@@ -26,14 +26,14 @@ For the manager's dashboard. All routes are staff routes, every response `no-sto
 - `GET /staff/finance/vendor-invoices?status&vendorId&contractId&purchaseRequestId` (paged, newest first), `GET …/{id}`: `VendorInvoiceView` with `lines`, `invoiceUrl`, `recordedByMe`, `payout`.
 - `POST …/{id}/approve {budgetLineId?, authorizationId?}`: `409 PAYABLE_SELF_APPROVAL` for its recorder; `409 BUDGET_NOT_ACTIVE`; `409 BUDGET_LINE_INSUFFICIENT {available}`; above the manager's limit `409 EXPENSE_NEEDS_APPROVAL {limit}` / `EXPENSE_AUTHORIZATION_EXCEEDED {remaining}` (its contract's or purchase's board approval is found by itself).
 - `POST …/{id}/reject {reasonCode}` (`vendorInvoiceReject`), `…/cancel {reasonCode}` (`vendorInvoiceCancel`; an approved one by an approver). `409 VENDOR_INVOICE_STATE {status}`.
-- `POST …/{id}/pay {paidOn, method: bank_transfer | cheque | cash, reference?, advanceSetOff?}` (idempotent): once; `payout {number, gross, retentionHeld, advanceSetOff, net, expenseId}`. `409 ADVANCE_SET_OFF_EXCEEDED {open}`.
+- `POST …/{id}/pay {paidOn, method: bank_transfer | cheque | cash, reference?, advanceSetOff?, cashAccountId?}` (idempotent): once; `payout {number, gross, retentionHeld, advanceSetOff, net, expenseId, cashAccountId}`. `409 ADVANCE_SET_OFF_EXCEEDED {open}`. What it pays leaves `cashAccountId` (ADR 0085) as a `payout` movement: a cash box for cash, a bank account otherwise (`409 CASH_ACCOUNT_WRONG_KIND {kind}`, `CASH_ACCOUNT_RETIRED`, `CASH_ACCOUNT_INSUFFICIENT {balance}`); required when net is above zero (`FIELD_REQUIRED`), refused at zero (`FIELD_NOT_ALLOWED`); `paidOn` then today or up to 31 days back (`DAY_OUT_OF_RANGE {min, max}`).
 - `GET /staff/finance/payment-schedule?from&to` (either permission; next month by default): `rows[]` of `invoice` and `commitment` by day, `totals`, `overdue`.
 
 ## A contract's money
 
 - `GET /staff/finance/contract-payables/{contractId}`: `advances`, `retention`, `invoices`, `disbursements`, `guarantees`. A contract's `retentionPct` (0–20) is set on `POST/PATCH /maintenance/contracts`.
 - `POST /staff/finance/contract-payables/{contractId}/disbursements {kind: advance | retention_release, amount, note?}` (idempotent): `409 ADVANCE_EXCEEDED {max}`, `RETENTION_NOT_DUE {endsOn}`, `RETENTION_EXCEEDED {held}`.
-- `GET /staff/finance/contract-disbursements` (waiting), `GET …/{id}`; `POST …/{id}/approve` (`PAYABLE_SELF_APPROVAL`, `DISBURSEMENT_NEEDS_APPROVAL {limit}`), `/reject {reasonCode}` (`disbursementReject`), `/cancel {reasonCode}` (`disbursementCancel`), `/pay {paidOn, method, reference?}` (idempotent). `409 DISBURSEMENT_STATE {status}`.
+- `GET /staff/finance/contract-disbursements` (waiting), `GET …/{id}`; `POST …/{id}/approve` (`PAYABLE_SELF_APPROVAL`, `DISBURSEMENT_NEEDS_APPROVAL {limit}`), `/reject {reasonCode}` (`disbursementReject`), `/cancel {reasonCode}` (`disbursementCancel`), `/pay {paidOn, method, reference?, cashAccountId}` (idempotent; the account as an invoice's payout takes it). `409 DISBURSEMENT_STATE {status}`.
 - `POST /staff/finance/contract-payables/{contractId}/guarantees {kind, issuer, reference, amount, issuedOn, expiresOn}`; `POST /staff/finance/vendor-guarantees/{id}/close {outcome: returned | called}` (`GUARANTEE_STATE`).
 
 ## The entries export — `finance.reports`

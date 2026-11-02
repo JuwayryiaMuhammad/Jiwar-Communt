@@ -437,8 +437,18 @@ The full notes are in [`notes/payables.md`](notes/payables.md).
 
 - **A line's figures.** `BudgetLineView` gains `transfersIn`, `transfersOut`, `committed`, `payable`, `available`; an expense spends only what is available.
 - **Commitments.** A contract's schedule and an approved purchase keep their line (`BUDGET_LINE_INSUFFICIENT`); `GET /staff/finance/commitments`.
-- **Vendors' invoices.** `/staff/finance/vendor-invoices…` (`finance.payables`, `finance.payables_approve`): recorded, approved by another (`PAYABLE_SELF_APPROVAL`), paid once into an expense; `GET /staff/finance/payment-schedule`.
+- **Vendors' invoices.** `/staff/finance/vendor-invoices…` (`finance.payables`, `finance.payables_approve`): recorded, approved by another (`PAYABLE_SELF_APPROVAL`), paid once into an expense and out of a treasury account (`cashAccountId`, a `payout` movement); `GET /staff/finance/payment-schedule`.
 - **A contract's money.** `/staff/finance/contract-payables/{contractId}…`, `/staff/finance/contract-disbursements…`, `/staff/finance/vendor-guarantees/{id}/close`; a contract's `retentionPct`.
 - **Planning.** `/staff/finance/budget-transfers…` (a `budget_transfer` request above the limit), `PUT /staff/finance/budgets/{id}/months`, `/staff/finance/variance-settings`, `/staff/finance/budget-lines/{id}/variance-reasons`, `GET /staff/finance/reports/budget-periods[/export]`.
 - **Entries.** `GET /staff/finance/reports/entries/export` (CSV, every money event once).
 
+
+### Treasury and custody (ADR 0085)
+
+The full notes are in [`notes/treasury.md`](notes/treasury.md).
+
+- **Accounts** (`finance.treasury`). `GET/POST /staff/finance/cash-accounts`, `GET/PATCH …/{id}`, `…/retire`, `…/adjustments`; `POST /staff/finance/cash-transfers`; `GET /staff/finance/cash-movements`. Balances are the sum of movements.
+- **Custody.** `GET /staff/finance/custody[/{accountId}]`, `POST …/{accountId}/handins` (`409 CUSTODY_CHANGED {expected}`, `CUSTODY_EMPTY`, `403 CUSTODY_CONFLICT`); `/staff/finance/custody-handins…` (`resolve`, `investigation`: `finance.custody`); `/staff/finance/custody-investigations…`; `GET /collector/custody`.
+- **Cheques** (`finance.payments`). `POST /staff/units/{unitId}/cheques`; `GET /staff/finance/cheques`; `…/{id}/deposit|clear|bounce|return` (`409 CHEQUE_STATE`, `CHEQUE_NOT_DUE`). An office payment by cheque is in the register.
+- **Statements** (`finance.treasury`). `POST /staff/finance/cash-accounts/{id}/statement-imports` (the dry run), `…/statement-imports/{id}/apply`; `GET /staff/finance/statement-lines`, `…/{id}/candidates`, `POST …/{id}/match`; `POST /staff/finance/statement-matches/{id}/undo`.
+- **Inbox types** `cash_custody`, `custody_variance`; **notices** `finance.custody_variance` (critical), `finance.custody_investigation_assigned`, `cheque.due`, `cheque.bounced`.

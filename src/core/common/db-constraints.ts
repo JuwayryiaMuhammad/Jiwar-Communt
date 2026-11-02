@@ -1093,4 +1093,10 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   experience_compensations_credit_note_key: null,
   experience_compensations_authorization_key: null,
   service_promises_tenant_id_id_key: null,
+  // Transfers, dues and closed units (ADR 0083). A transfer: one pending a
+  // unit, checked first under the unit's lock (OWNERSHIP_TRANSFER_PENDING);
+  // numbers under the compound's advisory lock.
+  ownership_transfers_tenant_id_id_key: null,
+  ownership_transfers_number_key: null,
+  ownership_transfers_one_pending_per_unit: null,
 };

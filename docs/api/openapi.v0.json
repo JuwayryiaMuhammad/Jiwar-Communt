@@ -2236,6 +2236,22 @@
         ],
         "type": "object"
       },
+      "ApproveOwnershipTransferDto": {
+        "properties": {
+          "duesExceptionCode": {
+            "description": "Only when the unit owes the compound: why the transfer goes ahead anyway, with a fresh step-up (POST /me/step-up). Ignored when nothing is owed.",
+            "enum": [
+              "dues_settled_at_sale",
+              "payment_plan_agreed",
+              "dues_disputed",
+              "court_order",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ApprovePermitDto": {
         "properties": {
           "note": {
@@ -5251,6 +5267,11 @@
             "format": "uuid",
             "type": "string"
           },
+          "owed": {
+            "description": "What the unit owes the compound now, EGP (ADR 0083): finance’s amount, open disputes included; \"0.00\" when nothing.",
+            "example": "0.00",
+            "type": "string"
+          },
           "plannedBySomeone": {
             "description": "False when the occupancy’s start planned it.",
             "type": "boolean"
@@ -5293,7 +5314,8 @@
           "handoverReason",
           "cancelledAt",
           "cancelReason",
-          "unitCode"
+          "unitCode",
+          "owed"
         ],
         "type": "object"
       },
@@ -7931,6 +7953,18 @@
         },
         "required": [
           "dueOn"
+        ],
+        "type": "object"
+      },
+      "CancelOwnershipTransferDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "`ownershipTransferCancel`: sale_cancelled, documents_missing, raised_in_error, other.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -45011,6 +45045,123 @@
         ],
         "type": "object"
       },
+      "OwnershipTransferView": {
+        "properties": {
+          "buyerAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "buyerName": {
+            "description": "The buyer’s name; null once their account is erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "Cancelled: the code (`ownershipTransferCancel`).",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "duesExceptionCode": {
+            "description": "Once done while the unit owed: the exception’s code (`transferDuesException`).",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "newOccupancyId": {
+            "description": "Once done: the new owner’s occupancy.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "owedAtApproval": {
+            "description": "Once done: what the unit owed when the transfer went ahead.",
+            "nullable": true,
+            "type": "string"
+          },
+          "owedNow": {
+            "description": "While pending: what the unit owes the compound now, EGP (finance’s amount, open disputes included). \"0.00\" when nothing.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "`householdEnd`.",
+            "type": "string"
+          },
+          "reference": {
+            "example": "OT-000012",
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "resides": {
+            "description": "The buyer lives there.",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "done",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "unitCode",
+          "buyerAccountId",
+          "buyerName",
+          "resides",
+          "reasonCode",
+          "status",
+          "requestedAt",
+          "decidedAt",
+          "owedNow",
+          "owedAtApproval",
+          "duesExceptionCode",
+          "cancelReason",
+          "newOccupancyId"
+        ],
+        "type": "object"
+      },
+      "OwnershipTransferViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/OwnershipTransferView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PairAlarmDeviceDto": {
         "properties": {
           "deviceId": {
@@ -50969,6 +51120,11 @@
             "nullable": true,
             "type": "string"
           },
+          "revokeCode": {
+            "description": "Revoked by the management (ADR 0083): its code (`proxyRevokeByManagement`); null when an owner revoked it or it ended otherwise.",
+            "nullable": true,
+            "type": "string"
+          },
           "scopes": {
             "items": {
               "enum": [
@@ -51006,6 +51162,7 @@
           "acceptedAt",
           "endedAt",
           "endReason",
+          "revokeCode",
           "createdAt"
         ],
         "type": "object"
@@ -55346,6 +55503,33 @@
         },
         "required": [
           "identifier"
+        ],
+        "type": "object"
+      },
+      "RequestOwnershipTransferDto": {
+        "properties": {
+          "reason": {
+            "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          },
+          "resides": {
+            "description": "Default true: the new owner lives there.",
+            "type": "boolean"
+          },
+          "toAccountId": {
+            "description": "An active resident account: the new owner.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "reason",
+          "toAccountId"
         ],
         "type": "object"
       },
@@ -67276,6 +67460,30 @@
         ],
         "type": "object"
       },
+      "StaffMoveDetailView": {
+        "properties": {
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistStepView"
+            },
+            "type": "array"
+          },
+          "move": {
+            "$ref": "#/components/schemas/MoveView"
+          },
+          "owed": {
+            "description": "What the unit owes the compound now, EGP (ADR 0083); \"0.00\" when nothing.",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "move",
+          "checklist",
+          "owed"
+        ],
+        "type": "object"
+      },
       "StaffNoticeView": {
         "properties": {
           "body": {
@@ -73526,6 +73734,17 @@
       },
       "TransferOwnershipDto": {
         "properties": {
+          "duesExceptionCode": {
+            "description": "Only when the unit owes the compound (ADR 0083): why the transfer goes ahead anyway, with a fresh step-up (POST /me/step-up). Ignored when nothing is owed.",
+            "enum": [
+              "dues_settled_at_sale",
+              "payment_plan_agreed",
+              "dues_disputed",
+              "court_order",
+              "other"
+            ],
+            "type": "string"
+          },
           "reason": {
             "description": "What the person is told (at most 1000 characters). Never stored in the audit trail.",
             "type": "string"
@@ -133404,7 +133623,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MoveDetailView"
+                  "$ref": "#/components/schemas/StaffMoveDetailView"
                 }
               }
             },
@@ -133774,6 +133993,208 @@
           "management-requests"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/ownership-transfers": {
+      "get": {
+        "operationId": "OwnershipTransfersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "done",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipTransferViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List ownership transfers, the newest first, with what is owed",
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/ownership-transfers/{id}": {
+      "get": {
+        "operationId": "OwnershipTransfersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one ownership transfer",
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/ownership-transfers/{id}/approve": {
+      "post": {
+        "operationId": "OwnershipTransfersController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveOwnershipTransferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve an ownership transfer and carry it out",
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/ownership-transfers/{id}/cancel": {
+      "post": {
+        "operationId": "OwnershipTransfersController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOwnershipTransferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a waiting ownership transfer",
+        "tags": [
+          "unit-states"
+        ],
         "x-stability": "draft"
       }
     },
@@ -143216,6 +143637,62 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/units/{unitId}/ownership-transfers": {
+      "post": {
+        "operationId": "OwnershipTransfersController_request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestOwnershipTransferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnershipTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Request an ownership transfer of the unit",
+        "tags": [
+          "unit-states"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/units/{unitId}/payments": {
       "post": {
         "description": "Cash, a bank transfer or a cheque; at most what is owed. It pays the invoices named first, then the oldest due.",
@@ -143307,6 +143784,61 @@
           }
         ],
         "summary": "A unit’s proxies",
+        "tags": [
+          "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/proxies/{id}/revoke": {
+      "post": {
+        "operationId": "StaffProxiesController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "End a proxy of the unit, with a reason",
         "tags": [
           "units"
         ],

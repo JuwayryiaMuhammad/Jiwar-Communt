@@ -25,7 +25,9 @@ const ref = (prefix: string, n: number) =>
  * - `moves.json`: the moves of its occupancies, with the steps ticked;
  * - `proxies.json`: the proxies its occupancies appointed and the places
  *   it holds as a proxy: unit, side, scopes, status, dates — never the
- *   other person's name or document.
+ *   other person's name or document;
+ * - `ownership-transfers.json`: the transfers naming it the buyer (ADR
+ *   0083).
  */
 @Injectable()
 export class PapersExportSections implements OnModuleInit {
@@ -40,6 +42,7 @@ export class PapersExportSections implements OnModuleInit {
     this.sections.register('registrations', (s) => this.registrations(s));
     this.sections.register('moves', (s) => this.moves(s));
     this.sections.register('proxies', (s) => this.proxies(s));
+    this.sections.register('ownership-transfers', (s) => this.transfers(s));
   }
 
   private async *contracts(s: ExportSubject): AsyncIterable<ExportEntry> {
@@ -177,6 +180,45 @@ export class PapersExportSections implements OnModuleInit {
         acceptedAt: p.acceptedAt,
         endedAt: p.endedAt,
         endReason: p.endReason,
+        // ADR 0083: the management ended it, and why.
+        revokedByManagement: p.revokeCode !== null,
+        revokeCode: p.revokeCode,
+      })),
+    };
+  }
+
+  /**
+   * The ownership transfers that made the account a unit's owner, or were
+   * to (ADR 0083): unit, status, dates and what the unit owed when it went
+   * ahead — never the management's words.
+   */
+  private async *transfers(s: ExportSubject): AsyncIterable<ExportEntry> {
+    const rows = await this.tenantTx.withTenantTx(async (tx) => {
+      const transfers = await tx.ownershipTransfer.findMany({
+        where: { buyerId: s.accountId },
+        orderBy: { number: 'asc' },
+      });
+      const units = await tx.unit.findMany({
+        where: { id: { in: [...new Set(transfers.map((t) => t.unitId))] } },
+        select: { id: true, code: true },
+      });
+      return transfers.map((t) => ({
+        t,
+        unitCode: units.find((u) => u.id === t.unitId)?.code ?? null,
+      }));
+    });
+    yield {
+      path: 'ownership-transfers.json',
+      json: rows.map(({ t, unitCode }) => ({
+        reference: ref('OT', t.number),
+        unitCode,
+        resides: t.resides,
+        status: t.status,
+        requestedAt: t.requestedAt,
+        decidedAt: t.decidedAt,
+        owedAtApproval: t.owedAtApproval?.toFixed(2) ?? null,
+        duesExceptionCode: t.duesExceptionCode,
+        cancelReason: t.cancelReason,
       })),
     };
   }

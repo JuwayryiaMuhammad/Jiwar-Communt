@@ -1971,6 +1971,8 @@ model UnitProxy {
   endedAt                DateTime? @map("ended_at") @db.Timestamptz(3)
   endReason              String?   @map("end_reason")
   endedBy                String?   @map("ended_by") @db.Uuid
+  /// Revoked by the management: its code, REASON_CODES.proxyRevokeByManagement (ADR 0083).
+  revokeCode             String?   @map("revoke_code")
 
   tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   unit        Unit          @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -13272,4 +13274,42 @@ model ServicePromise {
   @@unique([tenantId, id])
   @@index([tenantId, createdAt, id], map: "service_promises_list_idx")
   @@map("service_promises")
+}
+
+// ============================================================================
+// Transfers, dues and closed units, and the market's completion (ADR 0083)
+// ============================================================================
+
+/// An ownership transfer request (ADR 0083): the management's, approved
+/// once past the dues gate (then ADR 0021's transfer runs) or cancelled
+/// once. One pending per unit. Foreign keys in SQL only.
+model OwnershipTransfer {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  number            Int
+  unitId            String    @map("unit_id") @db.Uuid
+  buyerId           String    @map("buyer_account_id") @db.Uuid
+  resides           Boolean
+  /// REASON_CODES.householdEnd, and the words the leaving occupants are told.
+  reasonCode        String    @map("reason_code")
+  reasonText        String    @map("reason_text")
+  /// pending | done | cancelled (CHECK).
+  status            String    @default("pending")
+  requestedBy       String    @map("requested_by") @db.Uuid
+  requestedAt       DateTime  @map("requested_at") @db.Timestamptz(3)
+  decidedBy         String?   @map("decided_by") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// What the unit owed when it went ahead (done only).
+  owedAtApproval    Decimal?  @map("owed_at_approval") @db.Decimal(12, 2)
+  /// REASON_CODES.transferDuesException: done while the unit owed.
+  duesExceptionCode String?   @map("dues_exception_code")
+  newOccupancyId    String?   @map("new_occupancy_id") @db.Uuid
+  /// REASON_CODES.ownershipTransferCancel.
+  cancelReason      String?   @map("cancel_reason")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "ownership_transfers_number_key")
+  @@index([tenantId, requestedAt(sort: Desc), id(sort: Desc)], map: "ownership_transfers_list_idx")
+  @@index([tenantId, unitId, requestedAt(sort: Desc)], map: "ownership_transfers_unit_idx")
+  @@map("ownership_transfers")
 }

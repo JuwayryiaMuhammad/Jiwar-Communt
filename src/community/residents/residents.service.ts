@@ -38,6 +38,7 @@ import { lockUnits } from '../units/unit-lock';
 import { MovesService } from '../moves/moves.service';
 import { ProxiesService } from '../proxies/proxies.service';
 import { WorkersService } from '../workers/workers.service';
+import { TransferDuesGate, type DuesGateOutcome } from '../transfers/dues-gate';
 import { lockAccountShared, lockAccountsForUpdate } from './account-locks';
 import { dbNow } from '../db-clock';
 import type {
@@ -96,6 +97,7 @@ export class ResidentsService {
     private readonly lifecycle: AccountLifecycle,
     private readonly moves: MovesService,
     private readonly proxies: ProxiesService,
+    private readonly duesGate: TransferDuesGate,
   ) {}
 
   /** Account (resident role) + login identifiers + occupancies, atomically. */
@@ -706,104 +708,156 @@ export class ResidentsService {
    */
   async transferOwnership(
     unitId: string,
-    input: { toAccountId: string; resides?: boolean },
+    input: {
+      toAccountId: string;
+      resides?: boolean;
+      /** REASON_CODES.transferDuesException, if the unit may owe (ADR 0083). */
+      duesExceptionCode?: string;
+    },
     reasonInput: ReasonInput,
   ): Promise<OccupancyView> {
     const reason = requireReasonCode(reasonInput, REASON_CODES.householdEnd);
-    const resides = input.resides ?? true;
+    const exception = this.duesGate.exceptionCode(input.duesExceptionCode);
     const after: AfterCommit[] = [];
     const view = await this.tenantTx.withTenantTx(async (tx) => {
-      // Accounts before the unit (ADR 0036): the buyer, and every account
-      // the transfer ends or deactivates — the unit's occupants and its
-      // household's members — in id order. An erasure executing for any of
-      // them finishes first (the buyer is then not found), or waits for
-      // this one (and then finds a primary, and queues).
-      await lockAccountsForUpdate(tx, [
-        input.toAccountId,
-        ...(await this.accountsOfUnit(tx, unitId)),
-      ]);
-      await lockUnits(tx, [unitId]);
-      const buyer = await tx.account.findFirst({
-        where: { id: input.toAccountId, type: 'resident', status: 'active' },
-        select: { id: true },
-      });
-      if (!buyer) throw residentNotFound();
-      const active = await tx.unitOccupancy.findMany({
-        where: { unitId, status: 'active' },
-      });
-      const place = await this.notifier.place(
-        tx,
-        active[0]?.tenantId ?? this.ctx.tenantId,
-        unitId,
-      );
-      for (const o of active) {
-        await tx.unitOccupancy.update({
-          where: { id: o.id },
-          data: {
-            status: 'ended',
-            endedAt: new Date(),
-            endReason: 'ownership_transferred',
-            endNote: reason.text,
-          },
-        });
-        const ended = await tx.unitOccupancy.findUniqueOrThrow({
-          where: { id: o.id },
-        });
-        after.push(
-          ...(await this.afterEnded(tx, ended, 'ownership_transferred', {
-            flagReview: false,
-          })),
-        );
-        await this.notifier.toAccounts(
-          tx,
-          o.tenantId,
-          [o.accountId],
-          COMMUNITY_NOTICES.occupancyEnded,
-          { ...place, reason: reason.text },
-        );
-      }
-      after.push(
-        ...(await this.endHouseholdIn(
+      await this.lockForTransfer(tx, unitId, input.toAccountId);
+      const gate = await this.duesGate.pass(tx, unitId, exception);
+      return (
+        await this.transferOwnershipLocked(
           tx,
           unitId,
+          input,
           reason,
-          'ownership_transferred',
-        )),
-      );
-      const created = await tx.unitOccupancy.create({
-        data: {
-          id: newId(),
-          tenantId: this.ctx.tenantId,
-          unitId,
-          accountId: buyer.id,
-          occupancyType: 'owner',
-          ...(await this.primaryFields(tx, {
-            unitId,
-            occupancyType: 'owner',
-            resides,
-          })),
-          createdById: this.ctx.accountId,
-        },
-        include: { unit: { select: { code: true } } },
-      });
-      await this.recordCreated(tx, created);
-      await this.audit.record(tx, {
-        action: 'unit.ownership_transferred',
-        targetId: unitId,
-        metadata: {
-          reasonCode: reason.code,
-          endedOccupancyIds: active.map((o) => o.id),
-          newOccupancyId: created.id,
-          newOwnerAccountId: buyer.id,
-        },
-      });
-      // After the buyer's own occupancy exists: an occupant who buys keeps
-      // their entry credentials (ADR 0031).
-      for (const o of active) await this.residenceChanged(tx, o);
-      return toOccupancyView(created);
+          gate,
+          after,
+        )
+      ).view;
     });
     await runAfterCommit(after, this.logger);
     return view;
+  }
+
+  /**
+   * The locks an ownership transfer takes before it decides, in order.
+   * Accounts before the unit (ADR 0036): the buyer, and every account the
+   * transfer ends or deactivates — the unit's occupants and its household's
+   * members — in id order. An erasure executing for any of them finishes
+   * first (the buyer is then not found), or waits for this one (and then
+   * finds a primary, and queues). Then the unit. A transfer request's row
+   * and the dues gate's finance lock come after (ADR 0083).
+   */
+  async lockForTransfer(
+    tx: TenantTxClient,
+    unitId: string,
+    buyerId: string,
+  ): Promise<void> {
+    await lockAccountsForUpdate(tx, [
+      buyerId,
+      ...(await this.accountsOfUnit(tx, unitId)),
+    ]);
+    await lockUnits(tx, [unitId]);
+  }
+
+  /**
+   * Ownership moves to another resident, under lockForTransfer's locks and
+   * past the dues gate: every active occupancy of the unit ends
+   * (`ownership_transferred`, each occupant told), the household ends with
+   * it, and the new owner's occupancy starts — primary when they live
+   * there. The old family never keeps entry or visitor rights to a unit
+   * that is no longer theirs. The occupancies stay, ended, in the unit's
+   * history (ADR 0072). Also a transfer request's approval (ADR 0083).
+   */
+  async transferOwnershipLocked(
+    tx: TenantTxClient,
+    unitId: string,
+    input: { toAccountId: string; resides?: boolean },
+    reason: { code: string; text: string },
+    gate: DuesGateOutcome,
+    after: AfterCommit[],
+    transferId?: string,
+  ): Promise<{ view: OccupancyView; occupancyId: string }> {
+    const resides = input.resides ?? true;
+    const buyer = await tx.account.findFirst({
+      where: { id: input.toAccountId, type: 'resident', status: 'active' },
+      select: { id: true },
+    });
+    if (!buyer) throw residentNotFound();
+    const active = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active' },
+    });
+    const place = await this.notifier.place(
+      tx,
+      active[0]?.tenantId ?? this.ctx.tenantId,
+      unitId,
+    );
+    for (const o of active) {
+      await tx.unitOccupancy.update({
+        where: { id: o.id },
+        data: {
+          status: 'ended',
+          endedAt: new Date(),
+          endReason: 'ownership_transferred',
+          endNote: reason.text,
+        },
+      });
+      const ended = await tx.unitOccupancy.findUniqueOrThrow({
+        where: { id: o.id },
+      });
+      after.push(
+        ...(await this.afterEnded(tx, ended, 'ownership_transferred', {
+          flagReview: false,
+        })),
+      );
+      await this.notifier.toAccounts(
+        tx,
+        o.tenantId,
+        [o.accountId],
+        COMMUNITY_NOTICES.occupancyEnded,
+        { ...place, reason: reason.text },
+      );
+    }
+    after.push(
+      ...(await this.endHouseholdIn(
+        tx,
+        unitId,
+        reason,
+        'ownership_transferred',
+      )),
+    );
+    const created = await tx.unitOccupancy.create({
+      data: {
+        id: newId(),
+        tenantId: this.ctx.tenantId,
+        unitId,
+        accountId: buyer.id,
+        occupancyType: 'owner',
+        ...(await this.primaryFields(tx, {
+          unitId,
+          occupancyType: 'owner',
+          resides,
+        })),
+        createdById: this.ctx.accountId,
+      },
+      include: { unit: { select: { code: true } } },
+    });
+    await this.recordCreated(tx, created);
+    await this.audit.record(tx, {
+      action: 'unit.ownership_transferred',
+      targetId: unitId,
+      metadata: {
+        reasonCode: reason.code,
+        endedOccupancyIds: active.map((o) => o.id),
+        newOccupancyId: created.id,
+        newOwnerAccountId: buyer.id,
+        owed: gate.owed,
+        ...(gate.exception ? { duesExceptionCode: gate.exception } : {}),
+        ...(transferId ? { transferId } : {}),
+      },
+    });
+    // After the buyer's own occupancy exists: an occupant who buys keeps
+    // their entry credentials (ADR 0031).
+    for (const o of active) await this.residenceChanged(tx, o);
+    return { view: toOccupancyView(created), occupancyId: created.id };
   }
 
   /**

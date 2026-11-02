@@ -10,6 +10,7 @@ import {
   ValidateBy,
   ValidateIf,
 } from 'class-validator';
+import { REASON_CODES } from '../../../core/common/reasons';
 import { ReasonDto } from '../../../core/common/http/reason.dto';
 import { withParams } from '../../../core/common/validation/validation-errors';
 
@@ -40,6 +41,17 @@ export class TransferOwnershipDto extends ReasonDto {
   @IsOptional()
   @IsBoolean()
   resides?: boolean;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    enum: REASON_CODES.transferDuesException,
+    description:
+      'Only when the unit owes the compound (ADR 0083): why the transfer goes ahead anyway, with a fresh step-up (POST /me/step-up). Ignored when nothing is owed.',
+  })
+  @IsOptional()
+  @IsString()
+  duesExceptionCode?: string;
 }
 
 /** Either some members, or `all: true` — exactly one. */

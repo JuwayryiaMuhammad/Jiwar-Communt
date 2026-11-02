@@ -12,6 +12,7 @@ import {
   type ErrorParams,
 } from '../../core/common/errors';
 import { parseIdentityDocument } from '../../core/common/identity-document';
+import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
 import { isRealDate } from '../../core/common/validation/local-date';
 import { GlobalDbService } from '../../core/database/global-db.service';
@@ -19,6 +20,7 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { PROXY_SCOPES, type ProxyScope } from '../capabilities/capabilities';
@@ -70,6 +72,8 @@ export interface ProxyRead {
   acceptedAt: Date | null;
   endedAt: Date | null;
   endReason: string | null;
+  /** The management revoked it: its code (ADR 0083); else null. */
+  revokeCode: string | null;
   createdAt: Date;
 }
 
@@ -115,6 +119,7 @@ export class ProxiesService implements OnModuleInit {
     private readonly sweep: SweepRunner,
     private readonly settings: TenantSettingsService,
     private readonly lifecycle: AccountLifecycle,
+    private readonly notifier: Notifier,
   ) {}
 
   onModuleInit(): void {
@@ -226,8 +231,69 @@ export class ProxiesService implements OnModuleInit {
   }
 
   // --------------------------------------------------------------------------
-  // The management (`residents.manage`, read only) and the proxy itself
+  // The management (`residents.manage`) and the proxy itself
   // --------------------------------------------------------------------------
+
+  /**
+   * The management ends one of a unit's proxies, with a code (ADR 0083),
+   * under the unit's lock: the proxy's holder (once accepted) and the owner
+   * who appointed it are told.
+   */
+  staffRevoke(
+    unitId: string,
+    id: string,
+    reasonCode: string | undefined,
+  ): Promise<ProxyRead> {
+    const code = requireReasonCodeOnly(
+      reasonCode,
+      REASON_CODES.proxyRevokeByManagement,
+    );
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await lockAccountShared(tx, this.ctx.accountId);
+      await lockUnits(tx, [unitId]);
+      const row = await tx.unitProxy.findFirst({
+        where: { id, unitId, status: { in: ['invited', 'active'] } },
+      });
+      if (!row) throw notFound();
+      const ended = await this.end(
+        tx,
+        row,
+        'revoked',
+        this.ctx.accountId,
+        code,
+      );
+      const grantor = await tx.unitOccupancy.findUnique({
+        where: { id: row.appointedByOccupancyId },
+        select: { accountId: true },
+      });
+      const told = await tx.account.findMany({
+        where: {
+          id: {
+            in: [row.accountId, grantor?.accountId].filter(
+              (a): a is string => a !== null && a !== undefined,
+            ),
+          },
+          status: 'active',
+        },
+        select: { id: true },
+        orderBy: { id: 'asc' },
+      });
+      const unit = await tx.unit.findUniqueOrThrow({
+        where: { id: unitId },
+        select: { code: true },
+      });
+      await this.notifier.notify(
+        tx,
+        told.map((a) => a.id),
+        {
+          kind: 'unit_proxy.revoked_by_management',
+          params: { unitCode: unit.code, reason: code },
+          targetId: unitId,
+        },
+      );
+      return this.read(tx, ended);
+    });
+  }
 
   staffList(unitId: string): Promise<ProxyRead[]> {
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -307,6 +373,8 @@ export class ProxiesService implements OnModuleInit {
     row: UnitProxy,
     reason: ProxyEndReason,
     by: string | null,
+    /** The management's code when it is the one revoking (ADR 0083). */
+    revokeCode: string | null = null,
   ): Promise<UnitProxy> {
     const ended = await tx.unitProxy.update({
       where: { id: row.id },
@@ -315,6 +383,7 @@ export class ProxiesService implements OnModuleInit {
         endedAt: await dbNow(tx),
         endReason: reason,
         endedBy: by,
+        revokeCode,
         ...personalGone,
       },
     });
@@ -328,6 +397,7 @@ export class ProxiesService implements OnModuleInit {
         unitId: row.unitId,
         wasActive: row.status === 'active',
         ...(reason === 'revoked' ? {} : { reasonCode: reason }),
+        ...(revokeCode ? { side: 'management', revokeCode } : {}),
       },
     });
     return ended;
@@ -421,6 +491,7 @@ export class ProxiesService implements OnModuleInit {
       acceptedAt: r.acceptedAt,
       endedAt: r.endedAt,
       endReason: r.endReason,
+      revokeCode: r.revokeCode,
       createdAt: r.createdAt,
     };
   }

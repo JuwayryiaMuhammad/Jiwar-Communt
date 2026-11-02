@@ -91,7 +91,11 @@ export class UnitStatesController {
     await this.residents.endHousehold(id, reasonOf(dto));
   }
 
-  /** Every occupancy and the household end; the new owner's occupancy starts. */
+  /**
+   * Every occupancy and the household end; the new owner's occupancy
+   * starts. A unit that owes is TRANSFER_DUES_OWED, unless an exception's
+   * code is given with a fresh step-up (ADR 0083).
+   */
   @RequirePermissions('residents.manage')
   @Post('units/:id/transfer-ownership')
   @ApiOperation({ summary: "Transfer the unit's ownership" })
@@ -104,7 +108,11 @@ export class UnitStatesController {
     return OccupancyResponse.from(
       await this.residents.transferOwnership(
         id,
-        { toAccountId: dto.toAccountId, resides: dto.resides },
+        {
+          toAccountId: dto.toAccountId,
+          resides: dto.resides,
+          duesExceptionCode: dto.duesExceptionCode,
+        },
         reasonOf(dto),
       ),
     );

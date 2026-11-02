@@ -2931,6 +2931,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'title and status are NOT NULL; done_note, cancel_reason, done_at and cancelled_at are tested IS NULL first (done_at IS NOT NULL before the note’s length); created_at is NOT NULL',
   },
+  // Transfers, dues and closed units (ADR 0083).
+  ownership_transfers_codes: {},
+  unit_proxies_revoke_code: {
+    guarded:
+      'revoke_code IS NULL is tested first; end_reason IS NOT NULL is tested before it is compared',
+  },
+  ownership_transfers_state_shape: {
+    guarded:
+      'each nullable column is tested IS [NOT] NULL first; owed_at_approval, dues_exception_code and cancel_reason are compared only on a value',
+  },
 };
 
 interface Check {

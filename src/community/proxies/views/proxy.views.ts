@@ -33,6 +33,13 @@ export class ProxyView {
       'revoked | expired | invite_expired | ownership_transferred | household_ended | appointer_left | erased',
   })
   endReason: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Revoked by the management (ADR 0083): its code (`proxyRevokeByManagement`); null when an owner revoked it or it ended otherwise.',
+  })
+  revokeCode: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 

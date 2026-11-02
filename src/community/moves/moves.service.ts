@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { UnitMove, UnitMoveStep } from '@prisma/client';
 import { StaffRecipients } from '../../core/access/staff-recipients';
 import { AuditService } from '../../core/audit/audit.service';
+import { UnitDues } from '../../core/unit-dues/unit-dues';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
@@ -60,9 +61,13 @@ export interface MoveWithChecklist {
   checklist: ChecklistStep[];
 }
 
-/** A move on the management's board: the unit's code beside it. */
+/**
+ * A move on the management's board: the unit's code beside it, and what
+ * the unit owes now (ADR 0083).
+ */
 export interface BoardMove extends MoveRead {
   unitCode: string;
+  owed: string;
 }
 
 const notFound = () =>
@@ -120,6 +125,7 @@ export class MovesService {
     private readonly staff: StaffRecipients,
     private readonly settings: TenantSettingsService,
     private readonly steps: MoveSteps,
+    private readonly dues: UnitDues,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -331,15 +337,29 @@ export class MovesService {
         take: 200,
         include: { unit: { select: { code: true } } },
       });
-      return moves.map((m) => ({ ...read(m), unitCode: m.unit.code }));
+      const owed = await this.dues.owed(
+        tx,
+        moves.map((m) => m.unitId),
+      );
+      return moves.map((m) => ({
+        ...read(m),
+        unitCode: m.unit.code,
+        owed: owed.get(m.unitId) ?? '0.00',
+      }));
     });
   }
 
-  staffOpen(id: string): Promise<MoveWithChecklist> {
+  /** A move with its checklist, and what its unit owes now (ADR 0083). */
+  staffOpen(id: string): Promise<MoveWithChecklist & { owed: string }> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const move = await tx.unitMove.findUnique({ where: { id } });
       if (!move) throw notFound();
-      return { move: read(move), checklist: await this.checklist(tx, move) };
+      const owed = await this.dues.owed(tx, [move.unitId]);
+      return {
+        move: read(move),
+        checklist: await this.checklist(tx, move),
+        owed: owed.get(move.unitId) ?? '0.00',
+      };
     });
   }
 

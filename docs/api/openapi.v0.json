@@ -7745,6 +7745,18 @@
         ],
         "type": "object"
       },
+      "CancelIncidentActionDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `incidentActionCancel`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "CancelInstalmentPlanDto": {
         "properties": {
           "dueOn": {
@@ -16861,6 +16873,32 @@
           "day",
           "nameEn",
           "nameAr"
+        ],
+        "type": "object"
+      },
+      "CreateIncidentActionDto": {
+        "properties": {
+          "description": {
+            "description": "What must be done, about the work.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "From today, a year ahead at most.",
+            "format": "date",
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "An active staff member or the manager. Told.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "ownerId",
+          "dueOn"
         ],
         "type": "object"
       },
@@ -32641,6 +32679,162 @@
         ],
         "type": "object"
       },
+      "IncidentActionCancelReason": {
+        "enum": [
+          "not_needed",
+          "duplicate",
+          "superseded",
+          "other"
+        ],
+        "type": "string"
+      },
+      "IncidentActionCountsView": {
+        "properties": {
+          "cancelled": {
+            "type": "number"
+          },
+          "done": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "open",
+          "done",
+          "cancelled"
+        ],
+        "type": "object"
+      },
+      "IncidentActionDoneDto": {
+        "properties": {
+          "note": {
+            "description": "What was done, in the doer’s own words.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "IncidentActionState": {
+        "enum": [
+          "open",
+          "done",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "IncidentActionView": {
+        "properties": {
+          "cancelReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentActionCancelReason"
+              }
+            ],
+            "nullable": true
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "description": {
+            "description": "Null once an erasure cleared it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "doneAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "doneBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "doneNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "incidentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "overdue": {
+            "description": "Open and past its day on the compound’s today.",
+            "type": "boolean"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentActionState"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "incidentId",
+          "description",
+          "owner",
+          "dueOn",
+          "state",
+          "overdue",
+          "doneAt",
+          "doneBy",
+          "doneNote",
+          "cancelledAt",
+          "cancelReason",
+          "createdBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "IncidentActionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentActionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "IncidentEvidenceKind": {
         "description": "`visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days.",
         "enum": [
@@ -42936,6 +43130,39 @@
         ],
         "type": "object"
       },
+      "OwnActionIncidentView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "description": "I-0001.",
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentSeverity"
+              }
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "type",
+          "severity"
+        ],
+        "type": "object"
+      },
       "OwnFacilityBanView": {
         "properties": {
           "endsOn": {
@@ -42965,6 +43192,68 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/OwnFacilityBanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "OwnIncidentActionView": {
+        "properties": {
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "doneNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "incident": {
+            "$ref": "#/components/schemas/OwnActionIncidentView"
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentActionState"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "incident",
+          "description",
+          "dueOn",
+          "state",
+          "overdue",
+          "doneNote"
+        ],
+        "type": "object"
+      },
+      "OwnIncidentActionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/OwnIncidentActionView"
             },
             "type": "array"
           },
@@ -64039,6 +64328,14 @@
             },
             "type": "array"
           },
+          "actions": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IncidentActionCountsView"
+              }
+            ],
+            "description": "Its corrective actions by state (ADR 0087): it does not close while one is open."
+          },
           "assignedAt": {
             "format": "date-time",
             "nullable": true,
@@ -64213,7 +64510,8 @@
           "notes",
           "closingNote",
           "closedBy",
-          "acknowledgements"
+          "acknowledgements",
+          "actions"
         ],
         "type": "object"
       },
@@ -73679,6 +73977,25 @@
         "required": [
           "items"
         ],
+        "type": "object"
+      },
+      "UpdateIncidentActionDto": {
+        "properties": {
+          "description": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "A new owner is told.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "UpdateItemDto": {
@@ -127637,6 +127954,83 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/incident-actions": {
+      "get": {
+        "operationId": "OwnIncidentActionsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnIncidentActionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My open corrective actions, by due day",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/incident-actions/{actionId}/done": {
+      "post": {
+        "operationId": "OwnIncidentActionsController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentActionDoneDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark my corrective action done",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/instalment-plans": {
       "get": {
         "operationId": "StaffInstalmentsController_list",
@@ -132723,6 +133117,151 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/security/incident-actions/{actionId}": {
+      "patch": {
+        "description": "While open: its words, owner and day; a new owner is told.",
+        "operationId": "StaffIncidentActionsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIncidentActionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a corrective action",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incident-actions/{actionId}/cancel": {
+      "post": {
+        "operationId": "StaffIncidentActionsController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelIncidentActionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call a corrective action off",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incident-actions/{actionId}/done": {
+      "post": {
+        "operationId": "StaffIncidentActionsController_done",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "actionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentActionDoneDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a corrective action done",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/security/incidents": {
       "get": {
         "description": "Newest first; by status, type, severity and when they happened.",
@@ -132996,6 +133535,92 @@
           }
         ],
         "summary": "Acknowledge an incident",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/incidents/{id}/actions": {
+      "get": {
+        "description": "In the order they were made.",
+        "operationId": "StaffIncidentActionsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentActionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List an incident’s corrective actions",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Not to a closed incident (INCIDENT_CLOSED). Its owner is told. The incident does not close while it is open (INCIDENT_ACTIONS_OPEN).",
+        "operationId": "StaffIncidentActionsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIncidentActionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentActionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a corrective action to an incident",
         "tags": [
           "incidents"
         ],

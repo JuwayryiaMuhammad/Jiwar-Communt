@@ -206,6 +206,12 @@ import { IncidentExportSections } from './incidents/incident-export-sections';
 import { IncidentLifecycle } from './incidents/incident-lifecycle';
 import { IncidentsService } from './incidents/incidents.service';
 import { StaffIncidentsController } from './incidents/staff-incidents.controller';
+import {
+  OwnIncidentActionsController,
+  StaffIncidentActionsController,
+} from './incidents/incident-actions.controller';
+import { IncidentActionsService } from './incidents/incident-actions.service';
+import { IncidentActionSweep } from './incidents/incident-action-sweep';
 import { GateLockdownsController } from './lockdown/gate-lockdowns.controller';
 import {
   GateViolationsController,
@@ -455,6 +461,8 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     GateIncidentsController,
     TechnicianIncidentsController,
     StaffIncidentsController,
+    StaffIncidentActionsController,
+    OwnIncidentActionsController,
     UnitViolationsController,
     StaffViolationsController,
     GateViolationsController,
@@ -614,6 +622,8 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     callDriverProvider,
     GateCallsService,
     IncidentsService,
+    IncidentActionsService,
+    IncidentActionSweep,
     IncidentLifecycle,
     IncidentExportSections,
     ViolationsService,

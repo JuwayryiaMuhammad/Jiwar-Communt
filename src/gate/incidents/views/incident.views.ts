@@ -168,6 +168,16 @@ export class IncidentInvestigatorView {
   fullName: string | null;
 }
 
+/** An incident's corrective actions by state (ADR 0087). */
+export class IncidentActionCountsView {
+  @ApiProperty({ type: Number })
+  open: number;
+  @ApiProperty({ type: Number })
+  done: number;
+  @ApiProperty({ type: Number })
+  cancelled: number;
+}
+
 /**
  * An incident as the management keeps it (`incidents.manage`): everything
  * the author sees, and who reported it, where they were on shift, the
@@ -198,6 +208,12 @@ export class StaffIncidentView extends GuardIncidentView {
   closedBy: AccountRefView | null;
   @ApiProperty({ type: [IncidentAcknowledgementView] })
   acknowledgements: IncidentAcknowledgementView[];
+  @ApiProperty({
+    type: IncidentActionCountsView,
+    description:
+      'Its corrective actions by state (ADR 0087): it does not close while one is open.',
+  })
+  actions: IncidentActionCountsView;
 
   static from(r: IncidentRecord): StaffIncidentView {
     const i = r.incident;
@@ -220,6 +236,7 @@ export class StaffIncidentView extends GuardIncidentView {
         account: accountRef(a.account),
         at: a.ack.acknowledgedAt,
       })),
+      actions: { ...r.actions },
     };
   }
 }

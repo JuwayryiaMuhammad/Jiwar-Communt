@@ -40,6 +40,9 @@
 -- common area, the compound's place for prayer times, an emergency guide,
 -- a booking held now, and a lending post and a live listing each with its
 -- masked conversation (exactly one subject each).
+-- Spaces (ADR 0084): the permits' days off, moved into the holiday calendar
+-- by the branch's migration; on the new schema, a holiday, an area open to
+-- use requests and a pending request.
 -- The unit register (ADR 0072): a building ahead of its units, a unit put
 -- in it by id and one named by text, and a valid units import on its sheet
 -- (the base's units, named by text, are backfilled into buildings).
@@ -253,6 +256,30 @@ BEGIN
        date_trunc('day', now()) + interval '10 days', 'finishing', 540, 1020, 'Seed Builders', 'Tiling the kitchen', now());
     INSERT INTO guard_tasks (id, tenant_id, kind, unit_id, gate_id, created_by_account_id, updated_at) VALUES
       (gen_random_uuid(), t, 'closed_unit_inspection', u1, gate, mgr, now());
+    -- The permits' days off as ADR 0049 kept them, two of them, which ADR
+    -- 0084 moves into the holiday calendar as holidays that stop works and
+    -- then drops; on the new schema, the calendar's row and a holiday that
+    -- does not stop works, and a common area open to use requests with one
+    -- pending.
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'permit_settings' AND column_name = 'days_off') THEN
+      INSERT INTO permit_settings (tenant_id, days_off, updated_at) VALUES
+        (t, ARRAY[current_date + 10, current_date + 20]::date[], now())
+        ON CONFLICT (tenant_id) DO UPDATE SET days_off = EXCLUDED.days_off;
+    ELSE
+      INSERT INTO permit_settings (tenant_id, updated_at) VALUES (t, now())
+        ON CONFLICT (tenant_id) DO NOTHING;
+      INSERT INTO holiday_calendars (tenant_id) VALUES (t) ON CONFLICT (tenant_id) DO NOTHING;
+      INSERT INTO compound_holidays (id, tenant_id, day, name_en, name_ar, stops_works, updated_at) VALUES
+        (gen_random_uuid(), t, current_date + 30, 'Seed feast', 'عيد', false, now())
+        ON CONFLICT (tenant_id, day) DO NOTHING;
+      INSERT INTO space_use_areas (tenant_id, common_area_id, opened_at) VALUES (t, area, now())
+        ON CONFLICT DO NOTHING;
+      INSERT INTO space_use_requests (id, tenant_id, common_area_id, unit_id, requested_by_account_id,
+                                      starts_at, ends_at, purpose, guests, created_at) VALUES
+        (gen_random_uuid(), t, area, u1, res1, now() + interval '3 days', now() + interval '3 days 2 hours',
+         'A birthday', 10, now());
+    END IF;
     -- The bookings, emergencies and incidents as M1-3b finds them (ADR 0067):
     -- a ban's cancel reason and its link join the bookings' CHECKs, a ticket
     -- origin the emergencies' and incidents'.

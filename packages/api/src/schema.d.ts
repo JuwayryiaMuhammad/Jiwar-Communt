@@ -18322,6 +18322,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/ownership-transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List ownership transfers, the newest first, with what is owed */
+        get: operations["OwnershipTransfersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/ownership-transfers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one ownership transfer */
+        get: operations["OwnershipTransfersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/ownership-transfers/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve an ownership transfer and carry it out */
+        post: operations["OwnershipTransfersController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/ownership-transfers/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a waiting ownership transfer */
+        post: operations["OwnershipTransfersController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/parking-reports": {
         parameters: {
             query?: never;
@@ -21514,6 +21582,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/units/{unitId}/ownership-transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request an ownership transfer of the unit */
+        post: operations["OwnershipTransfersController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/payments": {
         parameters: {
             query?: never;
@@ -21545,6 +21630,23 @@ export interface paths {
         get: operations["StaffProxiesController_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/proxies/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End a proxy of the unit, with a reason */
+        post: operations["StaffProxiesController_revoke"];
         delete?: never;
         options?: never;
         head?: never;
@@ -26172,6 +26274,13 @@ export interface components {
             /** Format: date-time */
             withdrawnAt: string;
         };
+        ApproveOwnershipTransferDto: {
+            /**
+             * @description Only when the unit owes the compound: why the transfer goes ahead anyway, with a fresh step-up (POST /me/step-up). Ignored when nothing is owed.
+             * @enum {string}
+             */
+            duesExceptionCode?: "dues_settled_at_sale" | "payment_plan_agreed" | "dues_disputed" | "court_order" | "other";
+        };
         ApprovePermitDto: {
             /** @description The management’s own note. Never shown to the unit. */
             note?: string;
@@ -27053,6 +27162,11 @@ export interface components {
             id: string;
             /** Format: uuid */
             occupancyId: string;
+            /**
+             * @description What the unit owes the compound now, EGP (ADR 0083): finance’s amount, open disputes included; "0.00" when nothing.
+             * @example 0.00
+             */
+            owed: string;
             /** @description False when the occupancy’s start planned it. */
             plannedBySomeone: boolean;
             /** Format: date */
@@ -27890,6 +28004,10 @@ export interface components {
         CancelInstalmentPlanDto: {
             /** @description When the remainder invoice falls due: from today to 366 days ahead. */
             dueOn: string;
+        };
+        CancelOwnershipTransferDto: {
+            /** @description `ownershipTransferCancel`: sale_cancelled, documents_missing, raised_in_error, other. */
+            reasonCode: string;
         };
         CancelPermitDto: {
             /** @description From the closed list `unitPermitCancel`; optional. */
@@ -39734,6 +39852,46 @@ export interface components {
             data: components["schemas"]["OwnIncidentActionView"][];
             nextCursor: string | null;
         };
+        OwnershipTransferView: {
+            /** Format: uuid */
+            buyerAccountId: string;
+            /** @description The buyer’s name; null once their account is erased. */
+            buyerName: string | null;
+            /** @description Cancelled: the code (`ownershipTransferCancel`). */
+            cancelReason: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @description Once done while the unit owed: the exception’s code (`transferDuesException`). */
+            duesExceptionCode: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Once done: the new owner’s occupancy.
+             */
+            newOccupancyId: string | null;
+            /** @description Once done: what the unit owed when the transfer went ahead. */
+            owedAtApproval: string | null;
+            /** @description While pending: what the unit owes the compound now, EGP (finance’s amount, open disputes included). "0.00" when nothing. */
+            owedNow: string | null;
+            /** @description `householdEnd`. */
+            reasonCode: string;
+            /** @example OT-000012 */
+            reference: string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description The buyer lives there. */
+            resides: boolean;
+            /** @enum {string} */
+            status: "pending" | "done" | "cancelled";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        OwnershipTransferViewList: {
+            data: components["schemas"]["OwnershipTransferView"][];
+            nextCursor: string | null;
+        };
         PairAlarmDeviceDto: {
             /** Format: uuid */
             deviceId: string;
@@ -41634,6 +41792,8 @@ export interface components {
             inviteExpiresAt: string;
             /** @description The invite’s name, then the account’s; null once ended. */
             name: string | null;
+            /** @description Revoked by the management (ADR 0083): its code (`proxyRevokeByManagement`); null when an owner revoked it or it ended otherwise. */
+            revokeCode: string | null;
             scopes: ("inspections" | "tickets" | "visitors_invite" | "works" | "requests")[];
             /** @enum {string} */
             status: "invited" | "active" | "ended";
@@ -43053,6 +43213,19 @@ export interface components {
         RequestOtpDto: {
             /** @description Email or phone (local Egyptian format or international). */
             identifier: string;
+        };
+        RequestOwnershipTransferDto: {
+            /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
+            reason: string;
+            /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
+            /** @description Default true: the new owner lives there. */
+            resides?: boolean;
+            /**
+             * Format: uuid
+             * @description An active resident account: the new owner.
+             */
+            toAccountId: string;
         };
         RequestPartDto: {
             /** Format: uuid */
@@ -46547,6 +46720,15 @@ export interface components {
              */
             internal: boolean;
         };
+        StaffMoveDetailView: {
+            checklist: components["schemas"]["ChecklistStepView"][];
+            move: components["schemas"]["MoveView"];
+            /**
+             * @description What the unit owes the compound now, EGP (ADR 0083); "0.00" when nothing.
+             * @example 0.00
+             */
+            owed: string;
+        };
         StaffNoticeView: {
             /** @description The management’s own words. */
             body: string;
@@ -48373,6 +48555,11 @@ export interface components {
             visitorPass: number;
         };
         TransferOwnershipDto: {
+            /**
+             * @description Only when the unit owes the compound (ADR 0083): why the transfer goes ahead anyway, with a fresh step-up (POST /me/step-up). Ignored when nothing is owed.
+             * @enum {string}
+             */
+            duesExceptionCode?: "dues_settled_at_sale" | "payment_plan_agreed" | "dues_disputed" | "court_order" | "other";
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
@@ -78125,7 +78312,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MoveDetailView"];
+                    "application/json": components["schemas"]["StaffMoveDetailView"];
                 };
             };
         };
@@ -78311,6 +78498,102 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    OwnershipTransfersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "pending" | "done" | "cancelled";
+                unitId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipTransferViewList"];
+                };
+            };
+        };
+    };
+    OwnershipTransfersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipTransferView"];
+                };
+            };
+        };
+    };
+    OwnershipTransfersController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveOwnershipTransferDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipTransferView"];
+                };
+            };
+        };
+    };
+    OwnershipTransfersController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelOwnershipTransferDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipTransferView"];
+                };
             };
         };
     };
@@ -82952,6 +83235,34 @@ export interface operations {
             };
         };
     };
+    OwnershipTransfersController_request: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestOwnershipTransferDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipTransferView"];
+                };
+            };
+        };
+    };
     StaffPaymentsController_record: {
         parameters: {
             query?: never;
@@ -82997,6 +83308,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProxyView"][];
+                };
+            };
+        };
+    };
+    StaffProxiesController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyView"];
                 };
             };
         };

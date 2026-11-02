@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { FinanceClearance } from '@prisma/client';
+import { Prisma, type FinanceClearance } from '@prisma/client';
 import { createHash, randomBytes } from 'node:crypto';
 import { CommunityFinancePort } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
@@ -24,6 +24,34 @@ import { formatNumber, takeNumbers } from '../counters';
 import { asDate, dbNow, fromDate, localToday } from '../db-clock';
 import { balancesOf, CREDITED_SQL, PAID_SQL } from '../invoices/balances';
 import { show, ZERO } from '../money';
+
+/**
+ * What each unit owes now, open disputes included: the sum of what every
+ * open invoice of it still owes (ADR 0062). The clearance decides on it,
+ * and the transfers' dues gate and the moves read it (ADR 0083, through
+ * core's UnitDues): one computation. A unit owing nothing is absent.
+ */
+export async function owedByUnit(
+  tx: TenantTxClient,
+  unitIds: readonly string[],
+): Promise<Map<string, Prisma.Decimal>> {
+  const out = new Map<string, Prisma.Decimal>();
+  if (!unitIds.length) return out;
+  const open = await tx.$queryRaw<{ id: string; unitId: string }[]>`
+    SELECT i.id, i.unit_id::text AS "unitId" FROM invoices i
+     WHERE i.unit_id = ANY(${[...new Set(unitIds)]}::uuid[])
+       AND i.total - ${CREDITED_SQL} - ${PAID_SQL} > 0`;
+  const balances = await balancesOf(
+    tx,
+    open.map((o) => o.id),
+  );
+  for (const o of open) {
+    const b = balances.get(o.id);
+    if (!b) continue;
+    out.set(o.unitId, (out.get(o.unitId) ?? ZERO).add(b.outstanding));
+  }
+  return out;
+}
 
 /** Days a clearance is valid from its instant. */
 export const CLEARANCE_VALID_DAYS = 30;
@@ -242,18 +270,7 @@ export class ClearancesService {
 
   /** What the unit owes now, open disputes included. */
   private async owed(tx: TenantTxClient, unitId: string) {
-    const open = await tx.$queryRaw<{ id: string }[]>`
-      SELECT i.id FROM invoices i
-       WHERE i.unit_id = ${unitId}::uuid
-         AND i.total - ${CREDITED_SQL} - ${PAID_SQL} > 0`;
-    const balances = await balancesOf(
-      tx,
-      open.map((o) => o.id),
-    );
-    return [...balances.values()].reduce(
-      (sum, b) => sum.add(b.outstanding),
-      ZERO,
-    );
+    return (await owedByUnit(tx, [unitId])).get(unitId) ?? ZERO;
   }
 
   private async reads(

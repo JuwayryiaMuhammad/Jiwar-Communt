@@ -24,7 +24,12 @@ import {
   NewMoveDto,
 } from './dto/moves.dto';
 import { MovesService } from './moves.service';
-import { BoardMoveView, MoveDetailView, MoveView } from './views/move.views';
+import {
+  BoardMoveView,
+  MoveDetailView,
+  MoveView,
+  StaffMoveDetailView,
+} from './views/move.views';
 
 /** A resident's moves (ADR 0063): their own occupancies' only. */
 @ApiArea('units')
@@ -107,9 +112,9 @@ export class StaffMovesController {
 
   @Get('moves/:id')
   @ApiOperation({ summary: 'A move, with its checklist' })
-  @ApiOkResponse({ type: MoveDetailView })
-  async open(@Param('id', parseId()) id: string): Promise<MoveDetailView> {
-    return MoveDetailView.from(await this.moves.staffOpen(id));
+  @ApiOkResponse({ type: StaffMoveDetailView })
+  async open(@Param('id', parseId()) id: string): Promise<StaffMoveDetailView> {
+    return StaffMoveDetailView.fromStaff(await this.moves.staffOpen(id));
   }
 
   @Post('units/:unitId/moves')

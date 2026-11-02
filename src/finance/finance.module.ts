@@ -115,6 +115,7 @@ import {
 } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { FinanceMoveSteps } from './clearances/finance-move-steps';
+import { FinanceUnitDues } from './clearances/finance-unit-dues';
 import { FinanceInboxItems } from './finance-inbox-items';
 
 /**
@@ -176,6 +177,7 @@ import { FinanceInboxItems } from './finance-inbox-items';
     DepositsService,
     FinanceInboxItems,
     FinanceMoveSteps,
+    FinanceUnitDues,
     FinanceProvisioning,
     FinanceAccess,
     FeesService,

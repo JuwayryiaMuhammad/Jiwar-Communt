@@ -68,9 +68,16 @@ export class MoveView {
 export class BoardMoveView extends MoveView {
   @ApiProperty({ type: String })
   unitCode: string;
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    description:
+      'What the unit owes the compound now, EGP (ADR 0083): finance’s amount, open disputes included; "0.00" when nothing.',
+  })
+  owed: string;
 
   static fromBoard(m: BoardMove): BoardMoveView {
-    return { ...MoveView.from(m), unitCode: m.unitCode };
+    return { ...MoveView.from(m), unitCode: m.unitCode, owed: m.owed };
   }
 }
 
@@ -111,5 +118,22 @@ export class MoveDetailView {
       move: MoveView.from(m.move),
       checklist: m.checklist.map((s) => ChecklistStepView.from(s)),
     };
+  }
+}
+
+/** A move with its checklist, as the management reads it: what is owed beside. */
+export class StaffMoveDetailView extends MoveDetailView {
+  @ApiProperty({
+    type: String,
+    example: '0.00',
+    description:
+      'What the unit owes the compound now, EGP (ADR 0083); "0.00" when nothing.',
+  })
+  owed: string;
+
+  static fromStaff(
+    m: MoveWithChecklist & { owed: string },
+  ): StaffMoveDetailView {
+    return { ...MoveDetailView.from(m), owed: m.owed };
   }
 }

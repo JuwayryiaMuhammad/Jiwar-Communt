@@ -56258,6 +56258,217 @@
           }
         },
         {
+          "name": "List ownership transfers, the newest first, with what is owed",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "ownership-transfers"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/ownership-transfers"
+            }
+          }
+        },
+        {
+          "name": "Get one ownership transfer",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "ownership-transfers",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/ownership-transfers/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve an ownership transfer and carry it out",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"duesExceptionCode\": \"dues_settled_at_sale\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `duesExceptionCode` | `dues_settled_at_sale` \\| `payment_plan_agreed` \\| `dues_disputed` \\| `court_order` \\| `other` |  | Only when the unit owes the compound: why the transfer goes ahead anyway, with a fresh step-up (POST /me/step-up). Ignored when nothing is owed. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "ownership-transfers",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/ownership-transfers/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel a waiting ownership transfer",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | `ownershipTransferCancel`: sale_cancelled, documents_missing, raised_in_error, other. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "ownership-transfers",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/ownership-transfers/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request an ownership transfer of the unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"reason\": \"\",\n  \"toAccountId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n| `resides` | boolean |  | Default true: the new owner lives there. |\n| `toAccountId` | string (uuid) | yes | An active resident account: the new owner. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "ownership-transfers"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/ownership-transfers",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Report a resident of the unit as deceased",
           "request": {
             "body": {
@@ -56471,7 +56682,7 @@
               },
               "raw": "{\n  \"reasonCode\": \"\",\n  \"reason\": \"\",\n  \"toAccountId\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n| `resides` | boolean |  | Default true: the new owner lives there. |\n| `toAccountId` | string (uuid) | yes | An active resident account: the new owner. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `duesExceptionCode` | `dues_settled_at_sale` \\| `payment_plan_agreed` \\| `dues_disputed` \\| `court_order` \\| `other` |  | Only when the unit owes the compound (ADR 0083): why the transfer goes ahead anyway, with a fresh step-up (POST /me/step-up). Ignored when nothing is owed. |\n| `reason` | string | yes | What the person is told (at most 1000 characters). Never stored in the audit trail. |\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n| `resides` | boolean |  | Default true: the new owner lives there. |\n| `toAccountId` | string (uuid) | yes | An active resident account: the new owner. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -57703,6 +57914,57 @@
                 {
                   "description": "",
                   "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End a proxy of the unit, with a reason",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "proxies",
+                ":id",
+                "revoke"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/proxies/:id/revoke",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "id",
                   "value": ""
                 }
               ]

@@ -41,6 +41,7 @@ import { UnitCorrespondenceModule } from './core/unit-correspondence/unit-corres
 import { ExperienceModule } from './core/experience/experience.module';
 import { MoveStepsModule } from './core/moves/move-steps.module';
 import { VendorDirectoryModule } from './core/vendors/vendor-directory.module';
+import { UnitDuesModule } from './core/unit-dues/unit-dues.module';
 import { WorksCompletionsModule } from './core/works/works-completions.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
 import { PdfModule } from './core/pdf/pdf.module';
@@ -139,6 +140,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     UnitCorrespondenceModule,
     ExperienceModule,
     MoveStepsModule,
+    UnitDuesModule,
     WorksCompletionsModule,
     VendorDirectoryModule,
     FormalNoticesModule,

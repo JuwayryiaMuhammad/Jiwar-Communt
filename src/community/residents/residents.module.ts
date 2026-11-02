@@ -52,6 +52,10 @@ import { ResidentsController } from './residents.controller';
 import { ResidentsService } from './residents.service';
 import { CommunityInboxItems } from './community-inbox-items';
 
+import { TransferDuesGate } from '../transfers/dues-gate';
+import { OwnershipTransfersController } from '../transfers/ownership-transfers.controller';
+import { OwnershipTransfersService } from '../transfers/ownership-transfers.service';
+
 /** Residents, occupancies, unit states and self-registration (API v0, ADR 0062). */
 @Module({
   controllers: [
@@ -75,6 +79,7 @@ import { CommunityInboxItems } from './community-inbox-items';
     MyProxyUnitsController,
     StaffProxiesController,
     ProxyAcceptanceController,
+    OwnershipTransfersController,
   ],
   imports: [
     AccountsModule,
@@ -101,6 +106,8 @@ import { CommunityInboxItems } from './community-inbox-items';
     ProxyAcceptanceService,
     CommunityExportSections,
     PapersExportSections,
+    TransferDuesGate,
+    OwnershipTransfersService,
   ],
   exports: [ResidentsService, RegistrationService, MovesService],
 })

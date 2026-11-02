@@ -25,9 +25,17 @@ export async function lockAccountShared(
 }
 
 /**
- * Several accounts' rows, FOR UPDATE, in id order (so two callers locking
- * overlapping sets never deadlock either): for a write that may change
- * them — deactivate a member, end an occupant — besides pointing at them.
+ * Several accounts' rows, FOR NO KEY UPDATE, in id order (so two callers
+ * locking overlapping sets never deadlock either): for a write that may
+ * change them — deactivate a member, end an occupant — besides pointing at
+ * them. An erasure (FOR UPDATE) and an account's own share lock still wait.
+ *
+ * Not `FOR UPDATE`: that also stops every foreign-key check on the accounts
+ * (`FOR KEY SHARE`). A payment holds finance's lock on the unit and then
+ * tells the unit's people (a notice names each account): an ownership
+ * transfer holding them FOR UPDATE and reaching for that same finance lock
+ * (its dues gate, ADR 0083) deadlocked with it. An account's key never
+ * changes, so the checks have nothing to wait for (as with units).
  */
 export async function lockAccountsForUpdate(
   tx: TenantTxClient,
@@ -37,5 +45,5 @@ export async function lockAccountsForUpdate(
   if (!ids.length) return;
   await tx.$queryRaw`
     SELECT id FROM accounts WHERE id = ANY(${ids}::uuid[])
-     ORDER BY id FOR UPDATE`;
+     ORDER BY id FOR NO KEY UPDATE`;
 }

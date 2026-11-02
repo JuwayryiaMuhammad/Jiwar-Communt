@@ -21,6 +21,7 @@ import {
   NoStore,
   RequestHeader,
 } from '../../core/common/http/decorators';
+import { ReasonCodeOnlyDto } from '../../core/common/http/reason.dto';
 import { resolveLocale } from '../../core/common/i18n/locale';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import {
@@ -95,7 +96,10 @@ export class MyProxyUnitsController {
   }
 }
 
-/** A unit's proxies, as the management sees them: read only (ADR 0063). */
+/**
+ * A unit's proxies, as the management sees them (ADR 0063), and ended by
+ * it with a code (ADR 0083).
+ */
 @ApiArea('units')
 @RequirePermissions('residents.manage')
 @Controller('staff/units/:unitId/proxies')
@@ -109,6 +113,21 @@ export class StaffProxiesController {
     @Param('unitId', parseId('unitId')) unitId: string,
   ): Promise<ProxyView[]> {
     return (await this.proxies.staffList(unitId)).map((p) => ProxyView.from(p));
+  }
+
+  /** The proxy's holder and the owner who appointed it are told. */
+  @Post(':id/revoke')
+  @ApiOperation({ summary: 'End a proxy of the unit, with a reason' })
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: ProxyView })
+  async revoke(
+    @Param('unitId', parseId('unitId')) unitId: string,
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReasonCodeOnlyDto,
+  ): Promise<ProxyView> {
+    return ProxyView.from(
+      await this.proxies.staffRevoke(unitId, id, dto.reasonCode),
+    );
   }
 }
 

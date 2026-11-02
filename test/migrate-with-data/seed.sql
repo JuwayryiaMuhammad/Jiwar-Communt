@@ -46,6 +46,10 @@
 -- of the inbox's own, a live deputy, and an audit entry taken on its
 -- principal's behalf (`binding` and `on_behalf_of_id` are new columns of
 -- existing tables).
+-- Dispatch depth (ADR 0076): the SLA's settings with an escalation level
+-- turned off, an asset whose warranty starts, ends and names its warrantor,
+-- a work order of the management's own on it, and an open claim under its
+-- warranty.
 -- ============================================================================
 
 DO $$
@@ -423,6 +427,29 @@ BEGIN
       INSERT INTO unit_imports (id, tenant_id, kind, file_id, status, row_count, error_count,
                                 created_by_account_id, created_at) VALUES
         (gen_random_uuid(), t, 'units', sheet, 'valid', 1, 0, mgr, now());
+    END;
+    DECLARE
+      atype uuid := gen_random_uuid();
+      pump uuid := gen_random_uuid();
+      wo uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO maintenance_sla_settings (tenant_id, sla_enabled, enabled_at, at_risk_percent_urgent,
+                                            updated_at) VALUES
+        (t, true, now() - interval '1 day', NULL, now())
+        ON CONFLICT (tenant_id) DO NOTHING;
+      INSERT INTO asset_types (id, tenant_id, key, name_ar, name_en, category_id, updated_at) VALUES
+        (atype, t, 'seed_pump', 'مضخة', 'Pump', cat, now());
+      INSERT INTO assets (id, tenant_id, code, type_id, depth, common_area_id, name_ar, name_en,
+                          warranty_starts_on, warranty_ends_on, warrantor, warranty_covers, updated_at) VALUES
+        (pump, t, 'SEED-PUMP', atype, 1, area, 'مضخة', 'Pool pump',
+         current_date - 30, current_date + 335, 'Pumps & Co', 'Motor and seals', now());
+      INSERT INTO tickets (id, tenant_id, number, common_area, common_area_id, category_id,
+                           created_by_account_id, reporter_account_id, priority, description,
+                           origin, asset_id, updated_at) VALUES
+        (wo, t, 3, 'Pool', area, cat, mgr, mgr, 'normal', 'The pump hums', 'staff', pump, now());
+      INSERT INTO warranty_claims (id, tenant_id, asset_id, ticket_id, description, opened_by_account_id,
+                                   opened_at) VALUES
+        (gen_random_uuid(), t, pump, wo, 'The seal failed within the warranty', mgr, now());
     END;
   END LOOP;
 END $$;

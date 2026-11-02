@@ -40,6 +40,10 @@ export async function queuedBehind<T>(
       );
       const deadline = Date.now() + REACH_MS;
       for (;;) {
+        // The lock's transaction would see the sessions as they were at its
+        // first look (pg_stat_activity is cached per transaction): a
+        // connection the app opens later for this act never shows. Look anew.
+        await db.query('SELECT pg_stat_clear_snapshot()');
         const waiting = await db.query<{ n: number }>(
           `WITH RECURSIVE w(pid) AS (
              SELECT pid FROM pg_stat_activity

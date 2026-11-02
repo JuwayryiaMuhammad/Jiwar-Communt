@@ -11,7 +11,9 @@ import { dbNow } from '../db-clock';
  *
  * - **the reports it filed**: their description;
  * - **the incidents it closed**: the closing note;
- * - **its internal notes**: their words.
+ * - **its internal notes**: their words;
+ * - **the corrective actions it made or marked done** (ADR 0087): the
+ *   description it wrote, the done note it wrote.
  *
  * The incidents stay as the compound's record: their type, severity,
  * place, unit, links, photos (they show a place), outcome and
@@ -78,6 +80,44 @@ export class IncidentLifecycle implements OnModuleInit {
         action: 'incident_note.text_cleared',
         targetId: n.id,
         metadata: { incidentId: n.incident_id },
+      });
+    }
+    // ADR 0087: the corrective actions' words it wrote — a description it
+    // made, a note it marked done with.
+    const actions = await tx.$queryRaw<
+      {
+        id: string;
+        incident_id: string;
+        description: boolean;
+        done_note: boolean;
+      }[]
+    >`
+      SELECT id, incident_id,
+             (created_by_account_id = ${accountId}::uuid
+               AND description IS NOT NULL) AS description,
+             (done_by_account_id = ${accountId}::uuid
+               AND done_note IS NOT NULL) AS done_note
+        FROM incident_actions
+       WHERE (created_by_account_id = ${accountId}::uuid AND description IS NOT NULL)
+          OR (done_by_account_id = ${accountId}::uuid AND done_note IS NOT NULL)
+       ORDER BY id FOR UPDATE`;
+    for (const a of actions) {
+      await tx.incidentAction.update({
+        where: { id: a.id },
+        data: {
+          ...(a.description ? { description: null } : {}),
+          ...(a.done_note ? { doneNote: null } : {}),
+          textClearedAt: now,
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'incident_action.text_cleared',
+        targetId: a.id,
+        metadata: {
+          incidentId: a.incident_id,
+          description: a.description,
+          doneNote: a.done_note,
+        },
       });
     }
   }

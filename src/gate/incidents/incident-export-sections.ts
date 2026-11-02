@@ -17,7 +17,9 @@ import { safetyReference } from '../safety/safety-rules';
  *   many photos, the status and outcome — never the investigation;
  * - `notes.json`: the internal notes it wrote and the closing notes of the
  *   incidents it closed, its own words only;
- * - `acknowledgements.json`: what it acknowledged, as author or reviewer.
+ * - `acknowledgements.json`: what it acknowledged, as author or reviewer;
+ * - `actions.json` (ADR 0087): the corrective actions it owns, made or
+ *   marked done, with its own words only.
  * Nobody else's name or words.
  */
 @Injectable()
@@ -56,6 +58,13 @@ export class IncidentExportSections implements OnModuleInit {
         where: { signerAccountId: me },
         orderBy: [{ signedAt: 'asc' }, { id: 'asc' }],
       });
+      // Corrective actions (ADR 0087) it owns, made or marked done.
+      const actions = await tx.incidentAction.findMany({
+        where: {
+          OR: [{ ownerId: me }, { createdById: me }, { doneById: me }],
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
       const photos = new Map<string, number>();
       for (const p of reported.length
         ? await tx.incidentPhoto.findMany({
@@ -81,6 +90,7 @@ export class IncidentExportSections implements OnModuleInit {
           ...notes.map((n) => n.incidentId),
           ...acks.map((a) => a.incidentId),
           ...signatures.map((x) => x.incidentId),
+          ...actions.map((x) => x.incidentId),
         ]),
       ].filter((id) => !known.has(id));
       for (const i of missing.length
@@ -112,6 +122,7 @@ export class IncidentExportSections implements OnModuleInit {
         notes,
         acks,
         signatures,
+        actions,
         photos,
         media,
         known,
@@ -173,6 +184,21 @@ export class IncidentExportSections implements OnModuleInit {
         role: x.role,
         signedAt: x.signedAt,
         contentSha256: x.contentSha256,
+      })),
+    };
+    // Its own words only: the description it wrote, the note it marked
+    // done with; another's words are left out.
+    yield {
+      path: 'incidents/actions.json',
+      json: d.actions.map((a) => ({
+        incident: ref(a.incidentId),
+        owner: a.ownerId === me,
+        dueOn: a.dueOn.toISOString().slice(0, 10),
+        status: a.status,
+        description: a.createdById === me ? a.description : null,
+        doneNote: a.doneById === me ? a.doneNote : null,
+        createdAt: a.createdAt,
+        doneAt: a.doneAt,
       })),
     };
   }

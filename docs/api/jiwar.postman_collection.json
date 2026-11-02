@@ -24124,6 +24124,204 @@
           }
         },
         {
+          "name": "My open corrective actions, by due day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "incident-actions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/incident-actions"
+            }
+          }
+        },
+        {
+          "name": "Mark my corrective action done",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"note\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  | What was done, in the doer’s own words. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "incident-actions",
+                ":actionId",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/incident-actions/:actionId/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "actionId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a corrective action",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"description\": \"\",\n  \"dueOn\": \"2026-01-01\",\n  \"ownerId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string |  |  |\n| `dueOn` | string (date) |  |  |\n| `ownerId` | string (uuid) |  | A new owner is told. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incident-actions",
+                ":actionId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incident-actions/:actionId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "actionId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call a corrective action off",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `incidentActionCancel`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incident-actions",
+                ":actionId",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incident-actions/:actionId/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "actionId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a corrective action done",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"note\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  | What was done, in the doer’s own words. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incident-actions",
+                ":actionId",
+                "done"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incident-actions/:actionId/done",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "actionId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the incidents",
           "request": {
             "description": "**Responses:** 200",
@@ -24315,6 +24513,81 @@
                 "acknowledge"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List an incident’s corrective actions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "actions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/actions",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a corrective action to an incident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"description\": \"\",\n  \"ownerId\": \"\",\n  \"dueOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `description` | string | yes | What must be done, about the work. |\n| `dueOn` | string (date) | yes | From today, a year ahead at most. |\n| `ownerId` | string (uuid) | yes | An active staff member or the manager. Told. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "incidents",
+                ":id",
+                "actions"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/incidents/:id/actions",
               "variable": [
                 {
                   "description": "",

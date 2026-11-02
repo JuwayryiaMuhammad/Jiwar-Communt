@@ -17232,6 +17232,40 @@ export interface paths {
         patch: operations["StaffInboxController_updateSettings"];
         trace?: never;
     };
+    "/api/v1/staff/incident-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My open corrective actions, by due day */
+        get: operations["OwnIncidentActionsController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/incident-actions/{actionId}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark my corrective action done */
+        post: operations["OwnIncidentActionsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/instalment-plans": {
         parameters: {
             query?: never;
@@ -18902,6 +18936,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/incident-actions/{actionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a corrective action
+         * @description While open: its words, owner and day; a new owner is told.
+         */
+        patch: operations["StaffIncidentActionsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/security/incident-actions/{actionId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call a corrective action off */
+        post: operations["StaffIncidentActionsController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incident-actions/{actionId}/done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a corrective action done */
+        post: operations["StaffIncidentActionsController_done"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/incidents": {
         parameters: {
             query?: never;
@@ -18977,6 +19065,30 @@ export interface paths {
          * @description As its author (one you reported), or as a reviewer (one you did not: INCIDENT_OWN otherwise). Once each; again answers the same.
          */
         post: operations["StaffIncidentsController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/incidents/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List an incident’s corrective actions
+         * @description In the order they were made.
+         */
+        get: operations["StaffIncidentActionsController_list"];
+        put?: never;
+        /**
+         * Add a corrective action to an incident
+         * @description Not to a closed incident (INCIDENT_CLOSED). Its owner is told. The incident does not close while it is open (INCIDENT_ACTIONS_OPEN).
+         */
+        post: operations["StaffIncidentActionsController_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -27006,6 +27118,10 @@ export interface components {
         CancelGuardTaskDto: {
             reasonCode: components["schemas"]["GuardTaskCancel"];
         };
+        CancelIncidentActionDto: {
+            /** @description From the closed list `incidentActionCancel`. */
+            reasonCode: string;
+        };
         CancelInstalmentPlanDto: {
             /** @description When the remainder invoice falls due: from today to 366 days ahead. */
             dueOn: string;
@@ -29934,6 +30050,20 @@ export interface components {
             nameEn: string;
             /** @description On (the default), works and moves stop that day: a day off of the permits (ADR 0049). Bookings and planned work are only flagged, either way. */
             stopsWorks?: boolean;
+        };
+        CreateIncidentActionDto: {
+            /** @description What must be done, about the work. */
+            description: string;
+            /**
+             * Format: date
+             * @description From today, a year ahead at most.
+             */
+            dueOn: string;
+            /**
+             * Format: uuid
+             * @description An active staff member or the manager. Told.
+             */
+            ownerId: string;
         };
         CreateInspectionDto: {
             /**
@@ -34993,6 +35123,47 @@ export interface components {
             /** @enum {string} */
             role: "author" | "reviewer";
         };
+        /** @enum {string} */
+        IncidentActionCancelReason: "not_needed" | "duplicate" | "superseded" | "other";
+        IncidentActionCountsView: {
+            cancelled: number;
+            done: number;
+            open: number;
+        };
+        IncidentActionDoneDto: {
+            /** @description What was done, in the doer’s own words. */
+            note?: string;
+        };
+        /** @enum {string} */
+        IncidentActionState: "open" | "done" | "cancelled";
+        IncidentActionView: {
+            cancelReason: components["schemas"]["IncidentActionCancelReason"] | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["AccountRefView"];
+            /** @description Null once an erasure cleared it. */
+            description: string | null;
+            /** Format: date-time */
+            doneAt: string | null;
+            doneBy: components["schemas"]["AccountRefView"] | null;
+            doneNote: string | null;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            incidentId: string;
+            /** @description Open and past its day on the compound’s today. */
+            overdue: boolean;
+            owner: components["schemas"]["AccountRefView"];
+            state: components["schemas"]["IncidentActionState"];
+        };
+        IncidentActionViewList: {
+            data: components["schemas"]["IncidentActionView"][];
+            nextCursor: string | null;
+        };
         /**
          * @description `visitor_photo`: the guard’s photo of a visitor at an entry (`entryId`). `patrol_track`: where a patrol’s guard walked (`runId`), kept past its 30 days.
          * @enum {string}
@@ -38268,6 +38439,14 @@ export interface components {
             rows: components["schemas"]["OutstandingRowView"][];
             totals: components["schemas"]["OutstandingRowView"];
         };
+        OwnActionIncidentView: {
+            /** Format: uuid */
+            id: string;
+            /** @description I-0001. */
+            reference: string;
+            severity: components["schemas"]["IncidentSeverity"];
+            type: components["schemas"]["IncidentType"];
+        };
         OwnFacilityBanView: {
             /** Format: date */
             endsOn: string | null;
@@ -38278,6 +38457,21 @@ export interface components {
         };
         OwnFacilityBanViewList: {
             data: components["schemas"]["OwnFacilityBanView"][];
+            nextCursor: string | null;
+        };
+        OwnIncidentActionView: {
+            description: string | null;
+            doneNote: string | null;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            incident: components["schemas"]["OwnActionIncidentView"];
+            overdue: boolean;
+            state: components["schemas"]["IncidentActionState"];
+        };
+        OwnIncidentActionViewList: {
+            data: components["schemas"]["OwnIncidentActionView"][];
             nextCursor: string | null;
         };
         PairAlarmDeviceDto: {
@@ -44751,6 +44945,8 @@ export interface components {
         };
         StaffIncidentView: {
             acknowledgements: components["schemas"]["IncidentAcknowledgementView"][];
+            /** @description Its corrective actions by state (ADR 0087): it does not close while one is open. */
+            actions: components["schemas"]["IncidentActionCountsView"];
             /** Format: date-time */
             assignedAt: string | null;
             /**
@@ -47625,6 +47821,16 @@ export interface components {
         };
         UpdateInboxSettingsDto: {
             items: components["schemas"]["InboxDueHoursDto"][];
+        };
+        UpdateIncidentActionDto: {
+            description?: string;
+            /** Format: date */
+            dueOn?: string;
+            /**
+             * Format: uuid
+             * @description A new owner is told.
+             */
+            ownerId?: string;
         };
         UpdateItemDto: {
             /** Format: date */
@@ -74952,6 +75158,50 @@ export interface operations {
             };
         };
     };
+    OwnIncidentActionsController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnIncidentActionViewList"];
+                };
+            };
+        };
+    };
+    OwnIncidentActionsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IncidentActionDoneDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentActionView"];
+                };
+            };
+        };
+    };
     StaffInstalmentsController_list: {
         parameters: {
             query?: {
@@ -77474,6 +77724,81 @@ export interface operations {
             };
         };
     };
+    StaffIncidentActionsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIncidentActionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentActionView"];
+                };
+            };
+        };
+    };
+    StaffIncidentActionsController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelIncidentActionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentActionView"];
+                };
+            };
+        };
+    };
+    StaffIncidentActionsController_done: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IncidentActionDoneDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentActionView"];
+                };
+            };
+        };
+    };
     StaffIncidentsController_list: {
         parameters: {
             query?: {
@@ -77591,6 +77916,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffIncidentView"];
+                };
+            };
+        };
+    };
+    StaffIncidentActionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentActionViewList"];
+                };
+            };
+        };
+    };
+    StaffIncidentActionsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIncidentActionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentActionView"];
                 };
             };
         };

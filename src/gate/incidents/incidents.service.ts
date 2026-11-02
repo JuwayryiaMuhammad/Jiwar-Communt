@@ -92,6 +92,8 @@ export interface IncidentRecord {
   media: MediaView[];
   notes: { note: IncidentNote; author: Person }[];
   acknowledgements: { ack: IncidentAcknowledgement; account: Person }[];
+  /** Its corrective actions by state (ADR 0087). */
+  actions: { open: number; done: number; cancelled: number };
 }
 
 export const incidentNotFound = () =>
@@ -523,6 +525,18 @@ export class IncidentsService implements OnModuleInit {
       await this.safety.lockSelf(tx);
       const incident = await this.lock(tx, id);
       if (incident.status === 'closed') throw incidentClosed();
+      // ADR 0087: not while a corrective action is open. A new action takes
+      // the incident FOR SHARE, so it waits for this close and is refused
+      // after it, or came first and is counted here.
+      const open = await tx.incidentAction.count({
+        where: { incidentId: id, status: 'open' },
+      });
+      if (open > 0)
+        throw appError.conflict(
+          ErrorCode.INCIDENT_ACTIONS_OPEN,
+          'Its corrective actions are still open',
+          { params: { open } },
+        );
       const closed = await tx.incident.update({
         where: { id },
         data: {
@@ -654,6 +668,18 @@ export class IncidentsService implements OnModuleInit {
     const acks = await tx.incidentAcknowledgement.findMany({
       where: { incidentId: { in: ids } },
     });
+    const actionCounts = await tx.incidentAction.groupBy({
+      by: ['incidentId', 'status'],
+      where: { incidentId: { in: ids } },
+      _count: { _all: true },
+    });
+    const actionsOf = (incidentId: string) => {
+      const n = (status: string) =>
+        actionCounts.find(
+          (c) => c.incidentId === incidentId && c.status === status,
+        )?._count._all ?? 0;
+      return { open: n('open'), done: n('done'), cancelled: n('cancelled') };
+    };
     const places = new Map(
       (
         await tx.place.findMany({
@@ -722,6 +748,7 @@ export class IncidentsService implements OnModuleInit {
         acknowledgements: acks
           .filter((a) => a.incidentId === i.id)
           .map((a) => ({ ack: a, account: person(a.accountId) })),
+        actions: actionsOf(i.id),
       });
     }
     return out;

@@ -418,3 +418,13 @@ test('an overdue inbox item opens the inbox, a deputyship the deputy page (ADR 0
   assert.equal(notificationHref(n('deputy.appointed', { permissions: 2 }, 'account_deputy', 'x'), () => false), '/deputies');
   assert.equal(notificationText(n('deputy.appointed', { permissions: 2 }, 'account_deputy', 'x')), 'You are a deputy: 2 permission(s) are yours until it ends');
 });
+
+test('a brief or a review opens the briefs, service pressure the dispatch list (ADR 0079)', () => {
+  const all = () => true;
+  assert.equal(notificationHref(n('staff_brief.ready', { date: '2026-11-02' }, 'staff_brief', 'x'), all), '/briefs');
+  assert.equal(notificationHref(n('staff_review.ready', { date: '2026-11-02' }, 'staff_brief', 'x'), () => false), null);
+  assert.equal(notificationText(n('staff_brief.ready', { date: '2026-11-02' }, 'staff_brief', 'x')), 'The daily brief for 2026-11-02 is ready');
+  const pressure = n('maintenance.service_pressure', { open: 12, available: 1, threshold: 8 }, 'service_pressure', 'x');
+  assert.equal(notificationHref(pressure, all), '/maintenance');
+  assert.equal(notificationText(pressure), 'Service pressure: 12 open tickets for 1 available technician');
+});

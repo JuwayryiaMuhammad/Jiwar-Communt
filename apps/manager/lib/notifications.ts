@@ -344,6 +344,11 @@ const TEXT: Record<string, (p: P) => string> = {
   'staff_inbox.overdue': () => 'Something in your inbox passed its due time',
   'deputy.appointed': (p) => `You are a deputy: ${p.permissions} permission(s) are yours until it ends`,
   'deputy.ended': () => 'A deputyship of yours ended',
+  // The operations dashboard (ADR 0079).
+  'staff_brief.ready': (p) => `The daily brief for ${p.date} is ready`,
+  'staff_review.ready': (p) => `The end-of-day review of ${p.date} is ready`,
+  'maintenance.service_pressure': (p) =>
+    `Service pressure: ${p.open} open tickets for ${p.available} available technician${p.available === 1 ? '' : 's'}`,
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -381,6 +386,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   // The staff inbox and deputies (ADR 0073).
   if (n.targetType === 'inbox_item') return can('inbox.read') ? '/inbox' : null;
   if (n.targetType === 'account_deputy') return '/deputies';
+  // The operations dashboard (ADR 0079).
+  if (n.targetType === 'staff_brief') return can('dashboard.read') ? '/briefs' : null;
+  if (n.targetType === 'service_pressure') return can('tickets.dispatch') ? '/maintenance' : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

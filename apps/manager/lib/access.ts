@@ -77,6 +77,8 @@ export const ENTRY_PERMISSIONS = [
   // The vendor register and purchase approvals (ADR 0077).
   'vendors.manage',
   'purchases.approve',
+  // The operations dashboard (ADR 0079).
+  'dashboard.read',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

@@ -121,6 +121,20 @@ export type SlaReport = Schema<'SlaReportView'>;
 export type PlanCalendarEntry = Schema<'PlanCalendarEntryView'>;
 export type WarrantyClaim = Schema<'WarrantyClaimView'>;
 export type AssetTimelineEntry = Schema<'AssetTimelineEntryView'>;
+// The operations dashboard (ADR 0079).
+export type DashboardSummary = Schema<'DashboardSummaryView'>;
+export type DashboardFigures = Schema<'DashboardFiguresView'>;
+export type NeedsYou = Schema<'NeedsYouView'>;
+export type DashboardAlert = Schema<'DashboardAlertView'>;
+export type BuildingsStatus = Schema<'BuildingsStatusView'>;
+export type BuildingStatus = Schema<'BuildingStatusView'>;
+export type DashboardSettings = Schema<'DashboardSettingsView'>;
+export type BriefListItem = Schema<'BriefListItemView'>;
+export type Brief = Schema<'BriefView'>;
+export type BriefKind = Schema<'BriefKind'>;
+export type ServicePressure = Schema<'ServicePressureView'>;
+export type TrafficReport = Schema<'TrafficReportView'>;
+export type LogSearchResult = Schema<'LogSearchView'>;
 export type AccountDetail = Schema<'AccountDetailView'>;
 export type Erasure = Schema<'PendingErasureView'>;
 export type ErasureScope = Schema<'ErasureScopeView'>;
@@ -877,6 +891,16 @@ export const keys = {
   offlineFlags: (status: string, klass: string, deviceId = '') => ['offline', 'flags', status, klass, deviceId] as const,
   offlineBatches: (status: string) => ['offline', 'batches', status] as const,
   offlineBatch: (id: string) => ['offline', 'batch', id] as const,
+  // The operations dashboard (ADR 0079).
+  dashboardAll: ['dashboard'] as const,
+  dashboard: ['dashboard', 'summary'] as const,
+  needsYou: ['dashboard', 'needs-you'] as const,
+  buildingsStatus: ['dashboard', 'buildings'] as const,
+  dashboardSettings: ['dashboard', 'settings'] as const,
+  briefs: (kind: BriefKind | '') => ['briefs', 'list', kind] as const,
+  brief: (id: string) => ['briefs', 'detail', id] as const,
+  servicePressure: ['service-pressure'] as const,
+  traffic: (from: string, to: string, gateId: string) => ['gate', 'traffic', from, to, gateId] as const,
 };
 
 /** Empty strings are dropped: the API validates every query value it gets. */
@@ -1588,6 +1612,17 @@ export const fetchers = {
   offlineBatches: (status: OfflineBatchFilter, cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/gate/offline/batches', { params: { query: { status, cursor, limit } } })),
   offlineBatch: (id: string) => unwrap(api.GET('/api/v1/staff/gate/offline/batches/{id}', { params: { path: { id } } })),
+  // The operations dashboard (ADR 0079).
+  dashboard: () => unwrap(api.GET('/api/v1/staff/dashboard')),
+  needsYou: () => unwrap(api.GET('/api/v1/staff/dashboard/needs-you')),
+  buildingsStatus: () => unwrap(api.GET('/api/v1/staff/dashboard/buildings')),
+  dashboardSettings: () => unwrap(api.GET('/api/v1/staff/dashboard/settings')),
+  briefs: (kind: BriefKind | '', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/briefs', { params: { query: { kind: kind || undefined, cursor, limit } } })),
+  brief: (id: string) => unwrap(api.GET('/api/v1/staff/briefs/{id}', { params: { path: { id } } })),
+  servicePressure: () => unwrap(api.GET('/api/v1/maintenance/service-pressure')),
+  traffic: (from: string, to: string, gateId: string) =>
+    unwrap(api.GET('/api/v1/staff/gate/reports/traffic', { params: { query: { from, to, gateId: gateId || undefined } } })),
 };
 
 /** "100+" when the first page is full and the API says there is more. */

@@ -17,12 +17,30 @@ export async function download(
   const qs = new URLSearchParams(
     Object.entries(query).filter((e): e is [string, string] => Boolean(e[1])),
   );
+  return save(`/bff${path}?${qs}`, { credentials: 'same-origin', headers: { [BFF_HEADER]: '1' } }, fallback);
+}
+
+/**
+ * The same for an export asked in a body (ADR 0079: the gate log's, so a
+ * visitor's name never travels in a URL).
+ */
+export async function downloadPost(path: string, body: object, fallback: string): Promise<void> {
+  return save(
+    `/bff${path}`,
+    {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { [BFF_HEADER]: '1', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+    fallback,
+  );
+}
+
+async function save(target: string, init: Parameters<typeof fetch>[1], fallback: string): Promise<void> {
   let res: Response;
   try {
-    res = await fetch(`/bff${path}?${qs}`, {
-      credentials: 'same-origin',
-      headers: { [BFF_HEADER]: '1' },
-    });
+    res = await fetch(target, init);
   } catch {
     throw ApiError.from(0, undefined);
   }

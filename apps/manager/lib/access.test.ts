@@ -128,5 +128,6 @@ test('who keeps the vendor register or approves purchases enters; who only asks 
 test('a role that handles the market enters; a resident who posts on it does not (ADR 0071)', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['market.handle'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['inbox.read'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['dashboard.read'] }), true);
   assert.equal(mayEnter({ type: 'resident', permissions: ['market.post'] }), false);
 });

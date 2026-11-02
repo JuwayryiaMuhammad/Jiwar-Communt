@@ -86,6 +86,8 @@ import {
   ShoppingBag,
   Tag,
   Sun,
+  Newspaper,
+  Search,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -279,9 +281,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     {
       // The overview mixes every area's queues: the manager's own page.
       items: [
-        { href: '/', label: 'Overview', icon: <LayoutDashboard aria-hidden />, exact: true, show: isManager },
+        // The operations dashboard (ADR 0079): each card to its own permission.
+        {
+          href: '/',
+          label: 'Overview',
+          icon: <LayoutDashboard aria-hidden />,
+          exact: true,
+          show: isManager || can('dashboard.read'),
+        },
         // What waits for my decision, across the compound (ADR 0073).
         { href: '/inbox', label: 'Inbox', icon: <Inbox aria-hidden />, show: can('inbox.read') },
+        { href: '/briefs', label: 'Daily briefs', icon: <Newspaper aria-hidden />, show: can('dashboard.read') },
       ],
     },
     {
@@ -426,7 +436,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <ChartColumn aria-hidden />,
           show: can('facilities.manage') || can('bookings.handle'),
         },
-        { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, show: can('gate.read') },
+        { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, exact: true, show: can('gate.read') },
+        // The gate's traffic and its log search (ADR 0056, 0079).
+        { href: '/gate/traffic', label: 'Gate traffic', icon: <ChartColumn aria-hidden />, show: can('gate.read') },
+        { href: '/gate/log-search', label: 'Gate log search', icon: <Search aria-hidden />, show: can('gate_log.search') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },
       ],

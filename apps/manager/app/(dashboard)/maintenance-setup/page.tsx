@@ -9,6 +9,7 @@ import { Dispatch } from '@/components/maintenance-setup/dispatch';
 import { PreventiveServices } from '@/components/maintenance-setup/preventive';
 import { Rules } from '@/components/maintenance-setup/rules';
 import { Safety } from '@/components/maintenance-setup/safety';
+import { ServicePressureCard } from '@/components/maintenance-setup/service-pressure';
 import { Sla } from '@/components/maintenance-setup/sla';
 import { Specialties } from '@/components/maintenance-setup/specialties';
 import { usePermissions } from '@/lib/permissions';
@@ -62,7 +63,10 @@ function SetupView() {
       ) : tab === 'rules' ? (
         <Rules />
       ) : tab === 'dispatch' ? (
-        <Dispatch />
+        <div className="stack">
+          <Dispatch />
+          <ServicePressureCard />
+        </div>
       ) : tab === 'asset-types' ? (
         <AssetTypes />
       ) : tab === 'checklists' ? (

@@ -366,6 +366,16 @@ export class PayoutDto {
   @IsString()
   @Length(1, L.reference, withParams({ min: 1, max: L.reference }))
   reference?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque; needed when something is paid, refused when nothing is (set off whole). CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT.',
+  })
+  @IsOptional()
+  @IsUUID()
+  cashAccountId?: string;
 }
 
 export class InvoicePayoutDto extends PayoutDto {

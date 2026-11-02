@@ -12009,6 +12009,26 @@
           }
         },
         {
+          "name": "My cash not handed in, and my latest hand-ins",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "collector",
+                "custody"
+              ],
+              "raw": "{{baseUrl}}/api/v1/collector/custody"
+            }
+          }
+        },
+        {
           "name": "My visits: the open ones, and those closed in the last day",
           "request": {
             "description": "**Responses:** 200",
@@ -13635,6 +13655,580 @@
           }
         },
         {
+          "name": "List the bank and cash accounts with their balances",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-accounts"
+              ],
+              "query": [
+                {
+                  "description": "Retired accounts too.",
+                  "disabled": true,
+                  "key": "includeRetired",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-accounts"
+            }
+          }
+        },
+        {
+          "name": "Open a bank account or a cash box, with its opening balance",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"bank\",\n  \"name\": \"\",\n  \"openedOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bankName` | string |  | A bank account’s only. |\n| `kind` | `bank` \\| `cash` | yes |  |\n| `name` | string | yes |  |\n| `numberLast4` | string |  | A bank account’s last four digits; never the whole number. |\n| `openedOn` | string | yes | Today or earlier. |\n| `openingBalance` | string |  | Money in it on the day it opened. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-accounts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-accounts"
+            }
+          }
+        },
+        {
+          "name": "Get an account and its balance",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-accounts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-accounts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rename an account; a bank account’s bank and last four digits",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bankName\": \"\",\n  \"name\": \"\",\n  \"numberLast4\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bankName` | string |  |  |\n| `name` | string |  |  |\n| `numberLast4` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-accounts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-accounts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Adjust an account’s balance by hand, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\",\n  \"reasonCode\": \"\",\n  \"onDay\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | Positive in, negative out. |\n| `onDay` | string | yes | Today or up to 31 days ago. |\n| `reasonCode` | string | yes | REASON_CODES.cashAdjust. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-accounts",
+                ":id",
+                "adjustments"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-accounts/:id/adjustments",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retire an account at a zero balance, once",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-accounts",
+                ":id",
+                "retire"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-accounts/:id/retire",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check a bank statement’s CSV: a dry run",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | A `data_import` CSV the caller uploaded. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-accounts",
+                ":id",
+                "statement-imports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-accounts/:id/statement-imports",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List movements, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-movements"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "accountId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-movements"
+            }
+          }
+        },
+        {
+          "name": "Move money between two of the compound’s accounts",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fromAccountId\": \"\",\n  \"toAccountId\": \"\",\n  \"amount\": \"\",\n  \"onDay\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes |  |\n| `fromAccountId` | string (uuid) | yes |  |\n| `onDay` | string | yes | Today or up to 31 days ago. |\n| `toAccountId` | string (uuid) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-transfers"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-transfers"
+            }
+          }
+        },
+        {
+          "name": "List the cheque register, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cheques"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cheques"
+            }
+          }
+        },
+        {
+          "name": "A deposited cheque bounced: its payment reversed",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | REASON_CODES.chequeBounce, or .chequeReturn. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cheques",
+                ":id",
+                "bounce"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cheques/:id/bounce",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A deposited cheque cleared: its money in the bank account",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cheques",
+                ":id",
+                "clear"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cheques/:id/clear",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deposit a cheque into a bank account, from its due day",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"accountId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `accountId` | string (uuid) | yes | A live bank account. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cheques",
+                ":id",
+                "deposit"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cheques/:id/deposit",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Give a cheque back before it is deposited; a payment it made is reversed",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | REASON_CODES.chequeBounce, or .chequeReturn. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cheques",
+                ":id",
+                "return"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cheques/:id/return",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "What a collector may take above what a unit owes",
           "request": {
             "description": "**Responses:** 200",
@@ -13881,7 +14475,7 @@
               },
               "raw": "{\n  \"paidOn\": \"\",\n  \"method\": \"bank_transfer\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `method` | `bank_transfer` \\| `cheque` \\| `cash` | yes |  |\n| `paidOn` | string | yes | The day it was paid: within its line’s budget year, not ahead. |\n| `reference` | string |  | The transfer’s or the cheque’s reference. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cashAccountId` | string (uuid) |  | The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque; needed when something is paid, refused when nothing is (set off whole). CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT. |\n| `method` | `bank_transfer` \\| `cheque` \\| `cash` | yes |  |\n| `paidOn` | string | yes | The day it was paid: within its line’s budget year, not ahead. |\n| `reference` | string |  | The transfer’s or the cheque’s reference. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -14087,6 +14681,358 @@
                 {
                   "description": "",
                   "key": "contractId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Everyone’s cash not handed in, and unsettled variances",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody"
+            }
+          }
+        },
+        {
+          "name": "List hand-ins, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody-handins"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "custodianId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody-handins"
+            }
+          }
+        },
+        {
+          "name": "Get a hand-in, its payments and its investigation",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody-handins",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody-handins/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open an investigation of a hand-in’s variance",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"ownerId\": \"\",\n  \"dueOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `dueOn` | string | yes | From today, within 60 days. |\n| `ownerId` | string (uuid) | yes | A staff member who holds finance.custody or finance.payments, not the custodian. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody-handins",
+                ":id",
+                "investigation"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody-handins/:id/investigation",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Settle a hand-in’s variance without an investigation",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | REASON_CODES.custodyOutcome. |\n| `recoveredAmount` | string |  | With `recovered` only: cash recovered of a shortage, into the hand-in’s cash box. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody-handins",
+                ":id",
+                "resolve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody-handins/:id/resolve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List investigations, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody-investigations"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody-investigations"
+            }
+          }
+        },
+        {
+          "name": "Decide an investigation: its owner, or finance.custody",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | REASON_CODES.custodyOutcome. |\n| `recoveredAmount` | string |  | With `recovered` only: cash recovered of a shortage, into the hand-in’s cash box. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody-investigations",
+                ":id",
+                "decide"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody-investigations/:id/decide",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "One custodian’s open payments and latest hand-ins",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody",
+                ":accountId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody/:accountId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "accountId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a custodian’s cash handed in",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"cashAccountId\": \"\",\n  \"expected\": \"\",\n  \"counted\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cashAccountId` | string (uuid) | yes | The cash box it goes into. |\n| `counted` | string | yes |  |\n| `expected` | string | yes | The custody the receiver was shown; refused if it changed. |\n| `varianceReason` | string |  | REASON_CODES.custodyVariance: when the count differs, and only then. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "custody",
+                ":accountId",
+                "handins"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/custody/:accountId/handins",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "accountId",
                   "value": ""
                 }
               ]
@@ -15282,6 +16228,258 @@
           }
         },
         {
+          "name": "List statement imports, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "statement-imports"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "accountId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/statement-imports"
+            }
+          }
+        },
+        {
+          "name": "Get a statement import",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "statement-imports",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/statement-imports/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apply a checked statement, once, within a day",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "statement-imports",
+                ":id",
+                "apply"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/statement-imports/:id/apply",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List statement lines, newest first, with their matches",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "statement-lines"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "accountId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/statement-lines"
+            }
+          }
+        },
+        {
+          "name": "What a line could be matched to: the same amount within 30 days",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "statement-lines",
+                ":id",
+                "candidates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/statement-lines/:id/candidates",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Match a line to a payment, a cheque, a transfer or an adjustment",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"payment\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `payment` \\| `cheque` \\| `transfer` \\| `adjustment` | yes |  |\n| `reasonCode` | string |  | An adjustment’s REASON_CODES.cashAdjust, and only an adjustment’s. |\n| `targetId` | string (uuid) |  | The payment, cheque or transfer leg; not for an adjustment. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "statement-lines",
+                ":id",
+                "match"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/statement-lines/:id/match",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Undo a match, once; what it moved is reversed",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "statement-matches",
+                ":id",
+                "undo"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/statement-matches/:id/undo",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Past what share of its plan a month asks for a reason",
           "request": {
             "description": "**Responses:** 200",
@@ -15614,7 +16812,7 @@
               },
               "raw": "{\n  \"paidOn\": \"\",\n  \"method\": \"bank_transfer\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `advanceSetOff` | string |  | Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED). |\n| `method` | `bank_transfer` \\| `cheque` \\| `cash` | yes |  |\n| `paidOn` | string | yes | The day it was paid: within its line’s budget year, not ahead. |\n| `reference` | string |  | The transfer’s or the cheque’s reference. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `advanceSetOff` | string |  | Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED). |\n| `cashAccountId` | string (uuid) |  | The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque; needed when something is paid, refused when nothing is (set off whole). CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT. |\n| `method` | `bank_transfer` \\| `cheque` \\| `cash` | yes |  |\n| `paidOn` | string | yes | The day it was paid: within its line’s budget year, not ahead. |\n| `reference` | string |  | The transfer’s or the cheque’s reference. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -16644,6 +17842,55 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a cheque received for a unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"number\": \"\",\n  \"amount\": \"\",\n  \"dueOn\": \"\",\n  \"receivedOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | At most what is owed (of the invoices named, or all the unit’s). |\n| `bankName` | string |  |  |\n| `dueOn` | string | yes | The cheque’s date: up to 180 days ago, or post-dated up to 366 days ahead. |\n| `invoiceIds` | string[] |  | A cheque dated today or earlier only: invoices it pays first. |\n| `number` | string | yes |  |\n| `receivedOn` | string | yes | Today or up to 31 days ago. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "units",
+                ":unitId",
+                "cheques"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/units/:unitId/cheques",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
                   "value": ""
                 }
               ]

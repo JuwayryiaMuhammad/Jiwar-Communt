@@ -11,10 +11,11 @@ export const APPROVAL_TYPE_TEXT: Record<string, string> = {
   // ADR 0075.
   manager_handover_override: 'A manager leaving without a handover',
   budget_transfer: 'Budget transfer',
+  capital_plan: 'Capital plan',
 };
 
 /** What each type of request names as its subject: the raise form asks for it. */
-export const APPROVAL_SUBJECT: Record<string, 'budget' | 'budget_line' | 'manager' | 'budget_transfer' | null> = {
+export const APPROVAL_SUBJECT: Record<string, 'budget' | 'budget_line' | 'manager' | 'budget_transfer' | 'capital_plan' | null> = {
   annual_budget: 'budget',
   budget_increase: 'budget_line',
   major_contract: null,
@@ -24,6 +25,8 @@ export const APPROVAL_SUBJECT: Record<string, 'budget' | 'budget_line' | 'manage
   legal_escalation: null,
   manager_handover_override: 'manager',
   budget_transfer: 'budget_transfer',
+  // ADR 0086: raised from the capital plan's own page.
+  capital_plan: 'capital_plan',
 };
 
 export const APPROVAL_STATUS_TEXT: Record<string, string> = {

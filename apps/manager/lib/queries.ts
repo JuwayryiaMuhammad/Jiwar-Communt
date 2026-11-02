@@ -137,6 +137,13 @@ export type DispatchSettings = Schema<'DispatchSettingsResponse'>;
 export type SlaSettings = Schema<'SlaSettingsResponse'>;
 // Dispatch depth (ADR 0076).
 export type SlaReport = Schema<'SlaReportView'>;
+// The reports platform (ADR 0086).
+export type ReportCatalogEntry = Schema<'ReportCatalogView'>;
+export type ReportResult = Schema<'ReportView'>;
+export type ReportSchedule = Schema<'ReportScheduleView'>;
+export type ReportRun = Schema<'ReportRunView'>;
+export type CapitalPlan = Schema<'CapitalPlanView'>;
+export type CompoundExport = Schema<'CompoundExportView'>;
 export type PlanCalendarEntry = Schema<'PlanCalendarEntryView'>;
 // Spaces (ADR 0084).
 export type Holiday = Schema<'HolidayView'>;
@@ -618,6 +625,15 @@ export const keys = {
   ticketsAll: ['tickets'] as const,
   tickets: (filters: object) => ['tickets', 'list', filters] as const,
   slaReport: (from: string, to: string) => ['tickets', 'sla-report', from, to] as const,
+  // The reports platform (ADR 0086).
+  reportsAll: ['reports'] as const,
+  reportCatalog: () => ['reports', 'catalog'] as const,
+  report: (q: object) => ['reports', 'view', q] as const,
+  reportSchedules: () => ['reports', 'schedules'] as const,
+  reportRuns: () => ['reports', 'runs'] as const,
+  capitalPlansAll: ['capital-plans'] as const,
+  capitalPlan: (id: string) => ['capital-plans', id] as const,
+  compoundExports: () => ['compound-exports'] as const,
   planCalendar: (from: string, to: string) => ['assets', 'plan-calendar', from, to] as const,
   // Spaces (ADR 0084).
   spacesAll: ['spaces'] as const,
@@ -1049,6 +1065,15 @@ export const fetchers = {
   ticket: (id: string) => unwrap(api.GET('/api/v1/maintenance/tickets/{id}', { params: { path: { id } } })),
   slaReport: (from: string, to: string) =>
     unwrap(api.GET('/api/v1/maintenance/sla-report', { params: { query: { from, to } } })),
+  // The reports platform (ADR 0086).
+  reportCatalog: () => unwrap(api.GET('/api/v1/staff/reports', {})),
+  report: (q: { report: ReportCatalogEntry['key']; from: string; to: string; groupBy?: string; compare?: ReportResult['compare'] }) =>
+    unwrap(api.GET('/api/v1/staff/reports/view', { params: { query: q } })),
+  reportSchedules: () => unwrap(api.GET('/api/v1/staff/report-schedules', {})),
+  reportRuns: () => unwrap(api.GET('/api/v1/staff/report-runs', { params: { query: { limit: 100 } } })),
+  capitalPlans: () => unwrap(api.GET('/api/v1/maintenance/capital-plans', {})),
+  capitalPlan: (id: string) => unwrap(api.GET('/api/v1/maintenance/capital-plans/{id}', { params: { path: { id } } })),
+  compoundExports: () => unwrap(api.GET('/api/v1/staff/compound-exports', {})),
   planCalendar: (from: string, to: string) =>
     unwrap(api.GET('/api/v1/maintenance/plan-calendar', { params: { query: { from, to } } })),
   // Spaces (ADR 0084).

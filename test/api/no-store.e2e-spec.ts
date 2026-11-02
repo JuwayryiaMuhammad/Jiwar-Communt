@@ -54,6 +54,7 @@ import { unitsCalls } from './no-store-units';
 import { dispatchDepthCalls } from './no-store-dispatch-depth';
 import { m24Calls } from './no-store-m24';
 import { spacesCalls } from './no-store-spaces';
+import { officeQueueCalls } from './no-store-office-queue';
 import { proxyCalls } from './no-store-proxies';
 import { inspectionCalls } from './no-store-inspections';
 import { decisionAppealCalls } from './no-store-decision-appeals';
@@ -3425,6 +3426,7 @@ describe('API v0 — no-store', () => {
     ...dispatchDepthCalls(() => w),
     ...m24Calls(() => w),
     ...spacesCalls(() => w),
+    ...officeQueueCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

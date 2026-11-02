@@ -26,6 +26,7 @@ import { DISPATCH_DEPTH_ROUTES } from './dispatch-depth';
 import { VENDOR_ROUTES } from './vendors';
 import { STAFF_DASHBOARD_ROUTES } from './staff-dashboard';
 import { SPACES_ROUTES } from './spaces';
+import { OFFICE_QUEUE_ROUTES } from './office-queue';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
 import { FIELD_SAFETY_ROUTES } from './field-safety';
@@ -439,4 +440,5 @@ export const ROUTES: Row[] = [
   ...FITOUT_ROUTES,
   // ADR 0084.
   ...SPACES_ROUTES,
+  ...OFFICE_QUEUE_ROUTES,
 ];

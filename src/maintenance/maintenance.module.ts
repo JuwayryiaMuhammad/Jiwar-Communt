@@ -158,6 +158,9 @@ import {
 } from './contracts/contracts.controller';
 import { MaintenanceContractsService } from './contracts/contracts.service';
 import { ContractSweep } from './contracts/contract-sweep';
+import { PurchaseInboxItems } from './purchases/purchase-inbox-items';
+import { PurchasesController } from './purchases/purchases.controller';
+import { PurchasesService } from './purchases/purchases.service';
 import { VendorDocumentSweep } from './vendors/vendor-sweep';
 import { VendorsController } from './vendors/vendors.controller';
 import { VendorsService } from './vendors/vendors.service';
@@ -277,6 +280,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     AssetContractsController,
     ContractPaymentsDueController,
     VendorsController,
+    PurchasesController,
     EconomicsController,
     MetersController,
     MeterAlertsController,
@@ -372,6 +376,8 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     ContractSweep,
     VendorsService,
     VendorDocumentSweep,
+    PurchasesService,
+    PurchaseInboxItems,
     EconomicsService,
     MetersService,
     ReadingsService,

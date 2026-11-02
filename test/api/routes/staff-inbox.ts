@@ -13,6 +13,7 @@ const INBOX_TYPES = [
   'invoice_dispute',
   'decision_appeal',
   'management_request',
+  'purchase_request',
 ];
 
 /**

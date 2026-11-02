@@ -17134,6 +17134,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/purchase-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List purchase requests
+         * @description Newest first; a requester sees their own.
+         */
+        get: operations["PurchasesController_list"];
+        put?: never;
+        /** Ask to buy something */
+        post: operations["PurchasesController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a purchase request */
+        get: operations["PurchasesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-requests/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a purchase request */
+        post: operations["PurchasesController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call off a purchase request */
+        post: operations["PurchasesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-requests/{id}/fulfil": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a purchase request bought
+         * @description Once, with what paid it.
+         */
+        post: operations["PurchasesController_fulfil"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-requests/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn down a purchase request */
+        post: operations["PurchasesController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/readiness-items": {
         parameters: {
             query?: never;
@@ -23483,6 +23592,14 @@ export interface components {
             /** @description The management’s own note. Never shown to the unit. */
             note?: string;
         };
+        ApprovePurchaseRequestDto: {
+            /**
+             * Format: uuid
+             * @description Above the manager’s limit: the board’s approved major contract of at least the amount, covering no other request or contract.
+             */
+            approvalRequestId?: string;
+            note?: string;
+        };
         ApproveRegistrationDto: {
             /** @description Adds the unit to the same person's existing resident account (same phone AND email). */
             linkToExistingAccount?: boolean;
@@ -28059,6 +28176,35 @@ export interface components {
             startsOn: string;
             title: string;
         };
+        CreatePurchaseRequestDto: {
+            /**
+             * Format: uuid
+             * @description The budget line it would be paid from.
+             */
+            budgetLineId?: string;
+            description?: string;
+            /** @description EGP. Above the manager’s limit the board’s approval covers it. */
+            estimatedAmount: string;
+            /**
+             * Format: date
+             * @description Not before the compound’s today.
+             */
+            neededBy?: string;
+            /** @description In the item’s unit; with `stockItemId`. */
+            quantity?: string;
+            /**
+             * Format: uuid
+             * @description The store’s item it restocks (ADR 0065), with `quantity`.
+             */
+            stockItemId?: string;
+            /** @description What is needed, about the work: never about a person. */
+            title: string;
+            /**
+             * Format: uuid
+             * @description A vendor of the register to buy from; a suspended one is refused.
+             */
+            vendorId?: string;
+        };
         CreateRequestDto: {
             /** @description A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. */
             about?: components["schemas"]["RequestAboutDto"];
@@ -30628,6 +30774,10 @@ export interface components {
             data: components["schemas"]["FoundItemView"][];
             nextCursor: string | null;
         };
+        FulfilPurchaseRequestDto: {
+            /** @description What paid it: an expense’s number, an invoice’s reference. */
+            reference?: string;
+        };
         GalleryAlbumView: {
             /** Format: uuid */
             eventId: string | null;
@@ -32267,7 +32417,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -37277,6 +37427,53 @@ export interface components {
             titleEn?: string | null;
         };
         /** @enum {string} */
+        PurchaseRequestStatus: "requested" | "approved" | "rejected" | "cancelled" | "fulfilled";
+        PurchaseRequestView: {
+            /**
+             * Format: uuid
+             * @description The board’s approved major contract it is covered by.
+             */
+            approvalRequestId: string | null;
+            /** Format: uuid */
+            budgetLineId: string | null;
+            /** @description REASON_CODES.purchaseCancel. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decisionNote: string | null;
+            description: string | null;
+            /** @description EGP. */
+            estimatedAmount: string;
+            /** Format: date-time */
+            fulfilledAt: string | null;
+            fulfilledReference: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller asked for it. */
+            mine: boolean;
+            /** Format: date */
+            neededBy: string | null;
+            quantity: string | null;
+            /** @description PR-0001. */
+            reference: string;
+            /** @description REASON_CODES.purchaseReject. */
+            rejectReason: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            status: components["schemas"]["PurchaseRequestStatus"];
+            /** Format: uuid */
+            stockItemId: string | null;
+            title: string;
+            /** Format: uuid */
+            vendorId: string | null;
+        };
+        PurchaseRequestViewList: {
+            data: components["schemas"]["PurchaseRequestView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
         PushPlatform: "android" | "ios";
         QuietHoursDto: {
             /**
@@ -37969,6 +38166,11 @@ export interface components {
             /** @description The management’s own note. Never shown to the unit. */
             note?: string;
             /** @description From the closed list `unitPermitReject`. */
+            reasonCode: string;
+        };
+        RejectPurchaseRequestDto: {
+            note?: string;
+            /** @description REASON_CODES.purchaseReject. */
             reasonCode: string;
         };
         RejectSwapDto: {
@@ -71359,6 +71561,179 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlanRequestView"];
+                };
+            };
+        };
+    };
+    PurchasesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["PurchaseRequestStatus"];
+                /** @description Only the caller’s; a requester who does not approve always sees only theirs. */
+                mine?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestViewList"];
+                };
+            };
+        };
+    };
+    PurchasesController_submit: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePurchaseRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestView"];
+                };
+            };
+        };
+    };
+    PurchasesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestView"];
+                };
+            };
+        };
+    };
+    PurchasesController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovePurchaseRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestView"];
+                };
+            };
+        };
+    };
+    PurchasesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestView"];
+                };
+            };
+        };
+    };
+    PurchasesController_fulfil: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FulfilPurchaseRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestView"];
+                };
+            };
+        };
+    };
+    PurchasesController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectPurchaseRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestView"];
                 };
             };
         };

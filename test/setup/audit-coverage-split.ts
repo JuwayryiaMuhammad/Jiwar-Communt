@@ -1019,3 +1019,25 @@ export const M22_COVERAGE: readonly string[] = [
   'warranty_claim.rejected',
   'warranty_claim.withdrawn',
 ];
+
+/**
+ * Vendors, compound contracts and purchase requests (ADR 0077), covered by
+ * test/m25/audit-coverage.e2e-spec.ts.
+ */
+export const M25_COVERAGE: readonly string[] = [
+  'vendor.created',
+  'vendor.updated',
+  'vendor.suspended',
+  'vendor.reinstated',
+  'vendor.document_added',
+  'vendor.document_removed',
+  'vendor.evaluated',
+  'maintenance_contract.renewed',
+  'maintenance_contract.payments_scheduled',
+  'maintenance_contract.payment_paid',
+  'purchase_request.submitted',
+  'purchase_request.approved',
+  'purchase_request.rejected',
+  'purchase_request.cancelled',
+  'purchase_request.fulfilled',
+];

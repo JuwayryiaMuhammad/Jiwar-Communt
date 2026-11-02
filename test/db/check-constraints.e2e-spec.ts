@@ -2707,6 +2707,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'amount is NOT NULL; note and paid_reference are tested IS NULL first; the paid columns are compared only by IS [NOT] NULL',
   },
+  purchase_requests_text_length: {
+    guarded:
+      'number and title are NOT NULL; description, decision_note and fulfilled_reference are tested IS NULL first',
+  },
+  purchase_requests_amounts: {
+    guarded:
+      'estimated_amount is NOT NULL; quantity is tested IS NULL first, and stock_item_id and quantity are compared only by IS NULL',
+  },
+  purchase_requests_state_shape: {
+    guarded:
+      'status is NOT NULL; the decision, cancel and fulfilment columns are tested IS [NOT] NULL; each reason list runs only after its IS NULL test',
+  },
 };
 
 interface Check {

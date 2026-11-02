@@ -271,6 +271,10 @@ export interface World
   bPartRequestId: string;
   /** ADR 0065: compound B's maintenance contract. */
   bContractId: string;
+  /** ADR 0077: its vendor, a payment of its schedule, and a purchase request. */
+  bVendorId: string;
+  bContractPaymentId: string;
+  bPurchaseRequestId: string;
   /** ADR 0066: compound B's meter, in its common area. */
   bMeterId: string;
   /** ADR 0066: a reading of it, and a spike alert on it. */
@@ -1001,6 +1005,17 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  // ADR 0077: every contract names a vendor of the register.
+  const bVendor = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.vendor.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        number: 9001,
+        name: 'World vendor',
+      },
+    }),
+  );
   const bContract = await helpers.asManager(b, () =>
     helpers.prisma.tenant.maintenanceContract.create({
       data: {
@@ -1008,9 +1023,36 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         tenantId: b.tenantId,
         code: 'WORLD-AMC',
         kind: 'amc',
+        vendorId: bVendor.id,
         vendorName: 'World vendor',
         startsOn: new Date('2026-01-01T00:00:00.000Z'),
         endsOn: new Date('2026-12-31T00:00:00.000Z'),
+      },
+    }),
+  );
+  const bContractPayment = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.maintenanceContractPayment.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        contractId: bContract.id,
+        dueOn: new Date('2026-06-01T00:00:00.000Z'),
+        amount: '100',
+        createdById: b.managerId,
+        createdAt: new Date(),
+      },
+    }),
+  );
+  const bPurchaseRequest = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.purchaseRequest.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        number: 9001,
+        title: 'World purchase',
+        estimatedAmount: '100',
+        requestedById: b.managerId,
+        requestedAt: new Date(),
       },
     }),
   );
@@ -1731,6 +1773,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bStockItemId: bStockItem.id,
     bPartRequestId: bPartRequest.id,
     bContractId: bContract.id,
+    bVendorId: bVendor.id,
+    bContractPaymentId: bContractPayment.id,
+    bPurchaseRequestId: bPurchaseRequest.id,
     bMeterId: bMeter.id,
     bReadingId: bReading.id,
     bMeterAlertId: bMeterAlert.id,

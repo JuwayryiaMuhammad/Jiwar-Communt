@@ -1423,6 +1423,12 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/stores/{id}': w.bStoreId,
       '/maintenance/stock/items/{id}': w.bStockItemId,
       '/maintenance/contracts/{id}': w.bContractId,
+      // ADR 0077: B's vendor, its contract's payments and a purchase
+      // request: not found for everyone of A.
+      '/maintenance/contracts/{id}/payments': w.bContractId,
+      '/staff/vendors/{id}': w.bVendorId,
+      '/staff/vendors/{id}/evaluations': w.bVendorId,
+      '/staff/purchase-requests/{id}': w.bPurchaseRequestId,
       '/maintenance/meters/{id}': w.bMeterId,
       '/maintenance/meters/{id}/readings': w.bMeterId,
       '/technician/meters/{id}': w.bMeterId,

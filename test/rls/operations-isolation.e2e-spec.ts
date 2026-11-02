@@ -9,6 +9,8 @@ import { createAccountRow, createTenant, createUnit } from '../setup/fixtures';
 /** What a seed needs from one compound. */
 interface Side {
   tenantId: string;
+  /** ADR 0077: the compound's vendor its contracts name. */
+  vendorId: string;
   unitId: string;
   staffId: string;
   categoryId: string;
@@ -144,6 +146,7 @@ async function contract(tx: TenantTxClient, own: Side) {
       tenantId: own.tenantId,
       code: `C-${suffix()}`,
       kind: 'amc',
+      vendorId: own.vendorId,
       vendorName: 'Vendor',
       startsOn: dbDate('2031-01-01'),
       endsOn: dbDate('2031-12-31'),
@@ -310,6 +313,10 @@ describe('RLS isolation — maintenance operations (ADR 0065)', () => {
       categoryId: category.id,
     } as Side;
     await inTenant(s, async (tx) => {
+      s.vendorId = newId();
+      await tx.vendor.create({
+        data: { id: s.vendorId, tenantId, number: 1, name: `Vendor ${label}` },
+      });
       s.ticketId = await ticket(tx, s, s);
       s.areaId = newId();
       await tx.commonArea.create({

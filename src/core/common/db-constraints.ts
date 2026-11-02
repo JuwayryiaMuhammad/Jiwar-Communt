@@ -995,4 +995,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   maintenance_contracts_approval_key: null,
   maintenance_contract_payments_tenant_id_id_key: null,
   maintenance_contract_payments_day_key: ['dueOn'],
+  // Purchase requests (ADR 0077): numbered under the counter's lock; an
+  // approval covers one request, checked first (PURCHASE_APPROVAL_INVALID).
+  purchase_requests_tenant_id_id_key: null,
+  purchase_requests_number_key: null,
+  purchase_requests_approval_key: null,
 };

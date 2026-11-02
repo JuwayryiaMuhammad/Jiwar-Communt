@@ -30,6 +30,8 @@ export const INBOX_TYPES = [
   'invoice_dispute',
   'decision_appeal',
   'management_request',
+  // ADR 0077: a purchase request waiting for its approver.
+  'purchase_request',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

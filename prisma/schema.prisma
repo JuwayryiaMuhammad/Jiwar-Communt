@@ -11353,6 +11353,48 @@ model VendorEvaluation {
   @@map("vendor_evaluations")
 }
 
+/// A light request to buy something or a service (ADR 0077): approved by
+/// the manager up to the major contract threshold, above it under the
+/// board's approval; marked fulfilled once bought. Forward only.
+model PurchaseRequest {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  number            Int
+  title             String
+  description       String?
+  vendorId          String?   @map("vendor_id") @db.Uuid
+  budgetLineId      String?   @map("budget_line_id") @db.Uuid
+  stockItemId       String?   @map("stock_item_id") @db.Uuid
+  quantity          Decimal?  @db.Decimal(12, 3)
+  estimatedAmount   Decimal   @map("estimated_amount") @db.Decimal(14, 2)
+  neededBy          DateTime? @map("needed_by") @db.Date
+  /// requested | approved | rejected | cancelled | fulfilled
+  status            String    @default("requested")
+  requestedById     String    @map("requested_by_account_id") @db.Uuid
+  requestedAt       DateTime  @map("requested_at") @db.Timestamptz(3)
+  decidedById       String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.purchaseReject
+  rejectReason      String?   @map("reject_reason")
+  decisionNote      String?   @map("decision_note")
+  approvalRequestId String?   @map("approval_request_id") @db.Uuid
+  cancelledById     String?   @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.purchaseCancel
+  cancelReason      String?   @map("cancel_reason")
+  fulfilledById     String?   @map("fulfilled_by_account_id") @db.Uuid
+  fulfilledAt       DateTime? @map("fulfilled_at") @db.Timestamptz(3)
+  fulfilledReference String?  @map("fulfilled_reference")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "purchase_requests_number_key")
+  @@index([tenantId, status, requestedAt, id], map: "purchase_requests_status_idx")
+  @@index([tenantId, requestedById, requestedAt(sort: Desc), id(sort: Desc)], map: "purchase_requests_requester_idx")
+  @@map("purchase_requests")
+}
+
 /// What the compound measures (ADR 0066): a unit's or a common area's
 /// electricity, water, gas, fuel or a generator's running hours. Its code,
 /// kind, mode, multiplier and place never change (a trigger); retired

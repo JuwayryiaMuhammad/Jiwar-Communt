@@ -27,6 +27,8 @@
 -- the gate's settings, and a banned person with a photo met at the gate
 -- twice (ADR 0068 adds the settings' face-check switch and call times,
 -- widens the matches' CHECKs and recreates the files');
+-- (ADR 0077) a vendor, a contract naming it with its terms and payments,
+-- and a purchase request;
 -- a staff credit note, a vehicle fine paid at the office and a club plan
 -- with a membership paid at the office (ADR 0070 lets a credit note's author
 -- and a club payment's recorder be null, rewrites their CHECKs, links a fine
@@ -450,6 +452,29 @@ BEGIN
       INSERT INTO warranty_claims (id, tenant_id, asset_id, ticket_id, description, opened_by_account_id,
                                    opened_at) VALUES
         (gen_random_uuid(), t, pump, wo, 'The seal failed within the warranty', mgr, now());
+    END;
+    -- ADR 0077: a vendor of the register, a contract naming it with its
+    -- terms and a payment schedule (one paid), and a purchase request.
+    DECLARE
+      ven uuid := gen_random_uuid();
+      con uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO vendors (id, tenant_id, number, name, categories, phone, updated_at) VALUES
+        (ven, t, 1, 'Seed Lifts ' || left(gen_random_uuid()::text, 8), ARRAY['maintenance'], '+20 2 1234 5678', now());
+      INSERT INTO procurement_counters (tenant_id, kind, last_number) VALUES (t, 'vendor', 1), (t, 'purchase_request', 1)
+        ON CONFLICT (tenant_id, kind) DO NOTHING;
+      INSERT INTO maintenance_contracts (id, tenant_id, code, kind, vendor_id, vendor_name, starts_on, ends_on,
+                                         annual_value, late_penalty_per_day, penalty_cap, response_hours,
+                                         auto_renews, renewal_term_months, updated_at) VALUES
+        (con, t, 'SEED-' || left(gen_random_uuid()::text, 8), 'cleaning', ven, 'Seed Lifts',
+         current_date - 30, current_date + 300, 12000.00, 250.00, 5000.00, 4, true, 12, now());
+      INSERT INTO maintenance_contract_payments (id, tenant_id, contract_id, due_on, amount, paid_on,
+                                                 paid_by_account_id, paid_at, created_by_account_id, created_at) VALUES
+        (gen_random_uuid(), t, con, current_date - 10, 1000.00, current_date - 9, mgr, now(), mgr, now()),
+        (gen_random_uuid(), t, con, current_date + 20, 1000.00, NULL, NULL, NULL, mgr, now());
+      INSERT INTO purchase_requests (id, tenant_id, number, title, vendor_id, estimated_amount,
+                                     requested_by_account_id, requested_at, updated_at) VALUES
+        (gen_random_uuid(), t, 1, 'Two pump seals', ven, 3500.00, mgr, now(), now());
     END;
   END LOOP;
 END $$;

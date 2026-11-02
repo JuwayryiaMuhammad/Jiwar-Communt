@@ -1929,6 +1929,20 @@
         },
         "type": "object"
       },
+      "ApprovePurchaseRequestDto": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "Above the manager’s limit: the board’s approved major contract of at least the amount, covering no other request or contract.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ApproveRegistrationDto": {
         "properties": {
           "linkToExistingAccount": {
@@ -16017,6 +16031,56 @@
         ],
         "type": "object"
       },
+      "CreatePurchaseRequestDto": {
+        "properties": {
+          "budgetLineId": {
+            "description": "The budget line it would be paid from.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "estimatedAmount": {
+            "description": "EGP. Above the manager’s limit the board’s approval covers it.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "neededBy": {
+            "description": "Not before the compound’s today.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "In the item’s unit; with `stockItemId`.",
+            "pattern": "^\\d{1,6}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "stockItemId": {
+            "description": "The store’s item it restocks (ADR 0065), with `quantity`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "description": "What is needed, about the work: never about a person.",
+            "maxLength": 200,
+            "minLength": 3,
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "A vendor of the register to buy from; a suspended one is refused.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "estimatedAmount"
+        ],
+        "type": "object"
+      },
       "CreateRequestDto": {
         "properties": {
           "about": {
@@ -23908,6 +23972,16 @@
         ],
         "type": "object"
       },
+      "FulfilPurchaseRequestDto": {
+        "properties": {
+          "reference": {
+            "description": "What paid it: an expense’s number, an invoice’s reference.",
+            "maxLength": 120,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "GalleryAlbumView": {
         "properties": {
           "eventId": {
@@ -29544,7 +29618,8 @@
           "plan_request",
           "invoice_dispute",
           "decision_appeal",
-          "management_request"
+          "management_request",
+          "purchase_request"
         ],
         "type": "string"
       },
@@ -45255,6 +45330,160 @@
         },
         "type": "object"
       },
+      "PurchaseRequestStatus": {
+        "enum": [
+          "requested",
+          "approved",
+          "rejected",
+          "cancelled",
+          "fulfilled"
+        ],
+        "type": "string"
+      },
+      "PurchaseRequestView": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "The board’s approved major contract it is covered by.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "REASON_CODES.purchaseCancel.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decisionNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "estimatedAmount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "fulfilledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fulfilledReference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller asked for it.",
+            "type": "boolean"
+          },
+          "neededBy": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "description": "PR-0001.",
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "REASON_CODES.purchaseReject.",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseRequestStatus"
+              }
+            ]
+          },
+          "stockItemId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title",
+          "description",
+          "vendorId",
+          "budgetLineId",
+          "stockItemId",
+          "quantity",
+          "estimatedAmount",
+          "neededBy",
+          "status",
+          "mine",
+          "requestedAt",
+          "decidedAt",
+          "rejectReason",
+          "decisionNote",
+          "approvalRequestId",
+          "cancelledAt",
+          "cancelReason",
+          "fulfilledAt",
+          "fulfilledReference"
+        ],
+        "type": "object"
+      },
+      "PurchaseRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PushPlatform": {
         "enum": [
           "android",
@@ -47328,6 +47557,22 @@
           },
           "reasonCode": {
             "description": "From the closed list `unitPermitReject`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "RejectPurchaseRequestDto": {
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.purchaseReject.",
             "type": "string"
           }
         },
@@ -68267,7 +68512,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 12,
+            "maxItems": 13,
             "minItems": 1,
             "type": "array"
           }
@@ -122181,6 +122426,345 @@
         "summary": "Decline a plan request with a reason code",
         "tags": [
           "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-requests": {
+      "get": {
+        "description": "Newest first; a requester sees their own.",
+        "operationId": "PurchasesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PurchaseRequestStatus"
+            }
+          },
+          {
+            "description": "Only the caller’s; a requester who does not approve always sees only theirs.",
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List purchase requests",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "PurchasesController_submit",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask to buy something",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-requests/{id}": {
+      "get": {
+        "operationId": "PurchasesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a purchase request",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-requests/{id}/approve": {
+      "post": {
+        "operationId": "PurchasesController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovePurchaseRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a purchase request",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-requests/{id}/cancel": {
+      "post": {
+        "operationId": "PurchasesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a purchase request",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-requests/{id}/fulfil": {
+      "post": {
+        "description": "Once, with what paid it.",
+        "operationId": "PurchasesController_fulfil",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FulfilPurchaseRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a purchase request bought",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-requests/{id}/reject": {
+      "post": {
+        "operationId": "PurchasesController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectPurchaseRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn down a purchase request",
+        "tags": [
+          "maintenance"
         ],
         "x-stability": "draft"
       }

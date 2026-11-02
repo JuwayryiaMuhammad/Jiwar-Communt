@@ -31,6 +31,7 @@ import {
   ofDateColumn,
   type LocalDate,
 } from '../schedules/local-dates';
+import { claimApproval } from '../purchases/approval-claims';
 import { VendorsService } from '../vendors/vendors.service';
 import {
   CONTRACT_PAYMENTS_MAX,
@@ -234,6 +235,12 @@ export class MaintenanceContractsService implements OnModuleInit {
       throw invalid([
         { field: 'endsOn', code: FieldErrorCode.ENDS_BEFORE_START },
       ]);
+    requireTermsWhole({
+      autoRenews: input.autoRenews ?? false,
+      renewalTermMonths: input.renewalTermMonths ?? null,
+      latePenaltyPerDay: input.latePenaltyPerDay ?? null,
+      penaltyCap: input.penaltyCap ?? null,
+    });
     return this.tenantTx
       .withTenantTx(async (tx) => {
         const id = newId();
@@ -300,6 +307,21 @@ export class MaintenanceContractsService implements OnModuleInit {
           throw invalid([
             { field: 'endsOn', code: FieldErrorCode.ENDS_BEFORE_START },
           ]);
+        requireTermsWhole({
+          autoRenews: input.autoRenews ?? before.autoRenews,
+          renewalTermMonths:
+            input.renewalTermMonths === undefined
+              ? before.renewalTermMonths
+              : input.renewalTermMonths,
+          latePenaltyPerDay:
+            input.latePenaltyPerDay === undefined
+              ? money(before.latePenaltyPerDay)
+              : input.latePenaltyPerDay,
+          penaltyCap:
+            input.penaltyCap === undefined
+              ? money(before.penaltyCap)
+              : input.penaltyCap,
+        });
         const vendor = input.vendorId
           ? await this.vendors.lockUsable(tx, input.vendorId)
           : input.vendorName !== undefined &&
@@ -795,13 +817,22 @@ export class MaintenanceContractsService implements OnModuleInit {
         new Prisma.Decimal(q.value).gt(a.cost)
       )
         throw approvalInvalid('below_value');
-      const other = await tx.maintenanceContract.findFirst({
-        where: {
-          approvalRequestId: q.approvalRequestId,
-          ...(q.contractId ? { NOT: { id: q.contractId } } : {}),
-        },
-        select: { id: true },
-      });
+      // One claim of an approval at a time, by a contract or a purchase
+      // request (two tables, no unique index across them).
+      await claimApproval(tx, this.ctx.txTenantId, q.approvalRequestId);
+      const other =
+        (await tx.maintenanceContract.findFirst({
+          where: {
+            approvalRequestId: q.approvalRequestId,
+            ...(q.contractId ? { NOT: { id: q.contractId } } : {}),
+          },
+          select: { id: true },
+        })) ??
+        // A purchase request it covers (ADR 0077) counts too.
+        (await tx.purchaseRequest.findFirst({
+          where: { approvalRequestId: q.approvalRequestId },
+          select: { id: true },
+        }));
       if (other) throw approvalInvalid('signs_another');
       return q.approvalRequestId;
     }
@@ -874,6 +905,27 @@ function statusWhere(status: ContractStatus | undefined, day: Date) {
         endsOn: { gte: day },
       };
   }
+}
+
+/** Renewing by itself needs a term; a penalty cap needs a daily penalty. */
+function requireTermsWhole(t: {
+  autoRenews: boolean;
+  renewalTermMonths: number | null;
+  latePenaltyPerDay: string | null;
+  penaltyCap: string | null;
+}): void {
+  const fields: FieldError[] = [];
+  if (t.autoRenews && t.renewalTermMonths === null)
+    fields.push({
+      field: 'renewalTermMonths',
+      code: FieldErrorCode.FIELD_REQUIRED,
+    });
+  if (t.penaltyCap !== null && t.latePenaltyPerDay === null)
+    fields.push({
+      field: 'latePenaltyPerDay',
+      code: FieldErrorCode.FIELD_REQUIRED,
+    });
+  if (fields.length) throw invalid(fields);
 }
 
 /** The terms as columns: undefined keeps one, null clears it. */

@@ -112,6 +112,14 @@ export class GateSettingsResponse {
   })
   gateBusyBusyFrom: number;
 
+  @ApiProperty({
+    type: Number,
+    example: L.closedUnitRoundDays.default,
+    description:
+      'Days between a closed unit’s rounds, from when it closed or was last inspected (ADR 0083).',
+  })
+  closedUnitRoundDays: number;
+
   static from(s: GateSettingsValues): GateSettingsResponse {
     return {
       exceptionAnswerMinutes: s.exceptionAnswerMinutes,
@@ -128,6 +136,7 @@ export class GateSettingsResponse {
       callMaxSeconds: s.callMaxSeconds,
       gateBusyNormalFrom: s.gateBusyNormalFrom,
       gateBusyBusyFrom: s.gateBusyBusyFrom,
+      closedUnitRoundDays: s.closedUnitRoundDays,
     };
   }
 }

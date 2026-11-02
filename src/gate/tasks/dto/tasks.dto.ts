@@ -85,6 +85,16 @@ export class CreateGuardTaskDto {
   @IsOptional()
   @IsUUID()
   requestId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'The closed unit’s round it carries out (ADR 0083): a due one of the same unit (CLOSED_UNIT_ROUND_NOT_DUE otherwise); an inspection only, not with `requestId`.',
+  })
+  @IsOptional()
+  @IsUUID()
+  roundId?: string;
 }
 
 export class CancelGuardTaskDto {

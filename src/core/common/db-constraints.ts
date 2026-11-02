@@ -1099,4 +1099,15 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   ownership_transfers_tenant_id_id_key: null,
   ownership_transfers_number_key: null,
   ownership_transfers_one_pending_per_unit: null,
+  // A closed unit's round: one live a unit, made by the sweep with ON
+  // CONFLICT DO NOTHING; one round a task, set under the round's lock.
+  closed_unit_rounds_tenant_id_id_key: null,
+  closed_unit_rounds_one_live_per_unit: null,
+  closed_unit_rounds_task_key: null,
+  // An emergency entry: numbers under the compound's advisory lock; a photo
+  // claimed once by the files service.
+  unit_entries_tenant_id_id_key: null,
+  unit_entries_number_key: null,
+  unit_entry_photos_tenant_id_id_key: null,
+  unit_entry_photos_file_id_key: null,
 };

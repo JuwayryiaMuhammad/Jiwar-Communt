@@ -10607,6 +10607,182 @@
         ],
         "type": "object"
       },
+      "ClosedUnitInspectionView": {
+        "properties": {
+          "doneAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "description": "`all_clear` or `issue_found`.",
+            "type": "string"
+          },
+          "taskId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskId",
+          "doneAt",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "ClosedUnitRequestView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "example": "IR-000004",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "scheduled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ClosedUnitRoundView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Its due day.",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "due",
+              "scheduled",
+              "done",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "taskId": {
+            "description": "The closed-unit inspection task that carries it out.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "dueOn",
+          "status",
+          "taskId",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ClosedUnitView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "closedSince": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastInspection": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClosedUnitInspectionView"
+              }
+            ],
+            "description": "The newest inspection done since it closed.",
+            "nullable": true,
+            "type": "object"
+          },
+          "liveProxies": {
+            "description": "Invited or active proxies.",
+            "type": "number"
+          },
+          "nextRoundOn": {
+            "description": "The day its next round falls due: the compound’s days between rounds after it closed or was last inspected.",
+            "format": "date",
+            "type": "string"
+          },
+          "openRequest": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClosedUnitRequestView"
+              }
+            ],
+            "description": "An owner’s or a proxy’s request still open or scheduled.",
+            "nullable": true,
+            "type": "object"
+          },
+          "round": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClosedUnitRoundView"
+              }
+            ],
+            "description": "Its live round, due or scheduled.",
+            "nullable": true,
+            "type": "object"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "building",
+          "closedSince",
+          "lastInspection",
+          "openRequest",
+          "round",
+          "nextRoundOn",
+          "liveProxies"
+        ],
+        "type": "object"
+      },
+      "ClosedUnitViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ClosedUnitView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ClosurePreviewView": {
         "properties": {
           "bookings": {
@@ -17284,6 +17460,11 @@
           },
           "requestId": {
             "description": "The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "roundId": {
+            "description": "The closed unit’s round it carries out (ADR 0083): a due one of the same unit (CLOSED_UNIT_ROUND_NOT_DUE otherwise); an inspection only, not with `requestId`.",
             "format": "uuid",
             "type": "string"
           },
@@ -28995,6 +29176,11 @@
             "example": 45,
             "type": "number"
           },
+          "closedUnitRoundDays": {
+            "description": "Days between a closed unit’s rounds, from when it closed or was last inspected (ADR 0083).",
+            "example": 30,
+            "type": "number"
+          },
           "exceptionAnswerMinutes": {
             "description": "Minutes the management has to answer a field exception.",
             "example": 10,
@@ -29060,7 +29246,8 @@
           "callRingSeconds",
           "callMaxSeconds",
           "gateBusyNormalFrom",
-          "gateBusyBusyFrom"
+          "gateBusyBusyFrom",
+          "closedUnitRoundDays"
         ],
         "type": "object"
       },
@@ -53167,6 +53354,57 @@
         ],
         "type": "object"
       },
+      "RecordUnitEntryDto": {
+        "properties": {
+          "enteredAt": {
+            "description": "When staff went in: within the last 7 days.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Finalized `unit_entry_photo` files of the caller: before.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "reasonCode": {
+            "description": "`unitEntryReason`.",
+            "enum": [
+              "water_leak",
+              "fire",
+              "smoke",
+              "gas_smell",
+              "electrical_hazard",
+              "structural_danger",
+              "security_threat",
+              "other"
+            ],
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "witnessIds": {
+            "description": "Staff accounts who went in too, besides the caller: two staff at least.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "unitId",
+          "reasonCode",
+          "enteredAt",
+          "witnessIds"
+        ],
+        "type": "object"
+      },
       "RecordViolationPaymentDto": {
         "properties": {
           "amount": {
@@ -54888,6 +55126,42 @@
           "kind",
           "body",
           "state"
+        ],
+        "type": "object"
+      },
+      "ReportUnitEntryDto": {
+        "properties": {
+          "note": {
+            "description": "What staff found and did: their words, read by the unit’s people.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "outcome": {
+            "description": "`unitEntryOutcome`.",
+            "enum": [
+              "resolved",
+              "contained",
+              "no_issue_found",
+              "needs_maintenance",
+              "other"
+            ],
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "Finalized `unit_entry_photo` files of the caller: after.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "note",
+          "photoFileIds"
         ],
         "type": "object"
       },
@@ -70152,6 +70426,129 @@
         ],
         "type": "object"
       },
+      "StaffUnitEntryView": {
+        "properties": {
+          "enteredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "description": "`unitEntryOutcome`, once reported.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/UnitEntryPhotoView"
+            },
+            "type": "array"
+          },
+          "reasonCode": {
+            "description": "`unitEntryReason`.",
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recordedById": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "recordedByName": {
+            "description": "Null once the account is erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "example": "UE-000003",
+            "type": "string"
+          },
+          "reportNote": {
+            "description": "What staff found and did, once reported.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reportedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reportedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "reported"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "witnessCount": {
+            "description": "Staff who went in besides the one who led it.",
+            "type": "number"
+          },
+          "witnessNames": {
+            "description": "The witnesses’ names, in id order; null once erased.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "unitCode",
+          "reasonCode",
+          "enteredAt",
+          "recordedAt",
+          "status",
+          "outcome",
+          "reportNote",
+          "reportedAt",
+          "witnessCount",
+          "photos",
+          "recordedById",
+          "recordedByName",
+          "witnessNames",
+          "reportedById"
+        ],
+        "type": "object"
+      },
+      "StaffUnitEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffUnitEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "StaffVehicleDetailView": {
         "properties": {
           "color": {
@@ -74187,6 +74584,110 @@
         ],
         "type": "object"
       },
+      "UnitEntryPhotoView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "before",
+              "after"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "Presigned: never cached.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stage",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "UnitEntryView": {
+        "properties": {
+          "enteredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "description": "`unitEntryOutcome`, once reported.",
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/UnitEntryPhotoView"
+            },
+            "type": "array"
+          },
+          "reasonCode": {
+            "description": "`unitEntryReason`.",
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reference": {
+            "example": "UE-000003",
+            "type": "string"
+          },
+          "reportNote": {
+            "description": "What staff found and did, once reported.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reportedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "reported"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "witnessCount": {
+            "description": "Staff who went in besides the one who led it.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "unitId",
+          "unitCode",
+          "reasonCode",
+          "enteredAt",
+          "recordedAt",
+          "status",
+          "outcome",
+          "reportNote",
+          "reportedAt",
+          "witnessCount",
+          "photos"
+        ],
+        "type": "object"
+      },
       "UnitFeeView": {
         "properties": {
           "amount": {
@@ -76382,6 +76883,12 @@
             "description": "Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start.",
             "maximum": 120,
             "minimum": 15,
+            "type": "number"
+          },
+          "closedUnitRoundDays": {
+            "description": "Days between a closed unit’s rounds, from when it closed or was last inspected (ADR 0083).",
+            "maximum": 180,
+            "minimum": 7,
             "type": "number"
           },
           "exceptionAnswerMinutes": {
@@ -137581,6 +138088,34 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/security/closed-units": {
+      "get": {
+        "operationId": "ClosedUnitsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosedUnitViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Units in closed mode, the longest closed first, with their last inspection and round",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/security/found-items": {
       "get": {
         "description": "Newest first.",
@@ -141432,6 +141967,210 @@
           }
         ],
         "summary": "Cancel a task",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/unit-entries": {
+      "get": {
+        "operationId": "StaffUnitEntriesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "reported"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffUnitEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Emergency entries, the newest first",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffUnitEntriesController_record",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordUnitEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffUnitEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record an emergency entry into a unit",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/unit-entries/{id}": {
+      "get": {
+        "operationId": "StaffUnitEntriesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffUnitEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one emergency entry",
+        "tags": [
+          "guard-duty"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/security/unit-entries/{id}/report": {
+      "post": {
+        "operationId": "StaffUnitEntriesController_report",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportUnitEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffUnitEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report what an emergency entry found, once",
         "tags": [
           "guard-duty"
         ],
@@ -152207,6 +152946,47 @@
         "summary": "Get a unit’s emergency contacts",
         "tags": [
           "emergencies"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/entries": {
+      "get": {
+        "operationId": "UnitEntriesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnitEntryView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Emergency entries into the unit, newest first",
+        "tags": [
+          "units"
         ],
         "x-no-store": true,
         "x-stability": "draft"

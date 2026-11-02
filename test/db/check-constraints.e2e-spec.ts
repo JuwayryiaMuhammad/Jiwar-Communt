@@ -2933,6 +2933,17 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   // Transfers, dues and closed units (ADR 0083).
   ownership_transfers_codes: {},
+  gate_settings_closed_unit_round_days: {},
+  unit_entries_reason_known: {},
+  unit_entries_report_shape: {
+    guarded:
+      'status is NOT NULL; reported_at, reported_by, outcome and report_note are tested IS NULL first and compared only on a value',
+  },
+  unit_entry_photos_stage: {},
+  closed_unit_rounds_state_shape: {
+    guarded:
+      'status is NOT NULL; task_id, scheduled_at, done_at and cancelled_at only under IS [NOT] NULL; cancel_reason IS NULL is tested first',
+  },
   unit_proxies_revoke_code: {
     guarded:
       'revoke_code IS NULL is tested first; end_reason IS NOT NULL is tested before it is compared',

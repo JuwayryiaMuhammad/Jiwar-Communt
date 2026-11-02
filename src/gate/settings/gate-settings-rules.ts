@@ -42,6 +42,11 @@ export const GATE_SETTING_LIMITS = {
    */
   gateBusyNormalFrom: { min: 1, max: 1000, default: 10 },
   gateBusyBusyFrom: { min: 2, max: 1000, default: 30 },
+  /**
+   * Days between a closed unit's rounds (ADR 0083): a round falls due this
+   * long after the unit closed or was last inspected.
+   */
+  closedUnitRoundDays: { min: 7, max: 180, default: 30 },
 } as const;
 
 /** The gate's switches, each with its default. */

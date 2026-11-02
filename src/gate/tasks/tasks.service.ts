@@ -28,6 +28,7 @@ import {
   StaffGuardTaskView,
   type TaskContext,
 } from './views/task.views';
+import { ClosedUnitsService } from './closed-units.service';
 import { InspectionRequestsService } from './inspection-requests.service';
 
 export const TASK_RESOURCE = 'guard_task';
@@ -50,6 +51,8 @@ export interface NewTask {
   dueAt?: Date;
   /** The inspection request it answers (ADR 0063). */
   requestId?: string;
+  /** The closed unit's round it carries out (ADR 0083). */
+  roundId?: string;
 }
 
 type Outcome = (typeof REASON_CODES.guardTaskOutcome)[number];
@@ -81,6 +84,7 @@ export class TasksService implements OnModuleInit {
     private readonly roster: RosterCore,
     private readonly names: DutyNamesReader,
     private readonly inspections: InspectionRequestsService,
+    private readonly rounds: ClosedUnitsService,
   ) {}
 
   onModuleInit(): void {
@@ -121,6 +125,14 @@ export class TasksService implements OnModuleInit {
     if (input.kind === 'custom' && input.requestId !== undefined)
       fields.push({
         field: 'requestId',
+        code: FieldErrorCode.FIELD_NOT_ALLOWED,
+      });
+    if (
+      input.roundId !== undefined &&
+      (input.kind === 'custom' || input.requestId !== undefined)
+    )
+      fields.push({
+        field: 'roundId',
         code: FieldErrorCode.FIELD_NOT_ALLOWED,
       });
     if (title && title.length > TEXT.title)
@@ -184,6 +196,9 @@ export class TasksService implements OnModuleInit {
           requestId: input.requestId ?? null,
         },
       });
+      // It carries out a closed unit's round (ADR 0083).
+      if (input.roundId)
+        await this.rounds.scheduled(tx, input.roundId, input.unitId, id);
       const told = await this.tell(tx, task);
       await this.audit.record(tx, {
         action: 'guard_task.created',
@@ -192,6 +207,7 @@ export class TasksService implements OnModuleInit {
           kind: task.kind,
           ...(task.unitId ? { unitId: task.unitId } : {}),
           ...(task.requestId ? { requestId: task.requestId } : {}),
+          ...(input.roundId ? { roundId: input.roundId } : {}),
           ...(task.assigneeId
             ? { guardId: task.assigneeId }
             : task.gateId
@@ -311,6 +327,8 @@ export class TasksService implements OnModuleInit {
     });
     if (cancelled.requestId)
       await this.inspections.taskCancelled(tx, cancelled.requestId, by);
+    // A closed unit's round it scheduled is due again (ADR 0083).
+    await this.rounds.taskCancelled(tx, id);
     return cancelled;
   }
 
@@ -453,6 +471,7 @@ export class TasksService implements OnModuleInit {
         },
       });
       if (done.unitId) {
+        await this.rounds.taskDone(tx, id);
         const primary = await this.community.primaryOf(tx, done.unitId);
         // The request's asker too (ADR 0063): a vacant unit has no primary.
         const asker = done.requestId

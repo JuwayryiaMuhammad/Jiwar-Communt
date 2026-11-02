@@ -163,25 +163,46 @@ export class StaffInboxService implements OnModuleInit, OnApplicationBootstrap {
   /** The badge: what waits, and how much of it is overdue, per type. */
   async count(): Promise<InboxCount> {
     const sources = await this.visible();
-    return this.tenantTx.withTenantTx(async (tx) => {
-      const now = await clock(tx);
-      const due = await this.dueHours(tx);
-      const types: InboxCount['types'] = [];
-      for (const s of sources)
-        types.push({
-          type: s.type,
-          total: await s.count(tx, null),
-          overdue: await s.count(
-            tx,
-            new Date(now.getTime() - due[s.type] * HOUR_MS),
-          ),
-        });
-      return {
-        total: types.reduce((n, t) => n + t.total, 0),
-        overdue: types.reduce((n, t) => n + t.overdue, 0),
-        types,
-      };
-    });
+    return this.tenantTx.withTenantTx(async (tx) =>
+      this.countOf(tx, sources, await clock(tx)),
+    );
+  }
+
+  /**
+   * Every type's count as of `now`, whoever holds it, in the caller's
+   * transaction: the daily brief's (ADR 0079), which is read back per
+   * type to each reader's permissions.
+   */
+  countAll(tx: TenantTxClient, now: Date): Promise<InboxCount> {
+    return this.countOf(tx, this.inbox.all(), now);
+  }
+
+  /** Whether the caller may see a type (its permission), for a stored count. */
+  permissionOf(type: InboxType): InboxSource['permission'] | null {
+    return this.inbox.of(type)?.permission ?? null;
+  }
+
+  private async countOf(
+    tx: TenantTxClient,
+    sources: InboxSource[],
+    now: Date,
+  ): Promise<InboxCount> {
+    const due = await this.dueHours(tx);
+    const types: InboxCount['types'] = [];
+    for (const s of sources)
+      types.push({
+        type: s.type,
+        total: await s.count(tx, null),
+        overdue: await s.count(
+          tx,
+          new Date(now.getTime() - due[s.type] * HOUR_MS),
+        ),
+      });
+    return {
+      total: types.reduce((n, t) => n + t.total, 0),
+      overdue: types.reduce((n, t) => n + t.overdue, 0),
+      types,
+    };
   }
 
   settings(): Promise<InboxSetting[]> {

@@ -35,6 +35,7 @@ import { DecisionAppealsModule } from './core/decision-appeals/decision-appeals.
 import { ResidentItemsModule } from './core/resident-items/resident-items.module';
 import { StaffSearchModule } from './core/staff-search/staff-search.module';
 import { StaffInboxModule } from './core/staff-inbox/staff-inbox.module';
+import { StaffDashboardModule } from './core/staff-dashboard/staff-dashboard.module';
 import { MoveStepsModule } from './core/moves/move-steps.module';
 import { VendorDirectoryModule } from './core/vendors/vendor-directory.module';
 import { WorksCompletionsModule } from './core/works/works-completions.module';
@@ -130,6 +131,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     ResidentItemsModule,
     StaffSearchModule,
     StaffInboxModule,
+    StaffDashboardModule,
     MoveStepsModule,
     WorksCompletionsModule,
     VendorDirectoryModule,

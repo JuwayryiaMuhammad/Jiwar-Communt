@@ -596,6 +596,9 @@ model Tenant {
   marketSettings         MarketSettings?
   staffInboxDueHours     StaffInboxDueHours[]
   staffInboxOverdue      StaffInboxOverdue[]
+  staffDashboardSettings StaffDashboardSettings?
+  staffBriefs            StaffBrief[]
+  servicePressure        MaintenanceServicePressure?
   marketListings         MarketListing[]
   marketShops            MarketShop[]
   marketListingReports   MarketListingReport[]
@@ -12225,4 +12228,55 @@ model AccountDeputy {
 
   @@unique([tenantId, id])
   @@map("account_deputies")
+}
+
+// ============================================================================
+// The operations dashboard (ADR 0079)
+// ============================================================================
+
+/// When a compound's daily brief and end-of-day review are written: minutes
+/// after its local midnight; null, not written. No row: 07:00 and 17:00.
+model StaffDashboardSettings {
+  tenantId     String   @id @map("tenant_id") @db.Uuid
+  briefMinute  Int?     @default(420) @map("brief_minute")
+  reviewMinute Int?     @default(1020) @map("review_minute")
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("staff_dashboard_settings")
+}
+
+/// A daily brief or end-of-day review, once per compound, kind and local
+/// day: counts, shares and amounts only. Written once; never changed.
+model StaffBrief {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  /// brief | review (CHECK).
+  kind        String
+  day         DateTime @db.Date
+  contents    Json
+  generatedAt DateTime @map("generated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, day, kind], map: "staff_briefs_day_key")
+  @@index([tenantId, generatedAt, id], map: "staff_briefs_list_idx")
+  @@map("staff_briefs")
+}
+
+/// Service pressure (ADR 0079): the compound's threshold of open tickets
+/// per available technician (null: off), and the current rise.
+model MaintenanceServicePressure {
+  tenantId          String    @id @map("tenant_id") @db.Uuid
+  openPerTechnician Int?      @map("open_per_technician")
+  raisedAt          DateTime? @map("raised_at") @db.Timestamptz(3)
+  toldAt            DateTime? @map("told_at") @db.Timestamptz(3)
+  easedAt           DateTime? @map("eased_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("maintenance_service_pressure")
 }

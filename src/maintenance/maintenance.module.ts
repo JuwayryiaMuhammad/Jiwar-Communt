@@ -69,6 +69,9 @@ import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketSummary } from './tickets/resident-ticket-summary';
 import { ResidentTicketItems } from './tickets/resident-ticket-items';
 import { MaintenanceStaffSearchSources } from './tickets/staff-search-sources';
+import { MaintenanceDashboardSections } from './dashboard/maintenance-dashboard';
+import { ServicePressure } from './dispatch/service-pressure';
+import { ServicePressureController } from './dispatch/service-pressure.controller';
 import { ResidentTicketsController } from './tickets/resident-tickets.controller';
 import { TicketAccess } from './tickets/ticket-access';
 import { TicketLog } from './tickets/ticket-log';
@@ -243,6 +246,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     TechnicianAvailabilityController,
     DispatchAvailabilityController,
     DispatchSettingsController,
+    ServicePressureController,
     SlaSettingsController,
     CategorySlaTargetsController,
     ResidentVisitsController,
@@ -348,6 +352,8 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     QuotesService,
     ResidentTicketItems,
     MaintenanceStaffSearchSources,
+    ServicePressure,
+    MaintenanceDashboardSections,
     CommonAreasService,
     CompoundCalendar,
     AssetTypesService,

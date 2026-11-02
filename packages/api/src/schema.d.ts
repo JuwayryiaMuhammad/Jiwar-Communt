@@ -7479,6 +7479,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/service-pressure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the open tickets against the technicians available */
+        get: operations["ServicePressureController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set the service-pressure threshold
+         * @description The dispatch and the managers are told once a rise, at most once an hour; null turns the alert off and ends a rise in course.
+         */
+        patch: operations["ServicePressureController_update"];
+        trace?: never;
+    };
     "/api/v1/maintenance/settings": {
         parameters: {
             query?: never;
@@ -13699,6 +13720,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/briefs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the daily briefs and end-of-day reviews */
+        get: operations["StaffBriefsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/briefs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a brief or a review
+         * @description As written; the sections and inbox types the caller may read, the rest null.
+         */
+        get: operations["StaffBriefsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/clearances/{id}/certificate": {
         parameters: {
             query?: never;
@@ -14136,6 +14194,87 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the dashboard’s cards
+         * @description Every section the caller reads, as of now, on the compound’s day: tickets, the SLA and service pressure, outages, security, the gate, collections and what is owed, the units; the inbox’s badge. One call; each section a fixed number of aggregate queries.
+         */
+        get: operations["StaffDashboardController_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/dashboard/buildings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read every building’s status
+         * @description Each building of the register (ADR 0072) with its units, tickets and outages as the caller may read them, and a band: critical, attention or ok.
+         */
+        get: operations["StaffDashboardController_buildings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/dashboard/needs-you": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read what needs me now
+         * @description The alerts of the sections the caller reads, the critical first, then the inbox’s overdue items and its oldest (ADR 0073), 10 at most. Each opens on its own page.
+         */
+        get: operations["StaffDashboardController_needsYou"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/dashboard/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read when the brief and the review are written */
+        get: operations["StaffDashboardController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change when the brief and the review are written
+         * @description In the compound’s time zone; null turns one off. A change applies from the next day for a kind already written today.
+         */
+        patch: operations["StaffDashboardController_updateSettings"];
         trace?: never;
     };
     "/api/v1/staff/decision-appeals": {
@@ -24862,6 +25001,8 @@ export interface components {
             /** @description In service now. */
             open: boolean;
         };
+        /** @enum {string} */
+        BriefKind: "brief" | "review";
         BriefLatestView: {
             /** Format: uuid */
             id: string;
@@ -24869,6 +25010,22 @@ export interface components {
             number: string;
             /** @description The item’s own status: a TicketStatus for a ticket, a ManagementRequestStatus for a request. */
             status: string;
+        };
+        BriefListItemView: {
+            /**
+             * @description The compound’s day.
+             * @example 2026-11-02
+             */
+            date: string;
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["BriefKind"];
+        };
+        BriefListItemViewList: {
+            data: components["schemas"]["BriefListItemView"][];
+            nextCursor: string | null;
         };
         BriefOutageView: {
             /** Format: date-time */
@@ -24895,6 +25052,23 @@ export interface components {
             latest: components["schemas"]["BriefLatestView"] | null;
             /** @description Not finished, or not closed. */
             open: number;
+        };
+        BriefView: {
+            /**
+             * @description The compound’s day.
+             * @example 2026-11-02
+             */
+            date: string;
+            figures: components["schemas"]["DashboardFiguresView"];
+            /** Format: date-time */
+            generatedAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The types the reader decides; null without `inbox.read`. */
+            inbox: components["schemas"]["InboxCountView"] | null;
+            kind: components["schemas"]["BriefKind"];
+            /** @example Africa/Cairo */
+            timeZone: string;
         };
         /** @enum {string} */
         BudgetCategory: "security" | "cleaning" | "landscaping" | "maintenance" | "utilities" | "staff" | "insurance" | "administration" | "reserve_fund" | "other";
@@ -25039,6 +25213,14 @@ export interface components {
             status: string;
             totals: components["schemas"]["BudgetVsActualTotalsView"];
         };
+        BuildingEnergyView: {
+            outagesActive: number;
+        };
+        BuildingMaintenanceView: {
+            emergencyOpen: number;
+            open: number;
+            overdue: number;
+        };
         BuildingRepresentativeView: {
             building: string;
             /** @description Their first name only. */
@@ -25047,6 +25229,23 @@ export interface components {
             id: string;
             /** Format: date-time */
             since: string;
+        };
+        BuildingStatusView: {
+            /**
+             * @description critical: an outage in force or an emergency open; attention: an overdue ticket; from the sections the caller reads.
+             * @enum {string}
+             */
+            band: "ok" | "attention" | "critical";
+            energy: components["schemas"]["BuildingEnergyView"] | null;
+            /** Format: uuid */
+            id: string;
+            maintenance: components["schemas"]["BuildingMaintenanceView"] | null;
+            name: string;
+            units: components["schemas"]["BuildingUnitsView"] | null;
+        };
+        BuildingUnitsView: {
+            occupied: number;
+            units: number;
         };
         BuildingView: {
             /** Format: date-time */
@@ -25060,6 +25259,12 @@ export interface components {
         BuildingViewList: {
             data: components["schemas"]["BuildingView"][];
             nextCursor: string | null;
+        };
+        BuildingsStatusView: {
+            /** Format: date-time */
+            asOf: string;
+            /** @description By name. */
+            buildings: components["schemas"]["BuildingStatusView"][];
         };
         BuildingsView: {
             /** @description The buildings the compound’s units name, in order. */
@@ -28885,6 +29090,51 @@ export interface components {
             startedAt: string;
             unscheduledMinutes: number | null;
         };
+        DashboardAlertView: {
+            /** @description emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open (warning). */
+            code: string;
+            count: number;
+            section: components["schemas"]["DashboardSection"];
+            /** @enum {string} */
+            severity: "critical" | "warning";
+        };
+        DashboardFiguresView: {
+            energy: components["schemas"]["EnergyFiguresView"] | null;
+            finance: components["schemas"]["FinanceFiguresView"] | null;
+            gate: components["schemas"]["GateFiguresView"] | null;
+            maintenance: components["schemas"]["MaintenanceFiguresView"] | null;
+            security: components["schemas"]["SecurityFiguresView"] | null;
+            units: components["schemas"]["UnitsFiguresView"] | null;
+        };
+        /** @enum {string} */
+        DashboardSection: "units" | "maintenance" | "energy" | "security" | "gate" | "finance";
+        DashboardSettingsView: {
+            /**
+             * @description When the daily brief is written, the compound’s time; null: not written.
+             * @example 07:00
+             */
+            briefAt: string | null;
+            /** @example 17:00 */
+            reviewAt: string | null;
+            /** @example Africa/Cairo */
+            timeZone: string;
+        };
+        DashboardSummaryView: {
+            /** Format: date-time */
+            asOf: string;
+            /**
+             * @description The compound’s day.
+             * @example 2026-11-02
+             */
+            date: string;
+            figures: components["schemas"]["DashboardFiguresView"];
+            /** @description What waits for the caller’s decision; null without `inbox.read`. */
+            inbox: components["schemas"]["InboxBadgeView"] | null;
+            /** @description Days of spending the cash covers: always null until cash flow is built. */
+            liquidityDays: number | null;
+            /** @example Africa/Cairo */
+            timeZone: string;
+        };
         /** @enum {string} */
         DataExportStatus: "pending" | "building" | "ready" | "expired" | "failed";
         DataExportView: {
@@ -29837,6 +30087,14 @@ export interface components {
             /** @description For the next guard and the management. */
             notes?: string;
         };
+        EnergyFiguresView: {
+            /** @description Meter spikes nobody acknowledged. */
+            meterAlertsOpen: number;
+            /** @description Outages in force now. */
+            outagesActive: number;
+            /** @description Outages that start later today. */
+            outagesLaterToday: number;
+        };
         EnergySettingsDto: {
             /** @description From 1.2 to 10: a spike is the daily use above the mean times this. */
             anomalyFactor?: string;
@@ -30685,6 +30943,20 @@ export interface components {
             /** @description `pending` until finalized. */
             status: components["schemas"]["FileStatus"];
         };
+        FinanceFiguresView: {
+            /** @description Net of reversals, the month so far. */
+            collectedMonth: string;
+            /** @description Net of reversals. */
+            collectedToday: string;
+            /** @description The share of `dueMonth` paid, 0–1; null when nothing is due. */
+            collectionRate: number | null;
+            /** @example EGP */
+            currency: string;
+            /** @description What the invoices due this month so far ask, after credit notes. */
+            dueMonth: string;
+            overdueAmount: string;
+            overdueInvoices: number;
+        };
         /** @enum {string} */
         FinanceGatewayMode: "sandbox" | "live";
         FineAppealView: {
@@ -30909,6 +31181,12 @@ export interface components {
          * @enum {string}
          */
         GateExceptionStatus: "pending" | "approved" | "rejected" | "expired" | "withdrawn";
+        GateFiguresView: {
+            entriesToday: number;
+            exitsToday: number;
+            /** @description Visitors let in today: by pass, gate request or field exception. */
+            visitorsToday: number;
+        };
         GateInstructionsDto: {
             delivery: components["schemas"]["DeliveryInstruction"];
             uninvitedVisitor: components["schemas"]["VisitorInstruction"];
@@ -32387,6 +32665,10 @@ export interface components {
             /** @description The board’s threshold for the type (EGP); null: the compound set none. */
             limit: string | null;
         };
+        InboxBadgeView: {
+            overdue: number;
+            total: number;
+        };
         InboxCountView: {
             overdue: number;
             total: number;
@@ -33729,6 +34011,30 @@ export interface components {
             data: components["schemas"]["MaintenanceDocumentView"][];
             nextCursor: string | null;
         };
+        MaintenanceFiguresView: {
+            /** @description A running clock past its share of its target, not yet late. */
+            atRisk: number;
+            /** @description Completed, waiting for the residents’ confirmation. */
+            awaitingConfirmation: number;
+            closedToday: number;
+            completedToday: number;
+            emergencyOpen: number;
+            emergencyUnassigned: number;
+            inspectionsDueToday: number;
+            onHold: number;
+            /** @description New, or in a technician’s hands. */
+            open: number;
+            openedToday: number;
+            /** @description As the list’s `overdue`. */
+            overdue: number;
+            overdueEmergency: number;
+            /** @description Plan occurrences due today. */
+            plannedDueToday: number;
+            pressure: components["schemas"]["PressureFiguresView"];
+            /** @description Whether the SLA runs: `overdue` and `atRisk` are 0 while not. */
+            slaEnabled: boolean;
+            unassigned: number;
+        };
         MaintenanceKpisView: {
             completedCorrective: number;
             completedPlanned: number;
@@ -34824,6 +35130,15 @@ export interface components {
             birthDate: string | null;
             /** @description The number’s own structure holds: a real birth date, a known governorate. */
             valid: boolean;
+        };
+        NeedsYouView: {
+            /** @description The critical first. */
+            alerts: components["schemas"]["DashboardAlertView"][];
+            /** Format: date-time */
+            asOf: string;
+            inbox: components["schemas"]["InboxCountView"] | null;
+            /** @description The inbox’s overdue items first, then its oldest (10 at most); null without `inbox.read`. */
+            items: components["schemas"]["InboxItemView"][] | null;
         };
         /** @enum {string} */
         NeighbourClaimStatus: "pending" | "handed_over" | "declined" | "withdrawn";
@@ -37188,6 +37503,14 @@ export interface components {
             expiresAt: string;
             /** @description A presigned GET. */
             url: string;
+        };
+        PressureFiguresView: {
+            available: number;
+            /** Format: date-time */
+            since: string | null;
+            /** @description Open tickets one available technician may carry; null: no alert. */
+            threshold: number | null;
+            underPressure: boolean;
         };
         PreventiveServiceOptionView: {
             /** Format: uuid */
@@ -39897,6 +40220,13 @@ export interface components {
             data: components["schemas"]["SecurityEventView"][];
             nextCursor: string | null;
         };
+        SecurityFiguresView: {
+            criticalOpen: number;
+            /** @description Open or under investigation. */
+            incidentsOpen: number;
+            incidentsToday: number;
+            lockdownsLive: number;
+        };
         SelectAccountDto: {
             /** Format: uuid */
             accountId: string;
@@ -39958,6 +40288,23 @@ export interface components {
             firstName: string | null;
             /** Format: uuid */
             id: string;
+        };
+        ServicePressureView: {
+            /** @description Active technicians holding tickets.work who are available. */
+            available: number;
+            /** @description New, or in a technician’s hands. */
+            open: number;
+            /**
+             * Format: date-time
+             * @description When the current rise began, as the sweep saw it.
+             */
+            since: string | null;
+            /** @description Open tickets one available technician may carry; null: no alert. */
+            threshold: number | null;
+            /** Format: date-time */
+            toldAt: string | null;
+            /** @description open ≥ threshold × available (one at least). */
+            underPressure: boolean;
         };
         ServiceStandingView: {
             /** Format: date-time */
@@ -43925,6 +44272,14 @@ export interface components {
             data: components["schemas"]["UnitVisitView"][];
             nextCursor: string | null;
         };
+        UnitsFiguresView: {
+            /** @description In closed-unit mode. */
+            closed: number;
+            /** @description With an active occupancy. */
+            occupied: number;
+            units: number;
+            vacant: number;
+        };
         UnreadCountView: {
             /** @description Unread and critical. */
             critical: number;
@@ -44182,6 +44537,18 @@ export interface components {
             vendorId?: string;
             vendorName?: string;
             vendorPhone?: string | null;
+        };
+        UpdateDashboardSettingsDto: {
+            /**
+             * @description `HH:MM` in the compound’s time zone; null: no daily brief. Before `reviewAt` (ENDS_BEFORE_START).
+             * @example 07:00
+             */
+            briefAt?: string | null;
+            /**
+             * @description `HH:MM`; null: no end-of-day review. After `briefAt`.
+             * @example 17:00
+             */
+            reviewAt?: string | null;
         };
         UpdateDispatchSettingsDto: {
             /** @description Assign tickets automatically. Off until the manager turns it on, after setting technicians’ specialties. */
@@ -44646,6 +45013,10 @@ export interface components {
             title?: string;
             /** @enum {string} */
             unit?: "day" | "week" | "month" | "year";
+        };
+        UpdateServicePressureDto: {
+            /** @description Open tickets (new, or in a technician’s hands) one available technician may carry before the dispatch and the managers are told; null: no alert. */
+            openPerTechnician: number | null;
         };
         UpdateSettingsDto: {
             /** @description Whether households may write `always_allow` standing instructions (ADR 0043). */
@@ -56954,6 +57325,48 @@ export interface operations {
             };
         };
     };
+    ServicePressureController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePressureView"];
+                };
+            };
+        };
+    };
+    ServicePressureController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateServicePressureDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePressureView"];
+                };
+            };
+        };
+    };
     MaintenanceSettingsController_get: {
         parameters: {
             query?: never;
@@ -66491,6 +66904,51 @@ export interface operations {
             };
         };
     };
+    StaffBriefsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["BriefKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BriefListItemViewList"];
+                };
+            };
+        };
+    };
+    StaffBriefsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BriefView"];
+                };
+            };
+        };
+    };
     StaffClearancesController_certificate: {
         parameters: {
             query?: never;
@@ -67103,6 +67561,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ControlRoomPostViewList"];
+                };
+            };
+        };
+    };
+    StaffDashboardController_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummaryView"];
+                };
+            };
+        };
+    };
+    StaffDashboardController_buildings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildingsStatusView"];
+                };
+            };
+        };
+    };
+    StaffDashboardController_needsYou: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NeedsYouView"];
+                };
+            };
+        };
+    };
+    StaffDashboardController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSettingsView"];
+                };
+            };
+        };
+    };
+    StaffDashboardController_updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDashboardSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSettingsView"];
                 };
             };
         };

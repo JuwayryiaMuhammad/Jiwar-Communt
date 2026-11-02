@@ -8,6 +8,7 @@ import { ViolationBoardAppeals } from './violations/violation-board-appeals';
 import { PermitDecisionAppeals } from './permits/permit-decision-appeals';
 import { VehicleDecisionAppeals } from './vehicles/vehicle-decision-appeals';
 import { SecurityOverview } from './reports/security-overview';
+import { GateDashboardSections } from './reports/gate-dashboard';
 import {
   GuardDevicesController,
   StaffDevicesController,
@@ -495,6 +496,7 @@ import { PermitWorksCompletion } from './permits/permit-works-completion';
     PermitDecisionAppeals,
     VehicleDecisionAppeals,
     SecurityOverview,
+    GateDashboardSections,
     // The gate offline (ADR 0057).
     GateDevicesService,
     DeviceEnvelopes,

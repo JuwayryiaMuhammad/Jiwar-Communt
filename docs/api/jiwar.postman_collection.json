@@ -30107,6 +30107,61 @@
           }
         },
         {
+          "name": "Read the open tickets against the technicians available",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "service-pressure"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/service-pressure"
+            }
+          }
+        },
+        {
+          "name": "Set the service-pressure threshold",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"openPerTechnician\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `openPerTechnician` | number | yes | Open tickets (new, or in a technician’s hands) one available technician may carry before the dispatch and the managers are told; null: no alert. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "service-pressure"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/service-pressure"
+            }
+          }
+        },
+        {
           "name": "Get the maintenance settings",
           "request": {
             "description": "**Responses:** 200",
@@ -48276,6 +48331,193 @@
     },
     {
       "item": [
+        {
+          "name": "List the daily briefs and end-of-day reviews",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "briefs"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/briefs"
+            }
+          }
+        },
+        {
+          "name": "Read a brief or a review",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "briefs",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/briefs/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read the dashboard’s cards",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "dashboard"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/dashboard"
+            }
+          }
+        },
+        {
+          "name": "Read every building’s status",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "dashboard",
+                "buildings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/dashboard/buildings"
+            }
+          }
+        },
+        {
+          "name": "Read what needs me now",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "dashboard",
+                "needs-you"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/dashboard/needs-you"
+            }
+          }
+        },
+        {
+          "name": "Read when the brief and the review are written",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "dashboard",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/dashboard/settings"
+            }
+          }
+        },
+        {
+          "name": "Change when the brief and the review are written",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"briefAt\": \"07:00\",\n  \"reviewAt\": \"17:00\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `briefAt` | string |  | `HH:MM` in the compound’s time zone; null: no daily brief. Before `reviewAt` (ENDS_BEFORE_START). |\n| `reviewAt` | string |  | `HH:MM`; null: no end-of-day review. After `briefAt`. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "dashboard",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/dashboard/settings"
+            }
+          }
+        },
         {
           "name": "My deputyships, as principal or deputy",
           "request": {

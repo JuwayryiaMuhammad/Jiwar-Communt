@@ -17,8 +17,11 @@ interface AtRisk {
   clock: SlaClock;
 }
 
-/** The share of a clock's target, per priority, as the settings keep it. */
-const PERCENT = Prisma.sql`(CASE t.priority
+/**
+ * The share of a clock's target, per priority, as the settings keep it
+ * (`t` the ticket, `s` the settings); the dashboard counts by it too.
+ */
+export const PERCENT = Prisma.sql`(CASE t.priority
   WHEN 'normal' THEN s.at_risk_percent_normal
   WHEN 'urgent' THEN s.at_risk_percent_urgent
   ELSE s.at_risk_percent_emergency END)`;

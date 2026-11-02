@@ -6130,6 +6130,13 @@
         ],
         "type": "object"
       },
+      "BriefKind": {
+        "enum": [
+          "brief",
+          "review"
+        ],
+        "type": "string"
+      },
       "BriefLatestView": {
         "properties": {
           "id": {
@@ -6149,6 +6156,56 @@
           "id",
           "number",
           "status"
+        ],
+        "type": "object"
+      },
+      "BriefListItemView": {
+        "properties": {
+          "date": {
+            "description": "The compound’s day.",
+            "example": "2026-11-02",
+            "type": "string"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BriefKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "date",
+          "generatedAt"
+        ],
+        "type": "object"
+      },
+      "BriefListItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BriefListItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -6239,6 +6296,57 @@
         "required": [
           "open",
           "latest"
+        ],
+        "type": "object"
+      },
+      "BriefView": {
+        "properties": {
+          "date": {
+            "description": "The compound’s day.",
+            "example": "2026-11-02",
+            "type": "string"
+          },
+          "figures": {
+            "$ref": "#/components/schemas/DashboardFiguresView"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inbox": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxCountView"
+              }
+            ],
+            "description": "The types the reader decides; null without `inbox.read`.",
+            "nullable": true,
+            "type": "object"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BriefKind"
+              }
+            ]
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "date",
+          "generatedAt",
+          "timeZone",
+          "figures",
+          "inbox"
         ],
         "type": "object"
       },
@@ -6650,6 +6758,36 @@
         ],
         "type": "object"
       },
+      "BuildingEnergyView": {
+        "properties": {
+          "outagesActive": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "outagesActive"
+        ],
+        "type": "object"
+      },
+      "BuildingMaintenanceView": {
+        "properties": {
+          "emergencyOpen": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "overdue": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "open",
+          "overdue",
+          "emergencyOpen"
+        ],
+        "type": "object"
+      },
       "BuildingRepresentativeView": {
         "properties": {
           "building": {
@@ -6674,6 +6812,77 @@
           "building",
           "firstName",
           "since"
+        ],
+        "type": "object"
+      },
+      "BuildingStatusView": {
+        "properties": {
+          "band": {
+            "description": "critical: an outage in force or an emergency open; attention: an overdue ticket; from the sections the caller reads.",
+            "enum": [
+              "ok",
+              "attention",
+              "critical"
+            ],
+            "type": "string"
+          },
+          "energy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingEnergyView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maintenance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingMaintenanceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "units": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingUnitsView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "band",
+          "units",
+          "maintenance",
+          "energy"
+        ],
+        "type": "object"
+      },
+      "BuildingUnitsView": {
+        "properties": {
+          "occupied": {
+            "type": "number"
+          },
+          "units": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "units",
+          "occupied"
         ],
         "type": "object"
       },
@@ -6719,6 +6928,26 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "BuildingsStatusView": {
+        "properties": {
+          "asOf": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "buildings": {
+            "description": "By name.",
+            "items": {
+              "$ref": "#/components/schemas/BuildingStatusView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "asOf",
+          "buildings"
         ],
         "type": "object"
       },
@@ -17781,6 +18010,185 @@
         ],
         "type": "object"
       },
+      "DashboardAlertView": {
+        "properties": {
+          "code": {
+            "description": "emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open (warning).",
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "section": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardSection"
+              }
+            ]
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "warning"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "section",
+          "code",
+          "severity",
+          "count"
+        ],
+        "type": "object"
+      },
+      "DashboardFiguresView": {
+        "properties": {
+          "energy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EnergyFiguresView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "finance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinanceFiguresView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "gate": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GateFiguresView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "maintenance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceFiguresView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "security": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SecurityFiguresView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "units": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UnitsFiguresView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "units",
+          "maintenance",
+          "energy",
+          "security",
+          "gate",
+          "finance"
+        ],
+        "type": "object"
+      },
+      "DashboardSection": {
+        "enum": [
+          "units",
+          "maintenance",
+          "energy",
+          "security",
+          "gate",
+          "finance"
+        ],
+        "type": "string"
+      },
+      "DashboardSettingsView": {
+        "properties": {
+          "briefAt": {
+            "description": "When the daily brief is written, the compound’s time; null: not written.",
+            "example": "07:00",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewAt": {
+            "example": "17:00",
+            "nullable": true,
+            "type": "string"
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "briefAt",
+          "reviewAt",
+          "timeZone"
+        ],
+        "type": "object"
+      },
+      "DashboardSummaryView": {
+        "properties": {
+          "asOf": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "date": {
+            "description": "The compound’s day.",
+            "example": "2026-11-02",
+            "type": "string"
+          },
+          "figures": {
+            "$ref": "#/components/schemas/DashboardFiguresView"
+          },
+          "inbox": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxBadgeView"
+              }
+            ],
+            "description": "What waits for the caller’s decision; null without `inbox.read`.",
+            "nullable": true,
+            "type": "object"
+          },
+          "liquidityDays": {
+            "description": "Days of spending the cash covers: always null until cash flow is built.",
+            "nullable": true,
+            "type": "number"
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asOf",
+          "date",
+          "timeZone",
+          "figures",
+          "inbox",
+          "liquidityDays"
+        ],
+        "type": "object"
+      },
       "DataExportStatus": {
         "enum": [
           "pending",
@@ -20926,6 +21334,28 @@
         },
         "type": "object"
       },
+      "EnergyFiguresView": {
+        "properties": {
+          "meterAlertsOpen": {
+            "description": "Meter spikes nobody acknowledged.",
+            "type": "number"
+          },
+          "outagesActive": {
+            "description": "Outages in force now.",
+            "type": "number"
+          },
+          "outagesLaterToday": {
+            "description": "Outages that start later today.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "outagesActive",
+          "outagesLaterToday",
+          "meterAlertsOpen"
+        ],
+        "type": "object"
+      },
       "EnergySettingsDto": {
         "properties": {
           "anomalyFactor": {
@@ -23615,6 +24045,47 @@
         ],
         "type": "object"
       },
+      "FinanceFiguresView": {
+        "properties": {
+          "collectedMonth": {
+            "description": "Net of reversals, the month so far.",
+            "type": "string"
+          },
+          "collectedToday": {
+            "description": "Net of reversals.",
+            "type": "string"
+          },
+          "collectionRate": {
+            "description": "The share of `dueMonth` paid, 0–1; null when nothing is due.",
+            "nullable": true,
+            "type": "number"
+          },
+          "currency": {
+            "example": "EGP",
+            "type": "string"
+          },
+          "dueMonth": {
+            "description": "What the invoices due this month so far ask, after credit notes.",
+            "type": "string"
+          },
+          "overdueAmount": {
+            "type": "string"
+          },
+          "overdueInvoices": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "currency",
+          "collectedToday",
+          "collectedMonth",
+          "dueMonth",
+          "collectionRate",
+          "overdueInvoices",
+          "overdueAmount"
+        ],
+        "type": "object"
+      },
       "FinanceGatewayMode": {
         "enum": [
           "sandbox",
@@ -24357,6 +24828,26 @@
           "withdrawn"
         ],
         "type": "string"
+      },
+      "GateFiguresView": {
+        "properties": {
+          "entriesToday": {
+            "type": "number"
+          },
+          "exitsToday": {
+            "type": "number"
+          },
+          "visitorsToday": {
+            "description": "Visitors let in today: by pass, gate request or field exception.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "entriesToday",
+          "exitsToday",
+          "visitorsToday"
+        ],
+        "type": "object"
       },
       "GateInstructionsDto": {
         "properties": {
@@ -29415,6 +29906,21 @@
         ],
         "type": "object"
       },
+      "InboxBadgeView": {
+        "properties": {
+          "overdue": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "overdue"
+        ],
+        "type": "object"
+      },
       "InboxCountView": {
         "properties": {
           "overdue": {
@@ -33507,6 +34013,83 @@
         ],
         "type": "object"
       },
+      "MaintenanceFiguresView": {
+        "properties": {
+          "atRisk": {
+            "description": "A running clock past its share of its target, not yet late.",
+            "type": "number"
+          },
+          "awaitingConfirmation": {
+            "description": "Completed, waiting for the residents’ confirmation.",
+            "type": "number"
+          },
+          "closedToday": {
+            "type": "number"
+          },
+          "completedToday": {
+            "type": "number"
+          },
+          "emergencyOpen": {
+            "type": "number"
+          },
+          "emergencyUnassigned": {
+            "type": "number"
+          },
+          "inspectionsDueToday": {
+            "type": "number"
+          },
+          "onHold": {
+            "type": "number"
+          },
+          "open": {
+            "description": "New, or in a technician’s hands.",
+            "type": "number"
+          },
+          "openedToday": {
+            "type": "number"
+          },
+          "overdue": {
+            "description": "As the list’s `overdue`.",
+            "type": "number"
+          },
+          "overdueEmergency": {
+            "type": "number"
+          },
+          "plannedDueToday": {
+            "description": "Plan occurrences due today.",
+            "type": "number"
+          },
+          "pressure": {
+            "$ref": "#/components/schemas/PressureFiguresView"
+          },
+          "slaEnabled": {
+            "description": "Whether the SLA runs: `overdue` and `atRisk` are 0 while not.",
+            "type": "boolean"
+          },
+          "unassigned": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "slaEnabled",
+          "open",
+          "unassigned",
+          "onHold",
+          "awaitingConfirmation",
+          "emergencyOpen",
+          "emergencyUnassigned",
+          "atRisk",
+          "overdue",
+          "overdueEmergency",
+          "openedToday",
+          "completedToday",
+          "closedToday",
+          "plannedDueToday",
+          "inspectionsDueToday",
+          "pressure"
+        ],
+        "type": "object"
+      },
       "MaintenanceKpisView": {
         "properties": {
           "completedCorrective": {
@@ -37174,6 +37757,45 @@
         "required": [
           "valid",
           "birthDate"
+        ],
+        "type": "object"
+      },
+      "NeedsYouView": {
+        "properties": {
+          "alerts": {
+            "description": "The critical first.",
+            "items": {
+              "$ref": "#/components/schemas/DashboardAlertView"
+            },
+            "type": "array"
+          },
+          "asOf": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "inbox": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxCountView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "items": {
+            "description": "The inbox’s overdue items first, then its oldest (10 at most); null without `inbox.read`.",
+            "items": {
+              "$ref": "#/components/schemas/InboxItemView"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "required": [
+          "asOf",
+          "alerts",
+          "items",
+          "inbox"
         ],
         "type": "object"
       },
@@ -44520,6 +45142,33 @@
         "required": [
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PressureFiguresView": {
+        "properties": {
+          "available": {
+            "type": "number"
+          },
+          "since": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "threshold": {
+            "description": "Open tickets one available technician may carry; null: no alert.",
+            "nullable": true,
+            "type": "number"
+          },
+          "underPressure": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "threshold",
+          "available",
+          "underPressure",
+          "since"
         ],
         "type": "object"
       },
@@ -53197,6 +53846,30 @@
         ],
         "type": "object"
       },
+      "SecurityFiguresView": {
+        "properties": {
+          "criticalOpen": {
+            "type": "number"
+          },
+          "incidentsOpen": {
+            "description": "Open or under investigation.",
+            "type": "number"
+          },
+          "incidentsToday": {
+            "type": "number"
+          },
+          "lockdownsLive": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "incidentsToday",
+          "incidentsOpen",
+          "criticalOpen",
+          "lockdownsLive"
+        ],
+        "type": "object"
+      },
       "SelectAccountDto": {
         "properties": {
           "accountId": {
@@ -53350,6 +54023,47 @@
         "required": [
           "id",
           "firstName"
+        ],
+        "type": "object"
+      },
+      "ServicePressureView": {
+        "properties": {
+          "available": {
+            "description": "Active technicians holding tickets.work who are available.",
+            "type": "number"
+          },
+          "open": {
+            "description": "New, or in a technician’s hands.",
+            "type": "number"
+          },
+          "since": {
+            "description": "When the current rise began, as the sweep saw it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "threshold": {
+            "description": "Open tickets one available technician may carry; null: no alert.",
+            "nullable": true,
+            "type": "number"
+          },
+          "toldAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "underPressure": {
+            "description": "open ≥ threshold × available (one at least).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "threshold",
+          "open",
+          "available",
+          "underPressure",
+          "since",
+          "toldAt"
         ],
         "type": "object"
       },
@@ -67177,6 +67891,31 @@
         ],
         "type": "object"
       },
+      "UnitsFiguresView": {
+        "properties": {
+          "closed": {
+            "description": "In closed-unit mode.",
+            "type": "number"
+          },
+          "occupied": {
+            "description": "With an active occupancy.",
+            "type": "number"
+          },
+          "units": {
+            "type": "number"
+          },
+          "vacant": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "units",
+          "occupied",
+          "vacant",
+          "closed"
+        ],
+        "type": "object"
+      },
       "UnreadCountView": {
         "properties": {
           "critical": {
@@ -67931,6 +68670,23 @@
           "vendorPhone": {
             "nullable": true,
             "pattern": "^[0-9+() -]{3,30}$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateDashboardSettingsDto": {
+        "properties": {
+          "briefAt": {
+            "description": "`HH:MM` in the compound’s time zone; null: no daily brief. Before `reviewAt` (ENDS_BEFORE_START).",
+            "example": "07:00",
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewAt": {
+            "description": "`HH:MM`; null: no end-of-day review. After `briefAt`.",
+            "example": "17:00",
+            "nullable": true,
             "type": "string"
           }
         },
@@ -69256,6 +70012,21 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "UpdateServicePressureDto": {
+        "properties": {
+          "openPerTechnician": {
+            "description": "Open tickets (new, or in a technician’s hands) one available technician may carry before the dispatch and the managers are told; null: no alert.",
+            "maximum": 100,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "openPerTechnician"
+        ],
         "type": "object"
       },
       "UpdateSettingsDto": {
@@ -94150,6 +94921,71 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/service-pressure": {
+      "get": {
+        "operationId": "ServicePressureController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServicePressureView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the open tickets against the technicians available",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "The dispatch and the managers are told once a rise, at most once an hour; null turns the alert off and ends a rise in course.",
+        "operationId": "ServicePressureController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServicePressureDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServicePressureView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the service-pressure threshold",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/settings": {
       "get": {
         "operationId": "MaintenanceSettingsController_get",
@@ -112227,6 +113063,101 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/briefs": {
+      "get": {
+        "operationId": "StaffBriefsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BriefKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BriefListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the daily briefs and end-of-day reviews",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/briefs/{id}": {
+      "get": {
+        "description": "As written; the sections and inbox types the caller may read, the rest null.",
+        "operationId": "StaffBriefsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BriefView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a brief or a review",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/clearances/{id}/certificate": {
       "get": {
         "operationId": "StaffClearancesController_certificate",
@@ -113376,6 +114307,158 @@
         "summary": "The posts at a glance",
         "tags": [
           "control-room"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/dashboard": {
+      "get": {
+        "description": "Every section the caller reads, as of now, on the compound’s day: tickets, the SLA and service pressure, outages, security, the gate, collections and what is owed, the units; the inbox’s badge. One call; each section a fixed number of aggregate queries.",
+        "operationId": "StaffDashboardController_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummaryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the dashboard’s cards",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/dashboard/buildings": {
+      "get": {
+        "description": "Each building of the register (ADR 0072) with its units, tickets and outages as the caller may read them, and a band: critical, attention or ok.",
+        "operationId": "StaffDashboardController_buildings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildingsStatusView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read every building’s status",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/dashboard/needs-you": {
+      "get": {
+        "description": "The alerts of the sections the caller reads, the critical first, then the inbox’s overdue items and its oldest (ADR 0073), 10 at most. Each opens on its own page.",
+        "operationId": "StaffDashboardController_needsYou",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NeedsYouView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read what needs me now",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/dashboard/settings": {
+      "get": {
+        "operationId": "StaffDashboardController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read when the brief and the review are written",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "In the compound’s time zone; null turns one off. A change applies from the next day for a kind already written today.",
+        "operationId": "StaffDashboardController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDashboardSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change when the brief and the review are written",
+        "tags": [
+          "staff"
         ],
         "x-stability": "draft"
       }

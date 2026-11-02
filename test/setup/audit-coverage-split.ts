@@ -1006,3 +1006,16 @@ export const M23_COVERAGE: readonly string[] = [
   'deputy.appointed',
   'deputy.ended',
 ];
+
+/** Dispatch depth (ADR 0076), covered by test/dispatch-depth/audit-coverage.e2e-spec.ts. */
+export const M22_COVERAGE: readonly string[] = [
+  'ticket.closed_by_staff',
+  'ticket.reopened_by_staff',
+  'ticket.resumed_by_staff',
+  'maintenance.sla_escalation_changed',
+  'warranty_claim.opened',
+  'warranty_claim.reference_set',
+  'warranty_claim.accepted',
+  'warranty_claim.rejected',
+  'warranty_claim.withdrawn',
+];

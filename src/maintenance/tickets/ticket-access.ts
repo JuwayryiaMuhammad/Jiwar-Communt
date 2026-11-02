@@ -4,6 +4,7 @@ import { CommunityMaintenancePort } from '../../community';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
+import { SensitiveTickets } from './sensitive-tickets';
 import { residentVisible } from './ticket-visibility';
 
 /**
@@ -26,7 +27,11 @@ export const ticketNotFound = () =>
  *   may ever see (`residentVisible`, ADR 0064);
  * - a technician sees only the tickets assigned to them now: a reassigned
  *   or declining technician loses them at once;
- * - dispatch sees every ticket of the compound.
+ * - dispatch sees every ticket of the compound, but a sensitive one only
+ *   holding `tickets.sensitive` (ADR 0081).
+ *
+ * Every staff load of a sensitive ticket (dispatch's or its technician's,
+ * a read or a write) is logged as a read of it (ADR 0081).
  *
  * Writes lock the row first (`FOR UPDATE`) and check after the lock, so a
  * request that lost a race sees the winner's commit. Locks are always
@@ -37,6 +42,7 @@ export class TicketAccess {
   constructor(
     private readonly ctx: RequestContext,
     private readonly community: CommunityMaintenancePort,
+    private readonly sensitive: SensitiveTickets,
   ) {}
 
   async load(
@@ -50,6 +56,8 @@ export class TicketAccess {
     const ticket = await tx.ticket.findUnique({ where: { id } });
     if (!ticket || !(await this.sees(tx, ticket, audience)))
       throw ticketNotFound();
+    if (audience !== 'resident')
+      await this.sensitive.logReads(tx, [ticket], 'detail');
     return ticket;
   }
 
@@ -57,14 +65,20 @@ export class TicketAccess {
     tx: TenantTxClient,
     ticket: Pick<
       Ticket,
-      'createdById' | 'reporterId' | 'unitId' | 'technicianId' | 'origin'
+      | 'createdById'
+      | 'reporterId'
+      | 'unitId'
+      | 'technicianId'
+      | 'origin'
+      | 'sensitive'
     >,
     audience: Audience,
   ): Promise<boolean> {
     const me = this.ctx.accountId;
     switch (audience) {
       case 'dispatch':
-        return true;
+        // ADR 0081: a sensitive ticket only for `tickets.sensitive`.
+        return !ticket.sensitive || this.sensitive.mayRead();
       case 'technician':
         return ticket.technicianId === me;
       case 'resident':

@@ -49,6 +49,8 @@ import { ticketNotFound, TicketAccess, type Audience } from './ticket-access';
 import { COMMON_AREA_LENGTH, DESCRIPTION_LENGTH } from './ticket-limits';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
+import { SensitiveTickets } from './sensitive-tickets';
+import { TicketLanding } from '../analytics/ticket-landing';
 import { IN_HAND, ticketNumber, UNFINISHED } from './ticket-rules';
 import { TicketCreatedView } from './views/ticket.views';
 
@@ -92,6 +94,8 @@ export interface NewWorkOrder {
   actorId: string | null;
   /** ADR 0076: the meter's spike a staff work order answers (claimed by the caller). */
   meterAlertId?: string;
+  /** ADR 0081: the community case it is the work order of (for the audit entry). */
+  caseId?: string;
 }
 
 /** What `insert` writes of a work order. */
@@ -237,6 +241,13 @@ export interface DispatchQuery extends ResidentQuery {
   buildingId?: string;
   /** ADR 0076: a ticket number (`MT-000123` or `123`) or the start of a unit's code. */
   q?: string;
+  /** ADR 0081: only the sensitive tickets (true) or only the others (false). */
+  sensitive?: boolean;
+  /**
+   * ADR 0081: set by the service, never by a caller's query: the reader
+   * lacks `tickets.sensitive`, so every sensitive ticket is left out.
+   */
+  hideSensitive?: boolean;
 }
 
 const PAGE = keysetCursor('createdAt');
@@ -298,6 +309,8 @@ export class TicketsService implements OnModuleInit {
     private readonly escalation: EscalationService,
     private readonly tenantSettings: TenantSettingsService,
     private readonly consents: ConsentsService,
+    private readonly sensitive: SensitiveTickets,
+    private readonly landing: TicketLanding,
   ) {}
 
   onModuleInit(): void {
@@ -541,20 +554,28 @@ export class TicketsService implements OnModuleInit {
   listForTechnician(
     q: ResidentQuery & { sort?: 'newest' | 'priority' },
   ): Promise<Page<TicketRead>> {
+    // ADR 0081: their own sensitive tickets stay theirs; each read is logged.
     if (q.sort === 'priority')
       return this.tenantTx.withTenantTx(async (tx) => {
         const page = await this.byPriority(tx, q);
+        await this.sensitive.logReads(tx, page.items, 'list');
         return {
           items: await this.reads(tx, page.items),
           nextCursor: page.nextCursor,
         };
       });
-    return this.tenantTx.withTenantTx((tx) =>
-      this.page(tx, q, {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const page = await this.page(tx, q, {
         technicianId: this.ctx.accountId,
         ...(q.status ? { status: q.status } : {}),
-      }),
-    );
+      });
+      await this.sensitive.logReads(
+        tx,
+        page.items.map((r) => r.ticket),
+        'list',
+      );
+      return page;
+    });
   }
 
   /**
@@ -611,8 +632,14 @@ export class TicketsService implements OnModuleInit {
    * row carries its SLA and this cycle's escalation, read for the whole page
    * in a fixed number of queries (ADR 0034). One reading of the database's
    * clock decides the `overdue` filter and every row's `overdue`.
+   *
+   * ADR 0081: a sensitive ticket is left out for a reader without
+   * `tickets.sensitive`, on both paths; a holder's read of one is logged.
    */
-  listForDispatch(q: DispatchQuery): Promise<Page<DispatchTicketRead>> {
+  async listForDispatch(
+    query: DispatchQuery,
+  ): Promise<Page<DispatchTicketRead>> {
+    const q = await this.withSensitivity(query);
     return this.tenantTx.withTenantTx(async (tx) => {
       const now = await dbNow(tx);
       const page =
@@ -629,9 +656,12 @@ export class TicketsService implements OnModuleInit {
                 q.categoryId ? { categoryId: q.categoryId } : {},
                 q.origin ? { origin: q.origin } : {},
                 q.assetId ? { assetId: q.assetId } : {},
+                q.sensitive !== undefined ? { sensitive: q.sensitive } : {},
+                q.hideSensitive ? { sensitive: false } : {},
                 ...(await this.searchWhere(tx, q)),
               ],
             });
+      await this.sensitive.logReads(tx, page.items, 'list');
       const slas = await this.sla.summaries(tx, page.items, now);
       const escalated = await this.escalation.escalatedAt(tx, page.items, slas);
       return {
@@ -643,6 +673,14 @@ export class TicketsService implements OnModuleInit {
         nextCursor: page.nextCursor,
       };
     });
+  }
+
+  /**
+   * ADR 0081: the query as the reader may run it — `hideSensitive` from
+   * their permissions, whatever the query said.
+   */
+  async withSensitivity(q: DispatchQuery): Promise<DispatchQuery> {
+    return { ...q, hideSensitive: !(await this.sensitive.mayRead()) };
   }
 
   /**
@@ -1154,6 +1192,9 @@ export class TicketsService implements OnModuleInit {
       actorId,
       cycle: 1,
     });
+    // ADR 0081: a community case and a plan suggestion, under the counter's
+    // row lock taken above, so two landings see each other's commit.
+    await this.landing.landed(tx, ticket, category.key);
     if (ticket.priority === 'emergency')
       await this.notices.send(
         tx,
@@ -1240,6 +1281,7 @@ export class TicketsService implements OnModuleInit {
         categoryKey: category.key,
         priority: ticket.priority,
         ...(input.meterAlertId ? { meterAlertId: input.meterAlertId } : {}),
+        ...(input.caseId ? { maintenanceCaseId: input.caseId } : {}),
       },
     });
     return ticket;
@@ -1356,6 +1398,11 @@ export function dispatchSql(q: DispatchQuery): Prisma.Sql[] {
       : []),
     ...(q.origin ? [Prisma.sql`t.origin = ${q.origin}`] : []),
     ...(q.assetId ? [Prisma.sql`t.asset_id = ${q.assetId}::uuid`] : []),
+    // ADR 0081.
+    ...(q.sensitive !== undefined
+      ? [Prisma.sql`t.sensitive = ${q.sensitive}`]
+      : []),
+    ...(q.hideSensitive ? [Prisma.sql`NOT t.sensitive`] : []),
     ...searchSql(q),
   ];
 }

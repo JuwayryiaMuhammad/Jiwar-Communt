@@ -1047,4 +1047,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   management_requests_one_per_ticket: null,
   official_letters_tenant_id_id_key: null,
   official_letters_tenant_id_number_key: null,
+  // Maintenance analytics and cases (ADR 0081): one open suggestion a place
+  // and category, one open case a category and building, made under the
+  // ticket counter's row lock and checked first; one case a work order,
+  // checked first under the case's lock (MAINTENANCE_CASE_HAS_WORK_ORDER).
+  maintenance_plan_suggestions_tenant_id_id_key: null,
+  maintenance_plan_suggestions_one_open: null,
+  maintenance_cases_tenant_id_id_key: null,
+  maintenance_cases_one_open: null,
+  maintenance_cases_one_work_order: null,
 };

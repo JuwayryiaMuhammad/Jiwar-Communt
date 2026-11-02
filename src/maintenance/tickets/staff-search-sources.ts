@@ -1,40 +1,46 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { wantsNumber } from '../../core/resident-items/resident-items';
 import { StaffSearch } from '../../core/staff-search/staff-search';
+import { SensitiveTickets } from './sensitive-tickets';
 import { ticketNumber } from './ticket-rules';
 
 /**
  * Maintenance's sources of the staff's search (ADR 0072): a ticket by its
  * number (`MT-000123`), for whoever dispatches; an asset by its code or
- * name, for whoever reads the register.
+ * name, for whoever reads the register. A sensitive ticket only for
+ * `tickets.sensitive`, its hit logged as a read (ADR 0081).
  */
 @Injectable()
 export class MaintenanceStaffSearchSources implements OnModuleInit {
-  constructor(private readonly search: StaffSearch) {}
+  constructor(
+    private readonly search: StaffSearch,
+    private readonly sensitive: SensitiveTickets,
+  ) {}
 
   onModuleInit(): void {
     this.search.register({
       type: 'ticket',
       permissions: ['tickets.dispatch', 'maintenance.manage'],
-      search: async (tx, q, take) =>
-        wantsNumber(q, 'MT')
-          ? (
-              await tx.ticket.findMany({
-                where: { number: q.number! },
-                take,
-                select: {
-                  id: true,
-                  number: true,
-                  category: { select: { nameEn: true } },
-                },
-              })
-            ).map((t) => ({
-              type: 'ticket' as const,
-              id: t.id,
-              title: ticketNumber(t.number),
-              subtitle: t.category.nameEn,
-            }))
-          : [],
+      search: async (tx, q, take) => {
+        if (!wantsNumber(q, 'MT')) return [];
+        const rows = await tx.ticket.findMany({
+          where: { AND: [{ number: q.number! }, await this.sensitive.where()] },
+          take,
+          select: {
+            id: true,
+            number: true,
+            sensitive: true,
+            category: { select: { nameEn: true } },
+          },
+        });
+        await this.sensitive.logReads(tx, rows, 'search');
+        return rows.map((t) => ({
+          type: 'ticket' as const,
+          id: t.id,
+          title: ticketNumber(t.number),
+          subtitle: t.category.nameEn,
+        }));
+      },
     });
     this.search.register({
       type: 'asset',

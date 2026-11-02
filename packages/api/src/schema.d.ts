@@ -6115,6 +6115,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the community cases */
+        get: operations["CasesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a community case and its tickets */
+        get: operations["CasesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss a community case */
+        post: operations["CasesController_dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/cases/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve a community case */
+        post: operations["CasesController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/categories": {
         parameters: {
             query?: never;
@@ -6265,6 +6333,23 @@ export interface paths {
         get?: never;
         /** Replace the items: a new version; open runs keep theirs */
         put: operations["ChecklistsController_replaceItems"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/complaints-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where the tickets are, by building and area */
+        get: operations["AnalyticsController_complaintsMap"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -7177,6 +7262,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/plan-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the plan suggestions */
+        get: operations["PlanSuggestionsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plan-suggestions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a plan suggestion */
+        get: operations["PlanSuggestionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plan-suggestions/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a plan suggestion into a plan */
+        post: operations["PlanSuggestionsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plan-suggestions/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss a plan suggestion */
+        post: operations["PlanSuggestionsController_dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/plans": {
         parameters: {
             query?: never;
@@ -7558,6 +7711,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/recurrence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Repeat faults by place and category */
+        get: operations["AnalyticsController_recurrenceReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/replacement-recommendations": {
         parameters: {
             query?: never;
@@ -7646,6 +7816,24 @@ export interface paths {
         head?: never;
         /** Update the maintenance settings */
         patch: operations["MaintenanceSettingsController_update"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/settings/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the maintenance analytics settings */
+        get: operations["AnalyticsSettingsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the maintenance analytics settings */
+        patch: operations["AnalyticsSettingsController_update"];
         trace?: never;
     };
     "/api/v1/maintenance/sla-report": {
@@ -8417,6 +8605,40 @@ export interface paths {
         put?: never;
         /** Send a completed work order back */
         post: operations["DispatchTicketsController_sendBack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/sensitive-reads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who read a sensitive ticket */
+        get: operations["SensitivityController_reads"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/sensitivity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Mark a ticket sensitive, or clear it */
+        put: operations["SensitivityController_set"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -24221,6 +24443,15 @@ export interface components {
             /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
             staffCount?: number;
         };
+        AcceptPlanSuggestionDto: {
+            /** @description A new plan, by the plans’ own rules (an asset not in a unit; the suggestion’s own when it names one); its category is the suggestion’s by default. */
+            plan?: components["schemas"]["CreatePlanDto"];
+            /**
+             * Format: uuid
+             * @description An active plan that covers it already (of the suggestion’s asset, when it names one); nothing of the plan changes.
+             */
+            planId?: string;
+        };
         AcceptWarrantyClaimDto: {
             /** @description What the warrantor paid or covered, EGP. */
             recoveredAmount?: string;
@@ -24518,6 +24749,16 @@ export interface components {
             pairedAt: string;
             /** Format: uuid */
             shiftId: string;
+        };
+        AnalyticsSettingsView: {
+            /** @description Residents’ tickets of one category in one building within the window that make a community case. */
+            caseMinTickets: number;
+            /** @description Their window, days. */
+            caseWindowDays: number;
+            /** @description Repairs of one category on one asset (else in one unit) within the window that make a plan suggestion. */
+            recurrenceMinTickets: number;
+            /** @description Their window, days. */
+            recurrenceWindowDays: number;
         };
         AnnouncementAudienceDto: {
             /** @description Buildings, as `GET /community/buildings` lists them. Null or absent: the whole compound. */
@@ -26661,6 +26902,25 @@ export interface components {
             /** Format: uuid */
             caseId: string;
         };
+        CaseTicketView: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            linkedAt: string;
+            /** @example MT-000123 */
+            number: string;
+            status: string;
+            unitCode: string | null;
+        };
+        CaseWorkOrderView: {
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string;
+            status: string;
+        };
         CashEventView: {
             /** @description Signed: what it did to the drawer. */
             amount: string;
@@ -27909,6 +28169,14 @@ export interface components {
         ComplaintViewList: {
             data: components["schemas"]["ComplaintView"][];
             nextCursor: string | null;
+        };
+        ComplaintsMapView: {
+            areas: components["schemas"]["MapAreaView"][];
+            buildings: components["schemas"]["MapBuildingView"][];
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
         };
         CompleteGuardTaskDto: {
             note?: string;
@@ -30165,6 +30433,11 @@ export interface components {
              * @description The asset; or `commonAreaId` instead.
              */
             assetId?: string;
+            /**
+             * Format: uuid
+             * @description ADR 0081: the community case it is the one work order of; the case must be open and without one.
+             */
+            caseId?: string;
             /** Format: uuid */
             categoryId: string;
             /**
@@ -31112,6 +31385,8 @@ export interface components {
              * @description A preventive ticket: the window the resident asked for; null for a repair.
              */
             requestedStartsAt: string | null;
+            /** @description ADR 0081: marked sensitive; only `tickets.sensitive` sees it among the compound’s tickets, and every staff read is logged. */
+            sensitive: boolean;
             /** @description Null while the compound does not measure an SLA, or the ticket has no clocks. */
             sla: components["schemas"]["DispatchTicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
@@ -31182,6 +31457,8 @@ export interface components {
              * @description A preventive ticket: the window the resident asked for; null for a repair.
              */
             requestedStartsAt: string | null;
+            /** @description ADR 0081: marked sensitive; only `tickets.sensitive` sees it among the compound’s tickets, and every staff read is logged. */
+            sensitive: boolean;
             /** @description Null while the compound does not measure an SLA, or the ticket has no clocks. */
             sla: components["schemas"]["DispatchTicketSlaView"] | null;
             status: components["schemas"]["TicketStatus"];
@@ -34237,7 +34514,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -35496,6 +35773,58 @@ export interface components {
             data: components["schemas"]["LoginView"][];
             nextCursor: string | null;
         };
+        MaintenanceCaseDetailView: {
+            /** @description Opened by itself, at the threshold. */
+            automatic: boolean;
+            /** Format: uuid */
+            buildingId: string;
+            /** @description Null once the building was deleted. */
+            buildingName: string | null;
+            /** Format: uuid */
+            categoryId: string;
+            categoryKey: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            openedAt: string;
+            reasonCode: string | null;
+            status: components["schemas"]["MaintenanceCaseStatus"];
+            /** @description Its tickets the reader may see. */
+            ticketCount: number;
+            /** @description Its tickets the reader may see, in the order they joined. */
+            tickets: components["schemas"]["CaseTicketView"][];
+            workOrder: components["schemas"]["CaseWorkOrderView"] | null;
+        };
+        /** @enum {string} */
+        MaintenanceCaseStatus: "open" | "resolved" | "dismissed";
+        MaintenanceCaseView: {
+            /** @description Opened by itself, at the threshold. */
+            automatic: boolean;
+            /** Format: uuid */
+            buildingId: string;
+            /** @description Null once the building was deleted. */
+            buildingName: string | null;
+            /** Format: uuid */
+            categoryId: string;
+            categoryKey: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            openedAt: string;
+            reasonCode: string | null;
+            status: components["schemas"]["MaintenanceCaseStatus"];
+            /** @description Its tickets the reader may see. */
+            ticketCount: number;
+            workOrder: components["schemas"]["CaseWorkOrderView"] | null;
+        };
+        MaintenanceCaseViewList: {
+            data: components["schemas"]["MaintenanceCaseView"][];
+            nextCursor: string | null;
+        };
         /** @enum {string} */
         MaintenanceContractKind: "amc" | "service" | "warranty_extension" | "cleaning" | "security" | "landscaping" | "pest_control" | "supply" | "other";
         /**
@@ -35848,6 +36177,35 @@ export interface components {
             /** @description Null while frozen. */
             phone?: string | null;
             status?: components["schemas"]["AccountStatus"];
+        };
+        MapAreaView: {
+            code: string;
+            /** Format: uuid */
+            commonAreaId: string;
+            /** @description building, area, facility. */
+            kind: string;
+            latitude: number | null;
+            longitude: number | null;
+            open: number;
+            total: number;
+        };
+        MapBuildingView: {
+            /** Format: uuid */
+            buildingId: string;
+            /** @description The five categories with the most. */
+            categories: components["schemas"]["MapCategoryView"][];
+            latitude: number | null;
+            longitude: number | null;
+            name: string;
+            /** @description Neither closed nor cancelled. */
+            open: number;
+            /** @description Opened by residents. */
+            residents: number;
+            total: number;
+        };
+        MapCategoryView: {
+            categoryKey: string;
+            count: number;
         };
         MapPointDto: {
             /** @enum {string} */
@@ -38796,6 +39154,43 @@ export interface components {
             /** @description Open past the grace. */
             overdue: number;
         };
+        /** @enum {string} */
+        PlanSuggestionStatus: "open" | "accepted" | "dismissed";
+        PlanSuggestionView: {
+            /**
+             * Format: uuid
+             * @description An asset of a common area; else `unitId`.
+             */
+            assetId: string | null;
+            /** Format: uuid */
+            categoryId: string;
+            categoryKey: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            firstTicketAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastTicketAt: string;
+            placeCode: string | null;
+            /** @description Accepted: whether the plan was made for it. */
+            planCreated: boolean | null;
+            /** Format: uuid */
+            planId: string | null;
+            reasonCode: string | null;
+            status: components["schemas"]["PlanSuggestionStatus"];
+            ticketCount: number;
+            /** Format: uuid */
+            unitId: string | null;
+            windowDays: number;
+        };
+        PlanSuggestionViewList: {
+            data: components["schemas"]["PlanSuggestionView"][];
+            nextCursor: string | null;
+        };
         PlateBlocklistView: {
             /** Format: uuid */
             entryId: string;
@@ -39970,6 +40365,47 @@ export interface components {
             paidOn: string;
             /** @description Once among the compound’s violation payments (DUPLICATE_RESOURCE). */
             receiptNumber: string;
+        };
+        RecurrenceMonthView: {
+            count: number;
+            /** @example 2027-03 */
+            month: string;
+        };
+        /** @enum {string} */
+        RecurrencePlace: "asset" | "unit" | "building" | "common_area";
+        RecurrenceReportView: {
+            by: components["schemas"]["RecurrencePlace"];
+            /** Format: date */
+            from: string;
+            /** @description The threshold applied. */
+            min: number;
+            rows: components["schemas"]["RecurrenceRowView"][];
+            /** Format: date */
+            to: string;
+            /** @description More rows than the 500 shown. */
+            truncated: boolean;
+        };
+        RecurrenceRowView: {
+            /** Format: uuid */
+            categoryId: string;
+            categoryKey: string;
+            /**
+             * @description EGP recorded on those tickets, voided entries left out.
+             * @example 1250.00
+             */
+            cost: string;
+            count: number;
+            /** Format: date-time */
+            firstAt: string;
+            /** Format: date-time */
+            lastAt: string;
+            /** @description Mean days between consecutive tickets, one decimal. */
+            meanIntervalDays: number;
+            months: components["schemas"]["RecurrenceMonthView"][];
+            /** @description The asset’s, unit’s or area’s code; the building’s name. */
+            placeCode: string | null;
+            /** Format: uuid */
+            placeId: string;
         };
         RefreshTokenDto: {
             refreshToken: string;
@@ -42053,6 +42489,25 @@ export interface components {
             /** @description What the residents read; the suggestion’s note when left out. */
             note?: string;
         };
+        /**
+         * @description How: its page or a part of it (a write reads it too), a list page, the export, the search.
+         * @enum {string}
+         */
+        SensitiveReadVia: "detail" | "list" | "export" | "search";
+        SensitiveReadView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            readAt: string;
+            /** @description The staff member who read it. */
+            reader: components["schemas"]["AccountRefView"];
+            /** @description How: its page or a part of it (a write reads it too), a list page, the export, the search. */
+            via: components["schemas"]["SensitiveReadVia"];
+        };
+        SensitiveReadViewList: {
+            data: components["schemas"]["SensitiveReadView"][];
+            nextCursor: string | null;
+        };
         ServiceGateView: {
             /** Format: uuid */
             id: string;
@@ -42208,6 +42663,12 @@ export interface components {
              * @description An active, residing occupant of the unit.
              */
             accountId: string;
+        };
+        SetSensitivityDto: {
+            /** @description From `ticketSensitive` to mark, `ticketSensitiveClear` to clear; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
+            /** @description `true` marks the ticket sensitive (`tickets.dispatch`); `false` clears it (`tickets.sensitive`). */
+            sensitive: boolean;
         };
         SetTechnicianAvailabilityDto: {
             /** @description From the closed list `availabilityChange`. Required with `unavailable`; not taken with `available`. */
@@ -45398,6 +45859,8 @@ export interface components {
              * @description A preventive ticket: the window the resident asked for; null for a repair.
              */
             requestedStartsAt: string | null;
+            /** @description ADR 0081: marked sensitive by the dispatch; every read of it is logged. */
+            sensitive: boolean;
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
             /** @description The room (ADR 0038); null when not given. */
@@ -45439,6 +45902,8 @@ export interface components {
              * @description A preventive ticket: the window the resident asked for; null for a repair.
              */
             requestedStartsAt: string | null;
+            /** @description ADR 0081: marked sensitive by the dispatch; every read of it is logged. */
+            sensitive: boolean;
             status: components["schemas"]["TicketStatus"];
             unitCode: string | null;
             /** @description The room (ADR 0038); null when not given. */
@@ -46225,6 +46690,12 @@ export interface components {
         UpdateAccountStatusDto: {
             /** @enum {string} */
             status: "active" | "inactive";
+        };
+        UpdateAnalyticsSettingsDto: {
+            caseMinTickets?: number;
+            caseWindowDays?: number;
+            recurrenceMinTickets?: number;
+            recurrenceWindowDays?: number;
         };
         UpdateAnnouncementDto: {
             /** @description The files it shows from now on: ids it already shows (`attachments[].id`) to keep, and the caller’s own finalized `community_attachment` files to add (FILE_NOT_AVAILABLE). */
@@ -56731,6 +57202,102 @@ export interface operations {
             };
         };
     };
+    CasesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["MaintenanceCaseStatus"];
+                buildingId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseViewList"];
+                };
+            };
+        };
+    };
+    CasesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseDetailView"];
+                };
+            };
+        };
+    };
+    CasesController_dismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseDetailView"];
+                };
+            };
+        };
+    };
+    CasesController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceCaseDetailView"];
+                };
+            };
+        };
+    };
     CategoriesController_list: {
         parameters: {
             query?: never;
@@ -57027,6 +57594,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChecklistView"];
+                };
+            };
+        };
+    };
+    AnalyticsController_complaintsMap: {
+        parameters: {
+            query: {
+                /** @description Tickets created on or after, the compound’s day. */
+                from: string;
+                /** @description Created on or before; at most 366 days after `from`. */
+                to: string;
+                categoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplaintsMapView"];
                 };
             };
         };
@@ -58669,6 +59261,101 @@ export interface operations {
             };
         };
     };
+    PlanSuggestionsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["PlanSuggestionStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSuggestionViewList"];
+                };
+            };
+        };
+    };
+    PlanSuggestionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSuggestionView"];
+                };
+            };
+        };
+    };
+    PlanSuggestionsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptPlanSuggestionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSuggestionView"];
+                };
+            };
+        };
+    };
+    PlanSuggestionsController_dismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSuggestionView"];
+                };
+            };
+        };
+    };
     PlansController_list: {
         parameters: {
             query?: {
@@ -59371,6 +60058,34 @@ export interface operations {
             };
         };
     };
+    AnalyticsController_recurrenceReport: {
+        parameters: {
+            query: {
+                /** @description Tickets created on or after, the compound’s day. */
+                from: string;
+                /** @description Created on or before; at most 366 days after `from`. */
+                to: string;
+                categoryId?: string;
+                by?: components["schemas"]["RecurrencePlace"];
+                /** @description Tickets a row needs; the compound’s `recurrenceMinTickets` by default. */
+                min?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurrenceReportView"];
+                };
+            };
+        };
+    };
     ReplacementsController_list: {
         parameters: {
             query?: {
@@ -59522,6 +60237,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MaintenanceSettingsResponse"];
+                };
+            };
+        };
+    };
+    AnalyticsSettingsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsSettingsView"];
+                };
+            };
+        };
+    };
+    AnalyticsSettingsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAnalyticsSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsSettingsView"];
                 };
             };
         };
@@ -60175,6 +60932,8 @@ export interface operations {
                 overdue?: "true" | "false";
                 /** @description `true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off. */
                 escalated?: "true" | "false";
+                /** @description ADR 0081: `true`, only the sensitive tickets; `false`, only the others. A reader without `tickets.sensitive` never sees a sensitive one. */
+                sensitive?: "true" | "false";
                 /** @description Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names. */
                 buildingId?: string;
                 /** @description A ticket’s number (`MT-000123` or `123`) or the start of a unit’s code, any case (ADR 0076). */
@@ -60245,6 +61004,8 @@ export interface operations {
                 overdue?: "true" | "false";
                 /** @description `true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off. */
                 escalated?: "true" | "false";
+                /** @description ADR 0081: `true`, only the sensitive tickets; `false`, only the others. A reader without `tickets.sensitive` never sees a sensitive one. */
+                sensitive?: "true" | "false";
                 /** @description Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names. */
                 buildingId?: string;
                 /** @description A ticket’s number (`MT-000123` or `123`) or the start of a unit’s code, any case (ADR 0076). */
@@ -60841,6 +61602,54 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SensitivityController_reads: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SensitiveReadViewList"];
+                };
+            };
+        };
+    };
+    SensitivityController_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetSensitivityDto"];
             };
         };
         responses: {

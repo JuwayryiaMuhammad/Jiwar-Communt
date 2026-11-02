@@ -74,6 +74,20 @@ import { ServicePressure } from './dispatch/service-pressure';
 import { ServicePressureController } from './dispatch/service-pressure.controller';
 import { ResidentTicketsController } from './tickets/resident-tickets.controller';
 import { TicketAccess } from './tickets/ticket-access';
+import { SensitiveTickets } from './tickets/sensitive-tickets';
+import { SensitivityService } from './tickets/sensitivity.service';
+import { SensitivityController } from './tickets/sensitivity.controller';
+import { TicketLanding } from './analytics/ticket-landing';
+import { AnalyticsSettingsService } from './analytics/analytics-settings.service';
+import { AnalyticsSettingsController } from './analytics/analytics-settings.controller';
+import { RecurrenceReports } from './analytics/recurrence';
+import { ComplaintsMap } from './analytics/complaints-map';
+import { AnalyticsController } from './analytics/analytics.controller';
+import { PlanSuggestionsService } from './analytics/plan-suggestions.service';
+import { PlanSuggestionsController } from './analytics/plan-suggestions.controller';
+import { CasesService } from './analytics/cases.service';
+import { CasesController } from './analytics/cases.controller';
+import { PlanSuggestionInboxItems } from './analytics/plan-suggestion-inbox-items';
 import { TicketLog } from './tickets/ticket-log';
 import { TicketNotices } from './tickets/ticket-notices';
 import { TicketsService } from './tickets/tickets.service';
@@ -241,6 +255,12 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     DispatchTicketsController,
     WorkOrdersController,
     SlaReportController,
+    // ADR 0081.
+    SensitivityController,
+    AnalyticsSettingsController,
+    AnalyticsController,
+    PlanSuggestionsController,
+    CasesController,
     WarrantyClaimsController,
     DispatchUnitsController,
     TechnicianTicketsController,
@@ -323,6 +343,16 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     TechnicianQualification,
     MaintenanceSettingsService,
     TicketAccess,
+    SensitiveTickets,
+    // ADR 0081.
+    SensitivityService,
+    TicketLanding,
+    AnalyticsSettingsService,
+    RecurrenceReports,
+    ComplaintsMap,
+    PlanSuggestionsService,
+    CasesService,
+    PlanSuggestionInboxItems,
     TicketLog,
     TicketNotices,
     TicketsService,

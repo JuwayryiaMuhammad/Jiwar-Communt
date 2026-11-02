@@ -34,6 +34,8 @@ export const INBOX_TYPES = [
   'purchase_request',
   // ADR 0084: a common-area use request waiting for the staff.
   'space_use_request',
+  // ADR 0081: an open plan suggestion, for whoever keeps the plans.
+  'plan_suggestion',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

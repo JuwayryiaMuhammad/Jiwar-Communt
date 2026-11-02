@@ -98,6 +98,8 @@ export class DispatchTicketsController {
         open: q.open === 'true',
         overdue: q.overdue === 'true',
         escalated: q.escalated === 'true',
+        sensitive:
+          q.sensitive === undefined ? undefined : q.sensitive === 'true',
       }),
       (r) => DispatchTicketView.from(r),
     );
@@ -124,6 +126,8 @@ export class DispatchTicketsController {
         open: q.open === 'true',
         overdue: q.overdue === 'true',
         escalated: q.escalated === 'true',
+        sensitive:
+          q.sensitive === undefined ? undefined : q.sensitive === 'true',
       }),
     );
   }

@@ -73,6 +73,24 @@
         },
         "type": "object"
       },
+      "AcceptPlanSuggestionDto": {
+        "properties": {
+          "plan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            ],
+            "description": "A new plan, by the plans’ own rules (an asset not in a unit; the suggestion’s own when it names one); its category is the suggestion’s by default."
+          },
+          "planId": {
+            "description": "An active plan that covers it already (of the suggestion’s asset, when it names one); nothing of the plan changes.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "AcceptWarrantyClaimDto": {
         "properties": {
           "recoveredAmount": {
@@ -915,6 +933,33 @@
           "guard",
           "shiftId",
           "pairedAt"
+        ],
+        "type": "object"
+      },
+      "AnalyticsSettingsView": {
+        "properties": {
+          "caseMinTickets": {
+            "description": "Residents’ tickets of one category in one building within the window that make a community case.",
+            "type": "number"
+          },
+          "caseWindowDays": {
+            "description": "Their window, days.",
+            "type": "number"
+          },
+          "recurrenceMinTickets": {
+            "description": "Repairs of one category on one asset (else in one unit) within the window that make a plan suggestion.",
+            "type": "number"
+          },
+          "recurrenceWindowDays": {
+            "description": "Their window, days.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "recurrenceMinTickets",
+          "recurrenceWindowDays",
+          "caseMinTickets",
+          "caseWindowDays"
         ],
         "type": "object"
       },
@@ -8064,6 +8109,63 @@
         ],
         "type": "object"
       },
+      "CaseTicketView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "linkedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "unitCode",
+          "createdAt",
+          "linkedAt"
+        ],
+        "type": "object"
+      },
+      "CaseWorkOrderView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status"
+        ],
+        "type": "object"
+      },
       "CashEventView": {
         "properties": {
           "amount": {
@@ -12092,6 +12194,37 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ComplaintsMapView": {
+        "properties": {
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/MapAreaView"
+            },
+            "type": "array"
+          },
+          "buildings": {
+            "items": {
+              "$ref": "#/components/schemas/MapBuildingView"
+            },
+            "type": "array"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "buildings",
+          "areas"
         ],
         "type": "object"
       },
@@ -18021,6 +18154,11 @@
             "format": "uuid",
             "type": "string"
           },
+          "caseId": {
+            "description": "ADR 0081: the community case it is the one work order of; the case must be open and without one.",
+            "format": "uuid",
+            "type": "string"
+          },
           "categoryId": {
             "format": "uuid",
             "type": "string"
@@ -21028,6 +21166,10 @@
             "nullable": true,
             "type": "string"
           },
+          "sensitive": {
+            "description": "ADR 0081: marked sensitive; only `tickets.sensitive` sees it among the compound’s tickets, and every staff read is logged.",
+            "type": "boolean"
+          },
           "sla": {
             "allOf": [
               {
@@ -21102,6 +21244,7 @@
           "updatedAt",
           "sla",
           "escalatedAt",
+          "sensitive",
           "description",
           "reporter",
           "createdBy",
@@ -21269,6 +21412,10 @@
             "nullable": true,
             "type": "string"
           },
+          "sensitive": {
+            "description": "ADR 0081: marked sensitive; only `tickets.sensitive` sees it among the compound’s tickets, and every staff read is logged.",
+            "type": "boolean"
+          },
           "sla": {
             "allOf": [
               {
@@ -21342,7 +21489,8 @@
           "createdAt",
           "updatedAt",
           "sla",
-          "escalatedAt"
+          "escalatedAt",
+          "sensitive"
         ],
         "type": "object"
       },
@@ -31538,7 +31686,8 @@
           "decision_appeal",
           "management_request",
           "purchase_request",
-          "space_use_request"
+          "space_use_request",
+          "plan_suggestion"
         ],
         "type": "string"
       },
@@ -35323,6 +35472,193 @@
         ],
         "type": "object"
       },
+      "MaintenanceCaseDetailView": {
+        "properties": {
+          "automatic": {
+            "description": "Opened by itself, at the threshold.",
+            "type": "boolean"
+          },
+          "buildingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "buildingName": {
+            "description": "Null once the building was deleted.",
+            "nullable": true,
+            "type": "string"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "categoryKey": {
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceCaseStatus"
+              }
+            ]
+          },
+          "ticketCount": {
+            "description": "Its tickets the reader may see.",
+            "type": "number"
+          },
+          "tickets": {
+            "description": "Its tickets the reader may see, in the order they joined.",
+            "items": {
+              "$ref": "#/components/schemas/CaseTicketView"
+            },
+            "type": "array"
+          },
+          "workOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CaseWorkOrderView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "categoryId",
+          "categoryKey",
+          "buildingId",
+          "buildingName",
+          "status",
+          "openedAt",
+          "automatic",
+          "ticketCount",
+          "workOrder",
+          "closedAt",
+          "reasonCode",
+          "tickets"
+        ],
+        "type": "object"
+      },
+      "MaintenanceCaseStatus": {
+        "enum": [
+          "open",
+          "resolved",
+          "dismissed"
+        ],
+        "type": "string"
+      },
+      "MaintenanceCaseView": {
+        "properties": {
+          "automatic": {
+            "description": "Opened by itself, at the threshold.",
+            "type": "boolean"
+          },
+          "buildingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "buildingName": {
+            "description": "Null once the building was deleted.",
+            "nullable": true,
+            "type": "string"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "categoryKey": {
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceCaseStatus"
+              }
+            ]
+          },
+          "ticketCount": {
+            "description": "Its tickets the reader may see.",
+            "type": "number"
+          },
+          "workOrder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CaseWorkOrderView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "categoryId",
+          "categoryKey",
+          "buildingId",
+          "buildingName",
+          "status",
+          "openedAt",
+          "automatic",
+          "ticketCount",
+          "workOrder",
+          "closedAt",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "MaintenanceCaseViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MaintenanceCaseView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "MaintenanceContractKind": {
         "enum": [
           "amc",
@@ -36456,6 +36792,108 @@
         },
         "required": [
           "id"
+        ],
+        "type": "object"
+      },
+      "MapAreaView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "description": "building, area, facility.",
+            "type": "string"
+          },
+          "latitude": {
+            "nullable": true,
+            "type": "number"
+          },
+          "longitude": {
+            "nullable": true,
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "commonAreaId",
+          "code",
+          "kind",
+          "latitude",
+          "longitude",
+          "total",
+          "open"
+        ],
+        "type": "object"
+      },
+      "MapBuildingView": {
+        "properties": {
+          "buildingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "categories": {
+            "description": "The five categories with the most.",
+            "items": {
+              "$ref": "#/components/schemas/MapCategoryView"
+            },
+            "type": "array"
+          },
+          "latitude": {
+            "nullable": true,
+            "type": "number"
+          },
+          "longitude": {
+            "nullable": true,
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "open": {
+            "description": "Neither closed nor cancelled.",
+            "type": "number"
+          },
+          "residents": {
+            "description": "Opened by residents.",
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "buildingId",
+          "name",
+          "latitude",
+          "longitude",
+          "total",
+          "open",
+          "residents",
+          "categories"
+        ],
+        "type": "object"
+      },
+      "MapCategoryView": {
+        "properties": {
+          "categoryKey": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "categoryKey",
+          "count"
         ],
         "type": "object"
       },
@@ -45770,6 +46208,126 @@
         ],
         "type": "object"
       },
+      "PlanSuggestionStatus": {
+        "enum": [
+          "open",
+          "accepted",
+          "dismissed"
+        ],
+        "type": "string"
+      },
+      "PlanSuggestionView": {
+        "properties": {
+          "assetId": {
+            "description": "An asset of a common area; else `unitId`.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "categoryKey": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstTicketAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastTicketAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "placeCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "planCreated": {
+            "description": "Accepted: whether the plan was made for it.",
+            "nullable": true,
+            "type": "boolean"
+          },
+          "planId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlanSuggestionStatus"
+              }
+            ]
+          },
+          "ticketCount": {
+            "type": "number"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "windowDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "unitId",
+          "placeCode",
+          "categoryId",
+          "categoryKey",
+          "ticketCount",
+          "windowDays",
+          "firstTicketAt",
+          "lastTicketAt",
+          "status",
+          "createdAt",
+          "decidedAt",
+          "planId",
+          "planCreated",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "PlanSuggestionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PlanSuggestionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PlateBlocklistView": {
         "properties": {
           "entryId": {
@@ -49351,6 +49909,132 @@
           "amount",
           "receiptNumber",
           "paidOn"
+        ],
+        "type": "object"
+      },
+      "RecurrenceMonthView": {
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "month": {
+            "example": "2027-03",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "count"
+        ],
+        "type": "object"
+      },
+      "RecurrencePlace": {
+        "enum": [
+          "asset",
+          "unit",
+          "building",
+          "common_area"
+        ],
+        "type": "string"
+      },
+      "RecurrenceReportView": {
+        "properties": {
+          "by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecurrencePlace"
+              }
+            ]
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "min": {
+            "description": "The threshold applied.",
+            "type": "number"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RecurrenceRowView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "truncated": {
+            "description": "More rows than the 500 shown.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "by",
+          "min",
+          "truncated",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "RecurrenceRowView": {
+        "properties": {
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "categoryKey": {
+            "type": "string"
+          },
+          "cost": {
+            "description": "EGP recorded on those tickets, voided entries left out.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "firstAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "meanIntervalDays": {
+            "description": "Mean days between consecutive tickets, one decimal.",
+            "type": "number"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/RecurrenceMonthView"
+            },
+            "type": "array"
+          },
+          "placeCode": {
+            "description": "The asset’s, unit’s or area’s code; the building’s name.",
+            "nullable": true,
+            "type": "string"
+          },
+          "placeId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "placeId",
+          "placeCode",
+          "categoryId",
+          "categoryKey",
+          "count",
+          "firstAt",
+          "lastAt",
+          "meanIntervalDays",
+          "cost",
+          "months"
         ],
         "type": "object"
       },
@@ -56153,6 +56837,70 @@
         },
         "type": "object"
       },
+      "SensitiveReadVia": {
+        "description": "How: its page or a part of it (a write reads it too), a list page, the export, the search.",
+        "enum": [
+          "detail",
+          "list",
+          "export",
+          "search"
+        ],
+        "type": "string"
+      },
+      "SensitiveReadView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "readAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reader": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The staff member who read it."
+          },
+          "via": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SensitiveReadVia"
+              }
+            ],
+            "description": "How: its page or a part of it (a write reads it too), a list page, the export, the search."
+          }
+        },
+        "required": [
+          "id",
+          "reader",
+          "via",
+          "readAt"
+        ],
+        "type": "object"
+      },
+      "SensitiveReadViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SensitiveReadView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ServiceGateView": {
         "properties": {
           "id": {
@@ -56688,6 +57436,23 @@
         },
         "required": [
           "accountId"
+        ],
+        "type": "object"
+      },
+      "SetSensitivityDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From `ticketSensitive` to mark, `ticketSensitiveClear` to clear; see `allowed` on INVALID_REASON_CODE.",
+            "type": "string"
+          },
+          "sensitive": {
+            "description": "`true` marks the ticket sensitive (`tickets.dispatch`); `false` clears it (`tickets.sensitive`).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sensitive",
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -67734,6 +68499,10 @@
             "nullable": true,
             "type": "string"
           },
+          "sensitive": {
+            "description": "ADR 0081: marked sensitive by the dispatch; every read of it is logged.",
+            "type": "boolean"
+          },
           "status": {
             "allOf": [
               {
@@ -67774,6 +68543,7 @@
           "holdReason",
           "assignedAt",
           "createdAt",
+          "sensitive",
           "description",
           "cycle",
           "rejectionCount",
@@ -67875,6 +68645,10 @@
             "nullable": true,
             "type": "string"
           },
+          "sensitive": {
+            "description": "ADR 0081: marked sensitive by the dispatch; every read of it is logged.",
+            "type": "boolean"
+          },
           "status": {
             "allOf": [
               {
@@ -67914,7 +68688,8 @@
           "status",
           "holdReason",
           "assignedAt",
-          "createdAt"
+          "createdAt",
+          "sensitive"
         ],
         "type": "object"
       },
@@ -70621,6 +71396,31 @@
         ],
         "type": "object"
       },
+      "UpdateAnalyticsSettingsDto": {
+        "properties": {
+          "caseMinTickets": {
+            "maximum": 20,
+            "minimum": 2,
+            "type": "number"
+          },
+          "caseWindowDays": {
+            "maximum": 180,
+            "minimum": 1,
+            "type": "number"
+          },
+          "recurrenceMinTickets": {
+            "maximum": 20,
+            "minimum": 2,
+            "type": "number"
+          },
+          "recurrenceWindowDays": {
+            "maximum": 366,
+            "minimum": 7,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "UpdateAnnouncementDto": {
         "properties": {
           "attachmentFileIds": {
@@ -71901,7 +72701,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 14,
+            "maxItems": 15,
             "minItems": 1,
             "type": "array"
           }
@@ -92573,6 +93373,203 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/cases": {
+      "get": {
+        "operationId": "CasesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MaintenanceCaseStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "buildingId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceCaseViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the community cases",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/cases/{id}": {
+      "get": {
+        "operationId": "CasesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceCaseDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a community case and its tickets",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/cases/{id}/dismiss": {
+      "post": {
+        "operationId": "CasesController_dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceCaseDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dismiss a community case",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/cases/{id}/resolve": {
+      "post": {
+        "operationId": "CasesController_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceCaseDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resolve a community case",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/categories": {
       "get": {
         "operationId": "CategoriesController_list",
@@ -93093,6 +94090,64 @@
           }
         ],
         "summary": "Replace the items: a new version; open runs keep theirs",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/complaints-map": {
+      "get": {
+        "operationId": "AnalyticsController_complaintsMap",
+        "parameters": [
+          {
+            "description": "Tickets created on or after, the compound’s day.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Created on or before; at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplaintsMapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where the tickets are, by building and area",
         "tags": [
           "maintenance"
         ],
@@ -96407,6 +97462,194 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/plan-suggestions": {
+      "get": {
+        "operationId": "PlanSuggestionsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PlanSuggestionStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSuggestionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the plan suggestions",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plan-suggestions/{id}": {
+      "get": {
+        "operationId": "PlanSuggestionsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a plan suggestion",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plan-suggestions/{id}/accept": {
+      "post": {
+        "operationId": "PlanSuggestionsController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptPlanSuggestionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a plan suggestion into a plan",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plan-suggestions/{id}/dismiss": {
+      "post": {
+        "operationId": "PlanSuggestionsController_dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dismiss a plan suggestion",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/plans": {
       "get": {
         "operationId": "PlansController_list",
@@ -97764,6 +99007,83 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/recurrence": {
+      "get": {
+        "operationId": "AnalyticsController_recurrenceReport",
+        "parameters": [
+          {
+            "description": "Tickets created on or after, the compound’s day.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Created on or before; at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "by",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RecurrencePlace"
+            }
+          },
+          {
+            "description": "Tickets a row needs; the compound’s `recurrenceMinTickets` by default.",
+            "in": "query",
+            "name": "min",
+            "required": false,
+            "schema": {
+              "maximum": 50,
+              "minimum": 2,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurrenceReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Repeat faults by place and category",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/replacement-recommendations": {
       "get": {
         "operationId": "ReplacementsController_list",
@@ -98042,6 +99362,70 @@
           }
         ],
         "summary": "Update the maintenance settings",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/settings/analytics": {
+      "get": {
+        "operationId": "AnalyticsSettingsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the maintenance analytics settings",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "AnalyticsSettingsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAnalyticsSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the maintenance analytics settings",
         "tags": [
           "maintenance"
         ],
@@ -99394,6 +100778,19 @@
             }
           },
           {
+            "description": "ADR 0081: `true`, only the sensitive tickets; `false`, only the others. A reader without `tickets.sensitive` never sees a sensitive one.",
+            "in": "query",
+            "name": "sensitive",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "description": "Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names.",
             "in": "query",
             "name": "buildingId",
@@ -99614,6 +101011,19 @@
             "description": "`true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off.",
             "in": "query",
             "name": "escalated",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "ADR 0081: `true`, only the sensitive tickets; `false`, only the others. A reader without `tickets.sensitive` never sees a sensitive one.",
+            "in": "query",
+            "name": "sensitive",
             "required": false,
             "schema": {
               "enum": [
@@ -100730,6 +102140,103 @@
           }
         ],
         "summary": "Send a completed work order back",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/sensitive-reads": {
+      "get": {
+        "operationId": "SensitivityController_reads",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensitiveReadViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who read a sensitive ticket",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/sensitivity": {
+      "put": {
+        "operationId": "SensitivityController_set",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSensitivityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a ticket sensitive, or clear it",
         "tags": [
           "maintenance"
         ],

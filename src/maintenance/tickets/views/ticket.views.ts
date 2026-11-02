@@ -502,6 +502,12 @@ export class TechnicianTicketView {
   assignedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'ADR 0081: marked sensitive by the dispatch; every read of it is logged.',
+  })
+  sensitive: boolean;
 
   static from(r: TicketRead): TechnicianTicketView {
     const t = r.ticket;
@@ -524,6 +530,7 @@ export class TechnicianTicketView {
       holdReason: t.holdReason,
       assignedAt: t.assignedAt,
       createdAt: t.createdAt,
+      sensitive: t.sensitive,
     };
   }
 }
@@ -701,6 +708,12 @@ export class DispatchTicketView {
       'ADR 0038: when a resident escalated the ticket in this SLA cycle.',
   })
   escalatedAt: Date | null;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'ADR 0081: marked sensitive; only `tickets.sensitive` sees it among the compound’s tickets, and every staff read is logged.',
+  })
+  sensitive: boolean;
 
   static from(r: DispatchTicketRead): DispatchTicketView {
     const t = r.ticket;
@@ -729,6 +742,7 @@ export class DispatchTicketView {
       updatedAt: t.updatedAt,
       sla: DispatchTicketSlaView.fromSummary(r.sla),
       escalatedAt: r.escalatedAt,
+      sensitive: t.sensitive,
     };
   }
 }

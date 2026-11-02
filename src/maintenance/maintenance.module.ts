@@ -224,6 +224,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
  * community domain only through src/community/index.ts (ADR 0015); never
  * the gate.
  */
+import { MaintenanceManagementPort } from './management-port';
 @Module({
   imports: [AccountsModule, CommunityMaintenancePortModule, FilesModule],
   controllers: [
@@ -307,6 +308,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     TechnicianStatsController,
   ],
   providers: [
+    MaintenanceManagementPort,
     MaintenanceProvisioning,
     CategoriesService,
     PreventiveServicesService,
@@ -407,6 +409,10 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     TechnicianStatsService,
   ],
   // What the daily brief reads of a resident's tickets (ADR 0040).
-  exports: [ResidentTicketSummary, ResidentOutageSummary],
+  exports: [
+    ResidentTicketSummary,
+    ResidentOutageSummary,
+    MaintenanceManagementPort,
+  ],
 })
 export class MaintenanceModule {}

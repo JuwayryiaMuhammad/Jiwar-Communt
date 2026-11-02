@@ -720,6 +720,32 @@ export const NOTIFICATION_KINDS = {
     target: 'management_request',
     params: { requestNumber: {}, topicKey: {} },
   },
+  /** ADR 0080: the management started a conversation with the resident. */
+  'management_request.outreach': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
+  /** ADR 0080: the author's request became a ticket; its number, nothing else. */
+  'management_request.converted': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {}, ticketNumber: {} },
+  },
+  /** ADR 0080: an unassigned request moved to a topic the handlers own. */
+  'management_request.reclassified': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'management_request',
+    params: { requestNumber: {}, topicKey: {} },
+  },
   /** The management proposed a slot (the author accepts, or picks another). */
   'management_appointment.proposed': {
     needsDecision: true,

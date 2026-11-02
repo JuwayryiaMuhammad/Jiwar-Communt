@@ -33,9 +33,13 @@ import { ResidentRequestsController } from './requests/resident-requests.control
 import {
   RequestAssigneesController,
   RequestRatingsController,
+  RequestOutreachController,
   RequestUnitsController,
   StaffRequestsController,
 } from './requests/staff-requests.controller';
+import { RequestConversion } from './requests/conversion.service';
+import { ReplyTemplatesController } from './templates/reply-templates.controller';
+import { ReplyTemplatesService } from './templates/reply-templates.service';
 import { OfficeHoursService } from './settings/office-hours.service';
 import {
   OfficeHoursController,
@@ -51,6 +55,7 @@ import { TopicsService } from './topics/topics.service';
 import { UtilitiesMoveStep } from './requests/utilities-move-step';
 import { ManagementInboxItems } from './management-inbox-items';
 
+import { MaintenanceModule } from '../maintenance';
 /**
  * Requests to the management (ADR 0039), and the appeals of staff
  * decisions it decides (ADR 0059). The domain imports core freely,
@@ -58,7 +63,12 @@ import { ManagementInboxItems } from './management-inbox-items';
  * the gate.
  */
 @Module({
-  imports: [AccountsModule, CommunityManagementPortModule, FilesModule],
+  imports: [
+    AccountsModule,
+    CommunityManagementPortModule,
+    FilesModule,
+    MaintenanceModule,
+  ],
   controllers: [
     TopicsController,
     TopicOptionsController,
@@ -67,6 +77,8 @@ import { ManagementInboxItems } from './management-inbox-items';
     ResidentOfficeHoursController,
     ResidentRequestsController,
     StaffRequestsController,
+    RequestOutreachController,
+    ReplyTemplatesController,
     RequestAssigneesController,
     RequestRatingsController,
     RequestUnitsController,
@@ -90,6 +102,8 @@ import { ManagementInboxItems } from './management-inbox-items';
     RequestsService,
     UtilitiesMoveStep,
     RequestLifecycle,
+    RequestConversion,
+    ReplyTemplatesService,
     RequestEscalation,
     AppointmentsService,
     RatingService,

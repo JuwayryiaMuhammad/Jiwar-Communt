@@ -27,10 +27,14 @@ import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
   AssignRequestDto,
   CloseRequestDto,
+  ConvertRequestDto,
   CreateRequestOnBehalfDto,
+  ReclassifyRequestDto,
+  StartOutreachDto,
   PostStaffRequestMessageDto,
   StaffRequestsQueryDto,
 } from './dto/requests.dto';
+import { RequestConversion } from './conversion.service';
 import { RequestLifecycle } from './lifecycle.service';
 import { MessagesService } from './messages.service';
 import { RatingService } from './rating.service';
@@ -45,6 +49,7 @@ import {
   RequestCreatedView,
   RequestPersonView,
   RequestRatingView,
+  RequestTicketRefView,
   StaffRequestDetailView,
   StaffRequestListItemView,
 } from './views/request.views';
@@ -61,6 +66,7 @@ export class StaffRequestsController {
     private readonly requests: RequestsService,
     private readonly messages: MessagesService,
     private readonly lifecycle: RequestLifecycle,
+    private readonly conversion: RequestConversion,
   ) {}
 
   @Get()
@@ -175,6 +181,61 @@ export class StaffRequestsController {
     @Body() dto: CloseRequestDto,
   ): Promise<void> {
     await this.lifecycle.close(id, dto.reasonCode);
+  }
+
+  /**
+   * ADR 0080: staff put a live request under another topic. A request about
+   * a hold or on a system topic keeps its own (MANAGEMENT_REQUEST_TOPIC_FIXED).
+   */
+  @Post(':id/topic')
+  @NoStore()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Put a request under another topic' })
+  @ApiNoContentResponse()
+  async reclassify(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ReclassifyRequestDto,
+  ): Promise<void> {
+    await this.requests.reclassify(id, dto.topicId);
+  }
+
+  /**
+   * ADR 0080: the request becomes a maintenance ticket and closes
+   * `converted` for good; the resident is told the ticket's number. It opens
+   * a ticket, so the caller also holds `tickets.dispatch`.
+   */
+  @Post(':id/convert')
+  @NoStore()
+  @RequirePermissions('requests.handle', 'tickets.dispatch')
+  @ApiOperation({ summary: 'Turn a request into a maintenance ticket' })
+  @ApiCreatedResponse({ type: RequestTicketRefView })
+  async convert(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ConvertRequestDto,
+  ): Promise<RequestTicketRefView> {
+    const t = await this.conversion.convert(id, dto);
+    return { id: t.id, number: t.reference };
+  }
+}
+
+/**
+ * A conversation the management starts with a resident (ADR 0080). It
+ * names a resident, so `requests.handle` alone is not enough: the caller
+ * also holds `residents.read`.
+ */
+@ApiArea('management-requests')
+@RequirePermissions('requests.handle', 'residents.read')
+@Controller('management/outreach')
+export class RequestOutreachController {
+  constructor(private readonly requests: RequestsService) {}
+
+  @Post()
+  @NoStore()
+  @ApiOperation({ summary: 'Start a conversation with a resident' })
+  @Idempotent()
+  @ApiCreatedResponse({ type: RequestCreatedView })
+  async start(@Body() dto: StartOutreachDto): Promise<RequestCreatedView> {
+    return RequestCreatedView.from(await this.requests.startOutreach(dto));
   }
 }
 

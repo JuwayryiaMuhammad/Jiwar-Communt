@@ -437,44 +437,61 @@ export class TicketsService implements OnModuleInit {
     const ticket = await this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: TICKET_RESOURCE, id });
-      const where = this.location(input);
-      if (where.unitId && !(await this.community.unit(tx, where.unitId)))
-        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
-      const category = await this.category(tx, input.categoryId, where);
-      const reporter = { id: input.reporterAccountId };
-      if (!(await this.community.mayReport(tx, reporter.id, where.unitId)))
-        throw invalid([
-          {
-            field: 'reporterAccountId',
-            code: FieldErrorCode.REPORTER_NOT_ELIGIBLE,
-          },
-        ]);
-      const ticket = await this.insert(
-        tx,
-        id,
-        input,
-        where,
-        category,
-        reporter.id,
-      );
-      await this.audit.record(tx, {
-        action: 'ticket.created_on_behalf',
-        targetId: ticket.id,
-        metadata: {
-          categoryKey: category.key,
-          priority: ticket.priority,
-          location: ticket.unitId ? 'unit' : 'common_area',
-        },
-      });
-      await this.notices.send(
-        tx,
-        [reporter.id],
-        'ticket.opened_on_behalf',
-        ticket,
-      );
-      return ticket;
+      return this.openOnBehalfIn(tx, id, input);
     });
     return this.dispatched(ticket);
+  }
+
+  /**
+   * `createOnBehalf` inside the caller's transaction (ADR 0080: a
+   * management request converted into a ticket): the same checks, row,
+   * audit entry and notice to the reporter. The caller dispatches it once
+   * committed (`dispatchAfterCommit`). `from` names the source in the
+   * audit entry.
+   */
+  async openOnBehalfIn(
+    tx: TenantTxClient,
+    id: string,
+    input: Omit<NewTicket, 'photoFileIds'> & { reporterAccountId: string },
+    from?: 'management_request',
+  ): Promise<Ticket> {
+    const where = this.location(input);
+    if (where.unitId && !(await this.community.unit(tx, where.unitId)))
+      throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+    const category = await this.category(tx, input.categoryId, where);
+    const reporter = { id: input.reporterAccountId };
+    if (!(await this.community.mayReport(tx, reporter.id, where.unitId)))
+      throw invalid([
+        {
+          field: 'reporterAccountId',
+          code: FieldErrorCode.REPORTER_NOT_ELIGIBLE,
+        },
+      ]);
+    const ticket = await this.insert(
+      tx,
+      id,
+      input,
+      where,
+      category,
+      reporter.id,
+    );
+    await this.audit.record(tx, {
+      action: 'ticket.created_on_behalf',
+      targetId: ticket.id,
+      metadata: {
+        categoryKey: category.key,
+        priority: ticket.priority,
+        location: ticket.unitId ? 'unit' : 'common_area',
+        ...(from ? { from } : {}),
+      },
+    });
+    await this.notices.send(
+      tx,
+      [reporter.id],
+      'ticket.opened_on_behalf',
+      ticket,
+    );
+    return ticket;
   }
 
   /**

@@ -9007,6 +9007,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/management/outreach": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a conversation with a resident */
+        post: operations["RequestOutreachController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/reply-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the reply templates */
+        get: operations["ReplyTemplatesController_list"];
+        put?: never;
+        /** Add a reply template */
+        post: operations["ReplyTemplatesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/reply-templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a reply template */
+        delete: operations["ReplyTemplatesController_delete"];
+        options?: never;
+        head?: never;
+        /** Change a reply template */
+        patch: operations["ReplyTemplatesController_update"];
+        trace?: never;
+    };
     "/api/v1/management/request-assignees": {
         parameters: {
             query?: never;
@@ -9214,6 +9267,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/management/requests/{id}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a request into a maintenance ticket */
+        post: operations["StaffRequestsController_convert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/management/requests/{id}/messages": {
         parameters: {
             query?: never;
@@ -9260,6 +9330,23 @@ export interface paths {
         put?: never;
         /** Take an open request in hand */
         post: operations["StaffRequestsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/management/requests/{id}/topic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put a request under another topic */
+        post: operations["StaffRequestsController_reclassify"];
         delete?: never;
         options?: never;
         head?: never;
@@ -28146,6 +28233,26 @@ export interface components {
             data: components["schemas"]["ConversationView"][];
             nextCursor: string | null;
         };
+        ConvertRequestDto: {
+            /** Format: uuid */
+            assetId?: string;
+            /** Format: uuid */
+            categoryId: string;
+            /**
+             * Format: uuid
+             * @description A work order’s common area; or its asset, never both.
+             */
+            commonAreaId?: string;
+            /** @description Staff’s words for the ticket: what is to be done. */
+            description: string;
+            /** @description The category’s own by default. */
+            priority?: components["schemas"]["TicketPriority"];
+            /**
+             * @description `ticket`: the resident’s own ticket in the request’s unit (a request about no unit is INVALID_VALUE). `work_order`: the management’s work order on a common area or an asset.
+             * @enum {string}
+             */
+            target: "ticket" | "work_order";
+        };
         ConvertToInstalmentsDto: {
             /**
              * Format: uuid
@@ -29416,6 +29523,18 @@ export interface components {
              * @description A vendor of the register to buy from; a suspended one is refused.
              */
             vendorId?: string;
+        };
+        CreateReplyTemplateDto: {
+            bodyAr?: string | null;
+            /** @description English, Arabic or both: at least one. */
+            bodyEn?: string | null;
+            /** @description The compound’s own, once (DUPLICATE_RESOURCE). */
+            name: string;
+            /**
+             * Format: uuid
+             * @description A topic of the compound; null for any topic.
+             */
+            topicId?: string | null;
         };
         CreateRequestDto: {
             /** @description A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. */
@@ -39438,6 +39557,13 @@ export interface components {
             /** @description EGP for one. */
             unitCost: string;
         };
+        ReclassifyRequestDto: {
+            /**
+             * Format: uuid
+             * @description An active topic of the compound, not the one it has (SAME_AS_CURRENT, TOPIC_NOT_AVAILABLE).
+             */
+            topicId: string;
+        };
         RecommendReplacementDto: {
             note?: string;
             /** @enum {string} */
@@ -39979,6 +40105,24 @@ export interface components {
             data: components["schemas"]["ReplacementRecommendationView"][];
             nextCursor: string | null;
         };
+        ReplyTemplateView: {
+            bodyAr: string | null;
+            bodyEn: string | null;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /**
+             * Format: uuid
+             * @description Null: for any topic.
+             */
+            topicId: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ReplyTemplateViewList: {
+            data: components["schemas"]["ReplyTemplateView"][];
+            nextCursor: string | null;
+        };
         ReportConversationDto: {
             /** @description For the staff alone. */
             note?: string;
@@ -40336,6 +40480,12 @@ export interface components {
              * @description One of my slots: scheduled, unopened and to come (SLOT_NOT_SWAPPABLE).
              */
             slotId: string;
+        };
+        RequestTicketRefView: {
+            /** Format: uuid */
+            id: string;
+            /** @example MT-000123 */
+            number: string | null;
         };
         RequestTopicRefView: {
             /** Format: uuid */
@@ -40724,10 +40874,12 @@ export interface components {
             about: components["schemas"]["RequestAboutView"] | null;
             /** @description On an appointment request: the live appointment, else the last one. */
             appointment: components["schemas"]["AppointmentView"] | null;
-            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            /** @description Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`). */
             closeReason: string | null;
             /** Format: date-time */
             closedAt: string | null;
+            /** @description The ticket it became (ADR 0080); it goes on there. */
+            convertedTicket: components["schemas"]["RequestTicketRefView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** @description 1 when opened; one more each time it is reopened. */
@@ -40743,6 +40895,8 @@ export interface components {
             number: string;
             /** @description Opened by the management on the author’s behalf. */
             openedByManagement: boolean;
+            /** @description The management started the conversation (ADR 0080). */
+            outreach: boolean;
             /** @description The author’s own rating, once given. */
             rating: components["schemas"]["RequestRatingView"] | null;
             /**
@@ -40782,10 +40936,12 @@ export interface components {
         ResidentRequestView: {
             /** @description A request to release a hold: what it is about. */
             about: components["schemas"]["RequestAboutView"] | null;
-            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            /** @description Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`). */
             closeReason: string | null;
             /** Format: date-time */
             closedAt: string | null;
+            /** @description The ticket it became (ADR 0080); it goes on there. */
+            convertedTicket: components["schemas"]["RequestTicketRefView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** @description 1 when opened; one more each time it is reopened. */
@@ -40801,6 +40957,8 @@ export interface components {
             number: string;
             /** @description Opened by the management on the author’s behalf. */
             openedByManagement: boolean;
+            /** @description The management started the conversation (ADR 0080). */
+            outreach: boolean;
             /**
              * Format: date-time
              * @description On a closed request: until when the author may reopen it.
@@ -44028,10 +44186,12 @@ export interface components {
             /** @description Null: in the unassigned queue. */
             assignee: components["schemas"]["AccountRefView"] | null;
             author: components["schemas"]["AccountRefView"];
-            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            /** @description Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`). */
             closeReason: string | null;
             /** Format: date-time */
             closedAt: string | null;
+            /** @description The ticket it became (ADR 0080); it goes on there. */
+            convertedTicket: components["schemas"]["RequestTicketRefView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** @description 1 when opened; one more each time it is reopened. */
@@ -44061,6 +44221,8 @@ export interface components {
             onBehalfReason: string | null;
             /** @description The staff member who opened it for the author. */
             openedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The management started the conversation (ADR 0080). */
+            outreach: boolean;
             /** @description The response time has passed and nobody has responded in this cycle. */
             overdue: boolean;
             /**
@@ -44082,10 +44244,12 @@ export interface components {
             /** @description Null: in the unassigned queue. */
             assignee: components["schemas"]["AccountRefView"] | null;
             author: components["schemas"]["AccountRefView"];
-            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            /** @description Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`). */
             closeReason: string | null;
             /** Format: date-time */
             closedAt: string | null;
+            /** @description The ticket it became (ADR 0080); it goes on there. */
+            convertedTicket: components["schemas"]["RequestTicketRefView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** @description 1 when opened; one more each time it is reopened. */
@@ -44113,6 +44277,8 @@ export interface components {
             onBehalfReason: string | null;
             /** @description The staff member who opened it for the author. */
             openedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The management started the conversation (ADR 0080). */
+            outreach: boolean;
             /** @description The response time has passed and nobody has responded in this cycle. */
             overdue: boolean;
             /** @description The first 120 characters of the request’s first message, as written. Null once that message was erased. Staff inbox only. */
@@ -44161,10 +44327,12 @@ export interface components {
             /** @description Null: in the unassigned queue. */
             assignee: components["schemas"]["AccountRefView"] | null;
             author: components["schemas"]["AccountRefView"];
-            /** @description Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`. */
+            /** @description Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`). */
             closeReason: string | null;
             /** Format: date-time */
             closedAt: string | null;
+            /** @description The ticket it became (ADR 0080); it goes on there. */
+            convertedTicket: components["schemas"]["RequestTicketRefView"] | null;
             /** Format: date-time */
             createdAt: string;
             /** @description 1 when opened; one more each time it is reopened. */
@@ -44192,6 +44360,8 @@ export interface components {
             onBehalfReason: string | null;
             /** @description The staff member who opened it for the author. */
             openedBy: components["schemas"]["AccountRefView"] | null;
+            /** @description The management started the conversation (ADR 0080). */
+            outreach: boolean;
             /** @description The response time has passed and nobody has responded in this cycle. */
             overdue: boolean;
             /**
@@ -44572,6 +44742,27 @@ export interface components {
              * @enum {string}
              */
             scope: "gate" | "all";
+        };
+        StartOutreachDto: {
+            /** @description The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). */
+            attachmentFileIds?: string[];
+            /** @description What the management writes: the first message, an official one. The resident reads it as from the office. */
+            body: string;
+            /**
+             * Format: uuid
+             * @description The resident it is with: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author, and answer it.
+             */
+            residentAccountId: string;
+            /**
+             * Format: uuid
+             * @description An active topic of the compound (TOPIC_NOT_AVAILABLE).
+             */
+            topicId: string;
+            /**
+             * Format: uuid
+             * @description One of the resident’s units, when it is about one.
+             */
+            unitId?: string;
         };
         StartShiftDto: {
             /** Format: uuid */
@@ -46482,6 +46673,17 @@ export interface components {
             /** Format: date */
             startsOn?: string;
             title?: string;
+        };
+        UpdateReplyTemplateDto: {
+            bodyAr?: string | null;
+            /** @description English, Arabic or both: at least one. */
+            bodyEn?: string | null;
+            name?: string;
+            /**
+             * Format: uuid
+             * @description A topic of the compound; null for any topic.
+             */
+            topicId?: string | null;
         };
         UpdateRequestSettingsDto: {
             /** @description Appointments one slot takes. */
@@ -61355,6 +61557,121 @@ export interface operations {
             };
         };
     };
+    RequestOutreachController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartOutreachDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestCreatedView"];
+                };
+            };
+        };
+    };
+    ReplyTemplatesController_list: {
+        parameters: {
+            query?: {
+                /** @description A topic’s templates and those for any topic. */
+                topicId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplyTemplateViewList"];
+                };
+            };
+        };
+    };
+    ReplyTemplatesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReplyTemplateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplyTemplateView"];
+                };
+            };
+        };
+    };
+    ReplyTemplatesController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ReplyTemplatesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReplyTemplateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplyTemplateView"];
+                };
+            };
+        };
+    };
     RequestAssigneesController_list: {
         parameters: {
             query?: never;
@@ -61515,6 +61832,8 @@ export interface operations {
                 status?: components["schemas"]["ManagementRequestStatus"];
                 type?: components["schemas"]["ManagementRequestType"];
                 topicId?: string;
+                /** @description The requests about one unit (ADR 0080). */
+                unitId?: string;
                 /** @description An account id, `me` for the caller’s own, or `none` for the unassigned queue. */
                 assignee?: string;
                 /** @description `true`: only requests that are not closed. */
@@ -61703,6 +62022,31 @@ export interface operations {
             };
         };
     };
+    StaffRequestsController_convert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConvertRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestTicketRefView"];
+                };
+            };
+        };
+    };
     StaffRequestsController_thread: {
         parameters: {
             query?: {
@@ -61787,6 +62131,29 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffRequestsController_reclassify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReclassifyRequestDto"];
+            };
+        };
         responses: {
             204: {
                 headers: {

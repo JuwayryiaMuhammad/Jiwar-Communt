@@ -3214,6 +3214,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'في إعلان من الإدارة مستنيك. افتح التطبيق لقراءته.',
     },
   },
+  'management_request.outreach': {
+    en: {
+      title: 'A message from the management',
+      body: 'The management wrote to you: request #{requestNumber}.',
+    },
+    ar: {
+      title: 'رسالة من الإدارة',
+      body: 'كتبت لك الإدارة: الطلب رقم {requestNumber}.',
+    },
+  },
+  'management_request.converted': {
+    en: {
+      title: 'Request turned into a ticket',
+      body: 'Request #{requestNumber} is now maintenance ticket #{ticketNumber}.',
+    },
+    ar: {
+      title: 'تحويل الطلب إلى بلاغ',
+      body: 'الطلب رقم {requestNumber} أصبح بلاغ صيانة رقم {ticketNumber}.',
+    },
+  },
+  'management_request.reclassified': {
+    en: {
+      title: 'Request moved',
+      body: 'Request #{requestNumber} was put under another topic.',
+    },
+    ar: {
+      title: 'نقل الطلب',
+      body: 'نُقل الطلب رقم {requestNumber} إلى موضوع آخر.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

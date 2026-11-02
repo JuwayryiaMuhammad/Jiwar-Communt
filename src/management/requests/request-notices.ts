@@ -33,8 +33,10 @@ export class RequestNotices {
     request: Subject,
     kind: NotificationKind,
     except: string | null = null,
+    /** ADR 0080: the ticket a request became, by its number alone. */
+    extra: { ticketNumber?: string } = {},
   ): Promise<void> {
-    return this.send(tx, [request.authorId], kind, request, except);
+    return this.send(tx, [request.authorId], kind, request, except, extra);
   }
 
   /**
@@ -108,6 +110,7 @@ export class RequestNotices {
     kind: NotificationKind,
     request: Subject,
     except: string | null = null,
+    extra: { ticketNumber?: string } = {},
   ): Promise<void> {
     const ids = [...new Set(to)].filter(
       (id): id is string => id !== null && id !== except,
@@ -130,6 +133,7 @@ export class RequestNotices {
         params: {
           requestNumber: requestNumber(request.number),
           topicKey: topic.key,
+          ...(extra.ticketNumber ? { ticketNumber: extra.ticketNumber } : {}),
         },
         targetId: request.id,
       },

@@ -15,6 +15,7 @@ import {
   type ManagementRequestType,
 } from '@prisma/client';
 import { CommunityManagementPort, type RequestAuthor } from '../../community';
+import { MaintenanceManagementPort } from '../../maintenance';
 import { StaffRecipients } from '../../core/access/staff-recipients';
 import { AuditService } from '../../core/audit/audit.service';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -69,6 +70,18 @@ export interface NewRequestOnBehalf extends NewRequest {
   reasonCode: string;
 }
 
+/** A conversation the management starts with a resident (ADR 0080). */
+export interface NewOutreach {
+  /** The resident it is with: its author, who reads and answers it. */
+  residentAccountId: string;
+  topicId: string;
+  /** One of the resident's units, when it is about one. */
+  unitId?: string;
+  /** What the management writes: its first message, an official one. */
+  body: string;
+  attachmentFileIds?: string[];
+}
+
 /** Someone a view names: never more than an id, a name and a status. */
 export interface Person {
   id: string;
@@ -87,6 +100,8 @@ export interface RequestRead {
   topic: TopicRef;
   unitCode: string | null;
   people: Map<string, Person>;
+  /** ADR 0080: the references of the tickets requests became, by id. */
+  ticketRefs: Map<string, string>;
   /** The database's clock at the read: what "overdue" is measured by. */
   now: Date;
 }
@@ -133,6 +148,8 @@ export interface ResidentRequestsQuery {
 
 export interface StaffRequestsQuery extends ResidentRequestsQuery {
   topicId?: string;
+  /** ADR 0080: the requests about one unit. */
+  unitId?: string;
   /** An account's id, `me`, or `none` for the unassigned queue. */
   assignee?: string;
   /** Not closed: decided here, so every page of the inbox is full. */
@@ -187,6 +204,7 @@ export class RequestsService implements OnModuleInit {
     private readonly ratings: RatingService,
     private readonly notices: RequestNotices,
     private readonly items: ResidentItems,
+    private readonly maintenance: MaintenanceManagementPort,
   ) {}
 
   onModuleInit(): void {
@@ -301,6 +319,123 @@ export class RequestsService implements OnModuleInit {
         'management_request.opened_for_you',
       );
       return request;
+    });
+  }
+
+  /**
+   * The management starts a conversation with a resident (ADR 0080,
+   * `requests.handle` and `residents.read`): a request whose author is the
+   * resident, who reads it as a message from the office and answers it,
+   * and which staff started (`outreach`, `openedBy`; no on-behalf reason:
+   * the resident made no contact). Its first message is staff's official
+   * one, so it starts answered: it waits for the resident, it is no item of
+   * the staff's queue, and it closes by itself after the compound's days if
+   * they never answer. Their answer puts it in hand, as on any request.
+   */
+  startOutreach(input: NewOutreach): Promise<ManagementRequest> {
+    const me = this.ctx.accountId;
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const id = newId();
+      await this.idempotency.claim(tx, { type: REQUEST_RESOURCE, id });
+      await this.access.lockSelf(tx);
+      // The resident's row too: an erasure of theirs waits for this commit.
+      const active = await this.access.lockActive(tx, input.residentAccountId);
+      const author = active
+        ? await this.community.author(tx, input.residentAccountId)
+        : null;
+      if (!author)
+        throw invalid([
+          {
+            field: 'residentAccountId',
+            code: FieldErrorCode.AUTHOR_NOT_ELIGIBLE,
+          },
+        ]);
+      if (
+        input.unitId &&
+        !(await this.community.hasUnit(tx, author.id, input.unitId))
+      )
+        throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
+      const topic = await this.topic(tx, input.topicId);
+      const created = await this.insert(
+        tx,
+        id,
+        { ...input, type: 'general' },
+        topic,
+        { authorId: author.id, side: 'staff', openedById: me, outreach: true },
+      );
+      const now = created.createdAt;
+      const request = await tx.managementRequest.update({
+        where: { id },
+        data: { status: 'answered', firstResponseAt: now, answeredAt: now },
+      });
+      await this.audit.record(tx, {
+        action: 'management_request.outreach_started',
+        targetId: request.id,
+        metadata: { ...this.facts(request, topic), authorId: author.id },
+      });
+      await this.notices.toAuthor(tx, request, 'management_request.outreach');
+      return request;
+    });
+  }
+
+  /**
+   * Staff put a live request under another topic (ADR 0080): its target
+   * and its owner role are the new topic's from now on. The cycle keeps its
+   * start; its due time is the new topic's target from that start. A
+   * request about a hold (the release topic) or on a system topic keeps
+   * its topic (MANAGEMENT_REQUEST_TOPIC_FIXED), and no request moves onto
+   * either. The new topic's handlers are told when nobody holds it.
+   * Audited by key.
+   */
+  reclassify(id: string, topicId: string): Promise<void> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const request = await this.access.load(tx, id, 'staff', { lock: true });
+      assertCan(request, 'assign');
+      const from = await tx.managementRequestTopic.findUniqueOrThrow({
+        where: { id: request.topicId },
+      });
+      if (
+        request.aboutType !== null ||
+        SYSTEM_TOPIC_KEYS.includes(from.key) ||
+        from.key === RELEASE_TOPIC.key
+      )
+        throw appError.conflict(
+          ErrorCode.MANAGEMENT_REQUEST_TOPIC_FIXED,
+          'This request keeps its topic',
+        );
+      if (topicId === request.topicId)
+        throw invalid([
+          { field: 'topicId', code: FieldErrorCode.SAME_AS_CURRENT },
+        ]);
+      const topic = await this.topic(tx, topicId);
+      if (topic.key === RELEASE_TOPIC.key)
+        throw invalid([
+          { field: 'topicId', code: FieldErrorCode.TOPIC_NOT_AVAILABLE },
+        ]);
+      const updated = await tx.managementRequest.update({
+        where: { id },
+        data: {
+          topicId: topic.id,
+          responseDueAt: responseDueAt(
+            request.cycleStartedAt,
+            topic.targetResponseHours,
+          ),
+        },
+      });
+      await this.audit.record(tx, {
+        action: 'management_request.reclassified',
+        targetId: id,
+        changes: { topicKey: { from: from.key, to: topic.key } },
+        metadata: { requestNumber: request.number, cycle: request.cycle },
+      });
+      if (!updated.assigneeId)
+        await this.notices.toHandlers(
+          tx,
+          updated,
+          'management_request.reclassified',
+          this.ctx.accountId,
+        );
     });
   }
 
@@ -442,6 +577,8 @@ export class RequestsService implements OnModuleInit {
       openedById?: string;
       onBehalfReason?: string;
       about?: { type: HoldType; id: string; reasonCode: string } | null;
+      /** ADR 0080: the management starts it; its message is official. */
+      outreach?: boolean;
     },
   ): Promise<ManagementRequest> {
     const body = this.messages.body(input.body);
@@ -472,6 +609,7 @@ export class RequestsService implements OnModuleInit {
         aboutType: by.about?.type,
         aboutId: by.about?.id,
         aboutReason: by.about?.reasonCode,
+        outreach: by.outreach ?? false,
       },
     });
     // Written by whoever typed it: the author, or the staff member who
@@ -479,7 +617,7 @@ export class RequestsService implements OnModuleInit {
     const message = await this.messages.write(
       tx,
       request,
-      { side: by.side, body },
+      { side: by.side, body, ...(by.outreach ? { official: true } : {}) },
       now,
     );
     await this.messages.attach(tx, message, fileIds, 'attachmentFileIds');
@@ -541,6 +679,7 @@ export class RequestsService implements OnModuleInit {
           q.status ? { status: q.status } : {},
           q.type ? { type: q.type } : {},
           q.topicId ? { topicId: q.topicId } : {},
+          q.unitId ? { unitId: q.unitId } : {},
           q.open ? { status: { not: 'closed' } } : {},
           assignee,
           // request-rules.isOverdue, as a query.
@@ -684,8 +823,15 @@ export class RequestsService implements OnModuleInit {
       tx,
       requests.flatMap((r) => [r.authorId, r.openedById, r.assigneeId]),
     );
+    const ticketRefs = await this.maintenance.references(
+      tx,
+      requests.flatMap((r) =>
+        r.convertedTicketId ? [r.convertedTicketId] : [],
+      ),
+    );
     return requests.map((request) => ({
       request,
+      ticketRefs,
       topic: topics.get(request.topicId)!,
       unitCode: request.unitId ? (units.get(request.unitId) ?? null) : null,
       people,

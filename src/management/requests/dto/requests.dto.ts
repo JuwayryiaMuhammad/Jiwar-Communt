@@ -3,7 +3,11 @@ import {
   type HoldType,
 } from '../../../core/resident-items/resident-items';
 import { ApiProperty } from '@nestjs/swagger';
-import { ManagementRequestStatus, ManagementRequestType } from '@prisma/client';
+import {
+  ManagementRequestStatus,
+  ManagementRequestType,
+  TicketPriority,
+} from '@prisma/client';
 import {
   ArrayMaxSize,
   IsArray,
@@ -27,6 +31,7 @@ import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { MAX_ATTACHMENTS, MESSAGE_LENGTH } from '../messages.service';
 import { RATING, RATING_COMMENT_LENGTH } from '../rating.service';
+import { CONVERT_TARGETS, type ConvertTarget } from '../conversion.service';
 
 const BOOLEAN = ['true', 'false'] as const;
 const UUID =
@@ -182,6 +187,16 @@ export class StaffRequestsQueryDto extends ResidentRequestsQueryDto {
 
   @ApiProperty({
     type: String,
+    format: 'uuid',
+    required: false,
+    description: 'The requests about one unit (ADR 0080).',
+  })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiProperty({
+    type: String,
     required: false,
     description:
       'An account id, `me` for the caller’s own, or `none` for the unassigned queue.',
@@ -315,4 +330,128 @@ export class RateRequestDto {
     withParams({ ...RATING_COMMENT_LENGTH }),
   )
   comment?: string;
+}
+
+/** A conversation the management starts with a resident (ADR 0080). */
+export class StartOutreachDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description:
+      'The resident it is with: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author, and answer it.',
+  })
+  @IsUUID()
+  residentAccountId: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'An active topic of the compound (TOPIC_NOT_AVAILABLE).',
+  })
+  @IsUUID()
+  topicId: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'One of the resident’s units, when it is about one.',
+  })
+  @IsOptional()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiProperty({
+    type: String,
+    minLength: MESSAGE_LENGTH.min,
+    maxLength: MESSAGE_LENGTH.max,
+    description:
+      'What the management writes: the first message, an official one. The resident reads it as from the office.',
+  })
+  @IsString()
+  @Length(
+    MESSAGE_LENGTH.min,
+    MESSAGE_LENGTH.max,
+    withParams({ ...MESSAGE_LENGTH }),
+  )
+  body: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    required: false,
+    maxItems: MAX_ATTACHMENTS,
+    description:
+      'The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_ATTACHMENTS, withParams({ min: 0, max: MAX_ATTACHMENTS }))
+  @IsUUID(undefined, { each: true })
+  attachmentFileIds?: string[];
+}
+
+/** Another topic for a live request (ADR 0080). */
+export class ReclassifyRequestDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description:
+      'An active topic of the compound, not the one it has (SAME_AS_CURRENT, TOPIC_NOT_AVAILABLE).',
+  })
+  @IsUUID()
+  topicId: string;
+}
+
+/** A request turned into a maintenance ticket (ADR 0080). */
+export class ConvertRequestDto {
+  @ApiProperty({
+    enum: CONVERT_TARGETS,
+    description:
+      '`ticket`: the resident’s own ticket in the request’s unit (a request about no unit is INVALID_VALUE). `work_order`: the management’s work order on a common area or an asset.',
+  })
+  @IsIn(CONVERT_TARGETS, withParams({ allowed: [...CONVERT_TARGETS] }))
+  target: ConvertTarget;
+
+  @ApiProperty({ type: String, format: 'uuid' })
+  @IsUUID()
+  categoryId: string;
+
+  @ApiProperty({
+    enum: TicketPriority,
+    enumName: 'TicketPriority',
+    required: false,
+    description: 'The category’s own by default.',
+  })
+  @IsOptional()
+  @IsEnum(
+    TicketPriority,
+    withParams({ allowed: Object.values(TicketPriority) }),
+  )
+  priority?: TicketPriority;
+
+  @ApiProperty({
+    type: String,
+    minLength: 1,
+    maxLength: 2000,
+    description: 'Staff’s words for the ticket: what is to be done.',
+  })
+  @IsString()
+  @Length(1, 2000, withParams({ min: 1, max: 2000 }))
+  description: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'A work order’s common area; or its asset, never both.',
+  })
+  @IsOptional()
+  @IsUUID()
+  commonAreaId?: string;
+
+  @ApiProperty({ type: String, format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  assetId?: string;
 }

@@ -302,8 +302,13 @@ export const REASON_CODES = {
     'not_for_management',
     'other',
   ],
-  // Written by the system only: the sweep's close and the author's own.
-  managementRequestSystemClose: ['auto_closed', 'withdrawn_by_author'],
+  // Written by the system only: the sweep's close and the author's own;
+  // and a conversion's, by its own route (ADR 0080).
+  managementRequestSystemClose: [
+    'auto_closed',
+    'withdrawn_by_author',
+    'converted',
+  ],
   // Why an appointment is cancelled, by each side; and by the system when
   // its request closes.
   managementAppointmentCancelByResident: [
@@ -323,6 +328,13 @@ export const REASON_CODES = {
     'account_frozen',
     'account_erased',
     'role_lost',
+  ],
+  // Official letters (ADR 0080): why the management revokes one.
+  officialLetterRevoke: [
+    'issued_in_error',
+    'facts_changed',
+    'replaced',
+    'other',
   ],
   // Community life (ADR 0040). Why the staff cancel an event.
   communityEventCancel: [

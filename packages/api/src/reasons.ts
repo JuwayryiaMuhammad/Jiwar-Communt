@@ -104,7 +104,8 @@ export const REASON_CODES = {
   // Requests to the management (ADR 0039): codes only, never text.
   managementRequestOnBehalf: ['resident_phone_call', 'resident_walk_in', 'resident_written_letter'],
   managementRequestClose: ['resolved', 'duplicate', 'not_for_management', 'other'],
-  managementRequestSystemClose: ['auto_closed', 'withdrawn_by_author'],
+  managementRequestSystemClose: ['auto_closed', 'withdrawn_by_author', 'converted'],
+  officialLetterRevoke: ['issued_in_error', 'facts_changed', 'replaced', 'other'],
   managementAppointmentCancelByResident: ['no_longer_needed', 'cannot_attend', 'other'],
   managementAppointmentCancelByStaff: ['staff_unavailable', 'office_closed', 'other'],
   managementAppointmentSystemCancel: ['request_closed'],

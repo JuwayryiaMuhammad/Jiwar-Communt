@@ -447,6 +447,31 @@ export const AUDIT_ACTIONS = {
     target: 'management_request_topic',
     sensitive: ['nameAr', 'nameEn'],
   },
+  // ADR 0080. A conversation the management started (metadata: number,
+  // type, topicKey, withUnit, authorId); a request put under another topic
+  // (changes: topicKey by value); a request turned into a ticket (metadata:
+  // number, cycle, fromStatus, ticketId). Never a word of anyone's.
+  'management_request.outreach_started': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  'management_request.reclassified': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  'management_request.converted': {
+    log: 'tenant',
+    target: 'management_request',
+  },
+  // ADR 0080: reply templates. metadata: name, topicId; changes: name and
+  // topicId by value, the words as `{ changed: true }`.
+  'reply_template.created': { log: 'tenant', target: 'reply_template' },
+  'reply_template.changed': {
+    log: 'tenant',
+    target: 'reply_template',
+    sensitive: ['words'],
+  },
+  'reply_template.deleted': { log: 'tenant', target: 'reply_template' },
   // metadata: requestNumber, type, topicKey, withUnit.
   'management_request.created': { log: 'tenant', target: 'management_request' },
   // The same, with reasonCode and authorId: the actor is the staff member.

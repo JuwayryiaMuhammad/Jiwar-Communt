@@ -14,3 +14,8 @@ export {
   ResidentOutageSummary,
   type OutageBrief,
 } from './outages/resident-outage-summary';
+// What the management opens: a request converted into a ticket (ADR 0080).
+export {
+  MaintenanceManagementPort,
+  type ConvertedTicket,
+} from './management-port';

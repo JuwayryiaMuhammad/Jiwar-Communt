@@ -13664,6 +13664,51 @@
         ],
         "type": "object"
       },
+      "ConvertRequestDto": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "A work order’s common area; or its asset, never both.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "description": "Staff’s words for the ticket: what is to be done.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "priority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TicketPriority"
+              }
+            ],
+            "description": "The category’s own by default."
+          },
+          "target": {
+            "description": "`ticket`: the resident’s own ticket in the request’s unit (a request about no unit is INVALID_VALUE). `work_order`: the management’s work order on a common area or an asset.",
+            "enum": [
+              "ticket",
+              "work_order"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "categoryId",
+          "description"
+        ],
+        "type": "object"
+      },
       "ConvertToInstalmentsDto": {
         "properties": {
           "authorizationId": {
@@ -16750,6 +16795,39 @@
         "required": [
           "title",
           "estimatedAmount"
+        ],
+        "type": "object"
+      },
+      "CreateReplyTemplateDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "description": "English, Arabic or both: at least one.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "The compound’s own, once (DUPLICATE_RESOURCE).",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "topicId": {
+            "description": "A topic of the compound; null for any topic.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
         ],
         "type": "object"
       },
@@ -48562,6 +48640,19 @@
         ],
         "type": "object"
       },
+      "ReclassifyRequestDto": {
+        "properties": {
+          "topicId": {
+            "description": "An active topic of the compound, not the one it has (SAME_AS_CURRENT, TOPIC_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topicId"
+        ],
+        "type": "object"
+      },
       "RecommendReplacementDto": {
         "properties": {
           "note": {
@@ -50193,6 +50284,63 @@
         ],
         "type": "object"
       },
+      "ReplyTemplateView": {
+        "properties": {
+          "bodyAr": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "topicId": {
+            "description": "Null: for any topic.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "topicId",
+          "bodyEn",
+          "bodyAr",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ReplyTemplateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReplyTemplateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ReportConversationDto": {
         "properties": {
           "note": {
@@ -51286,6 +51434,24 @@
         "required": [
           "slotId",
           "colleagueId"
+        ],
+        "type": "object"
+      },
+      "RequestTicketRefView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "MT-000123",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number"
         ],
         "type": "object"
       },
@@ -52630,7 +52796,7 @@
             "type": "object"
           },
           "closeReason": {
-            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "description": "Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`).",
             "nullable": true,
             "type": "string"
           },
@@ -52638,6 +52804,16 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "convertedTicket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestTicketRefView"
+              }
+            ],
+            "description": "The ticket it became (ADR 0080); it goes on there.",
+            "nullable": true,
+            "type": "object"
           },
           "createdAt": {
             "format": "date-time",
@@ -52662,6 +52838,10 @@
           },
           "openedByManagement": {
             "description": "Opened by the management on the author’s behalf.",
+            "type": "boolean"
+          },
+          "outreach": {
+            "description": "The management started the conversation (ADR 0080).",
             "type": "boolean"
           },
           "rating": {
@@ -52723,6 +52903,8 @@
           "unit",
           "cycle",
           "closeReason",
+          "outreach",
+          "convertedTicket",
           "closedAt",
           "createdAt",
           "lastActivityAt",
@@ -52818,7 +53000,7 @@
             "type": "object"
           },
           "closeReason": {
-            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "description": "Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`).",
             "nullable": true,
             "type": "string"
           },
@@ -52826,6 +53008,16 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "convertedTicket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestTicketRefView"
+              }
+            ],
+            "description": "The ticket it became (ADR 0080); it goes on there.",
+            "nullable": true,
+            "type": "object"
           },
           "createdAt": {
             "format": "date-time",
@@ -52850,6 +53042,10 @@
           },
           "openedByManagement": {
             "description": "Opened by the management on the author’s behalf.",
+            "type": "boolean"
+          },
+          "outreach": {
+            "description": "The management started the conversation (ADR 0080).",
             "type": "boolean"
           },
           "reopenUntil": {
@@ -52901,6 +53097,8 @@
           "unit",
           "cycle",
           "closeReason",
+          "outreach",
+          "convertedTicket",
           "closedAt",
           "createdAt",
           "lastActivityAt",
@@ -63992,7 +64190,7 @@
             "$ref": "#/components/schemas/AccountRefView"
           },
           "closeReason": {
-            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "description": "Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`).",
             "nullable": true,
             "type": "string"
           },
@@ -64000,6 +64198,16 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "convertedTicket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestTicketRefView"
+              }
+            ],
+            "description": "The ticket it became (ADR 0080); it goes on there.",
+            "nullable": true,
+            "type": "object"
           },
           "createdAt": {
             "format": "date-time",
@@ -64056,6 +64264,10 @@
             "nullable": true,
             "type": "object"
           },
+          "outreach": {
+            "description": "The management started the conversation (ADR 0080).",
+            "type": "boolean"
+          },
           "overdue": {
             "description": "The response time has passed and nobody has responded in this cycle.",
             "type": "boolean"
@@ -64102,6 +64314,8 @@
           "unit",
           "cycle",
           "closeReason",
+          "outreach",
+          "convertedTicket",
           "closedAt",
           "createdAt",
           "lastActivityAt",
@@ -64151,7 +64365,7 @@
             "$ref": "#/components/schemas/AccountRefView"
           },
           "closeReason": {
-            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "description": "Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`).",
             "nullable": true,
             "type": "string"
           },
@@ -64159,6 +64373,16 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "convertedTicket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestTicketRefView"
+              }
+            ],
+            "description": "The ticket it became (ADR 0080); it goes on there.",
+            "nullable": true,
+            "type": "object"
           },
           "createdAt": {
             "format": "date-time",
@@ -64207,6 +64431,10 @@
             "description": "The staff member who opened it for the author.",
             "nullable": true,
             "type": "object"
+          },
+          "outreach": {
+            "description": "The management started the conversation (ADR 0080).",
+            "type": "boolean"
           },
           "overdue": {
             "description": "The response time has passed and nobody has responded in this cycle.",
@@ -64260,6 +64488,8 @@
           "unit",
           "cycle",
           "closeReason",
+          "outreach",
+          "convertedTicket",
           "closedAt",
           "createdAt",
           "lastActivityAt",
@@ -64406,7 +64636,7 @@
             "$ref": "#/components/schemas/AccountRefView"
           },
           "closeReason": {
-            "description": "Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.",
+            "description": "Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`).",
             "nullable": true,
             "type": "string"
           },
@@ -64414,6 +64644,16 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "convertedTicket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequestTicketRefView"
+              }
+            ],
+            "description": "The ticket it became (ADR 0080); it goes on there.",
+            "nullable": true,
+            "type": "object"
           },
           "createdAt": {
             "format": "date-time",
@@ -64463,6 +64703,10 @@
             "nullable": true,
             "type": "object"
           },
+          "outreach": {
+            "description": "The management started the conversation (ADR 0080).",
+            "type": "boolean"
+          },
           "overdue": {
             "description": "The response time has passed and nobody has responded in this cycle.",
             "type": "boolean"
@@ -64509,6 +64753,8 @@
           "unit",
           "cycle",
           "closeReason",
+          "outreach",
+          "convertedTicket",
           "closedAt",
           "createdAt",
           "lastActivityAt",
@@ -65840,6 +66086,46 @@
           "scope",
           "reasonCode",
           "confirmation"
+        ],
+        "type": "object"
+      },
+      "StartOutreachDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE).",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "body": {
+            "description": "What the management writes: the first message, an official one. The resident reads it as from the office.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "residentAccountId": {
+            "description": "The resident it is with: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author, and answer it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "topicId": {
+            "description": "An active topic of the compound (TOPIC_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitId": {
+            "description": "One of the resident’s units, when it is about one.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "residentAccountId",
+          "topicId",
+          "body"
         ],
         "type": "object"
       },
@@ -71995,6 +72281,35 @@
           "title": {
             "maxLength": 120,
             "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateReplyTemplateDto": {
+        "properties": {
+          "bodyAr": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "bodyEn": {
+            "description": "English, Arabic or both: at least one.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "topicId": {
+            "description": "A topic of the compound; null for any topic.",
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           }
         },
@@ -101973,6 +102288,209 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/management/outreach": {
+      "post": {
+        "operationId": "RequestOutreachController_start",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartOutreachDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestCreatedView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a conversation with a resident",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/reply-templates": {
+      "get": {
+        "operationId": "ReplyTemplatesController_list",
+        "parameters": [
+          {
+            "description": "A topic’s templates and those for any topic.",
+            "in": "query",
+            "name": "topicId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplyTemplateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the reply templates",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ReplyTemplatesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReplyTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplyTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a reply template",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/reply-templates/{id}": {
+      "delete": {
+        "operationId": "ReplyTemplatesController_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a reply template",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "ReplyTemplatesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReplyTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplyTemplateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a reply template",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/management/request-assignees": {
       "get": {
         "operationId": "RequestAssigneesController_list",
@@ -102275,6 +102793,16 @@
           {
             "in": "query",
             "name": "topicId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The requests about one unit (ADR 0080).",
+            "in": "query",
+            "name": "unitId",
             "required": false,
             "schema": {
               "format": "uuid",
@@ -102651,6 +103179,54 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/management/requests/{id}/convert": {
+      "post": {
+        "operationId": "StaffRequestsController_convert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestTicketRefView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a request into a maintenance ticket",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/management/requests/{id}/messages": {
       "get": {
         "operationId": "StaffRequestsController_thread",
@@ -102826,6 +103402,47 @@
           }
         ],
         "summary": "Take an open request in hand",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/management/requests/{id}/topic": {
+      "post": {
+        "operationId": "StaffRequestsController_reclassify",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReclassifyRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Put a request under another topic",
         "tags": [
           "management-requests"
         ],

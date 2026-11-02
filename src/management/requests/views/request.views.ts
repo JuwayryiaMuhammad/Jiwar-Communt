@@ -89,6 +89,14 @@ export class RequestAboutView {
   reasonCode: string;
 }
 
+/** A ticket a request became (ADR 0080). */
+export class RequestTicketRefView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, nullable: true, example: 'MT-000123' })
+  number: string | null;
+}
+
 class RequestBaseView {
   @ApiProperty({ type: String, format: 'uuid' })
   id: string;
@@ -121,9 +129,20 @@ class RequestBaseView {
     type: String,
     nullable: true,
     description:
-      'Why it closed: a staff reason, `auto_closed` or `withdrawn_by_author`.',
+      'Why it closed: a staff reason, `auto_closed`, `withdrawn_by_author`, or `converted` (ADR 0080: it became `convertedTicket`).',
   })
   closeReason: string | null;
+  @ApiProperty({
+    type: Boolean,
+    description: 'The management started the conversation (ADR 0080).',
+  })
+  outreach: boolean;
+  @ApiProperty({
+    type: RequestTicketRefView,
+    nullable: true,
+    description: 'The ticket it became (ADR 0080); it goes on there.',
+  })
+  convertedTicket: RequestTicketRefView | null;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   closedAt: Date | null;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -152,6 +171,13 @@ class RequestBaseView {
       unit: r.unitId ? { id: r.unitId, code: read.unitCode } : null,
       cycle: r.cycle,
       closeReason: r.closeReason,
+      outreach: r.outreach,
+      convertedTicket: r.convertedTicketId
+        ? {
+            id: r.convertedTicketId,
+            number: read.ticketRefs.get(r.convertedTicketId) ?? null,
+          }
+        : null,
       closedAt: r.closedAt,
       createdAt: r.createdAt,
       lastActivityAt: r.lastActivityAt,
@@ -193,7 +219,7 @@ export class ResidentRequestView extends RequestBaseView {
       r.firstResponseAt === null;
     return {
       ...RequestBaseView.base(read),
-      openedByManagement: r.openedById !== null,
+      openedByManagement: r.openedById !== null && !r.outreach,
       responseDueAt: waiting ? r.responseDueAt : null,
       reopenUntil: r.closedAt ? reopenUntil(r.closedAt) : null,
     };

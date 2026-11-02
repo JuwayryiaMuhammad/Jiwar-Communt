@@ -6,6 +6,7 @@ import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
+import { MaintenanceManagementPort } from '../../maintenance';
 import { dbNow } from '../db-clock';
 import { MessagesService, type PostedMessage } from './messages.service';
 import { RequestAccess } from './request-access';
@@ -53,6 +54,7 @@ export class RequestLifecycle implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly sweep: SweepRunner,
     private readonly notices: RequestNotices,
+    private readonly maintenance: MaintenanceManagementPort,
   ) {}
 
   onModuleInit(): void {
@@ -133,6 +135,22 @@ export class RequestLifecycle implements OnModuleInit {
         lock: true,
       });
       assertCan(request, 'reopen');
+      // A request that became a ticket goes on there (ADR 0080).
+      if (request.convertedTicketId)
+        throw appError.conflict(
+          ErrorCode.MANAGEMENT_REQUEST_CONVERTED,
+          'This request became a ticket',
+          {
+            params: {
+              ticketNumber:
+                (
+                  await this.maintenance.references(tx, [
+                    request.convertedTicketId,
+                  ])
+                ).get(request.convertedTicketId) ?? '',
+            },
+          },
+        );
       const now = await dbNow(tx);
       if (!mayReopen(request.closedAt!, now))
         throw appError.conflict(
@@ -221,6 +239,49 @@ export class RequestLifecycle implements OnModuleInit {
         await this.closeRow(tx, request, 'auto_closed', 'system', now);
         return 1;
       },
+    );
+  }
+
+  /**
+   * A request turned into a ticket (ADR 0080), in the converting
+   * transaction under the request's lock: closed `converted` for good,
+   * pointing at its ticket, its closing handlers run (a live appointment
+   * ends), audited, and the author told the ticket's number.
+   */
+  async closeConverted(
+    tx: TenantTxClient,
+    request: ManagementRequest,
+    ticket: { id: string; reference: string },
+    now: Date,
+  ): Promise<void> {
+    await tx.managementRequest.update({
+      where: { id: request.id },
+      data: {
+        status: 'closed',
+        closedAt: now,
+        closeReason: 'converted',
+        closedBySide: 'staff',
+        convertedTicketId: ticket.id,
+        lastActivityAt: now,
+      },
+    });
+    for (const handler of this.closing) await handler(tx, request, now);
+    await this.audit.record(tx, {
+      action: 'management_request.converted',
+      targetId: request.id,
+      metadata: {
+        requestNumber: request.number,
+        cycle: request.cycle,
+        fromStatus: request.status,
+        ticketId: ticket.id,
+      },
+    });
+    await this.notices.toAuthor(
+      tx,
+      request,
+      'management_request.converted',
+      null,
+      { ticketNumber: ticket.reference },
     );
   }
 

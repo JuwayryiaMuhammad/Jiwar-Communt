@@ -36395,6 +36395,180 @@
           }
         },
         {
+          "name": "Start a conversation with a resident",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"residentAccountId\": \"\",\n  \"topicId\": \"\",\n  \"body\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `attachmentFileIds` | string (uuid)[] |  | The caller’s own finalized `request_attachment` files (FILE_NOT_AVAILABLE). |\n| `body` | string | yes | What the management writes: the first message, an official one. The resident reads it as from the office. |\n| `residentAccountId` | string (uuid) | yes | The resident it is with: an active resident or family account (AUTHOR_NOT_ELIGIBLE). They are its author, and answer it. |\n| `topicId` | string (uuid) | yes | An active topic of the compound (TOPIC_NOT_AVAILABLE). |\n| `unitId` | string (uuid) |  | One of the resident’s units, when it is about one. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "outreach"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/outreach"
+            }
+          }
+        },
+        {
+          "name": "List the reply templates",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "reply-templates"
+              ],
+              "query": [
+                {
+                  "description": "A topic’s templates and those for any topic.",
+                  "disabled": true,
+                  "key": "topicId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/reply-templates"
+            }
+          }
+        },
+        {
+          "name": "Add a reply template",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  | English, Arabic or both: at least one. |\n| `name` | string | yes | The compound’s own, once (DUPLICATE_RESOURCE). |\n| `topicId` | string (uuid) |  | A topic of the compound; null for any topic. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "reply-templates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/reply-templates"
+            }
+          }
+        },
+        {
+          "name": "Change a reply template",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bodyAr\": \"\",\n  \"bodyEn\": \"\",\n  \"name\": \"\",\n  \"topicId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bodyAr` | string |  |  |\n| `bodyEn` | string |  | English, Arabic or both: at least one. |\n| `name` | string |  |  |\n| `topicId` | string (uuid) |  | A topic of the compound; null for any topic. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "reply-templates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/reply-templates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete a reply template",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "reply-templates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/reply-templates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List who a request may be assigned to",
           "request": {
             "description": "**Responses:** 200",
@@ -36646,6 +36820,12 @@
                   "description": "",
                   "disabled": true,
                   "key": "topicId",
+                  "value": ""
+                },
+                {
+                  "description": "The requests about one unit (ADR 0080).",
+                  "disabled": true,
+                  "key": "unitId",
                   "value": ""
                 },
                 {
@@ -36959,6 +37139,50 @@
           }
         },
         {
+          "name": "Turn a request into a maintenance ticket",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"target\": \"ticket\",\n  \"categoryId\": \"\",\n  \"description\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  |  |\n| `categoryId` | string (uuid) | yes |  |\n| `commonAreaId` | string (uuid) |  | A work order’s common area; or its asset, never both. |\n| `description` | string | yes | Staff’s words for the ticket: what is to be done. |\n| `priority` | `normal` \\| `urgent` \\| `emergency` |  | The category’s own by default. |\n| `target` | `ticket` \\| `work_order` | yes | `ticket`: the resident’s own ticket in the request’s unit (a request about no unit is INVALID_VALUE). `work_order`: the management’s work order on a common area or an asset. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "convert"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/convert",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Read the conversation of a request, notes included",
           "request": {
             "description": "**Responses:** 200",
@@ -37098,6 +37322,50 @@
                 "start"
               ],
               "raw": "{{baseUrl}}/api/v1/management/requests/:id/start",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Put a request under another topic",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"topicId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `topicId` | string (uuid) | yes | An active topic of the compound, not the one it has (SAME_AS_CURRENT, TOPIC_NOT_AVAILABLE). |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "management",
+                "requests",
+                ":id",
+                "topic"
+              ],
+              "raw": "{{baseUrl}}/api/v1/management/requests/:id/topic",
               "variable": [
                 {
                   "description": "",

@@ -1068,3 +1068,23 @@ export const FITOUT_COVERAGE: readonly string[] = [
   'damage_claim.settled',
   'damage_claim.appeal_cleared',
 ];
+
+/** The spaces (ADR 0084), covered by test/spaces/audit-coverage.e2e-spec.ts. */
+export const M214_COVERAGE: readonly string[] = [
+  'holiday.created',
+  'holiday.changed',
+  'holiday.removed',
+  'site_map.image_set',
+  'site_map.points_set',
+  'floor_plan.created',
+  'floor_plan.image_set',
+  'floor_plan.hotspots_set',
+  'floor_plan.removed',
+  'space_use_area.opened',
+  'space_use_area.closed',
+  'space_use.requested',
+  'space_use.approved',
+  'space_use.refused',
+  'space_use.cancelled',
+  'space_use.expired',
+];

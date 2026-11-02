@@ -18,6 +18,7 @@ import { MaintenanceProvisioning } from '../../src/maintenance/provisioning';
 import { ManagementProvisioning } from '../../src/management/provisioning';
 import { NeighboursProvisioning } from '../../src/neighbours/provisioning';
 import { PartnersProvisioning } from '../../src/partners/provisioning';
+import { HolidayProvisioning } from '../../src/core/holidays/holiday-provisioning';
 import { dbDate, ofDbDate, today, yearsBefore } from './compound-clock';
 import type { DbHarness } from './db-module';
 import { suiteSequence } from './id-blocks';
@@ -45,6 +46,7 @@ new LockdownProvisioning(tenantLifecycle).onModuleInit();
 new GovernanceProvisioning(tenantLifecycle).onModuleInit();
 new GateSettingsProvisioning(tenantLifecycle).onModuleInit();
 new PartnersProvisioning(tenantLifecycle).onModuleInit();
+new HolidayProvisioning(tenantLifecycle).onModuleInit();
 
 /**
  * Generated phones and national IDs live in a space hand-written test values

@@ -2691,4 +2691,55 @@ describe('Permission sync', () => {
       });
     });
   });
+
+  describe('Phase M2-14 (ADR 0084)', () => {
+    const m214 = ['spaces.manage'];
+    /** The catalog before M2-14: the permission nowhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m214.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m214.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: spaces.manage to the manager only; no staff or resident role gains it', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M2-14 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m214].sort());
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toContain('spaces.manage');
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'technician',
+        'maintenance_supervisor',
+        'security_supervisor',
+        'accountant',
+        'collector',
+        'unit_proxy',
+      ])
+        expect((await role(t, key)).permissions).not.toContain('spaces.manage');
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
 });

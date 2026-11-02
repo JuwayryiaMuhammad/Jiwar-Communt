@@ -107,6 +107,7 @@ import { r11c2World, type R11c2World } from './world-r11c2';
 import { m21World, type M21World } from './world-m21';
 import { m22World, type M22World } from './world-m22';
 import { m24World, type M24World } from './world-m24';
+import { m214World, type M214World } from './world-m214';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
 import { gateHelpers } from '../setup/gate';
@@ -180,7 +181,8 @@ export interface World
     R11c2World,
     M21World,
     M22World,
-    M24World {
+    M24World,
+    M214World {
   h: HttpHarness;
   helpers: ReturnType<typeof communityHelpers>;
   /** The compound the requests act in. */
@@ -1698,6 +1700,11 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const m21 = await m21World(h, helpers, b);
   const m22 = await m22World(h, helpers, b, bAsset.asset.id);
   const m24 = await m24World(h, helpers, b);
+  const m214 = await m214World(h, helpers, b, {
+    buildingId: m21.bBuildingId,
+    unitId: b.homeUnitId,
+    commonAreaId: bCommonArea.id,
+  });
   return {
     ...m21,
     ...gateCompletion,
@@ -1707,6 +1714,7 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     ...r11c2,
     ...m22,
     ...m24,
+    ...m214,
     ...guardDuty,
     ...patrols,
     ...securityOps,

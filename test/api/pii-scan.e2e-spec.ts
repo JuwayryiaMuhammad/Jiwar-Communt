@@ -1811,6 +1811,13 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/warranty-claims/{id}': w.bWarrantyClaimId,
       // ADR 0079: B's brief, not found for everyone of A.
       '/staff/briefs/{id}': w.bStaffBriefId,
+      // ADR 0084: B's plan and request, not found for everyone of A; A's
+      // unit's plan (its own box only) and requests.
+      '/staff/floor-plans/{id}': w.bFloorPlanId,
+      '/staff/space-uses/{id}': w.bSpaceUseId,
+      '/units/{unitId}/floor-plan': unit.id,
+      '/units/{unitId}/space-uses': unit.id,
+      '/staff/facilities/{id}/closure-preview': w.aFacilityId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,
@@ -1941,6 +1948,11 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/consumption/benchmark': {
         kind: 'water',
         month: '2026-01',
+      },
+      // ADR 0084: a closure's preview over a day.
+      '/staff/facilities/{id}/closure-preview': {
+        startsAt: at(day(30), 0).toISOString(),
+        endsAt: at(day(31), 0).toISOString(),
       },
     };
 

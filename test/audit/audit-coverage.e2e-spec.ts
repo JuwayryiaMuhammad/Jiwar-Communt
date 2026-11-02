@@ -40,6 +40,7 @@ import {
   FITOUT_COVERAGE,
   M214_COVERAGE,
   M29_COVERAGE,
+  M213_COVERAGE,
   BOARD_MATTERS_COVERAGE,
   BUDGET_COVERAGE,
   COMMUNITY_COVERAGE,
@@ -924,6 +925,7 @@ describe('Audit coverage', () => {
         ...FITOUT_COVERAGE,
         ...M214_COVERAGE,
         ...M29_COVERAGE,
+        ...M213_COVERAGE,
       ];
       for (const key of elsewhere) expect(all).toContain(key);
       const mine = all.filter((k) => !elsewhere.includes(k)).sort();

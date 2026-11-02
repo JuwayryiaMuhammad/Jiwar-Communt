@@ -23,6 +23,8 @@ describe('Audit coverage — payables and commitments (ADR 0089)', () => {
   let read: ReturnType<typeof auditReaders>;
   let s: Awaited<ReturnType<ReturnType<typeof budgetHelpers>['setUp']>>;
   let budget: BudgetBody;
+  /** The bank account payouts leave (ADR 0085). */
+  let bank: { id: string };
 
   beforeAll(async () => {
     h = await createHttpHarness();
@@ -42,6 +44,15 @@ describe('Audit coverage — payables and commitments (ADR 0089)', () => {
         items: [{ type: 'major_contract', threshold: '100000.00' }],
       })
       .expect(200);
+    bank = (
+      await f
+        .http('post', '/staff/finance/cash-accounts', s.manager.token, {
+          kind: 'bank',
+          name: 'Coverage bank',
+          openedOn: clock().today,
+        })
+        .expect(201)
+    ).body as { id: string };
   }, 240_000);
 
   afterAll(() => h.close());
@@ -232,6 +243,7 @@ describe('Audit coverage — payables and commitments (ADR 0089)', () => {
           paidOn: clock().today,
           method: 'bank_transfer',
           reference: MARKER,
+          cashAccountId: bank.id,
         })
         .expect(200)
     ).body as { payout: { id: string } };
@@ -243,6 +255,7 @@ describe('Audit coverage — payables and commitments (ADR 0089)', () => {
         gross: '1000.00',
         retentionHeld: '50.00',
         net: '950.00',
+        cashAccountId: bank.id,
       },
       changes: { reference: { changed: true } },
     });

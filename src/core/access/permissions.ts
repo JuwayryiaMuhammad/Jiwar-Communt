@@ -232,6 +232,15 @@ export const PERMISSIONS = {
   // Both are `finance.*`, so a deputy never holds them (ADR 0073).
   'finance.payables': { kinds: ['staff', 'manager'] },
   'finance.payables_approve': { kinds: ['staff', 'manager'] },
+  // Treasury and custody (ADR 0085). `finance.treasury` keeps the
+  // compound's bank and cash accounts (registers, not a ledger): their
+  // movements, transfers between them, adjustments by hand, and bank
+  // statements imported and matched. `finance.custody` settles a custody
+  // hand-in's variance, opens an investigation and decides any (the
+  // manager's: a maker-checker over the cashiers who record hand-ins with
+  // `finance.payments`). The cheque register is `finance.payments`.
+  'finance.treasury': { kinds: ['staff', 'manager'] },
+  'finance.custody': { kinds: ['manager'] },
   // Permits (ADR 0049). Residents and family ask for a unit's permits: the
   // unit's primary for works, moves and material exits, anyone who may
   // invite visitors for an event (the service decides per unit);

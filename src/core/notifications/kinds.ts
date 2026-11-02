@@ -3397,6 +3397,47 @@ export const NOTIFICATION_KINDS = {
     target: 'technician_help_request',
     params: { helpKind: {} },
   },
+  // Treasury and custody (ADR 0085). Never an amount.
+  /**
+   * A hand-in counted other than what was expected: to who settles custody
+   * variances (`finance.custody`). Critical: cash is missing or unexplained.
+   */
+  'finance.custody_variance': {
+    needsDecision: true,
+    priority: 'critical',
+    category: 'finance',
+    critical: true,
+    target: 'custody_handin',
+    params: { handinNumber: {} },
+  },
+  /** An investigation of a hand-in's variance is the owner's. */
+  'finance.custody_investigation_assigned': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'custody_investigation',
+    params: { handinNumber: {}, dueOn: {} },
+  },
+  /** A post-dated cheque's due day came: deposit it (`finance.payments`). */
+  'cheque.due': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'cheque',
+    params: { dueOn: {} },
+  },
+  /**
+   * A cheque the unit paid with bounced, and the payment it made was
+   * reversed: to who sees the unit's money.
+   */
+  'cheque.bounced': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'payment',
+    params: {},
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

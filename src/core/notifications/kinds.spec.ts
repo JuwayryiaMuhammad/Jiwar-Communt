@@ -70,6 +70,8 @@ const CRITICAL_KINDS = [
   'ticket.sla_at_risk_emergency',
   // ADR 0083: staff entered the unit in an emergency; never silent.
   'unit_entry.recorded',
+  // ADR 0085: a custody hand-in counted short or over.
+  'finance.custody_variance',
 ].sort();
 
 describe('notification catalog', () => {

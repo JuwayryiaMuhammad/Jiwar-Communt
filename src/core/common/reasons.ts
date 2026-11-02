@@ -1232,4 +1232,34 @@ export const REASON_CODES = {
     'needs_maintenance',
     'other',
   ],
+  // Treasury and custody (ADR 0085): why a hand-in's count differs from what
+  // was expected; how a variance was settled (with or without an
+  // investigation); why a cheque bounced or was given back; why a bank or
+  // cash account's balance was adjusted by hand (a statement line matched
+  // as an adjustment takes the same list).
+  custodyVariance: [
+    'counting_error',
+    'missing_cash',
+    'excess_cash',
+    'change_given',
+    'unrecorded_payment',
+    'other',
+  ],
+  custodyOutcome: ['recovered', 'written_off', 'explained', 'other'],
+  chequeBounce: [
+    'insufficient_funds',
+    'signature_mismatch',
+    'stopped',
+    'stale',
+    'account_closed',
+    'other',
+  ],
+  chequeReturn: ['replaced', 'paid_otherwise', 'payer_asked', 'other'],
+  cashAdjust: [
+    'bank_charge',
+    'interest',
+    'refund_paid',
+    'counting_correction',
+    'other',
+  ],
 } as const;

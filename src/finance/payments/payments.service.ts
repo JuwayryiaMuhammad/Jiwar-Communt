@@ -37,6 +37,8 @@ import { invoiceView, InvoicesService } from '../invoices/invoices.service';
 import { CURRENCY, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
 import { supersedeLive } from '../online/supersede';
+import { registerCheque } from '../treasury/cheque-rows';
+import { lockCustody } from '../treasury/treasury-locks';
 import { allocateUnit, applyPayment, unitCredit } from './allocation';
 import { newReceiptCode, receiptCodeHash, receiptUrl } from './receipts';
 import type {
@@ -170,28 +172,79 @@ export class PaymentsService implements OnModuleInit {
           },
         ]);
       await this.access.lockUnits(tx, [unitId]);
-      const named = dto.invoiceIds ?? [];
-      const outstanding = await this.owed(tx, unitId, named);
-      const amount = money(dto.amount);
-      if (amount.gt(outstanding))
-        throw appError.conflict(
-          ErrorCode.PAYMENT_EXCEEDS_OUTSTANDING,
-          'More than is owed',
-          { params: { outstanding: show(outstanding) } },
-        );
-      await supersedeLive(tx, [unitId]);
-      await this.create(tx, id, {
-        unitId,
-        channel: 'office',
+      await this.officeLocked(tx, id, unitId, {
         method: dto.method,
-        amount,
+        amount: money(dto.amount),
         paidOn: dto.paidOn,
         reference: dto.reference ?? null,
-        recordedById: this.ctx.accountId,
-        named,
+        named: dto.invoiceIds ?? [],
       });
+      // A cheque is in the register from the day it is received (ADR 0085):
+      // dated the day it was paid, it pays at once, as it always did.
+      if (dto.method === 'cheque')
+        await registerCheque(tx, this.audit, {
+          tenantId: this.ctx.txTenantId,
+          unitId,
+          number: dto.reference!,
+          bankName: null,
+          amount: money(dto.amount),
+          dueOn: dto.paidOn,
+          receivedOn: dto.paidOn,
+          recordedById: this.ctx.accountId,
+          paymentId: id,
+        });
       return this.detailIn(tx, id, true);
     });
+  }
+
+  /**
+   * An office payment under the unit's finance lock the caller holds: at
+   * most what the invoices named (or all the unit's) still ask for; the
+   * unit's open checkout superseded. Shared with the cheque register.
+   */
+  async officeLocked(
+    tx: TenantTxClient,
+    id: string,
+    unitId: string,
+    p: {
+      method: 'cash' | 'bank_transfer' | 'cheque';
+      amount: Prisma.Decimal;
+      paidOn: LocalDate;
+      reference: string | null;
+      named: readonly string[];
+    },
+  ): Promise<void> {
+    await this.withinOwed(tx, unitId, p.named, p.amount);
+    await supersedeLive(tx, [unitId]);
+    await this.create(tx, id, {
+      unitId,
+      channel: 'office',
+      method: p.method,
+      amount: p.amount,
+      paidOn: p.paidOn,
+      reference: p.reference,
+      recordedById: this.ctx.accountId,
+      named: p.named,
+    });
+  }
+
+  /**
+   * PAYMENT_EXCEEDS_OUTSTANDING past what the invoices named (or all the
+   * unit's) still ask for, under the unit's finance lock the caller holds.
+   */
+  async withinOwed(
+    tx: TenantTxClient,
+    unitId: string,
+    named: readonly string[],
+    amount: Prisma.Decimal,
+  ): Promise<void> {
+    const outstanding = await this.owed(tx, unitId, named);
+    if (amount.gt(outstanding))
+      throw appError.conflict(
+        ErrorCode.PAYMENT_EXCEEDS_OUTSTANDING,
+        'More than is owed',
+        { params: { outstanding: show(outstanding) } },
+      );
   }
 
   /**
@@ -246,6 +299,10 @@ export class PaymentsService implements OnModuleInit {
     p: NewPayment,
   ): Promise<FinancePayment> {
     const tenantId = this.ctx.txTenantId;
+    // Office cash is its recorder's custody until handed in (ADR 0085):
+    // the custody lock first, so a hand-in sees this payment whole or not.
+    if (p.channel === 'office' && p.method === 'cash' && p.recordedById)
+      await lockCustody(tx, tenantId, p.recordedById);
     const receipt = await takeNumbers(tx, tenantId, 'receipt');
     const code = newReceiptCode();
     const payment = await tx.financePayment.create({
@@ -355,6 +412,10 @@ export class PaymentsService implements OnModuleInit {
         ErrorCode.PAYMENT_REFUNDED,
         'Money of this payment was refunded',
       );
+    // A cash payment not yet handed in leaves its recorder's custody: the
+    // same custody lock as a hand-in's (ADR 0085).
+    if (payment.method === 'cash' && payment.recordedById)
+      await lockCustody(tx, payment.tenantId, payment.recordedById);
     await tx.financePayment.create({
       data: {
         id,

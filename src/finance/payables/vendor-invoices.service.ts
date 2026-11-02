@@ -31,6 +31,7 @@ import { TenantSettingsService } from '../../core/tenant-settings/tenant-setting
 import { VendorDirectory } from '../../core/vendors/vendor-directory';
 import { FinanceAccess } from '../access';
 import { BudgetsService, budgetLineNotFound } from '../budgets/budgets.service';
+import { CashAccountsService } from '../treasury/cash-accounts.service';
 import { ExpensesService } from '../budgets/expenses.service';
 import { formatNumber, takeNumbers } from '../counters';
 import { asDate, dbNow, localToday } from '../db-clock';
@@ -153,6 +154,7 @@ export class VendorInvoicesService implements OnModuleInit {
     private readonly notifier: Notifier,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly cashAccounts: CashAccountsService,
   ) {}
 
   onModuleInit(): void {
@@ -612,9 +614,9 @@ export class VendorInvoicesService implements OnModuleInit {
    * Paid once (an approved invoice): its expense written (ADR 0055) on its
    * line, under its authorization, on the day it was paid; the contract's
    * retention held back and its open advances set off as asked; a schedule
-   * payment marked paid with the payout's number. How it was paid is a
-   * method and a reference: the treasury's account (ADR 0085) joins it
-   * when the two phases meet.
+   * payment marked paid with the payout's number. What it pays leaves the
+   * treasury's account (ADR 0085) of its method's kind, as a movement;
+   * a payout set off whole names none.
    */
   pay(
     id: string,
@@ -623,6 +625,7 @@ export class VendorInvoicesService implements OnModuleInit {
       method: PayoutMethod;
       reference?: string;
       advanceSetOff?: string;
+      cashAccountId?: string;
     },
   ): Promise<InvoiceRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -680,6 +683,15 @@ export class VendorInvoicesService implements OnModuleInit {
             },
           ]);
       }
+      const net = gross.sub(retention).sub(setOff);
+      // The treasury's account (ADR 0085): after the lines, before the
+      // counters.
+      const cashAccountId = await this.cashAccounts.payoutAccount(tx, {
+        cashAccountId: input.cashAccountId,
+        method: input.method,
+        net,
+        paidOn: input.paidOn,
+      });
       const payoutId = newId();
       await this.idempotency.claim(tx, {
         type: VENDOR_PAYOUT_RESOURCE,
@@ -735,7 +747,6 @@ export class VendorInvoicesService implements OnModuleInit {
           'expense.recorded',
         ),
       });
-      const net = gross.sub(retention).sub(setOff);
       const payoutReference = input.reference?.trim() || null;
       await tx.financeVendorPayout.create({
         data: {
@@ -755,9 +766,17 @@ export class VendorInvoicesService implements OnModuleInit {
           reference: payoutReference,
           paidOn: asDate(input.paidOn),
           paidById: this.ctx.accountId,
+          cashAccountId,
           createdAt: now,
         },
       });
+      if (cashAccountId)
+        await this.cashAccounts.payoutMovement(tx, {
+          payoutId,
+          accountId: cashAccountId,
+          net,
+          paidOn: input.paidOn,
+        });
       const paid = await tx.financeVendorInvoice.update({
         where: { id },
         data: { status: 'paid', paidAt: now },
@@ -780,6 +799,7 @@ export class VendorInvoicesService implements OnModuleInit {
           advanceSetOff: show(setOff),
           net: show(net),
           method: input.method,
+          cashAccountId,
           paidOn: input.paidOn,
         },
         ...(payoutReference

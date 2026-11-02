@@ -52,6 +52,10 @@ export const INBOX_TYPES = [
   'contract_disbursement',
   // ADR 0088: a tender past its deadline, waiting to be opened by two.
   'tender_opening',
+  // ADR 0085: a custodian's cash not handed in, and a hand-in's variance
+  // not yet settled.
+  'cash_custody',
+  'custody_variance',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

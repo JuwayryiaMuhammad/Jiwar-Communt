@@ -29,6 +29,7 @@ import { FinanceAccess } from '../access';
 import { formatNumber, takeNumbers } from '../counters';
 import { asDate, dbNow, localToday } from '../db-clock';
 import { money, show, ZERO } from '../money';
+import { CashAccountsService } from '../treasury/cash-accounts.service';
 import {
   type DisbursementKind,
   type GuaranteeKind,
@@ -104,6 +105,7 @@ export class ContractMoneyService implements OnModuleInit {
     private readonly notifier: Notifier,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly cashAccounts: CashAccountsService,
   ) {}
 
   onModuleInit(): void {
@@ -298,10 +300,18 @@ export class ContractMoneyService implements OnModuleInit {
     );
   }
 
-  /** Paid once, whole, on a day not after today. */
+  /**
+   * Paid once, whole, on a day not after today, out of the treasury's
+   * account of its method's kind (ADR 0085).
+   */
   pay(
     id: string,
-    input: { paidOn: string; method: PayoutMethod; reference?: string },
+    input: {
+      paidOn: string;
+      method: PayoutMethod;
+      reference?: string;
+      cashAccountId?: string;
+    },
   ): Promise<DisbursementRecord> {
     return this.decide(
       id,
@@ -315,6 +325,14 @@ export class ContractMoneyService implements OnModuleInit {
               params: { max: today },
             },
           ]);
+        const net = money(d.amount);
+        // The treasury's account: after the rows, before the counter.
+        const cashAccountId = await this.cashAccounts.payoutAccount(tx, {
+          cashAccountId: input.cashAccountId,
+          method: input.method,
+          net,
+          paidOn: input.paidOn,
+        });
         const payoutId = newId();
         const number = await takeNumbers(tx, this.ctx.txTenantId, 'payout');
         const now = await dbNow(tx);
@@ -334,9 +352,17 @@ export class ContractMoneyService implements OnModuleInit {
             reference,
             paidOn: asDate(input.paidOn),
             paidById: this.ctx.accountId,
+            cashAccountId,
             createdAt: now,
           },
         });
+        if (cashAccountId)
+          await this.cashAccounts.payoutMovement(tx, {
+            payoutId,
+            accountId: cashAccountId,
+            net,
+            paidOn: input.paidOn,
+          });
         await tx.financeContractDisbursement.update({
           where: { id },
           data: { status: 'paid', paidAt: now },
@@ -351,6 +377,7 @@ export class ContractMoneyService implements OnModuleInit {
             gross: show(d.amount),
             net: show(d.amount),
             method: input.method,
+            cashAccountId,
             paidOn: input.paidOn,
           },
           ...(reference ? { changes: { reference: { changed: true } } } : {}),

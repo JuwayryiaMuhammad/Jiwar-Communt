@@ -8798,6 +8798,130 @@
         ],
         "type": "object"
       },
+      "CashAccountKind": {
+        "enum": [
+          "bank",
+          "cash"
+        ],
+        "type": "string"
+      },
+      "CashAccountView": {
+        "properties": {
+          "balance": {
+            "description": "The sum of its movements.",
+            "type": "string"
+          },
+          "bankName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashAccountKind"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "numberLast4": {
+            "nullable": true,
+            "type": "string"
+          },
+          "openedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "pendingCheques": {
+            "description": "Cheques deposited to it, not yet cleared or bounced.",
+            "type": "number"
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "unmatchedLines": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "bankName",
+          "numberLast4",
+          "openedOn",
+          "balance",
+          "unmatchedLines",
+          "pendingCheques",
+          "retiredAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CashAccountViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CashAccountView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CashAdjustReason": {
+        "enum": [
+          "bank_charge",
+          "interest",
+          "refund_paid",
+          "counting_correction",
+          "other"
+        ],
+        "type": "string"
+      },
+      "CashAdjustmentDto": {
+        "properties": {
+          "amount": {
+            "description": "Positive in, negative out.",
+            "pattern": "^-?(?!0+(\\.0{1,2})?$)\\d{1,8}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "onDay": {
+            "description": "Today or up to 31 days ago.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.cashAdjust.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "reasonCode",
+          "onDay"
+        ],
+        "type": "object"
+      },
       "CashEventView": {
         "properties": {
           "amount": {
@@ -8844,6 +8968,176 @@
           "amount",
           "reference",
           "recordedBy"
+        ],
+        "type": "object"
+      },
+      "CashMovementKind": {
+        "enum": [
+          "opening",
+          "handin",
+          "recovery",
+          "transfer",
+          "cheque",
+          "statement_payment",
+          "adjustment",
+          "reversal",
+          "payout"
+        ],
+        "type": "string"
+      },
+      "CashMovementView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "chequeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "handinId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashMovementKind"
+              }
+            ]
+          },
+          "matchId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "onDay": {
+            "format": "date",
+            "type": "string"
+          },
+          "payoutId": {
+            "description": "The vendor’s payout it paid (ADR 0089).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashAdjustReason"
+              }
+            ],
+            "nullable": true
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "reversesId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "transferId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "kind",
+          "amount",
+          "onDay",
+          "handinId",
+          "transferId",
+          "chequeId",
+          "matchId",
+          "reversesId",
+          "reasonCode",
+          "payoutId",
+          "recordedBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CashMovementViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CashMovementView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CashTransferDto": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "fromAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "onDay": {
+            "description": "Today or up to 31 days ago.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "toAccountId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromAccountId",
+          "toAccountId",
+          "amount",
+          "onDay"
+        ],
+        "type": "object"
+      },
+      "CashTransferView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "legs": {
+            "description": "Out of the first, into the second.",
+            "items": {
+              "$ref": "#/components/schemas/CashMovementView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "legs"
         ],
         "type": "object"
       },
@@ -10103,6 +10397,192 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/CheckpointView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ChequeBounceReason": {
+        "enum": [
+          "insufficient_funds",
+          "signature_mismatch",
+          "stopped",
+          "stale",
+          "account_closed",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ChequeReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "REASON_CODES.chequeBounce, or .chequeReturn.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ChequeReturnReason": {
+        "enum": [
+          "replaced",
+          "paid_otherwise",
+          "payer_asked",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ChequeStatus": {
+        "enum": [
+          "received",
+          "deposited",
+          "cleared",
+          "bounced",
+          "returned"
+        ],
+        "type": "string"
+      },
+      "ChequeView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "bankName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "bounceReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChequeBounceReason"
+              }
+            ],
+            "nullable": true
+          },
+          "bouncedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "clearedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "depositedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "depositedToAccountId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "paymentId": {
+            "description": "The payment it made.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "paymentReversed": {
+            "type": "boolean"
+          },
+          "postDated": {
+            "description": "Dated after the day it was received.",
+            "type": "boolean"
+          },
+          "receivedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "returnReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChequeReturnReason"
+              }
+            ],
+            "nullable": true
+          },
+          "returnedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChequeStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "number",
+          "bankName",
+          "amount",
+          "dueOn",
+          "receivedOn",
+          "postDated",
+          "status",
+          "paymentId",
+          "paymentReversed",
+          "depositedToAccountId",
+          "depositedOn",
+          "clearedOn",
+          "bouncedOn",
+          "bounceReason",
+          "returnedOn",
+          "returnReason",
+          "recordedBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ChequeViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ChequeView"
             },
             "type": "array"
           },
@@ -17264,6 +17744,49 @@
         ],
         "type": "object"
       },
+      "CreateCashAccountDto": {
+        "properties": {
+          "bankName": {
+            "description": "A bank account’s only.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "bank",
+              "cash"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "numberLast4": {
+            "description": "A bank account’s last four digits; never the whole number.",
+            "pattern": "^[0-9]{4}$",
+            "type": "string"
+          },
+          "openedOn": {
+            "description": "Today or earlier.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "openingBalance": {
+            "description": "Money in it on the day it opened.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "openedOn"
+        ],
+        "type": "object"
+      },
       "CreateCategoryDto": {
         "properties": {
           "commonAreaAllowed": {
@@ -21227,6 +21750,580 @@
         ],
         "type": "object"
       },
+      "CustodyHandinDetailView": {
+        "properties": {
+          "cashAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "counted": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "custodian": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "investigation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyInvestigationView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "investigationId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "paymentCount": {
+            "type": "number"
+          },
+          "payments": {
+            "items": {
+              "$ref": "#/components/schemas/CustodyPaymentView"
+            },
+            "type": "array"
+          },
+          "receivedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "receivedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "recovered": {
+            "nullable": true,
+            "type": "string"
+          },
+          "resolvedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "resolvedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyHandinStatus"
+              }
+            ]
+          },
+          "variance": {
+            "description": "Counted less expected.",
+            "type": "string"
+          },
+          "varianceReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyVarianceReason"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "custodian",
+          "receivedBy",
+          "cashAccountId",
+          "expected",
+          "counted",
+          "variance",
+          "varianceReason",
+          "paymentCount",
+          "receivedOn",
+          "status",
+          "outcome",
+          "recovered",
+          "resolvedBy",
+          "resolvedAt",
+          "investigationId",
+          "createdAt",
+          "payments",
+          "investigation"
+        ],
+        "type": "object"
+      },
+      "CustodyHandinDto": {
+        "properties": {
+          "cashAccountId": {
+            "description": "The cash box it goes into.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "counted": {
+            "pattern": "^\\d{1,8}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "expected": {
+            "description": "The custody the receiver was shown; refused if it changed.",
+            "pattern": "^\\d{1,8}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "varianceReason": {
+            "description": "REASON_CODES.custodyVariance: when the count differs, and only then.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cashAccountId",
+          "expected",
+          "counted"
+        ],
+        "type": "object"
+      },
+      "CustodyHandinStatus": {
+        "enum": [
+          "balanced",
+          "variance",
+          "resolved"
+        ],
+        "type": "string"
+      },
+      "CustodyHandinView": {
+        "properties": {
+          "cashAccountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "counted": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "custodian": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "investigationId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "paymentCount": {
+            "type": "number"
+          },
+          "receivedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "receivedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "recovered": {
+            "nullable": true,
+            "type": "string"
+          },
+          "resolvedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "resolvedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyHandinStatus"
+              }
+            ]
+          },
+          "variance": {
+            "description": "Counted less expected.",
+            "type": "string"
+          },
+          "varianceReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyVarianceReason"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "custodian",
+          "receivedBy",
+          "cashAccountId",
+          "expected",
+          "counted",
+          "variance",
+          "varianceReason",
+          "paymentCount",
+          "receivedOn",
+          "status",
+          "outcome",
+          "recovered",
+          "resolvedBy",
+          "resolvedAt",
+          "investigationId",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CustodyHandinViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CustodyHandinView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CustodyInvestigationStatus": {
+        "enum": [
+          "open",
+          "decided"
+        ],
+        "type": "string"
+      },
+      "CustodyInvestigationView": {
+        "properties": {
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "handinId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "handinNumber": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "openedBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "recovered": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustodyInvestigationStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "handinId",
+          "handinNumber",
+          "owner",
+          "dueOn",
+          "overdue",
+          "status",
+          "outcome",
+          "recovered",
+          "openedBy",
+          "openedAt",
+          "decidedBy",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
+      "CustodyInvestigationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CustodyInvestigationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CustodyOutcome": {
+        "enum": [
+          "recovered",
+          "written_off",
+          "explained",
+          "other"
+        ],
+        "type": "string"
+      },
+      "CustodyOutcomeDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "REASON_CODES.custodyOutcome.",
+            "type": "string"
+          },
+          "recoveredAmount": {
+            "description": "With `recovered` only: cash recovered of a shortage, into the hand-in’s cash box.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "CustodyPaymentView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "paidOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "paymentId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "receiptNumber": {
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentId",
+          "receiptNumber",
+          "unitId",
+          "unitCode",
+          "amount",
+          "paidOn",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CustodySummaryView": {
+        "properties": {
+          "ageHours": {
+            "description": "Hours since the oldest unhanded payment.",
+            "nullable": true,
+            "type": "number"
+          },
+          "custodian": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "expected": {
+            "description": "What they hold: their open cash payments.",
+            "type": "string"
+          },
+          "oldestAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "openCount": {
+            "type": "number"
+          },
+          "unresolvedVariances": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "custodian",
+          "openCount",
+          "expected",
+          "oldestAt",
+          "ageHours",
+          "unresolvedVariances"
+        ],
+        "type": "object"
+      },
+      "CustodySummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CustodySummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CustodyVarianceReason": {
+        "enum": [
+          "counting_error",
+          "missing_cash",
+          "excess_cash",
+          "change_given",
+          "unrecorded_payment",
+          "other"
+        ],
+        "type": "string"
+      },
+      "CustodyView": {
+        "properties": {
+          "ageHours": {
+            "nullable": true,
+            "type": "number"
+          },
+          "custodian": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "handins": {
+            "description": "The latest 20.",
+            "items": {
+              "$ref": "#/components/schemas/CustodyHandinView"
+            },
+            "type": "array"
+          },
+          "oldestAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "openCount": {
+            "type": "number"
+          },
+          "payments": {
+            "description": "The oldest 500.",
+            "items": {
+              "$ref": "#/components/schemas/CustodyPaymentView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "custodian",
+          "expected",
+          "openCount",
+          "oldestAt",
+          "ageHours",
+          "payments",
+          "handins"
+        ],
+        "type": "object"
+      },
       "DailyBriefView": {
         "properties": {
           "announcements": {
@@ -22884,6 +23981,19 @@
           "deny"
         ],
         "type": "string"
+      },
+      "DepositChequeDto": {
+        "properties": {
+          "accountId": {
+            "description": "A live bank account.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId"
+        ],
+        "type": "object"
       },
       "DepositEventView": {
         "properties": {
@@ -35721,7 +36831,9 @@
           "unit_entry_report",
           "vendor_invoice",
           "contract_disbursement",
-          "tender_opening"
+          "tender_opening",
+          "cash_custody",
+          "custody_variance"
         ],
         "type": "string"
       },
@@ -38026,6 +39138,11 @@
           "advanceSetOff": {
             "description": "Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED).",
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "cashAccountId": {
+            "description": "The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque; needed when something is paid, refused when nothing is (set off whole). CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT.",
+            "format": "uuid",
             "type": "string"
           },
           "method": {
@@ -41774,6 +42891,99 @@
         "required": [
           "building",
           "firstName"
+        ],
+        "type": "object"
+      },
+      "MatchCandidateKind": {
+        "enum": [
+          "payment",
+          "cheque",
+          "transfer"
+        ],
+        "type": "string"
+      },
+      "MatchCandidateView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MatchCandidateKind"
+              }
+            ]
+          },
+          "onDay": {
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "description": "A transfer’s or cheque’s reference, or a receipt number.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "amount",
+          "onDay",
+          "reference",
+          "unitCode"
+        ],
+        "type": "object"
+      },
+      "MatchCandidateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MatchCandidateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MatchLineDto": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "payment",
+              "cheque",
+              "transfer",
+              "adjustment"
+            ],
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "An adjustment’s REASON_CODES.cashAdjust, and only an adjustment’s.",
+            "type": "string"
+          },
+          "targetId": {
+            "description": "The payment, cheque or transfer leg; not for an adjustment.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
         ],
         "type": "object"
       },
@@ -47016,6 +48226,25 @@
         ],
         "type": "object"
       },
+      "OpenInvestigationDto": {
+        "properties": {
+          "dueOn": {
+            "description": "From today, within 60 days.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "A staff member who holds finance.custody or finance.payments, not the custodian.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ownerId",
+          "dueOn"
+        ],
+        "type": "object"
+      },
       "OpenPaymentSessionDto": {
         "properties": {
           "invoiceIds": {
@@ -50055,6 +51284,11 @@
       },
       "PayoutDto": {
         "properties": {
+          "cashAccountId": {
+            "description": "The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque; needed when something is paid, refused when nothing is (set off whole). CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT.",
+            "format": "uuid",
+            "type": "string"
+          },
           "method": {
             "allOf": [
               {
@@ -50093,6 +51327,12 @@
           "advanceSetOff": {
             "description": "Of the contract’s advances.",
             "example": "1200.00",
+            "type": "string"
+          },
+          "cashAccountId": {
+            "description": "The treasury’s account it was paid from (ADR 0085); none when nothing was paid.",
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "createdAt": {
@@ -50164,6 +51404,7 @@
           "method",
           "reference",
           "paidOn",
+          "cashAccountId",
           "createdAt"
         ],
         "type": "object"
@@ -55434,6 +56675,49 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "ReceiveChequeDto": {
+        "properties": {
+          "amount": {
+            "description": "At most what is owed (of the invoices named, or all the unit’s).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "bankName": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "The cheque’s date: up to 180 days ago, or post-dated up to 366 days ahead.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "invoiceIds": {
+            "description": "A cheque dated today or earlier only: invoices it pays first.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "number": {
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          },
+          "receivedOn": {
+            "description": "Today or up to 31 days ago.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "amount",
+          "dueOn",
+          "receivedOn"
         ],
         "type": "object"
       },
@@ -74197,6 +75481,269 @@
         ],
         "type": "object"
       },
+      "StatementImportDto": {
+        "properties": {
+          "fileId": {
+            "description": "A `data_import` CSV the caller uploaded.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
+      "StatementImportStatus": {
+        "enum": [
+          "valid",
+          "invalid",
+          "applied",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "StatementImportView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "appliedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "duplicateCount": {
+            "description": "Lines imported already, from this file or another.",
+            "type": "number"
+          },
+          "errorCount": {
+            "type": "number"
+          },
+          "errors": {
+            "description": "The first 100.",
+            "items": {
+              "$ref": "#/components/schemas/StatementProblemView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "importedCount": {
+            "nullable": true,
+            "type": "number"
+          },
+          "matchedCount": {
+            "description": "Lines matched on their own.",
+            "nullable": true,
+            "type": "number"
+          },
+          "newCount": {
+            "description": "Lines not imported before.",
+            "type": "number"
+          },
+          "rowCount": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatementImportStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "status",
+          "rowCount",
+          "newCount",
+          "duplicateCount",
+          "errorCount",
+          "errors",
+          "createdAt",
+          "appliedAt",
+          "importedCount",
+          "matchedCount"
+        ],
+        "type": "object"
+      },
+      "StatementImportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StatementImportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StatementLineView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "bookedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "importId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "match": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatementMatchView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "accountId",
+          "importId",
+          "bookedOn",
+          "amount",
+          "reference",
+          "description",
+          "match",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "StatementLineViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StatementLineView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "StatementMatchKind": {
+        "enum": [
+          "payment",
+          "cheque",
+          "transfer",
+          "adjustment"
+        ],
+        "type": "string"
+      },
+      "StatementMatchView": {
+        "properties": {
+          "auto": {
+            "description": "Matched on its own when applied.",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StatementMatchKind"
+              }
+            ]
+          },
+          "matchedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashAdjustReason"
+              }
+            ],
+            "nullable": true
+          },
+          "targetId": {
+            "description": "The payment, cheque or transfer leg.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "targetId",
+          "reasonCode",
+          "auto",
+          "matchedAt"
+        ],
+        "type": "object"
+      },
+      "StatementProblemView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "line": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "line",
+          "field",
+          "code"
+        ],
+        "type": "object"
+      },
       "StatementView": {
         "properties": {
           "credit": {
@@ -79464,6 +81011,26 @@
         },
         "type": "object"
       },
+      "UpdateCashAccountDto": {
+        "properties": {
+          "bankName": {
+            "maxLength": 100,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "numberLast4": {
+            "pattern": "^[0-9]{4}$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateCategoryDto": {
         "properties": {
           "active": {
@@ -80504,7 +82071,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 24,
+            "maxItems": 26,
             "minItems": 1,
             "type": "array"
           }
@@ -89516,6 +91083,34 @@
           }
         ],
         "summary": "Call off a collector visit of my unit",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/collector/custody": {
+      "get": {
+        "operationId": "CollectorCustodyController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My cash not handed in, and my latest hand-ins",
         "tags": [
           "finance"
         ],
@@ -134283,6 +135878,692 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/cash-accounts": {
+      "get": {
+        "operationId": "TreasuryController_list",
+        "parameters": [
+          {
+            "description": "Retired accounts too.",
+            "in": "query",
+            "name": "includeRetired",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAccountViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the bank and cash accounts with their balances",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TreasuryController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCashAccountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAccountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a bank account or a cash box, with its opening balance",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-accounts/{id}": {
+      "get": {
+        "operationId": "TreasuryController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAccountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an account and its balance",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "TreasuryController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCashAccountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAccountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename an account; a bank account’s bank and last four digits",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-accounts/{id}/adjustments": {
+      "post": {
+        "description": "Positive in, negative out; a cash box never below zero.",
+        "operationId": "TreasuryController_adjust",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashAdjustmentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashMovementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Adjust an account’s balance by hand, with a reason code",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-accounts/{id}/retire": {
+      "post": {
+        "operationId": "TreasuryController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashAccountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire an account at a zero balance, once",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-accounts/{id}/statement-imports": {
+      "post": {
+        "description": "Columns date, amount (money in positive), reference and description. Says how many lines are new and how many were imported before; imports nothing.",
+        "operationId": "TreasuryController_check",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check a bank statement’s CSV: a dry run",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-movements": {
+      "get": {
+        "operationId": "TreasuryController_movements",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accountId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashMovementViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List movements, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-transfers": {
+      "post": {
+        "operationId": "TreasuryController_transfer",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashTransferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move money between two of the compound’s accounts",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cheques": {
+      "get": {
+        "operationId": "ChequesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "received",
+                "deposited",
+                "cleared",
+                "bounced",
+                "returned"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the cheque register, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cheques/{id}/bounce": {
+      "post": {
+        "operationId": "ChequesController_bounce",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChequeReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A deposited cheque bounced: its payment reversed",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cheques/{id}/clear": {
+      "post": {
+        "operationId": "ChequesController_clear",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A deposited cheque cleared: its money in the bank account",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cheques/{id}/deposit": {
+      "post": {
+        "operationId": "ChequesController_deposit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepositChequeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deposit a cheque into a bank account, from its due day",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cheques/{id}/return": {
+      "post": {
+        "operationId": "ChequesController_giveBack",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChequeReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Give a cheque back before it is deposited; a payment it made is reversed",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/collector-settings": {
       "get": {
         "operationId": "StaffCollectorVisitsController_getSettings",
@@ -134846,6 +137127,439 @@
           "finance"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody": {
+      "get": {
+        "operationId": "CustodyController_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodySummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Everyone’s cash not handed in, and unsettled variances",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody-handins": {
+      "get": {
+        "operationId": "CustodyController_handins",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "balanced",
+                "variance",
+                "resolved"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "custodianId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyHandinViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List hand-ins, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody-handins/{id}": {
+      "get": {
+        "operationId": "CustodyController_handin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyHandinDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a hand-in, its payments and its investigation",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody-handins/{id}/investigation": {
+      "post": {
+        "operationId": "CustodyController_investigate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenInvestigationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyHandinDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open an investigation of a hand-in’s variance",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody-handins/{id}/resolve": {
+      "post": {
+        "operationId": "CustodyController_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustodyOutcomeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyHandinDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Settle a hand-in’s variance without an investigation",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody-investigations": {
+      "get": {
+        "description": "Every one to finance.custody; to anyone else, those they own.",
+        "operationId": "CustodyController_investigations",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "decided"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyInvestigationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List investigations, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody-investigations/{id}/decide": {
+      "post": {
+        "operationId": "CustodyController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustodyOutcomeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyInvestigationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decide an investigation: its owner, or finance.custody",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody/{accountId}": {
+      "get": {
+        "operationId": "CustodyController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One custodian’s open payments and latest hand-ins",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/custody/{accountId}/handins": {
+      "post": {
+        "description": "Every open payment at once, into a cash box, against the expected amount shown (409 CUSTODY_CHANGED otherwise). A count that differs needs its reason and stays open until settled.",
+        "operationId": "CustodyController_handIn",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustodyHandinDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustodyHandinDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a custodian’s cash handed in",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },
@@ -136473,6 +139187,330 @@
           }
         ],
         "summary": "Get a spending report, superseded or not",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/statement-imports": {
+      "get": {
+        "operationId": "TreasuryController_imports",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accountId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementImportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List statement imports, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/statement-imports/{id}": {
+      "get": {
+        "operationId": "TreasuryController_getImport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a statement import",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/statement-imports/{id}/apply": {
+      "post": {
+        "description": "Imports its new lines and matches on their own those that name exactly one payment, cheque or transfer.",
+        "operationId": "TreasuryController_apply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementImportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply a checked statement, once, within a day",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/statement-lines": {
+      "get": {
+        "operationId": "TreasuryController_lines",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accountId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "matched",
+                "unmatched"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List statement lines, newest first, with their matches",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/statement-lines/{id}/candidates": {
+      "get": {
+        "operationId": "TreasuryController_candidates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchCandidateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What a line could be matched to: the same amount within 30 days",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/statement-lines/{id}/match": {
+      "post": {
+        "operationId": "TreasuryController_match",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchLineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Match a line to a payment, a cheque, a transfer or an adjustment",
+        "tags": [
+          "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/statement-matches/{id}/undo": {
+      "post": {
+        "operationId": "TreasuryController_undo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Undo a match, once; what it moved is reversed",
         "tags": [
           "finance"
         ],
@@ -151691,6 +154729,63 @@
           "units"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/cheques": {
+      "post": {
+        "description": "Dated today or earlier, it pays at once as an office payment by cheque; post-dated, it is held and pays when deposited.",
+        "operationId": "ChequesController_receive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiveChequeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a cheque received for a unit",
+        "tags": [
+          "finance"
+        ],
         "x-stability": "draft"
       }
     },

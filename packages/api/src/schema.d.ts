@@ -1563,6 +1563,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/collector/custody": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My cash not handed in, and my latest hand-ins */
+        get: operations["CollectorCustodyController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/collector/visits": {
         parameters: {
             query?: never;
@@ -17130,6 +17147,218 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/cash-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the bank and cash accounts with their balances */
+        get: operations["TreasuryController_list"];
+        put?: never;
+        /** Open a bank account or a cash box, with its opening balance */
+        post: operations["TreasuryController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an account and its balance */
+        get: operations["TreasuryController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename an account; a bank account’s bank and last four digits */
+        patch: operations["TreasuryController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-accounts/{id}/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Adjust an account’s balance by hand, with a reason code
+         * @description Positive in, negative out; a cash box never below zero.
+         */
+        post: operations["TreasuryController_adjust"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-accounts/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire an account at a zero balance, once */
+        post: operations["TreasuryController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-accounts/{id}/statement-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check a bank statement’s CSV: a dry run
+         * @description Columns date, amount (money in positive), reference and description. Says how many lines are new and how many were imported before; imports nothing.
+         */
+        post: operations["TreasuryController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List movements, newest first */
+        get: operations["TreasuryController_movements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move money between two of the compound’s accounts */
+        post: operations["TreasuryController_transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cheques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the cheque register, newest first */
+        get: operations["ChequesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cheques/{id}/bounce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A deposited cheque bounced: its payment reversed */
+        post: operations["ChequesController_bounce"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cheques/{id}/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A deposited cheque cleared: its money in the bank account */
+        post: operations["ChequesController_clear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cheques/{id}/deposit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deposit a cheque into a bank account, from its due day */
+        post: operations["ChequesController_deposit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cheques/{id}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Give a cheque back before it is deposited; a payment it made is reversed */
+        post: operations["ChequesController_giveBack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/collector-settings": {
         parameters: {
             query?: never;
@@ -17339,6 +17568,165 @@ export interface paths {
          * @description Its expiry is told 30 days ahead, once.
          */
         post: operations["PayablesController_guarantee"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everyone’s cash not handed in, and unsettled variances */
+        get: operations["CustodyController_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody-handins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List hand-ins, newest first */
+        get: operations["CustodyController_handins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody-handins/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a hand-in, its payments and its investigation */
+        get: operations["CustodyController_handin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody-handins/{id}/investigation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open an investigation of a hand-in’s variance */
+        post: operations["CustodyController_investigate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody-handins/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Settle a hand-in’s variance without an investigation */
+        post: operations["CustodyController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody-investigations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List investigations, newest first
+         * @description Every one to finance.custody; to anyone else, those they own.
+         */
+        get: operations["CustodyController_investigations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody-investigations/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide an investigation: its owner, or finance.custody */
+        post: operations["CustodyController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One custodian’s open payments and latest hand-ins */
+        get: operations["CustodyController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/custody/{accountId}/handins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a custodian’s cash handed in
+         * @description Every open payment at once, into a cash box, against the expected amount shown (409 CUSTODY_CHANGED otherwise). A count that differs needs its reason and stays open until settled.
+         */
+        post: operations["CustodyController_handIn"];
         delete?: never;
         options?: never;
         head?: never;
@@ -17849,6 +18237,128 @@ export interface paths {
         get: operations["StaffSpendingReportsController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/statement-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List statement imports, newest first */
+        get: operations["TreasuryController_imports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/statement-imports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a statement import */
+        get: operations["TreasuryController_getImport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/statement-imports/{id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply a checked statement, once, within a day
+         * @description Imports its new lines and matches on their own those that name exactly one payment, cheque or transfer.
+         */
+        post: operations["TreasuryController_apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/statement-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List statement lines, newest first, with their matches */
+        get: operations["TreasuryController_lines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/statement-lines/{id}/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a line could be matched to: the same amount within 30 days */
+        get: operations["TreasuryController_candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/statement-lines/{id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match a line to a payment, a cheque, a transfer or an adjustment */
+        post: operations["TreasuryController_match"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/statement-matches/{id}/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Undo a match, once; what it moved is reversed */
+        post: operations["TreasuryController_undo"];
         delete?: never;
         options?: never;
         head?: never;
@@ -23010,6 +23520,26 @@ export interface paths {
         get: operations["StaffUnitsController_export"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/units/{unitId}/cheques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a cheque received for a unit
+         * @description Dated today or earlier, it pays at once as an office payment by cheque; post-dated, it is held and pays when deposited.
+         */
+        post: operations["ChequesController_receive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -29940,6 +30470,41 @@ export interface components {
             number: string;
             status: string;
         };
+        /** @enum {string} */
+        CashAccountKind: "bank" | "cash";
+        CashAccountView: {
+            /** @description The sum of its movements. */
+            balance: string;
+            bankName: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["CashAccountKind"];
+            name: string;
+            numberLast4: string | null;
+            /** Format: date */
+            openedOn: string;
+            /** @description Cheques deposited to it, not yet cleared or bounced. */
+            pendingCheques: number;
+            /** Format: date-time */
+            retiredAt: string | null;
+            unmatchedLines: number;
+        };
+        CashAccountViewList: {
+            data: components["schemas"]["CashAccountView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        CashAdjustReason: "bank_charge" | "interest" | "refund_paid" | "counting_correction" | "other";
+        CashAdjustmentDto: {
+            /** @description Positive in, negative out. */
+            amount: string;
+            /** @description Today or up to 31 days ago. */
+            onDay: string;
+            /** @description REASON_CODES.cashAdjust. */
+            reasonCode: string;
+        };
         CashEventView: {
             /** @description Signed: what it did to the drawer. */
             amount: string;
@@ -29953,6 +30518,56 @@ export interface components {
             recordedBy: components["schemas"]["StaffRefView"];
             reference: string | null;
             unitCode: string;
+        };
+        /** @enum {string} */
+        CashMovementKind: "opening" | "handin" | "recovery" | "transfer" | "cheque" | "statement_payment" | "adjustment" | "reversal" | "payout";
+        CashMovementView: {
+            /** Format: uuid */
+            accountId: string;
+            amount: string;
+            /** Format: uuid */
+            chequeId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            handinId: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["CashMovementKind"];
+            /** Format: uuid */
+            matchId: string | null;
+            /** Format: date */
+            onDay: string;
+            /**
+             * Format: uuid
+             * @description The vendor’s payout it paid (ADR 0089).
+             */
+            payoutId: string | null;
+            reasonCode: components["schemas"]["CashAdjustReason"] | null;
+            recordedBy: components["schemas"]["StaffRefView"];
+            /** Format: uuid */
+            reversesId: string | null;
+            /** Format: uuid */
+            transferId: string | null;
+        };
+        CashMovementViewList: {
+            data: components["schemas"]["CashMovementView"][];
+            nextCursor: string | null;
+        };
+        CashTransferDto: {
+            amount: string;
+            /** Format: uuid */
+            fromAccountId: string;
+            /** @description Today or up to 31 days ago. */
+            onDay: string;
+            /** Format: uuid */
+            toAccountId: string;
+        };
+        CashTransferView: {
+            /** Format: uuid */
+            id: string;
+            /** @description Out of the first, into the second. */
+            legs: components["schemas"]["CashMovementView"][];
         };
         CashierRowView: {
             /** @enum {string} */
@@ -30341,6 +30956,58 @@ export interface components {
         };
         CheckpointViewList: {
             data: components["schemas"]["CheckpointView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        ChequeBounceReason: "insufficient_funds" | "signature_mismatch" | "stopped" | "stale" | "account_closed" | "other";
+        ChequeReasonDto: {
+            /** @description REASON_CODES.chequeBounce, or .chequeReturn. */
+            reasonCode: string;
+        };
+        /** @enum {string} */
+        ChequeReturnReason: "replaced" | "paid_otherwise" | "payer_asked" | "other";
+        /** @enum {string} */
+        ChequeStatus: "received" | "deposited" | "cleared" | "bounced" | "returned";
+        ChequeView: {
+            amount: string;
+            bankName: string | null;
+            bounceReason: components["schemas"]["ChequeBounceReason"] | null;
+            /** Format: date */
+            bouncedOn: string | null;
+            /** Format: date */
+            clearedOn: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            depositedOn: string | null;
+            /** Format: uuid */
+            depositedToAccountId: string | null;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            number: string;
+            /**
+             * Format: uuid
+             * @description The payment it made.
+             */
+            paymentId: string | null;
+            paymentReversed: boolean;
+            /** @description Dated after the day it was received. */
+            postDated: boolean;
+            /** Format: date */
+            receivedOn: string;
+            recordedBy: components["schemas"]["StaffRefView"];
+            returnReason: components["schemas"]["ChequeReturnReason"] | null;
+            /** Format: date */
+            returnedOn: string | null;
+            status: components["schemas"]["ChequeStatus"];
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        ChequeViewList: {
+            data: components["schemas"]["ChequeView"][];
             nextCursor: string | null;
         };
         ChildAlertView: {
@@ -32588,6 +33255,19 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        CreateCashAccountDto: {
+            /** @description A bank account’s only. */
+            bankName?: string;
+            /** @enum {string} */
+            kind: "bank" | "cash";
+            name: string;
+            /** @description A bank account’s last four digits; never the whole number. */
+            numberLast4?: string;
+            /** @description Today or earlier. */
+            openedOn: string;
+            /** @description Money in it on the day it opened. */
+            openingBalance?: string;
+        };
         CreateCategoryDto: {
             /** @default true */
             commonAreaAllowed: boolean;
@@ -34275,6 +34955,156 @@ export interface components {
             /** @description What it gave back of paid money to the unit’s credit: the part beyond what the invoice still owed (ADR 0048). */
             released: string;
         };
+        CustodyHandinDetailView: {
+            /** Format: uuid */
+            cashAccountId: string;
+            counted: string;
+            /** Format: date-time */
+            createdAt: string;
+            custodian: components["schemas"]["StaffRefView"];
+            expected: string;
+            /** Format: uuid */
+            id: string;
+            investigation: components["schemas"]["CustodyInvestigationView"] | null;
+            /** Format: uuid */
+            investigationId: string | null;
+            number: string;
+            outcome: components["schemas"]["CustodyOutcome"] | null;
+            paymentCount: number;
+            payments: components["schemas"]["CustodyPaymentView"][];
+            receivedBy: components["schemas"]["StaffRefView"];
+            /** Format: date */
+            receivedOn: string;
+            recovered: string | null;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            resolvedBy: components["schemas"]["StaffRefView"] | null;
+            status: components["schemas"]["CustodyHandinStatus"];
+            /** @description Counted less expected. */
+            variance: string;
+            varianceReason: components["schemas"]["CustodyVarianceReason"] | null;
+        };
+        CustodyHandinDto: {
+            /**
+             * Format: uuid
+             * @description The cash box it goes into.
+             */
+            cashAccountId: string;
+            counted: string;
+            /** @description The custody the receiver was shown; refused if it changed. */
+            expected: string;
+            /** @description REASON_CODES.custodyVariance: when the count differs, and only then. */
+            varianceReason?: string;
+        };
+        /** @enum {string} */
+        CustodyHandinStatus: "balanced" | "variance" | "resolved";
+        CustodyHandinView: {
+            /** Format: uuid */
+            cashAccountId: string;
+            counted: string;
+            /** Format: date-time */
+            createdAt: string;
+            custodian: components["schemas"]["StaffRefView"];
+            expected: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            investigationId: string | null;
+            number: string;
+            outcome: components["schemas"]["CustodyOutcome"] | null;
+            paymentCount: number;
+            receivedBy: components["schemas"]["StaffRefView"];
+            /** Format: date */
+            receivedOn: string;
+            recovered: string | null;
+            /** Format: date-time */
+            resolvedAt: string | null;
+            resolvedBy: components["schemas"]["StaffRefView"] | null;
+            status: components["schemas"]["CustodyHandinStatus"];
+            /** @description Counted less expected. */
+            variance: string;
+            varianceReason: components["schemas"]["CustodyVarianceReason"] | null;
+        };
+        CustodyHandinViewList: {
+            data: components["schemas"]["CustodyHandinView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        CustodyInvestigationStatus: "open" | "decided";
+        CustodyInvestigationView: {
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["StaffRefView"] | null;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            handinId: string;
+            handinNumber: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            openedAt: string;
+            openedBy: components["schemas"]["StaffRefView"];
+            outcome: components["schemas"]["CustodyOutcome"] | null;
+            overdue: boolean;
+            owner: components["schemas"]["StaffRefView"];
+            recovered: string | null;
+            status: components["schemas"]["CustodyInvestigationStatus"];
+        };
+        CustodyInvestigationViewList: {
+            data: components["schemas"]["CustodyInvestigationView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        CustodyOutcome: "recovered" | "written_off" | "explained" | "other";
+        CustodyOutcomeDto: {
+            /** @description REASON_CODES.custodyOutcome. */
+            reasonCode: string;
+            /** @description With `recovered` only: cash recovered of a shortage, into the hand-in’s cash box. */
+            recoveredAmount?: string;
+        };
+        CustodyPaymentView: {
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date */
+            paidOn: string;
+            /** Format: uuid */
+            paymentId: string;
+            receiptNumber: string;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        CustodySummaryView: {
+            /** @description Hours since the oldest unhanded payment. */
+            ageHours: number | null;
+            custodian: components["schemas"]["StaffRefView"];
+            /** @description What they hold: their open cash payments. */
+            expected: string;
+            /** Format: date-time */
+            oldestAt: string | null;
+            openCount: number;
+            unresolvedVariances: number;
+        };
+        CustodySummaryViewList: {
+            data: components["schemas"]["CustodySummaryView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        CustodyVarianceReason: "counting_error" | "missing_cash" | "excess_cash" | "change_given" | "unrecorded_payment" | "other";
+        CustodyView: {
+            ageHours: number | null;
+            custodian: components["schemas"]["StaffRefView"];
+            expected: string;
+            /** @description The latest 20. */
+            handins: components["schemas"]["CustodyHandinView"][];
+            /** Format: date-time */
+            oldestAt: string | null;
+            openCount: number;
+            /** @description The oldest 500. */
+            payments: components["schemas"]["CustodyPaymentView"][];
+        };
         DailyBriefView: {
             announcements: components["schemas"]["BriefAnnouncementsView"];
             /** @description The next three bus departures. */
@@ -34791,6 +35621,13 @@ export interface components {
         DeletionRequestStatus: "pending" | "cancelled" | "completed" | "queued" | "closed";
         /** @enum {string} */
         DeliveryInstruction: "ask" | "allow" | "leave_at_gate" | "deny";
+        DepositChequeDto: {
+            /**
+             * Format: uuid
+             * @description A live bank account.
+             */
+            accountId: string;
+        };
         DepositEventView: {
             /** @description EGP. */
             amount: string | null;
@@ -38626,7 +39463,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening" | "cash_custody" | "custody_variance";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -39345,6 +40182,11 @@ export interface components {
         InvoicePayoutDto: {
             /** @description Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED). */
             advanceSetOff?: string;
+            /**
+             * Format: uuid
+             * @description The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque; needed when something is paid, refused when nothing is (set off whole). CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT.
+             */
+            cashAccountId?: string;
             method: components["schemas"]["PayoutMethod"];
             /** @description The day it was paid: within its line’s budget year, not ahead. */
             paidOn: string;
@@ -40575,6 +41417,34 @@ export interface components {
             building: string | null;
             /** @description Their first name: only once BOTH sides agreed to show names. Null before. */
             firstName: string | null;
+        };
+        /** @enum {string} */
+        MatchCandidateKind: "payment" | "cheque" | "transfer";
+        MatchCandidateView: {
+            amount: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["MatchCandidateKind"];
+            /** Format: date */
+            onDay: string;
+            /** @description A transfer’s or cheque’s reference, or a receipt number. */
+            reference: string | null;
+            unitCode: string | null;
+        };
+        MatchCandidateViewList: {
+            data: components["schemas"]["MatchCandidateView"][];
+            nextCursor: string | null;
+        };
+        MatchLineDto: {
+            /** @enum {string} */
+            kind: "payment" | "cheque" | "transfer" | "adjustment";
+            /** @description An adjustment’s REASON_CODES.cashAdjust, and only an adjustment’s. */
+            reasonCode?: string;
+            /**
+             * Format: uuid
+             * @description The payment, cheque or transfer leg; not for an adjustment.
+             */
+            targetId?: string;
         };
         MaterialEntryView: {
             /** @description What came in, in the guard’s words. */
@@ -42222,6 +43092,15 @@ export interface components {
             /** @description The opener’s own words, trimmed. Shown to the opener and to the staff only; cleared when the opener is erased. */
             text?: string;
         };
+        OpenInvestigationDto: {
+            /** @description From today, within 60 days. */
+            dueOn: string;
+            /**
+             * Format: uuid
+             * @description A staff member who holds finance.custody or finance.payments, not the custodian.
+             */
+            ownerId: string;
+        };
         OpenPaymentSessionDto: {
             /** @description Omitted or empty: every invoice the unit owes. */
             invoiceIds?: string[];
@@ -43203,6 +44082,11 @@ export interface components {
             nextCursor: string | null;
         };
         PayoutDto: {
+            /**
+             * Format: uuid
+             * @description The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque; needed when something is paid, refused when nothing is (set off whole). CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT.
+             */
+            cashAccountId?: string;
             method: components["schemas"]["PayoutMethod"];
             /** @description The day it was paid: within its line’s budget year, not ahead. */
             paidOn: string;
@@ -43217,6 +44101,11 @@ export interface components {
              * @example 1200.00
              */
             advanceSetOff: string;
+            /**
+             * Format: uuid
+             * @description The treasury’s account it was paid from (ADR 0085); none when nothing was paid.
+             */
+            cashAccountId: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: uuid */
@@ -44907,6 +45796,18 @@ export interface components {
         ReceiptCodeDto: {
             /** @description The code from the receipt link’s fragment (`/receipt#<code>`). */
             code: string;
+        };
+        ReceiveChequeDto: {
+            /** @description At most what is owed (of the invoices named, or all the unit’s). */
+            amount: string;
+            bankName?: string;
+            /** @description The cheque’s date: up to 180 days ago, or post-dated up to 366 days ahead. */
+            dueOn: string;
+            /** @description A cheque dated today or earlier only: invoices it pays first. */
+            invoiceIds?: string[];
+            number: string;
+            /** @description Today or up to 31 days ago. */
+            receivedOn: string;
         };
         ReceiveParcelDto: {
             carrier: components["schemas"]["ParcelCarrier"];
@@ -50559,6 +51460,83 @@ export interface components {
             /** @description On a credit note: what it gave back of paid money to the unit’s credit (ADR 0048); null on other kinds. */
             released: string | null;
         };
+        StatementImportDto: {
+            /**
+             * Format: uuid
+             * @description A `data_import` CSV the caller uploaded.
+             */
+            fileId: string;
+        };
+        /** @enum {string} */
+        StatementImportStatus: "valid" | "invalid" | "applied" | "expired";
+        StatementImportView: {
+            /** Format: uuid */
+            accountId: string;
+            /** Format: date-time */
+            appliedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Lines imported already, from this file or another. */
+            duplicateCount: number;
+            errorCount: number;
+            /** @description The first 100. */
+            errors: components["schemas"]["StatementProblemView"][];
+            /** Format: uuid */
+            id: string;
+            importedCount: number | null;
+            /** @description Lines matched on their own. */
+            matchedCount: number | null;
+            /** @description Lines not imported before. */
+            newCount: number;
+            rowCount: number;
+            status: components["schemas"]["StatementImportStatus"];
+        };
+        StatementImportViewList: {
+            data: components["schemas"]["StatementImportView"][];
+            nextCursor: string | null;
+        };
+        StatementLineView: {
+            /** Format: uuid */
+            accountId: string;
+            amount: string;
+            /** Format: date */
+            bookedOn: string;
+            /** Format: date-time */
+            createdAt: string;
+            description: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            importId: string;
+            match: components["schemas"]["StatementMatchView"] | null;
+            reference: string | null;
+        };
+        StatementLineViewList: {
+            data: components["schemas"]["StatementLineView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        StatementMatchKind: "payment" | "cheque" | "transfer" | "adjustment";
+        StatementMatchView: {
+            /** @description Matched on its own when applied. */
+            auto: boolean;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["StatementMatchKind"];
+            /** Format: date-time */
+            matchedAt: string;
+            reasonCode: components["schemas"]["CashAdjustReason"] | null;
+            /**
+             * Format: uuid
+             * @description The payment, cheque or transfer leg.
+             */
+            targetId: string | null;
+        };
+        StatementProblemView: {
+            code: string;
+            field: string;
+            line: number;
+        };
         StatementView: {
             /** @description Paid beyond what was owed and not refunded, for its next invoices. */
             credit: string;
@@ -52142,6 +53120,11 @@ export interface components {
             active?: boolean;
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateCashAccountDto: {
+            bankName?: string | null;
+            name?: string;
+            numberLast4?: string;
         };
         UpdateCategoryDto: {
             /** @description False retires it: no new ticket under it. */
@@ -56231,6 +57214,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectorVisitView"];
+                };
+            };
+        };
+    };
+    CollectorCustodyController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyView"];
                 };
             };
         };
@@ -79730,6 +80732,347 @@ export interface operations {
             };
         };
     };
+    TreasuryController_list: {
+        parameters: {
+            query?: {
+                /** @description Retired accounts too. */
+                includeRetired?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashAccountViewList"];
+                };
+            };
+        };
+    };
+    TreasuryController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCashAccountDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashAccountView"];
+                };
+            };
+        };
+    };
+    TreasuryController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashAccountView"];
+                };
+            };
+        };
+    };
+    TreasuryController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCashAccountDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashAccountView"];
+                };
+            };
+        };
+    };
+    TreasuryController_adjust: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashAdjustmentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashMovementView"];
+                };
+            };
+        };
+    };
+    TreasuryController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashAccountView"];
+                };
+            };
+        };
+    };
+    TreasuryController_check: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementImportDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportView"];
+                };
+            };
+        };
+    };
+    TreasuryController_movements: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                accountId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashMovementViewList"];
+                };
+            };
+        };
+    };
+    TreasuryController_transfer: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashTransferDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashTransferView"];
+                };
+            };
+        };
+    };
+    ChequesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "received" | "deposited" | "cleared" | "bounced" | "returned";
+                unitId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeViewList"];
+                };
+            };
+        };
+    };
+    ChequesController_bounce: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeReasonDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeView"];
+                };
+            };
+        };
+    };
+    ChequesController_clear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeView"];
+                };
+            };
+        };
+    };
+    ChequesController_deposit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepositChequeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeView"];
+                };
+            };
+        };
+    };
+    ChequesController_giveBack: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeReasonDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeView"];
+                };
+            };
+        };
+    };
     StaffCollectorVisitsController_getSettings: {
         parameters: {
             query?: never;
@@ -80011,6 +81354,219 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuaranteeView"];
+                };
+            };
+        };
+    };
+    CustodyController_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodySummaryViewList"];
+                };
+            };
+        };
+    };
+    CustodyController_handins: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "balanced" | "variance" | "resolved";
+                custodianId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyHandinViewList"];
+                };
+            };
+        };
+    };
+    CustodyController_handin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyHandinDetailView"];
+                };
+            };
+        };
+    };
+    CustodyController_investigate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenInvestigationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyHandinDetailView"];
+                };
+            };
+        };
+    };
+    CustodyController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustodyOutcomeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyHandinDetailView"];
+                };
+            };
+        };
+    };
+    CustodyController_investigations: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "open" | "decided";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyInvestigationViewList"];
+                };
+            };
+        };
+    };
+    CustodyController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustodyOutcomeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyInvestigationView"];
+                };
+            };
+        };
+    };
+    CustodyController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyView"];
+                };
+            };
+        };
+    };
+    CustodyController_handIn: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustodyHandinDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustodyHandinDetailView"];
                 };
             };
         };
@@ -80777,6 +82333,164 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpendingReportView"];
+                };
+            };
+        };
+    };
+    TreasuryController_imports: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportViewList"];
+                };
+            };
+        };
+    };
+    TreasuryController_getImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportView"];
+                };
+            };
+        };
+    };
+    TreasuryController_apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementImportView"];
+                };
+            };
+        };
+    };
+    TreasuryController_lines: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                accountId?: string;
+                status?: "matched" | "unmatched";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineViewList"];
+                };
+            };
+        };
+    };
+    TreasuryController_candidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchCandidateViewList"];
+                };
+            };
+        };
+    };
+    TreasuryController_match: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchLineDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineView"];
+                };
+            };
+        };
+    };
+    TreasuryController_undo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineView"];
                 };
             };
         };
@@ -88287,6 +90001,34 @@ export interface operations {
                 };
                 content: {
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    ChequesController_receive: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveChequeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeView"];
                 };
             };
         };

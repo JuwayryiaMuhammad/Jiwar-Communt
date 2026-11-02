@@ -1790,6 +1790,9 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/assets/{id}': w.bAssetId,
       '/maintenance/assets/{id}/events': w.bAssetId,
       '/maintenance/assets/{id}/impact': w.bAssetId,
+      // ADR 0076.
+      '/maintenance/assets/{id}/timeline': w.bAssetId,
+      '/maintenance/warranty-claims/{id}': w.bWarrantyClaimId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,

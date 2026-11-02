@@ -15,6 +15,7 @@ const INBOX_TYPES = [
   'management_request',
   'purchase_request',
   'space_use_request',
+  'plan_suggestion',
 ];
 
 /**

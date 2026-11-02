@@ -1108,3 +1108,17 @@ export const M29_COVERAGE: readonly string[] = [
   'official_letter.issued',
   'official_letter.revoked',
 ];
+
+/**
+ * The maintenance analytics and cases (ADR 0081), covered by
+ * test/maintenance-analytics/audit-coverage.e2e-spec.ts.
+ */
+export const M213_COVERAGE: readonly string[] = [
+  'ticket.sensitivity_changed',
+  'maintenance.analytics_settings_changed',
+  'plan_suggestion.accepted',
+  'plan_suggestion.dismissed',
+  'maintenance_case.opened',
+  'maintenance_case.resolved',
+  'maintenance_case.dismissed',
+];

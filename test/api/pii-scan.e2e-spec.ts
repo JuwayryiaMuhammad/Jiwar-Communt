@@ -1825,6 +1825,11 @@ describe('API v0 — PII leak scan', () => {
       '/staff/official-letters/{id}/pdf': w.bLetterId,
       '/me/official-letters/{id}/pdf': w.bLetterId,
       '/staff/units/{unitId}/correspondence': unit.id,
+      // ADR 0081.
+      // A's ticket (not sensitive: nobody read it so); an error echoes B's.
+      '/maintenance/tickets/{id}/sensitive-reads': ticket.id,
+      '/maintenance/plan-suggestions/{id}': w.bPlanSuggestionId,
+      '/maintenance/cases/{id}': w.bMaintenanceCaseId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,

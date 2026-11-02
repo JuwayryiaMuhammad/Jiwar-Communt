@@ -142,6 +142,8 @@ const DISPATCH = [
   'unit.code',
   'unit.id',
   'updatedAt',
+  // ADR 0081: marked sensitive; only `tickets.sensitive` sees one at all.
+  'sensitive',
 ].sort();
 const TECHNICIAN = [
   'assignedAt',
@@ -165,6 +167,8 @@ const TECHNICIAN = [
   'priority',
   'status',
   'unitCode',
+  // ADR 0081: marked sensitive (its reads are logged); their own work.
+  'sensitive',
 ].sort();
 const TECHNICIAN_DETAIL = [
   ...TECHNICIAN,

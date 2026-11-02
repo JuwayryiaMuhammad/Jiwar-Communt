@@ -2031,6 +2031,54 @@ export const ErrorCode = {
   TECHNICIAN_HELP_LIVE: 'TECHNICIAN_HELP_LIVE',
   /** The call was taken, resolved or called off already, `params.status` (409). */
   TECHNICIAN_HELP_CLOSED: 'TECHNICIAN_HELP_CLOSED',
+  // Treasury and custody (ADR 0085).
+  CASH_ACCOUNT_NOT_FOUND: 'CASH_ACCOUNT_NOT_FOUND',
+  /** The account is retired and takes no movement (409). */
+  CASH_ACCOUNT_RETIRED: 'CASH_ACCOUNT_RETIRED',
+  /** Retired only at a zero balance (409, params.balance). */
+  CASH_ACCOUNT_NOT_EMPTY: 'CASH_ACCOUNT_NOT_EMPTY',
+  /** A cash box never goes below zero (409, params.balance). */
+  CASH_ACCOUNT_INSUFFICIENT: 'CASH_ACCOUNT_INSUFFICIENT',
+  /** A bank account where a cash box is needed, or the reverse (409, params.kind: the kind needed). */
+  CASH_ACCOUNT_WRONG_KIND: 'CASH_ACCOUNT_WRONG_KIND',
+  /** Not a staff or manager account of the compound (404). */
+  CUSTODIAN_NOT_FOUND: 'CUSTODIAN_NOT_FOUND',
+  /** Nothing of theirs is waiting to be handed in (409). */
+  CUSTODY_EMPTY: 'CUSTODY_EMPTY',
+  /** Their custody is no longer what was counted against (409, params.expected). */
+  CUSTODY_CHANGED: 'CUSTODY_CHANGED',
+  /** The custodian never receives, resolves or decides their own custody (403). */
+  CUSTODY_CONFLICT: 'CUSTODY_CONFLICT',
+  CUSTODY_HANDIN_NOT_FOUND: 'CUSTODY_HANDIN_NOT_FOUND',
+  /** No unresolved variance on this hand-in (409, params.status). */
+  CUSTODY_HANDIN_NOT_OPEN: 'CUSTODY_HANDIN_NOT_OPEN',
+  /** The hand-in has an investigation already (409, params.investigationId). */
+  CUSTODY_INVESTIGATION_OPEN: 'CUSTODY_INVESTIGATION_OPEN',
+  CUSTODY_INVESTIGATION_NOT_FOUND: 'CUSTODY_INVESTIGATION_NOT_FOUND',
+  /** Decided already (409). */
+  CUSTODY_INVESTIGATION_DECIDED: 'CUSTODY_INVESTIGATION_DECIDED',
+  CHEQUE_NOT_FOUND: 'CHEQUE_NOT_FOUND',
+  /** Not in the state this step needs (409, params.status). */
+  CHEQUE_STATE: 'CHEQUE_STATE',
+  /** A post-dated cheque is deposited from its due day (409, params.dueOn). */
+  CHEQUE_NOT_DUE: 'CHEQUE_NOT_DUE',
+  STATEMENT_IMPORT_NOT_FOUND: 'STATEMENT_IMPORT_NOT_FOUND',
+  /** Only a valid import is applied, once, within a day (409, params.status). */
+  STATEMENT_IMPORT_NOT_VALID: 'STATEMENT_IMPORT_NOT_VALID',
+  /** Not CSV a spreadsheet or a bank would write (422, params.problem, params.line). */
+  STATEMENT_IMPORT_UNREADABLE: 'STATEMENT_IMPORT_UNREADABLE',
+  STATEMENT_LINE_NOT_FOUND: 'STATEMENT_LINE_NOT_FOUND',
+  /** The line is matched already (409, params.matchId). */
+  STATEMENT_LINE_MATCHED: 'STATEMENT_LINE_MATCHED',
+  STATEMENT_MATCH_NOT_FOUND: 'STATEMENT_MATCH_NOT_FOUND',
+  /** Undone already (409). */
+  STATEMENT_MATCH_UNDONE: 'STATEMENT_MATCH_UNDONE',
+  /** The payment, cheque or transfer named does not exist (404). */
+  MATCH_TARGET_NOT_FOUND: 'MATCH_TARGET_NOT_FOUND',
+  /** It cannot be this line's (409, params.why: amount, account, state). */
+  MATCH_TARGET_INVALID: 'MATCH_TARGET_INVALID',
+  /** It is another line's match already (409, params.lineId). */
+  MATCH_TARGET_TAKEN: 'MATCH_TARGET_TAKEN',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

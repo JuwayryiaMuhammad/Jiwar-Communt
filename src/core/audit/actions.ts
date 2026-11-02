@@ -2842,6 +2842,48 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'technician_help_request',
   },
+  // Treasury and custody (ADR 0085). Codes, ids, days and amounts; never a
+  // cheque's number or a statement line's text.
+  // A bank or cash account: metadata kind and the opening balance; changes
+  // of its name, bank and last four digits.
+  'cash_account.created': { log: 'tenant', target: 'cash_account' },
+  'cash_account.updated': { log: 'tenant', target: 'cash_account' },
+  'cash_account.retired': { log: 'tenant', target: 'cash_account' },
+  // Money moved between two of the compound's accounts (metadata from, to,
+  // amount, day), or an account's balance adjusted by hand (account,
+  // amount, reason code, day).
+  'cash_transfer.recorded': { log: 'tenant', target: 'cash_transfer' },
+  'cash_adjustment.recorded': { log: 'tenant', target: 'cash_movement' },
+  // A custodian's cash handed in: custodian, cash box, expected, counted,
+  // variance and its reason code, how many payments; a variance settled
+  // (outcome, what was recovered); an investigation opened (owner, due
+  // day) and decided (outcome, recovered).
+  'custody_handin.recorded': { log: 'tenant', target: 'custody_handin' },
+  'custody_handin.resolved': { log: 'tenant', target: 'custody_handin' },
+  'custody_investigation.opened': {
+    log: 'tenant',
+    target: 'custody_investigation',
+  },
+  'custody_investigation.decided': {
+    log: 'tenant',
+    target: 'custody_investigation',
+  },
+  // The cheque register: unit, amount, due day, the payment it settled;
+  // the account it was deposited to; the reason code of a bounce or a
+  // return and the payment reversed.
+  'cheque.received': { log: 'tenant', target: 'cheque' },
+  'cheque.deposited': { log: 'tenant', target: 'cheque' },
+  'cheque.cleared': { log: 'tenant', target: 'cheque' },
+  'cheque.bounced': { log: 'tenant', target: 'cheque' },
+  'cheque.returned': { log: 'tenant', target: 'cheque' },
+  // A bank statement's file checked (rows, new, already imported, errors),
+  // applied (lines imported, matched on their own) or expired; a line
+  // matched (kind, what it matched, whether on its own) and undone.
+  'statement_import.checked': { log: 'tenant', target: 'statement_import' },
+  'statement_import.applied': { log: 'tenant', target: 'statement_import' },
+  'statement_import.expired': { log: 'tenant', target: 'statement_import' },
+  'statement_line.matched': { log: 'tenant', target: 'statement_match' },
+  'statement_match.undone': { log: 'tenant', target: 'statement_match' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

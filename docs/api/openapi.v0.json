@@ -15158,6 +15158,77 @@
         ],
         "type": "object"
       },
+      "CompoundExportView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "readyAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rows": {
+            "description": "Its rows.",
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "building",
+              "ready",
+              "expired",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "tables": {
+            "description": "Its tables.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "requestedAt",
+          "readyAt",
+          "expiresAt",
+          "tables",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "CompoundExportViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CompoundExportView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ConfirmDto": {
         "properties": {
           "comment": {
@@ -20324,6 +20395,47 @@
         },
         "required": [
           "name"
+        ],
+        "type": "object"
+      },
+      "CreateReportScheduleDto": {
+        "properties": {
+          "cadence": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportCadence"
+              }
+            ]
+          },
+          "compare": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportComparison"
+              }
+            ]
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ]
+          },
+          "groupBy": {
+            "type": "string"
+          },
+          "reportKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reportKey",
+          "cadence",
+          "format"
         ],
         "type": "object"
       },
@@ -29655,6 +29767,23 @@
           "asset",
           "events",
           "readings"
+        ],
+        "type": "object"
+      },
+      "FileLinkView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "A presigned GET of the file, valid a few minutes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -58745,6 +58874,107 @@
         ],
         "type": "object"
       },
+      "ReportCadence": {
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly"
+        ],
+        "type": "string"
+      },
+      "ReportCatalogView": {
+        "properties": {
+          "groupBy": {
+            "description": "Its groupings, the default first.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ]
+          },
+          "permission": {
+            "description": "What reads it.",
+            "type": "string"
+          },
+          "title": {
+            "$ref": "#/components/schemas/ReportTitleView"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "permission",
+          "groupBy"
+        ],
+        "type": "object"
+      },
+      "ReportCatalogViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReportCatalogView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReportColumnView": {
+        "properties": {
+          "ar": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "text",
+              "number",
+              "money"
+            ],
+            "type": "string"
+          },
+          "sum": {
+            "description": "Summed in the totals; 0 where a period has no row.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "en",
+          "ar",
+          "kind",
+          "sum"
+        ],
+        "type": "object"
+      },
+      "ReportComparison": {
+        "enum": [
+          "none",
+          "previous",
+          "last_year",
+          "both"
+        ],
+        "type": "string"
+      },
       "ReportConversationDto": {
         "properties": {
           "note": {
@@ -58834,6 +59064,14 @@
         ],
         "type": "object"
       },
+      "ReportFormat": {
+        "enum": [
+          "pdf",
+          "xlsx",
+          "csv"
+        ],
+        "type": "string"
+      },
       "ReportIncidentDto": {
         "properties": {
           "description": {
@@ -58909,6 +59147,16 @@
           "description"
         ],
         "type": "object"
+      },
+      "ReportKey": {
+        "enum": [
+          "maintenance_spend",
+          "stock_consumption",
+          "service_by_building",
+          "energy_cost",
+          "collections_by_building"
+        ],
+        "type": "string"
       },
       "ReportListingDto": {
         "properties": {
@@ -59011,6 +59259,27 @@
         ],
         "type": "object"
       },
+      "ReportPeriodView": {
+        "properties": {
+          "days": {
+            "type": "number"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "days"
+        ],
+        "type": "object"
+      },
       "ReportPostView": {
         "properties": {
           "body": {
@@ -59042,6 +59311,216 @@
           "kind",
           "body",
           "state"
+        ],
+        "type": "object"
+      },
+      "ReportRowView": {
+        "properties": {
+          "lastYear": {
+            "items": {
+              "nullable": true,
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "previous": {
+            "items": {
+              "nullable": true,
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "values": {
+            "description": "The cells, in column order: figures as decimal strings.",
+            "items": {
+              "nullable": true,
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "values",
+          "previous",
+          "lastYear"
+        ],
+        "type": "object"
+      },
+      "ReportRunView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "periodFrom": {
+            "format": "date",
+            "type": "string"
+          },
+          "periodTo": {
+            "format": "date",
+            "type": "string"
+          },
+          "reportKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ]
+          },
+          "rows": {
+            "type": "number"
+          },
+          "scheduleId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "writtenAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scheduleId",
+          "reportKey",
+          "periodFrom",
+          "periodTo",
+          "format",
+          "rows",
+          "status",
+          "writtenAt",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "ReportRunViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReportRunView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReportScheduleView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "cadence": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportCadence"
+              }
+            ]
+          },
+          "compare": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportComparison"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ]
+          },
+          "groupBy": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reportKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reportKey",
+          "cadence",
+          "format",
+          "compare",
+          "groupBy",
+          "active",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ReportScheduleViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReportScheduleView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReportTitleView": {
+        "properties": {
+          "ar": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "en",
+          "ar"
         ],
         "type": "object"
       },
@@ -59078,6 +59557,84 @@
           "outcome",
           "note",
           "photoFileIds"
+        ],
+        "type": "object"
+      },
+      "ReportView": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ReportColumnView"
+            },
+            "type": "array"
+          },
+          "compare": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportComparison"
+              }
+            ]
+          },
+          "dimensions": {
+            "description": "The leading columns that name a row.",
+            "type": "number"
+          },
+          "groupBy": {
+            "type": "string"
+          },
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ]
+          },
+          "lastYearPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportPeriodView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "period": {
+            "$ref": "#/components/schemas/ReportPeriodView"
+          },
+          "previousPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportPeriodView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ReportRowView"
+            },
+            "type": "array"
+          },
+          "title": {
+            "$ref": "#/components/schemas/ReportTitleView"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ReportRowView"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "groupBy",
+          "compare",
+          "period",
+          "previousPeriod",
+          "lastYearPeriod",
+          "columns",
+          "dimensions",
+          "rows",
+          "totals"
         ],
         "type": "object"
       },
@@ -82892,6 +83449,32 @@
             "description": "A topic of the compound; null for any topic.",
             "format": "uuid",
             "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateReportScheduleDto": {
+        "properties": {
+          "active": {
+            "description": "false pauses it.",
+            "type": "boolean"
+          },
+          "compare": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportComparison"
+              }
+            ]
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ]
+          },
+          "groupBy": {
             "type": "string"
           }
         },
@@ -131939,6 +132522,98 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/compound-exports": {
+      "get": {
+        "operationId": "CompoundExportsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompoundExportViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s latest exports",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "CompoundExportsController_request",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompoundExportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the compound’s operational data (step-up required)",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compound-exports/{id}/download": {
+      "get": {
+        "operationId": "CompoundExportsController_download",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileLinkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A short-lived download URL for a ready export",
+        "tags": [
+          "reports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/contract-renewals": {
       "get": {
         "operationId": "StaffContractsController_renewals",
@@ -147854,6 +148529,417 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/report-runs": {
+      "get": {
+        "operationId": "ReportRunsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scheduleId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportRunViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The runs of the reports I may read",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/report-runs/{id}/download": {
+      "get": {
+        "operationId": "ReportRunsController_download",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileLinkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A short-lived download URL for a run’s file",
+        "tags": [
+          "reports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/report-schedules": {
+      "get": {
+        "operationId": "ReportSchedulesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s report schedules",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ReportSchedulesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportScheduleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a report daily, weekly or monthly to the staff who may read it",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/report-schedules/{id}": {
+      "patch": {
+        "operationId": "ReportSchedulesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReportScheduleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a schedule’s format, comparison or grouping, or pause it",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/reports": {
+      "get": {
+        "operationId": "ReportsController_catalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportCatalogViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The reports I may read, and their groupings",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/reports/{key}": {
+      "get": {
+        "operationId": "ReportsController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out. At most 366 days.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One of the report’s groupings (the catalog lists them); its first by default.",
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReportComparison"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A report over a period, grouped, compared with the period before and/or a year earlier",
+        "tags": [
+          "reports"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/reports/{key}/export": {
+      "get": {
+        "operationId": "ReportsController_export",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out. At most 366 days.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One of the report’s groupings (the catalog lists them); its first by default.",
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReportComparison"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ReportFormat"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A report as a PDF, a workbook or CSV (audited)",
+        "tags": [
+          "reports"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

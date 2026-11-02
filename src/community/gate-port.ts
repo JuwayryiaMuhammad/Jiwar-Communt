@@ -273,6 +273,81 @@ export class CommunityGatePort {
   }
 
   /**
+   * The units in closed mode now (ADR 0020), the longest closed first: for
+   * the closed units' list and their rounds (ADR 0083). Codes and
+   * buildings, never who lives there; at most `take`.
+   */
+  async closedUnits(
+    tx: TenantTxClient,
+    take: number,
+  ): Promise<
+    {
+      unitId: string;
+      unitCode: string;
+      building: string | null;
+      closedSince: Date;
+    }[]
+  > {
+    const units = await tx.unit.findMany({
+      where: { closedSince: { not: null } },
+      select: { id: true, code: true, building: true, closedSince: true },
+      orderBy: [{ closedSince: 'asc' }, { id: 'asc' }],
+      take,
+    });
+    return units.map((u) => ({
+      unitId: u.id,
+      unitCode: u.code,
+      building: u.building,
+      closedSince: u.closedSince!,
+    }));
+  }
+
+  /** How many live (invited or active) proxies each unit has (ADR 0063). */
+  async liveProxies(
+    tx: TenantTxClient,
+    unitIds: readonly string[],
+  ): Promise<Map<string, number>> {
+    if (!unitIds.length) return new Map();
+    const rows = await tx.unitProxy.groupBy({
+      by: ['unitId'],
+      where: {
+        unitId: { in: [...new Set(unitIds)] },
+        status: { in: ['invited', 'active'] },
+      },
+      _count: { _all: true },
+    });
+    return new Map(rows.map((r) => [r.unitId, r._count._all]));
+  }
+
+  /**
+   * Who is told that staff entered the unit (ADR 0083), and reads the
+   * entry: every active occupant of it, owners and tenants, and its active
+   * proxies with `inspections` — the unit's people and those who look after
+   * it, whether or not the proxy may act now. Active accounts, by id.
+   */
+  async entryAudience(tx: TenantTxClient, unitId: string): Promise<string[]> {
+    const occupants = await tx.unitOccupancy.findMany({
+      where: { unitId, status: 'active', account: { status: 'active' } },
+      select: { accountId: true },
+    });
+    const proxies = await tx.unitProxy.findMany({
+      where: {
+        unitId,
+        status: 'active',
+        scopes: { has: 'inspections' },
+        account: { status: 'active' },
+      },
+      select: { accountId: true },
+    });
+    return [
+      ...new Set([
+        ...occupants.map((o) => o.accountId),
+        ...proxies.flatMap((p) => (p.accountId ? [p.accountId] : [])),
+      ]),
+    ].sort();
+  }
+
+  /**
    * The people who live in the unit (ADR 0047): its residing occupants and
    * its active adult members with an account — the `gateEntry` holders,
    * never a landlord, a pending or removed member, a minor or an ended

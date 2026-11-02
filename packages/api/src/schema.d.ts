@@ -19513,6 +19513,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/security/closed-units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Units in closed mode, the longest closed first, with their last inspection and round */
+        get: operations["ClosedUnitsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/security/found-items": {
         parameters: {
             query?: never;
@@ -20772,6 +20789,58 @@ export interface paths {
          * @description While open or in progress (409 GUARD_TASK_CLOSED).
          */
         post: operations["StaffTasksController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/unit-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Emergency entries, the newest first */
+        get: operations["StaffUnitEntriesController_list"];
+        put?: never;
+        /** Record an emergency entry into a unit */
+        post: operations["StaffUnitEntriesController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/unit-entries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one emergency entry */
+        get: operations["StaffUnitEntriesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/unit-entries/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report what an emergency entry found, once */
+        post: operations["StaffUnitEntriesController_report"];
         delete?: never;
         options?: never;
         head?: never;
@@ -24335,6 +24404,23 @@ export interface paths {
          * @description For anyone the unit gives the emergency button. The family (with their phones) only for someone who lives there too.
          */
         get: operations["EmergencyContactsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Emergency entries into the unit, newest first */
+        get: operations["UnitEntriesController_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -28827,6 +28913,65 @@ export interface components {
         ClosedModeDto: {
             closed: boolean;
         };
+        ClosedUnitInspectionView: {
+            /** Format: date-time */
+            doneAt: string;
+            /** @description `all_clear` or `issue_found`. */
+            outcome: string;
+            /** Format: uuid */
+            taskId: string;
+        };
+        ClosedUnitRequestView: {
+            /** Format: uuid */
+            id: string;
+            /** @example IR-000004 */
+            reference: string;
+            /** @enum {string} */
+            status: "open" | "scheduled";
+        };
+        ClosedUnitRoundView: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date
+             * @description Its due day.
+             */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "due" | "scheduled" | "done" | "cancelled";
+            /**
+             * Format: uuid
+             * @description The closed-unit inspection task that carries it out.
+             */
+            taskId: string | null;
+        };
+        ClosedUnitView: {
+            building: string | null;
+            /** Format: date-time */
+            closedSince: string;
+            /** @description The newest inspection done since it closed. */
+            lastInspection: components["schemas"]["ClosedUnitInspectionView"] | null;
+            /** @description Invited or active proxies. */
+            liveProxies: number;
+            /**
+             * Format: date
+             * @description The day its next round falls due: the compound’s days between rounds after it closed or was last inspected.
+             */
+            nextRoundOn: string;
+            /** @description An owner’s or a proxy’s request still open or scheduled. */
+            openRequest: components["schemas"]["ClosedUnitRequestView"] | null;
+            /** @description Its live round, due or scheduled. */
+            round: components["schemas"]["ClosedUnitRoundView"] | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        ClosedUnitViewList: {
+            data: components["schemas"]["ClosedUnitView"][];
+            nextCursor: string | null;
+        };
         ClosurePreviewView: {
             /** @description Soonest first. Never a booker or anyone else. */
             bookings: components["schemas"]["PreviewedBookingView"][];
@@ -30995,6 +31140,11 @@ export interface components {
              * @description The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only.
              */
             requestId?: string;
+            /**
+             * Format: uuid
+             * @description The closed unit’s round it carries out (ADR 0083): a due one of the same unit (CLOSED_UNIT_ROUND_NOT_DUE otherwise); an inspection only, not with `requestId`.
+             */
+            roundId?: string;
             /** @description Required for a custom task; not for an inspection. */
             title?: string;
             /**
@@ -34862,6 +35012,11 @@ export interface components {
              * @example 45
              */
             callRingSeconds: number;
+            /**
+             * @description Days between a closed unit’s rounds, from when it closed or was last inspected (ADR 0083).
+             * @example 30
+             */
+            closedUnitRoundDays: number;
             /**
              * @description Minutes the management has to answer a field exception.
              * @example 10
@@ -42489,6 +42644,24 @@ export interface components {
             /** @description The local day the money was paid back: up to 31 days ago. */
             refundedOn: string;
         };
+        RecordUnitEntryDto: {
+            /**
+             * Format: date-time
+             * @description When staff went in: within the last 7 days.
+             */
+            enteredAt: string;
+            /** @description Finalized `unit_entry_photo` files of the caller: before. */
+            photoFileIds?: string[];
+            /**
+             * @description `unitEntryReason`.
+             * @enum {string}
+             */
+            reasonCode: "water_leak" | "fire" | "smoke" | "gas_smell" | "electrical_hazard" | "structural_danger" | "security_threat" | "other";
+            /** Format: uuid */
+            unitId: string;
+            /** @description Staff accounts who went in too, besides the caller: two staff at least. */
+            witnessIds: string[];
+        };
         RecordViolationPaymentDto: {
             /** @description The whole amount of the violation (AMOUNT_MISMATCH, params.amount). */
             amount: string;
@@ -43018,6 +43191,17 @@ export interface components {
             kind: components["schemas"]["NeighbourPostKind"];
             /** @enum {string} */
             state: "open" | "expired" | "closed";
+        };
+        ReportUnitEntryDto: {
+            /** @description What staff found and did: their words, read by the unit’s people. */
+            note: string;
+            /**
+             * @description `unitEntryOutcome`.
+             * @enum {string}
+             */
+            outcome: "resolved" | "contained" | "no_issue_found" | "needs_maintenance" | "other";
+            /** @description Finalized `unit_entry_photo` files of the caller: after. */
+            photoFileIds: string[];
         };
         ReportedMessageView: {
             /** @description Null once its sender was erased. */
@@ -47491,6 +47675,44 @@ export interface components {
             unitId: string | null;
             updates: components["schemas"]["StaffSuggestionUpdateView"][];
         };
+        StaffUnitEntryView: {
+            /** Format: date-time */
+            enteredAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description `unitEntryOutcome`, once reported. */
+            outcome: string | null;
+            photos: components["schemas"]["UnitEntryPhotoView"][];
+            /** @description `unitEntryReason`. */
+            reasonCode: string;
+            /** Format: date-time */
+            recordedAt: string;
+            /** Format: uuid */
+            recordedById: string;
+            /** @description Null once the account is erased. */
+            recordedByName: string | null;
+            /** @example UE-000003 */
+            reference: string;
+            /** @description What staff found and did, once reported. */
+            reportNote: string | null;
+            /** Format: date-time */
+            reportedAt: string | null;
+            /** Format: uuid */
+            reportedById: string | null;
+            /** @enum {string} */
+            status: "open" | "reported";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description Staff who went in besides the one who led it. */
+            witnessCount: number;
+            /** @description The witnesses’ names, in id order; null once erased. */
+            witnessNames: string[];
+        };
+        StaffUnitEntryViewList: {
+            data: components["schemas"]["StaffUnitEntryView"][];
+            nextCursor: string | null;
+        };
         StaffVehicleDetailView: {
             color: string;
             /** Format: date-time */
@@ -48704,6 +48926,40 @@ export interface components {
             validUntil: string | null;
             workerName: string;
         };
+        UnitEntryPhotoView: {
+            /** Format: date-time */
+            expiresAt: string;
+            /** @enum {string} */
+            stage: "before" | "after";
+            /** @description Presigned: never cached. */
+            url: string;
+        };
+        UnitEntryView: {
+            /** Format: date-time */
+            enteredAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description `unitEntryOutcome`, once reported. */
+            outcome: string | null;
+            photos: components["schemas"]["UnitEntryPhotoView"][];
+            /** @description `unitEntryReason`. */
+            reasonCode: string;
+            /** Format: date-time */
+            recordedAt: string;
+            /** @example UE-000003 */
+            reference: string;
+            /** @description What staff found and did, once reported. */
+            reportNote: string | null;
+            /** Format: date-time */
+            reportedAt: string | null;
+            /** @enum {string} */
+            status: "open" | "reported";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description Staff who went in besides the one who led it. */
+            witnessCount: number;
+        };
         UnitFeeView: {
             /** @description What this unit pays each period, EGP. */
             amount: string;
@@ -49401,6 +49657,8 @@ export interface components {
             callMaxSeconds?: number;
             /** @description Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start. */
             callRingSeconds?: number;
+            /** @description Days between a closed unit’s rounds, from when it closed or was last inspected (ADR 0083). */
+            closedUnitRoundDays?: number;
             /** @description Minutes the management has to answer a field exception before it expires. */
             exceptionAnswerMinutes?: number;
             /** @description Minutes an approved field exception lets its one entry in, at its gate. */
@@ -80312,6 +80570,25 @@ export interface operations {
             };
         };
     };
+    ClosedUnitsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosedUnitViewList"];
+                };
+            };
+        };
+    };
     StaffFoundItemsController_list: {
         parameters: {
             query?: {
@@ -82141,6 +82418,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffGuardTaskView"];
+                };
+            };
+        };
+    };
+    StaffUnitEntriesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                unitId?: string;
+                status?: "open" | "reported";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUnitEntryViewList"];
+                };
+            };
+        };
+    };
+    StaffUnitEntriesController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordUnitEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUnitEntryView"];
+                };
+            };
+        };
+    };
+    StaffUnitEntriesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUnitEntryView"];
+                };
+            };
+        };
+    };
+    StaffUnitEntriesController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportUnitEntryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffUnitEntryView"];
                 };
             };
         };
@@ -87577,6 +87951,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmergencyContactsView"];
+                };
+            };
+        };
+    };
+    UnitEntriesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitEntryView"][];
                 };
             };
         };

@@ -348,6 +348,13 @@ import {
   StaffInspectionRequestsController,
 } from './tasks/inspection-requests.controller';
 import { InspectionRequestsService } from './tasks/inspection-requests.service';
+import { ClosedUnitsController } from './tasks/closed-units.controller';
+import { ClosedUnitsService } from './tasks/closed-units.service';
+import {
+  StaffUnitEntriesController,
+  UnitEntriesController,
+} from './tasks/unit-entries.controller';
+import { UnitEntriesService } from './tasks/unit-entries.service';
 import {
   PermitInspectionsController,
   PublicWorksCertificatesController,
@@ -484,6 +491,9 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     GuardTasksController,
     InspectionRequestsController,
     StaffInspectionRequestsController,
+    ClosedUnitsController,
+    StaffUnitEntriesController,
+    UnitEntriesController,
     PermitInspectionsController,
     StaffPermitInspectionsController,
     FitOutController,
@@ -661,6 +671,8 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     HandoverService,
     TasksService,
     InspectionRequestsService,
+    ClosedUnitsService,
+    UnitEntriesService,
     InspectionExportSections,
     ResidentInspectionItems,
     PermitWorksCompletion,

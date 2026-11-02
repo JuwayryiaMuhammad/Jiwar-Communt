@@ -16872,9 +16872,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"callMaxSeconds\": 60,\n  \"callRingSeconds\": 15,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"faceChecks\": false,\n  \"faceChecksNoticePosted\": false,\n  \"gateBusyBusyFrom\": 2,\n  \"gateBusyNormalFrom\": 1,\n  \"geofenceExitMinutes\": 1,\n  \"offlineSyncAlertMinutes\": 5,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
+              "raw": "{\n  \"audioMaxMb\": 1,\n  \"audioMaxSeconds\": 10,\n  \"callMaxSeconds\": 60,\n  \"callRingSeconds\": 15,\n  \"closedUnitRoundDays\": 7,\n  \"exceptionAnswerMinutes\": 1,\n  \"exceptionEntryMinutes\": 5,\n  \"faceChecks\": false,\n  \"faceChecksNoticePosted\": false,\n  \"gateBusyBusyFrom\": 2,\n  \"gateBusyNormalFrom\": 1,\n  \"geofenceExitMinutes\": 1,\n  \"offlineSyncAlertMinutes\": 5,\n  \"videoMaxMb\": 1,\n  \"videoMaxSeconds\": 10,\n  \"visitExpectedMinutes\": 15\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `callMaxSeconds` | number |  | Seconds an answered gate call lasts at most (ADR 0068). |\n| `callRingSeconds` | number |  | Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start. |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `faceChecks` | boolean |  | Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed. |\n| `faceChecksNoticePosted` | boolean |  | The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020). |\n| `gateBusyBusyFrom` | number |  | Entries in fifteen minutes from which a gate reads busy; above the normal one (INVALID_VALUE). |\n| `gateBusyNormalFrom` | number |  | Entries in fifteen minutes from which a gate reads normal (ADR 0071). |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `offlineSyncAlertMinutes` | number |  | Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `audioMaxMb` | number |  | The largest sound, in megabytes; checked when attached. |\n| `audioMaxSeconds` | number |  | The longest sound a patrol note or an incident takes, in seconds; checked when attached. |\n| `callMaxSeconds` | number |  | Seconds an answered gate call lasts at most (ADR 0068). |\n| `callRingSeconds` | number |  | Seconds a gate call rings before it is missed (ADR 0068); a call ringing keeps its start. |\n| `closedUnitRoundDays` | number |  | Days between a closed unit’s rounds, from when it closed or was last inspected (ADR 0083). |\n| `exceptionAnswerMinutes` | number |  | Minutes the management has to answer a field exception before it expires. |\n| `exceptionEntryMinutes` | number |  | Minutes an approved field exception lets its one entry in, at its gate. |\n| `faceChecks` | boolean |  | Face checks against the blocklist’s faces (ADR 0068). Turned on only with `faceChecksNoticePosted: true`; off, the vendor’s templates are removed. |\n| `faceChecksNoticePosted` | boolean |  | The management’s word that a visible notice is posted at the gate: required to turn face checks on, and audited. A face template is sensitive data (Law 151/2020). |\n| `gateBusyBusyFrom` | number |  | Entries in fifteen minutes from which a gate reads busy; above the normal one (INVALID_VALUE). |\n| `gateBusyNormalFrom` | number |  | Entries in fifteen minutes from which a gate reads normal (ADR 0071). |\n| `geofenceExitMinutes` | number |  | Minutes outside a patrol route’s geofence that flag the exit; an exit is flagged once. |\n| `offlineSyncAlertMinutes` | number |  | Minutes a guard device on an open shift may go without calling before the management is told (ADR 0057), once per outage. |\n| `videoMaxMb` | number |  | The largest video, in megabytes; checked when attached. |\n| `videoMaxSeconds` | number |  | The longest video, in seconds; checked when attached. |\n| `visitExpectedMinutes` | number |  | Minutes a visit is expected to last when its pass gives none; `null` turns the overstay alert off. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -22980,6 +22980,27 @@
           }
         },
         {
+          "name": "Units in closed mode, the longest closed first, with their last inspection and round",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "closed-units"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/closed-units"
+            }
+          }
+        },
+        {
           "name": "List the register",
           "request": {
             "description": "**Responses:** 200",
@@ -24157,7 +24178,7 @@
               },
               "raw": "{\n  \"kind\": \"closed_unit_inspection\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `details` | string |  |  |\n| `dueAt` | string (date-time) |  |  |\n| `gateId` | string (uuid) |  |  |\n| `guardId` | string (uuid) |  | For one guard: exactly one of `guardId`, `gateId`, `zoneId`. |\n| `kind` | `closed_unit_inspection` \\| `custom` | yes |  |\n| `requestId` | string (uuid) |  | The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only. |\n| `title` | string |  | Required for a custom task; not for an inspection. |\n| `unitId` | string (uuid) |  | An inspection’s unit, in closed mode (UNIT_NOT_CLOSED). |\n| `zoneId` | string (uuid) |  | A place in service. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `details` | string |  |  |\n| `dueAt` | string (date-time) |  |  |\n| `gateId` | string (uuid) |  |  |\n| `guardId` | string (uuid) |  | For one guard: exactly one of `guardId`, `gateId`, `zoneId`. |\n| `kind` | `closed_unit_inspection` \\| `custom` | yes |  |\n| `requestId` | string (uuid) |  | The inspection request it answers (ADR 0063): an open one of the same unit (INSPECTION_REQUEST_NOT_FOUND otherwise); an inspection only. |\n| `roundId` | string (uuid) |  | The closed unit’s round it carries out (ADR 0083): a due one of the same unit (CLOSED_UNIT_ROUND_NOT_DUE otherwise); an inspection only, not with `requestId`. |\n| `title` | string |  | Required for a custom task; not for an inspection. |\n| `unitId` | string (uuid) |  | An inspection’s unit, in closed mode (UNIT_NOT_CLOSED). |\n| `zoneId` | string (uuid) |  | A place in service. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -24250,6 +24271,168 @@
                 "cancel"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/tasks/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Emergency entries, the newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "unit-entries"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/unit-entries"
+            }
+          }
+        },
+        {
+          "name": "Record an emergency entry into a unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"reasonCode\": \"water_leak\",\n  \"enteredAt\": \"2026-01-01T09:00:00.000Z\",\n  \"witnessIds\": [\n    \"\"\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `enteredAt` | string (date-time) | yes | When staff went in: within the last 7 days. |\n| `photoFileIds` | string[] |  | Finalized `unit_entry_photo` files of the caller: before. |\n| `reasonCode` | `water_leak` \\| `fire` \\| `smoke` \\| `gas_smell` \\| `electrical_hazard` \\| `structural_danger` \\| `security_threat` \\| `other` | yes | `unitEntryReason`. |\n| `unitId` | string (uuid) | yes |  |\n| `witnessIds` | string[] | yes | Staff accounts who went in too, besides the caller: two staff at least. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "unit-entries"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/unit-entries"
+            }
+          }
+        },
+        {
+          "name": "Get one emergency entry",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "unit-entries",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/unit-entries/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Report what an emergency entry found, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"outcome\": \"resolved\",\n  \"note\": \"\",\n  \"photoFileIds\": [\n    \"\"\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string | yes | What staff found and did: their words, read by the unit’s people. |\n| `outcome` | `resolved` \\| `contained` \\| `no_issue_found` \\| `needs_maintenance` \\| `other` | yes | `unitEntryOutcome`. |\n| `photoFileIds` | string[] | yes | Finalized `unit_entry_photo` files of the caller: after. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "unit-entries",
+                ":id",
+                "report"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/unit-entries/:id/report",
               "variable": [
                 {
                   "description": "",
@@ -58560,6 +58743,34 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Emergency entries into the unit, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "entries"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/entries",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
                   "value": ""
                 }
               ]

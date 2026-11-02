@@ -237,4 +237,18 @@ export class UpdateGateSettingsDto {
   @Min(L.gateBusyBusyFrom.min, withParams(bounds(L.gateBusyBusyFrom)))
   @Max(L.gateBusyBusyFrom.max, withParams(bounds(L.gateBusyBusyFrom)))
   gateBusyBusyFrom?: number;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: L.closedUnitRoundDays.min,
+    maximum: L.closedUnitRoundDays.max,
+    description:
+      'Days between a closed unit’s rounds, from when it closed or was last inspected (ADR 0083).',
+  })
+  @ValidateIf((_, v) => v !== undefined)
+  @IsInt(withParams(bounds(L.closedUnitRoundDays)))
+  @Min(L.closedUnitRoundDays.min, withParams(bounds(L.closedUnitRoundDays)))
+  @Max(L.closedUnitRoundDays.max, withParams(bounds(L.closedUnitRoundDays)))
+  closedUnitRoundDays?: number;
 }

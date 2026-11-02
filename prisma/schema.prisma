@@ -3186,6 +3186,8 @@ model GateSettings {
   /// Entries in 15 minutes from which a gate reads normal, and busy (ADR 0071).
   gateBusyNormalFrom     Int      @default(10) @map("gate_busy_normal_from") @db.SmallInt
   gateBusyBusyFrom       Int      @default(30) @map("gate_busy_busy_from") @db.SmallInt
+  /// Days between a closed unit's rounds (ADR 0083).
+  closedUnitRoundDays    Int      @default(30) @map("closed_unit_round_days") @db.SmallInt
 
   @@map("gate_settings")
 }
@@ -13312,4 +13314,83 @@ model OwnershipTransfer {
   @@index([tenantId, requestedAt(sort: Desc), id(sort: Desc)], map: "ownership_transfers_list_idx")
   @@index([tenantId, unitId, requestedAt(sort: Desc)], map: "ownership_transfers_unit_idx")
   @@map("ownership_transfers")
+}
+
+/// A closed unit's round (ADR 0083): due every N days after the unit closed
+/// or was last inspected, scheduled as a closed-unit inspection task, done
+/// with it or cancelled. One live per unit. Foreign keys in SQL only.
+model ClosedUnitRound {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  unitId       String    @map("unit_id") @db.Uuid
+  dueOn        DateTime  @map("due_on") @db.Date
+  /// due | scheduled | done | cancelled (CHECK).
+  status       String    @default("due")
+  createdAt    DateTime  @map("created_at") @db.Timestamptz(3)
+  taskId       String?   @map("task_id") @db.Uuid
+  scheduledAt  DateTime? @map("scheduled_at") @db.Timestamptz(3)
+  doneAt       DateTime? @map("done_at") @db.Timestamptz(3)
+  cancelledAt  DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// unit_reopened | task_cancelled (CHECK).
+  cancelReason String?   @map("cancel_reason")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, unitId, createdAt(sort: Desc)], map: "closed_unit_rounds_unit_idx")
+  @@map("closed_unit_rounds")
+}
+
+/// An emergency entry into a unit (ADR 0083): recorded with its witnesses
+/// and photos before, the unit's people told at once; reported once with
+/// what was found. Never deleted. Foreign keys in SQL only.
+model UnitEntry {
+  id         String    @id @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  number     Int
+  unitId     String    @map("unit_id") @db.Uuid
+  /// REASON_CODES.unitEntryReason.
+  reasonCode String    @map("reason_code")
+  enteredAt  DateTime  @map("entered_at") @db.Timestamptz(3)
+  recordedBy String    @map("recorded_by") @db.Uuid
+  recordedAt DateTime  @map("recorded_at") @db.Timestamptz(3)
+  /// open | reported (CHECK).
+  status     String    @default("open")
+  /// REASON_CODES.unitEntryOutcome, once reported.
+  outcome    String?
+  /// The staff's words on what they found; they describe the unit.
+  reportNote String?   @map("report_note")
+  reportedBy String?   @map("reported_by") @db.Uuid
+  reportedAt DateTime? @map("reported_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "unit_entries_number_key")
+  @@index([tenantId, recordedAt(sort: Desc), id(sort: Desc)], map: "unit_entries_list_idx")
+  @@index([tenantId, unitId, recordedAt(sort: Desc)], map: "unit_entries_unit_idx")
+  @@map("unit_entries")
+}
+
+/// A staff witness of an emergency entry (ADR 0083). Never changes.
+model UnitEntryWitness {
+  tenantId  String @map("tenant_id") @db.Uuid
+  entryId   String @map("entry_id") @db.Uuid
+  accountId String @map("account_id") @db.Uuid
+
+  @@id([tenantId, entryId, accountId])
+  @@index([tenantId, accountId], map: "unit_entry_witnesses_account_idx")
+  @@map("unit_entry_witnesses")
+}
+
+/// An emergency entry's photo, before or after (ADR 0083). Never changes.
+model UnitEntryPhoto {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  entryId    String   @map("entry_id") @db.Uuid
+  fileId     String   @unique @map("file_id") @db.Uuid
+  /// before | after (CHECK).
+  stage      String
+  uploadedBy String   @map("uploaded_by") @db.Uuid
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, entryId], map: "unit_entry_photos_entry_idx")
+  @@map("unit_entry_photos")
 }

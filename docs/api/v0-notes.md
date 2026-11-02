@@ -201,6 +201,7 @@ The owners' side is in [`notes/governance.md`](notes/governance.md#appeals-to-th
 - A sitting board member (`governance.board`): `/board/approvals`, `/board/appeals`, motions (`POST …/{id}/motions`, `/board/motions/{id}/votes`, `…/close`, `…/withdraw`) and `GET /board/overview`. Recused members get `403 BOARD_MEMBER_RECUSED`.
 - The management: `/staff/governance/approvals` (`governance.approvals`), `/staff/governance/settings` and `/staff/governance/board-appeals` (`governance.manage`), `/staff/finance/budget-settings`, `/staff/finance/budgets`, `/staff/finance/expenses` and `/staff/finance/expense-authorizations` (`finance.budget`), and `GET /staff/finance/reports/budget-vs-actual` with its CSV (`finance.reports`).
 - Three new file purposes (`approval_attachment`, `board_appeal_attachment`, `expense_invoice`), the export's `governance/board-appeals.json` and `governance/board-votes.json`, nine notification kinds (`governance_approval.*`, `governance_motion.proposed`, `governance_appeal.*`; category `governance`), and two new permissions.
+- `PATCH /staff/governance/settings` takes up to one item per setting type (`maxItems` is the number of types, nine now, and grows with them; it was a fixed eight, one short of sending every type at once). A repeated type stays `DUPLICATE_VALUE`.
 
 ### Gate card — guard completion (ADR 0056)
 

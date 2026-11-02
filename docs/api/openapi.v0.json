@@ -68477,7 +68477,7 @@
             "items": {
               "$ref": "#/components/schemas/GovernanceSettingDto"
             },
-            "maxItems": 8,
+            "maxItems": 9,
             "minItems": 1,
             "type": "array"
           }

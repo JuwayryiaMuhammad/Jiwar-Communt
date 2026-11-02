@@ -1,3 +1,4 @@
+import { SETTING_TYPES } from '../../src/governance/approvals/approval-rules';
 import {
   boardMatterHelpers,
   type MotionBody,
@@ -443,6 +444,55 @@ describe('Governance — approval requests (ADR 0055)', () => {
       });
       expect((contract as unknown as { threshold: string }).threshold).toBe(
         '50000.00',
+      );
+    });
+
+    it('the settings take every type in one change, once each, and no more', async () => {
+      type Setting = { type: string; deadlineDays: number };
+      const settings = async () =>
+        (
+          (
+            await b
+              .http('get', '/staff/governance/settings', s.manager.token)
+              .expect(200)
+          ).body as { items: Setting[] }
+        ).items;
+      const patch = (items: Setting[]) =>
+        b.http('patch', '/staff/governance/settings', s.manager.token, {
+          items,
+        });
+      const before = await settings();
+      expect(before.map((i) => i.type)).toEqual([...SETTING_TYPES]);
+      const every = before.map(({ type, deadlineDays }) => ({
+        type,
+        deadlineDays: deadlineDays === 90 ? 89 : deadlineDays + 1,
+      }));
+      const changed = (await patch(every).expect(200)).body as {
+        items: Setting[];
+      };
+      expect(
+        changed.items.map(({ type, deadlineDays }) => ({ type, deadlineDays })),
+      ).toEqual(every);
+      // One more than there are types: refused by its length.
+      const tooMany = await patch([...every, every[0]]).expect(400);
+      expect((tooMany.body as { fields: unknown[] }).fields).toEqual([
+        {
+          field: 'items',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: SETTING_TYPES.length },
+        },
+      ]);
+      // Back as they were, every type in one change again.
+      await patch(
+        before.map(({ type, deadlineDays }) => ({ type, deadlineDays })),
+      ).expect(200);
+      expect(
+        (await settings()).map(({ type, deadlineDays }) => ({
+          type,
+          deadlineDays,
+        })),
+      ).toEqual(
+        before.map(({ type, deadlineDays }) => ({ type, deadlineDays })),
       );
     });
 

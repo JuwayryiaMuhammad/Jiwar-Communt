@@ -65,12 +65,19 @@ export class GovernanceSettingDto {
   binding?: boolean;
 }
 
+/** One PATCH may send every type, once each (the service refuses a repeat). */
+const ITEMS = { min: 1, max: SETTING_TYPES.length };
+
 /** Changes some types' rows; the others stay. */
 export class UpdateGovernanceSettingsDto {
-  @ApiProperty({ type: [GovernanceSettingDto], minItems: 1, maxItems: 8 })
+  @ApiProperty({
+    type: [GovernanceSettingDto],
+    minItems: ITEMS.min,
+    maxItems: ITEMS.max,
+  })
   @IsArray()
-  @ArrayMinSize(1, withParams({ min: 1, max: 8 }))
-  @ArrayMaxSize(8, withParams({ min: 1, max: 8 }))
+  @ArrayMinSize(ITEMS.min, withParams(ITEMS))
+  @ArrayMaxSize(ITEMS.max, withParams(ITEMS))
   @ValidateNested({ each: true })
   @Type(() => GovernanceSettingDto)
   items: GovernanceSettingDto[];

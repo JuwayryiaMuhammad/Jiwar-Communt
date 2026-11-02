@@ -100,6 +100,17 @@ export class RaiseApprovalDto {
   @IsUUID()
   budgetTransferId?: string;
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'capital_plan only (ADR 0086): a draft capital plan; its total is the cost.',
+  })
+  @IsOptional()
+  @IsUUID()
+  capitalPlanId?: string;
+
   @ApiProperty({ type: String, minLength: 1, maxLength: L.context })
   @IsString()
   @Length(1, L.context, withParams({ min: 1, max: L.context }))

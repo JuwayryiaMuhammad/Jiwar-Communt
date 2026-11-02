@@ -26,9 +26,9 @@ const DAY_MS = 86_400_000;
 
 /**
  * Never delegated (ADR 0073): money, the board's matters, appeals, the
- * roles, deputies themselves (no deputy of a deputy), and a tender's
- * opening, which takes two people (ADR 0088). A compensation's decision is
- * money too (ADR 0082).
+ * roles, deputies themselves (no deputy of a deputy), a tender's opening,
+ * which takes two people (ADR 0088), and (ADR 0086) the compound's whole
+ * export. A compensation's decision is money too (ADR 0082).
  */
 export function delegable(permission: string): boolean {
   return (
@@ -40,6 +40,7 @@ export function delegable(permission: string): boolean {
     permission !== 'deputies.manage' &&
     // A tender's opening takes two people, each on their own (ADR 0088).
     permission !== 'tenders.open' &&
+    permission !== 'compound.export' &&
     !isDerived(permission)
   );
 }

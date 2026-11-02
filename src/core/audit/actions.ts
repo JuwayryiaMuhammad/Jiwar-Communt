@@ -2884,6 +2884,34 @@ export const AUDIT_ACTIONS = {
   'statement_import.expired': { log: 'tenant', target: 'statement_import' },
   'statement_line.matched': { log: 'tenant', target: 'statement_match' },
   'statement_match.undone': { log: 'tenant', target: 'statement_match' },
+  // The reports platform (ADR 0086). A report drawn as a file: metadata
+  // the report's key, the format, the period and the comparison; never a
+  // figure.
+  'report.exported': { log: 'tenant', target: 'tenant' },
+  // A schedule: the report's key, the cadence, the format, the comparison
+  // and whether it runs.
+  'report_schedule.created': { log: 'tenant', target: 'report_schedule' },
+  'report_schedule.changed': { log: 'tenant', target: 'report_schedule' },
+  // A scheduled run: written once per period (as the system), its file
+  // downloaded by a holder of the report's permission, and expired.
+  'report_run.written': { log: 'tenant', target: 'report_run' },
+  'report_run.downloaded': { log: 'tenant', target: 'report_run' },
+  'report_run.expired': { log: 'tenant', target: 'report_run' },
+  // A capital plan for the board (ADR 0086): its year, its lines' asset ids
+  // and amounts, the approval request it was put to; never the words.
+  'capital_plan.created': { log: 'tenant', target: 'capital_plan' },
+  'capital_plan.line_added': { log: 'tenant', target: 'capital_plan' },
+  'capital_plan.line_removed': { log: 'tenant', target: 'capital_plan' },
+  'capital_plan.submitted': { log: 'tenant', target: 'capital_plan' },
+  'capital_plan.decided': { log: 'tenant', target: 'capital_plan' },
+  'capital_plan.returned': { log: 'tenant', target: 'capital_plan' },
+  // The compound's export: requested behind a step-up, built, downloaded,
+  // failed or expired; ids and counts only.
+  'compound_export.requested': { log: 'tenant', target: 'compound_export' },
+  'compound_export.ready': { log: 'tenant', target: 'compound_export' },
+  'compound_export.downloaded': { log: 'tenant', target: 'compound_export' },
+  'compound_export.failed': { log: 'tenant', target: 'compound_export' },
+  'compound_export.expired': { log: 'tenant', target: 'compound_export' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

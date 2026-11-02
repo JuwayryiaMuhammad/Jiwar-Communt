@@ -2682,6 +2682,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   warranty_claims_decided_shape: {
     guarded:
       'status is NOT NULL; the nullable columns only under IS [NOT] NULL; recovered_amount IS NULL is tested first and compared only on a value',
+  }, // The reports platform (ADR 0086).
+  report_schedules_shape: {},
+  report_schedules_group_by_shape: {
+    guarded:
+      'group_by IS NULL is tested first; the pattern runs only on a value',
   },
   // Vendors, compound contracts and purchase requests (ADR 0077).
   procurement_counters_kind_known: {},
@@ -3113,6 +3118,13 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'reason_code IS NULL is tested first; the list runs only on a value',
   },
   finance_statement_matches_undone_shape: {},
+  report_runs_shape: {},
+  report_runs_status_shape: {},
+  capital_plans_shape: {},
+  capital_plan_lines_shape: {},
+  capital_plan_lines_computed_asset: {},
+  compound_exports_status_known: {},
+  compound_exports_ready_shape: {},
 };
 
 interface Check {

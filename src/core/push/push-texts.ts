@@ -3714,6 +3714,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ارتد شيك دُفع لوحدتك، فأُلغيت دفعته. راجع كشف الحساب في التطبيق.',
     },
   },
+  'report_run.ready': {
+    en: {
+      title: 'Report ready',
+      body: 'A scheduled report for {periodFrom} to {periodTo} is ready to download.',
+    },
+    ar: {
+      title: 'التقرير جاهز',
+      body: 'تقرير مجدول للفترة من {periodFrom} إلى {periodTo} جاهز للتنزيل.',
+    },
+  },
+  'compound_export.ready': {
+    en: {
+      title: 'Export ready',
+      body: 'The compound’s export is ready. Open the dashboard to download it.',
+    },
+    ar: {
+      title: 'التصدير جاهز',
+      body: 'تصدير بيانات المجمع جاهز. افتح لوحة الإدارة لتنزيله.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

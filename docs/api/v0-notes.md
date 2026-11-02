@@ -355,3 +355,13 @@ The full notes are in [`notes/dispatch-depth.md`](notes/dispatch-depth.md).
 - **An asset.** `GET /maintenance/assets/{id}/timeline`; the card's `warrantyStartsOn`, `warrantor`, `warrantyCovers`; `/maintenance/warranty-claims…`.
 - **Planned work.** `GET /maintenance/plan-calendar?from&to` (at most 93 days).
 
+### The operations dashboard (ADR 0079)
+
+The full notes are in [`notes/operations-dashboard.md`](notes/operations-dashboard.md).
+
+- **The cards.** `GET /staff/dashboard` (`dashboard.read`): six sections, each to its own permission, null otherwise; the inbox's badge; `liquidityDays: null`.
+- **Needs you now.** `GET /staff/dashboard/needs-you`: rule-based alerts, the critical first, then the inbox's overdue and oldest items.
+- **The buildings.** `GET /staff/dashboard/buildings`: each building's units, tickets and outages, with a band.
+- **Briefs.** `GET`/`PATCH /staff/dashboard/settings` (times; `settings.manage` to change); `GET /staff/briefs`, `GET /staff/briefs/{id}` (`404 STAFF_BRIEF_NOT_FOUND`); notices `staff_brief.ready`, `staff_review.ready`.
+- **Service pressure.** `GET`/`PATCH /maintenance/service-pressure`; notice `maintenance.service_pressure`.
+- **The gate log.** `POST /staff/gate/log-search/export` (CSV, the search's body and rules, `422 EXPORT_TOO_LARGE`).

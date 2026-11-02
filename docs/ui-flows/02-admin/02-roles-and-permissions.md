@@ -222,6 +222,7 @@ sequenceDiagram
 | `vendors.manage` | سجل الموردين (ADR 0077): تسجيل المورد ومستنداته وصلاحيتها، وتقييمه، وإيقافه وإعادته | staff, manager | manager | `POST/PATCH /staff/vendors…`، `/staff/vendors/{id}/suspend`، `/reinstate`، `/documents`، `/evaluations` |
 | `purchases.request` | طلب شراء قطعة أو مستلزم أو خدمة غير موجودة، ومتابعة طلباته وإلغاؤها (ADR 0077) | staff, manager | manager, security_supervisor, technician, maintenance_supervisor, accountant | `GET/POST /staff/purchase-requests`، `/staff/purchase-requests/{id}/cancel` |
 | `purchases.approve` | اعتماد طلبات الشراء حتى حد المدير وفوقه باعتماد المجلس، ورفضها، وتسجيل الشراء؛ ولا أحد يعتمد طلبه (ADR 0077) | staff, manager | manager | `/staff/purchase-requests/{id}/approve`، `/reject`، `/fulfil` |
+| `dashboard.read` | لوحة القيادة التشغيلية والموجزات اليومية: كل قسم لمن يملك صلاحيته (البلاغات للتوزيع، المالية للتقارير المالية، الأمن للحوادث، البوابة لقراءتها، الطاقة لقراءتها، الوحدات لقائمتها) (ADR 0079) | staff, manager | manager, security_supervisor, maintenance_supervisor, accountant | `GET /staff/dashboard`، `/staff/dashboard/needs-you`، `/staff/dashboard/buildings`، `GET /staff/dashboard/settings`، `/staff/briefs` |
 
 ملاحظات على الجدول:
 - بعض الشاشات تحتاج **صلاحيتين معًا**: قائمة "من يمكن أن يكون صاحب البلاغ" (`GET /maintenance/units/{unitId}/reporters`) تحتاج `tickets.dispatch` + `residents.read`. وشاشات وحدات طلبات الإدارة (`/management/units/*`) وجزء من `/management/requests` تحتاج `requests.handle` + `residents.read`. إذا أعطى المدير مشرفًا `tickets.dispatch` فقط فلن يرى هذه القوائم.

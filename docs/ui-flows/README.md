@@ -43,6 +43,7 @@
 | [03-staff-accounts](02-admin/03-staff-accounts.md) | حسابات الموظفين: إنشاء، حالة، تغيير بيانات التواصل |
 | [04-compound-settings-and-audit](02-admin/04-compound-settings-and-audit.md) | إعدادات الكمبوند وسجل التدقيق |
 | [05-inbox-and-deputy](02-admin/05-inbox-and-deputy.md) | صندوق القرارات ومهلاته، صلاحية المجلس الملزمة، والنائب (ADR 0073) |
+| [06-operations-dashboard](02-admin/06-operations-dashboard.md) | لوحة القيادة التشغيلية: البطاقات، ما يحتاج تدخلك الآن، حالة المباني، الموجز اليومي ومراجعة نهاية اليوم، ضغط الخدمة، حركة البوابة والبحث في سجلها (ADR 0079) |
 
 ### 03 — المجتمع: الوحدات والسكان والأسرة
 | الملف | الفيتشر |

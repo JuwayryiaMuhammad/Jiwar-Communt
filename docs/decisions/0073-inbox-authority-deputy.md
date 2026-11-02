@@ -108,3 +108,6 @@ The manager audit (2026-11-01) found that what waits for a staff decision is spr
 
 - An inbox row's amount for a dispute is null: the credit is chosen at the decision.
 - An inspection campaign's or a part request's waiting items are not in the inbox yet.
+
+## Update (Phase M2-4, ADR 0079)
+- The operations dashboard reads the inbox's count for its badge and the inbox's own list for "needs you now" (its overdue items, then its oldest). The daily brief keeps every type's count (`countAll`), read back to each reader by the types they decide.

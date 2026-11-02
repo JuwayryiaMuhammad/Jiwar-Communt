@@ -2851,6 +2851,36 @@ export const NOTIFICATION_KINDS = {
     target: 'ticket',
     params: { ticketNumber: {}, unitCode: { optional: true } },
   },
+  /**
+   * The operations dashboard (ADR 0079): the compound's daily brief, or its
+   * end-of-day review, is written. Its day only; the figures are read on
+   * the dashboard, each section to its own permission's holders.
+   */
+  'staff_brief.ready': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'staff_brief',
+    params: { date: {} },
+  },
+  'staff_review.ready': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'staff_brief',
+    params: { date: {} },
+  },
+  /**
+   * The open tickets reached the compound's threshold per available
+   * technician (ADR 0079): told once a rise, at most once an hour.
+   */
+  'maintenance.service_pressure': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'service_pressure',
+    params: { open: {}, available: {}, threshold: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

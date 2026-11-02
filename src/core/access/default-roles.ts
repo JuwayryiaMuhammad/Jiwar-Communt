@@ -110,6 +110,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'vendors.manage',
       'purchases.request',
       'purchases.approve',
+      'dashboard.read',
     ],
   },
   {
@@ -204,6 +205,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'inbox.read',
       // What the guards need bought (ADR 0077).
       'purchases.request',
+      'dashboard.read',
     ],
   },
   {
@@ -244,6 +246,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'safety.manage',
       'inbox.read',
       'purchases.request',
+      'dashboard.read',
     ],
   },
   {
@@ -268,6 +271,7 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.budget',
       'inbox.read',
       'purchases.request',
+      'dashboard.read',
     ],
   },
   {

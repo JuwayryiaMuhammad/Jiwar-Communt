@@ -3074,6 +3074,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'أغلقت الإدارة البلاغ رقم {ticketNumber}. يمكنك إعادة فتحه.',
     },
   },
+  'staff_brief.ready': {
+    en: {
+      title: 'Your daily brief',
+      body: 'The brief for {date} is ready on the dashboard.',
+    },
+    ar: {
+      title: 'الموجز اليومي',
+      body: 'موجز يوم {date} جاهز في لوحة القيادة.',
+    },
+  },
+  'staff_review.ready': {
+    en: {
+      title: 'The end-of-day review',
+      body: 'The review of {date} is ready on the dashboard.',
+    },
+    ar: {
+      title: 'مراجعة نهاية اليوم',
+      body: 'مراجعة يوم {date} جاهزة في لوحة القيادة.',
+    },
+  },
+  'maintenance.service_pressure': {
+    en: {
+      title: 'The team is under pressure',
+      body: '{open} open tickets for {available} available technicians. Open the dispatch queue.',
+    },
+    ar: {
+      title: 'ضغط على فريق الصيانة',
+      body: '{open} بلاغًا مفتوحًا مقابل {available} فنيين متاحين. افتح قائمة التوزيع.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

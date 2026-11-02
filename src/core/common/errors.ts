@@ -1765,6 +1765,8 @@ export const ErrorCode = {
   WARRANTY_CLAIM_DECIDED: 'WARRANTY_CLAIM_DECIDED',
   /** The ticket is not one of this asset's (409). */
   TICKET_NOT_OF_ASSET: 'TICKET_NOT_OF_ASSET',
+  // The operations dashboard (ADR 0079).
+  STAFF_BRIEF_NOT_FOUND: 'STAFF_BRIEF_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

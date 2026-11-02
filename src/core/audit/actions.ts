@@ -2357,6 +2357,14 @@ export const AUDIT_ACTIONS = {
   'warranty_claim.accepted': { log: 'tenant', target: 'warranty_claim' },
   'warranty_claim.rejected': { log: 'tenant', target: 'warranty_claim' },
   'warranty_claim.withdrawn': { log: 'tenant', target: 'warranty_claim' },
+  // The operations dashboard (ADR 0079). changes: briefAt, reviewAt (HH:MM
+  // or null).
+  'staff_dashboard.settings_changed': { log: 'tenant', target: 'tenant' },
+  // The service-pressure threshold. changes: openPerTechnician.
+  'maintenance.service_pressure_changed': { log: 'tenant', target: 'tenant' },
+  // The gate log searched to a CSV (ADR 0079), as its search is audited
+  // (ADR 0056). metadata: from, to, unitId, byName, rows — never the name.
+  'gate.log_exported': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

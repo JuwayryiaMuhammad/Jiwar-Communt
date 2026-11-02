@@ -1000,4 +1000,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   purchase_requests_tenant_id_id_key: null,
   purchase_requests_number_key: null,
   purchase_requests_approval_key: null,
+  // The operations dashboard (ADR 0079): one brief a compound, kind and
+  // day, written by the sweep with ON CONFLICT DO NOTHING (never surfaced).
+  staff_briefs_tenant_id_id_key: null,
+  staff_briefs_day_key: null,
 };

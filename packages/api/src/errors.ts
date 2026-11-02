@@ -579,6 +579,8 @@ const ERROR_TEXT: Record<string, string> = {
   WARRANTY_CLAIM_OPEN: 'This ticket has an open warranty claim already.',
   WARRANTY_CLAIM_DECIDED: 'This claim is decided already.',
   TICKET_NOT_OF_ASSET: 'That ticket is not one of this asset’s.',
+  // The operations dashboard (ADR 0079).
+  STAFF_BRIEF_NOT_FOUND: 'This brief was not found.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

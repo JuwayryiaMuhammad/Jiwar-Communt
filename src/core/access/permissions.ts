@@ -328,6 +328,11 @@ export const PERMISSIONS = {
   // Staff may hold it too: a deputy decides in the manager's place (ADR
   // 0073); only the manager's role has it by default.
   'purchases.approve': { kinds: ['staff', 'manager'] },
+  // The operations dashboard (ADR 0079): the summary cards, "needs you
+  // now", the buildings' status and the daily brief and end-of-day review.
+  // It opens the page only; each section shows to the holders of its own
+  // domain's permission, as the inbox's types do.
+  'dashboard.read': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

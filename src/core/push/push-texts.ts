@@ -423,6 +423,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم البت في طلب الشراء {requestRef}.',
     },
   },
+  'vendor_invoice.received': {
+    en: {
+      title: 'A vendor invoice waits',
+      body: 'Vendor invoice {invoiceRef} waits for approval.',
+    },
+    ar: {
+      title: 'فاتورة مورد بانتظار الاعتماد',
+      body: 'فاتورة المورد {invoiceRef} بانتظار الاعتماد.',
+    },
+  },
+  'vendor_invoice.decided': {
+    en: {
+      title: 'A vendor invoice was decided',
+      body: 'Vendor invoice {invoiceRef} was decided.',
+    },
+    ar: {
+      title: 'تم البت في فاتورة مورد',
+      body: 'تم البت في فاتورة المورد {invoiceRef}.',
+    },
+  },
+  'contract_disbursement.requested': {
+    en: {
+      title: 'A contract payment waits',
+      body: 'Request {disbursementRef} waits for approval.',
+    },
+    ar: {
+      title: 'دفعة عقد بانتظار الاعتماد',
+      body: 'الطلب {disbursementRef} بانتظار الاعتماد.',
+    },
+  },
+  'vendor_guarantee.expiring': {
+    en: {
+      title: 'A guarantee expires soon',
+      body: 'A vendor’s guarantee expires on {expiresOn}.',
+    },
+    ar: {
+      title: 'خطاب ضمان ينتهي قريبًا',
+      body: 'ينتهي خطاب ضمان أحد الموردين في {expiresOn}.',
+    },
+  },
   'stock.reorder_level': {
     en: {
       title: 'Time to reorder',

@@ -17,6 +17,7 @@ const APPROVAL_TYPES = [
   'legal_escalation',
   'compensation_above_limit',
   'manager_handover_override',
+  'budget_transfer',
 ];
 
 /** Approval requests, the staff's side (ADR 0055). */

@@ -19,14 +19,26 @@ const MAX_ATTACHMENTS = 5;
  * Raises a matter for the board (ADR 0055): its context and impact, the
  * cost, up to five alternatives and five attachments. An annual budget is
  * raised from its own page (`budgetId` given): its cost is its total. A
- * budget increase names a line of the active budget.
+ * budget increase names a line of the active budget. A budget transfer
+ * above the manager's limit is raised from its own page too
+ * (`budgetTransferId`): its amount is its cost (ADR 0089).
  */
-export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budgetId?: string }) {
+export function RaiseApproval({
+  onClose,
+  budgetId,
+  budgetTransferId,
+}: {
+  onClose: () => void;
+  budgetId?: string;
+  budgetTransferId?: string;
+}) {
   const toast = useToast();
   const router = useRouter();
   const { can } = usePermissions();
   const [key] = useState(() => crypto.randomUUID());
-  const [type, setType] = useState<ApprovalType>(budgetId ? 'annual_budget' : 'major_contract');
+  const [type, setType] = useState<ApprovalType>(
+    budgetId ? 'annual_budget' : budgetTransferId ? 'budget_transfer' : 'major_contract',
+  );
   const [lineId, setLineId] = useState('');
   const [managerId, setManagerId] = useState('');
   const [context, setContext] = useState('');
@@ -49,7 +61,7 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
   });
   const managers = (staff.data?.data ?? []).filter((a) => a.type === 'manager' && a.status === 'active');
   const types = (Object.keys(APPROVAL_TYPE_TEXT) as ApprovalType[]).filter(
-    (t) => t !== 'annual_budget' && (t !== 'budget_increase' || can('finance.budget')),
+    (t) => t !== 'annual_budget' && t !== 'budget_transfer' && (t !== 'budget_increase' || can('finance.budget')),
   );
   const raise = useAction(
     () =>
@@ -63,7 +75,8 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
             ...(subject === 'budget' && budgetId ? { budgetId } : {}),
             ...(subject === 'budget_line' && lineId ? { budgetLineId: lineId } : {}),
             ...(subject === 'manager' && managerId ? { managerAccountId: managerId } : {}),
-            ...(type !== 'annual_budget' && cost.trim() ? { cost: cost.trim() } : {}),
+            ...(subject === 'budget_transfer' && budgetTransferId ? { budgetTransferId } : {}),
+            ...(type !== 'annual_budget' && type !== 'budget_transfer' && cost.trim() ? { cost: cost.trim() } : {}),
             ...(alternatives.length
               ? { alternatives: alternatives.map((a) => ({ text: a.text.trim(), ...(a.cost.trim() ? { cost: a.cost.trim() } : {}) })) }
               : {}),
@@ -99,13 +112,13 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
         <>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" loading={raise.isPending} disabled={!ready}>
-            {budgetId ? 'Submit' : 'Raise'}
+            {budgetId || budgetTransferId ? 'Submit' : 'Raise'}
           </Button>
         </>
       }
     >
       <div className="form">
-        {budgetId ? null : (
+        {budgetId || budgetTransferId ? null : (
           <Field label="Type" error={err('type')}>
             {(p) => (
               <Select {...p} value={type} onChange={(e) => setType(e.target.value as ApprovalType)}>
@@ -154,6 +167,8 @@ export function RaiseApproval({ onClose, budgetId }: { onClose: () => void; budg
         </Field>
         {type === 'annual_budget' ? (
           <p className="t-secondary">Its cost is the budget’s total.</p>
+        ) : type === 'budget_transfer' ? (
+          <p className="t-secondary">Its cost is the amount transferred.</p>
         ) : (
           <Field
             label={type === 'budget_increase' || type === 'major_contract' ? 'Cost (EGP)' : 'Cost (EGP, optional)'}

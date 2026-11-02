@@ -8,7 +8,10 @@ export type CounterKind =
   | 'refund'
   | 'expense'
   | 'clearance'
-  | 'deposit';
+  | 'deposit'
+  | 'vendor_invoice'
+  | 'disbursement'
+  | 'payout';
 
 /**
  * The one order in which a transaction takes numbers (ADR 0048). A counter
@@ -26,6 +29,10 @@ export const COUNTER_ORDER: readonly CounterKind[] = [
   'expense',
   'clearance',
   'deposit',
+  // Payables (ADR 0089): a payout writes its expense, then takes its own.
+  'vendor_invoice',
+  'disbursement',
+  'payout',
 ];
 
 const lastTaken = new WeakMap<object, number>();
@@ -71,6 +78,9 @@ const PREFIX: Record<CounterKind, string> = {
   expense: 'EX',
   clearance: 'CL',
   deposit: 'DP',
+  vendor_invoice: 'VI',
+  disbursement: 'VD',
+  payout: 'VP',
 };
 
 /** `INV-000123`: six digits at least, as the house numbers are. */

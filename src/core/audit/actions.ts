@@ -1510,6 +1510,76 @@ export const AUDIT_ACTIONS = {
   },
   // metadata: reasonCode.
   'expense.voided': { log: 'tenant', target: 'expense' },
+  // Payables and commitments (ADR 0089): ids, numbers, codes, amounts and
+  // days; a vendor's invoice note, a guarantee's issuer and reference, a
+  // payout's reference and a transfer's or a variance's words as changed.
+  // A transfer applied at once (within the manager's limit), put to the
+  // board, decided by it (system), or called off before it was raised.
+  'budget_transfer.applied': { log: 'tenant', target: 'budget_transfer' },
+  'budget_transfer.requested': {
+    log: 'tenant',
+    target: 'budget_transfer',
+    sensitive: ['reason'],
+  },
+  'budget_transfer.decided': { log: 'tenant', target: 'budget_transfer' },
+  'budget_transfer.cancelled': { log: 'tenant', target: 'budget_transfer' },
+  // A budget's lines split by month. metadata: lines (how many).
+  'budget.phased': { log: 'tenant', target: 'budget' },
+  // Why a line ran past its plan in a month. metadata: month, reasonCode.
+  'budget_line.variance_explained': {
+    log: 'tenant',
+    target: 'budget_line',
+    sensitive: ['note'],
+  },
+  // Budget reserved by a contract's payment or an approved purchase, and
+  // given back (invoiced, changed, cancelled, terminated, paid by hand).
+  'finance_commitment.reserved': {
+    log: 'tenant',
+    target: 'finance_commitment',
+  },
+  'finance_commitment.released': {
+    log: 'tenant',
+    target: 'finance_commitment',
+  },
+  'vendor_invoice.recorded': {
+    log: 'tenant',
+    target: 'vendor_invoice',
+    sensitive: ['note'],
+  },
+  'vendor_invoice.approved': { log: 'tenant', target: 'vendor_invoice' },
+  'vendor_invoice.rejected': { log: 'tenant', target: 'vendor_invoice' },
+  'vendor_invoice.cancelled': { log: 'tenant', target: 'vendor_invoice' },
+  'contract_disbursement.requested': {
+    log: 'tenant',
+    target: 'contract_disbursement',
+    sensitive: ['note'],
+  },
+  'contract_disbursement.approved': {
+    log: 'tenant',
+    target: 'contract_disbursement',
+  },
+  'contract_disbursement.rejected': {
+    log: 'tenant',
+    target: 'contract_disbursement',
+  },
+  'contract_disbursement.cancelled': {
+    log: 'tenant',
+    target: 'contract_disbursement',
+  },
+  // Money out to a vendor: an invoice (writing its expense once), an
+  // advance or a retention released.
+  'vendor_payout.recorded': {
+    log: 'tenant',
+    target: 'vendor_payout',
+    sensitive: ['reference'],
+  },
+  'vendor_guarantee.recorded': {
+    log: 'tenant',
+    target: 'vendor_guarantee',
+    sensitive: ['issuer', 'reference'],
+  },
+  'vendor_guarantee.returned': { log: 'tenant', target: 'vendor_guarantee' },
+  'vendor_guarantee.called': { log: 'tenant', target: 'vendor_guarantee' },
   // Patrols (ADR 0052): ids, codes and counts. A checkpoint's names and
   // position go in as changed; its token and hash never.
   'patrol_checkpoint.created': {

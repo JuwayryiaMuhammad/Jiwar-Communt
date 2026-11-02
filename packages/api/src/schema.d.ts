@@ -26808,7 +26808,7 @@ export interface components {
         /** @enum {string} */
         ApprovalStatus: "pending" | "approved" | "rejected" | "withdrawn";
         /** @enum {string} */
-        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override";
+        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "budget_transfer";
         ApprovalView: {
             alternatives: components["schemas"]["ApprovalAlternativeView"][];
             attachments: components["schemas"]["ApprovalAttachmentView"][];
@@ -36063,7 +36063,7 @@ export interface components {
             type: components["schemas"]["GovernanceSettingType"];
         };
         /** @enum {string} */
-        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "board_appeal" | "objection";
+        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "budget_transfer" | "board_appeal" | "objection";
         GovernanceSettingsResponse: {
             items: components["schemas"]["GovernanceSettingResponse"][];
         };
@@ -37098,7 +37098,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -42920,6 +42920,11 @@ export interface components {
              * @description budget_increase only: a line of the active budget.
              */
             budgetLineId?: string;
+            /**
+             * Format: uuid
+             * @description budget_transfer only (ADR 0089): a transfer waiting for the board; its amount is the cost.
+             */
+            budgetTransferId?: string;
             context: string;
             /** @description EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total). */
             cost?: string;

@@ -359,6 +359,13 @@ const TEXT: Record<string, (p: P) => string> = {
   'incident_action.overdue': (p) => `A corrective action due ${p.dueOn} is still open`,
   'purchase_request.decided': (p) =>
     `Your purchase request ${p.requestRef} was ${p.decision === 'approved' ? 'approved' : 'turned down'}`,
+  // Payables (ADR 0089).
+  'vendor_invoice.received': (p) => `Vendor invoice ${p.invoiceRef} waits for approval`,
+  'vendor_invoice.decided': (p) =>
+    `Vendor invoice ${p.invoiceRef} was ${p.decision === 'approved' ? 'approved' : 'turned down'}`,
+  'contract_disbursement.requested': (p) =>
+    `${p.disbursementKind === 'advance' ? 'An advance' : 'A retention release'} ${p.disbursementRef} waits for approval`,
+  'vendor_guarantee.expiring': (p) => `A vendor’s guarantee expires on ${p.expiresOn}`,
   'meter.anomaly': (p) => `Meter ${p.meterRef} used far more than usual up to ${p.readOn}`,
   'part_request.created': (p) => `${ticket(p)} asks the store for ${p.itemRef}`,
   'maintenance.plan_overdue': (p) => `Planned work on asset ${p.assetRef}, due ${p.dueOn}, is overdue`,
@@ -419,6 +426,11 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('purchases.approve') || can('purchases.request') ? `/purchases/${n.targetId}` : null;
   // Compliance (ADR 0087).
   if (n.targetType === 'compliance_item' && n.targetId) return can('compliance.manage') ? `/compliance/${n.targetId}` : null;
+  // Payables (ADR 0089).
+  if (n.targetType === 'vendor_invoice' && n.targetId)
+    return can('finance.payables') || can('finance.payables_approve') ? `/finance/payables/${n.targetId}` : null;
+  if (n.targetType === 'contract_disbursement' || n.targetType === 'vendor_guarantee')
+    return can('finance.payables') || can('finance.payables_approve') ? '/finance/payables/contracts' : null;
   // Energy (ADR 0066).
   if (n.targetType === 'meter' && n.targetId) return can('energy.read') ? `/meters/${n.targetId}` : null;
   // Readiness (ADR 0067): the program, for who keeps readiness.

@@ -25,6 +25,8 @@ export const APPROVAL_TYPES = [
   'compensation_above_limit',
   // ADR 0075: the board approves a manager leaving without a handover.
   'manager_handover_override',
+  // ADR 0089: moving budget between two lines above the manager's limit.
+  'budget_transfer',
 ] as const;
 export type ApprovalType = (typeof APPROVAL_TYPES)[number];
 
@@ -82,7 +84,7 @@ export interface ApprovalKindHandler {
    * Which subject the request names: a budget, one of its lines, or none.
    * Governance refuses a request that names another.
    */
-  subject: 'budget' | 'budget_line' | 'manager' | null;
+  subject: 'budget' | 'budget_line' | 'manager' | 'budget_transfer' | null;
   /**
    * At the raise: locks the subject, refuses with a coded error when it
    * cannot be put to the board, and returns the cost to record when the

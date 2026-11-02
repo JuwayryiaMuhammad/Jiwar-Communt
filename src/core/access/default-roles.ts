@@ -123,6 +123,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'experience.manage',
       'experience.compensate',
       'field_team.manage',
+      'finance.payables',
+      'finance.payables_approve',
     ],
   },
   {
@@ -285,6 +287,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'inbox.read',
       'purchases.request',
       'dashboard.read',
+      // Records vendors' invoices and pays out what the manager approved
+      // (ADR 0089).
+      'finance.payables',
     ],
   },
   {

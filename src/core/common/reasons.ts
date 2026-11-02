@@ -638,6 +638,34 @@ export const REASON_CODES = {
     'other',
   ],
   expenseVoid: ['entered_in_error', 'duplicate', 'vendor_refund', 'other'],
+  // Payables and commitments (ADR 0089): why a vendor's invoice is turned
+  // down or called off, why an advance or a retention release is turned
+  // down or called off, and why a budget line ran past its plan; the
+  // migrations' CHECKs repeat them.
+  vendorInvoiceReject: [
+    'wrong_amount',
+    'not_delivered',
+    'duplicate',
+    'not_ours',
+    'other',
+  ],
+  vendorInvoiceCancel: [
+    'entered_in_error',
+    'vendor_withdrew',
+    'duplicate',
+    'other',
+  ],
+  disbursementReject: ['not_due', 'too_much', 'not_agreed', 'other'],
+  disbursementCancel: ['entered_in_error', 'not_needed', 'other'],
+  budgetVariance: [
+    'timing',
+    'price_change',
+    'unplanned_work',
+    'saving',
+    'scope_change',
+    'emergency',
+    'other',
+  ],
   // Why the management cancels a scheduled patrol run (ADR 0052).
   patrolRunCancel: ['not_needed', 'post_closed', 'other'],
   // A scheduled run the system cancels, never picked by staff: its route

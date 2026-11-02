@@ -365,3 +365,13 @@ The full notes are in [`notes/operations-dashboard.md`](notes/operations-dashboa
 - **Briefs.** `GET`/`PATCH /staff/dashboard/settings` (times; `settings.manage` to change); `GET /staff/briefs`, `GET /staff/briefs/{id}` (`404 STAFF_BRIEF_NOT_FOUND`); notices `staff_brief.ready`, `staff_review.ready`.
 - **Service pressure.** `GET`/`PATCH /maintenance/service-pressure`; notice `maintenance.service_pressure`.
 - **The gate log.** `POST /staff/gate/log-search/export` (CSV, the search's body and rules, `422 EXPORT_TOO_LARGE`).
+
+### Spaces (ADR 0084)
+
+The full notes are in [`notes/spaces.md`](notes/spaces.md).
+
+- **Holidays.** `/staff/holidays` (`spaces.manage`; one a day, at most 100 coming); `GET /community/holidays`. A holiday that `stopsWorks` is a permits' day off; `daysOff` left `PATCH /staff/permit-settings`. The slots of a day and the planned work calendar's dates carry `holiday`.
+- **The site map.** `GET /staff/site-map`, `PUT …/image`, `PUT …/points` (fractions of the image); `GET /site-map` for the apps.
+- **Floor plans.** `/staff/floor-plans…` (one a building floor; `PUT …/hotspots`, boxes inside the image, units of the floor); `GET /units/{unitId}/floor-plan` (the unit's own box only).
+- **Use requests.** `/staff/space-use-areas/{commonAreaId}` (open, close); `GET /space-use-areas`; `POST/GET /units/{unitId}/space-uses`, `POST /space-uses/{id}/withdraw`; `/staff/space-uses…` (`approve`, `refuse`, `cancel`; `bookings.handle`). Inbox type `space_use_request`.
+- **A closure's preview.** `GET /staff/facilities/{id}/closure-preview?startsAt&endsAt`; `previewToken` on `POST …/closures` (`FACILITY_CLOSURE_PREVIEW_REQUIRED`, `…_STALE`).

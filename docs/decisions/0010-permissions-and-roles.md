@@ -39,3 +39,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase M2-4, ADR 0079)
 - New permission `dashboard.read` (staff, manager: the manager, the two supervisors and the accountant by default): the operations dashboard and the daily briefs, each section still to its own domain's permission's holders. It lets a staff account into the manager dashboard.
+
+## Update (Phase M2-14, ADR 0084)
+- New permission `spaces.manage` (staff, manager: the manager by default): the holiday calendar, the site map, the floor plans and the common areas open to use requests (decided with `bookings.handle`).

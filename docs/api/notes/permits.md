@@ -58,7 +58,7 @@ Conventions, as everywhere in API v0:
 ```
 
 - `workDays`: 0 = Sunday … 6 = Saturday.
-- `daysOff`: from today on.
+- `daysOff`: from today on: the compound's holidays that stop works (ADR 0084). They are kept on the holiday calendar (`/staff/holidays`), not here: `PATCH /staff/permit-settings` refuses `daysOff` (`FIELD_NOT_ALLOWED`). `limits.daysOff` is the calendar's cap on coming holidays.
 - The management may change the rules at any time. The guard applies them **as they stand at each entry**, so an approved permit's worker may be refused on a day the compound has since made a day off.
 
 ---

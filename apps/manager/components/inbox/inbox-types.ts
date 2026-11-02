@@ -18,6 +18,8 @@ export const INBOX_TYPE: Record<string, { label: string; href: (id: string) => s
   management_request: { label: 'Management request', href: (id) => `/management-requests/${id}` },
   // ADR 0084.
   space_use_request: { label: 'Common-area use', href: () => '/space-uses' },
+  // ADR 0081.
+  plan_suggestion: { label: 'Plan suggestion', href: () => '/recurrence' },
 };
 
 export const inboxLabel = (type: string) => INBOX_TYPE[type]?.label ?? type;

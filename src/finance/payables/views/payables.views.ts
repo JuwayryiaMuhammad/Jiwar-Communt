@@ -169,6 +169,11 @@ export class PayoutView {
   method: string;
   @ApiProperty({ type: String, nullable: true }) reference: string | null;
   @dayProp() paidOn: string;
+  @id(
+    true,
+    'The treasury’s account it was paid from (ADR 0085); none when nothing was paid.',
+  )
+  cashAccountId: string | null;
   @ApiProperty({ type: String, format: 'date-time' }) createdAt: Date;
 
   static from(p: FinanceVendorPayout): PayoutView {
@@ -184,6 +189,7 @@ export class PayoutView {
       method: p.method,
       reference: p.reference,
       paidOn: fromDate(p.paidOn),
+      cashAccountId: p.cashAccountId,
       createdAt: p.createdAt,
     };
   }

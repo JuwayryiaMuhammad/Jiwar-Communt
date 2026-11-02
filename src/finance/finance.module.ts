@@ -117,6 +117,18 @@ import { PaymentsService } from './payments/payments.service';
 import { FinanceMoveSteps } from './clearances/finance-move-steps';
 import { FinanceUnitDues } from './clearances/finance-unit-dues';
 import { FinanceInboxItems } from './finance-inbox-items';
+import { CashAccountsService } from './treasury/cash-accounts.service';
+import { ChequesService } from './treasury/cheques.service';
+import { CustodyService } from './treasury/custody.service';
+import { StatementsService } from './treasury/statements.service';
+import { TreasuryCommon } from './treasury/treasury-common';
+import {
+  ChequesController,
+  CollectorCustodyController,
+  CustodyController,
+  TreasuryController,
+} from './treasury/treasury.controller';
+import { TreasuryInboxItems } from './treasury/treasury-inbox-items';
 
 /**
  * Finance (ADR 0046, 0048, 0055): invoices per unit, recurring billing,
@@ -169,6 +181,11 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     CollectorVisitsController,
     StaffCollectorVisitsController,
     CollectorController,
+    // Treasury and custody (ADR 0085).
+    TreasuryController,
+    CustodyController,
+    CollectorCustodyController,
+    ChequesController,
     UpcomingDuesController,
     PlanRequestsController,
     StaffPlanRequestsController,
@@ -194,6 +211,12 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     ClearancePageService,
     DepositsService,
     FinanceInboxItems,
+    TreasuryCommon,
+    CashAccountsService,
+    CustodyService,
+    ChequesService,
+    StatementsService,
+    TreasuryInboxItems,
     FinanceMoveSteps,
     FinanceUnitDues,
     FinanceProvisioning,

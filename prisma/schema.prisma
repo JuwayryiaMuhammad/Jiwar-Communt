@@ -7225,6 +7225,8 @@ model FinanceSettings {
   duesNotice           Boolean  @default(false) @map("dues_notice")
   /// What a collector may take above what a unit owes (ADR 0069): 0–1000.
   collectorMargin      Decimal  @default(50.00) @map("collector_margin") @db.Decimal(12, 2)
+  /// Past this share of a month's plan (1–100), a line's variance asks for a reason (ADR 0089); null: never.
+  varianceReasonPct    Int?     @map("variance_reason_pct") @db.SmallInt
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -9737,6 +9739,8 @@ model FinanceExpense {
   voidedAt        DateTime? @map("voided_at") @db.Timestamptz(3)
   voidedById      String?   @map("voided_by_account_id") @db.Uuid
   voidReasonCode  String?   @map("void_reason_code")
+  /// The vendor's invoice a payout paid with it (ADR 0089), once; never voided then.
+  vendorInvoiceId String?   @map("vendor_invoice_id") @db.Uuid
 
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "finance_expenses_number_key")
@@ -11737,6 +11741,8 @@ model MaintenanceContract {
   approvalRequestId  String?   @map("approval_request_id") @db.Uuid
   /// The budget line it is paid from.
   budgetLineId       String?   @map("budget_line_id") @db.Uuid
+  /// Held back of each payout, a percentage up to 20 (ADR 0089); released at the end.
+  retentionPct       Decimal?  @map("retention_pct") @db.Decimal(5, 2)
   createdById        String?   @map("created_by_account_id") @db.Uuid
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -13479,4 +13485,245 @@ model TechnicianHelpRequest {
   @@unique([tenantId, id])
   @@index([tenantId, status, createdAt, id], map: "technician_help_requests_status_idx")
   @@map("technician_help_requests")
+}
+
+// ============================================================================
+// Payables and commitments (ADR 0089)
+// ============================================================================
+
+/// Money moved between two lines of one budget: applied at once within the
+/// manager's limit, else by the board's `budget_transfer` approval.
+model FinanceBudgetTransfer {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  budgetId          String    @map("budget_id") @db.Uuid
+  fromLineId        String    @map("from_line_id") @db.Uuid
+  toLineId          String    @map("to_line_id") @db.Uuid
+  amount            Decimal   @db.Decimal(14, 2)
+  reason            String
+  /// awaiting_board | applied | rejected | withdrawn | lapsed
+  status            String
+  requestedById     String    @map("requested_by_account_id") @db.Uuid
+  requestedAt       DateTime  @map("requested_at") @db.Timestamptz(3)
+  approvalRequestId String?   @map("approval_request_id") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, budgetId, requestedAt(sort: Desc), id(sort: Desc)], map: "finance_budget_transfers_budget_idx")
+  @@map("finance_budget_transfers")
+}
+
+/// A line's month (1 = the fiscal year's first); twelve add up to its amount.
+model FinanceBudgetLineMonth {
+  tenantId String  @map("tenant_id") @db.Uuid
+  lineId   String  @map("line_id") @db.Uuid
+  month    Int     @db.SmallInt
+  amount   Decimal @db.Decimal(14, 2)
+
+  @@id([tenantId, lineId, month])
+  @@map("finance_budget_line_months")
+}
+
+/// Why a line ran past its plan in a month; append-only, the latest shows.
+model FinanceBudgetVarianceNote {
+  id           String   @id @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  lineId       String   @map("line_id") @db.Uuid
+  month        Int      @db.SmallInt
+  /// REASON_CODES.budgetVariance
+  reasonCode   String   @map("reason_code")
+  note         String?
+  recordedById String   @map("recorded_by_account_id") @db.Uuid
+  recordedAt   DateTime @map("recorded_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, lineId, month, recordedAt(sort: Desc)], map: "finance_budget_variance_notes_line_idx")
+  @@map("finance_budget_variance_notes")
+}
+
+/// Budget a line keeps for a contract's payment or an approved purchase.
+model FinanceCommitment {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  lineId            String    @map("line_id") @db.Uuid
+  /// contract | purchase_request
+  source            String
+  contractId        String?   @map("contract_id") @db.Uuid
+  contractPaymentId String?   @map("contract_payment_id") @db.Uuid
+  purchaseRequestId String?   @map("purchase_request_id") @db.Uuid
+  vendorId          String?   @map("vendor_id") @db.Uuid
+  amount            Decimal   @db.Decimal(14, 2)
+  dueOn             DateTime? @map("due_on") @db.Date
+  createdById       String?   @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "finance_commitments_created_idx")
+  @@map("finance_commitments")
+}
+
+/// What gave a commitment back; append-only.
+model FinanceCommitmentRelease {
+  id              String   @id @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  commitmentId    String   @map("commitment_id") @db.Uuid
+  amount          Decimal  @db.Decimal(14, 2)
+  /// invoiced | changed | cancelled | terminated | paid_outside
+  reason          String
+  vendorInvoiceId String?  @map("vendor_invoice_id") @db.Uuid
+  createdById     String?  @map("created_by_account_id") @db.Uuid
+  createdAt       DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, commitmentId], map: "finance_commitment_releases_commitment_idx")
+  @@index([tenantId, createdAt, id], map: "finance_commitment_releases_created_idx")
+  @@map("finance_commitment_releases")
+}
+
+/// A vendor's invoice: received, approved against a budget line, paid once.
+model FinanceVendorInvoice {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  number            Int
+  /// office (the contractor portal adds its own, ADR 0088)
+  channel           String    @default("office")
+  vendorId          String    @map("vendor_id") @db.Uuid
+  /// The vendor's own number, once per vendor among the live invoices.
+  vendorNumber      String    @map("vendor_number")
+  issuedOn          DateTime  @map("issued_on") @db.Date
+  dueOn             DateTime  @map("due_on") @db.Date
+  contractId        String?   @map("contract_id") @db.Uuid
+  contractPaymentId String?   @map("contract_payment_id") @db.Uuid
+  purchaseRequestId String?   @map("purchase_request_id") @db.Uuid
+  budgetLineId      String?   @map("budget_line_id") @db.Uuid
+  authorizationId   String?   @map("authorization_id") @db.Uuid
+  invoiceFileId     String    @map("invoice_file_id") @db.Uuid
+  subtotal          Decimal   @db.Decimal(14, 2)
+  tax               Decimal   @db.Decimal(14, 2)
+  total             Decimal   @db.Decimal(14, 2)
+  note              String?
+  /// received | approved | rejected | cancelled | paid
+  status            String    @default("received")
+  recordedById      String    @map("recorded_by_account_id") @db.Uuid
+  recordedAt        DateTime  @map("recorded_at") @db.Timestamptz(3)
+  decidedById       String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.vendorInvoiceReject
+  rejectReason      String?   @map("reject_reason")
+  cancelledById     String?   @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.vendorInvoiceCancel
+  cancelReason      String?   @map("cancel_reason")
+  paidAt            DateTime? @map("paid_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_vendor_invoices_number_key")
+  @@unique([tenantId, invoiceFileId], map: "finance_vendor_invoices_file_key")
+  @@index([tenantId, status, recordedAt, id], map: "finance_vendor_invoices_status_idx")
+  @@index([tenantId, vendorId, recordedAt(sort: Desc), id(sort: Desc)], map: "finance_vendor_invoices_vendor_idx")
+  @@map("finance_vendor_invoices")
+}
+
+/// An invoice's line with its tax code (zero by default); append-only.
+model FinanceVendorInvoiceLine {
+  tenantId    String  @map("tenant_id") @db.Uuid
+  invoiceId   String  @map("invoice_id") @db.Uuid
+  position    Int     @db.SmallInt
+  description String
+  amount      Decimal @db.Decimal(14, 2)
+  /// TAX_CODES: zero | exempt | vat_14
+  taxCode     String  @default("zero") @map("tax_code")
+  taxRate     Decimal @default(0) @map("tax_rate") @db.Decimal(5, 2)
+  tax         Decimal @default(0) @db.Decimal(14, 2)
+
+  @@id([tenantId, invoiceId, position])
+  @@map("finance_vendor_invoice_lines")
+}
+
+/// An advance to a contract's vendor, or its retention released.
+model FinanceContractDisbursement {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  number        Int
+  /// advance | retention_release
+  kind          String
+  contractId    String    @map("contract_id") @db.Uuid
+  vendorId      String    @map("vendor_id") @db.Uuid
+  amount        Decimal   @db.Decimal(14, 2)
+  note          String?
+  /// requested | approved | rejected | cancelled | paid
+  status        String    @default("requested")
+  requestedById String    @map("requested_by_account_id") @db.Uuid
+  requestedAt   DateTime  @map("requested_at") @db.Timestamptz(3)
+  decidedById   String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt     DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.disbursementReject
+  rejectReason  String?   @map("reject_reason")
+  cancelledById String?   @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt   DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.disbursementCancel
+  cancelReason  String?   @map("cancel_reason")
+  paidAt        DateTime? @map("paid_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_contract_disbursements_number_key")
+  @@index([tenantId, contractId, requestedAt(sort: Desc), id(sort: Desc)], map: "finance_contract_disbursements_contract_idx")
+  @@index([tenantId, status, requestedAt, id], map: "finance_contract_disbursements_status_idx")
+  @@map("finance_contract_disbursements")
+}
+
+/// Money out to a vendor, once per invoice, advance or release; append-only.
+model FinanceVendorPayout {
+  id              String   @id @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  number          Int
+  /// invoice | advance | retention_release
+  kind            String
+  vendorInvoiceId String?  @map("vendor_invoice_id") @db.Uuid
+  disbursementId  String?  @map("disbursement_id") @db.Uuid
+  contractId      String?  @map("contract_id") @db.Uuid
+  vendorId        String   @map("vendor_id") @db.Uuid
+  expenseId       String?  @map("expense_id") @db.Uuid
+  gross           Decimal  @db.Decimal(14, 2)
+  retentionHeld   Decimal  @default(0) @map("retention_held") @db.Decimal(14, 2)
+  advanceSetOff   Decimal  @default(0) @map("advance_set_off") @db.Decimal(14, 2)
+  net             Decimal  @db.Decimal(14, 2)
+  /// bank_transfer | cheque | cash
+  method          String
+  reference       String?
+  paidOn          DateTime @map("paid_on") @db.Date
+  paidById        String   @map("paid_by_account_id") @db.Uuid
+  createdAt       DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_vendor_payouts_number_key")
+  @@index([tenantId, paidOn, id], map: "finance_vendor_payouts_paid_idx")
+  @@map("finance_vendor_payouts")
+}
+
+/// A guarantee the vendor's bank gives on a contract.
+model FinanceVendorGuarantee {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  contractId      String    @map("contract_id") @db.Uuid
+  vendorId        String    @map("vendor_id") @db.Uuid
+  /// performance | advance_payment | warranty | other
+  kind            String
+  issuer          String
+  reference       String
+  amount          Decimal   @db.Decimal(14, 2)
+  issuedOn        DateTime  @map("issued_on") @db.Date
+  expiresOn       DateTime  @map("expires_on") @db.Date
+  /// held | returned | called
+  status          String    @default("held")
+  recordedById    String    @map("recorded_by_account_id") @db.Uuid
+  recordedAt      DateTime  @map("recorded_at") @db.Timestamptz(3)
+  closedById      String?   @map("closed_by_account_id") @db.Uuid
+  closedAt        DateTime? @map("closed_at") @db.Timestamptz(3)
+  expiryAlertedAt DateTime? @map("expiry_alerted_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, contractId, expiresOn], map: "finance_vendor_guarantees_contract_idx")
+  @@map("finance_vendor_guarantees")
 }

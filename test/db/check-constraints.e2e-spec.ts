@@ -2983,6 +2983,47 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   technician_help_requests_escalated_before_taken: {
     guarded: 'escalated_at and taken_at IS NULL are tested first',
   },
+  // Payables and commitments (ADR 0089).
+  finance_settings_variance_reason_pct: {
+    guarded:
+      'variance_reason_pct is tested IS NULL first; the range runs only on a value',
+  },
+  finance_budget_transfers_shape: {},
+  finance_budget_transfers_state_shape: {},
+  finance_budget_line_months_shape: {},
+  finance_budget_variance_notes_shape: {
+    guarded:
+      'month and reason_code are NOT NULL; note is tested IS NULL first and its length runs only on a value',
+  },
+  finance_commitments_shape: {},
+  finance_commitment_releases_shape: {},
+  finance_vendor_invoices_shape: {
+    guarded:
+      'the amounts and days are NOT NULL; note is tested IS NULL first and its length runs only on a value',
+  },
+  finance_vendor_invoices_source: {},
+  finance_vendor_invoices_state_shape: {
+    guarded:
+      'status is NOT NULL; the decision, cancel and paid columns are tested IS [NOT] NULL; each reason list runs only after its IS NULL test',
+  },
+  finance_vendor_invoice_lines_shape: {},
+  maintenance_contracts_retention: {
+    guarded:
+      'retention_pct is tested IS NULL first; the range runs only on a value',
+  },
+  finance_contract_disbursements_shape: {
+    guarded:
+      'kind and amount are NOT NULL; note is tested IS NULL first and its length runs only on a value',
+  },
+  finance_contract_disbursements_state_shape: {
+    guarded:
+      'status is NOT NULL; decided_by_account_id is tested IS NULL first before it is compared; the cancel columns are tested IS [NOT] NULL; each reason list runs only after its IS NULL test',
+  },
+  finance_vendor_payouts_shape: {
+    guarded:
+      'the amounts, kind and method are NOT NULL; reference is tested IS NULL first and its length runs only on a value',
+  },
+  finance_vendor_guarantees_shape: {},
 };
 
 interface Check {

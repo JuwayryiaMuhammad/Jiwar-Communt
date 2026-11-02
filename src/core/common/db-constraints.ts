@@ -1114,4 +1114,28 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // first under their help lock (TECHNICIAN_HELP_LIVE).
   technician_help_requests_tenant_id_id_key: null,
   technician_help_requests_one_live_key: null,
+  // Payables and commitments (ADR 0089): every key is checked first under
+  // its lock (the line's, the invoice's advisory lock on the vendor's
+  // number, the source's row), so a violation is a race and names nothing.
+  finance_budget_transfers_tenant_id_id_key: null,
+  finance_budget_transfers_approval_key: null,
+  finance_budget_variance_notes_tenant_id_id_key: null,
+  finance_commitments_tenant_id_id_key: null,
+  finance_commitments_open_payment_key: null,
+  finance_commitments_open_purchase_key: null,
+  finance_commitment_releases_tenant_id_id_key: null,
+  finance_vendor_invoices_tenant_id_id_key: null,
+  finance_vendor_invoices_number_key: null,
+  finance_vendor_invoices_file_key: ['invoiceFileId'],
+  finance_vendor_invoices_vendor_number_key: ['vendorNumber'],
+  finance_vendor_invoices_payment_key: ['contractPaymentId'],
+  finance_expenses_vendor_invoice_key: null,
+  finance_contract_disbursements_tenant_id_id_key: null,
+  finance_contract_disbursements_number_key: null,
+  finance_vendor_payouts_tenant_id_id_key: null,
+  finance_vendor_payouts_number_key: null,
+  finance_vendor_payouts_invoice_key: null,
+  finance_vendor_payouts_disbursement_key: null,
+  finance_vendor_payouts_expense_key: null,
+  finance_vendor_guarantees_tenant_id_id_key: null,
 };

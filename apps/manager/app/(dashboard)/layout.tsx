@@ -334,6 +334,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         // The store, contracts and what it all cost (ADR 0065).
         { href: '/stock', label: 'Stock', icon: <Package aria-hidden />, show: can('stock.manage') },
         { href: '/contracts', label: 'Contracts', icon: <Handshake aria-hidden />, show: can('assets.manage') },
+        { href: '/vendors', label: 'Vendors', icon: <Handshake aria-hidden />, show: can('vendors.manage') },
+        {
+          href: '/purchases',
+          label: 'Purchase requests',
+          icon: <Handshake aria-hidden />,
+          show: can('purchases.approve') || can('purchases.request'),
+        },
         { href: '/economics', label: 'Economics', icon: <Receipt aria-hidden />, show: can('assets.manage') },
         // Energy and utilities (ADR 0066).
         { href: '/meters', label: 'Meters', icon: <Gauge aria-hidden />, show: can('energy.read') },

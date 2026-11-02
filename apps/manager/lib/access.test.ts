@@ -119,6 +119,12 @@ test('a role that decides residents’ appeals of staff decisions enters (ADR 00
   assert.equal(mayEnter({ type: 'staff', permissions: ['appeals.decide'] }), true);
 });
 
+test('who keeps the vendor register or approves purchases enters; who only asks to buy does not (ADR 0077)', () => {
+  assert.equal(mayEnter({ type: 'staff', permissions: ['vendors.manage'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['purchases.approve'] }), true);
+  assert.equal(mayEnter({ type: 'staff', permissions: ['purchases.request'] }), false);
+});
+
 test('a role that handles the market enters; a resident who posts on it does not (ADR 0071)', () => {
   assert.equal(mayEnter({ type: 'staff', permissions: ['market.handle'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['inbox.read'] }), true);

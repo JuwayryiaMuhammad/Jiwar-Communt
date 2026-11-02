@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type MaintenanceContract } from '@/lib/queries';
 
-const KINDS = ['amc', 'service', 'warranty_extension', 'other'] as const;
+const KINDS = ['amc', 'service', 'warranty_extension', 'cleaning', 'security', 'landscaping', 'pest_control', 'supply', 'other'] as const;
 type Status = MaintenanceContract['status'] | '';
 
 function NewContractDialog({ onClose }: { onClose: () => void }) {
@@ -124,7 +124,7 @@ export default function ContractsPage() {
     <>
       <PageHeader
         title="Contracts"
-        description="Maintenance contracts with vendors: what they cover and until when."
+        description="The compound’s contracts with its vendors: what they cover, their terms and until when."
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
             New contract

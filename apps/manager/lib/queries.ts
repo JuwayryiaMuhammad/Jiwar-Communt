@@ -79,6 +79,10 @@ export type StockMovement = Schema<'StockMovementView'>;
 export type PartRequest = Schema<'PartRequestView'>;
 export type TicketParts = Schema<'TicketPartsView'>;
 export type MaintenanceContract = Schema<'MaintenanceContractView'>;
+// Vendors and purchase requests (ADR 0077).
+export type VendorSummary = Schema<'VendorSummaryView'>;
+export type Vendor = Schema<'VendorView'>;
+export type PurchaseRequest = Schema<'PurchaseRequestView'>;
 export type AssetEconomics = Schema<'AssetEconomicsView'>;
 export type CompoundEconomics = Schema<'CompoundEconomicsView'>;
 export type MaintenanceKpis = Schema<'MaintenanceKpisView'>;
@@ -596,6 +600,11 @@ export const keys = {
   stockMovements: (filters: object) => ['stock', 'movements', filters] as const,
   partRequests: (filters: object) => ['stock', 'part-requests', filters] as const,
   contractsAll: ['contracts'] as const,
+  vendorsAll: ['vendors'] as const,
+  vendors: (filters: object) => ['vendors', 'list', filters] as const,
+  vendor: (id: string) => ['vendors', 'detail', id] as const,
+  purchasesAll: ['purchases'] as const,
+  purchases: (filters: object) => ['purchases', 'list', filters] as const,
   contracts: (filters: object) => ['contracts', 'list', filters] as const,
   contract: (id: string) => ['contracts', 'detail', id] as const,
   assetEconomics: (id: string) => ['assets', 'detail', id, 'economics'] as const,
@@ -1024,6 +1033,19 @@ export const fetchers = {
       }),
     ),
   contract: (id: string) => unwrap(api.GET('/api/v1/maintenance/contracts/{id}', { params: { path: { id } } })),
+  vendors: (filters: { status?: VendorSummary['status'] | ''; q?: string }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/vendors', {
+        params: { query: { ...(clean(filters) as { status?: VendorSummary['status']; q?: string }), cursor, limit } },
+      }),
+    ),
+  vendor: (id: string) => unwrap(api.GET('/api/v1/staff/vendors/{id}', { params: { path: { id } } })),
+  purchases: (filters: { status?: PurchaseRequest['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/purchase-requests', {
+        params: { query: { ...(clean(filters) as { status?: PurchaseRequest['status'] }), cursor, limit } },
+      }),
+    ),
   assetEconomics: (id: string) =>
     unwrap(api.GET('/api/v1/maintenance/assets/{id}/economics', { params: { path: { id } } })),
   economics: (from: string, to: string) =>

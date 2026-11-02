@@ -346,6 +346,21 @@ test('a contract’s end (ADR 0065) reads as its code and date, and opens it for
   assert.equal(notificationHref(ending, (p) => p === 'assets.read'), null);
 });
 
+test('a vendor’s paper, a contract payment and a purchase request (ADR 0077) read as their references and open for who decides them', () => {
+  const paper = { kind: 'vendor_document.expiring', params: { vendorRef: 'V-0007', paperKind: 'insurance', expiresOn: '2027-01-31' }, targetType: 'vendor', targetId: 'v1' };
+  assert.equal(notificationText(paper), 'A paper of vendor V-0007 expires on 2027-01-31');
+  assert.equal(notificationHref(paper, (p) => p === 'vendors.manage'), '/vendors/v1');
+  assert.equal(notificationHref(paper, (p) => p === 'assets.manage'), null);
+  const due = { kind: 'maintenance_contract.payment_due', params: { contractRef: 'AMC-LIFTS', dueOn: '2027-01-10', amount: '1000.00' }, targetType: 'maintenance_contract', targetId: 'c1' };
+  assert.equal(notificationText(due), 'Contract AMC-LIFTS has 1000.00 EGP due on 2027-01-10');
+  const waiting = { kind: 'purchase_request.submitted', params: { requestRef: 'PR-0003', amount: '3500.00' }, targetType: 'purchase_request', targetId: 'p1' };
+  assert.equal(notificationText(waiting), 'Purchase request PR-0003 (3500.00 EGP) waits for approval');
+  assert.equal(notificationHref(waiting, (p) => p === 'purchases.approve'), '/purchases/p1');
+  assert.equal(notificationHref(waiting, () => false), null);
+  const decided = { kind: 'purchase_request.decided', params: { requestRef: 'PR-0003', decision: 'rejected' }, targetType: 'purchase_request', targetId: 'p1' };
+  assert.equal(notificationText(decided), 'Your purchase request PR-0003 was turned down');
+});
+
 test('a meter’s spike (ADR 0066) reads as its code and day, and opens the meter for who reads energy', () => {
   const high = { kind: 'meter.anomaly', params: { meterRef: 'W-POOL', readOn: '2026-12-20' }, targetType: 'meter', targetId: 'm1' };
   assert.equal(notificationText(high), 'Meter W-POOL used far more than usual up to 2026-12-20');

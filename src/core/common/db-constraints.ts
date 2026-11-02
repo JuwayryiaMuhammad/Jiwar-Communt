@@ -1154,4 +1154,35 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   tender_bids_file_key: ['fileId'],
   tender_bid_links_token_hash_key: null,
   tender_bid_links_one_live: null,
+  // Treasury and custody (ADR 0085). Two live accounts never share a
+  // name; every other key is decided first under the account's, the
+  // custodian's, the cheque's or the line's lock, so a violation is a race
+  // and names nothing.
+  finance_cash_accounts_tenant_id_id_key: null,
+  finance_cash_accounts_live_name_key: ['name'],
+  finance_cash_movements_tenant_id_id_key: null,
+  finance_cash_movements_one_per_handin: null,
+  finance_cash_movements_one_recovery: null,
+  finance_cash_movements_one_per_cheque: null,
+  finance_cash_movements_one_per_match: null,
+  finance_cash_movements_one_reversal: null,
+  finance_cash_movements_transfer_leg: null,
+  // A payout's movement is written once, by its payout, under its
+  // account's lock (ADR 0089).
+  finance_cash_movements_one_per_payout: null,
+  finance_custody_handins_tenant_id_id_key: null,
+  finance_custody_handins_number_key: null,
+  finance_custody_investigations_tenant_id_id_key: null,
+  finance_custody_investigations_one_per_handin: null,
+  finance_cheques_tenant_id_id_key: null,
+  finance_cheques_payment_key: null,
+  finance_statement_imports_tenant_id_id_key: null,
+  finance_statement_imports_file_id_key: null,
+  finance_statement_lines_tenant_id_id_key: null,
+  finance_statement_lines_hash_key: null,
+  finance_statement_matches_tenant_id_id_key: null,
+  finance_statement_matches_one_per_line: null,
+  finance_statement_matches_one_per_payment: null,
+  finance_statement_matches_one_per_cheque: null,
+  finance_statement_matches_one_per_movement: null,
 };

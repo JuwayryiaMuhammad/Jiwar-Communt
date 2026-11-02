@@ -3053,6 +3053,64 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   tender_bid_links_token_hash_hex: {},
   tender_bid_links_validity: {},
   tender_bid_links_revoked_shape: {},
+  // Treasury and custody (ADR 0085).
+  finance_cash_accounts_kind_known: {},
+  finance_cash_accounts_name_length: {},
+  finance_cash_accounts_bank_shape: {
+    guarded:
+      'bank_name and number_last4 are each tested IS NULL first; the kind, length and digits run only on a value',
+  },
+  finance_cash_accounts_retired_shape: {},
+  finance_cash_movements_kind_known: {},
+  finance_cash_movements_amount_range: {},
+  finance_cash_movements_kind_shape: {},
+  finance_cash_movements_reason: {
+    guarded:
+      'reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  finance_custody_handins_not_self: {},
+  finance_custody_handins_amounts: {},
+  finance_custody_handins_status_known: {},
+  finance_custody_handins_state_shape: {},
+  finance_custody_handins_recovered_shape: {
+    guarded:
+      'outcome IS NOT NULL is tested before it is compared; recovered IS NULL is tested first and compared only on a value',
+  },
+  finance_custody_handins_codes: {
+    guarded:
+      'variance_reason and outcome are each tested IS NULL first; the lists run only on a value',
+  },
+  finance_custody_handin_items_amount: {},
+  finance_custody_investigations_status_known: {},
+  finance_custody_investigations_decided_shape: {
+    guarded:
+      'outcome IS NOT NULL is tested before it is compared and IS NULL before its list; recovered IS NULL is tested first',
+  },
+  finance_cheques_terms: {
+    guarded:
+      'bank_name IS NULL is tested first; the length runs only on a value',
+  },
+  finance_cheques_status_known: {},
+  finance_cheques_state_shape: {},
+  finance_cheques_codes: {
+    guarded:
+      'bounce_reason and return_reason are each tested IS NULL first; the lists run only on a value',
+  },
+  finance_statement_imports_status_known: {},
+  finance_statement_imports_counts_range: {},
+  finance_statement_imports_state_shape: {},
+  finance_statement_imports_file_kept: {},
+  finance_statement_lines_terms: {
+    guarded:
+      'reference and description are each tested IS NULL first; the lengths run only on a value',
+  },
+  finance_statement_matches_kind_known: {},
+  finance_statement_matches_kind_shape: {},
+  finance_statement_matches_reason: {
+    guarded:
+      'reason_code IS NULL is tested first; the list runs only on a value',
+  },
+  finance_statement_matches_undone_shape: {},
 };
 
 interface Check {

@@ -75,6 +75,7 @@ The manager audit of 2026-11-01 (operations rows MO-2: "موجز تشغيلي ي
 - The inbox gains `countAll` (every type, for the brief) and is exported to the dashboard; the SLA's at-risk share is shared with its count.
 - The manager dashboard's overview reads the summary instead of paging three queues; "Daily briefs", "Gate traffic" and "Gate log search" are new pages, and service pressure sits in Maintenance setup → Dispatch.
 - No request pays for any of it: the figures are read on the dashboard's own routes only.
+- Every ticket count of the dashboard goes through one condition (`countable`). When sensitive tickets come (M2-13, ADR 0081), their filter takes its place: a reader without `tickets.sensitive` counts none of them, and neither does the brief, which the sweep writes for every reader. Service pressure alone counts every open ticket: it is the team's load, and it names no ticket.
 
 ## Open
 

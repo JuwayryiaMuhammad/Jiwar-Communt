@@ -1,6 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  StreamableFile,
+} from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiProduces } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import { csvFile } from '../../core/common/csv';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { LogSearchDto } from './dto/log-search.dto';
 import { LogSearchService } from './log-search.service';
@@ -29,5 +37,20 @@ export class LogSearchController {
   @ApiOkResponse({ type: LogSearchView })
   async find(@Body() dto: LogSearchDto): Promise<LogSearchView> {
     return LogSearchView.from(await this.search.search(dto));
+  }
+
+  @Post('export')
+  @NoStore()
+  @HttpCode(HttpStatus.OK)
+  @ApiProduces('text/csv')
+  @ApiOperation({
+    summary: 'Export a search of the gate log as CSV',
+    description:
+      'The same body and rules as the search (ADR 0079): every entry found, newest first, 50 000 at most (EXPORT_TOO_LARGE). Audited without the name; counts against the search’s 20 per 10 minutes. UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.',
+  })
+  @ApiOkResponse({ schema: { type: 'string' } })
+  async export(@Body() dto: LogSearchDto): Promise<StreamableFile> {
+    const { name, body } = await this.search.export(dto);
+    return csvFile(name, body);
   }
 }

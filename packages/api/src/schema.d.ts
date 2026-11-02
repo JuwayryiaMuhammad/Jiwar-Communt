@@ -15270,6 +15270,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/gate/log-search/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export a search of the gate log as CSV
+         * @description The same body and rules as the search (ADR 0079): every entry found, newest first, 50 000 at most (EXPORT_TOO_LARGE). Audited without the name; counts against the search’s 20 per 10 minutes. UTF-8 with a byte-order mark, CRLF; text cells guarded against formulas.
+         */
+        post: operations["LogSearchController_export"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/gate/offline/batches": {
         parameters: {
             query?: never;
@@ -68856,6 +68876,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogSearchView"];
+                };
+            };
+        };
+    };
+    LogSearchController_export: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogSearchDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

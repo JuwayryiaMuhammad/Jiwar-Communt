@@ -1179,3 +1179,22 @@ export const BOARD_WORK_COVERAGE: readonly string[] = [
   'manager_handover.notes_cleared',
   'board_report.generated',
 ];
+
+/**
+ * Transfers, dues and closed units, and the market's completion (ADR 0083),
+ * covered by test/m211/audit-coverage.e2e-spec.ts.
+ */
+export const M211_COVERAGE: readonly string[] = [
+  'ownership_transfer.requested',
+  'ownership_transfer.approved',
+  'ownership_transfer.cancelled',
+  'closed_unit_round.due',
+  'closed_unit_round.scheduled',
+  'closed_unit_round.done',
+  'closed_unit_round.cancelled',
+  'unit_entry.recorded',
+  'unit_entry.reported',
+  'group_offer.contracted',
+  'group_offer.reconfirm_requested',
+  'group_offer.reconfirmed',
+];

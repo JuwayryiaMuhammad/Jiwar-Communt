@@ -1848,6 +1848,12 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0082.
       '/staff/experience/cases/{id}': w.bExperienceCaseId,
       '/staff/experience/compensations/{id}': w.bCompensationId,
+      // ADR 0083: a transfer and an entry nowhere (not found); the home's
+      // emergency entries, as its people read them.
+      '/staff/ownership-transfers/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000083a1',
+      '/staff/security/unit-entries/{id}':
+        '0192a5f0-1c2b-7d3e-8f40-0000000083a2',
+      '/units/{unitId}/entries': unit.id,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,

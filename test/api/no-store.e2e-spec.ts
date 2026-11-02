@@ -57,6 +57,7 @@ import { m24Calls } from './no-store-m24';
 import { spacesCalls } from './no-store-spaces';
 import { officeQueueCalls } from './no-store-office-queue';
 import { boardWorkCalls } from './no-store-board-work';
+import { m211Calls } from './no-store-m211';
 import { proxyCalls } from './no-store-proxies';
 import { inspectionCalls } from './no-store-inspections';
 import { decisionAppealCalls } from './no-store-decision-appeals';
@@ -3431,6 +3432,7 @@ describe('API v0 — no-store', () => {
     ...spacesCalls(() => w),
     ...officeQueueCalls(() => w),
     ...boardWorkCalls(() => w, aSittingBoard),
+    ...m211Calls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

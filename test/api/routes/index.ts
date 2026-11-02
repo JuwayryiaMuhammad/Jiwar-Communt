@@ -22,6 +22,7 @@ import {
   DEPUTY_ROUTES,
   STAFF_INBOX_ROUTES,
 } from './staff-inbox';
+import { M211_ROUTES } from './m211';
 import { DISPATCH_DEPTH_ROUTES } from './dispatch-depth';
 import { VENDOR_ROUTES } from './vendors';
 import { STAFF_DASHBOARD_ROUTES } from './staff-dashboard';
@@ -453,4 +454,6 @@ export const ROUTES: Row[] = [
   ...EXPERIENCE_ROUTES,
   // ADR 0075.
   ...BOARD_WORK_ROUTES,
+  // ADR 0083.
+  ...M211_ROUTES,
 ];

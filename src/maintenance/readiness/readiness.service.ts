@@ -40,6 +40,7 @@ import {
   titleProblems,
   windowProblems,
   itemState,
+  type DrillType,
   type Readiness,
   type ReadinessItemKind,
   type ReadinessKind,
@@ -59,6 +60,8 @@ const COPIED_KINDS: readonly ReadinessItemKind[] = [
   'task',
   'estimate',
   'inspection_campaign',
+  // ADR 0087: a drill comes open again, its type kept.
+  'drill',
 ];
 
 export interface ProgramInput {
@@ -82,6 +85,15 @@ export interface ItemInput {
   estimateAmount?: string;
   contractId?: string;
   checklistId?: string;
+  /** A drill's DRILL_TYPES (ADR 0087). */
+  drillType?: DrillType;
+}
+
+/** What a drill's done records (ADR 0087). */
+export interface DrillResult {
+  outcome?: string;
+  participants?: number;
+  minutes?: number;
 }
 
 export interface ItemUpdate {
@@ -498,6 +510,7 @@ export class ReadinessService implements OnModuleInit {
             ),
             estimateAmount: item.estimateAmount,
             checklistId: item.checklistId,
+            drillType: item.drillType,
             copiedFromId: item.id,
             createdById: this.ctx.accountId,
           },
@@ -570,6 +583,7 @@ export class ReadinessService implements OnModuleInit {
               : new Prisma.Decimal(input.estimateAmount),
           contractId: input.contractId ?? null,
           checklistId: input.checklistId ?? null,
+          drillType: input.drillType ?? null,
           createdById: this.ctx.accountId,
         },
       });
@@ -587,6 +601,7 @@ export class ReadinessService implements OnModuleInit {
             estimateAmount: item.estimateAmount?.toFixed(2) ?? null,
             contractId: input.contractId ?? null,
             checklistId: input.checklistId ?? null,
+            drillType: input.drillType ?? null,
           },
           'readiness_item.created',
         ),
@@ -685,7 +700,7 @@ export class ReadinessService implements OnModuleInit {
    */
   done(
     id: string,
-    input: { decision?: string },
+    input: { decision?: string } & DrillResult,
     as: 'manage' | 'owner',
   ): Promise<ReadinessItem> {
     return this.tenantTx.withTenantTx(async (tx) => {
@@ -707,6 +722,18 @@ export class ReadinessService implements OnModuleInit {
         throw invalid([
           { field: 'decision', code: FieldErrorCode.FIELD_NOT_ALLOWED },
         ]);
+      // ADR 0087: a drill is done with its outcome and headcount, its
+      // minutes when counted; no other kind takes them.
+      const drill = item.kind === 'drill';
+      const drillFields: FieldError[] = [];
+      for (const field of ['outcome', 'participants', 'minutes'] as const) {
+        const given = input[field] !== undefined;
+        if (!drill && given)
+          drillFields.push({ field, code: FieldErrorCode.FIELD_NOT_ALLOWED });
+        else if (drill && !given && field !== 'minutes')
+          drillFields.push({ field, code: FieldErrorCode.FIELD_REQUIRED });
+      }
+      if (drillFields.length) throw invalid(drillFields);
       const { now } = await this.calendar.now(tx);
       const updated = await tx.readinessItem.update({
         where: { id },
@@ -714,6 +741,9 @@ export class ReadinessService implements OnModuleInit {
           doneAt: now,
           doneById: this.ctx.accountId,
           decision: input.decision ?? null,
+          drillOutcome: input.outcome ?? null,
+          drillParticipants: input.participants ?? null,
+          drillMinutes: input.minutes ?? null,
         },
       });
       await this.audit.record(tx, {
@@ -725,6 +755,14 @@ export class ReadinessService implements OnModuleInit {
           by: as,
           decision: input.decision ?? null,
           contractId: item.contractId,
+          ...(drill
+            ? {
+                drillType: item.drillType,
+                outcome: input.outcome,
+                participants: input.participants,
+                minutes: input.minutes ?? null,
+              }
+            : {}),
         },
       });
       return updated;

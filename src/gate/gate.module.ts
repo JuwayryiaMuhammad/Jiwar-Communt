@@ -239,6 +239,7 @@ import { DailyReportController } from './reports/daily-report.controller';
 import { DailyReportService } from './reports/daily-report.service';
 import {
   IncidentReportController,
+  SafetyReportController,
   ViolationReportController,
 } from './reports/security-reports.controller';
 import { SecurityReportsService } from './reports/security-reports.service';
@@ -498,6 +499,7 @@ import { PermitDrawingsService } from './permits/fitout/permit-drawings.service'
     StaffFoundItemsController,
     DailyReportController,
     IncidentReportController,
+    SafetyReportController,
     ViolationReportController,
     CheckpointsController,
     RoutesController,

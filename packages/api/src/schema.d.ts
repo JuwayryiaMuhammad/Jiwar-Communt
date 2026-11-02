@@ -19308,7 +19308,11 @@ export interface paths {
          */
         get: operations["StaffLockdownsController_list"];
         put?: never;
-        post?: never;
+        /**
+         * Lock one gate or all down from the office
+         * @description The management (ADR 0087), with a reason code and the typed confirmation `LOCKDOWN`, as a guard does: immediate, no shift. The guards on shift and the management get a critical push, every resident a generic one. One live per scope: a repeat answers 200 with it.
+         */
+        post: operations["StaffLockdownsController_start"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19733,6 +19737,26 @@ export interface paths {
          * @description UTF-8 with a byte-order mark, CRLF; one row per type, the totals last (`all`).
          */
         get: operations["IncidentReportController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/security/reports/safety": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the safety KPIs
+         * @description Over the compound’s days asked (30 by default, 366 at most): the safety incidents and the days since the last injury, the observations’ closure rate and time, the corrective actions and the drills. Counts and rates only.
+         */
+        get: operations["SafetyReportController_report"];
         put?: never;
         post?: never;
         delete?: never;
@@ -30100,6 +30124,8 @@ export interface components {
              * @description A contract review’s maintenance contract: in force, ending by the program’s last day.
              */
             contractId?: string;
+            /** @description A drill’s (ADR 0087), required; no other kind’s. */
+            drillType?: components["schemas"]["DrillType"];
             /**
              * Format: date
              * @description From today, by the program’s last day.
@@ -32204,6 +32230,13 @@ export interface components {
             /** @description The fiscal year, named after the calendar year it starts in: the one under way, the one before or the next. */
             fiscalYear: number;
         };
+        /** @enum {string} */
+        DrillOutcome: "passed" | "issues_found" | "failed";
+        /**
+         * @description A drill’s (ADR 0087).
+         * @enum {string}
+         */
+        DrillType: "fire" | "evacuation" | "lockdown" | "medical" | "earthquake" | "other";
         DueContractPaymentView: {
             /** @description EGP. */
             amount: string;
@@ -34445,6 +34478,8 @@ export interface components {
             /** Format: date-time */
             startedAt: string;
             startedBy: components["schemas"]["FirstNameRefView"];
+            /** @description `gate`: a guard on shift; `office`: the management (ADR 0087). */
+            startedFrom: components["schemas"]["LockdownStartedFrom"];
         };
         GuardParkingView: {
             areaName: string;
@@ -36020,6 +36055,12 @@ export interface components {
         ItemDoneDto: {
             /** @description A contract review’s, required; no other kind’s. */
             decision?: components["schemas"]["ContractReviewDecision"];
+            /** @description The minutes a drill took (an evacuation’s time to the assembly point), when counted. */
+            minutes?: number;
+            /** @description A drill’s (ADR 0087), required; no other kind’s. */
+            outcome?: components["schemas"]["DrillOutcome"];
+            /** @description How many took part in a drill, required; no other kind’s. */
+            participants?: number;
         };
         JoinGroupOfferDto: {
             quantity: number;
@@ -36318,6 +36359,11 @@ export interface components {
         };
         /** @enum {string} */
         LockdownScope: "gate" | "all";
+        /**
+         * @description `gate`: a guard on shift; `office`: the management (ADR 0087).
+         * @enum {string}
+         */
+        LockdownStartedFrom: "gate" | "office";
         LodgeBoardAppealDto: {
             /** @description The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). */
             attachmentIds?: string[];
@@ -40710,7 +40756,7 @@ export interface components {
         /** @enum {string} */
         ReadinessItemCancelReason: "not_needed" | "covered_elsewhere" | "out_of_budget" | "other";
         /** @enum {string} */
-        ReadinessItemKind: "task" | "inspection_campaign" | "contract_review" | "estimate";
+        ReadinessItemKind: "task" | "inspection_campaign" | "contract_review" | "estimate" | "drill";
         ReadinessItemView: {
             cancelReason: components["schemas"]["ReadinessItemCancelReason"] | null;
             /** Format: date-time */
@@ -40724,6 +40770,11 @@ export interface components {
             decision: components["schemas"]["ContractReviewDecision"] | null;
             /** Format: date-time */
             doneAt: string | null;
+            drillMinutes: number | null;
+            drillOutcome: components["schemas"]["DrillOutcome"] | null;
+            drillParticipants: number | null;
+            /** @description A drill’s (ADR 0087). */
+            drillType: components["schemas"]["DrillType"] | null;
             /** Format: date */
             dueOn: string;
             /** @description EGP, two places. */
@@ -42994,6 +43045,49 @@ export interface components {
             /** Format: uuid */
             ticketId: string;
         };
+        SafetyActionsView: {
+            cancelled: number;
+            /** @description Of them, done. */
+            done: number;
+            /** @description Of them, done by their day. */
+            doneOnTime: number;
+            /** @description Done by their day over done, in whole percent. */
+            onTimeRatePct: number | null;
+            /** @description Every action open now. */
+            openNow: number;
+            /** @description Made in the period. */
+            opened: number;
+            /** @description Open now and past their day. */
+            overdueNow: number;
+        };
+        SafetyDrillsView: {
+            avgMinutes: number | null;
+            failed: number;
+            /** @description Done in the period. */
+            held: number;
+            issuesFound: number;
+            /** @description Who took part, in all. */
+            participants: number;
+            passed: number;
+            /** @description Due on the period’s days. */
+            scheduled: number;
+        };
+        SafetyIncidentsView: {
+            /** @description Days from the last injury to the period’s last day. */
+            daysWithoutInjury: number | null;
+            fires: number;
+            hazards: number;
+            injuries: number;
+            /**
+             * Format: date
+             * @description The compound’s day of the last injury by the period’s end.
+             */
+            lastInjuryOn: string | null;
+            nearMisses: number;
+            propertyDamage: number;
+            /** @description Injuries, near misses, hazards, fires and property damage. */
+            reported: number;
+        };
         SafetyInstructionView: {
             /** Format: uuid */
             categoryId: string;
@@ -43004,6 +43098,24 @@ export interface components {
             textAr: string;
             textEn: string;
             version: number;
+        };
+        SafetyObservationsView: {
+            avgHoursToClose: number | null;
+            /** @description Of them, closed now. */
+            closed: number;
+            /** @description Closed over reported, in whole percent; null with none. */
+            closureRatePct: number | null;
+            reported: number;
+        };
+        SafetyReportView: {
+            actions: components["schemas"]["SafetyActionsView"];
+            drills: components["schemas"]["SafetyDrillsView"];
+            /** Format: date */
+            from: string;
+            incidents: components["schemas"]["SafetyIncidentsView"];
+            observations: components["schemas"]["SafetyObservationsView"];
+            /** Format: date */
+            to: string;
         };
         ScanDto: {
             /** @description Metres, as the device reports it; with a position only. */
@@ -45103,6 +45215,8 @@ export interface components {
             /** Format: date-time */
             startedAt: string;
             startedBy: components["schemas"]["AccountRefView"];
+            /** @description `gate`: a guard on shift; `office`: the management (ADR 0087). */
+            startedFrom: components["schemas"]["LockdownStartedFrom"];
         };
         StaffLockdownViewList: {
             data: components["schemas"]["StaffLockdownView"][];
@@ -78297,6 +78411,41 @@ export interface operations {
             };
         };
     };
+    StaffLockdownsController_start: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartLockdownDto"];
+            };
+        };
+        responses: {
+            /** @description The live one. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffLockdownView"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffLockdownView"];
+                };
+            };
+        };
+    };
     StaffLockdownsController_get: {
         parameters: {
             query?: never;
@@ -78818,7 +78967,7 @@ export interface operations {
     IncidentReportController_report: {
         parameters: {
             query?: {
-                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                /** @description The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG). */
                 from?: string;
                 to?: string;
             };
@@ -78841,7 +78990,7 @@ export interface operations {
     IncidentReportController_export: {
         parameters: {
             query?: {
-                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                /** @description The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG). */
                 from?: string;
                 to?: string;
             };
@@ -78861,10 +79010,33 @@ export interface operations {
             };
         };
     };
+    SafetyReportController_report: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: 29 days ago by default. 30 days by default, 366 at most (PERIOD_TOO_LONG). */
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SafetyReportView"];
+                };
+            };
+        };
+    };
     ViolationReportController_report: {
         parameters: {
             query?: {
-                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                /** @description The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG). */
                 from?: string;
                 to?: string;
             };
@@ -78887,7 +79059,7 @@ export interface operations {
     ViolationReportController_export: {
         parameters: {
             query?: {
-                /** @description The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG). */
+                /** @description The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG). */
                 from?: string;
                 to?: string;
             };

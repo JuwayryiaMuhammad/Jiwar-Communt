@@ -16948,6 +16948,14 @@
             "format": "uuid",
             "type": "string"
           },
+          "drillType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DrillType"
+              }
+            ],
+            "description": "A drill’s (ADR 0087), required; no other kind’s."
+          },
           "dueOn": {
             "description": "From today, by the program’s last day.",
             "format": "date",
@@ -22920,6 +22928,26 @@
           "fiscalYear"
         ],
         "type": "object"
+      },
+      "DrillOutcome": {
+        "enum": [
+          "passed",
+          "issues_found",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "DrillType": {
+        "description": "A drill’s (ADR 0087).",
+        "enum": [
+          "fire",
+          "evacuation",
+          "lockdown",
+          "medical",
+          "earthquake",
+          "other"
+        ],
+        "type": "string"
       },
       "DueContractPaymentView": {
         "properties": {
@@ -30325,6 +30353,14 @@
           },
           "startedBy": {
             "$ref": "#/components/schemas/FirstNameRefView"
+          },
+          "startedFrom": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockdownStartedFrom"
+              }
+            ],
+            "description": "`gate`: a guard on shift; `office`: the management (ADR 0087)."
           }
         },
         "required": [
@@ -30333,7 +30369,8 @@
           "gate",
           "reasonCode",
           "startedAt",
-          "startedBy"
+          "startedBy",
+          "startedFrom"
         ],
         "type": "object"
       },
@@ -35376,6 +35413,26 @@
               }
             ],
             "description": "A contract review’s, required; no other kind’s."
+          },
+          "minutes": {
+            "description": "The minutes a drill took (an evacuation’s time to the assembly point), when counted.",
+            "maximum": 600,
+            "minimum": 1,
+            "type": "number"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DrillOutcome"
+              }
+            ],
+            "description": "A drill’s (ADR 0087), required; no other kind’s."
+          },
+          "participants": {
+            "description": "How many took part in a drill, required; no other kind’s.",
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
           }
         },
         "type": "object"
@@ -36274,6 +36331,14 @@
         "enum": [
           "gate",
           "all"
+        ],
+        "type": "string"
+      },
+      "LockdownStartedFrom": {
+        "description": "`gate`: a guard on shift; `office`: the management (ADR 0087).",
+        "enum": [
+          "gate",
+          "office"
         ],
         "type": "string"
       },
@@ -50235,7 +50300,8 @@
           "task",
           "inspection_campaign",
           "contract_review",
-          "estimate"
+          "estimate",
+          "drill"
         ],
         "type": "string"
       },
@@ -50281,6 +50347,31 @@
             "format": "date-time",
             "nullable": true,
             "type": "string"
+          },
+          "drillMinutes": {
+            "nullable": true,
+            "type": "number"
+          },
+          "drillOutcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DrillOutcome"
+              }
+            ],
+            "nullable": true
+          },
+          "drillParticipants": {
+            "nullable": true,
+            "type": "number"
+          },
+          "drillType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DrillType"
+              }
+            ],
+            "description": "A drill’s (ADR 0087).",
+            "nullable": true
           },
           "dueOn": {
             "format": "date",
@@ -50337,7 +50428,11 @@
           "doneAt",
           "cancelledAt",
           "cancelReason",
-          "copiedFromId"
+          "copiedFromId",
+          "drillType",
+          "drillOutcome",
+          "drillParticipants",
+          "drillMinutes"
         ],
         "type": "object"
       },
@@ -57592,6 +57687,132 @@
         ],
         "type": "object"
       },
+      "SafetyActionsView": {
+        "properties": {
+          "cancelled": {
+            "type": "number"
+          },
+          "done": {
+            "description": "Of them, done.",
+            "type": "number"
+          },
+          "doneOnTime": {
+            "description": "Of them, done by their day.",
+            "type": "number"
+          },
+          "onTimeRatePct": {
+            "description": "Done by their day over done, in whole percent.",
+            "nullable": true,
+            "type": "number"
+          },
+          "openNow": {
+            "description": "Every action open now.",
+            "type": "number"
+          },
+          "opened": {
+            "description": "Made in the period.",
+            "type": "number"
+          },
+          "overdueNow": {
+            "description": "Open now and past their day.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "opened",
+          "done",
+          "doneOnTime",
+          "cancelled",
+          "onTimeRatePct",
+          "openNow",
+          "overdueNow"
+        ],
+        "type": "object"
+      },
+      "SafetyDrillsView": {
+        "properties": {
+          "avgMinutes": {
+            "nullable": true,
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "held": {
+            "description": "Done in the period.",
+            "type": "number"
+          },
+          "issuesFound": {
+            "type": "number"
+          },
+          "participants": {
+            "description": "Who took part, in all.",
+            "type": "number"
+          },
+          "passed": {
+            "type": "number"
+          },
+          "scheduled": {
+            "description": "Due on the period’s days.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "scheduled",
+          "held",
+          "passed",
+          "issuesFound",
+          "failed",
+          "participants",
+          "avgMinutes"
+        ],
+        "type": "object"
+      },
+      "SafetyIncidentsView": {
+        "properties": {
+          "daysWithoutInjury": {
+            "description": "Days from the last injury to the period’s last day.",
+            "nullable": true,
+            "type": "number"
+          },
+          "fires": {
+            "type": "number"
+          },
+          "hazards": {
+            "type": "number"
+          },
+          "injuries": {
+            "type": "number"
+          },
+          "lastInjuryOn": {
+            "description": "The compound’s day of the last injury by the period’s end.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "nearMisses": {
+            "type": "number"
+          },
+          "propertyDamage": {
+            "type": "number"
+          },
+          "reported": {
+            "description": "Injuries, near misses, hazards, fires and property damage.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reported",
+          "injuries",
+          "nearMisses",
+          "hazards",
+          "fires",
+          "propertyDamage",
+          "lastInjuryOn",
+          "daysWithoutInjury"
+        ],
+        "type": "object"
+      },
       "SafetyInstructionView": {
         "properties": {
           "categoryId": {
@@ -57623,6 +57844,66 @@
           "textEn",
           "textAr",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "SafetyObservationsView": {
+        "properties": {
+          "avgHoursToClose": {
+            "nullable": true,
+            "type": "number"
+          },
+          "closed": {
+            "description": "Of them, closed now.",
+            "type": "number"
+          },
+          "closureRatePct": {
+            "description": "Closed over reported, in whole percent; null with none.",
+            "nullable": true,
+            "type": "number"
+          },
+          "reported": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "reported",
+          "closed",
+          "closureRatePct",
+          "avgHoursToClose"
+        ],
+        "type": "object"
+      },
+      "SafetyReportView": {
+        "properties": {
+          "actions": {
+            "$ref": "#/components/schemas/SafetyActionsView"
+          },
+          "drills": {
+            "$ref": "#/components/schemas/SafetyDrillsView"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "incidents": {
+            "$ref": "#/components/schemas/SafetyIncidentsView"
+          },
+          "observations": {
+            "$ref": "#/components/schemas/SafetyObservationsView"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "incidents",
+          "observations",
+          "actions",
+          "drills"
         ],
         "type": "object"
       },
@@ -64897,6 +65178,14 @@
           },
           "startedBy": {
             "$ref": "#/components/schemas/AccountRefView"
+          },
+          "startedFrom": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockdownStartedFrom"
+              }
+            ],
+            "description": "`gate`: a guard on shift; `office`: the management (ADR 0087)."
           }
         },
         "required": [
@@ -64906,6 +65195,7 @@
           "reasonCode",
           "startedAt",
           "startedBy",
+          "startedFrom",
           "endedAt",
           "endedBy",
           "endReason",
@@ -134286,6 +134576,64 @@
         ],
         "x-no-store": true,
         "x-stability": "draft"
+      },
+      "post": {
+        "description": "The management (ADR 0087), with a reason code and the typed confirmation `LOCKDOWN`, as a guard does: immediate, no shift. The guards on shift and the management get a critical push, every resident a generic one. One live per scope: a repeat answers 200 with it.",
+        "operationId": "StaffLockdownsController_start",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartLockdownDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffLockdownView"
+                }
+              }
+            },
+            "description": "The live one."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffLockdownView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lock one gate or all down from the office",
+        "tags": [
+          "lockdown"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
       }
     },
     "/api/v1/staff/security/lockdowns/{id}": {
@@ -135411,7 +135759,7 @@
         "operationId": "IncidentReportController_report",
         "parameters": [
           {
-            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
             "in": "query",
             "name": "from",
             "required": false,
@@ -135461,7 +135809,7 @@
         "operationId": "IncidentReportController_export",
         "parameters": [
           {
-            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
             "in": "query",
             "name": "from",
             "required": false,
@@ -135505,13 +135853,63 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/security/reports/safety": {
+      "get": {
+        "description": "Over the compound’s days asked (30 by default, 366 at most): the safety incidents and the days since the last injury, the observations’ closure rate and time, the corrective actions and the drills. Counts and rates only.",
+        "operationId": "SafetyReportController_report",
+        "parameters": [
+          {
+            "description": "The compound’s first day: 29 days ago by default. 30 days by default, 366 at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-10-30",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SafetyReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the safety KPIs",
+        "tags": [
+          "incidents"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/security/reports/violations": {
       "get": {
         "description": "Per kind, the violations of the compound’s days asked: issued, by guards, warnings and fined, the amounts issued and paid, open, under appeal, paid and cancelled now, and the appeals and their decisions. Counts only.",
         "operationId": "ViolationReportController_report",
         "parameters": [
           {
-            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
             "in": "query",
             "name": "from",
             "required": false,
@@ -135561,7 +135959,7 @@
         "operationId": "ViolationReportController_export",
         "parameters": [
           {
-            "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+            "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
             "in": "query",
             "name": "from",
             "required": false,

@@ -4,6 +4,7 @@ import { REASON_CODES } from '../../../core/common/reasons';
 import { ofDateColumn } from '../../schedules/local-dates';
 import type { CampaignRead } from '../campaigns.service';
 import {
+  DRILL_TYPES,
   itemState,
   READINESS_ITEM_KINDS,
   READINESS_KINDS,
@@ -129,6 +130,23 @@ export class ReadinessItemView {
   cancelReason: string | null;
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   copiedFromId: string | null;
+  @ApiProperty({
+    enum: DRILL_TYPES,
+    enumName: 'DrillType',
+    nullable: true,
+    description: 'A drill’s (ADR 0087).',
+  })
+  drillType: string | null;
+  @ApiProperty({
+    enum: REASON_CODES.drillOutcome,
+    enumName: 'DrillOutcome',
+    nullable: true,
+  })
+  drillOutcome: string | null;
+  @ApiProperty({ type: Number, nullable: true })
+  drillParticipants: number | null;
+  @ApiProperty({ type: Number, nullable: true })
+  drillMinutes: number | null;
 
   static from(i: ReadinessItem): ReadinessItemView {
     return {
@@ -147,6 +165,10 @@ export class ReadinessItemView {
       cancelledAt: i.cancelledAt,
       cancelReason: i.cancelReason,
       copiedFromId: i.copiedFromId,
+      drillType: i.drillType,
+      drillOutcome: i.drillOutcome,
+      drillParticipants: i.drillParticipants,
+      drillMinutes: i.drillMinutes,
     };
   }
 }

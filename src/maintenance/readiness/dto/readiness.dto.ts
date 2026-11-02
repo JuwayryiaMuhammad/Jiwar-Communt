@@ -3,11 +3,14 @@ import {
   ArrayMaxSize,
   IsArray,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
   Matches,
+  Max,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { PageQueryDto } from '../../../core/common/http/list';
@@ -15,11 +18,15 @@ import { REASON_CODES } from '../../../core/common/reasons';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { IsLocalDate } from '../../schedules/local-dates';
 import {
+  DRILL_MINUTES,
+  DRILL_PARTICIPANTS,
+  DRILL_TYPES,
   ESTIMATE,
   MAX_CAMPAIGN_TARGETS,
   READINESS_ITEM_KINDS,
   READINESS_KINDS,
   TITLE_MAX,
+  type DrillType,
   type ReadinessItemKind,
   type ReadinessKind,
 } from '../readiness-rules';
@@ -29,6 +36,7 @@ const allowed = (xs: readonly string[]) => withParams({ allowed: [...xs] });
 const TITLE = { min: 1, max: TITLE_MAX };
 const AMOUNT_TEXT = withParams({ format: 'amount' });
 const DECISIONS = REASON_CODES.contractReviewDecision;
+const OUTCOMES = REASON_CODES.drillOutcome;
 
 export class CreateProgramDto {
   @ApiProperty({ enum: READINESS_KINDS, enumName: 'ReadinessKind' })
@@ -168,6 +176,15 @@ export class CreateItemDto {
   @IsOptional()
   @IsUUID()
   checklistId?: string;
+
+  @ApiPropertyOptional({
+    enum: DRILL_TYPES,
+    enumName: 'DrillType',
+    description: 'A drill’s (ADR 0087), required; no other kind’s.',
+  })
+  @IsOptional()
+  @IsIn(DRILL_TYPES, allowed(DRILL_TYPES))
+  drillType?: DrillType;
 }
 
 export class UpdateItemDto {
@@ -209,6 +226,40 @@ export class ItemDoneDto {
   @IsOptional()
   @IsIn(DECISIONS, allowed(DECISIONS))
   decision?: (typeof DECISIONS)[number];
+
+  @ApiPropertyOptional({
+    enum: OUTCOMES,
+    enumName: 'DrillOutcome',
+    description: 'A drill’s (ADR 0087), required; no other kind’s.',
+  })
+  @IsOptional()
+  @IsIn(OUTCOMES, allowed(OUTCOMES))
+  outcome?: (typeof OUTCOMES)[number];
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: DRILL_PARTICIPANTS.min,
+    maximum: DRILL_PARTICIPANTS.max,
+    description: 'How many took part in a drill, required; no other kind’s.',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(DRILL_PARTICIPANTS.min, withParams({ ...DRILL_PARTICIPANTS }))
+  @Max(DRILL_PARTICIPANTS.max, withParams({ ...DRILL_PARTICIPANTS }))
+  participants?: number;
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: DRILL_MINUTES.min,
+    maximum: DRILL_MINUTES.max,
+    description:
+      'The minutes a drill took (an evacuation’s time to the assembly point), when counted.',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(DRILL_MINUTES.min, withParams({ ...DRILL_MINUTES }))
+  @Max(DRILL_MINUTES.max, withParams({ ...DRILL_MINUTES }))
+  minutes?: number;
 }
 
 const TARGETS = { max: MAX_CAMPAIGN_TARGETS };

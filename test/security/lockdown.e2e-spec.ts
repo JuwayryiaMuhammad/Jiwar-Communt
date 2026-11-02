@@ -84,6 +84,8 @@ describe('Lockdown — the gates locked down', () => {
       gateId: s.north.id,
       reasonCode: 'security_threat',
       shiftId: s.atNorth.shiftId,
+      // ADR 0087: where it was started.
+      from: 'gate',
       recipients: 2,
       residents: 1,
     });

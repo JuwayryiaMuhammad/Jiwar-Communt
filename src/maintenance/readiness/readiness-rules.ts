@@ -12,8 +12,24 @@ export const READINESS_ITEM_KINDS = [
   'inspection_campaign',
   'contract_review',
   'estimate',
+  // ADR 0087: a drill, done with its outcome and headcount.
+  'drill',
 ] as const;
 export type ReadinessItemKind = (typeof READINESS_ITEM_KINDS)[number];
+
+/** What a drill rehearses (ADR 0087); the migration's CHECK repeats it. */
+export const DRILL_TYPES = [
+  'fire',
+  'evacuation',
+  'lockdown',
+  'medical',
+  'earthquake',
+  'other',
+] as const;
+export type DrillType = (typeof DRILL_TYPES)[number];
+/** A drill's headcount and minutes, as the CHECK says. */
+export const DRILL_PARTICIPANTS = { min: 0, max: 10000 } as const;
+export const DRILL_MINUTES = { min: 1, max: 600 } as const;
 
 /** A program's days: at most a year and a day, as the CHECK says. */
 export const MAX_PROGRAM_DAYS = 366;
@@ -57,11 +73,16 @@ export function windowProblems(
  * What an item of `kind` names, and nothing it does not (the CHECK
  * readiness_items_kind_shape): a contract only for a review, a checklist
  * only for a campaign, an amount always for an estimate and optionally for
- * a task.
+ * a task, a drill's type only for a drill (readiness_items_drill_shape).
  */
 export function kindProblems(
   kind: ReadinessItemKind,
-  i: { contractId?: string; checklistId?: string; estimateAmount?: string },
+  i: {
+    contractId?: string;
+    checklistId?: string;
+    estimateAmount?: string;
+    drillType?: string;
+  },
 ): FieldError[] {
   const fields: FieldError[] = [];
   const need = (field: string, given: boolean, wanted: boolean) => {
@@ -76,6 +97,7 @@ export function kindProblems(
     i.checklistId !== undefined,
     kind === 'inspection_campaign',
   );
+  need('drillType', i.drillType !== undefined, kind === 'drill');
   if (kind === 'estimate')
     need('estimateAmount', i.estimateAmount !== undefined, true);
   else if (kind !== 'task')

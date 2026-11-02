@@ -95,6 +95,8 @@ describe('Audit coverage — security (ADR 0053)', () => {
         gateId: gate.id,
         reasonCode: 'drill',
         shiftId: guard.shiftId,
+        // ADR 0087: where it was started.
+        from: 'gate',
         recipients: 1,
         residents: 1,
       });

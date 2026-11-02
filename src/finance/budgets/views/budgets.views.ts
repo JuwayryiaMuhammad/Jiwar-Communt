@@ -139,8 +139,15 @@ export class ExpenseView {
   category: BudgetCategory;
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   authorizationId: string | null;
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, description: 'Who was paid, as recorded.' })
   vendor: string;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The vendor of the register it names (ADR 0077).',
+  })
+  vendorId: string | null;
   @money()
   amount: string;
   @ApiProperty({ type: String, example: 'EGP' })
@@ -173,6 +180,7 @@ export class ExpenseView {
       category: r.category as BudgetCategory,
       authorizationId: e.authorizationId,
       vendor: e.vendor,
+      vendorId: e.vendorId,
       amount: show(e.amount),
       currency: 'EGP',
       spentOn: fromDate(e.spentOn),

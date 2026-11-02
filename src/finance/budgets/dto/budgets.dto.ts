@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -12,6 +12,7 @@ import {
   Matches,
   Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { LARGE_AMOUNT } from '../../../core/common/amounts';
@@ -129,14 +130,34 @@ export class RecordExpenseDto {
   @IsUUID()
   budgetLineId: string;
 
-  @ApiProperty({ type: String, minLength: 1, maxLength: BUDGET_LIMITS.vendor })
+  @ApiPropertyOptional({
+    type: String,
+    minLength: 1,
+    maxLength: BUDGET_LIMITS.vendor,
+    description:
+      'Who was paid, in words: required without `vendorId`. A name the vendor register has links to that vendor (ADR 0077).',
+  })
+  @ValidateIf(
+    (o: { vendorId?: string; vendor?: string }) =>
+      !o.vendorId || o.vendor !== undefined,
+  )
   @IsString()
   @Length(
     1,
     BUDGET_LIMITS.vendor,
     withParams({ min: 1, max: BUDGET_LIMITS.vendor }),
   )
-  vendor: string;
+  vendor?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'A vendor of the register (ADR 0077); its name is recorded. A suspended one is refused.',
+  })
+  @IsOptional()
+  @IsUUID()
+  vendorId?: string;
 
   @ApiProperty({
     type: String,

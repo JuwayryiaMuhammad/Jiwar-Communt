@@ -36,6 +36,7 @@ import { ResidentItemsModule } from './core/resident-items/resident-items.module
 import { StaffSearchModule } from './core/staff-search/staff-search.module';
 import { StaffInboxModule } from './core/staff-inbox/staff-inbox.module';
 import { MoveStepsModule } from './core/moves/move-steps.module';
+import { VendorDirectoryModule } from './core/vendors/vendor-directory.module';
 import { WorksCompletionsModule } from './core/works/works-completions.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
 import { PdfModule } from './core/pdf/pdf.module';
@@ -131,6 +132,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     StaffInboxModule,
     MoveStepsModule,
     WorksCompletionsModule,
+    VendorDirectoryModule,
     FormalNoticesModule,
     PdfModule,
     AssistModule,

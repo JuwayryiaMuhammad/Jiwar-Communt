@@ -6142,6 +6142,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/contract-payments/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the contract payments due
+         * @description Unpaid, between two days, of contracts not terminated: next month’s commitments. At most 500, by day.
+         */
+        get: operations["ContractPaymentsDueController_due"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/contracts": {
         parameters: {
             query?: never;
@@ -6189,6 +6209,70 @@ export interface paths {
         /** Set the assets a contract covers */
         put: operations["MaintenanceContractsController_setAssets"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/contracts/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a contract’s payment schedule
+         * @description By day.
+         */
+        get: operations["MaintenanceContractsController_payments"];
+        /**
+         * Set a contract’s payment schedule
+         * @description Every unpaid payment, replaced whole; what is paid stays.
+         */
+        put: operations["MaintenanceContractsController_schedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/contracts/{id}/payments/{paymentId}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a contract payment paid
+         * @description Once.
+         */
+        post: operations["MaintenanceContractsController_pay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/contracts/{id}/renew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Renew a contract
+         * @description A new contract with the same vendor, kind, scope, terms, budget line and assets still in service, from the day after its end by default.
+         */
+        post: operations["MaintenanceContractsController_renew"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19202,6 +19286,140 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the vendors
+         * @description In register order.
+         */
+        get: operations["VendorsController_list"];
+        put?: never;
+        /** Register a vendor */
+        post: operations["VendorsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vendors/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a vendor
+         * @description With its live papers, the last year’s evaluations and its contracts.
+         */
+        get: operations["VendorsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a vendor’s details */
+        patch: operations["VendorsController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/vendors/{id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** File a vendor’s paper */
+        post: operations["VendorsController_addDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vendors/{id}/documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a paper filed by mistake */
+        delete: operations["VendorsController_removeDocument"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vendors/{id}/evaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a vendor’s evaluations
+         * @description Newest first.
+         */
+        get: operations["VendorsController_evaluations"];
+        put?: never;
+        /** Evaluate a vendor */
+        post: operations["VendorsController_evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vendors/{id}/reinstate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reinstate a suspended vendor */
+        post: operations["VendorsController_reinstate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/vendors/{id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suspend a vendor
+         * @description Its contracts run on; no new contract, expense or purchase request names it.
+         */
+        post: operations["VendorsController_suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/violation-payments/{id}/reverse": {
         parameters: {
             query?: never;
@@ -22850,6 +23068,22 @@ export interface components {
              */
             fileId: string;
         };
+        AddVendorDocumentDto: {
+            /**
+             * Format: date
+             * @description Its last day in force; after `issuedOn`. Announced 30 days ahead.
+             */
+            expiresOn?: string;
+            /**
+             * Format: uuid
+             * @description An uploaded file of purpose `vendor_document`, finalized.
+             */
+            fileId: string;
+            /** Format: date */
+            issuedOn?: string;
+            kind: components["schemas"]["VendorDocumentKind"];
+            number?: string;
+        };
         AdjustStockDto: {
             /** @description Signed: `-2` takes two off, `1.5` adds one and a half. */
             delta: string;
@@ -26396,6 +26630,38 @@ export interface components {
             data: components["schemas"]["ContractDueView"][];
             nextCursor: string | null;
         };
+        ContractPaymentDto: {
+            /** @description EGP. */
+            amount: string;
+            /**
+             * Format: date
+             * @description Within the contract’s dates; one payment a day.
+             */
+            dueOn: string;
+            note?: string;
+        };
+        ContractPaymentView: {
+            /** @description EGP. */
+            amount: string;
+            /** Format: uuid */
+            contractId: string;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            /** Format: date */
+            paidOn: string | null;
+            paidReference: string | null;
+        };
+        ContractPaymentViewList: {
+            data: components["schemas"]["ContractPaymentView"][];
+            nextCursor: string | null;
+        };
+        ContractPaymentsDto: {
+            /** @description Every unpaid payment from now on; what is paid stays. */
+            payments: components["schemas"]["ContractPaymentDto"][];
+        };
         ContractReadView: {
             /** Format: date-time */
             createdAt: string;
@@ -27013,6 +27279,18 @@ export interface components {
         CreateContractDto: {
             /** @description EGP a year. */
             annualValue?: string;
+            /**
+             * Format: uuid
+             * @description The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once.
+             */
+            approvalRequestId?: string;
+            /** @description Renews by itself unless notice is given; needs `renewalTermMonths`. */
+            autoRenews?: boolean;
+            /**
+             * Format: uuid
+             * @description The budget line it is paid from (ADR 0055).
+             */
+            budgetLineId?: string;
             /** @description The compound’s reference for it, unique. Never changes. */
             code: string;
             /**
@@ -27021,16 +27299,31 @@ export interface components {
              */
             endsOn: string;
             kind: components["schemas"]["MaintenanceContractKind"];
+            /** @description EGP a day the vendor owes for being late (ADR 0077). */
+            latePenaltyPerDay?: string;
             /**
              * @description How many days before its end the end is announced.
              * @default 30
              */
             noticeDays: number;
+            /** @description The late penalty at most in all; with `latePenaltyPerDay`. */
+            penaltyCap?: string;
+            /** @description Its penalties and service levels, in the contract’s words. */
+            penaltyTerms?: string;
+            renewalTermMonths?: number;
+            /** @description Hours the vendor has to respond. */
+            responseHours?: number;
             /** @description What it covers, in the compound’s words. */
             scope?: string;
             /** Format: date */
             startsOn: string;
-            vendorName: string;
+            /**
+             * Format: uuid
+             * @description A vendor of the register (ADR 0077); a suspended one is refused. Or `vendorName`.
+             */
+            vendorId?: string;
+            /** @description Without `vendorId`: the register’s vendor of this name (whatever its case), or a new one registered with it. */
+            vendorName?: string;
             vendorPhone?: string;
         };
         CreateDelegationDto: {
@@ -28116,6 +28409,26 @@ export interface components {
              */
             plate: string;
             type: components["schemas"]["VehicleType"];
+        };
+        CreateVendorDto: {
+            address?: string;
+            /** @description Its trades; `other` when none is given. */
+            categories?: components["schemas"]["VendorCategory"][];
+            commercialRegister?: string;
+            contactName?: string;
+            /** Format: email */
+            email?: string;
+            legalName?: string;
+            /** @description Unique in the compound, whatever its case. */
+            name: string;
+            notes?: string;
+            /**
+             * Format: uuid
+             * @description The same company as this partner (ADR 0060); at most one vendor a partner.
+             */
+            partnerId?: string;
+            phone?: string;
+            taxNumber?: string;
         };
         CreateVisitorAreaDto: {
             capacity: number;
@@ -29210,6 +29523,28 @@ export interface components {
             /** @description The fiscal year, named after the calendar year it starts in: the one under way, the one before or the next. */
             fiscalYear: number;
         };
+        DueContractPaymentView: {
+            /** @description EGP. */
+            amount: string;
+            contractCode: string;
+            /** Format: uuid */
+            contractId: string;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            /** Format: date */
+            paidOn: string | null;
+            paidReference: string | null;
+            /** Format: uuid */
+            vendorId: string;
+            vendorName: string;
+        };
+        DueContractPaymentViewList: {
+            data: components["schemas"]["DueContractPaymentView"][];
+            nextCursor: string | null;
+        };
         DuesMonthView: {
             /** @description Issued and still owed, due in it. */
             invoiced: string;
@@ -29507,6 +29842,19 @@ export interface components {
             /** @description The SLA's cycle (ADR 0034). */
             slaCycle: number;
         };
+        EvaluateVendorDto: {
+            communication: number;
+            /**
+             * Format: uuid
+             * @description One of its contracts, when the evaluation is of that.
+             */
+            contractId?: string;
+            cost: number;
+            note?: string;
+            quality: number;
+            safety: number;
+            timeliness: number;
+        };
         EventCountsView: {
             /** @description Children registered (an event for children). Never who. */
             children: number;
@@ -29699,7 +30047,13 @@ export interface components {
             reference: string | null;
             /** @example 2027-03-14 */
             spentOn: string;
+            /** @description Who was paid, as recorded. */
             vendor: string;
+            /**
+             * Format: uuid
+             * @description The vendor of the register it names (ADR 0077).
+             */
+            vendorId: string | null;
             voided: components["schemas"]["ExpenseVoidView"] | null;
         };
         ExpenseViewList: {
@@ -33114,7 +33468,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        MaintenanceContractKind: "amc" | "service" | "warranty_extension" | "other";
+        MaintenanceContractKind: "amc" | "service" | "warranty_extension" | "cleaning" | "security" | "landscaping" | "pest_control" | "supply" | "other";
         /**
          * @description From its dates on the compound’s today.
          * @enum {string}
@@ -33123,14 +33477,38 @@ export interface components {
         MaintenanceContractView: {
             /** @description EGP a year. */
             annualValue: string | null;
+            /**
+             * Format: uuid
+             * @description The board’s approved major contract it is signed under.
+             */
+            approvalRequestId: string | null;
             assetIds: string[];
+            autoRenews: boolean;
+            /** Format: uuid */
+            budgetLineId: string | null;
             code: string;
             /** Format: date */
             endsOn: string;
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["MaintenanceContractKind"];
+            /** @description EGP a day the vendor owes for being late. */
+            latePenaltyPerDay: string | null;
             noticeDays: number;
+            penaltyCap: string | null;
+            penaltyTerms: string | null;
+            /**
+             * Format: uuid
+             * @description The contract that renews it.
+             */
+            renewalId: string | null;
+            renewalTermMonths: number | null;
+            /**
+             * Format: uuid
+             * @description The contract it renews.
+             */
+            renewsId: string | null;
+            responseHours: number | null;
             scope: string | null;
             /** Format: date */
             startsOn: string;
@@ -33140,6 +33518,12 @@ export interface components {
             terminatedAt: string | null;
             /** @description REASON_CODES.contractTerminate. */
             terminationReason: string | null;
+            /**
+             * Format: uuid
+             * @description Its vendor (ADR 0077).
+             */
+            vendorId: string;
+            /** @description The vendor’s name when the contract was written. */
             vendorName: string;
             vendorPhone: string | null;
         };
@@ -35616,6 +36000,15 @@ export interface components {
              */
             until: string | null;
         };
+        PayContractPaymentDto: {
+            /**
+             * Format: date
+             * @description Not after the compound’s today.
+             */
+            paidOn: string;
+            /** @description What paid it: an expense’s number, a transfer’s reference. */
+            reference?: string;
+        };
         PayWageDto: {
             /**
              * @description In the compound’s currency, at most two decimals. Need not equal the monthly wage.
@@ -37266,7 +37659,13 @@ export interface components {
             reference?: string;
             /** @description Within the budget’s year, not ahead (DAY_OUT_OF_RANGE). */
             spentOn: string;
-            vendor: string;
+            /** @description Who was paid, in words: required without `vendorId`. A name the vendor register has links to that vendor (ADR 0077). */
+            vendor?: string;
+            /**
+             * Format: uuid
+             * @description A vendor of the register (ADR 0077); its name is recorded. A suspended one is refused.
+             */
+            vendorId?: string;
         };
         RecordFinePaymentDto: {
             /** @description The whole amount of the fine (AMOUNT_MISMATCH, params.amount). */
@@ -37587,6 +37986,24 @@ export interface components {
         RenameRouteDto: {
             nameAr?: string;
             nameEn?: string;
+        };
+        RenewContractDto: {
+            /** @description EGP a year; the old one’s by default. */
+            annualValue?: string | null;
+            /**
+             * Format: uuid
+             * @description The board’s approved major contract, above the manager’s limit.
+             */
+            approvalRequestId?: string;
+            /** @description The new contract’s reference, unique. */
+            code: string;
+            /** Format: date */
+            endsOn: string;
+            /**
+             * Format: date
+             * @description The day after the old one’s end by default.
+             */
+            startsOn?: string;
         };
         RenewOption: {
             /** Format: date */
@@ -43509,12 +43926,38 @@ export interface components {
         };
         UpdateContractDto: {
             annualValue?: string | null;
+            /**
+             * Format: uuid
+             * @description The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once.
+             */
+            approvalRequestId?: string;
+            /** @description Renews by itself unless notice is given; needs `renewalTermMonths`. */
+            autoRenews?: boolean;
+            /**
+             * Format: uuid
+             * @description The budget line it is paid from (ADR 0055).
+             */
+            budgetLineId?: string | null;
             /** Format: date */
             endsOn?: string;
+            /** @description EGP a day the vendor owes for being late (ADR 0077). */
+            latePenaltyPerDay?: string | null;
             noticeDays?: number;
+            /** @description The late penalty at most in all; with `latePenaltyPerDay`. */
+            penaltyCap?: string | null;
+            /** @description Its penalties and service levels, in the contract’s words. */
+            penaltyTerms?: string | null;
+            renewalTermMonths?: number | null;
+            /** @description Hours the vendor has to respond. */
+            responseHours?: number | null;
             scope?: string | null;
             /** Format: date */
             startsOn?: string;
+            /**
+             * Format: uuid
+             * @description Another vendor of the register; a suspended one is refused.
+             */
+            vendorId?: string;
             vendorName?: string;
             vendorPhone?: string | null;
         };
@@ -44115,6 +44558,21 @@ export interface components {
             /** @description The longest visitor parking booking, in hours. */
             visitorParkingMaxHours?: number;
         };
+        UpdateVendorDto: {
+            address?: string | null;
+            categories?: components["schemas"]["VendorCategory"][];
+            commercialRegister?: string | null;
+            contactName?: string | null;
+            /** Format: email */
+            email?: string | null;
+            legalName?: string | null;
+            name?: string;
+            notes?: string | null;
+            /** Format: uuid */
+            partnerId?: string | null;
+            phone?: string | null;
+            taxNumber?: string | null;
+        };
         UpdateVisitorAreaDto: {
             /** @description False retires the area: no new booking, the booked ones stay. */
             active?: boolean;
@@ -44227,6 +44685,114 @@ export interface components {
         VehicleViewList: {
             data: components["schemas"]["VehicleView"][];
             nextCursor: string | null;
+        };
+        /** @enum {string} */
+        VendorCategory: "maintenance" | "cleaning" | "security" | "landscaping" | "pest_control" | "supplies" | "utilities" | "professional" | "other";
+        VendorContractsSummaryView: {
+            /** @description In force on the compound’s today. */
+            active: number;
+            total: number;
+        };
+        /** @enum {string} */
+        VendorDocumentKind: "commercial_register" | "tax_card" | "licence" | "insurance" | "safety_certificate" | "contract_copy" | "other";
+        VendorDocumentView: {
+            /** Format: date-time */
+            addedAt: string;
+            /** @description Its expiry passed on the compound’s today. */
+            expired: boolean;
+            /** Format: date */
+            expiresOn: string | null;
+            /** @description A short-lived link to read the file; null when it is gone. */
+            fileUrl: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            issuedOn: string | null;
+            kind: components["schemas"]["VendorDocumentKind"];
+            number: string | null;
+        };
+        VendorEvaluationView: {
+            communication: number;
+            /** Format: uuid */
+            contractId: string | null;
+            cost: number;
+            /** Format: date-time */
+            evaluatedAt: string;
+            /** Format: uuid */
+            evaluatedById: string;
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            quality: number;
+            safety: number;
+            timeliness: number;
+        };
+        VendorEvaluationViewList: {
+            data: components["schemas"]["VendorEvaluationView"][];
+            nextCursor: string | null;
+        };
+        VendorEvaluationsSummaryView: {
+            averages: components["schemas"]["VendorScoresView"];
+            /** @description In the last year. */
+            count: number;
+        };
+        VendorScoresView: {
+            communication: number | null;
+            cost: number | null;
+            /** @description The mean of each evaluation’s mean. */
+            overall: number | null;
+            quality: number | null;
+            safety: number | null;
+            timeliness: number | null;
+        };
+        /** @enum {string} */
+        VendorStatus: "active" | "suspended";
+        VendorSummaryView: {
+            categories: components["schemas"]["VendorCategory"][];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            partnerId: string | null;
+            phone: string | null;
+            /** @description V-0001. */
+            reference: string;
+            status: components["schemas"]["VendorStatus"];
+        };
+        VendorSummaryViewList: {
+            data: components["schemas"]["VendorSummaryView"][];
+            nextCursor: string | null;
+        };
+        VendorView: {
+            address: string | null;
+            categories: components["schemas"]["VendorCategory"][];
+            commercialRegister: string | null;
+            contactName: string | null;
+            contracts: components["schemas"]["VendorContractsSummaryView"];
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The live papers, newest first. */
+            documents: components["schemas"]["VendorDocumentView"][];
+            /** @description A live paper’s expiry passed. */
+            documentsExpired: boolean;
+            email: string | null;
+            evaluations: components["schemas"]["VendorEvaluationsSummaryView"];
+            /** Format: uuid */
+            id: string;
+            legalName: string | null;
+            name: string;
+            notes: string | null;
+            /** Format: uuid */
+            partnerId: string | null;
+            phone: string | null;
+            /** @description V-0001. */
+            reference: string;
+            status: components["schemas"]["VendorStatus"];
+            /** @description REASON_CODES.vendorSuspend. */
+            suspendReason: string | null;
+            /** Format: date-time */
+            suspendedAt: string | null;
+            taxNumber: string | null;
         };
         VerifyBlocklistView: {
             /** Format: uuid */
@@ -53755,6 +54321,28 @@ export interface operations {
             };
         };
     };
+    ContractPaymentsDueController_due: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DueContractPaymentViewList"];
+                };
+            };
+        };
+    };
     MaintenanceContractsController_list: {
         parameters: {
             query?: {
@@ -53765,6 +54353,8 @@ export interface operations {
                 status?: "upcoming" | "active" | "ended" | "terminated";
                 /** @description Covering it. */
                 assetId?: string;
+                /** @description Its vendor’s (ADR 0077). */
+                vendorId?: string;
             };
             header?: never;
             path?: never;
@@ -53870,6 +54460,106 @@ export interface operations {
         };
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenanceContractView"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_payments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractPaymentViewList"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContractPaymentsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractPaymentViewList"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_pay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayContractPaymentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractPaymentView"];
+                };
+            };
+        };
+    };
+    MaintenanceContractsController_renew: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenewContractDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -73754,6 +74444,246 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffVehicleDetailView"];
+                };
+            };
+        };
+    };
+    VendorsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["VendorStatus"];
+                category?: components["schemas"]["VendorCategory"];
+                /** @description A part of its name or legal name, whatever the case. */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorSummaryViewList"];
+                };
+            };
+        };
+    };
+    VendorsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVendorDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorView"];
+                };
+            };
+        };
+    };
+    VendorsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorView"];
+                };
+            };
+        };
+    };
+    VendorsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVendorDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorView"];
+                };
+            };
+        };
+    };
+    VendorsController_addDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddVendorDocumentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorDocumentView"];
+                };
+            };
+        };
+    };
+    VendorsController_removeDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    VendorsController_evaluations: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorEvaluationViewList"];
+                };
+            };
+        };
+    };
+    VendorsController_evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvaluateVendorDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorView"];
+                };
+            };
+        };
+    };
+    VendorsController_reinstate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorView"];
+                };
+            };
+        };
+    };
+    VendorsController_suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorView"];
                 };
             };
         };

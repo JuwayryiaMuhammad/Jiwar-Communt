@@ -2026,6 +2026,16 @@ export const FieldErrorCode = {
   STAY_TOO_LONG: 'STAY_TOO_LONG',
   /** ADR 0067: a ban is for an active account that books: a resident or a family member. */
   BAN_ACCOUNT_NOT_ELIGIBLE: 'BAN_ACCOUNT_NOT_ELIGIBLE',
+  /** ADR 0077: no such partner in the compound. */
+  PARTNER_NOT_AVAILABLE: 'PARTNER_NOT_AVAILABLE',
+  /** ADR 0077: no such budget line in the compound. */
+  BUDGET_LINE_NOT_AVAILABLE: 'BUDGET_LINE_NOT_AVAILABLE',
+  /** ADR 0077: no such stock item, or it is retired. */
+  STOCK_ITEM_NOT_AVAILABLE: 'STOCK_ITEM_NOT_AVAILABLE',
+  /** ADR 0077: an evaluation's contract is another vendor's. */
+  CONTRACT_NOT_OF_VENDOR: 'CONTRACT_NOT_OF_VENDOR',
+  /** ADR 0077: a payment is due within the contract's dates. */
+  PAYMENT_OUTSIDE_CONTRACT: 'PAYMENT_OUTSIDE_CONTRACT',
 } as const;
 
 export type FieldErrorCode =

@@ -978,4 +978,21 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // lock (WARRANTY_CLAIM_OPEN).
   warranty_claims_tenant_id_id_key: null,
   warranty_claims_one_open_per_ticket: null,
+  // Vendors (ADR 0077): one vendor a name and a partner a compound; the
+  // services check both first under the name's lock, so a violation is a
+  // race and names the field.
+  vendors_tenant_id_id_key: null,
+  vendors_number_key: null,
+  vendors_name_key: ['name'],
+  vendors_partner_key: ['partnerId'],
+  vendor_documents_tenant_id_id_key: null,
+  vendor_documents_file_key: null,
+  vendor_evaluations_tenant_id_id_key: null,
+  // A contract is renewed once, an approval signs one contract, a payment a
+  // day: each checked first under the contract's lock (CONTRACT_ALREADY_RENEWED,
+  // CONTRACT_APPROVAL_INVALID); a violation is a race.
+  maintenance_contracts_renews_key: null,
+  maintenance_contracts_approval_key: null,
+  maintenance_contract_payments_tenant_id_id_key: null,
+  maintenance_contract_payments_day_key: ['dueOn'],
 };

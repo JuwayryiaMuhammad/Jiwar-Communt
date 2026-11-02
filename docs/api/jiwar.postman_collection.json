@@ -12090,9 +12090,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"budgetLineId\": \"\",\n  \"vendor\": \"\",\n  \"amount\": \"\",\n  \"spentOn\": \"\",\n  \"invoiceFileId\": \"\"\n}"
+              "raw": "{\n  \"budgetLineId\": \"\",\n  \"amount\": \"\",\n  \"spentOn\": \"\",\n  \"invoiceFileId\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP. |\n| `authorizationId` | string (uuid) |  | An approved major contract (GET /staff/finance/expense-authorizations): needed above the manager’s limit (EXPENSE_NEEDS_APPROVAL). |\n| `budgetLineId` | string (uuid) | yes | A line of the active budget. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice` (FILE_NOT_AVAILABLE). |\n| `reference` | string |  |  |\n| `spentOn` | string | yes | Within the budget’s year, not ahead (DAY_OUT_OF_RANGE). |\n| `vendor` | string | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP. |\n| `authorizationId` | string (uuid) |  | An approved major contract (GET /staff/finance/expense-authorizations): needed above the manager’s limit (EXPENSE_NEEDS_APPROVAL). |\n| `budgetLineId` | string (uuid) | yes | A line of the active budget. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice` (FILE_NOT_AVAILABLE). |\n| `reference` | string |  |  |\n| `spentOn` | string | yes | Within the budget’s year, not ahead (DAY_OUT_OF_RANGE). |\n| `vendor` | string |  | Who was paid, in words: required without `vendorId`. A name the vendor register has links to that vendor (ADR 0077). |\n| `vendorId` | string (uuid) |  | A vendor of the register (ADR 0077); its name is recorded. A suspended one is refused. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -26158,6 +26158,39 @@
           }
         },
         {
+          "name": "List the contract payments due",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contract-payments",
+                "due"
+              ],
+              "query": [
+                {
+                  "description": "(required)",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required)",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contract-payments/due?from=&to="
+            }
+          }
+        },
+        {
           "name": "List contracts by end date",
           "request": {
             "description": "**Responses:** 200",
@@ -26197,6 +26230,12 @@
                   "disabled": true,
                   "key": "assetId",
                   "value": ""
+                },
+                {
+                  "description": "Its vendor’s (ADR 0077).",
+                  "disabled": true,
+                  "key": "vendorId",
+                  "value": ""
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/contracts"
@@ -26213,9 +26252,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"code\": \"\",\n  \"kind\": \"amc\",\n  \"vendorName\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"endsOn\": \"2026-01-01\"\n}"
+              "raw": "{\n  \"code\": \"\",\n  \"kind\": \"amc\",\n  \"startsOn\": \"2026-01-01\",\n  \"endsOn\": \"2026-01-01\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  | EGP a year. |\n| `code` | string | yes | The compound’s reference for it, unique. Never changes. |\n| `endsOn` | string (date) | yes | Its last day; after `startsOn`. |\n| `kind` | `amc` \\| `service` \\| `warranty_extension` \\| `other` | yes |  |\n| `noticeDays` | number |  | How many days before its end the end is announced. |\n| `scope` | string |  | What it covers, in the compound’s words. |\n| `startsOn` | string (date) | yes |  |\n| `vendorName` | string | yes |  |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  | EGP a year. |\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once. |\n| `autoRenews` | boolean |  | Renews by itself unless notice is given; needs `renewalTermMonths`. |\n| `budgetLineId` | string (uuid) |  | The budget line it is paid from (ADR 0055). |\n| `code` | string | yes | The compound’s reference for it, unique. Never changes. |\n| `endsOn` | string (date) | yes | Its last day; after `startsOn`. |\n| `kind` | `amc` \\| `service` \\| `warranty_extension` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supply` \\| `other` | yes |  |\n| `latePenaltyPerDay` | string |  | EGP a day the vendor owes for being late (ADR 0077). |\n| `noticeDays` | number |  | How many days before its end the end is announced. |\n| `penaltyCap` | string |  | The late penalty at most in all; with `latePenaltyPerDay`. |\n| `penaltyTerms` | string |  | Its penalties and service levels, in the contract’s words. |\n| `renewalTermMonths` | number |  |  |\n| `responseHours` | number |  | Hours the vendor has to respond. |\n| `scope` | string |  | What it covers, in the compound’s words. |\n| `startsOn` | string (date) | yes |  |\n| `vendorId` | string (uuid) |  | A vendor of the register (ADR 0077); a suspended one is refused. Or `vendorName`. |\n| `vendorName` | string |  | Without `vendorId`: the register’s vendor of this name (whatever its case), or a new one registered with it. |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -26281,9 +26320,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"annualValue\": \"\",\n  \"endsOn\": \"2026-01-01\",\n  \"noticeDays\": 0,\n  \"scope\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\"\n}"
+              "raw": "{\n  \"annualValue\": \"\",\n  \"approvalRequestId\": \"\",\n  \"autoRenews\": false,\n  \"budgetLineId\": \"\",\n  \"endsOn\": \"2026-01-01\",\n  \"latePenaltyPerDay\": \"\",\n  \"noticeDays\": 0,\n  \"penaltyCap\": \"\",\n  \"penaltyTerms\": \"\",\n  \"renewalTermMonths\": 1,\n  \"responseHours\": 1,\n  \"scope\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"vendorId\": \"\",\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  |  |\n| `endsOn` | string (date) |  |  |\n| `noticeDays` | number |  |  |\n| `scope` | string |  |  |\n| `startsOn` | string (date) |  |  |\n| `vendorName` | string |  |  |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  |  |\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once. |\n| `autoRenews` | boolean |  | Renews by itself unless notice is given; needs `renewalTermMonths`. |\n| `budgetLineId` | string (uuid) |  | The budget line it is paid from (ADR 0055). |\n| `endsOn` | string (date) |  |  |\n| `latePenaltyPerDay` | string |  | EGP a day the vendor owes for being late (ADR 0077). |\n| `noticeDays` | number |  |  |\n| `penaltyCap` | string |  | The late penalty at most in all; with `latePenaltyPerDay`. |\n| `penaltyTerms` | string |  | Its penalties and service levels, in the contract’s words. |\n| `renewalTermMonths` | number |  |  |\n| `responseHours` | number |  | Hours the vendor has to respond. |\n| `scope` | string |  |  |\n| `startsOn` | string (date) |  |  |\n| `vendorId` | string (uuid) |  | Another vendor of the register; a suspended one is refused. |\n| `vendorName` | string |  |  |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -26348,6 +26387,179 @@
                 "assets"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id/assets",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List a contract’s payment schedule",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id",
+                "payments"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id/payments",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set a contract’s payment schedule",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"payments\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `payments` | object[] | yes | Every unpaid payment from now on; what is paid stays. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id",
+                "payments"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id/payments",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a contract payment paid",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"paidOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `paidOn` | string (date) | yes | Not after the compound’s today. |\n| `reference` | string |  | What paid it: an expense’s number, a transfer’s reference. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id",
+                "payments",
+                ":paymentId",
+                "pay"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id/payments/:paymentId/pay",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "paymentId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Renew a contract",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"code\": \"\",\n  \"endsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  | EGP a year; the old one’s by default. |\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract, above the manager’s limit. |\n| `code` | string | yes | The new contract’s reference, unique. |\n| `endsOn` | string (date) | yes |  |\n| `startsOn` | string (date) |  | The day after the old one’s end by default. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "contracts",
+                ":id",
+                "renew"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/contracts/:id/renew",
               "variable": [
                 {
                   "description": "",
@@ -33061,6 +33273,408 @@
                 {
                   "description": "",
                   "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the vendors",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "description": "A part of its name or legal name, whatever the case.",
+                  "disabled": true,
+                  "key": "q",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors"
+            }
+          }
+        },
+        {
+          "name": "Register a vendor",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `address` | string |  |  |\n| `categories` | `maintenance` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supplies` \\| `utilities` \\| `professional` \\| `other`[] |  | Its trades; `other` when none is given. |\n| `commercialRegister` | string |  |  |\n| `contactName` | string |  |  |\n| `email` | string (email) |  |  |\n| `legalName` | string |  |  |\n| `name` | string | yes | Unique in the compound, whatever its case. |\n| `notes` | string |  |  |\n| `partnerId` | string (uuid) |  | The same company as this partner (ADR 0060); at most one vendor a partner. |\n| `phone` | string |  |  |\n| `taxNumber` | string |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors"
+            }
+          }
+        },
+        {
+          "name": "Get a vendor",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a vendor’s details",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"address\": \"\",\n  \"categories\": [\n    \"maintenance\"\n  ],\n  \"commercialRegister\": \"\",\n  \"contactName\": \"\",\n  \"email\": \"\",\n  \"legalName\": \"\",\n  \"name\": \"\",\n  \"notes\": \"\",\n  \"partnerId\": \"\",\n  \"phone\": \"\",\n  \"taxNumber\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `address` | string |  |  |\n| `categories` | `maintenance` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supplies` \\| `utilities` \\| `professional` \\| `other`[] |  |  |\n| `commercialRegister` | string |  |  |\n| `contactName` | string |  |  |\n| `email` | string (email) |  |  |\n| `legalName` | string |  |  |\n| `name` | string |  |  |\n| `notes` | string |  |  |\n| `partnerId` | string (uuid) |  |  |\n| `phone` | string |  |  |\n| `taxNumber` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "File a vendor’s paper",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"commercial_register\",\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `expiresOn` | string (date) |  | Its last day in force; after `issuedOn`. Announced 30 days ahead. |\n| `fileId` | string (uuid) | yes | An uploaded file of purpose `vendor_document`, finalized. |\n| `issuedOn` | string (date) |  |  |\n| `kind` | `commercial_register` \\| `tax_card` \\| `licence` \\| `insurance` \\| `safety_certificate` \\| `contract_copy` \\| `other` | yes |  |\n| `number` | string |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id",
+                "documents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id/documents",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a paper filed by mistake",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id",
+                "documents",
+                ":documentId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id/documents/:documentId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "documentId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List a vendor’s evaluations",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id",
+                "evaluations"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id/evaluations",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Evaluate a vendor",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"quality\": 1,\n  \"timeliness\": 1,\n  \"cost\": 1,\n  \"communication\": 1,\n  \"safety\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `communication` | number | yes |  |\n| `contractId` | string (uuid) |  | One of its contracts, when the evaluation is of that. |\n| `cost` | number | yes |  |\n| `note` | string |  |  |\n| `quality` | number | yes |  |\n| `safety` | number | yes |  |\n| `timeliness` | number | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id",
+                "evaluations"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id/evaluations",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reinstate a suspended vendor",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id",
+                "reinstate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id/reinstate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Suspend a vendor",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "vendors",
+                ":id",
+                "suspend"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/vendors/:id/suspend",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
                   "value": ""
                 }
               ]

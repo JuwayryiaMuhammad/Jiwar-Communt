@@ -15,7 +15,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
   bounded,
@@ -29,13 +32,19 @@ import { ReasonCodeDto } from '../tickets/dto/tickets.dto';
 import { MaintenanceContractsService } from './contracts.service';
 import {
   ContractAssetsDto,
+  ContractPaymentsDto,
   ContractsQueryDto,
   CreateContractDto,
+  DuePaymentsQueryDto,
+  PayContractPaymentDto,
+  RenewContractDto,
   UpdateContractDto,
 } from './dto/contracts.dto';
 import {
-  MaintenanceContractView,
+  ContractPaymentView,
   CoveringContractView,
+  DueContractPaymentView,
+  MaintenanceContractView,
 } from './views/contract.views';
 
 /** The compound's maintenance contracts (ADR 0065). */
@@ -97,6 +106,68 @@ export class MaintenanceContractsController {
     );
   }
 
+  /** A new contract naming this one, once (ADR 0077). */
+  @Post(':id/renew')
+  @Idempotent()
+  @ApiOperation({
+    summary: 'Renew a contract',
+    description:
+      'A new contract with the same vendor, kind, scope, terms, budget line and assets still in service, from the day after its end by default.',
+  })
+  @ApiCreatedResponse({ type: MaintenanceContractView })
+  async renew(
+    @Param('id', parseId()) id: string,
+    @Body() dto: RenewContractDto,
+  ): Promise<MaintenanceContractView> {
+    return MaintenanceContractView.from(await this.contracts.renew(id, dto));
+  }
+
+  @Get(':id/payments')
+  @ApiOperation({
+    summary: 'List a contract’s payment schedule',
+    description: 'By day.',
+  })
+  @ApiOkResponse({ type: ListOf(ContractPaymentView) })
+  async payments(
+    @Param('id', parseId()) id: string,
+  ): Promise<ListResponse<ContractPaymentView>> {
+    return bounded(await this.contracts.payments(id), (p) =>
+      ContractPaymentView.from(p),
+    );
+  }
+
+  @Put(':id/payments')
+  @ApiOperation({
+    summary: 'Set a contract’s payment schedule',
+    description: 'Every unpaid payment, replaced whole; what is paid stays.',
+  })
+  @ApiOkResponse({ type: ListOf(ContractPaymentView) })
+  async schedule(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ContractPaymentsDto,
+  ): Promise<ListResponse<ContractPaymentView>> {
+    return bounded(await this.contracts.schedule(id, dto.payments), (p) =>
+      ContractPaymentView.from(p),
+    );
+  }
+
+  @Post(':id/payments/:paymentId/pay')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Mark a contract payment paid',
+    description: 'Once.',
+  })
+  @ApiOkResponse({ type: ContractPaymentView })
+  async pay(
+    @Param('id', parseId()) id: string,
+    @Param('paymentId', parseId('paymentId')) paymentId: string,
+    @Body() dto: PayContractPaymentDto,
+  ): Promise<ContractPaymentView> {
+    return ContractPaymentView.from(
+      await this.contracts.pay(id, paymentId, dto),
+    );
+  }
+
   /** `reasonCode` from the closed list `contractTerminate`. */
   @Post(':id/terminate')
   @HttpCode(HttpStatus.OK)
@@ -108,6 +179,29 @@ export class MaintenanceContractsController {
   ): Promise<MaintenanceContractView> {
     return MaintenanceContractView.from(
       await this.contracts.terminate(id, dto.reasonCode),
+    );
+  }
+}
+
+/** What the contracts have due and unpaid in a window (ADR 0077). */
+@ApiArea('maintenance')
+@RequireAnyPermission('assets.manage', 'finance.budget')
+@Controller('maintenance/contract-payments')
+export class ContractPaymentsDueController {
+  constructor(private readonly contracts: MaintenanceContractsService) {}
+
+  @Get('due')
+  @ApiOperation({
+    summary: 'List the contract payments due',
+    description:
+      'Unpaid, between two days, of contracts not terminated: next month’s commitments. At most 500, by day.',
+  })
+  @ApiOkResponse({ type: ListOf(DueContractPaymentView) })
+  async due(
+    @Query() q: DuePaymentsQueryDto,
+  ): Promise<ListResponse<DueContractPaymentView>> {
+    return bounded(await this.contracts.due(q), (d) =>
+      DueContractPaymentView.ofDue(d),
     );
   }
 }

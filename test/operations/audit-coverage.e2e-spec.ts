@@ -423,6 +423,11 @@ describe('Audit coverage — maintenance operations', () => {
       expect(
         (await single(s.c, 'maintenance_contract.updated', made.id)).changes,
       ).toEqual({
+        // ADR 0077: a new name is another vendor of the register.
+        vendorId: {
+          from: expect.any(String) as unknown,
+          to: expect.any(String) as unknown,
+        },
         vendorName: { changed: true },
         annualValue: { from: '5000.00', to: '5500.00' },
       });

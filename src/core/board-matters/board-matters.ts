@@ -194,6 +194,21 @@ export type DecisionReader = (
   publicationId: string,
 ) => Promise<{ decidedOn: string } | null>;
 
+/**
+ * An approval request as a domain that cites it reads it (ADR 0077): a
+ * contract or a purchase request signed under a major contract the board
+ * approved. Its row shared-locked, so it is not withdrawn under the caller;
+ * null when there is no such request.
+ */
+export type ApprovalReader = (
+  tx: TenantTxClient,
+  requestId: string,
+) => Promise<{
+  type: ApprovalType;
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn';
+  cost: string | null;
+} | null>;
+
 @Injectable()
 export class BoardMatters {
   private readonly approvals = new Map<ApprovalType, ApprovalKindHandler>();
@@ -202,6 +217,7 @@ export class BoardMatters {
   private thresholds: ThresholdReader | null = null;
   private bindings: BindingReader | null = null;
   private decisions: DecisionReader | null = null;
+  private requests: ApprovalReader | null = null;
 
   registerApproval(type: ApprovalType, handler: ApprovalKindHandler): void {
     if (this.approvals.has(type))
@@ -242,6 +258,20 @@ export class BoardMatters {
   registerDecisions(reader: DecisionReader): void {
     if (this.decisions) throw new Error('Decisions are registered twice');
     this.decisions = reader;
+  }
+
+  /** Governance's approval requests (one reader, ADR 0077). */
+  registerApprovalReader(reader: ApprovalReader): void {
+    if (this.requests) throw new Error('Approval reader is registered twice');
+    this.requests = reader;
+  }
+
+  approvalRequest(
+    tx: TenantTxClient,
+    requestId: string,
+  ): ReturnType<ApprovalReader> {
+    if (!this.requests) throw new Error('No approval reader is registered');
+    return this.requests(tx, requestId);
   }
 
   publishedDecision(

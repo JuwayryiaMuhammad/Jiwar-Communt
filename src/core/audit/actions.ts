@@ -2056,12 +2056,12 @@ export const AUDIT_ACTIONS = {
   'maintenance_contract.created': {
     log: 'tenant',
     target: 'maintenance_contract',
-    sensitive: ['vendorName', 'vendorPhone', 'scope'],
+    sensitive: ['vendorName', 'vendorPhone', 'scope', 'penaltyTerms'],
   },
   'maintenance_contract.updated': {
     log: 'tenant',
     target: 'maintenance_contract',
-    sensitive: ['vendorName', 'vendorPhone', 'scope'],
+    sensitive: ['vendorName', 'vendorPhone', 'scope', 'penaltyTerms'],
   },
   'maintenance_contract.terminated': {
     log: 'tenant',

@@ -5,8 +5,12 @@ import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { CompoundCalendar } from '../schedules/compound-calendar';
 import { addDays, ofDateColumn } from '../schedules/local-dates';
+import { dbNow } from '../db-clock';
+import { PAYMENT_NOTICE_DAYS } from './contract-rules';
 
 export const CONTRACT_SWEEP = 'maintenance.contract_expiry';
+/** A contract payment due within a week, once (ADR 0077). */
+export const PAYMENT_SWEEP = 'maintenance.contract_payments';
 /** Contracts end on a day: an hourly look is soon enough. */
 export const CONTRACT_SWEEP_INTERVAL_MS = 60 * 60_000;
 /** Contracts one run looks at per compound. */
@@ -33,6 +37,81 @@ export class ContractSweep implements OnModuleInit {
     this.sweep.register(CONTRACT_SWEEP, () => this.run(), {
       intervalMs: CONTRACT_SWEEP_INTERVAL_MS,
     });
+    this.sweep.register(PAYMENT_SWEEP, () => this.runPayments(), {
+      intervalMs: CONTRACT_SWEEP_INTERVAL_MS,
+    });
+  }
+
+  /**
+   * Payments due within PAYMENT_NOTICE_DAYS of the compound's today, unpaid,
+   * of a contract not terminated: its keepers are told once
+   * (`due_alerted_at`, cleared when the amount changes), each under the
+   * contract's lock then the payment's.
+   */
+  runPayments(): Promise<number> {
+    return this.sweep.forEachTenantItem(
+      async (tx, tenantId) => {
+        const { today } = await this.calendar.now(tx, tenantId);
+        const rows = await tx.$queryRaw<{ id: string }[]>`
+          SELECT p.id FROM maintenance_contract_payments p
+            JOIN maintenance_contracts c ON c.tenant_id = p.tenant_id AND c.id = p.contract_id
+           WHERE p.paid_at IS NULL AND p.due_alerted_at IS NULL
+             AND c.terminated_at IS NULL
+             AND p.due_on >= ${today}::date
+             AND p.due_on - ${PAYMENT_NOTICE_DAYS}::int <= ${today}::date
+           ORDER BY p.due_on, p.id
+           LIMIT ${CONTRACT_BATCH}`;
+        return rows.map((r) => r.id);
+      },
+      (tx, tenantId, id) => this.warnPayment(tx, tenantId, id),
+    );
+  }
+
+  private async warnPayment(
+    tx: TenantTxClient,
+    tenantId: string,
+    id: string,
+  ): Promise<number> {
+    const seen = await tx.maintenanceContractPayment.findUnique({
+      where: { id },
+      select: { contractId: true },
+    });
+    if (!seen) return 0;
+    await tx.$queryRaw`SELECT id FROM maintenance_contracts WHERE id = ${seen.contractId}::uuid FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM maintenance_contract_payments WHERE id = ${id}::uuid FOR UPDATE`;
+    const p = await tx.maintenanceContractPayment.findUnique({
+      where: { id },
+      include: { contract: { select: { code: true, terminatedAt: true } } },
+    });
+    if (
+      !p ||
+      p.paidAt !== null ||
+      p.dueAlertedAt !== null ||
+      p.contract.terminatedAt !== null
+    )
+      return 0;
+    const { today } = await this.calendar.now(tx, tenantId);
+    const dueOn = ofDateColumn(p.dueOn);
+    if (dueOn < today || addDays(dueOn, -PAYMENT_NOTICE_DAYS) > today) return 0;
+    await tx.maintenanceContractPayment.update({
+      where: { id },
+      data: { dueAlertedAt: await dbNow(tx) },
+    });
+    const keepers = await this.staff.holding(tx, 'assets.manage');
+    await this.notifier.notify(
+      tx,
+      keepers.map((k) => k.id),
+      {
+        kind: 'maintenance_contract.payment_due',
+        params: {
+          contractRef: p.contract.code,
+          dueOn,
+          amount: p.amount.toFixed(2),
+        },
+        targetId: p.contractId,
+      },
+    );
+    return 1;
   }
 
   /** Warnings sent across the compounds. */

@@ -10,6 +10,14 @@ const migration = readFileSync(
   ),
   'utf8',
 ).replace(/\s+/g, ' ');
+/** ADR 0077 recreated the kinds' CHECK with every trade. */
+const widened = readFileSync(
+  join(
+    __dirname,
+    '../../../prisma/migrations/20270302090300_compound_contracts/migration.sql',
+  ),
+  'utf8',
+).replace(/\s+/g, ' ');
 const quoted = (xs: readonly string[]) => xs.map((x) => `'${x}'`).join(', ');
 
 describe('maintenance contracts (ADR 0065)', () => {
@@ -29,7 +37,7 @@ describe('maintenance contracts (ADR 0065)', () => {
   });
 
   it('the CHECKs repeat the kinds and the termination reasons', () => {
-    expect(migration).toContain(`"kind" IN (${quoted(CONTRACT_KINDS)})`);
+    expect(widened).toContain(`"kind" IN (${quoted(CONTRACT_KINDS)})`);
     expect(migration).toContain(
       `"termination_reason" IN (${quoted(REASON_CODES.contractTerminate)})`,
     );

@@ -566,6 +566,42 @@
         ],
         "type": "object"
       },
+      "AddVendorDocumentDto": {
+        "properties": {
+          "expiresOn": {
+            "description": "Its last day in force; after `issuedOn`. Announced 30 days ahead.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "An uploaded file of purpose `vendor_document`, finalized.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorDocumentKind"
+              }
+            ]
+          },
+          "number": {
+            "pattern": "^[A-Za-z0-9/. -]{1,60}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "fileId"
+        ],
+        "type": "object"
+      },
       "AdjustStockDto": {
         "properties": {
           "delta": {
@@ -12292,6 +12328,108 @@
         ],
         "type": "object"
       },
+      "ContractPaymentDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "Within the contract’s dates; one payment a day.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "dueOn",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "ContractPaymentView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "paidOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "paidReference": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contractId",
+          "dueOn",
+          "amount",
+          "note",
+          "paidOn",
+          "paidReference"
+        ],
+        "type": "object"
+      },
+      "ContractPaymentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ContractPaymentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ContractPaymentsDto": {
+        "properties": {
+          "payments": {
+            "description": "Every unpaid payment from now on; what is paid stays.",
+            "items": {
+              "$ref": "#/components/schemas/ContractPaymentDto"
+            },
+            "maxItems": 120,
+            "type": "array"
+          }
+        },
+        "required": [
+          "payments"
+        ],
+        "type": "object"
+      },
       "ContractReadView": {
         "properties": {
           "createdAt": {
@@ -14085,6 +14223,21 @@
             "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
             "type": "string"
           },
+          "approvalRequestId": {
+            "description": "The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "autoRenews": {
+            "description": "Renews by itself unless notice is given; needs `renewalTermMonths`.",
+            "type": "boolean"
+          },
+          "budgetLineId": {
+            "description": "The budget line it is paid from (ADR 0055).",
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
           "code": {
             "description": "The compound’s reference for it, unique. Never changes.",
             "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
@@ -14103,11 +14256,42 @@
               }
             ]
           },
+          "latePenaltyPerDay": {
+            "description": "EGP a day the vendor owes for being late (ADR 0077).",
+            "nullable": false,
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
           "noticeDays": {
             "default": 30,
             "description": "How many days before its end the end is announced.",
             "maximum": 180,
             "minimum": 0,
+            "type": "number"
+          },
+          "penaltyCap": {
+            "description": "The late penalty at most in all; with `latePenaltyPerDay`.",
+            "nullable": false,
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "penaltyTerms": {
+            "description": "Its penalties and service levels, in the contract’s words.",
+            "maxLength": 1000,
+            "nullable": false,
+            "type": "string"
+          },
+          "renewalTermMonths": {
+            "maximum": 60,
+            "minimum": 1,
+            "nullable": false,
+            "type": "number"
+          },
+          "responseHours": {
+            "description": "Hours the vendor has to respond.",
+            "maximum": 720,
+            "minimum": 1,
+            "nullable": false,
             "type": "number"
           },
           "scope": {
@@ -14120,7 +14304,13 @@
             "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
             "type": "string"
           },
+          "vendorId": {
+            "description": "A vendor of the register (ADR 0077); a suspended one is refused. Or `vendorName`.",
+            "format": "uuid",
+            "type": "string"
+          },
           "vendorName": {
+            "description": "Without `vendorId`: the register’s vendor of this name (whatever its case), or a new one registered with it.",
             "maxLength": 120,
             "minLength": 1,
             "type": "string"
@@ -14133,7 +14323,6 @@
         "required": [
           "code",
           "kind",
-          "vendorName",
           "startsOn",
           "endsOn"
         ],
@@ -16683,6 +16872,67 @@
           "makeAndModel",
           "color",
           "type"
+        ],
+        "type": "object"
+      },
+      "CreateVendorDto": {
+        "properties": {
+          "address": {
+            "maxLength": 300,
+            "type": "string"
+          },
+          "categories": {
+            "description": "Its trades; `other` when none is given.",
+            "items": {
+              "$ref": "#/components/schemas/VendorCategory"
+            },
+            "maxItems": 9,
+            "minItems": 1,
+            "type": "array"
+          },
+          "commercialRegister": {
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          },
+          "contactName": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "legalName": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "name": {
+            "description": "Unique in the compound, whatever its case.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "notes": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "partnerId": {
+            "description": "The same company as this partner (ADR 0060); at most one vendor a partner.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "phone": {
+            "pattern": "^[0-9+() -]{3,30}$",
+            "type": "string"
+          },
+          "taxNumber": {
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
         ],
         "type": "object"
       },
@@ -20146,6 +20396,81 @@
         ],
         "type": "object"
       },
+      "DueContractPaymentView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "contractCode": {
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "paidOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "paidReference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contractId",
+          "dueOn",
+          "amount",
+          "note",
+          "paidOn",
+          "paidReference",
+          "contractCode",
+          "vendorId",
+          "vendorName"
+        ],
+        "type": "object"
+      },
+      "DueContractPaymentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DueContractPaymentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "DuesMonthView": {
         "properties": {
           "invoiced": {
@@ -21100,6 +21425,52 @@
         ],
         "type": "object"
       },
+      "EvaluateVendorDto": {
+        "properties": {
+          "communication": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "contractId": {
+            "description": "One of its contracts, when the evaluation is of that.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "cost": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "note": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "quality": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "safety": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          },
+          "timeliness": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "quality",
+          "timeliness",
+          "cost",
+          "communication",
+          "safety"
+        ],
+        "type": "object"
+      },
       "EventCountsView": {
         "properties": {
           "children": {
@@ -21670,6 +22041,13 @@
             "type": "string"
           },
           "vendor": {
+            "description": "Who was paid, as recorded.",
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "The vendor of the register it names (ADR 0077).",
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "voided": {
@@ -21691,6 +22069,7 @@
           "category",
           "authorizationId",
           "vendor",
+          "vendorId",
           "amount",
           "currency",
           "spentOn",
@@ -32775,6 +33154,11 @@
           "amc",
           "service",
           "warranty_extension",
+          "cleaning",
+          "security",
+          "landscaping",
+          "pest_control",
+          "supply",
           "other"
         ],
         "type": "string"
@@ -32796,12 +33180,26 @@
             "nullable": true,
             "type": "string"
           },
+          "approvalRequestId": {
+            "description": "The board’s approved major contract it is signed under.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "assetIds": {
             "items": {
               "format": "uuid",
               "type": "string"
             },
             "type": "array"
+          },
+          "autoRenews": {
+            "type": "boolean"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           },
           "code": {
             "type": "string"
@@ -32821,7 +33219,40 @@
               }
             ]
           },
+          "latePenaltyPerDay": {
+            "description": "EGP a day the vendor owes for being late.",
+            "nullable": true,
+            "type": "string"
+          },
           "noticeDays": {
+            "type": "number"
+          },
+          "penaltyCap": {
+            "nullable": true,
+            "type": "string"
+          },
+          "penaltyTerms": {
+            "nullable": true,
+            "type": "string"
+          },
+          "renewalId": {
+            "description": "The contract that renews it.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "renewalTermMonths": {
+            "nullable": true,
+            "type": "number"
+          },
+          "renewsId": {
+            "description": "The contract it renews.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "responseHours": {
+            "nullable": true,
             "type": "number"
           },
           "scope": {
@@ -32850,7 +33281,13 @@
             "nullable": true,
             "type": "string"
           },
+          "vendorId": {
+            "description": "Its vendor (ADR 0077).",
+            "format": "uuid",
+            "type": "string"
+          },
           "vendorName": {
+            "description": "The vendor’s name when the contract was written.",
             "type": "string"
           },
           "vendorPhone": {
@@ -32863,6 +33300,7 @@
           "code",
           "kind",
           "status",
+          "vendorId",
           "vendorName",
           "vendorPhone",
           "scope",
@@ -32872,7 +33310,17 @@
           "noticeDays",
           "terminatedAt",
           "terminationReason",
-          "assetIds"
+          "assetIds",
+          "latePenaltyPerDay",
+          "penaltyCap",
+          "responseHours",
+          "penaltyTerms",
+          "autoRenews",
+          "renewalTermMonths",
+          "renewsId",
+          "renewalId",
+          "approvalRequestId",
+          "budgetLineId"
         ],
         "type": "object"
       },
@@ -40752,6 +41200,25 @@
         ],
         "type": "object"
       },
+      "PayContractPaymentDto": {
+        "properties": {
+          "paidOn": {
+            "description": "Not after the compound’s today.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "reference": {
+            "description": "What paid it: an expense’s number, a transfer’s reference.",
+            "maxLength": 120,
+            "type": "string"
+          }
+        },
+        "required": [
+          "paidOn"
+        ],
+        "type": "object"
+      },
       "PayWageDto": {
         "properties": {
           "amount": {
@@ -45893,14 +46360,19 @@
             "type": "string"
           },
           "vendor": {
+            "description": "Who was paid, in words: required without `vendorId`. A name the vendor register has links to that vendor (ADR 0077).",
             "maxLength": 200,
             "minLength": 1,
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "A vendor of the register (ADR 0077); its name is recorded. A suspended one is refused.",
+            "format": "uuid",
             "type": "string"
           }
         },
         "required": [
           "budgetLineId",
-          "vendor",
           "amount",
           "spentOn",
           "invoiceFileId"
@@ -46922,6 +47394,42 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "RenewContractDto": {
+        "properties": {
+          "annualValue": {
+            "description": "EGP a year; the old one’s by default.",
+            "nullable": true,
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "approvalRequestId": {
+            "description": "The board’s approved major contract, above the manager’s limit.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "description": "The new contract’s reference, unique.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "startsOn": {
+            "description": "The day after the old one’s end by default.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "endsOn"
+        ],
         "type": "object"
       },
       "RenewOption": {
@@ -67099,14 +67607,60 @@
             "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
             "type": "string"
           },
+          "approvalRequestId": {
+            "description": "The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "autoRenews": {
+            "description": "Renews by itself unless notice is given; needs `renewalTermMonths`.",
+            "type": "boolean"
+          },
+          "budgetLineId": {
+            "description": "The budget line it is paid from (ADR 0055).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "endsOn": {
             "format": "date",
             "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
             "type": "string"
           },
+          "latePenaltyPerDay": {
+            "description": "EGP a day the vendor owes for being late (ADR 0077).",
+            "nullable": true,
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
           "noticeDays": {
             "maximum": 180,
             "minimum": 0,
+            "type": "number"
+          },
+          "penaltyCap": {
+            "description": "The late penalty at most in all; with `latePenaltyPerDay`.",
+            "nullable": true,
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "penaltyTerms": {
+            "description": "Its penalties and service levels, in the contract’s words.",
+            "maxLength": 1000,
+            "nullable": true,
+            "type": "string"
+          },
+          "renewalTermMonths": {
+            "maximum": 60,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "responseHours": {
+            "description": "Hours the vendor has to respond.",
+            "maximum": 720,
+            "minimum": 1,
+            "nullable": true,
             "type": "number"
           },
           "scope": {
@@ -67117,6 +67671,11 @@
           "startsOn": {
             "format": "date",
             "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "Another vendor of the register; a suspended one is refused.",
+            "format": "uuid",
             "type": "string"
           },
           "vendorName": {
@@ -68769,6 +69328,70 @@
         },
         "type": "object"
       },
+      "UpdateVendorDto": {
+        "properties": {
+          "address": {
+            "maxLength": 300,
+            "nullable": true,
+            "type": "string"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/VendorCategory"
+            },
+            "maxItems": 9,
+            "minItems": 1,
+            "type": "array"
+          },
+          "commercialRegister": {
+            "nullable": true,
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          },
+          "contactName": {
+            "maxLength": 120,
+            "nullable": true,
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 254,
+            "nullable": true,
+            "type": "string"
+          },
+          "legalName": {
+            "maxLength": 200,
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "notes": {
+            "maxLength": 1000,
+            "nullable": true,
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "pattern": "^[0-9+() -]{3,30}$",
+            "type": "string"
+          },
+          "taxNumber": {
+            "nullable": true,
+            "pattern": "^[A-Za-z0-9/-]{1,40}$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateVisitorAreaDto": {
         "properties": {
           "active": {
@@ -69134,6 +69757,420 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "VendorCategory": {
+        "enum": [
+          "maintenance",
+          "cleaning",
+          "security",
+          "landscaping",
+          "pest_control",
+          "supplies",
+          "utilities",
+          "professional",
+          "other"
+        ],
+        "type": "string"
+      },
+      "VendorContractsSummaryView": {
+        "properties": {
+          "active": {
+            "description": "In force on the compound’s today.",
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "active"
+        ],
+        "type": "object"
+      },
+      "VendorDocumentKind": {
+        "enum": [
+          "commercial_register",
+          "tax_card",
+          "licence",
+          "insurance",
+          "safety_certificate",
+          "contract_copy",
+          "other"
+        ],
+        "type": "string"
+      },
+      "VendorDocumentView": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expired": {
+            "description": "Its expiry passed on the compound’s today.",
+            "type": "boolean"
+          },
+          "expiresOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "fileUrl": {
+            "description": "A short-lived link to read the file; null when it is gone.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorDocumentKind"
+              }
+            ]
+          },
+          "number": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "number",
+          "issuedOn",
+          "expiresOn",
+          "expired",
+          "addedAt",
+          "fileUrl"
+        ],
+        "type": "object"
+      },
+      "VendorEvaluationView": {
+        "properties": {
+          "communication": {
+            "type": "number"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          },
+          "evaluatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "evaluatedById": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "quality": {
+            "type": "number"
+          },
+          "safety": {
+            "type": "number"
+          },
+          "timeliness": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "contractId",
+          "quality",
+          "timeliness",
+          "cost",
+          "communication",
+          "safety",
+          "note",
+          "evaluatedById",
+          "evaluatedAt"
+        ],
+        "type": "object"
+      },
+      "VendorEvaluationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VendorEvaluationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "VendorEvaluationsSummaryView": {
+        "properties": {
+          "averages": {
+            "$ref": "#/components/schemas/VendorScoresView"
+          },
+          "count": {
+            "description": "In the last year.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "averages"
+        ],
+        "type": "object"
+      },
+      "VendorScoresView": {
+        "properties": {
+          "communication": {
+            "nullable": true,
+            "type": "number"
+          },
+          "cost": {
+            "nullable": true,
+            "type": "number"
+          },
+          "overall": {
+            "description": "The mean of each evaluation’s mean.",
+            "nullable": true,
+            "type": "number"
+          },
+          "quality": {
+            "nullable": true,
+            "type": "number"
+          },
+          "safety": {
+            "nullable": true,
+            "type": "number"
+          },
+          "timeliness": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "quality",
+          "timeliness",
+          "cost",
+          "communication",
+          "safety",
+          "overall"
+        ],
+        "type": "object"
+      },
+      "VendorStatus": {
+        "enum": [
+          "active",
+          "suspended"
+        ],
+        "type": "string"
+      },
+      "VendorSummaryView": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/VendorCategory"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "description": "V-0001.",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "name",
+          "categories",
+          "status",
+          "phone",
+          "partnerId"
+        ],
+        "type": "object"
+      },
+      "VendorSummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "VendorView": {
+        "properties": {
+          "address": {
+            "nullable": true,
+            "type": "string"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/VendorCategory"
+            },
+            "type": "array"
+          },
+          "commercialRegister": {
+            "nullable": true,
+            "type": "string"
+          },
+          "contactName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "contracts": {
+            "$ref": "#/components/schemas/VendorContractsSummaryView"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "documents": {
+            "description": "The live papers, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/VendorDocumentView"
+            },
+            "type": "array"
+          },
+          "documentsExpired": {
+            "description": "A live paper’s expiry passed.",
+            "type": "boolean"
+          },
+          "email": {
+            "nullable": true,
+            "type": "string"
+          },
+          "evaluations": {
+            "$ref": "#/components/schemas/VendorEvaluationsSummaryView"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "legalName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "notes": {
+            "nullable": true,
+            "type": "string"
+          },
+          "partnerId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "phone": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "description": "V-0001.",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorStatus"
+              }
+            ]
+          },
+          "suspendReason": {
+            "description": "REASON_CODES.vendorSuspend.",
+            "nullable": true,
+            "type": "string"
+          },
+          "suspendedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "taxNumber": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "name",
+          "categories",
+          "status",
+          "phone",
+          "partnerId",
+          "legalName",
+          "commercialRegister",
+          "taxNumber",
+          "contactName",
+          "email",
+          "address",
+          "notes",
+          "suspendedAt",
+          "suspendReason",
+          "documents",
+          "documentsExpired",
+          "evaluations",
+          "contracts",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -88048,6 +89085,56 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/contract-payments/due": {
+      "get": {
+        "description": "Unpaid, between two days, of contracts not terminated: next month’s commitments. At most 500, by day.",
+        "operationId": "ContractPaymentsDueController_due",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DueContractPaymentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the contract payments due",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/contracts": {
       "get": {
         "operationId": "MaintenanceContractsController_list",
@@ -88091,6 +89178,16 @@
             "description": "Covering it.",
             "in": "query",
             "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Its vendor’s (ADR 0077).",
+            "in": "query",
+            "name": "vendorId",
             "required": false,
             "schema": {
               "format": "uuid",
@@ -88291,6 +89388,203 @@
           }
         ],
         "summary": "Set the assets a contract covers",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/contracts/{id}/payments": {
+      "get": {
+        "description": "By day.",
+        "operationId": "MaintenanceContractsController_payments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractPaymentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a contract’s payment schedule",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "description": "Every unpaid payment, replaced whole; what is paid stays.",
+        "operationId": "MaintenanceContractsController_schedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractPaymentsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractPaymentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a contract’s payment schedule",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/contracts/{id}/payments/{paymentId}/pay": {
+      "post": {
+        "description": "Once.",
+        "operationId": "MaintenanceContractsController_pay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paymentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayContractPaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractPaymentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a contract payment paid",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/contracts/{id}/renew": {
+      "post": {
+        "description": "A new contract with the same vendor, kind, scope, terms, budget line and assets still in service, from the day after its end by default.",
+        "operationId": "MaintenanceContractsController_renew",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenewContractDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenanceContractView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Renew a contract",
         "tags": [
           "maintenance"
         ],
@@ -127320,6 +128614,485 @@
           "vehicles"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors": {
+      "get": {
+        "description": "In register order.",
+        "operationId": "VendorsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VendorStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VendorCategory"
+            }
+          },
+          {
+            "description": "A part of its name or legal name, whatever the case.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the vendors",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "VendorsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVendorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors/{id}": {
+      "get": {
+        "description": "With its live papers, the last year’s evaluations and its contracts.",
+        "operationId": "VendorsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "VendorsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVendorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a vendor’s details",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors/{id}/documents": {
+      "post": {
+        "operationId": "VendorsController_addDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddVendorDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "File a vendor’s paper",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors/{id}/documents/{documentId}": {
+      "delete": {
+        "operationId": "VendorsController_removeDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a paper filed by mistake",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors/{id}/evaluations": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "VendorsController_evaluations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorEvaluationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a vendor’s evaluations",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "VendorsController_evaluate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateVendorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Evaluate a vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors/{id}/reinstate": {
+      "post": {
+        "operationId": "VendorsController_reinstate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reinstate a suspended vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors/{id}/suspend": {
+      "post": {
+        "description": "Its contracts run on; no new contract, expense or purchase request names it.",
+        "operationId": "VendorsController_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspend a vendor",
+        "tags": [
+          "maintenance"
+        ],
         "x-stability": "draft"
       }
     },

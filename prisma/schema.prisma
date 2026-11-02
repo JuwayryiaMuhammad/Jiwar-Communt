@@ -9228,6 +9228,8 @@ model FinanceExpense {
   budgetLineId    String    @map("budget_line_id") @db.Uuid
   authorizationId String?   @map("authorization_id") @db.Uuid
   vendor          String
+  /// The vendor (ADR 0077), set once; `vendor` keeps its name as written.
+  vendorId        String?   @map("vendor_id") @db.Uuid
   amount          Decimal   @db.Decimal(14, 2)
   spentOn         DateTime  @map("spent_on") @db.Date
   invoiceFileId   String    @map("invoice_file_id") @db.Uuid
@@ -10605,6 +10607,8 @@ model Asset {
   expectedLifeYears  Int?      @map("expected_life_years") @db.SmallInt
   vendorName         String?   @map("vendor_name")
   vendorPhone        String?   @map("vendor_phone")
+  /// The vendor (ADR 0077); `vendorName` is its name as written.
+  vendorId           String?   @map("vendor_id") @db.Uuid
   warrantyEndsOn     DateTime? @map("warranty_ends_on") @db.Date
   /// ADR 0076: when the warranty starts, who gives it, what it covers (plain data).
   warrantyStartsOn   DateTime? @map("warranty_starts_on") @db.Date
@@ -11167,6 +11171,8 @@ model MaintenanceContract {
   code               String
   /// CONTRACT_KINDS.
   kind               String
+  /// The vendor (ADR 0077); `vendorName` is its name when the contract was written.
+  vendorId           String    @map("vendor_id") @db.Uuid
   vendorName         String    @map("vendor_name")
   vendorPhone        String?   @map("vendor_phone")
   scope              String?
@@ -11182,11 +11188,27 @@ model MaintenanceContract {
   terminationReason  String?   @map("termination_reason")
   /// The end date last announced: once per end date.
   expiryAlertedFor   DateTime? @map("expiry_alerted_for") @db.Date
+  /// EGP a day the vendor owes for being late (ADR 0077), and at most in all.
+  latePenaltyPerDay  Decimal?  @map("late_penalty_per_day") @db.Decimal(12, 2)
+  penaltyCap         Decimal?  @map("penalty_cap") @db.Decimal(12, 2)
+  /// Hours the vendor has to respond.
+  responseHours      Int?      @map("response_hours") @db.SmallInt
+  penaltyTerms       String?   @map("penalty_terms")
+  /// Renews by itself for `renewalTermMonths` (what the end announcement says).
+  autoRenews         Boolean   @default(false) @map("auto_renews")
+  renewalTermMonths  Int?      @map("renewal_term_months") @db.SmallInt
+  /// The contract this one renews, once.
+  renewsId           String?   @map("renews_id") @db.Uuid
+  /// The board's approval (a major contract) it was signed under.
+  approvalRequestId  String?   @map("approval_request_id") @db.Uuid
+  /// The budget line it is paid from.
+  budgetLineId       String?   @map("budget_line_id") @db.Uuid
   createdById        String?   @map("created_by_account_id") @db.Uuid
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  assets MaintenanceContractAsset[]
+  assets   MaintenanceContractAsset[]
+  payments MaintenanceContractPayment[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, code])
@@ -11207,6 +11229,128 @@ model MaintenanceContractAsset {
   @@id([contractId, assetId])
   @@index([tenantId, assetId], map: "maintenance_contract_assets_asset_idx")
   @@map("maintenance_contract_assets")
+}
+
+/// What a contract's vendor is paid on a day (ADR 0077): paid once, with
+/// the reference of what paid it; an unpaid one may be moved or removed.
+model MaintenanceContractPayment {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  contractId      String    @map("contract_id") @db.Uuid
+  dueOn           DateTime  @map("due_on") @db.Date
+  amount          Decimal   @db.Decimal(12, 2)
+  note            String?
+  paidOn          DateTime? @map("paid_on") @db.Date
+  paidReference   String?   @map("paid_reference")
+  paidById        String?   @map("paid_by_account_id") @db.Uuid
+  paidAt          DateTime? @map("paid_at") @db.Timestamptz(3)
+  /// When its keepers were told it is due (once).
+  dueAlertedAt    DateTime? @map("due_alerted_at") @db.Timestamptz(3)
+  createdById     String    @map("created_by_account_id") @db.Uuid
+  createdAt       DateTime  @map("created_at") @db.Timestamptz(3)
+
+  contract MaintenanceContract @relation(fields: [tenantId, contractId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "maintenance_contract_payments_tenant_id_contract_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, contractId, dueOn], map: "maintenance_contract_payments_day_key")
+  @@map("maintenance_contract_payments")
+}
+
+/// A compound's V- and PR- numbers, taken under the row lock (ADR 0077).
+model ProcurementCounter {
+  tenantId   String @map("tenant_id") @db.Uuid
+  /// vendor | purchase_request
+  kind       String
+  lastNumber Int    @default(0) @map("last_number")
+
+  @@id([tenantId, kind])
+  @@map("procurement_counters")
+}
+
+/// A company the compound buys from or contracts with (ADR 0077). Its
+/// contacts are business data. Suspended with a code and reinstated;
+/// never deleted. Optionally the same company as a partner (ADR 0060).
+model Vendor {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  number             Int
+  name               String
+  legalName          String?   @map("legal_name")
+  commercialRegister String?   @map("commercial_register")
+  taxNumber          String?   @map("tax_number")
+  /// VENDOR_CATEGORIES.
+  categories         String[]  @default(["other"])
+  contactName        String?   @map("contact_name")
+  phone              String?
+  email              String?
+  address            String?
+  notes              String?
+  partnerId          String?   @map("partner_id") @db.Uuid
+  /// active | suspended
+  status             String    @default("active")
+  suspendedAt        DateTime? @map("suspended_at") @db.Timestamptz(3)
+  suspendedById      String?   @map("suspended_by_account_id") @db.Uuid
+  /// REASON_CODES.vendorSuspend
+  suspendReason      String?   @map("suspend_reason")
+  createdById        String?   @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  documents   VendorDocument[]
+  evaluations VendorEvaluation[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "vendors_number_key")
+  @@index([tenantId, status, name, id], map: "vendors_status_idx")
+  @@map("vendors")
+}
+
+/// A vendor's paper (ADR 0077): never edited, removed once; its expiry
+/// announced once per date.
+model VendorDocument {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  vendorId         String    @map("vendor_id") @db.Uuid
+  /// VENDOR_DOCUMENT_KINDS.
+  kind             String
+  fileId           String    @map("file_id") @db.Uuid
+  number           String?
+  issuedOn         DateTime? @map("issued_on") @db.Date
+  expiresOn        DateTime? @map("expires_on") @db.Date
+  expiryAlertedFor DateTime? @map("expiry_alerted_for") @db.Date
+  addedById        String    @map("added_by_account_id") @db.Uuid
+  addedAt          DateTime  @map("added_at") @db.Timestamptz(3)
+  removedAt        DateTime? @map("removed_at") @db.Timestamptz(3)
+  removedById      String?   @map("removed_by_account_id") @db.Uuid
+
+  vendor Vendor @relation(fields: [tenantId, vendorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "vendor_documents_tenant_id_vendor_fkey")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, fileId], map: "vendor_documents_file_key")
+  @@index([tenantId, vendorId, kind, addedAt(sort: Desc), id(sort: Desc)], map: "vendor_documents_vendor_idx")
+  @@map("vendor_documents")
+}
+
+/// A vendor's evaluation (ADR 0077): five scores of 1 to 5. Append-only.
+model VendorEvaluation {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  vendorId      String   @map("vendor_id") @db.Uuid
+  contractId    String?  @map("contract_id") @db.Uuid
+  quality       Int      @db.SmallInt
+  timeliness    Int      @db.SmallInt
+  cost          Int      @db.SmallInt
+  communication Int      @db.SmallInt
+  safety        Int      @db.SmallInt
+  note          String?
+  evaluatedById String   @map("evaluated_by_account_id") @db.Uuid
+  evaluatedAt   DateTime @map("evaluated_at") @db.Timestamptz(3)
+
+  vendor Vendor @relation(fields: [tenantId, vendorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "vendor_evaluations_tenant_id_vendor_fkey")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, vendorId, evaluatedAt(sort: Desc), id(sort: Desc)], map: "vendor_evaluations_vendor_idx")
+  @@map("vendor_evaluations")
 }
 
 /// What the compound measures (ADR 0066): a unit's or a common area's

@@ -485,7 +485,18 @@ export const TECHNICIAN_PART_ROUTES: Row[] = [
   }),
 ];
 
-const CONTRACT_KINDS = ['amc', 'service', 'warranty_extension', 'other'];
+const CONTRACT_KINDS = [
+  'amc',
+  'service',
+  'warranty_extension',
+  // ADR 0077.
+  'cleaning',
+  'security',
+  'landscaping',
+  'pest_control',
+  'supply',
+  'other',
+];
 const CONTRACT_STATUSES = ['upcoming', 'active', 'ended', 'terminated'];
 /** The register's keepers' routes: `assets.manage`, which a technician lacks. */
 const keeper = (row: Omit<Row, 'auth' | 'as' | 'denied'>): Row => ({

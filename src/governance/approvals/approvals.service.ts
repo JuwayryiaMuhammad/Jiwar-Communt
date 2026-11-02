@@ -48,6 +48,7 @@ import {
   THRESHOLD_TYPES,
   type ApprovalFilter,
   type ApprovalProgressStatus,
+  type ApprovalStatus,
 } from './approval-rules';
 import { ApprovalView } from './views/approvals.views';
 
@@ -136,6 +137,21 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
   ) {}
 
   onModuleInit(): void {
+    // A contract or a purchase request cites the major contract it was
+    // signed under (ADR 0077): its type, status and cost, the row shared.
+    this.matters.registerApprovalReader(async (tx, id) => {
+      const [row] = await tx.$queryRaw<
+        { type: string; status: string; cost: string | null }[]
+      >`
+        SELECT type, status, cost::text AS cost FROM governance_approval_requests
+         WHERE id = ${id}::uuid FOR SHARE`;
+      if (!row) return null;
+      return {
+        type: row.type as ApprovalType,
+        status: row.status as ApprovalStatus,
+        cost: row.cost,
+      };
+    });
     // A replay's body as the route answers it: the view.
     this.idempotency.renderer(GOVERNANCE_APPROVAL_RESOURCE, (id) =>
       this.tenantTx.withTenantTx(async (tx) =>

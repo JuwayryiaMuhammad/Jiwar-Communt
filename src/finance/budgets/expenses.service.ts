@@ -22,6 +22,7 @@ import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { FinanceAccess } from '../access';
 import { takeNumbers } from '../counters';
 import { asDate, dbNow } from '../db-clock';
+import { VendorDirectory } from '../../core/vendors/vendor-directory';
 import { money, show } from '../money';
 import { BudgetsService, budgetLineNotFound } from './budgets.service';
 import { ExpenseView } from './views/budgets.views';
@@ -31,7 +32,10 @@ const PAGE = keysetCursor('recordedAt', 'desc');
 
 export interface NewExpense {
   budgetLineId: string;
-  vendor: string;
+  /** In words; the vendor's name when `vendorId` is given. */
+  vendor?: string;
+  /** A vendor of the register (ADR 0077). */
+  vendorId?: string;
   amount: string;
   spentOn: string;
   invoiceFileId: string;
@@ -67,7 +71,8 @@ const expenseNotFound = () =>
  * line), spent down by the expenses that name it.
  *
  * Locks: the caller's account → the budget (shared) → the line (update) →
- * the threshold's row (shared) → the authorization (update) → the counter.
+ * the threshold's row (shared) → the authorization (update) → the vendor
+ * (shared, ADR 0077, through core's VendorDirectory) → the counter.
  */
 @Injectable()
 export class ExpensesService implements OnModuleInit {
@@ -80,6 +85,7 @@ export class ExpensesService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
+    private readonly vendors: VendorDirectory,
   ) {}
 
   onModuleInit(): void {
@@ -146,6 +152,15 @@ export class ExpensesService implements OnModuleInit {
           'Above the manager’s limit: the board approves it as a major contract',
           { params: { limit } },
         );
+      // The vendor (ADR 0077): named by its id, or by a name the register
+      // has; a suspended one takes no expense. Its name is kept as written.
+      const vendor = await this.vendors.forSpend(
+        tx,
+        input.vendorId
+          ? { vendorId: input.vendorId }
+          : { name: input.vendor ?? '' },
+      );
+      const vendorName = vendor?.name ?? (input.vendor ?? '').trim();
       const id = newId();
       await this.idempotency.claim(tx, { type: EXPENSE_RESOURCE, id });
       const file = await this.files.claim(
@@ -167,7 +182,8 @@ export class ExpensesService implements OnModuleInit {
           number,
           budgetLineId: line.id,
           authorizationId,
-          vendor: input.vendor,
+          vendor: vendorName,
+          vendorId: vendor?.id ?? null,
           amount: input.amount,
           spentOn: asDate(input.spentOn),
           invoiceFileId: file.id,
@@ -187,7 +203,8 @@ export class ExpensesService implements OnModuleInit {
             authorizationId,
             amount: show(amount),
             spentOn: input.spentOn,
-            vendor: input.vendor,
+            vendor: vendorName,
+            vendorId: vendor?.id ?? null,
             reference: input.reference ?? null,
           },
           'expense.recorded',

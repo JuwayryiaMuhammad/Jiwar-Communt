@@ -2677,6 +2677,36 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'status is NOT NULL; the nullable columns only under IS [NOT] NULL; recovered_amount IS NULL is tested first and compared only on a value',
   },
+  // Vendors, compound contracts and purchase requests (ADR 0077).
+  procurement_counters_kind_known: {},
+  procurement_counters_last_number: {},
+  vendors_number_positive: {},
+  vendors_text_length: {
+    guarded:
+      'name is NOT NULL; each optional text is tested IS NULL first, and its length or pattern runs only on a value',
+  },
+  vendors_categories_known: {},
+  vendors_status_shape: {
+    guarded:
+      'status is NOT NULL; the suspension columns are tested IS [NOT] NULL, and the reason list runs only beside suspend_reason IS NOT NULL',
+  },
+  vendor_documents_kind_known: {},
+  vendor_documents_shape: {
+    guarded:
+      'number, issued_on, expires_on and expiry_alerted_for are each tested IS NULL first; the pattern and comparisons run only on values',
+  },
+  vendor_evaluations_scores: {
+    guarded:
+      'the five scores are NOT NULL; note is tested IS NULL first and its length runs only on a value',
+  },
+  maintenance_contracts_terms: {
+    guarded:
+      'each term is tested IS NULL first; the comparisons run only on values, auto_renews is NOT NULL, and renews_id is tested IS NULL first',
+  },
+  maintenance_contract_payments_shape: {
+    guarded:
+      'amount is NOT NULL; note and paid_reference are tested IS NULL first; the paid columns are compared only by IS [NOT] NULL',
+  },
 };
 
 interface Check {

@@ -153,10 +153,14 @@ import { StockLedger } from './stock/stock-ledger';
 import { StoresService } from './stock/stores.service';
 import {
   AssetContractsController,
+  ContractPaymentsDueController,
   MaintenanceContractsController,
 } from './contracts/contracts.controller';
 import { MaintenanceContractsService } from './contracts/contracts.service';
 import { ContractSweep } from './contracts/contract-sweep';
+import { VendorDocumentSweep } from './vendors/vendor-sweep';
+import { VendorsController } from './vendors/vendors.controller';
+import { VendorsService } from './vendors/vendors.service';
 import { MeterAlertsService } from './energy/alerts.service';
 import { ConsumptionService } from './energy/consumption.service';
 import { HouseholdConsumptionController } from './energy/household-consumption.controller';
@@ -271,6 +275,8 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     TechnicianPartsController,
     MaintenanceContractsController,
     AssetContractsController,
+    ContractPaymentsDueController,
+    VendorsController,
     EconomicsController,
     MetersController,
     MeterAlertsController,
@@ -364,6 +370,8 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     PartRequestsService,
     MaintenanceContractsService,
     ContractSweep,
+    VendorsService,
+    VendorDocumentSweep,
     EconomicsService,
     MetersService,
     ReadingsService,

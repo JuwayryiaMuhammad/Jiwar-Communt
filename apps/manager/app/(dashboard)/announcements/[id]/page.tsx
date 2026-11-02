@@ -3,6 +3,7 @@
 import { formatDateTime, humanize, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { Badge, Button, Card, CardBody, ConfirmDialog, Dialog, ForbiddenState, PageHeader, Stat, StatusBadge, useToast } from '@jiwar/ui';
+import { AnnouncementDelivery } from '@/components/office-queue/announcement-delivery';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -218,6 +219,7 @@ export default function AnnouncementPage() {
               </CardBody>
             </Card>
             {a.publishAt ? <ReadCounts id={a.id} /> : null}
+            {a.publishAt ? <AnnouncementDelivery id={a.id} out={a.status === 'published'} /> : null}
             <Versions id={a.id} />
           </div>
         ) : null}

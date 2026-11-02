@@ -375,3 +375,13 @@ The full notes are in [`notes/spaces.md`](notes/spaces.md).
 - **Floor plans.** `/staff/floor-plans…` (one a building floor; `PUT …/hotspots`, boxes inside the image, units of the floor); `GET /units/{unitId}/floor-plan` (the unit's own box only).
 - **Use requests.** `/staff/space-use-areas/{commonAreaId}` (open, close); `GET /space-use-areas`; `POST/GET /units/{unitId}/space-uses`, `POST /space-uses/{id}/withdraw`; `/staff/space-uses…` (`approve`, `refuse`, `cancel`; `bookings.handle`). Inbox type `space_use_request`.
 - **A closure's preview.** `GET /staff/facilities/{id}/closure-preview?startsAt&endsAt`; `previewToken` on `POST …/closures` (`FACILITY_CLOSURE_PREVIEW_REQUIRED`, `…_STALE`).
+### Announcements and the office queue (ADR 0080)
+
+The full notes are in [`notes/office-queue.md`](notes/office-queue.md).
+
+- **Announcements.** A unit audience (`audience.unitIds`); `GET /community/announcements/{id}/delivery`; `POST …/remind` (once); `/community/announcement-templates`.
+- **The queue.** `POST /management/outreach`; `POST /management/requests/{id}/topic`; `POST …/convert` (into a ticket or a work order, closed `converted`); `?unitId=`; `/management/reply-templates`.
+- **Suggestions.** `deferred`; an answer on done, deferred and declined.
+- **Letters.** `/staff/official-letters…`, `/me/official-letters…`, `POST /public/letters/lookup` (validity, issuer, day only).
+- **Correspondence.** `GET /staff/units/{unitId}/correspondence` (each read logged).
+

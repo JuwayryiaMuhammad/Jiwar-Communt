@@ -65,13 +65,31 @@ import { FacilityBansService } from './bans/bans.service';
 import { FacilityUsageController } from './usage/usage.controller';
 import { FacilityUsageService } from './usage/usage.service';
 import { BookingInboxItems } from './bookings/booking-inbox-items';
+import { FilesModule } from '../core/files/files.module';
+import { SiteMapService } from './spaces/site-map.service';
+import { FloorPlansService } from './spaces/floor-plans.service';
+import { SpaceUsesService } from './spaces/space-uses.service';
+import { SpaceUseSweep } from './spaces/space-use-sweep';
+import { SpaceUseInboxItems } from './spaces/space-use-inbox-items';
+import { SpaceUseLifecycle } from './spaces/space-use-lifecycle';
+import {
+  SiteMapController,
+  SpaceUseAreasController,
+  SpaceUsesController,
+  StaffFloorPlansController,
+  StaffSiteMapController,
+  StaffSpaceUseAreasController,
+  StaffSpaceUsesController,
+  UnitFloorPlanController,
+  UnitSpaceUsesController,
+} from './spaces/spaces.controller';
 
 /**
  * Facilities and bookings, the club (ADR 0044). Reads community through
  * its index and nothing else; nothing imports it.
  */
 @Module({
-  imports: [AccountsModule, CommunityFacilitiesPortModule],
+  imports: [AccountsModule, CommunityFacilitiesPortModule, FilesModule],
   controllers: [
     FacilitiesController,
     StaffFacilitiesController,
@@ -97,6 +115,16 @@ import { BookingInboxItems } from './bookings/booking-inbox-items';
     FacilityBansController,
     OwnFacilityBansController,
     FacilityUsageController,
+    // ADR 0084.
+    StaffSiteMapController,
+    SiteMapController,
+    StaffFloorPlansController,
+    UnitFloorPlanController,
+    StaffSpaceUseAreasController,
+    SpaceUseAreasController,
+    UnitSpaceUsesController,
+    SpaceUsesController,
+    StaffSpaceUsesController,
   ],
   providers: [
     FacilityBusy,
@@ -123,6 +151,13 @@ import { BookingInboxItems } from './bookings/booking-inbox-items';
     FacilitiesExportSections,
     FacilityBansService,
     FacilityUsageService,
+    // ADR 0084.
+    SiteMapService,
+    FloorPlansService,
+    SpaceUsesService,
+    SpaceUseSweep,
+    SpaceUseInboxItems,
+    SpaceUseLifecycle,
   ],
 })
 export class FacilitiesModule {}

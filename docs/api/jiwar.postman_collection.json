@@ -10046,6 +10046,47 @@
           }
         },
         {
+          "name": "Preview closing a facility for a time",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "facilities",
+                ":id",
+                "closure-preview"
+              ],
+              "query": [
+                {
+                  "description": "(required)",
+                  "key": "startsAt",
+                  "value": ""
+                },
+                {
+                  "description": "(required) After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG).",
+                  "key": "endsAt",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/facilities/:id/closure-preview?startsAt=&endsAt=",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List a facility’s closures, latest first",
           "request": {
             "description": "**Responses:** 200",
@@ -10100,7 +10141,7 @@
               },
               "raw": "{\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"reasonCode\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsAt` | string (date-time) | yes | After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG), and not already past (CLOSURE_ENDED). |\n| `reasonCode` | string | yes | From the closed list `facilityClosure`. |\n| `startsAt` | string (date-time) | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsAt` | string (date-time) | yes | After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG), and not already past (CLOSURE_ENDED). |\n| `previewToken` | string |  | The token of `GET …/closure-preview` for the same window (ADR 0084). Needed when the closure cancels a booking with a fee (FACILITY_CLOSURE_PREVIEW_REQUIRED); with it, the closure applies exactly what was previewed or refuses (FACILITY_CLOSURE_PREVIEW_STALE). |\n| `reasonCode` | string | yes | From the closed list `facilityClosure`. |\n| `startsAt` | string (date-time) | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -49052,6 +49093,294 @@
           }
         },
         {
+          "name": "Get the site map",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "site-map"
+              ],
+              "raw": "{{baseUrl}}/api/v1/site-map"
+            }
+          }
+        },
+        {
+          "name": "List the common areas one may ask to use",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "space-use-areas"
+              ],
+              "raw": "{{baseUrl}}/api/v1/space-use-areas"
+            }
+          }
+        },
+        {
+          "name": "Withdraw a use request before it starts",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `spaceUseWithdraw` (the residents), `spaceUseRefuse` or `spaceUseCancel` (the staff). |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "space-uses",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/space-uses/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the floor plans, by building and floor",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "floor-plans"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "buildingId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/floor-plans"
+            }
+          }
+        },
+        {
+          "name": "Add a building floor’s plan",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\",\n  \"buildingId\": \"\",\n  \"floor\": -5\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `buildingId` | string (uuid) | yes | A building of the register (BUILDING_NOT_FOUND). |\n| `fileId` | string (uuid) | yes | A finalized upload of the caller’s, of the purpose `site_map` or `floor_plan` (FILE_NOT_AVAILABLE). |\n| `floor` | number | yes | One plan a floor (FLOOR_PLAN_EXISTS). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "floor-plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/floor-plans"
+            }
+          }
+        },
+        {
+          "name": "Get a floor plan with its units’ boxes",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "floor-plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/floor-plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a floor plan, its image and its boxes",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "floor-plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/floor-plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace a floor plan’s unit boxes",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"hotspots\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `hotspots` | object[] | yes | Every unit’s box on the plan, replacing them all; at most 500. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "floor-plans",
+                ":id",
+                "hotspots"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/floor-plans/:id/hotspots",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace a floor plan’s image",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | A finalized upload of the caller’s, of the purpose `site_map` or `floor_plan` (FILE_NOT_AVAILABLE). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "floor-plans",
+                ":id",
+                "image"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/floor-plans/:id/image",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the compound’s holidays over up to a year, by day",
           "request": {
             "description": "**Responses:** 200",
@@ -49185,6 +49514,478 @@
                 {
                   "description": "",
                   "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the site map and its points",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "site-map"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/site-map"
+            }
+          }
+        },
+        {
+          "name": "Set or replace the site map’s image",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | A finalized upload of the caller’s, of the purpose `site_map` or `floor_plan` (FILE_NOT_AVAILABLE). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "site-map",
+                "image"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/site-map/image"
+            }
+          }
+        },
+        {
+          "name": "Replace the site map’s points",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"points\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `points` | object[] | yes | Every point of the map, replacing them all; at most 500. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "site-map",
+                "points"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/site-map/points"
+            }
+          }
+        },
+        {
+          "name": "List the common areas open to use requests",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-use-areas"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-use-areas"
+            }
+          }
+        },
+        {
+          "name": "Open a common area to use requests",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-use-areas",
+                ":commonAreaId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-use-areas/:commonAreaId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "commonAreaId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take no more use requests for a common area",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-use-areas",
+                ":commonAreaId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-use-areas/:commonAreaId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "commonAreaId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List use requests, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-uses"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "`pending` is the queue.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "commonAreaId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-uses"
+            }
+          }
+        },
+        {
+          "name": "Get a use request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-uses",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-uses/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve a use request",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-uses",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-uses/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel an approved use before it ends, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `spaceUseWithdraw` (the residents), `spaceUseRefuse` or `spaceUseCancel` (the staff). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-uses",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-uses/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Refuse a use request, with a reason code",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From the closed list `spaceUseWithdraw` (the residents), `spaceUseRefuse` or `spaceUseCancel` (the staff). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "space-uses",
+                ":id",
+                "refuse"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/space-uses/:id/refuse",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the plan of the unit’s floor, with the unit marked",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "floor-plan"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/floor-plan",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the unit’s use requests the caller sees, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "space-uses"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/space-uses",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask to use a common area for a time",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"commonAreaId\": \"\",\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"purpose\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `commonAreaId` | string (uuid) | yes | A common area open to requests (SPACE_USE_AREA_CLOSED). |\n| `endsAt` | string (date-time) | yes | After the start (ENDS_BEFORE_START), at most 12 hours after it (SPACE_USE_TOO_LONG). |\n| `guests` | number |  | How many people beside the requester, a number. Default 0. |\n| `purpose` | string | yes | What it is for, in the requester’s words: the staff read it. |\n| `startsAt` | string (date-time) | yes | At least 24 hours ahead (SPACE_USE_TOO_SOON), within 90 days (SPACE_USE_TOO_FAR). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "units",
+                ":unitId",
+                "space-uses"
+              ],
+              "raw": "{{baseUrl}}/api/v1/units/:unitId/space-uses",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "unitId",
                   "value": ""
                 }
               ]

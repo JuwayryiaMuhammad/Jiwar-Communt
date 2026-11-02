@@ -13655,6 +13655,63 @@ export interface paths {
         patch: operations["SettingsController_update"];
         trace?: never;
     };
+    "/api/v1/site-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the site map
+         * @description Its buildings, active gates and active facilities.
+         */
+        get: operations["SiteMapController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/space-use-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the common areas one may ask to use */
+        get: operations["SpaceUseAreasController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/space-uses/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a use request before it starts
+         * @description Its requester or the unit’s primary; pending or approved (SPACE_USE_DECIDED), not started (SPACE_USE_STARTED).
+         */
+        post: operations["SpaceUsesController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/billing-plans": {
         parameters: {
             query?: never;
@@ -14642,6 +14699,26 @@ export interface paths {
         patch: operations["StaffFacilitiesController_update"];
         trace?: never;
     };
+    "/api/v1/staff/facilities/{id}/closure-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview closing a facility for a time
+         * @description The bookings it would cancel and what their fees would become (ADR 0084): an unpaid invoice credited, a paid fee the unit’s credit. Its token goes with the closure.
+         */
+        get: operations["FacilityClosuresController_preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/facilities/{id}/closures": {
         parameters: {
             query?: never;
@@ -14654,7 +14731,7 @@ export interface paths {
         put?: never;
         /**
          * Close a facility for a time
-         * @description Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker.
+         * @description Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker; their fees are credited (ADR 0070). One that cancels a booking with a fee needs its preview’s token (ADR 0084).
          */
         post: operations["FacilityClosuresController_create"];
         delete?: never;
@@ -15393,6 +15470,82 @@ export interface paths {
         /** Get a spending report, superseded or not */
         get: operations["StaffSpendingReportsController_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/floor-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the floor plans, by building and floor */
+        get: operations["StaffFloorPlansController_list"];
+        put?: never;
+        /**
+         * Add a building floor’s plan
+         * @description An upload of the purpose `floor_plan`; one plan a floor.
+         */
+        post: operations["StaffFloorPlansController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/floor-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a floor plan with its units’ boxes */
+        get: operations["StaffFloorPlansController_get"];
+        put?: never;
+        post?: never;
+        /** Remove a floor plan, its image and its boxes */
+        delete: operations["StaffFloorPlansController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/floor-plans/{id}/hotspots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace a floor plan’s unit boxes
+         * @description Units of its building and floor, each a box inside the image. A box a unit kept on another floor’s plan goes.
+         */
+        put: operations["StaffFloorPlansController_setHotspots"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/floor-plans/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a floor plan’s image */
+        put: operations["StaffFloorPlansController_setImage"];
         post?: never;
         delete?: never;
         options?: never;
@@ -19031,6 +19184,192 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/site-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the site map and its points */
+        get: operations["StaffSiteMapController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/site-map/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set or replace the site map’s image
+         * @description An upload of the purpose `site_map`. The points stay where they were, as fractions of the image.
+         */
+        put: operations["StaffSiteMapController_setImage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/site-map/points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace the site map’s points
+         * @description The image first (SITE_MAP_NOT_SET).
+         */
+        put: operations["StaffSiteMapController_setPoints"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/space-use-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the common areas open to use requests */
+        get: operations["StaffSpaceUseAreasController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/space-use-areas/{commonAreaId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Open a common area to use requests
+         * @description An active area or facility, not a building as a whole.
+         */
+        put: operations["StaffSpaceUseAreasController_open"];
+        post?: never;
+        /**
+         * Take no more use requests for a common area
+         * @description What was asked or approved stands.
+         */
+        delete: operations["StaffSpaceUseAreasController_close"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/space-uses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List use requests, newest first */
+        get: operations["StaffSpaceUsesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/space-uses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a use request */
+        get: operations["StaffSpaceUsesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/space-uses/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a use request
+         * @description Pending and not started; no approved use of the area overlaps it (SPACE_USE_OVERLAP); on a facility’s area, no booking holds it then (SPACE_USE_BOOKED) and no closure (FACILITY_CLOSED). The requester is told.
+         */
+        post: operations["StaffSpaceUsesController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/space-uses/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an approved use before it ends, with a reason code */
+        post: operations["StaffSpaceUsesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/space-uses/{id}/refuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refuse a use request, with a reason code */
+        post: operations["StaffSpaceUsesController_refuse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-imports": {
         parameters: {
             query?: never;
@@ -22376,6 +22715,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/units/{unitId}/floor-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the plan of the unit’s floor, with the unit marked
+         * @description The unit’s own box only: no other unit or anyone in it (FLOOR_PLAN_NOT_FOUND when its floor has none).
+         */
+        get: operations["UnitFloorPlanController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units/{unitId}/gate-instructions": {
         parameters: {
             query?: never;
@@ -22802,6 +23161,30 @@ export interface paths {
         put?: never;
         /** End a proxy of the unit */
         post: operations["ProxiesController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitId}/space-uses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the unit’s use requests the caller sees, newest first
+         * @description The caller’s own; the unit’s primary sees all of them, except during a separation.
+         */
+        get: operations["UnitSpaceUsesController_list"];
+        put?: never;
+        /**
+         * Ask to use a common area for a time
+         * @description For whoever books for the unit (BOOKINGS_NOT_ALLOWED); three live per unit (SPACE_USE_LIMIT). The staff decide; an approved use of a facility’s area closes it to bookings then.
+         */
+        post: operations["UnitSpaceUsesController_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -25399,6 +25782,12 @@ export interface components {
             data: components["schemas"]["BookingView"][];
             nextCursor: string | null;
         };
+        BoxView: {
+            height: number;
+            width: number;
+            x: number;
+            y: number;
+        };
         BriefAnnouncementsView: {
             /** @description Out in the last seven days and not opened by the caller, pinned ones aside. */
             new: components["schemas"]["AnnouncementListItemView"][];
@@ -26610,6 +26999,16 @@ export interface components {
         };
         ClosedModeDto: {
             closed: boolean;
+        };
+        ClosurePreviewView: {
+            /** @description Soonest first. Never a booker or anyone else. */
+            bookings: components["schemas"]["PreviewedBookingView"][];
+            /** @example 0.00 */
+            invoicesCredited: string;
+            /** @description Send it with the closure: it then applies exactly this, or refuses (FACILITY_CLOSURE_PREVIEW_STALE). */
+            previewToken: string;
+            /** @example 0.00 */
+            unitCredit: string;
         };
         ClubCoveredPersonView: {
             firstName: string | null;
@@ -27973,6 +28372,8 @@ export interface components {
              * @description After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG), and not already past (CLOSURE_ENDED).
              */
             endsAt: string;
+            /** @description The token of `GET …/closure-preview` for the same window (ADR 0084). Needed when the closure cancels a booking with a fee (FACILITY_CLOSURE_PREVIEW_REQUIRED); with it, the closure applies exactly what was previewed or refuses (FACILITY_CLOSURE_PREVIEW_STALE). */
+            previewToken?: string;
             /** @description From the closed list `facilityClosure`. */
             reasonCode: string;
             /** Format: date-time */
@@ -28219,6 +28620,20 @@ export interface components {
             slotMinutes?: number;
             /** @description Bookings a unit may hold here in any 7 days. Default 2. */
             weeklyQuota?: number;
+        };
+        CreateFloorPlanDto: {
+            /**
+             * Format: uuid
+             * @description A building of the register (BUILDING_NOT_FOUND).
+             */
+            buildingId: string;
+            /**
+             * Format: uuid
+             * @description A finalized upload of the caller’s, of the purpose `site_map` or `floor_plan` (FILE_NOT_AVAILABLE).
+             */
+            fileId: string;
+            /** @description One plan a floor (FLOOR_PLAN_EXISTS). */
+            floor: number;
         };
         CreateGateDto: {
             kind: components["schemas"]["GateKind"];
@@ -29044,6 +29459,27 @@ export interface components {
              * @description The caller’s unit: someone who lives there asks.
              */
             unitId: string;
+        };
+        CreateSpaceUseDto: {
+            /**
+             * Format: uuid
+             * @description A common area open to requests (SPACE_USE_AREA_CLOSED).
+             */
+            commonAreaId: string;
+            /**
+             * Format: date-time
+             * @description After the start (ENDS_BEFORE_START), at most 12 hours after it (SPACE_USE_TOO_LONG).
+             */
+            endsAt: string;
+            /** @description How many people beside the requester, a number. Default 0. */
+            guests?: number;
+            /** @description What it is for, in the requester’s words: the staff read it. */
+            purpose: string;
+            /**
+             * Format: date-time
+             * @description At least 24 hours ahead (SPACE_USE_TOO_SOON), within 90 days (SPACE_USE_TOO_FAR).
+             */
+            startsAt: string;
         };
         CreateSpecialtyDto: {
             /** @description Stable code, lowercase (e.g. `hvac`). Never changes once created. */
@@ -31616,6 +32052,36 @@ export interface components {
             id: string;
             type: string;
         };
+        FloorPlanSummaryView: {
+            /** Format: uuid */
+            buildingId: string;
+            buildingName: string;
+            floor: number;
+            /** @description Units boxed on it. */
+            hotspots: number;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        FloorPlanSummaryViewList: {
+            data: components["schemas"]["FloorPlanSummaryView"][];
+            nextCursor: string | null;
+        };
+        FloorPlanView: {
+            /** Format: uuid */
+            buildingId: string;
+            buildingName: string;
+            floor: number;
+            /** @description Units boxed on it. */
+            hotspots: number;
+            /** Format: uuid */
+            id: string;
+            image: components["schemas"]["PresignedReadView"] | null;
+            units: components["schemas"]["HotspotView"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
         /** @enum {string} */
         FormalNoticeType: "late_payment";
         FoundItemClaimView: {
@@ -33086,6 +33552,32 @@ export interface components {
             data: components["schemas"]["HostRequestResponse"][];
             nextCursor: string | null;
         };
+        HotspotDto: {
+            /** @description More than 0; `y + height` at most 1 (HOTSPOT_OUTSIDE_IMAGE). */
+            height: number;
+            /**
+             * Format: uuid
+             * @description A unit of the plan’s building and floor (UNIT_NOT_ON_FLOOR); each once (DUPLICATE_VALUE).
+             */
+            unitId: string;
+            /** @description More than 0; `x + width` at most 1 (HOTSPOT_OUTSIDE_IMAGE), after rounding to five decimals. */
+            width: number;
+            /** @description The box’s left edge, from the image’s. */
+            x: number;
+            /** @description The box’s top edge, from the image’s. */
+            y: number;
+        };
+        HotspotView: {
+            height: number;
+            /** @description The unit is no longer on the plan’s building and floor: draw it again on its own. */
+            misplaced: boolean;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            width: number;
+            x: number;
+            y: number;
+        };
         HouseholdCompareView: {
             /** @description The latest complete month. */
             month: string;
@@ -33259,6 +33751,13 @@ export interface components {
             reasonCode: "not_verified" | "does_not_match_documents" | "other" | null;
             /** @enum {string} */
             status: "pending" | "approved" | "rejected" | "cancelled";
+        };
+        ImageDto: {
+            /**
+             * Format: uuid
+             * @description A finalized upload of the caller’s, of the purpose `site_map` or `floor_plan` (FILE_NOT_AVAILABLE).
+             */
+            fileId: string;
         };
         ImplementedApprovalDto: {
             note?: string;
@@ -34878,6 +35377,37 @@ export interface components {
             /** @description Null while frozen. */
             phone?: string | null;
             status?: components["schemas"]["AccountStatus"];
+        };
+        MapPointDto: {
+            /** @enum {string} */
+            kind: "building" | "gate" | "facility";
+            /**
+             * Format: uuid
+             * @description The building (ADR 0072), gate or active facility (MAP_PLACE_NOT_AVAILABLE); each once (DUPLICATE_VALUE).
+             */
+            refId: string;
+            /** @description From the image’s left edge. */
+            x: number;
+            /** @description From the image’s top edge. */
+            y: number;
+        };
+        MapPointView: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "building" | "gate" | "facility";
+            nameAr: string;
+            /** @description Its name, as the place has it. */
+            nameEn: string;
+            /**
+             * Format: uuid
+             * @description The building’s, gate’s or facility’s id.
+             */
+            refId: string;
+            /** @description A fraction of the width, from the left. */
+            x: number;
+            /** @description A fraction of the height, from the top. */
+            y: number;
         };
         /**
          * @description A unit for sale or to let is `real_estate`; nothing else is (INVALID_VALUE).
@@ -38182,6 +38712,29 @@ export interface components {
             data: components["schemas"]["PreventiveServiceView"][];
             nextCursor: string | null;
         };
+        PreviewedBookingView: {
+            charge: components["schemas"]["PreviewedChargeView"] | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** @enum {string} */
+            status: "pending" | "confirmed";
+            unitCode: string;
+        };
+        PreviewedChargeView: {
+            /** @example 150.00 */
+            amount: string;
+            /**
+             * @description `invoice_credited`: the unpaid invoice is credited, nothing owed; `unit_credit`: the money paid goes to the unit’s credit (cash back only through the manager’s refund).
+             * @enum {string}
+             */
+            outcome: "invoice_credited" | "unit_credit";
+            /** @enum {string} */
+            status: "open" | "paid";
+        };
         PriorityDto: {
             priority: components["schemas"]["TicketPriority"];
             /** @description From the closed list `ticketPriority`. */
@@ -40134,6 +40687,43 @@ export interface components {
             data: components["schemas"]["ResidentRequestView"][];
             nextCursor: string | null;
         };
+        ResidentSpaceUseView: {
+            areaCode: string;
+            areaNameAr: string;
+            areaNameEn: string;
+            /** Format: uuid */
+            commonAreaId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string | null;
+            guests: number;
+            /** Format: uuid */
+            id: string;
+            /** @description The caller asked for it. */
+            mine: boolean;
+            /** @description The requester’s words; null once they were erased. */
+            purpose: string | null;
+            /** @description A refusal’s or a cancel’s code (`spaceUseRefuse`, `spaceUseCancel`, `spaceUseWithdraw`, or `requester_left`). */
+            reasonCode: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "refused" | "cancelled" | "expired";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        ResidentSpaceUseViewList: {
+            data: components["schemas"]["ResidentSpaceUseView"][];
+            nextCursor: string | null;
+        };
         ResidentTicketDetailView: {
             /**
              * Format: date-time
@@ -41072,6 +41662,14 @@ export interface components {
             /** @description The mobile wallet integration; omitted or null: card only. */
             walletIntegrationId?: number | null;
         };
+        SetHotspotsDto: {
+            /** @description Every unit’s box on the plan, replacing them all; at most 500. */
+            hotspots: components["schemas"]["HotspotDto"][];
+        };
+        SetMapPointsDto: {
+            /** @description Every point of the map, replacing them all; at most 500. */
+            points: components["schemas"]["MapPointDto"][];
+        };
         SetOnlinePaymentDto: {
             onlineEnabled: boolean;
         };
@@ -41207,6 +41805,11 @@ export interface components {
             /** @description `author`: who reported it (INCIDENT_SIGNER_NOT_ELIGIBLE otherwise). `reviewer`: a keeper who did not. */
             role: components["schemas"]["IncidentSignatureRole"];
         };
+        SiteMapView: {
+            /** @description Null until the management sets one. */
+            image: components["schemas"]["PresignedReadView"] | null;
+            points: components["schemas"]["MapPointView"][];
+        };
         SlaAtRiskView: {
             emergency: number | null;
             normal: number | null;
@@ -41313,6 +41916,63 @@ export interface components {
             overtimeMinutes: number | null;
             /** Format: date-time */
             startedAt: string;
+        };
+        SpaceUseAreaView: {
+            code: string;
+            /** Format: uuid */
+            commonAreaId: string;
+            /**
+             * Format: uuid
+             * @description The facility it is, if any: an approved use closes it to bookings then.
+             */
+            facilityId: string | null;
+            nameAr: string;
+            nameEn: string;
+            /** Format: date-time */
+            openedAt: string;
+        };
+        SpaceUseAreaViewList: {
+            data: components["schemas"]["SpaceUseAreaView"][];
+            nextCursor: string | null;
+        };
+        SpaceUseReasonDto: {
+            /** @description From the closed list `spaceUseWithdraw` (the residents), `spaceUseRefuse` or `spaceUseCancel` (the staff). */
+            reasonCode: string;
+        };
+        SpaceUseView: {
+            areaCode: string;
+            areaNameAr: string;
+            areaNameEn: string;
+            /** Format: uuid */
+            commonAreaId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            facilityId: string | null;
+            guests: number;
+            /** Format: uuid */
+            id: string;
+            /** @description The requester’s words; null once they were erased. */
+            purpose: string | null;
+            /** @description A refusal’s or a cancel’s code (`spaceUseRefuse`, `spaceUseCancel`, `spaceUseWithdraw`, or `requester_left`). */
+            reasonCode: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "refused" | "cancelled" | "expired";
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+        };
+        SpaceUseViewList: {
+            data: components["schemas"]["SpaceUseView"][];
+            nextCursor: string | null;
         };
         SpawnCampaignDto: {
             /** @description Assets of the compound’s to inspect (never one in a unit). With `commonAreaIds`, at least one target. */
@@ -44746,6 +45406,14 @@ export interface components {
         UnitFeeViewList: {
             data: components["schemas"]["UnitFeeView"][];
             nextCursor: string | null;
+        };
+        UnitFloorPlanView: {
+            /** @description The unit’s own box; null when it has none on the plan. */
+            box: components["schemas"]["BoxView"] | null;
+            buildingName: string;
+            floor: number;
+            image: components["schemas"]["PresignedReadView"] | null;
+            unitCode: string;
         };
         UnitHistoryView: {
             account: components["schemas"]["AccountRefView"];
@@ -67417,6 +68085,67 @@ export interface operations {
             };
         };
     };
+    SiteMapController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteMapView"];
+                };
+            };
+        };
+    };
+    SpaceUseAreasController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceUseAreaViewList"];
+                };
+            };
+        };
+    };
+    SpaceUsesController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpaceUseReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     BillingPlansController_list: {
         parameters: {
             query?: never;
@@ -68832,6 +69561,31 @@ export interface operations {
             };
         };
     };
+    FacilityClosuresController_preview: {
+        parameters: {
+            query: {
+                startsAt: string;
+                /** @description After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG). */
+                endsAt: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosurePreviewView"];
+                };
+            };
+        };
+    };
     FacilityClosuresController_list: {
         parameters: {
             query?: {
@@ -70044,6 +70798,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpendingReportView"];
+                };
+            };
+        };
+    };
+    StaffFloorPlansController_list: {
+        parameters: {
+            query?: {
+                buildingId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FloorPlanSummaryViewList"];
+                };
+            };
+        };
+    };
+    StaffFloorPlansController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFloorPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FloorPlanView"];
+                };
+            };
+        };
+    };
+    StaffFloorPlansController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FloorPlanView"];
+                };
+            };
+        };
+    };
+    StaffFloorPlansController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffFloorPlansController_setHotspots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetHotspotsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FloorPlanView"];
+                };
+            };
+        };
+    };
+    StaffFloorPlansController_setImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FloorPlanView"];
                 };
             };
         };
@@ -75317,6 +76205,246 @@ export interface operations {
             };
         };
     };
+    StaffSiteMapController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteMapView"];
+                };
+            };
+        };
+    };
+    StaffSiteMapController_setImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteMapView"];
+                };
+            };
+        };
+    };
+    StaffSiteMapController_setPoints: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetMapPointsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteMapView"];
+                };
+            };
+        };
+    };
+    StaffSpaceUseAreasController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceUseAreaViewList"];
+                };
+            };
+        };
+    };
+    StaffSpaceUseAreasController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commonAreaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffSpaceUseAreasController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commonAreaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffSpaceUsesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `pending` is the queue. */
+                status?: "pending" | "approved" | "refused" | "cancelled" | "expired";
+                commonAreaId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceUseViewList"];
+                };
+            };
+        };
+    };
+    StaffSpaceUsesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceUseView"];
+                };
+            };
+        };
+    };
+    StaffSpaceUsesController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceUseView"];
+                };
+            };
+        };
+    };
+    StaffSpaceUsesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpaceUseReasonDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceUseView"];
+                };
+            };
+        };
+    };
+    StaffSpaceUsesController_refuse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpaceUseReasonDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceUseView"];
+                };
+            };
+        };
+    };
     UnitImportsController_list: {
         parameters: {
             query?: {
@@ -80454,6 +81582,27 @@ export interface operations {
             };
         };
     };
+    UnitFloorPlanController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitFloorPlanView"];
+                };
+            };
+        };
+    };
     VisitorsController_getInstructions: {
         parameters: {
             query?: never;
@@ -81109,6 +82258,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProxyView"];
+                };
+            };
+        };
+    };
+    UnitSpaceUsesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentSpaceUseViewList"];
+                };
+            };
+        };
+    };
+    UnitSpaceUsesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSpaceUseDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentSpaceUseView"];
                 };
             };
         };

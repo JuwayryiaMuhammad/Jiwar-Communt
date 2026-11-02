@@ -23,11 +23,13 @@ import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { ClosuresService } from './closures.service';
 import {
+  ClosurePreviewQueryDto,
   ClosuresQueryDto,
   CreateClosureDto,
   LiftClosureDto,
 } from './dto/closures.dto';
 import {
+  ClosurePreviewView,
   FacilityClosureCreatedView,
   FacilityClosureView,
 } from './views/closure.views';
@@ -52,13 +54,29 @@ export class FacilityClosuresController {
     );
   }
 
+  @Get(':id/closure-preview')
+  @NoStore()
+  @RequirePermissions('facilities.manage')
+  @ApiOperation({
+    summary: 'Preview closing a facility for a time',
+    description:
+      'The bookings it would cancel and what their fees would become (ADR 0084): an unpaid invoice credited, a paid fee the unit’s credit. Its token goes with the closure.',
+  })
+  @ApiOkResponse({ type: ClosurePreviewView })
+  async preview(
+    @Param('id', parseId()) id: string,
+    @Query() q: ClosurePreviewQueryDto,
+  ): Promise<ClosurePreviewView> {
+    return ClosurePreviewView.from(await this.closures.preview(id, q));
+  }
+
   @Post(':id/closures')
   @NoStore()
   @RequirePermissions('facilities.manage')
   @ApiOperation({
     summary: 'Close a facility for a time',
     description:
-      'Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker.',
+      'Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker; their fees are credited (ADR 0070). One that cancels a booking with a fee needs its preview’s token (ADR 0084).',
   })
   @Idempotent()
   @ApiCreatedResponse({ type: FacilityClosureCreatedView })

@@ -19,6 +19,8 @@ import { CompanionsService } from '../companions/companions.service';
 import { CompanionBookingView } from '../companions/views/companion.views';
 import { WaitlistEntryView } from '../waitlist/views/waitlist.views';
 import { WaitlistService } from '../waitlist/waitlist.service';
+import { SpaceUsesService } from '../spaces/space-uses.service';
+import { SpaceUseView } from '../spaces/views/spaces.views';
 
 /**
  * The facilities section of a personal-data export (ADR 0044). It runs as
@@ -38,7 +40,10 @@ import { WaitlistService } from '../waitlist/waitlist.service';
  *   companions of the bookings it made (the booking, the way in and the
  *   state — never who);
  * - `facilities/waitlist.json`: every slot it waited for, with the unit,
- *   the party and how the wait ended.
+ *   the party and how the wait ended;
+ * - `facilities/space-uses.json`: every common-area use request it made
+ *   (ADR 0084), with its area, unit, time, purpose (until erased) and
+ *   state — never who decided it.
  *
  * Nothing here names another person: not who else a membership covers,
  * nor who else of the household booked.
@@ -55,6 +60,7 @@ export class FacilitiesExportSections implements OnModuleInit {
     private readonly clubRequests: ClubRequestsService,
     private readonly companions: CompanionsService,
     private readonly waitlist: WaitlistService,
+    private readonly spaceUses: SpaceUsesService,
   ) {}
 
   onModuleInit(): void {
@@ -106,6 +112,10 @@ export class FacilitiesExportSections implements OnModuleInit {
       json: (await this.waitlist.everyOwn()).map((e) =>
         WaitlistEntryView.from(e),
       ),
+    };
+    yield {
+      path: 'facilities/space-uses.json',
+      json: (await this.spaceUses.mine()).map((r) => SpaceUseView.from(r)),
     };
     const units = await this.tenantTx.withTenantTx((tx) =>
       this.community.places(tx, s.accountId),

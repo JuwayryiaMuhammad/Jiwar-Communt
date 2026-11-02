@@ -6136,6 +6136,29 @@
         ],
         "type": "object"
       },
+      "BoxView": {
+        "properties": {
+          "height": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
       "BriefAnnouncementsView": {
         "properties": {
           "new": {
@@ -10037,6 +10060,36 @@
         },
         "required": [
           "closed"
+        ],
+        "type": "object"
+      },
+      "ClosurePreviewView": {
+        "properties": {
+          "bookings": {
+            "description": "Soonest first. Never a booker or anyone else.",
+            "items": {
+              "$ref": "#/components/schemas/PreviewedBookingView"
+            },
+            "type": "array"
+          },
+          "invoicesCredited": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "previewToken": {
+            "description": "Send it with the closure: it then applies exactly this, or refuses (FACILITY_CLOSURE_PREVIEW_STALE).",
+            "type": "string"
+          },
+          "unitCredit": {
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookings",
+          "invoicesCredited",
+          "unitCredit",
+          "previewToken"
         ],
         "type": "object"
       },
@@ -14337,6 +14390,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "previewToken": {
+            "description": "The token of `GET …/closure-preview` for the same window (ADR 0084). Needed when the closure cancels a booking with a fee (FACILITY_CLOSURE_PREVIEW_REQUIRED); with it, the closure applies exactly what was previewed or refuses (FACILITY_CLOSURE_PREVIEW_STALE).",
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
           "reasonCode": {
             "description": "From the closed list `facilityClosure`.",
             "type": "string"
@@ -14992,6 +15050,32 @@
           "mode",
           "nameEn",
           "nameAr"
+        ],
+        "type": "object"
+      },
+      "CreateFloorPlanDto": {
+        "properties": {
+          "buildingId": {
+            "description": "A building of the register (BUILDING_NOT_FOUND).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "A finalized upload of the caller’s, of the purpose `site_map` or `floor_plan` (FILE_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "floor": {
+            "description": "One plan a floor (FLOOR_PLAN_EXISTS).",
+            "maximum": 200,
+            "minimum": -5,
+            "type": "number"
+          }
+        },
+        "required": [
+          "fileId",
+          "buildingId",
+          "floor"
         ],
         "type": "object"
       },
@@ -16819,6 +16903,44 @@
           "unitId",
           "placeId",
           "description"
+        ],
+        "type": "object"
+      },
+      "CreateSpaceUseDto": {
+        "properties": {
+          "commonAreaId": {
+            "description": "A common area open to requests (SPACE_USE_AREA_CLOSED).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "After the start (ENDS_BEFORE_START), at most 12 hours after it (SPACE_USE_TOO_LONG).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "guests": {
+            "description": "How many people beside the requester, a number. Default 0.",
+            "maximum": 500,
+            "minimum": 0,
+            "type": "number"
+          },
+          "purpose": {
+            "description": "What it is for, in the requester’s words: the staff read it.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "startsAt": {
+            "description": "At least 24 hours ahead (SPACE_USE_TOO_SOON), within 90 days (SPACE_USE_TOO_FAR).",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "commonAreaId",
+          "startsAt",
+          "endsAt",
+          "purpose"
         ],
         "type": "object"
       },
@@ -24924,6 +25046,112 @@
         ],
         "type": "object"
       },
+      "FloorPlanSummaryView": {
+        "properties": {
+          "buildingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "buildingName": {
+            "type": "string"
+          },
+          "floor": {
+            "type": "number"
+          },
+          "hotspots": {
+            "description": "Units boxed on it.",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "buildingId",
+          "buildingName",
+          "floor",
+          "hotspots",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "FloorPlanSummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FloorPlanSummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "FloorPlanView": {
+        "properties": {
+          "buildingId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "buildingName": {
+            "type": "string"
+          },
+          "floor": {
+            "type": "number"
+          },
+          "hotspots": {
+            "description": "Units boxed on it.",
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "image": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "units": {
+            "items": {
+              "$ref": "#/components/schemas/HotspotView"
+            },
+            "type": "array"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "buildingId",
+          "buildingName",
+          "floor",
+          "hotspots",
+          "updatedAt",
+          "image",
+          "units"
+        ],
+        "type": "object"
+      },
       "FormalNoticeType": {
         "enum": [
           "late_payment"
@@ -29959,6 +30187,84 @@
         ],
         "type": "object"
       },
+      "HotspotDto": {
+        "properties": {
+          "height": {
+            "description": "More than 0; `y + height` at most 1 (HOTSPOT_OUTSIDE_IMAGE).",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "unitId": {
+            "description": "A unit of the plan’s building and floor (UNIT_NOT_ON_FLOOR); each once (DUPLICATE_VALUE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "width": {
+            "description": "More than 0; `x + width` at most 1 (HOTSPOT_OUTSIDE_IMAGE), after rounding to five decimals.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "x": {
+            "description": "The box’s left edge, from the image’s.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "y": {
+            "description": "The box’s top edge, from the image’s.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "unitId",
+          "x",
+          "y",
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "HotspotView": {
+        "properties": {
+          "height": {
+            "type": "number"
+          },
+          "misplaced": {
+            "description": "The unit is no longer on the plan’s building and floor: draw it again on its own.",
+            "type": "boolean"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "width": {
+            "type": "number"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "x",
+          "y",
+          "width",
+          "height",
+          "misplaced"
+        ],
+        "type": "object"
+      },
       "HouseholdCompareView": {
         "properties": {
           "month": {
@@ -30572,6 +30878,19 @@
           "createdAt",
           "decidedAt",
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ImageDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized upload of the caller’s, of the purpose `site_map` or `floor_plan` (FILE_NOT_AVAILABLE).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
         ],
         "type": "object"
       },
@@ -35566,6 +35885,88 @@
         },
         "required": [
           "id"
+        ],
+        "type": "object"
+      },
+      "MapPointDto": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "building",
+              "gate",
+              "facility"
+            ],
+            "type": "string"
+          },
+          "refId": {
+            "description": "The building (ADR 0072), gate or active facility (MAP_PLACE_NOT_AVAILABLE); each once (DUPLICATE_VALUE).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "x": {
+            "description": "From the image’s left edge.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "y": {
+            "description": "From the image’s top edge.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "refId",
+          "x",
+          "y"
+        ],
+        "type": "object"
+      },
+      "MapPointView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "building",
+              "gate",
+              "facility"
+            ],
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "description": "Its name, as the place has it.",
+            "type": "string"
+          },
+          "refId": {
+            "description": "The building’s, gate’s or facility’s id.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "x": {
+            "description": "A fraction of the width, from the left.",
+            "type": "number"
+          },
+          "y": {
+            "description": "A fraction of the height, from the top.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "refId",
+          "nameEn",
+          "nameAr",
+          "x",
+          "y"
         ],
         "type": "object"
       },
@@ -46067,6 +46468,79 @@
         ],
         "type": "object"
       },
+      "PreviewedBookingView": {
+        "properties": {
+          "charge": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreviewedChargeView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "confirmed"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unitCode",
+          "startsAt",
+          "endsAt",
+          "status",
+          "charge"
+        ],
+        "type": "object"
+      },
+      "PreviewedChargeView": {
+        "properties": {
+          "amount": {
+            "example": "150.00",
+            "type": "string"
+          },
+          "outcome": {
+            "description": "`invoice_credited`: the unpaid invoice is credited, nothing owed; `unit_credit`: the money paid goes to the unit’s credit (cash back only through the manager’s refund).",
+            "enum": [
+              "invoice_credited",
+              "unit_credit"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "paid"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "status",
+          "outcome"
+        ],
+        "type": "object"
+      },
       "PriorityDto": {
         "properties": {
           "priority": {
@@ -52216,6 +52690,128 @@
         ],
         "type": "object"
       },
+      "ResidentSpaceUseView": {
+        "properties": {
+          "areaCode": {
+            "type": "string"
+          },
+          "areaNameAr": {
+            "type": "string"
+          },
+          "areaNameEn": {
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "guests": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mine": {
+            "description": "The caller asked for it.",
+            "type": "boolean"
+          },
+          "purpose": {
+            "description": "The requester’s words; null once they were erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A refusal’s or a cancel’s code (`spaceUseRefuse`, `spaceUseCancel`, `spaceUseWithdraw`, or `requester_left`).",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "refused",
+              "cancelled",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "commonAreaId",
+          "areaCode",
+          "areaNameEn",
+          "areaNameAr",
+          "facilityId",
+          "unitId",
+          "unitCode",
+          "startsAt",
+          "endsAt",
+          "purpose",
+          "guests",
+          "status",
+          "reasonCode",
+          "decidedAt",
+          "endedAt",
+          "createdAt",
+          "mine"
+        ],
+        "type": "object"
+      },
+      "ResidentSpaceUseViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentSpaceUseView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ResidentTicketDetailView": {
         "properties": {
           "autoCloseAt": {
@@ -55300,6 +55896,36 @@
         ],
         "type": "object"
       },
+      "SetHotspotsDto": {
+        "properties": {
+          "hotspots": {
+            "description": "Every unit’s box on the plan, replacing them all; at most 500.",
+            "items": {
+              "$ref": "#/components/schemas/HotspotDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "hotspots"
+        ],
+        "type": "object"
+      },
+      "SetMapPointsDto": {
+        "properties": {
+          "points": {
+            "description": "Every point of the map, replacing them all; at most 500.",
+            "items": {
+              "$ref": "#/components/schemas/MapPointDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "type": "object"
+      },
       "SetOnlinePaymentDto": {
         "properties": {
           "onlineEnabled": {
@@ -55705,6 +56331,31 @@
         ],
         "type": "object"
       },
+      "SiteMapView": {
+        "properties": {
+          "image": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "description": "Null until the management sets one.",
+            "nullable": true,
+            "type": "object"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/MapPointView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "image",
+          "points"
+        ],
+        "type": "object"
+      },
       "SlaAtRiskView": {
         "properties": {
           "emergency": {
@@ -56077,6 +56728,190 @@
           "startedAt",
           "endedAt",
           "overtimeMinutes"
+        ],
+        "type": "object"
+      },
+      "SpaceUseAreaView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "facilityId": {
+            "description": "The facility it is, if any: an approved use closes it to bookings then.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "commonAreaId",
+          "code",
+          "nameEn",
+          "nameAr",
+          "facilityId",
+          "openedAt"
+        ],
+        "type": "object"
+      },
+      "SpaceUseAreaViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceUseAreaView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SpaceUseReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `spaceUseWithdraw` (the residents), `spaceUseRefuse` or `spaceUseCancel` (the staff).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "SpaceUseView": {
+        "properties": {
+          "areaCode": {
+            "type": "string"
+          },
+          "areaNameAr": {
+            "type": "string"
+          },
+          "areaNameEn": {
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "facilityId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "guests": {
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "purpose": {
+            "description": "The requester’s words; null once they were erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A refusal’s or a cancel’s code (`spaceUseRefuse`, `spaceUseCancel`, `spaceUseWithdraw`, or `requester_left`).",
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "refused",
+              "cancelled",
+              "expired"
+            ],
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "commonAreaId",
+          "areaCode",
+          "areaNameEn",
+          "areaNameAr",
+          "facilityId",
+          "unitId",
+          "unitCode",
+          "startsAt",
+          "endsAt",
+          "purpose",
+          "guests",
+          "status",
+          "reasonCode",
+          "decidedAt",
+          "endedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "SpaceUseViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceUseView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -68063,6 +68898,46 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "UnitFloorPlanView": {
+        "properties": {
+          "box": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoxView"
+              }
+            ],
+            "description": "The unit’s own box; null when it has none on the plan.",
+            "nullable": true,
+            "type": "object"
+          },
+          "buildingName": {
+            "type": "string"
+          },
+          "floor": {
+            "type": "number"
+          },
+          "image": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PresignedReadView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "unitCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "buildingName",
+          "floor",
+          "image",
+          "unitCode",
+          "box"
         ],
         "type": "object"
       },
@@ -113652,6 +114527,105 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/site-map": {
+      "get": {
+        "description": "Its buildings, active gates and active facilities.",
+        "operationId": "SiteMapController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteMapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the site map",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/space-use-areas": {
+      "get": {
+        "operationId": "SpaceUseAreasController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceUseAreaViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the common areas one may ask to use",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/space-uses/{id}/withdraw": {
+      "post": {
+        "description": "Its requester or the unit’s primary; pending or approved (SPACE_USE_DECIDED), not started (SPACE_USE_STARTED).",
+        "operationId": "SpaceUsesController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpaceUseReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw a use request before it starts",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/billing-plans": {
       "get": {
         "operationId": "BillingPlansController_list",
@@ -116289,6 +117263,64 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/facilities/{id}/closure-preview": {
+      "get": {
+        "description": "The bookings it would cancel and what their fees would become (ADR 0084): an unpaid invoice credited, a paid fee the unit’s credit. Its token goes with the closure.",
+        "operationId": "FacilityClosuresController_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startsAt",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "After the start (ENDS_BEFORE_START), at most 366 days after it (CLOSURE_TOO_LONG).",
+            "in": "query",
+            "name": "endsAt",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosurePreviewView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Preview closing a facility for a time",
+        "tags": [
+          "facilities"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/facilities/{id}/closures": {
       "get": {
         "operationId": "FacilityClosuresController_list",
@@ -116347,7 +117379,7 @@
         "x-stability": "draft"
       },
       "post": {
-        "description": "Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker.",
+        "description": "Cancels every booking of the facility that holds a place in the window and has not started, and tells each booker; their fees are credited (ADR 0070). One that cancels a booking with a fee needs its preview’s token (ADR 0084).",
         "operationId": "FacilityClosuresController_create",
         "parameters": [
           {
@@ -118773,6 +119805,245 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/floor-plans": {
+      "get": {
+        "operationId": "StaffFloorPlansController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "buildingId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloorPlanSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the floor plans, by building and floor",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "An upload of the purpose `floor_plan`; one plan a floor.",
+        "operationId": "StaffFloorPlansController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFloorPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloorPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a building floor’s plan",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/floor-plans/{id}": {
+      "delete": {
+        "operationId": "StaffFloorPlansController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a floor plan, its image and its boxes",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      },
+      "get": {
+        "operationId": "StaffFloorPlansController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloorPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a floor plan with its units’ boxes",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/floor-plans/{id}/hotspots": {
+      "put": {
+        "description": "Units of its building and floor, each a box inside the image. A box a unit kept on another floor’s plan goes.",
+        "operationId": "StaffFloorPlansController_setHotspots",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetHotspotsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloorPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a floor plan’s unit boxes",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/floor-plans/{id}/image": {
+      "put": {
+        "operationId": "StaffFloorPlansController_setImage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloorPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a floor plan’s image",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -129620,6 +130891,451 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/site-map": {
+      "get": {
+        "operationId": "StaffSiteMapController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteMapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the site map and its points",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/site-map/image": {
+      "put": {
+        "description": "An upload of the purpose `site_map`. The points stay where they were, as fractions of the image.",
+        "operationId": "StaffSiteMapController_setImage",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteMapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set or replace the site map’s image",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/site-map/points": {
+      "put": {
+        "description": "The image first (SITE_MAP_NOT_SET).",
+        "operationId": "StaffSiteMapController_setPoints",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetMapPointsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteMapView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace the site map’s points",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/space-use-areas": {
+      "get": {
+        "operationId": "StaffSpaceUseAreasController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceUseAreaViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the common areas open to use requests",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/space-use-areas/{commonAreaId}": {
+      "delete": {
+        "description": "What was asked or approved stands.",
+        "operationId": "StaffSpaceUseAreasController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "commonAreaId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take no more use requests for a common area",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "description": "An active area or facility, not a building as a whole.",
+        "operationId": "StaffSpaceUseAreasController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "commonAreaId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a common area to use requests",
+        "tags": [
+          "spaces"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/space-uses": {
+      "get": {
+        "operationId": "StaffSpaceUsesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`pending` is the queue.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "approved",
+                "refused",
+                "cancelled",
+                "expired"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "commonAreaId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceUseViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List use requests, newest first",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/space-uses/{id}": {
+      "get": {
+        "operationId": "StaffSpaceUsesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceUseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a use request",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/space-uses/{id}/approve": {
+      "post": {
+        "description": "Pending and not started; no approved use of the area overlaps it (SPACE_USE_OVERLAP); on a facility’s area, no booking holds it then (SPACE_USE_BOOKED) and no closure (FACILITY_CLOSED). The requester is told.",
+        "operationId": "StaffSpaceUsesController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceUseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a use request",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/space-uses/{id}/cancel": {
+      "post": {
+        "operationId": "StaffSpaceUsesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpaceUseReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceUseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel an approved use before it ends, with a reason code",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/space-uses/{id}/refuse": {
+      "post": {
+        "operationId": "StaffSpaceUsesController_refuse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpaceUseReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceUseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Refuse a use request, with a reason code",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/unit-imports": {
       "get": {
         "operationId": "UnitImportsController_list",
@@ -139805,6 +141521,45 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/units/{unitId}/floor-plan": {
+      "get": {
+        "description": "The unit’s own box only: no other unit or anyone in it (FLOOR_PLAN_NOT_FOUND when its floor has none).",
+        "operationId": "UnitFloorPlanController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitFloorPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the plan of the unit’s floor, with the unit marked",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/units/{unitId}/gate-instructions": {
       "get": {
         "operationId": "VisitorsController_getInstructions",
@@ -141143,6 +142898,112 @@
         "tags": [
           "units"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/units/{unitId}/space-uses": {
+      "get": {
+        "description": "The caller’s own; the unit’s primary sees all of them, except during a separation.",
+        "operationId": "UnitSpaceUsesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentSpaceUseViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the unit’s use requests the caller sees, newest first",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "For whoever books for the unit (BOOKINGS_NOT_ALLOWED); three live per unit (SPACE_USE_LIMIT). The staff decide; an approved use of a facility’s area closes it to bookings then.",
+        "operationId": "UnitSpaceUsesController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpaceUseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentSpaceUseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask to use a common area for a time",
+        "tags": [
+          "spaces"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

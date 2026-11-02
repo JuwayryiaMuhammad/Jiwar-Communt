@@ -730,6 +730,7 @@ describe('Permission sync', () => {
       'finance.payables',
       'finance.payments',
       'finance.reports',
+      'finance.treasury',
       'fines.billing',
       'governance.approvals',
       'inbox.read',
@@ -803,6 +804,7 @@ describe('Permission sync', () => {
       'finance.payables',
       'finance.payments',
       'finance.reports',
+      'finance.treasury',
       'governance.approvals',
       'inbox.read',
       'purchases.request',
@@ -821,6 +823,7 @@ describe('Permission sync', () => {
       'finance.payables',
       'finance.payments',
       'finance.reports',
+      'finance.treasury',
       'fines.billing',
       'governance.approvals',
       'inbox.read',
@@ -3143,6 +3146,64 @@ describe('Permission sync', () => {
         'unit_proxy',
       ])
         expect(await has(key)).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M3-2 (ADR 0085)', () => {
+    const m32 = ['finance.treasury', 'finance.custody'];
+    /** The catalog before M3-2: no treasury permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m32.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m32.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: both to the manager, finance.treasury to the accountant; no other role gains either', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M3-2 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m32].sort());
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toEqual(
+        expect.arrayContaining(m32),
+      );
+      const accountant = (await role(t, 'accountant')).permissions;
+      expect(accountant).toContain('finance.treasury');
+      // Settling a variance is the manager's: a check on the cashiers.
+      expect(accountant).not.toContain('finance.custody');
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'technician',
+        'collector',
+        'security_supervisor',
+        'maintenance_supervisor',
+        'unit_proxy',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m32.includes(p)),
+        ).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

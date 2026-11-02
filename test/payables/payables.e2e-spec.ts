@@ -27,7 +27,9 @@ interface Invoice {
   budgetLineId: string | null;
   authorizationId: string | null;
   payout: {
+    id: string;
     number: string;
+    cashAccountId: string | null;
     gross: string;
     retentionHeld: string;
     advanceSetOff: string;
@@ -56,6 +58,8 @@ describe('Payables and commitments (ADR 0089)', () => {
   let f: ReturnType<typeof budgetHelpers>;
   let s: Awaited<ReturnType<ReturnType<typeof budgetHelpers>['setUp']>>;
   let budget: BudgetBody;
+  /** The bank account payouts leave (ADR 0085). */
+  let bank: { id: string };
 
   beforeAll(async () => {
     h = await createHttpHarness();
@@ -70,6 +74,15 @@ describe('Payables and commitments (ADR 0089)', () => {
       ],
     );
     await setThreshold('100000.00');
+    bank = (
+      await f
+        .http('post', '/staff/finance/cash-accounts', s.manager.token, {
+          kind: 'bank',
+          name: 'Payables bank',
+          openedOn: clock().today,
+        })
+        .expect(201)
+    ).body as { id: string };
   }, 240_000);
 
   afterAll(() => h.close());
@@ -155,6 +168,7 @@ describe('Payables and commitments (ADR 0089)', () => {
       paidOn: today(),
       method: 'bank_transfer',
       reference: 'TRF-1',
+      cashAccountId: bank.id,
       ...body,
     });
 
@@ -652,6 +666,82 @@ describe('Payables and commitments (ADR 0089)', () => {
     });
   });
 
+  describe('paid from the treasury’s accounts (ADR 0085)', () => {
+    const balance = async (id: string) =>
+      (
+        (
+          await http('get', `/staff/finance/cash-accounts/${id}`, m()).expect(
+            200,
+          )
+        ).body as { balance: string }
+      ).balance;
+
+    it('what a payout pays leaves one account of its method’s kind as one movement; a cash box never goes below zero', async () => {
+      const box = (
+        await http('post', '/staff/finance/cash-accounts', m(), {
+          kind: 'cash',
+          name: `Payout box ${uniqueSuffix()}`,
+          openingBalance: '1000.00',
+          openedOn: today(),
+        }).expect(201)
+      ).body as { id: string };
+      const inv = (await record({}).expect(201)).body as Invoice;
+      await approve(inv.id).expect(200);
+      expect(
+        err(await pay(inv.id, { cashAccountId: undefined }).expect(400)).fields,
+      ).toEqual([{ field: 'cashAccountId', code: 'FIELD_REQUIRED' }]);
+      expect(
+        err(await pay(inv.id, { method: 'cash' }).expect(409)),
+      ).toMatchObject({
+        code: 'CASH_ACCOUNT_WRONG_KIND',
+        params: { kind: 'cash' },
+      });
+      expect(
+        err(await pay(inv.id, { cashAccountId: box.id }).expect(409)),
+      ).toMatchObject({
+        code: 'CASH_ACCOUNT_WRONG_KIND',
+        params: { kind: 'bank' },
+      });
+      expect(
+        err(
+          await pay(inv.id, { method: 'cash', cashAccountId: box.id }).expect(
+            409,
+          ),
+        ),
+      ).toMatchObject({
+        code: 'CASH_ACCOUNT_INSUFFICIENT',
+        params: { balance: '1000.00' },
+      });
+      expect(await balance(box.id)).toBe('1000.00');
+      const before = Number(await balance(bank.id));
+      const paid = (await pay(inv.id).expect(200)).body as Invoice;
+      expect(paid.payout).toMatchObject({
+        net: '5000.00',
+        cashAccountId: bank.id,
+      });
+      expect(before - Number(await balance(bank.id))).toBe(5000);
+      const moved = (
+        (
+          await http(
+            'get',
+            `/staff/finance/cash-movements?accountId=${bank.id}`,
+            m(),
+          ).expect(200)
+        ).body as {
+          data: {
+            kind: string;
+            amount: string;
+            onDay: string;
+            payoutId: string | null;
+          }[];
+        }
+      ).data.filter((x) => x.kind === 'payout');
+      expect(moved.filter((x) => x.payoutId === paid.payout!.id)).toEqual([
+        expect.objectContaining({ amount: '-5000.00', onDay: today() }),
+      ]);
+    });
+  });
+
   describe('advances, retentions and guarantees', () => {
     it('an advance asked by one and approved by another, paid, then set off against an invoice', async () => {
       const c = await contract();
@@ -689,6 +779,7 @@ describe('Payables and commitments (ADR 0089)', () => {
         {
           paidOn: today(),
           method: 'cheque',
+          cashAccountId: bank.id,
         },
       ).expect(200);
       const inv = (await record({ contractId: c.id }).expect(201))

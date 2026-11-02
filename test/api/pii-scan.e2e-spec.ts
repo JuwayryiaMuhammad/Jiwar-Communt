@@ -1873,6 +1873,12 @@ describe('API v0 — PII leak scan', () => {
       // A call for help nowhere (not found).
       '/staff/field-team/help-requests/{id}':
         '0192a5f0-1c2b-7d3e-8f40-0000000078a2',
+      // ADR 0085.
+      '/staff/finance/cash-accounts/{id}': w.bCashAccountId,
+      '/staff/finance/custody/{accountId}': w.bCustodianId,
+      '/staff/finance/custody-handins/{id}': w.bHandinId,
+      '/staff/finance/statement-imports/{id}': w.bStatementImportId,
+      '/staff/finance/statement-lines/{id}/candidates': w.bStatementLineId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,

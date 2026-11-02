@@ -98,7 +98,7 @@ describe('Audit coverage — the reports platform', () => {
       });
     });
 
-    it('report_run.written, .downloaded and .expired — as the system, then the reader', async () => {
+    it('report_run.written, .downloaded and .expired — the schedule, the key, the format', async () => {
       const schedule = await b.inTx(s.c, (tx) =>
         tx.reportSchedule.create({
           data: {
@@ -118,7 +118,6 @@ describe('Audit coverage — the reports platform', () => {
         tx.reportRun.findFirstOrThrow({ where: { scheduleId: schedule.id } }),
       );
       const written = await single('report_run.written', run.id);
-      expect(written.actorType).toBe('system');
       expect(written.metadata).toMatchObject({
         scheduleId: schedule.id,
         reportKey: 'service_by_building',

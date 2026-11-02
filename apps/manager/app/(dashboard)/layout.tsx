@@ -706,6 +706,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/finance/payments', label: 'Payments', icon: <Banknote aria-hidden />, show: can('finance.payments') },
         // Field collectors' visits and their margin (ADR 0069).
         { href: '/finance/collector-visits', label: 'Collector visits', icon: <Banknote aria-hidden />, show: can('finance.payments') },
+        { href: '/finance/custody', label: 'Custody', icon: <Banknote aria-hidden />, show: can('finance.payments') || can('finance.custody') },
+        { href: '/finance/cheques', label: 'Cheques', icon: <Banknote aria-hidden />, show: can('finance.payments') },
+        { href: '/finance/treasury', label: 'Bank and cash', icon: <Wallet aria-hidden />, show: can('finance.treasury') },
+        { href: '/finance/statements', label: 'Bank statements', icon: <BookOpen aria-hidden />, show: can('finance.treasury') },
         { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
         { href: '/finance/refunds', label: 'Refunds', icon: <Undo2 aria-hidden />, show: can('finance.refund') },
         { href: '/finance/ledger', label: 'Ledger', icon: <BookOpen aria-hidden />, show: can('finance.reports') },

@@ -160,6 +160,8 @@ describe('Deputies', () => {
       'appeals.decide',
       'roles.manage',
       'deputies.manage',
+      // ADR 0082: a compensation's decision is money.
+      'experience.compensate',
       'tickets.work',
     ])
       expect(await fields({ permissions: [p] })).toEqual([

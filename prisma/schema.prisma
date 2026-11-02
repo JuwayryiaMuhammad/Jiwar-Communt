@@ -4329,12 +4329,15 @@ model TicketFeedback {
   /// ADR 0038: the technician who did the work, rated on its own; optional.
   technicianRating  Int?               @map("technician_rating")
   ratedTechnicianId String?            @map("rated_technician_account_id") @db.Uuid
+  /// ADR 0082: why a confirmation's rating of 1 or 2 is low (REASON_CODES.lowRating).
+  lowReasonCode     String?            @map("low_reason_code")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
 
   ticket Ticket  @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   author Account @relation("FeedbackAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "ticket_feedback_tenant_id_author_fkey")
 
   @@unique([tenantId, ticketId, cycle, kind])
+  @@index([tenantId, createdAt], map: "ticket_feedback_created_idx")
   @@map("ticket_feedback")
 }
 
@@ -5201,16 +5204,19 @@ model ManagementRequestRating {
   tenantId  String   @map("tenant_id") @db.Uuid
   requestId String   @map("request_id") @db.Uuid
   authorId  String   @map("author_account_id") @db.Uuid
-  rating    Int
+  rating        Int
+  /// ADR 0082: why a rating of 1 or 2 is low (REASON_CODES.lowRating).
+  lowReasonCode String?  @map("low_reason_code")
   /// Free text: NULL once its author is erased.
-  comment   String?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  comment       String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   request ManagementRequest @relation(fields: [tenantId, requestId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   author  Account           @relation("ManagementRatingAuthor", fields: [tenantId, authorId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "management_request_ratings_tenant_id_author_fkey")
 
   @@id([tenantId, requestId])
   @@index([tenantId, authorId], map: "management_request_ratings_author_idx")
+  @@index([tenantId, createdAt], map: "management_request_ratings_created_idx")
   @@map("management_request_ratings")
 }
 
@@ -10795,12 +10801,15 @@ model PartnerRating {
   partnerId        String    @map("partner_id") @db.Uuid
   raterAccountId   String    @map("rater_account_id") @db.Uuid
   stars            Int
+  /// ADR 0082: why a rating of 1 or 2 is low (REASON_CODES.lowRating).
+  lowReasonCode    String?   @map("low_reason_code")
   comment          String?
   commentClearedAt DateTime? @map("comment_cleared_at") @db.Timestamptz(3)
   createdAt        DateTime  @map("created_at") @db.Timestamptz(3)
 
   @@id([tenantId, requestId])
   @@index([tenantId, partnerId, createdAt(sort: Desc), requestId], map: "partner_ratings_partner_idx")
+  @@index([tenantId, createdAt], map: "partner_ratings_created_idx")
   @@map("partner_ratings")
 }
 
@@ -12904,4 +12913,169 @@ model OfficialLetterLink {
   createdAt DateTime @map("created_at") @db.Timestamptz(3)
 
   @@map("official_letter_links")
+}
+
+// ============================================================================
+// Experience and recovery (ADR 0082)
+// ============================================================================
+//
+// Rule-based dissatisfaction signals, the follow-up and recovery cases they
+// open (or the staff open by hand), compensations proposed on a case and
+// decided once, the compensation rules, and the service promises register.
+// Codes, ids and amounts reach the audit trail; the words never do.
+
+/// A compound's signal thresholds. No row: the code's defaults; a count
+/// null: the rule is off.
+model ExperienceSetting {
+  tenantId        String   @id @map("tenant_id") @db.Uuid
+  lowRatingsCount Int?     @default(2) @map("low_ratings_count")
+  lowRatingsDays  Int      @default(90) @map("low_ratings_days")
+  reopenedCount   Int?     @default(2) @map("reopened_count")
+  reopenedDays    Int      @default(60) @map("reopened_days")
+  complaintsCount Int?     @default(3) @map("complaints_count")
+  complaintsDays  Int      @default(30) @map("complaints_days")
+  updatedAt       DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@map("experience_settings")
+}
+
+/// A case's number per compound (`EC-000123`), taken under the row's lock.
+model ExperienceCounter {
+  tenantId String @id @map("tenant_id") @db.Uuid
+  last     Int
+
+  @@map("experience_counters")
+}
+
+/// A follow-up or recovery case about one unit; one open per unit (a
+/// partial unique index); closed once with an outcome.
+model ExperienceCase {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  number      Int
+  unitId      String    @map("unit_id") @db.Uuid
+  /// follow_up, recovery.
+  kind        String
+  /// signal, manual.
+  origin      String
+  /// ticket, management_request, partner_request: what it is about.
+  sourceType  String?   @map("source_type")
+  sourceId    String?   @map("source_id") @db.Uuid
+  /// REASON_CODES.creditNoteCompensation: what failed.
+  failureCode String?   @map("failure_code")
+  /// Staff's words, plain data: never in the audit trail.
+  note        String?
+  ownerId     String?   @map("owner_account_id") @db.Uuid
+  /// open, closed.
+  status      String    @default("open")
+  /// Null when a signal opened it.
+  openedById  String?   @map("opened_by_account_id") @db.Uuid
+  openedAt    DateTime  @map("opened_at") @db.Timestamptz(3)
+  closedById  String?   @map("closed_by_account_id") @db.Uuid
+  closedAt    DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// REASON_CODES.experienceCaseOutcome.
+  outcome     String?
+  /// Staff's words on the outcome, plain data.
+  outcomeNote String?   @map("outcome_note")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@index([tenantId, status, openedAt(sort: Desc), id(sort: Desc)], map: "experience_cases_list_idx")
+  @@index([tenantId, unitId, openedAt(sort: Desc)], map: "experience_cases_unit_idx")
+  @@map("experience_cases")
+}
+
+/// A rule met for a unit, once per the newest item that met it (the key).
+model ExperienceSignal {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  unitId     String   @map("unit_id") @db.Uuid
+  /// repeated_low_ratings, reopened_tickets, repeated_complaints.
+  code       String
+  /// The newest item that met the rule, in its own domain's table.
+  basisId    String   @map("basis_id") @db.Uuid
+  count      Int
+  windowDays Int      @map("window_days")
+  detectedAt DateTime @map("detected_at") @db.Timestamptz(3)
+  /// The unit's open case it joined, set once.
+  caseId     String?  @map("case_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, unitId, code, basisId], map: "experience_signals_basis_key")
+  @@index([tenantId, detectedAt(sort: Desc), id(sort: Desc)], map: "experience_signals_list_idx")
+  @@index([tenantId, caseId], map: "experience_signals_case_idx")
+  @@map("experience_signals")
+}
+
+/// What the compound recommends for a failure (one row per failure code).
+model ExperienceCompensationRule {
+  tenantId    String   @map("tenant_id") @db.Uuid
+  failureCode String   @map("failure_code")
+  /// credit, apology, redo, priority.
+  kind        String
+  /// EGP; a credit only.
+  amount      Decimal? @db.Decimal(12, 2)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@id([tenantId, failureCode])
+  @@map("experience_compensation_rules")
+}
+
+/// A compensation proposed on an open case, decided once by the manager;
+/// an approved credit is finance's credit note (ADR 0058).
+model ExperienceCompensation {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  caseId          String    @map("case_id") @db.Uuid
+  unitId          String    @map("unit_id") @db.Uuid
+  /// credit, apology, redo, priority.
+  kind            String
+  /// REASON_CODES.creditNoteCompensation.
+  failureCode     String    @map("failure_code")
+  /// EGP; a credit only.
+  amount          Decimal?  @db.Decimal(12, 2)
+  /// Staff's words, plain data: never in the audit trail.
+  note            String?
+  /// proposed, approved, rejected.
+  status          String    @default("proposed")
+  proposedById    String    @map("proposed_by_account_id") @db.Uuid
+  proposedAt      DateTime  @map("proposed_at") @db.Timestamptz(3)
+  decidedById     String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt       DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.compensationReject.
+  rejectReason    String?   @map("reject_reason")
+  creditNoteId    String?   @map("credit_note_id") @db.Uuid
+  /// The board's authorization the credit used, above the binding threshold.
+  authorizationId String?   @map("authorization_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, creditNoteId], map: "experience_compensations_credit_note_key")
+  @@unique([tenantId, authorizationId], map: "experience_compensations_authorization_key")
+  @@index([tenantId, caseId, proposedAt], map: "experience_compensations_case_idx")
+  @@index([tenantId, status, proposedAt, id], map: "experience_compensations_list_idx")
+  @@map("experience_compensations")
+}
+
+/// What the compound promises its residents, and the target, measured
+/// where a metric exists. Retired with `active`, never deleted.
+model ServicePromise {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  titleEn     String   @map("title_en")
+  titleAr     String   @map("title_ar")
+  /// ticket_resolution_hours, request_response_hours, ticket_rating,
+  /// request_rating, partner_rating; null: not measured.
+  metric      String?
+  /// Hours, or an average rating.
+  target      Decimal? @db.Decimal(8, 2)
+  /// The share of items within the hours, 1–100 (an hours metric only).
+  targetShare Int?     @map("target_share")
+  active      Boolean  @default(true)
+  createdById String   @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "service_promises_list_idx")
+  @@map("service_promises")
 }

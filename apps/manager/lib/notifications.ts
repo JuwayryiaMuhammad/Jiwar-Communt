@@ -371,6 +371,10 @@ const TEXT: Record<string, (p: P) => string> = {
   'staff_review.ready': (p) => `The end-of-day review of ${p.date} is ready`,
   'maintenance.service_pressure': (p) =>
     `Service pressure: ${p.open} open tickets for ${p.available} available technician${p.available === 1 ? '' : 's'}`,
+  // Experience and recovery (ADR 0082).
+  'experience_case.opened': (p) => `Case ${p.caseNumber} was opened: ${words(p.signal)}`,
+  'experience_case.assigned': (p) => `Case ${p.caseNumber} (${words(p.caseKind)}) is yours`,
+  'experience_compensation.proposed': (p) => `A compensation (${words(p.compensationKind)}) on case ${p.caseNumber} waits for your decision`,
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -416,6 +420,11 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   // The operations dashboard (ADR 0079).
   if (n.targetType === 'staff_brief') return can('dashboard.read') ? '/briefs' : null;
   if (n.targetType === 'service_pressure') return can('tickets.dispatch') ? '/maintenance' : null;
+  // Experience and recovery (ADR 0082).
+  if (n.targetType === 'experience_case' && n.targetId)
+    return can('experience.manage') ? `/experience/cases/${n.targetId}` : null;
+  if (n.targetType === 'experience_compensation')
+    return can('experience.compensate') ? '/experience/compensations' : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

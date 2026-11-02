@@ -21,6 +21,8 @@ export const APPROVAL_TYPES = [
   'waiver_above_limit',
   'payment_plan_above_limit',
   'legal_escalation',
+  // ADR 0082: a compensation above the manager's limit.
+  'compensation_above_limit',
 ] as const;
 export type ApprovalType = (typeof APPROVAL_TYPES)[number];
 
@@ -28,13 +30,15 @@ export type ApprovalType = (typeof APPROVAL_TYPES)[number];
  * The types with a per-compound threshold. `major_contract`'s is the
  * manager's limit: an expense above it needs the board (ADR 0055). A
  * waiver's and a payment plan's bind when the compound makes them binding
- * (ADR 0073); `exceptional_fee`'s is only shown when a request is raised.
+ * (ADR 0073), and so does a compensation's (ADR 0082, binding by
+ * default); `exceptional_fee`'s is only shown when a request is raised.
  */
 export const THRESHOLD_TYPES = [
   'major_contract',
   'exceptional_fee',
   'waiver_above_limit',
   'payment_plan_above_limit',
+  'compensation_above_limit',
 ] as const satisfies readonly ApprovalType[];
 export type ThresholdType = (typeof THRESHOLD_TYPES)[number];
 
@@ -181,6 +185,7 @@ export type BindingReader = (
 export const BINDABLE_TYPES = [
   'waiver_above_limit',
   'payment_plan_above_limit',
+  'compensation_above_limit',
 ] as const satisfies readonly ThresholdType[];
 export type BindableType = (typeof BINDABLE_TYPES)[number];
 

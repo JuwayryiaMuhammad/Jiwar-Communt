@@ -22,21 +22,30 @@ const voice = read(
 const requests = read(
   'prisma/migrations/20261102090300_governance_approval_requests/migration.sql',
 );
+/**
+ * ADR 0082 widened the types (`compensation_above_limit`): the newest
+ * migration that sets each CHECK is the one the lists match.
+ */
+const authority = read(
+  'prisma/migrations/20270406090200_compensation_authority/migration.sql',
+);
 const mirror = read('packages/api/src/reasons.ts');
 const quoted = (list: readonly string[]) =>
   list.map((c) => `'${c}'`).join(', ');
 
 describe('board matters’ lists (ADR 0055)', () => {
   it('the approval types and the settings’ rows are the CHECKs’', () => {
-    expect(requests).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
-    expect(voice).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
-    expect(settings).toContain(`"type" IN (${quoted(THRESHOLD_TYPES)})`);
+    expect(authority).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
+    expect(authority).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
+    expect(authority).toContain(`"type" IN (${quoted(THRESHOLD_TYPES)})`);
   });
 
   it('the backfill gives every compound the defaults a new one gets', () => {
     for (const type of SETTING_TYPES)
-      expect(`${settings} ${voice}`).toContain(
-        `(t."id", '${type}', ${DEFAULT_DEADLINE_DAYS[type]})`,
+      expect(`${settings} ${voice} ${authority}`).toContain(
+        type === 'compensation_above_limit'
+          ? `(t."id", '${type}', ${DEFAULT_DEADLINE_DAYS[type]}, true)`
+          : `(t."id", '${type}', ${DEFAULT_DEADLINE_DAYS[type]})`,
       );
   });
 

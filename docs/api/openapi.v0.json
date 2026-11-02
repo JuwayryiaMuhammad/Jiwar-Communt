@@ -2033,7 +2033,8 @@
           "exceptional_fee",
           "waiver_above_limit",
           "payment_plan_above_limit",
-          "legal_escalation"
+          "legal_escalation",
+          "compensation_above_limit"
         ],
         "type": "string"
       },
@@ -3884,7 +3885,8 @@
             "enum": [
               "invoice_dispute",
               "plan_request",
-              "invoice"
+              "invoice",
+              "experience_compensation"
             ],
             "type": "string"
           }
@@ -4212,7 +4214,8 @@
       "BindableApprovalType": {
         "enum": [
           "waiver_above_limit",
-          "payment_plan_above_limit"
+          "payment_plan_above_limit",
+          "compensation_above_limit"
         ],
         "type": "string"
       },
@@ -29217,7 +29220,7 @@
       "GovernanceSettingDto": {
         "properties": {
           "binding": {
-            "description": "Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit and payment_plan_above_limit only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds.",
+            "description": "Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit, payment_plan_above_limit and compensation_above_limit (ADR 0082, binding by default) only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds.",
             "type": "boolean"
           },
           "deadlineDays": {
@@ -29295,6 +29298,7 @@
           "waiver_above_limit",
           "payment_plan_above_limit",
           "legal_escalation",
+          "compensation_above_limit",
           "board_appeal",
           "objection"
         ],
@@ -74206,7 +74210,7 @@
             "items": {
               "$ref": "#/components/schemas/GovernanceSettingDto"
             },
-            "maxItems": 9,
+            "maxItems": 10,
             "minItems": 1,
             "type": "array"
           }

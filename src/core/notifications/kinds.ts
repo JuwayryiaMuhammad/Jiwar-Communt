@@ -3110,6 +3110,32 @@ export const NOTIFICATION_KINDS = {
     target: 'plan_suggestion',
     params: { categoryKey: {}, ticketCount: {} },
   },
+  // Experience and recovery (ADR 0082): the staff only, codes only.
+  /** A signal opened a follow-up case: the holders of `experience.manage`. */
+  'experience_case.opened': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'experience_case',
+    params: { caseNumber: {}, signal: {} },
+  },
+  /** The recipient was made a case's owner. */
+  'experience_case.assigned': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'experience_case',
+    params: { caseNumber: {}, caseKind: {} },
+  },
+  /** A compensation waits for a decision: the holders of `experience.compensate`. */
+  'experience_compensation.proposed': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'experience_compensation',
+    params: { caseNumber: {}, compensationKind: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

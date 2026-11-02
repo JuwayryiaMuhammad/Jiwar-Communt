@@ -1118,4 +1118,30 @@ export const REASON_CODES = {
     'replacement_planned',
     'other',
   ],
+  // Experience and recovery (ADR 0082): why a rating of 1 or 2 is low (a
+  // ticket's, a management request's, a partner request's); how a
+  // follow-up or recovery case ends; why a compensation is refused.
+  lowRating: [
+    'not_fixed',
+    'slow',
+    'poor_quality',
+    'staff_conduct',
+    'no_show',
+    'poor_communication',
+    'price',
+    'other',
+  ],
+  experienceCaseOutcome: [
+    'resolved',
+    'compensated',
+    'no_action_needed',
+    'resident_unreachable',
+    'resident_declined',
+  ],
+  compensationReject: [
+    'not_justified',
+    'already_compensated',
+    'outside_policy',
+    'other',
+  ],
 } as const;

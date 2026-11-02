@@ -27,6 +27,7 @@ export const DEFAULT_DEADLINE_DAYS: Record<SettingType, number> = {
   waiver_above_limit: 14,
   payment_plan_above_limit: 14,
   legal_escalation: 14,
+  compensation_above_limit: 14,
   board_appeal: 30,
   objection: 14,
 };

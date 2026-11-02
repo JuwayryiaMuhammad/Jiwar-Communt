@@ -17,7 +17,13 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { BoardAuthority, type BoardAuthorizationRead } from './board-authority';
 
 const BOOL = ['true', 'false'] as const;
-const USES = ['invoice_dispute', 'plan_request', 'invoice'] as const;
+const USES = [
+  'invoice_dispute',
+  'plan_request',
+  'invoice',
+  // ADR 0082: a compensation's credit.
+  'experience_compensation',
+] as const;
 
 export class BoardAuthorizationsQueryDto {
   @ApiProperty({

@@ -58,7 +58,7 @@ export class GovernanceSettingDto {
     type: Boolean,
     required: false,
     description:
-      'Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit and payment_plan_above_limit only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds.',
+      'Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit, payment_plan_above_limit and compensation_above_limit (ADR 0082, binding by default) only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds.',
   })
   @IsOptional()
   @IsBoolean()

@@ -638,6 +638,16 @@ const ERROR_TEXT: Record<string, string> = {
   PLAN_SUGGESTION_NOT_FOUND: 'This suggestion was not found.',
   PLAN_SUGGESTION_DECIDED: 'This suggestion is decided already.',
   PLAN_NOT_OF_ASSET: 'That plan is not an active plan of this asset.',
+  // Experience and recovery (ADR 0082).
+  EXPERIENCE_CASE_NOT_FOUND: 'This case was not found.',
+  EXPERIENCE_CASE_OPEN: 'This unit has an open case already.',
+  EXPERIENCE_CASE_CLOSED: 'This case is closed.',
+  EXPERIENCE_CASE_COMPENSATION_PENDING: 'A compensation of this case waits for its decision.',
+  EXPERIENCE_CASE_NOT_COMPENSATED: 'No compensation of this case was approved.',
+  EXPERIENCE_OWNER_INVALID: 'The owner must be an active staff or manager account.',
+  COMPENSATION_NOT_FOUND: 'This compensation was not found.',
+  COMPENSATION_DECIDED: 'This compensation is decided already.',
+  SERVICE_PROMISE_NOT_FOUND: 'This service promise was not found.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

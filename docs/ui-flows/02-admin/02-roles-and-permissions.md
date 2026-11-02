@@ -229,6 +229,8 @@ sequenceDiagram
 | `correspondence.read` | مراسلات الوحدة: خط زمني واحد لكل ما كتبه سكانها والإدارة لبعض، وكل قراءة بتتسجل (ADR 0080) | manager | manager | `GET /staff/units/{unitId}/correspondence` |
 | `compliance.manage` | تقويم الامتثال (ADR 0087): الالتزامات (السلامة من الحريق، المصاعد، التأمين، التراخيص والتصاريح) ومن يتولاها ومواعيدها وتكرارها، وتسجيل الإنجاز وأدلته، وتقرير الحالة، ومهل التنبيه | staff, manager | manager | `/staff/compliance/items…`، `/staff/compliance/occurrences/{id}/complete`، `/evidence`، `/calendar`، `/report`، `/settings` |
 | `lockdown.start` | بدء الإغلاق الطارئ من المكتب بالتأكيد المكتوب نفسه الذي يكتبه الحارس (ADR 0087) | manager | manager | `POST /staff/security/lockdowns` |
+| `experience.manage` | تجربة السكان والتعافي: إشارات عدم الرضا، تقرير التقييمات، فتح حالات المتابعة والتعافي وإسنادها وإغلاقها، اقتراح التعويض، سجل وعود الخدمة، عتبات الإشارات وقواعد التعويض (ADR 0082) | staff, manager | manager | `/staff/experience/*` |
+| `experience.compensate` | البتّ في التعويض: رصيد عبر المالية حتى حد المجلس الملزم، وفوقه بما اعتمده المجلس؛ لا يُفوَّض لنائب (ADR 0082) | manager | manager | `POST /staff/experience/compensations/{id}/decide` |
 
 ملاحظات على الجدول:
 - بعض الشاشات تحتاج **صلاحيتين معًا**: قائمة "من يمكن أن يكون صاحب البلاغ" (`GET /maintenance/units/{unitId}/reporters`) تحتاج `tickets.dispatch` + `residents.read`. وشاشات وحدات طلبات الإدارة (`/management/units/*`) وجزء من `/management/requests` تحتاج `requests.handle` + `residents.read`. إذا أعطى المدير مشرفًا `tickets.dispatch` فقط فلن يرى هذه القوائم.

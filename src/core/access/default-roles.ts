@@ -120,6 +120,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       // Compliance and safety (ADR 0087).
       'compliance.manage',
       'lockdown.start',
+      'experience.manage',
+      'experience.compensate',
     ],
   },
   {

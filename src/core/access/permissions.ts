@@ -355,6 +355,15 @@ export const PERMISSIONS = {
   // the management's own start of a lockdown (ADR 0053's typed confirmation).
   'compliance.manage': { kinds: ['staff', 'manager'] },
   'lockdown.start': { kinds: ['manager'] },
+  // Experience and recovery (ADR 0082). `experience.manage` reads the
+  // dissatisfaction signals and the ratings report, opens, assigns and
+  // closes follow-up and recovery cases, proposes compensations, keeps the
+  // service promises register, the signal thresholds and the compensation
+  // rules. `experience.compensate` decides a compensation (a credit through
+  // finance, up to the board's binding threshold; above it, with what the
+  // board approved): the manager's, never a deputy's.
+  'experience.manage': { kinds: ['staff', 'manager'] },
+  'experience.compensate': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

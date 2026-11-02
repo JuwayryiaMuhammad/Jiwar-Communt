@@ -3344,6 +3344,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: '{ticketCount} أعطال متكررة تقترح صيانة دورية. افتح التطبيق لتقرر.',
     },
   },
+  'experience_case.opened': {
+    en: {
+      title: 'A unit needs a follow-up',
+      body: 'Case {caseNumber} was opened from a dissatisfaction signal.',
+    },
+    ar: {
+      title: 'وحدة تحتاج إلى متابعة',
+      body: 'فُتحت الحالة {caseNumber} من إشارة عدم رضا.',
+    },
+  },
+  'experience_case.assigned': {
+    en: {
+      title: 'A case is yours',
+      body: 'You now own case {caseNumber}.',
+    },
+    ar: {
+      title: 'حالة مسندة إليك',
+      body: 'أصبحت مسؤولًا عن الحالة {caseNumber}.',
+    },
+  },
+  'experience_compensation.proposed': {
+    en: {
+      title: 'A compensation to decide',
+      body: 'A compensation on case {caseNumber} waits for your decision.',
+    },
+    ar: {
+      title: 'تعويض بانتظار قرارك',
+      body: 'تعويض على الحالة {caseNumber} بانتظار قرارك.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

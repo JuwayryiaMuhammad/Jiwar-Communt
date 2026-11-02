@@ -26,11 +26,13 @@ const DAY_MS = 86_400_000;
 
 /**
  * Never delegated (ADR 0073): money, the board's matters, appeals, the
- * roles, and deputies themselves (no deputy of a deputy).
+ * roles, and deputies themselves (no deputy of a deputy). A compensation's
+ * decision is money too (ADR 0082).
  */
 export function delegable(permission: string): boolean {
   return (
     !permission.startsWith('finance.') &&
+    permission !== 'experience.compensate' &&
     !permission.startsWith('governance.') &&
     permission !== 'appeals.decide' &&
     permission !== 'roles.manage' &&

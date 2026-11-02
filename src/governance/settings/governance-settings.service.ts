@@ -28,8 +28,8 @@ export interface GovernanceSettingView {
   thresholded: boolean;
   /**
    * Above the threshold, the domain refuses unless the board approved it
-   * (ADR 0073): always major_contract; a waiver and a payment plan when the
-   * compound says so; never the rest.
+   * (ADR 0073): always major_contract; a waiver, a payment plan and a
+   * compensation (ADR 0082) when the compound says so; never the rest.
    */
   binding: boolean;
   /** Whether the compound may change `binding` for the type. */

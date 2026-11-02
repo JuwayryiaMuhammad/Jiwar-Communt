@@ -297,6 +297,9 @@ export const REASON_CODES = {
   maintenanceCaseResolve: ['fixed', 'work_planned', 'external_cause', 'other'],
   maintenanceCaseDismiss: ['not_related', 'isolated_faults', 'raised_in_error', 'other'],
   planSuggestionDismiss: ['already_planned', 'not_recurring', 'replacement_planned', 'other'],
+  lowRating: ['not_fixed', 'slow', 'poor_quality', 'staff_conduct', 'no_show', 'poor_communication', 'price', 'other'],
+  experienceCaseOutcome: ['resolved', 'compensated', 'no_action_needed', 'resident_unreachable', 'resident_declined'],
+  compensationReject: ['not_justified', 'already_compensated', 'outside_policy', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

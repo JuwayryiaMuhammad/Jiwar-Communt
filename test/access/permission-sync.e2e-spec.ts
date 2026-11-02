@@ -2906,4 +2906,58 @@ describe('Permission sync', () => {
       });
     });
   });
+
+  describe('Phase M2-10 (ADR 0082)', () => {
+    const m210 = ['experience.manage', 'experience.compensate'];
+    /** The catalog before M2-10: neither permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m210.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m210.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: both to the manager; no other role gains either', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M2-10 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m210].sort());
+      expect(report.rolesCreated).toEqual([]);
+      for (const p of m210)
+        expect((await role(t, 'manager')).permissions).toContain(p);
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'technician',
+        'security_supervisor',
+        'maintenance_supervisor',
+        'accountant',
+        'collector',
+        'unit_proxy',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m210.includes(p)),
+        ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
 });

@@ -1858,6 +1858,22 @@ export const ErrorCode = {
   PLAN_SUGGESTION_DECIDED: 'PLAN_SUGGESTION_DECIDED',
   /** That plan is not an active plan of the suggestion's asset (409). */
   PLAN_NOT_OF_ASSET: 'PLAN_NOT_OF_ASSET',
+  // Experience and recovery (ADR 0082).
+  EXPERIENCE_CASE_NOT_FOUND: 'EXPERIENCE_CASE_NOT_FOUND',
+  /** The unit has an open case already (409, params.caseId). */
+  EXPERIENCE_CASE_OPEN: 'EXPERIENCE_CASE_OPEN',
+  /** The case is closed (409). */
+  EXPERIENCE_CASE_CLOSED: 'EXPERIENCE_CASE_CLOSED',
+  /** A compensation of the case waits for its decision (409). */
+  EXPERIENCE_CASE_COMPENSATION_PENDING: 'EXPERIENCE_CASE_COMPENSATION_PENDING',
+  /** Closed as compensated with no compensation approved (409). */
+  EXPERIENCE_CASE_NOT_COMPENSATED: 'EXPERIENCE_CASE_NOT_COMPENSATED',
+  /** The owner is not an active staff or manager account (409). */
+  EXPERIENCE_OWNER_INVALID: 'EXPERIENCE_OWNER_INVALID',
+  COMPENSATION_NOT_FOUND: 'COMPENSATION_NOT_FOUND',
+  /** Decided already (409, params.status). */
+  COMPENSATION_DECIDED: 'COMPENSATION_DECIDED',
+  SERVICE_PROMISE_NOT_FOUND: 'SERVICE_PROMISE_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -2529,6 +2529,38 @@ export const AUDIT_ACTIONS = {
   'maintenance_case.opened': { log: 'tenant', target: 'maintenance_case' },
   'maintenance_case.resolved': { log: 'tenant', target: 'maintenance_case' },
   'maintenance_case.dismissed': { log: 'tenant', target: 'maintenance_case' },
+  // Experience and recovery (ADR 0082). Codes, ids and amounts only: a
+  // case's or a compensation's words never reach the trail.
+  // The signal thresholds; the compensation rules (changes per code).
+  'experience.settings_changed': { log: 'tenant', target: 'tenant' },
+  'experience.compensation_rules_changed': { log: 'tenant', target: 'tenant' },
+  // A signal the sweep raised, as the system. metadata: unitId, code,
+  // count, windowDays, caseId.
+  'experience_signal.raised': { log: 'tenant', target: 'experience_signal' },
+  // A case. metadata: unitId, number, kind, origin, signalId, source
+  // (opened); ownerId (assigned); outcome (closed).
+  'experience_case.opened': { log: 'tenant', target: 'experience_case' },
+  'experience_case.assigned': { log: 'tenant', target: 'experience_case' },
+  'experience_case.closed': { log: 'tenant', target: 'experience_case' },
+  // A compensation. metadata: caseId, unitId, kind, failureCode, amount
+  // (proposed); creditNoteId, authorizationId (approved); reasonCode
+  // (rejected).
+  'experience_compensation.proposed': {
+    log: 'tenant',
+    target: 'experience_compensation',
+  },
+  'experience_compensation.approved': {
+    log: 'tenant',
+    target: 'experience_compensation',
+  },
+  'experience_compensation.rejected': {
+    log: 'tenant',
+    target: 'experience_compensation',
+  },
+  // The service promises register. metadata: metric, target, targetShare,
+  // active; never the titles.
+  'service_promise.created': { log: 'tenant', target: 'service_promise' },
+  'service_promise.updated': { log: 'tenant', target: 'service_promise' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

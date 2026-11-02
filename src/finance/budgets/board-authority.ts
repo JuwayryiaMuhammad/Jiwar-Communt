@@ -14,9 +14,13 @@ import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { dbNow } from '../db-clock';
 import { money, show } from '../money';
 
-/** What an authorization served: one dispute's credit, or one plan. */
+/**
+ * What an authorization served: one dispute's credit, one plan, or one
+ * compensation's credit (ADR 0082).
+ */
 export type AuthorizationUse = {
-  type: 'invoice_dispute' | 'plan_request' | 'invoice';
+  type:
+    'invoice_dispute' | 'plan_request' | 'invoice' | 'experience_compensation';
   id: string;
 };
 

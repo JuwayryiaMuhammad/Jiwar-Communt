@@ -1065,4 +1065,17 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   compliance_evidence_file_key: null,
   // Corrective actions (ADR 0087).
   incident_actions_tenant_id_id_key: null,
+  // Experience and recovery (ADR 0082). One open case per unit is met with
+  // ON CONFLICT (a signal joins it; a hand is told EXPERIENCE_CASE_OPEN), a
+  // signal raised once per basis likewise; a credit note and an
+  // authorization serve one compensation, under its lock.
+  experience_cases_tenant_id_id_key: null,
+  experience_cases_tenant_id_number_key: null,
+  experience_cases_one_open_per_unit: null,
+  experience_signals_tenant_id_id_key: null,
+  experience_signals_basis_key: null,
+  experience_compensations_tenant_id_id_key: null,
+  experience_compensations_credit_note_key: null,
+  experience_compensations_authorization_key: null,
+  service_promises_tenant_id_id_key: null,
 };

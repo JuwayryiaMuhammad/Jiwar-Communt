@@ -15,6 +15,7 @@ const APPROVAL_TYPES = [
   'waiver_above_limit',
   'payment_plan_above_limit',
   'legal_escalation',
+  'compensation_above_limit',
 ];
 
 /** Approval requests, the staff's side (ADR 0055). */

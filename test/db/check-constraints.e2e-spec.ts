@@ -2847,6 +2847,55 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'kind is NOT NULL; drill_type, drill_outcome, drill_participants and drill_minutes are each tested IS NULL first, and their lists and ranges run only on a value; done_at only by IS [NOT] NULL',
   },
   gate_lockdowns_started_from: {},
+  // Experience and recovery (ADR 0082).
+  ticket_feedback_low_reason: {
+    guarded:
+      'low_reason_code IS NULL is tested first; rating IS NOT NULL is required before it is compared',
+  },
+  management_request_ratings_low_reason: {
+    guarded:
+      'low_reason_code IS NULL is tested first; the list runs only on a value (rating is NOT NULL)',
+  },
+  partner_ratings_low_reason: {
+    guarded:
+      'low_reason_code IS NULL is tested first; the list runs only on a value (stars is NOT NULL)',
+  },
+  experience_settings_range: {
+    guarded: 'each count is tested IS NULL first; the days are NOT NULL',
+  },
+  experience_counters_positive: {},
+  experience_cases_known: {},
+  experience_cases_origin_shape: {},
+  experience_cases_source_shape: {
+    guarded:
+      'source_type and failure_code are tested IS NULL first; each list runs only on a value',
+  },
+  experience_cases_text_length: {
+    guarded: 'each text is tested IS NULL first',
+  },
+  experience_cases_closed_shape: {
+    guarded:
+      'the closing columns only under IS [NOT] NULL; outcome IS NULL is tested first and listed only on a value',
+  },
+  experience_signals_known: {},
+  experience_compensation_rules_shape: {
+    guarded:
+      'amount is tested IS [NOT] NULL first and compared only on a value',
+  },
+  experience_compensations_known: {},
+  experience_compensations_amount_shape: {
+    guarded:
+      'amount and note are tested IS [NOT] NULL first and compared only on a value',
+  },
+  experience_compensations_decided_shape: {
+    guarded:
+      'the deciding columns only under IS [NOT] NULL; reject_reason IS NULL is tested first and listed only on a value',
+  },
+  service_promises_text_length: {},
+  service_promises_target_shape: {
+    guarded:
+      'each branch tests metric, target and target_share IS [NOT] NULL before it compares them',
+  },
 };
 
 interface Check {

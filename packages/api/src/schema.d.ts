@@ -25431,7 +25431,7 @@ export interface components {
         /** @enum {string} */
         ApprovalStatus: "pending" | "approved" | "rejected" | "withdrawn";
         /** @enum {string} */
-        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation";
+        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit";
         ApprovalView: {
             alternatives: components["schemas"]["ApprovalAlternativeView"][];
             attachments: components["schemas"]["ApprovalAttachmentView"][];
@@ -25973,7 +25973,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** @enum {string} */
-            type: "invoice_dispute" | "plan_request" | "invoice";
+            type: "invoice_dispute" | "plan_request" | "invoice" | "experience_compensation";
         };
         AuthorizeDelegateDto: {
             /** @description The delegate’s name, shown to the guard only after a valid delegate code. No phone. */
@@ -26075,7 +26075,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        BindableApprovalType: "waiver_above_limit" | "payment_plan_above_limit";
+        BindableApprovalType: "waiver_above_limit" | "payment_plan_above_limit" | "compensation_above_limit";
         BirthDateDto: {
             /** Format: date */
             birthDate: string;
@@ -34141,7 +34141,7 @@ export interface components {
             unitCode: string;
         };
         GovernanceSettingDto: {
-            /** @description Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit and payment_plan_above_limit only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds. */
+            /** @description Whether the threshold binds (ADR 0073): above it, finance refuses the credit or the plan unless the board approved it. waiver_above_limit, payment_plan_above_limit and compensation_above_limit (ADR 0082, binding by default) only (FIELD_NOT_ALLOWED otherwise); major_contract’s always binds. */
             binding?: boolean;
             /** @description Days the board has to decide a matter of this type raised from now on. */
             deadlineDays?: number;
@@ -34163,7 +34163,7 @@ export interface components {
             type: components["schemas"]["GovernanceSettingType"];
         };
         /** @enum {string} */
-        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "board_appeal" | "objection";
+        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "board_appeal" | "objection";
         GovernanceSettingsResponse: {
             items: components["schemas"]["GovernanceSettingResponse"][];
         };

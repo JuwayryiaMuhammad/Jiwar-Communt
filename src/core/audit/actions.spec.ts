@@ -265,6 +265,11 @@ describe('audit catalog', () => {
         // ADR 0087.
         'compliance_item',
         'incident_action',
+        // ADR 0082.
+        'experience_signal',
+        'experience_case',
+        'experience_compensation',
+        'service_promise',
       ]).toContain(def.target);
     }
   });

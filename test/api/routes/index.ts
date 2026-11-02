@@ -24,6 +24,7 @@ import {
 } from './staff-inbox';
 import { DISPATCH_DEPTH_ROUTES } from './dispatch-depth';
 import { VENDOR_ROUTES } from './vendors';
+import { STAFF_DASHBOARD_ROUTES } from './staff-dashboard';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
 import { FIELD_SAFETY_ROUTES } from './field-safety';
@@ -430,4 +431,6 @@ export const ROUTES: Row[] = [
   ...DISPATCH_DEPTH_ROUTES,
   // ADR 0077.
   ...VENDOR_ROUTES,
+  // ADR 0079.
+  ...STAFF_DASHBOARD_ROUTES,
 ];

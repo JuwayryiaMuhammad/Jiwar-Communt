@@ -1799,6 +1799,8 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0076.
       '/maintenance/assets/{id}/timeline': w.bAssetId,
       '/maintenance/warranty-claims/{id}': w.bWarrantyClaimId,
+      // ADR 0079: B's brief, not found for everyone of A.
+      '/staff/briefs/{id}': w.bStaffBriefId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,

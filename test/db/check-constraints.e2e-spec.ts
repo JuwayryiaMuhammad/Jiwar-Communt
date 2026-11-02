@@ -2719,6 +2719,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'status is NOT NULL; the decision, cancel and fulfilment columns are tested IS [NOT] NULL; each reason list runs only after its IS NULL test',
   },
+  // The operations dashboard (ADR 0079).
+  staff_dashboard_settings_minutes: {
+    guarded:
+      'each minute is tested IS NULL first; the ranges and the order run only on values',
+  },
+  staff_briefs_shape: {},
+  maintenance_service_pressure_range: {
+    guarded:
+      'open_per_technician IS NULL is tested first; the range runs only on a value',
+  },
 };
 
 interface Check {

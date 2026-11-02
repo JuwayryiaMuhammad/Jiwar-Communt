@@ -5,11 +5,15 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { localDate } from '../../core/common/slots/day-slots';
+import { MaintenanceGatePort } from '../../maintenance';
+import { dbNow } from '../db-clock';
 import { RosterCore } from '../roster/roster-core';
 import { CURRENCY } from '../violations/violations.service';
 import type {
   IncidentReportCountsView,
   IncidentReportView,
+  SafetyReportView,
   ViolationReportCountsView,
   ViolationReportView,
 } from './views/security-reports.views';
@@ -78,6 +82,21 @@ const VIOLATION_COLUMNS: CsvColumn[] = [
 
 /** The CSVs' last row: the period's totals. */
 const ALL = 'all';
+/** The incidents report and the safety KPIs cover up to a year (ADR 0087). */
+export const SAFETY_MAX_DAYS = 366;
+/** The incident types the safety KPIs count. */
+const SAFETY_TYPES = [
+  'injury',
+  'near_miss',
+  'hazard',
+  'fire',
+  'property_damage',
+];
+/** A safety observation: a hazard or a near miss someone reported. */
+const OBSERVATIONS = ['hazard', 'near_miss'];
+
+const pct = (part: number, whole: number): number | null =>
+  whole === 0 ? null : Math.floor((part * 100) / whole);
 
 const noIncidents = (): IncidentReportCountsView => ({
   reported: 0,
@@ -110,7 +129,8 @@ const noViolations = (): ViolationReportCountsView => ({
 
 /**
  * The incidents and violations reports (ADR 0053), over the compound's
- * days asked (a week by default, 31 at most): counts only, every type or
+ * days asked (a week by default, 31 at most; incidents 366, ADR 0087):
+ * counts only, every type or
  * kind in a fixed order and the period's totals, never a name, a note or
  * a unit. Incidents by when they happened, with their state now;
  * violations by their day. One fixed aggregate query each (a rollup gives
@@ -121,7 +141,125 @@ export class SecurityReportsService {
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly roster: RosterCore,
+    private readonly maintenance: MaintenanceGatePort,
   ) {}
+
+  /**
+   * The safety KPIs (ADR 0087) over the compound's days asked (30 by
+   * default, 366 at most): the safety incidents by type and the last
+   * injury, the observations' closure rate and time, the corrective
+   * actions made then and where all stand now, and the drills. Each an
+   * aggregate in SQL, counts and rates only.
+   */
+  safety(q: Period): Promise<SafetyReportView> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const period = await this.roster.period(
+        tx,
+        q,
+        { back: 29, span: 29 },
+        SAFETY_MAX_DAYS,
+      );
+      const tz = await this.roster.timeZone(tx);
+      const today = localDate(await dbNow(tx), tz);
+      const [i] = await tx.$queryRaw<
+        {
+          reported: number;
+          injuries: number;
+          near_misses: number;
+          hazards: number;
+          fires: number;
+          property_damage: number;
+          observations: number;
+          observations_closed: number;
+          avg_hours: number | null;
+        }[]
+      >`
+        SELECT count(*) FILTER (WHERE type = ANY(${SAFETY_TYPES}::text[]))::int AS reported,
+               count(*) FILTER (WHERE type = 'injury')::int AS injuries,
+               count(*) FILTER (WHERE type = 'near_miss')::int AS near_misses,
+               count(*) FILTER (WHERE type = 'hazard')::int AS hazards,
+               count(*) FILTER (WHERE type = 'fire')::int AS fires,
+               count(*) FILTER (WHERE type = 'property_damage')::int AS property_damage,
+               count(*) FILTER (WHERE type = ANY(${OBSERVATIONS}::text[]))::int AS observations,
+               count(*) FILTER (WHERE type = ANY(${OBSERVATIONS}::text[])
+                                  AND status = 'closed')::int AS observations_closed,
+               round(avg(extract(epoch FROM closed_at - created_at) / 3600)
+                     FILTER (WHERE type = ANY(${OBSERVATIONS}::text[])
+                               AND status = 'closed'), 1)::float8 AS avg_hours
+          FROM incidents
+         WHERE occurred_at >= ${period.start} AND occurred_at < ${period.end}`;
+      const [last] = await tx.$queryRaw<{ day: string | null }[]>`
+        SELECT to_char(max(occurred_at) AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS day
+          FROM incidents
+         WHERE type = 'injury' AND occurred_at < ${period.end}`;
+      const [a] = await tx.$queryRaw<
+        {
+          opened: number;
+          done: number;
+          done_on_time: number;
+          cancelled: number;
+          open_now: number;
+          overdue_now: number;
+        }[]
+      >`
+        SELECT count(*) FILTER (WHERE created_at >= ${period.start}
+                                  AND created_at < ${period.end})::int AS opened,
+               count(*) FILTER (WHERE created_at >= ${period.start} AND created_at < ${period.end}
+                                  AND status = 'done')::int AS done,
+               count(*) FILTER (WHERE created_at >= ${period.start} AND created_at < ${period.end}
+                                  AND status = 'done'
+                                  AND (done_at AT TIME ZONE ${tz})::date <= due_on)::int AS done_on_time,
+               count(*) FILTER (WHERE created_at >= ${period.start} AND created_at < ${period.end}
+                                  AND status = 'cancelled')::int AS cancelled,
+               count(*) FILTER (WHERE status = 'open')::int AS open_now,
+               count(*) FILTER (WHERE status = 'open'
+                                  AND due_on < ${today}::date)::int AS overdue_now
+          FROM incident_actions`;
+      const lastInjuryOn = last?.day ?? null;
+      return {
+        from: period.from,
+        to: period.to,
+        incidents: {
+          reported: i?.reported ?? 0,
+          injuries: i?.injuries ?? 0,
+          nearMisses: i?.near_misses ?? 0,
+          hazards: i?.hazards ?? 0,
+          fires: i?.fires ?? 0,
+          propertyDamage: i?.property_damage ?? 0,
+          lastInjuryOn,
+          daysWithoutInjury: lastInjuryOn
+            ? Math.max(
+                0,
+                Math.round(
+                  (Date.parse(`${period.to}T00:00:00Z`) -
+                    Date.parse(`${lastInjuryOn}T00:00:00Z`)) /
+                    86_400_000,
+                ),
+              )
+            : null,
+        },
+        observations: {
+          reported: i?.observations ?? 0,
+          closed: i?.observations_closed ?? 0,
+          closureRatePct: pct(
+            i?.observations_closed ?? 0,
+            i?.observations ?? 0,
+          ),
+          avgHoursToClose: i?.avg_hours ?? null,
+        },
+        actions: {
+          opened: a?.opened ?? 0,
+          done: a?.done ?? 0,
+          doneOnTime: a?.done_on_time ?? 0,
+          cancelled: a?.cancelled ?? 0,
+          onTimeRatePct: pct(a?.done_on_time ?? 0, a?.done ?? 0),
+          openNow: a?.open_now ?? 0,
+          overdueNow: a?.overdue_now ?? 0,
+        },
+        drills: await this.maintenance.drills(tx, period),
+      };
+    });
+  }
 
   incidents(q: Period): Promise<IncidentReportView> {
     return this.tenantTx.withTenantTx((tx) => this.incidentReport(tx, q));
@@ -167,7 +305,13 @@ export class SecurityReportsService {
     tx: TenantTxClient,
     q: Period,
   ): Promise<IncidentReportView> {
-    const period = await this.roster.period(tx, q, { back: 6, span: 6 });
+    // ADR 0087: a year at most, as the safety KPIs.
+    const period = await this.roster.period(
+      tx,
+      q,
+      { back: 6, span: 6 },
+      SAFETY_MAX_DAYS,
+    );
     const rows = await tx.$queryRaw<
       {
         type: string | null;

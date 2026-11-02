@@ -10,6 +10,7 @@ import { scopeOf } from '../lockdown-core';
 import type { LockdownRecord, OverrideRecord } from '../lockdown.service';
 
 const SCOPES = ['gate', 'all'] as const;
+const STARTED_FROM = ['gate', 'office'] as const;
 
 export class LockdownGateView {
   @ApiProperty({ type: String, format: 'uuid' })
@@ -42,6 +43,13 @@ export class GuardLockdownView {
   startedAt: Date;
   @ApiProperty({ type: FirstNameRefView })
   startedBy: FirstNameRefView;
+  @ApiProperty({
+    enum: STARTED_FROM,
+    enumName: 'LockdownStartedFrom',
+    description:
+      '`gate`: a guard on shift; `office`: the management (ADR 0087).',
+  })
+  startedFrom: string;
 
   static from(r: LockdownRecord): GuardLockdownView {
     const l = r.lockdown;
@@ -52,6 +60,7 @@ export class GuardLockdownView {
       reasonCode: l.reasonCode,
       startedAt: l.startedAt,
       startedBy: firstNameRef(r.startedBy),
+      startedFrom: l.startedFrom,
     };
   }
 }
@@ -113,6 +122,13 @@ export class StaffLockdownView {
   startedAt: Date;
   @ApiProperty({ type: AccountRefView })
   startedBy: AccountRefView;
+  @ApiProperty({
+    enum: STARTED_FROM,
+    enumName: 'LockdownStartedFrom',
+    description:
+      '`gate`: a guard on shift; `office`: the management (ADR 0087).',
+  })
+  startedFrom: string;
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   endedAt: Date | null;
   @ApiProperty({ type: AccountRefView, nullable: true })
@@ -137,6 +153,7 @@ export class StaffLockdownView {
       reasonCode: l.reasonCode,
       startedAt: l.startedAt,
       startedBy: accountRef(r.startedBy),
+      startedFrom: l.startedFrom,
       endedAt: l.endedAt,
       endedBy: r.endedBy && accountRef(r.endedBy),
       endReason: l.endReason,

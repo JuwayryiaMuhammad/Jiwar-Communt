@@ -109,3 +109,107 @@ export class ViolationReportView {
   })
   kinds: ViolationReportKindView[];
 }
+
+/** Safety incidents of the period (ADR 0087), by when they happened. */
+export class SafetyIncidentsView {
+  @ApiProperty({
+    type: Number,
+    description: 'Injuries, near misses, hazards, fires and property damage.',
+  })
+  reported: number;
+  @ApiProperty({ type: Number })
+  injuries: number;
+  @ApiProperty({ type: Number })
+  nearMisses: number;
+  @ApiProperty({ type: Number })
+  hazards: number;
+  @ApiProperty({ type: Number })
+  fires: number;
+  @ApiProperty({ type: Number })
+  propertyDamage: number;
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    description: 'The compound’s day of the last injury by the period’s end.',
+  })
+  lastInjuryOn: string | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Days from the last injury to the period’s last day.',
+  })
+  daysWithoutInjury: number | null;
+}
+
+/** Safety observations (ADR 0087): hazards and near misses reported. */
+export class SafetyObservationsView {
+  @ApiProperty({ type: Number })
+  reported: number;
+  @ApiProperty({ type: Number, description: 'Of them, closed now.' })
+  closed: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Closed over reported, in whole percent; null with none.',
+  })
+  closureRatePct: number | null;
+  @ApiProperty({ type: Number, nullable: true })
+  avgHoursToClose: number | null;
+}
+
+/** Corrective actions (ADR 0087): made in the period, and where all stand now. */
+export class SafetyActionsView {
+  @ApiProperty({ type: Number, description: 'Made in the period.' })
+  opened: number;
+  @ApiProperty({ type: Number, description: 'Of them, done.' })
+  done: number;
+  @ApiProperty({ type: Number, description: 'Of them, done by their day.' })
+  doneOnTime: number;
+  @ApiProperty({ type: Number })
+  cancelled: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Done by their day over done, in whole percent.',
+  })
+  onTimeRatePct: number | null;
+  @ApiProperty({ type: Number, description: 'Every action open now.' })
+  openNow: number;
+  @ApiProperty({ type: Number, description: 'Open now and past their day.' })
+  overdueNow: number;
+}
+
+/** Drills (ADR 0087): the readiness items of kind `drill`. */
+export class SafetyDrillsView {
+  @ApiProperty({ type: Number, description: 'Due on the period’s days.' })
+  scheduled: number;
+  @ApiProperty({ type: Number, description: 'Done in the period.' })
+  held: number;
+  @ApiProperty({ type: Number })
+  passed: number;
+  @ApiProperty({ type: Number })
+  issuesFound: number;
+  @ApiProperty({ type: Number })
+  failed: number;
+  @ApiProperty({ type: Number, description: 'Who took part, in all.' })
+  participants: number;
+  @ApiProperty({ type: Number, nullable: true })
+  avgMinutes: number | null;
+}
+
+/** The safety KPIs (ADR 0087): counts and rates only, over up to 366 days. */
+export class SafetyReportView {
+  @ApiProperty({ type: String, format: 'date' })
+  from: string;
+  @ApiProperty({ type: String, format: 'date' })
+  to: string;
+  @ApiProperty({ type: SafetyIncidentsView })
+  incidents: SafetyIncidentsView;
+  @ApiProperty({ type: SafetyObservationsView })
+  observations: SafetyObservationsView;
+  @ApiProperty({ type: SafetyActionsView })
+  actions: SafetyActionsView;
+  @ApiProperty({ type: SafetyDrillsView })
+  drills: SafetyDrillsView;
+}

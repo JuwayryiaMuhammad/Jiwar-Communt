@@ -24903,7 +24903,7 @@
               ],
               "query": [
                 {
-                  "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+                  "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
                   "disabled": true,
                   "key": "from",
                   "value": ""
@@ -24940,7 +24940,7 @@
               ],
               "query": [
                 {
-                  "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+                  "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
                   "disabled": true,
                   "key": "from",
                   "value": ""
@@ -24953,6 +24953,42 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/reports/incidents/export"
+            }
+          }
+        },
+        {
+          "name": "Read the safety KPIs",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "reports",
+                "safety"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s first day: 29 days ago by default. 30 days by default, 366 at most (PERIOD_TOO_LONG).",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/reports/safety"
             }
           }
         },
@@ -25156,6 +25192,47 @@
                   "key": "status",
                   "value": ""
                 }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/security/lockdowns"
+            }
+          }
+        },
+        {
+          "name": "Lock one gate or all down from the office",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"scope\": \"gate\",\n  \"reasonCode\": \"\",\n  \"confirmation\": \"LOCKDOWN\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `confirmation` | `LOCKDOWN` | yes | The confirmation the guard types: exactly `LOCKDOWN`. Nothing starts without it. |\n| `gateId` | string (uuid) |  | The gate, for `scope: gate`; never with `all`. |\n| `reasonCode` | string | yes | From the closed list `gateLockdownStart`. |\n| `scope` | `gate` \\| `all` | yes | `gate`: one gate (`gateId`); `all`: every gate. |\n\n**Responses:** 200, 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "security",
+                "lockdowns"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/security/lockdowns"
             }
@@ -30441,9 +30518,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"decision\": \"renew\"\n}"
+              "raw": "{\n  \"decision\": \"renew\",\n  \"minutes\": 1,\n  \"outcome\": \"passed\",\n  \"participants\": 0\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `renew` \\| `replace` \\| `end` |  | A contract review’s, required; no other kind’s. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `renew` \\| `replace` \\| `end` |  | A contract review’s, required; no other kind’s. |\n| `minutes` | number |  | The minutes a drill took (an evacuation’s time to the assembly point), when counted. |\n| `outcome` | `passed` \\| `issues_found` \\| `failed` |  | A drill’s (ADR 0087), required; no other kind’s. |\n| `participants` | number |  | How many took part in a drill, required; no other kind’s. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -30803,7 +30880,7 @@
               },
               "raw": "{\n  \"kind\": \"task\",\n  \"title\": \"\",\n  \"ownerId\": \"\",\n  \"dueOn\": \"2026-01-01\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `checklistId` | string (uuid) |  | An inspection campaign’s checklist, for inspections. |\n| `contractId` | string (uuid) |  | A contract review’s maintenance contract: in force, ending by the program’s last day. |\n| `dueOn` | string (date) | yes | From today, by the program’s last day. |\n| `estimateAmount` | string |  | EGP, more than 0: an estimate’s (required), or a task’s; never another kind’s. |\n| `kind` | `task` \\| `inspection_campaign` \\| `contract_review` \\| `estimate` | yes |  |\n| `ownerId` | string (uuid) | yes | An active staff member or the manager. Told. |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `checklistId` | string (uuid) |  | An inspection campaign’s checklist, for inspections. |\n| `contractId` | string (uuid) |  | A contract review’s maintenance contract: in force, ending by the program’s last day. |\n| `drillType` | `fire` \\| `evacuation` \\| `lockdown` \\| `medical` \\| `earthquake` \\| `other` |  | A drill’s (ADR 0087). |\n| `dueOn` | string (date) | yes | From today, by the program’s last day. |\n| `estimateAmount` | string |  | EGP, more than 0: an estimate’s (required), or a task’s; never another kind’s. |\n| `kind` | `task` \\| `inspection_campaign` \\| `contract_review` \\| `estimate` \\| `drill` | yes |  |\n| `ownerId` | string (uuid) | yes | An active staff member or the manager. Told. |\n| `title` | string | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -35165,9 +35242,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"decision\": \"renew\"\n}"
+              "raw": "{\n  \"decision\": \"renew\",\n  \"minutes\": 1,\n  \"outcome\": \"passed\",\n  \"participants\": 0\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `renew` \\| `replace` \\| `end` |  | A contract review’s, required; no other kind’s. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `renew` \\| `replace` \\| `end` |  | A contract review’s, required; no other kind’s. |\n| `minutes` | number |  | The minutes a drill took (an evacuation’s time to the assembly point), when counted. |\n| `outcome` | `passed` \\| `issues_found` \\| `failed` |  | A drill’s (ADR 0087), required; no other kind’s. |\n| `participants` | number |  | How many took part in a drill, required; no other kind’s. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -57661,7 +57738,7 @@
               ],
               "query": [
                 {
-                  "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+                  "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
                   "disabled": true,
                   "key": "from",
                   "value": ""
@@ -57698,7 +57775,7 @@
               ],
               "query": [
                 {
-                  "description": "The compound’s first day: six days ago by default. A week by default, 31 days at most (PERIOD_TOO_LONG).",
+                  "description": "The compound’s first day: six days ago by default. A week by default; 366 days at most for incidents (ADR 0087), 31 for violations (PERIOD_TOO_LONG).",
                   "disabled": true,
                   "key": "from",
                   "value": ""

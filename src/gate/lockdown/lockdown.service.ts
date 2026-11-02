@@ -24,10 +24,13 @@ import { LockdownCore, scopeOf, type LockdownScope } from './lockdown-core';
 import {
   GuardLockdownView,
   LockdownOverrideView,
+  StaffLockdownView,
 } from './views/lockdown.views';
 
 export const LOCKDOWN_RESOURCE = 'gate_lockdown';
 export const LOCKDOWN_OVERRIDE_RESOURCE = 'gate_lockdown_override';
+/** The management's start from the office, replayed as its own view (ADR 0087). */
+export const OFFICE_LOCKDOWN_RESOURCE = 'gate_lockdown_office';
 
 export const END_NOTE = { min: 1, max: 500 } as const;
 
@@ -59,7 +62,8 @@ const lockdownEnded = () =>
 /**
  * The lockdown of the gates (ADR 0053).
  *
- * - **Started** by a guard on shift (at a gate or in a zone), for one gate
+ * - **Started** by a guard on shift (at a gate or in a zone), or by the
+ *   management from the office (ADR 0087, `lockdown.start`), for one gate
  *   or all, with a reason code and the typed confirmation, immediately.
  *   One live lockdown per scope: a second start of a live scope answers 200
  *   with it and tells nobody again. The guards on shift and the management
@@ -93,6 +97,9 @@ export class LockdownService implements OnModuleInit {
     this.idempotency.renderer(LOCKDOWN_RESOURCE, async (id) =>
       GuardLockdownView.from(await this.get(id)),
     );
+    this.idempotency.renderer(OFFICE_LOCKDOWN_RESOURCE, async (id) =>
+      StaffLockdownView.from(await this.get(id)),
+    );
     this.idempotency.renderer(LOCKDOWN_OVERRIDE_RESOURCE, (id) =>
       this.tenantTx.withTenantTx(async (tx) => {
         const o = await tx.gateLockdownOverride.findUniqueOrThrow({
@@ -112,6 +119,31 @@ export class LockdownService implements OnModuleInit {
     gateId?: string;
     reasonCode: string;
   }): Promise<{ record: LockdownRecord; created: boolean }> {
+    return this.begin(input, 'gate');
+  }
+
+  /**
+   * The management starts one from the office (ADR 0087, `lockdown.start`,
+   * the manager only): the same scope, reason code and typed confirmation,
+   * under the same state row, with no shift. A repeat of a live scope
+   * answers 200 with it, whoever started it, and tells nobody again.
+   */
+  startFromOffice(input: {
+    scope: LockdownScope;
+    gateId?: string;
+    reasonCode: string;
+  }): Promise<{ record: LockdownRecord; created: boolean }> {
+    return this.begin(input, 'office');
+  }
+
+  private begin(
+    input: {
+      scope: LockdownScope;
+      gateId?: string;
+      reasonCode: string;
+    },
+    from: 'gate' | 'office',
+  ): Promise<{ record: LockdownRecord; created: boolean }> {
     if ((input.scope === 'gate') !== (input.gateId !== undefined))
       throw appError.badRequest(
         ErrorCode.VALIDATION_FAILED,
@@ -139,7 +171,11 @@ export class LockdownService implements OnModuleInit {
       // 0056's lock order): the shift's end waits for the start, or came
       // first and the guard is refused; never a lockdown started by a
       // shift already over.
-      const shift = await this.shifts.requireOnDutyLocked(tx);
+      const resource =
+        from === 'gate' ? LOCKDOWN_RESOURCE : OFFICE_LOCKDOWN_RESOURCE;
+      // From the office there is no shift: the account, then the state.
+      const shift =
+        from === 'gate' ? await this.shifts.requireOnDutyLocked(tx) : null;
       const gateId = input.scope === 'gate' ? input.gateId! : null;
       if (gateId) {
         const gate = await tx.gate.findUnique({ where: { id: gateId } });
@@ -153,7 +189,7 @@ export class LockdownService implements OnModuleInit {
       if (live) {
         await this.idempotency.claim(
           tx,
-          { type: LOCKDOWN_RESOURCE, id: live.id },
+          { type: resource, id: live.id },
           HttpStatus.OK,
         );
         return { record: await this.record(tx, live), created: false };
@@ -162,7 +198,7 @@ export class LockdownService implements OnModuleInit {
         where: { endedAt: null },
       });
       const id = newId();
-      await this.idempotency.claim(tx, { type: LOCKDOWN_RESOURCE, id });
+      await this.idempotency.claim(tx, { type: resource, id });
       const lockdown = await tx.gateLockdown.create({
         data: {
           id,
@@ -170,7 +206,8 @@ export class LockdownService implements OnModuleInit {
           gateId,
           reasonCode,
           startedById: me,
-          startedShiftId: shift.id,
+          startedShiftId: shift?.id ?? null,
+          startedFrom: from,
           startedAt: await dbNow(tx),
         },
       });
@@ -200,7 +237,8 @@ export class LockdownService implements OnModuleInit {
           scope,
           gateId,
           reasonCode,
-          shiftId: shift.id,
+          shiftId: shift?.id ?? null,
+          from,
           recipients: told,
           residents: residentsTold,
         },
@@ -209,7 +247,7 @@ export class LockdownService implements OnModuleInit {
         kind: 'lockdown_started',
         source: { type: 'lockdown', id },
         gateId,
-        shiftId: shift.id,
+        shiftId: shift?.id ?? null,
       });
       return { record: await this.record(tx, lockdown), created: true };
     });

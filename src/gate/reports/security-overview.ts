@@ -18,8 +18,16 @@ export class SecurityOverview implements OnModuleInit {
     this.matters.registerOverview('security', async (period) => {
       const incidents = await this.reports.incidents(period);
       const violations = await this.reports.violations(period);
+      // ADR 0087: the safety KPIs of the same days.
+      const safety = await this.reports.safety(period);
       return {
         incidents: incidents.totals,
+        safety: {
+          incidents: safety.incidents,
+          observations: safety.observations,
+          actions: safety.actions,
+          drills: safety.drills,
+        },
         violations: violations.totals,
         currency: violations.currency,
       };

@@ -90,7 +90,8 @@ export class RosterCore {
   }
 
   /**
-   * The compound's days `from` … `to`, inclusive, at most MAX_RANGE_DAYS.
+   * The compound's days `from` … `to`, inclusive, at most MAX_RANGE_DAYS
+   * (or `maxDays`: the safety reports' year, ADR 0087).
    * Absent, `from` is `back` days before today and `to` is `span` days
    * after `from`.
    */
@@ -98,6 +99,7 @@ export class RosterCore {
     tx: TenantTxClient,
     q: { from?: string; to?: string },
     defaults: { back: number; span: number } = { back: 0, span: 13 },
+    maxDays: number = MAX_RANGE_DAYS,
   ): Promise<Period> {
     const tz = await this.timeZone(tx);
     const from =
@@ -106,11 +108,11 @@ export class RosterCore {
     const fields: Parameters<typeof invalid>[0] = [];
     if (to < from)
       fields.push({ field: 'to', code: FieldErrorCode.ENDS_BEFORE_START });
-    else if (dayCount(from, to) > MAX_RANGE_DAYS)
+    else if (dayCount(from, to) > maxDays)
       fields.push({
         field: 'to',
         code: FieldErrorCode.PERIOD_TOO_LONG,
-        params: { maxDays: MAX_RANGE_DAYS },
+        params: { maxDays },
       });
     if (fields.length) throw invalid(fields);
     return {

@@ -3,10 +3,14 @@ import { ApiOkResponse, ApiOperation, ApiProduces } from '@nestjs/swagger';
 import { RequireAnyPermission } from '../../core/access/require-permissions.decorator';
 import { csvFile } from '../../core/common/csv';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
-import { SecurityReportQueryDto } from './dto/security-reports.dto';
+import {
+  SafetyReportQueryDto,
+  SecurityReportQueryDto,
+} from './dto/security-reports.dto';
 import { SecurityReportsService } from './security-reports.service';
 import {
   IncidentReportView,
+  SafetyReportView,
   ViolationReportView,
 } from './views/security-reports.views';
 
@@ -76,5 +80,25 @@ export class ViolationReportController {
   async export(@Query() q: SecurityReportQueryDto): Promise<StreamableFile> {
     const { name, body } = await this.reports.violationsCsv(q);
     return csvFile(name, body);
+  }
+}
+
+/** The safety KPIs (ADR 0087). */
+@ApiArea('incidents')
+@RequireAnyPermission('incidents.manage', 'guard_reports.read')
+@Controller('staff/security/reports/safety')
+export class SafetyReportController {
+  constructor(private readonly reports: SecurityReportsService) {}
+
+  @Get()
+  @NoStore()
+  @ApiOperation({
+    summary: 'Read the safety KPIs',
+    description:
+      'Over the compound’s days asked (30 by default, 366 at most): the safety incidents and the days since the last injury, the observations’ closure rate and time, the corrective actions and the drills. Counts and rates only.',
+  })
+  @ApiOkResponse({ type: SafetyReportView })
+  report(@Query() q: SafetyReportQueryDto): Promise<SafetyReportView> {
+    return this.reports.safety(q);
   }
 }

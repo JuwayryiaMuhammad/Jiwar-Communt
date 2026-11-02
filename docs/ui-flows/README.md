@@ -96,6 +96,7 @@
 | [01-resident-requests](07-management-requests/01-resident-requests.md) | طلبات الساكن للإدارة، المحادثة، المواعيد، و"طلباتي" |
 | [02-staff-inbox](07-management-requests/02-staff-inbox.md) | صندوق وارد الموظفين والتصعيد |
 | [03-management-settings](07-management-requests/03-management-settings.md) | الموضوعات، ساعات العمل، إعدادات الطلبات |
+| [04-office-queue](07-management-requests/04-office-queue.md) | رسالة من الإدارة، تغيير الموضوع، تحويل الطلب لبلاغ، قوالب الرد والإعلان، الخطابات الرسمية والتحقق منها، مراسلات الوحدة، الإعلان لوحدة والتذكير، الاقتراح المؤجل |
 
 ### 08 — المرافق
 | الملف | الفيتشر |

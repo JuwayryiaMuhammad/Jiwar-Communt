@@ -450,6 +450,13 @@ BEGIN
         (t, 'waiver_above_limit', 14, 1000.00, true),
         (t, 'payment_plan_above_limit', 14, NULL, false);
       INSERT INTO staff_inbox_due_hours (tenant_id, type, hours) VALUES (t, 'vehicle', 12);
+      -- ADR 0085 recreates both inbox CHECKs: an overdue item already told
+      -- must pass the wider one; the office cash payment above must not be
+      -- anyone's custody (custody starts at the migration).
+      INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
+        (t, 'plan_request', gen_random_uuid(), now() - interval '1 hour');
+      INSERT INTO finance_counters (tenant_id, kind, last_number) VALUES (t, 'deposit', 3)
+        ON CONFLICT (tenant_id, kind) DO NOTHING;
       INSERT INTO account_deputies (id, tenant_id, principal_account_id, deputy_account_id, permissions,
                                     starts_at, ends_at, created_by_account_id) VALUES
         (gen_random_uuid(), t, mgr, guard, ARRAY['permits.manage'], now(), now() + interval '3 days', mgr);

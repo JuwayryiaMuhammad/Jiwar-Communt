@@ -3645,6 +3645,8 @@ enum FilePurpose {
   floor_plan
   @@map("file_purpose")
   vendor_document
+  /// A compliance item's evidence (ADR 0087): a photo or a PDF, 10 MB.
+  compliance_evidence
 }
 
 enum FileStatus {
@@ -9818,7 +9820,10 @@ model GateLockdown {
   gateId         String?   @map("gate_id") @db.Uuid
   reasonCode     String    @map("reason_code")
   startedById    String    @map("started_by_account_id") @db.Uuid
-  startedShiftId String    @map("started_shift_id") @db.Uuid
+  /// The guard's shift that started it; null when the management did (ADR 0087).
+  startedShiftId String?   @map("started_shift_id") @db.Uuid
+  /// gate (a guard on shift) | office (the management, ADR 0087).
+  startedFrom    String    @default("gate") @map("started_from")
   startedAt      DateTime  @map("started_at") @db.Timestamptz(3)
   endedAt        DateTime? @map("ended_at") @db.Timestamptz(3)
   endedById      String?   @map("ended_by_account_id") @db.Uuid
@@ -10235,6 +10240,36 @@ model IncidentNote {
   @@unique([tenantId, id])
   @@index([tenantId, incidentId, createdAt, id], map: "incident_notes_incident_idx")
   @@map("incident_notes")
+}
+
+/// A corrective action of an incident (ADR 0087): its owner, its day, done
+/// or called off once. An incident does not close while one is open.
+model IncidentAction {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  incidentId        String    @map("incident_id") @db.Uuid
+  /// Null only once an erasure cleared it.
+  description       String?
+  ownerId           String    @map("owner_account_id") @db.Uuid
+  dueOn             DateTime  @map("due_on") @db.Date
+  /// open | done | cancelled.
+  status            String    @default("open")
+  doneAt            DateTime? @map("done_at") @db.Timestamptz(3)
+  doneById          String?   @map("done_by_account_id") @db.Uuid
+  doneNote          String?   @map("done_note")
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById     String?   @map("cancelled_by_account_id") @db.Uuid
+  /// REASON_CODES.incidentActionCancel.
+  cancelReason      String?   @map("cancel_reason")
+  overdueNotifiedAt DateTime? @map("overdue_notified_at") @db.Timestamptz(3)
+  textClearedAt     DateTime? @map("text_cleared_at") @db.Timestamptz(3)
+  createdById       String    @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, incidentId, createdAt, id], map: "incident_actions_incident_idx")
+  @@map("incident_actions")
 }
 
 /// The author's and a reviewer's acknowledgement of an incident, once each.
@@ -11670,6 +11705,94 @@ model PurchaseRequest {
   @@map("purchase_requests")
 }
 
+/// A compound's compliance lead times (ADR 0087): one row, made by its first
+/// change; with none, 60, 30 and 7 days.
+model ComplianceSettings {
+  tenantId    String   @id @map("tenant_id") @db.Uuid
+  leadDays    Int[]    @default([60, 30, 7]) @map("lead_days") @db.SmallInt
+  updatedById String?  @map("updated_by_account_id") @db.Uuid
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("compliance_settings")
+}
+
+/// What the compound keeps valid (ADR 0087): a fire system's certificate,
+/// a lift's licence, an insurance policy, a licence or a permit. Retired
+/// once; never deleted.
+model ComplianceItem {
+  id               String    @id @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  /// COMPLIANCE_KINDS.
+  kind             String
+  title            String
+  authority        String?
+  reference        String?
+  assetId          String?   @map("asset_id") @db.Uuid
+  commonAreaId     String?   @map("common_area_id") @db.Uuid
+  vendorId         String?   @map("vendor_id") @db.Uuid
+  ownerId          String?   @map("owner_account_id") @db.Uuid
+  recurrenceMonths Int?      @map("recurrence_months") @db.SmallInt
+  /// Its own lead times; empty: the compound's.
+  leadDays         Int[]     @default([]) @map("lead_days") @db.SmallInt
+  notes            String?
+  retiredAt        DateTime? @map("retired_at") @db.Timestamptz(3)
+  retiredById      String?   @map("retired_by_account_id") @db.Uuid
+  /// REASON_CODES.complianceRetire.
+  retireReason     String?   @map("retire_reason")
+  createdById      String?   @map("created_by_account_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, kind, createdAt, id], map: "compliance_items_list_idx")
+  @@map("compliance_items")
+}
+
+/// A compliance item's due day (ADR 0087): one open at a time; done or
+/// called off once.
+model ComplianceOccurrence {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  itemId            String    @map("item_id") @db.Uuid
+  dueOn             DateTime  @map("due_on") @db.Date
+  /// open | done | cancelled.
+  status            String    @default("open")
+  leadAlertedDays   Int?      @map("lead_alerted_days") @db.SmallInt
+  overdueNotifiedAt DateTime? @map("overdue_notified_at") @db.Timestamptz(3)
+  doneOn            DateTime? @map("done_on") @db.Date
+  doneAt            DateTime? @map("done_at") @db.Timestamptz(3)
+  doneById          String?   @map("done_by_account_id") @db.Uuid
+  certificateNumber String?   @map("certificate_number")
+  expiresOn         DateTime? @map("expires_on") @db.Date
+  note              String?
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById     String?   @map("cancelled_by_account_id") @db.Uuid
+  previousId        String?   @map("previous_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, itemId, dueOn(sort: Desc), id(sort: Desc)], map: "compliance_occurrences_item_idx")
+  @@map("compliance_occurrences")
+}
+
+/// A due day's evidence file (ADR 0087): never edited, removed once.
+model ComplianceEvidence {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  occurrenceId String    @map("occurrence_id") @db.Uuid
+  fileId       String    @map("file_id") @db.Uuid
+  addedById    String    @map("added_by_account_id") @db.Uuid
+  addedAt      DateTime  @map("added_at") @db.Timestamptz(3)
+  removedAt    DateTime? @map("removed_at") @db.Timestamptz(3)
+  removedById  String?   @map("removed_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, fileId], map: "compliance_evidence_file_key")
+  @@index([tenantId, occurrenceId, addedAt, id], map: "compliance_evidence_occurrence_idx")
+  @@map("compliance_evidence")
+}
+
 /// What the compound measures (ADR 0066): a unit's or a common area's
 /// electricity, water, gas, fuel or a generator's running hours. Its code,
 /// kind, mode, multiplier and place never change (a trigger); retired
@@ -11913,6 +12036,12 @@ model ReadinessItem {
   checklistId       String?   @map("checklist_id") @db.Uuid
   /// REASON_CODES.contractReviewDecision, once a review is done.
   decision          String?
+  /// A drill's DRILL_TYPES (ADR 0087).
+  drillType         String?   @map("drill_type")
+  /// REASON_CODES.drillOutcome, with its done; its headcount and minutes too.
+  drillOutcome      String?   @map("drill_outcome")
+  drillParticipants Int?      @map("drill_participants")
+  drillMinutes      Int?      @map("drill_minutes")
   doneAt            DateTime? @map("done_at") @db.Timestamptz(3)
   doneById          String?   @map("done_by_account_id") @db.Uuid
   cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)

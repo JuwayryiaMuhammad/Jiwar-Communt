@@ -181,6 +181,10 @@ import { PurchasesService } from './purchases/purchases.service';
 import { VendorDocumentSweep } from './vendors/vendor-sweep';
 import { VendorsController } from './vendors/vendors.controller';
 import { VendorsService } from './vendors/vendors.service';
+import { ComplianceController } from './compliance/compliance.controller';
+import { ComplianceOverview } from './compliance/compliance-overview';
+import { ComplianceService } from './compliance/compliance.service';
+import { ComplianceSweep } from './compliance/compliance-sweep';
 import { MeterAlertsService } from './energy/alerts.service';
 import { ConsumptionService } from './energy/consumption.service';
 import { HouseholdConsumptionController } from './energy/household-consumption.controller';
@@ -307,6 +311,7 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     ContractPaymentsDueController,
     VendorsController,
     PurchasesController,
+    ComplianceController,
     EconomicsController,
     MetersController,
     MeterAlertsController,
@@ -418,6 +423,9 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     VendorDocumentSweep,
     PurchasesService,
     PurchaseInboxItems,
+    ComplianceService,
+    ComplianceSweep,
+    ComplianceOverview,
     EconomicsService,
     MetersService,
     ReadingsService,

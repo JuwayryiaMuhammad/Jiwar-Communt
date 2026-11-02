@@ -14698,6 +14698,212 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/compliance/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The compliance calendar
+         * @description The due days of the days asked (90 by default, 366 at most) and the vendors’ papers expiring then, by day.
+         */
+        get: operations["ComplianceController_calendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/evidence/{evidenceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove evidence filed by mistake */
+        delete: operations["ComplianceController_removeEvidence"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compliance items
+         * @description In the order they were made, each with its open due day and its state today.
+         */
+        get: operations["ComplianceController_list"];
+        put?: never;
+        /**
+         * Add a compliance item
+         * @description Its first due day is made with it. The responsible staff member is told.
+         */
+        post: operations["ComplianceController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a compliance item
+         * @description With its due days, the latest first, and their evidence.
+         */
+        get: operations["ComplianceController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a compliance item
+         * @description `nextDueOn` moves its open due day; its notices start again.
+         */
+        patch: operations["ComplianceController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/items/{id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire a compliance item
+         * @description Once: its open due day is called off.
+         */
+        post: operations["ComplianceController_retire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/occurrences/{occurrenceId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a due day done
+         * @description Once (COMPLIANCE_OCCURRENCE_ENDED after), with what it gave and its evidence. The next due day is made: the one given, else the expiry, else so many months on; none for an item done once.
+         */
+        post: operations["ComplianceController_complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/occurrences/{occurrenceId}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * File evidence on a due day
+         * @description Open or done, 20 live files at most.
+         */
+        post: operations["ComplianceController_addEvidence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The compliance status report
+         * @description Per kind, how many items are valid, due soon, overdue, done once or retired today; and the vendors’ papers. Counts only.
+         */
+        get: operations["ComplianceController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/report/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the compliance status as CSV
+         * @description UTF-8 with a byte-order mark, CRLF; one row per item not retired, the soonest due first.
+         */
+        get: operations["ComplianceController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compliance/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s compliance lead times */
+        get: operations["ComplianceController_settings"];
+        /**
+         * Set the compound’s compliance lead times
+         * @description One to three, 1 to 365 days each; 60, 30 and 7 by default.
+         */
+        put: operations["ComplianceController_updateSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/compound-documents": {
         parameters: {
             query?: never;
@@ -24607,6 +24813,13 @@ export interface components {
             kind: "plan" | "manual" | "warranty" | "certificate" | "photo" | "other";
             title: string;
         };
+        AddEvidenceDto: {
+            /**
+             * Format: uuid
+             * @description A finalized `compliance_evidence` upload.
+             */
+            fileId: string;
+        };
         AddPermitDrawingDto: {
             /**
              * Format: uuid
@@ -28190,6 +28403,29 @@ export interface components {
             /** @description The token from the invitation link. */
             token: string;
         };
+        CompleteOccurrenceDto: {
+            /** @description The certificate’s, licence’s or policy’s number it gave. */
+            certificateNumber?: string;
+            /**
+             * Format: date
+             * @description The day it was done: not after today, a year back at most.
+             */
+            doneOn: string;
+            /**
+             * Format: date
+             * @description When what it gave expires, after `doneOn`: the next due day, unless `nextDueOn` is given.
+             */
+            expiresOn?: string;
+            /** @description Finalized `compliance_evidence` uploads, filed with it. */
+            fileIds?: string[];
+            /**
+             * Format: date
+             * @description The next due day, after `doneOn`; by default the expiry, else so many months on, else none.
+             */
+            nextDueOn?: string;
+            /** @description About the work, never a person. */
+            note?: string;
+        };
         CompleteProxyDto: {
             code: string;
             /** @description The token from the proxy invitation link. */
@@ -28234,6 +28470,54 @@ export interface components {
             /** @description For the staff only; needs `actionCode`. */
             note?: string;
         };
+        ComplianceArchiveView: {
+            certificateNumber: string | null;
+            /** Format: date */
+            doneOn: string | null;
+            /** Format: date */
+            dueOn: string;
+            evidence: components["schemas"]["ComplianceEvidenceView"][];
+            /** Format: date */
+            expiresOn: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description About the work. */
+            note: string | null;
+            /** Format: uuid */
+            previousId: string | null;
+            status: components["schemas"]["ComplianceOccurrenceStatus"];
+        };
+        ComplianceCalendarEntryView: {
+            /** Format: date */
+            day: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string | null;
+            /** @description ComplianceKind, or the paper’s VendorDocumentKind. */
+            kind: string;
+            /**
+             * @description `compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077).
+             * @enum {string}
+             */
+            source: "compliance" | "vendor_document";
+            state: components["schemas"]["ComplianceCalendarState"];
+            title: string | null;
+            /** Format: uuid */
+            vendorId: string | null;
+            vendorName: string | null;
+        };
+        /** @enum {string} */
+        ComplianceCalendarState: "valid" | "due_soon" | "overdue" | "done" | "expired";
+        ComplianceCalendarView: {
+            entries: components["schemas"]["ComplianceCalendarEntryView"][];
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** @description More than 1000 entries: ask for fewer days. */
+            truncated: boolean;
+        };
         ComplianceCaseResponse: {
             /** Format: date-time */
             closedAt: string | null;
@@ -28253,6 +28537,149 @@ export interface components {
         ComplianceCaseResponseList: {
             data: components["schemas"]["ComplianceCaseResponse"][];
             nextCursor: string | null;
+        };
+        ComplianceEvidenceView: {
+            /** Format: date-time */
+            addedAt: string;
+            /** @description A short-lived link to read the file; null when it is gone. */
+            fileUrl: string | null;
+            /** Format: uuid */
+            id: string;
+        };
+        ComplianceItemDetailView: {
+            asset: components["schemas"]["ComplianceSubjectView"] | null;
+            authority: string | null;
+            commonArea: components["schemas"]["ComplianceSubjectView"] | null;
+            current: components["schemas"]["ComplianceOccurrenceView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ComplianceKind"];
+            lastDone: components["schemas"]["ComplianceOccurrenceView"] | null;
+            /** @description The lead times in force, longest first. */
+            leadDays: number[];
+            notes: string | null;
+            /** @description Its due days, the latest first (100 at most), with their evidence. */
+            occurrences: components["schemas"]["ComplianceArchiveView"][];
+            /** @description Its own lead times, not the compound’s. */
+            ownLeadDays: boolean;
+            owner: components["schemas"]["AccountRefView"] | null;
+            /** @description Null: once. */
+            recurrenceMonths: number | null;
+            reference: string | null;
+            retireReason: components["schemas"]["ComplianceRetireReason"] | null;
+            /** Format: date-time */
+            retiredAt: string | null;
+            /** @description On the compound’s today. */
+            state: components["schemas"]["ComplianceState"];
+            title: string;
+            vendor: components["schemas"]["ComplianceVendorView"] | null;
+        };
+        ComplianceItemView: {
+            asset: components["schemas"]["ComplianceSubjectView"] | null;
+            authority: string | null;
+            commonArea: components["schemas"]["ComplianceSubjectView"] | null;
+            current: components["schemas"]["ComplianceOccurrenceView"] | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ComplianceKind"];
+            lastDone: components["schemas"]["ComplianceOccurrenceView"] | null;
+            /** @description The lead times in force, longest first. */
+            leadDays: number[];
+            notes: string | null;
+            /** @description Its own lead times, not the compound’s. */
+            ownLeadDays: boolean;
+            owner: components["schemas"]["AccountRefView"] | null;
+            /** @description Null: once. */
+            recurrenceMonths: number | null;
+            reference: string | null;
+            retireReason: components["schemas"]["ComplianceRetireReason"] | null;
+            /** Format: date-time */
+            retiredAt: string | null;
+            /** @description On the compound’s today. */
+            state: components["schemas"]["ComplianceState"];
+            title: string;
+            vendor: components["schemas"]["ComplianceVendorView"] | null;
+        };
+        ComplianceItemViewList: {
+            data: components["schemas"]["ComplianceItemView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        ComplianceKind: "fire_system" | "lift" | "insurance" | "licence" | "permit" | "other";
+        ComplianceKindCountsView: {
+            /** @description Done once; nothing recurs. */
+            completed: number;
+            dueSoon: number;
+            /** @description Not retired. */
+            items: number;
+            kind: components["schemas"]["ComplianceKind"];
+            overdue: number;
+            retired: number;
+            valid: number;
+        };
+        /** @enum {string} */
+        ComplianceOccurrenceStatus: "open" | "done" | "cancelled";
+        ComplianceOccurrenceView: {
+            certificateNumber: string | null;
+            /** Format: date */
+            doneOn: string | null;
+            /** Format: date */
+            dueOn: string;
+            /** Format: date */
+            expiresOn: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description About the work. */
+            note: string | null;
+            /** Format: uuid */
+            previousId: string | null;
+            status: components["schemas"]["ComplianceOccurrenceStatus"];
+        };
+        ComplianceReportView: {
+            /** Format: date */
+            asOf: string;
+            /** @description Every kind, in a fixed order, with zeros. */
+            kinds: components["schemas"]["ComplianceKindCountsView"][];
+            totals: components["schemas"]["ComplianceStatusCountsView"];
+            vendorPapers: components["schemas"]["VendorPapersCountsView"];
+        };
+        /** @enum {string} */
+        ComplianceRetireReason: "not_applicable" | "asset_retired" | "replaced" | "duplicate" | "other";
+        ComplianceSettingsDto: {
+            /** @description One to three lead times, 1 to 365 days each. */
+            leadDays: number[];
+        };
+        ComplianceSettingsView: {
+            /** @description Longest first. */
+            leadDays: number[];
+        };
+        /**
+         * @description On the compound’s today.
+         * @enum {string}
+         */
+        ComplianceState: "valid" | "due_soon" | "overdue" | "completed" | "retired";
+        ComplianceStatusCountsView: {
+            /** @description Done once; nothing recurs. */
+            completed: number;
+            dueSoon: number;
+            /** @description Not retired. */
+            items: number;
+            overdue: number;
+            retired: number;
+            valid: number;
+        };
+        ComplianceSubjectView: {
+            code: string;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
+        ComplianceVendorView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            status: components["schemas"]["VendorStatus"];
         };
         CompoundDocumentSummaryView: {
             /** Format: date */
@@ -29113,6 +29540,45 @@ export interface components {
              * @description One of the author’s own units, when they have several.
              */
             unitId?: string;
+        };
+        CreateComplianceItemDto: {
+            /**
+             * Format: uuid
+             * @description An asset of the compound’s own, not retired (a lift); never with `commonAreaId`.
+             */
+            assetId?: string;
+            /** @description Who issues it: the civil defence, the insurer, the city. */
+            authority?: string;
+            /**
+             * Format: uuid
+             * @description An active common area (a building, the pool); never with `assetId`.
+             */
+            commonAreaId?: string;
+            /**
+             * Format: date
+             * @description Its first due day: from today, ten years ahead at most.
+             */
+            firstDueOn: string;
+            kind: components["schemas"]["ComplianceKind"];
+            /** @description Its own lead times, 1 to 365 days each, at most three; empty or none: the compound’s. */
+            leadDays?: number[];
+            notes?: string;
+            /**
+             * Format: uuid
+             * @description The staff member who answers for it: an active staff member or the manager. Told. With `vendorId`, or alone.
+             */
+            ownerId?: string;
+            /** @description Every how many months it is due again; none: once. */
+            recurrenceMonths?: number;
+            /** @description Its licence, policy or file number. */
+            reference?: string;
+            /** @description The compound’s words: “Civil defence certificate, tower A”. */
+            title: string;
+            /**
+             * Format: uuid
+             * @description The vendor of the register who answers for it (ADR 0077); not a suspended one. With `ownerId`, or alone.
+             */
+            vendorId?: string;
         };
         CreateContractDto: {
             /** @description EGP a year. */
@@ -32578,7 +33044,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "vendor_document";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "vendor_document" | "compliance_evidence";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -46886,6 +47352,35 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
         };
+        UpdateComplianceItemDto: {
+            /** Format: uuid */
+            assetId?: string | null;
+            authority?: string | null;
+            /** Format: uuid */
+            commonAreaId?: string | null;
+            /** @description Empty: the compound’s lead times. */
+            leadDays?: number[];
+            /**
+             * Format: date
+             * @description Moves the open due day (the authority gave another): from today. Its notices start again.
+             */
+            nextDueOn?: string;
+            notes?: string | null;
+            /**
+             * Format: uuid
+             * @description Null takes the staff member away, when a vendor answers. A new one is told.
+             */
+            ownerId?: string | null;
+            /** @description Null: once. */
+            recurrenceMonths?: number | null;
+            reference?: string | null;
+            title?: string;
+            /**
+             * Format: uuid
+             * @description Null takes the vendor away, when a staff member answers.
+             */
+            vendorId?: string | null;
+        };
         UpdateContractDto: {
             annualValue?: string | null;
             /**
@@ -47724,6 +48219,12 @@ export interface components {
             averages: components["schemas"]["VendorScoresView"];
             /** @description In the last year. */
             count: number;
+        };
+        VendorPapersCountsView: {
+            expired: number;
+            /** @description Within 30 days. */
+            expiringSoon: number;
+            valid: number;
         };
         VendorScoresView: {
             communication: number | null;
@@ -70728,6 +71229,304 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectorViewList"];
+                };
+            };
+        };
+    };
+    ComplianceController_calendar: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day: today by default. */
+                from?: string;
+                /** @description The last day: 90 days by default, 366 at most (PERIOD_TOO_LONG). */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceCalendarView"];
+                };
+            };
+        };
+    };
+    ComplianceController_removeEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidenceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ComplianceController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["ComplianceKind"];
+                status?: "active" | "retired";
+                ownerId?: string;
+                vendorId?: string;
+                assetId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceItemViewList"];
+                };
+            };
+        };
+    };
+    ComplianceController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateComplianceItemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceItemDetailView"];
+                };
+            };
+        };
+    };
+    ComplianceController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceItemDetailView"];
+                };
+            };
+        };
+    };
+    ComplianceController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateComplianceItemDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceItemDetailView"];
+                };
+            };
+        };
+    };
+    ComplianceController_retire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceItemDetailView"];
+                };
+            };
+        };
+    };
+    ComplianceController_complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                occurrenceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteOccurrenceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceItemDetailView"];
+                };
+            };
+        };
+    };
+    ComplianceController_addEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                occurrenceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddEvidenceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceArchiveView"];
+                };
+            };
+        };
+    };
+    ComplianceController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceReportView"];
+                };
+            };
+        };
+    };
+    ComplianceController_export: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    ComplianceController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceSettingsView"];
+                };
+            };
+        };
+    };
+    ComplianceController_updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplianceSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComplianceSettingsView"];
                 };
             };
         };

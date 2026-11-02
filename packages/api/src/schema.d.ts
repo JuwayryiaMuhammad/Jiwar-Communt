@@ -10000,8 +10000,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Leave a group offer I joined, while it is open */
+        /** Leave a group offer I joined, while it is open or re-confirming a higher price */
         post: operations["GroupOffersController_leave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/market/group-offers/{id}/reconfirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-confirm a group offer’s higher final price */
+        post: operations["GroupOffersController_reconfirm"];
         delete?: never;
         options?: never;
         head?: never;
@@ -17777,6 +17794,23 @@ export interface paths {
         put?: never;
         /** Call a group offer off */
         post: operations["StaffGroupOffersController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/group-offers/{id}/contract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a confirmed group offer’s contract */
+        post: operations["StaffGroupOffersController_contract"];
         delete?: never;
         options?: never;
         head?: never;
@@ -30071,6 +30105,20 @@ export interface components {
             data: components["schemas"]["ContractDueView"][];
             nextCursor: string | null;
         };
+        ContractGroupOfferDto: {
+            /**
+             * @description The price agreed with the supplier, EGP.
+             * @example 980.00
+             */
+            finalPrice: string;
+            /**
+             * Format: uuid
+             * @description The partner it is contracted with; else the offer’s own.
+             */
+            partnerId?: string;
+            /** @description Hours the participants have to re-confirm a higher price; 72 by default. */
+            reconfirmHours?: number;
+        };
         ContractPaymentDto: {
             /** @description EGP. */
             amount: string;
@@ -35493,6 +35541,10 @@ export interface components {
             cancelReason: string | null;
             /** Format: date-time */
             closesAt: string;
+            /** Format: date-time */
+            contractedAt: string | null;
+            /** @description The contract’s final price (ADR 0083), once the handlers recorded it. */
+            finalPrice: string | null;
             /** @example 950.00 */
             groupPrice: string;
             /** Format: uuid */
@@ -35510,12 +35562,19 @@ export interface components {
             myInterest: boolean;
             /** @description The caller’s quantity, once joined. */
             myQuantity: number | null;
-            /** @description (list − group) × the caller’s quantity, once joined. */
+            /** @description The caller joined and has yet to re-confirm the higher final price. */
+            myReconfirmNeeded: boolean;
+            /** @description (list − group, or the final price once contracted) × the caller’s quantity, once joined. */
             mySaving: string | null;
             /** Format: uuid */
             partnerId: string | null;
             /** @description The quantity taken in all. */
             quantity: number;
+            /**
+             * Format: date-time
+             * @description Re-confirming: the participants re-confirm the higher price by then, or leave.
+             */
+            reconfirmClosesAt: string | null;
             status: components["schemas"]["GroupOfferStatus"];
             titleAr: string;
             titleEn: string;
@@ -38283,8 +38342,14 @@ export interface components {
             nextCursor: string | null;
         };
         MarketSettingsView: {
+            /** @description The categories a new or edited listing may take (ADR 0083). */
+            allowedCategories: components["schemas"]["MarketListingCategory"][];
+            /** @description No services and nothing under a shop on a new or edited listing (ADR 0083). */
+            commercialBlocked: boolean;
             expiryDays: number;
             maxLivePerAccount: number;
+            /** @description Listings one unit may have open at once (ADR 0083). */
+            maxLivePerUnit: number;
             reportHideThreshold: number;
             requiresReview: boolean;
         };
@@ -49797,10 +49862,16 @@ export interface components {
             visitSlotMinutes?: number;
         };
         UpdateMarketSettingsDto: {
+            /** @description The categories a new or edited listing may take (ADR 0083), one at least. Listings already open stay. */
+            allowedCategories?: components["schemas"]["MarketListingCategory"][];
+            /** @description No commercial listings (ADR 0083): a service offered, or anything under a shop, and no new shop. Listings already open stay. */
+            commercialBlocked?: boolean;
             /** @description Days a listing stays on the market. */
             expiryDays?: number;
             /** @description Listings one account may have waiting, live or reported at once. */
             maxLivePerAccount?: number;
+            /** @description Listings one unit may have waiting, live or reported at once, whoever posts them (ADR 0083). */
+            maxLivePerUnit?: number;
             /** @description Units whose reports take a live listing off for review. */
             reportHideThreshold?: number;
             /** @description A new or changed listing waits for a handler first. */
@@ -66461,6 +66532,27 @@ export interface operations {
             };
         };
     };
+    GroupOffersController_reconfirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferView"];
+                };
+            };
+        };
+    };
     MarketController_search: {
         parameters: {
             query?: {
@@ -77874,7 +77966,7 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
-                status?: "interest" | "open" | "confirmed" | "failed" | "cancelled";
+                status?: "interest" | "open" | "confirmed" | "failed" | "cancelled" | "reconfirming" | "contracted";
             };
             header?: never;
             path?: never;
@@ -77935,6 +78027,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    StaffGroupOffersController_contract: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContractGroupOfferDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupOfferView"];
+                };
             };
         };
     };

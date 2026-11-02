@@ -18,6 +18,10 @@ import { Notifier } from '../../core/notifications/notifier';
 import { NeighbourAccess } from '../access';
 import { dbNow } from '../db-clock';
 import { liveWhere } from './market-rules';
+import {
+  categoryAllowed,
+  MarketSettingsService,
+} from './market-settings.service';
 
 export const SHOP_NAME_LENGTH = { min: 2, max: 60 } as const;
 export const SHOP_DESCRIPTION_LENGTH = { min: 1, max: 500 } as const;
@@ -75,6 +79,7 @@ export class ShopsService {
     private readonly community: CommunityNeighboursPort,
     private readonly audit: AuditService,
     private readonly notifier: Notifier,
+    private readonly settings: MarketSettingsService,
   ) {}
 
   /** A resident opens a shop: it waits for a handler. */
@@ -100,6 +105,20 @@ export class ShopsService {
           ErrorCode.MARKET_SHOP_EXISTS,
           'You have a shop already',
           { params: { shopId: open.id } },
+        );
+      // The compound's rules (ADR 0083): a shop is commercial, and its
+      // category must be one the market takes now. The settings row last.
+      const settings = await this.settings.share(tx);
+      if (settings.commercialBlocked)
+        throw appError.conflict(
+          ErrorCode.MARKET_COMMERCIAL_BLOCKED,
+          'The compound takes no commercial listings now',
+        );
+      if (!categoryAllowed(settings, input.category))
+        throw appError.conflict(
+          ErrorCode.MARKET_CATEGORY_NOT_ALLOWED,
+          'The compound does not take this category now',
+          { params: { category: input.category } },
         );
       const now = await dbNow(tx);
       const shop = await tx.marketShop.create({

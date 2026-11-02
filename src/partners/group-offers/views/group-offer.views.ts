@@ -53,9 +53,33 @@ export class GroupOfferView {
   @ApiProperty({
     type: String,
     nullable: true,
-    description: '(list − group) × the caller’s quantity, once joined.',
+    description:
+      '(list − group, or the final price once contracted) × the caller’s quantity, once joined.',
   })
   mySaving: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'The contract’s final price (ADR 0083), once the handlers recorded it.',
+  })
+  finalPrice: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description:
+      'Re-confirming: the participants re-confirm the higher price by then, or leave.',
+  })
+  reconfirmClosesAt: Date | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  contractedAt: Date | null;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'The caller joined and has yet to re-confirm the higher final price.',
+  })
+  myReconfirmNeeded: boolean;
 
   static from(r: GroupOfferRead): GroupOfferView {
     const o = r.offer;
@@ -80,8 +104,15 @@ export class GroupOfferView {
       myInterest: r.myInterest,
       myQuantity: r.mine?.quantity ?? null,
       mySaving: r.mine
-        ? o.listPrice.sub(o.groupPrice).mul(r.mine.quantity).toFixed(2)
+        ? o.listPrice
+            .sub(o.finalPrice ?? o.groupPrice)
+            .mul(r.mine.quantity)
+            .toFixed(2)
         : null,
+      finalPrice: o.finalPrice?.toFixed(2) ?? null,
+      reconfirmClosesAt: o.reconfirmClosesAt,
+      contractedAt: o.contractedAt,
+      myReconfirmNeeded: r.myReconfirmNeeded,
     };
   }
 }

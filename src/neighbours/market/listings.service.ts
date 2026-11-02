@@ -5,6 +5,7 @@ import {
   type MarketListingCategory,
   type MarketListingKind,
   type MarketListingStatus,
+  type MarketSettings,
 } from '@prisma/client';
 import { CommunityNeighboursPort, type ListedUnitFacts } from '../../community';
 import { AuditService } from '../../core/audit/audit.service';
@@ -44,7 +45,11 @@ import {
   stateOf,
   type SystemWithdrawal,
 } from './market-rules';
-import { MarketSettingsService } from './market-settings.service';
+import {
+  categoryAllowed,
+  isCommercial,
+  MarketSettingsService,
+} from './market-settings.service';
 import { ShopsService } from './shops.service';
 
 export const LISTING_RESOURCE = 'market_listing';
@@ -233,6 +238,9 @@ export class ListingsService implements OnModuleInit {
       if (input.fromUnitId && !places.some((p) => p.id === input.fromUnitId))
         throw appError.notFound(ErrorCode.UNIT_NOT_FOUND, 'Unit not found');
       let sellerUnitId = input.fromUnitId ?? places[0].id;
+      // The unit the listing counts against (ADR 0083): the listed unit, or
+      // the one it is posted from. Its quota before the listed unit's row.
+      await this.self.lockUnitQuota(tx, input.unitId ?? sellerUnitId);
       if (input.unitId) {
         await this.community.lockUnit(tx, input.unitId);
         if (!(await this.community.ownsLive(tx, me, input.unitId)))
@@ -254,6 +262,20 @@ export class ListingsService implements OnModuleInit {
           ErrorCode.MARKET_LISTING_LIMIT_REACHED,
           'Too many listings open',
           { params: { max: settings.maxLivePerAccount } },
+        );
+      this.assertRules(settings, {
+        kind: input.kind,
+        shopId: input.shopId ?? null,
+        category: input.category,
+      });
+      const openOfUnit = await tx.marketListing.count({
+        where: { sellerUnitId, ...this.openWhere(now) },
+      });
+      if (openOfUnit >= settings.maxLivePerUnit)
+        throw appError.conflict(
+          ErrorCode.MARKET_UNIT_LISTING_LIMIT_REACHED,
+          'Too many listings open for this unit',
+          { params: { max: settings.maxLivePerUnit } },
         );
       const status: MarketListingStatus = settings.requiresReview
         ? 'pending_review'
@@ -351,6 +373,12 @@ export class ListingsService implements OnModuleInit {
       const negotiable =
         price === null ? false : (patch.negotiable ?? l.negotiable);
       const settings = await this.settings.share(tx);
+      // The compound's rules as they are now (ADR 0083).
+      this.assertRules(settings, {
+        kind: l.kind,
+        shopId: l.shopId,
+        category: patch.category ?? l.category,
+      });
       const back = l.status === 'live' && settings.requiresReview;
       const updated = await tx.marketListing.update({
         where: { id },
@@ -386,6 +414,31 @@ export class ListingsService implements OnModuleInit {
         });
       return this.read(tx, updated, now);
     });
+  }
+
+  /**
+   * The compound's rules on what a listing is (ADR 0083): no commercial
+   * listing while they are blocked, and only an allowed category.
+   */
+  private assertRules(
+    settings: MarketSettings,
+    l: {
+      kind: MarketListingKind;
+      shopId: string | null;
+      category: MarketListingCategory;
+    },
+  ): void {
+    if (settings.commercialBlocked && isCommercial(l))
+      throw appError.conflict(
+        ErrorCode.MARKET_COMMERCIAL_BLOCKED,
+        'The compound takes no commercial listings now',
+      );
+    if (!categoryAllowed(settings, l.category))
+      throw appError.conflict(
+        ErrorCode.MARKET_CATEGORY_NOT_ALLOWED,
+        'The compound does not take this category now',
+        { params: { category: l.category } },
+      );
   }
 
   /** The seller takes their listing off, whatever it was waiting for. */

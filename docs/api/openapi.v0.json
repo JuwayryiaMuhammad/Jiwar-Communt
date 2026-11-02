@@ -14533,6 +14533,31 @@
         ],
         "type": "object"
       },
+      "ContractGroupOfferDto": {
+        "properties": {
+          "finalPrice": {
+            "description": "The price agreed with the supplier, EGP.",
+            "example": "980.00",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "partnerId": {
+            "description": "The partner it is contracted with; else the offer’s own.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reconfirmHours": {
+            "description": "Hours the participants have to re-confirm a higher price; 72 by default.",
+            "maximum": 168,
+            "minimum": 24,
+            "type": "number"
+          }
+        },
+        "required": [
+          "finalPrice"
+        ],
+        "type": "object"
+      },
       "ContractPaymentDto": {
         "properties": {
           "amount": {
@@ -30700,6 +30725,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "contractedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "finalPrice": {
+            "description": "The contract’s final price (ADR 0083), once the handlers recorded it.",
+            "nullable": true,
+            "type": "string"
+          },
           "groupPrice": {
             "example": "950.00",
             "type": "string"
@@ -30740,8 +30775,12 @@
             "nullable": true,
             "type": "number"
           },
+          "myReconfirmNeeded": {
+            "description": "The caller joined and has yet to re-confirm the higher final price.",
+            "type": "boolean"
+          },
           "mySaving": {
-            "description": "(list − group) × the caller’s quantity, once joined.",
+            "description": "(list − group, or the final price once contracted) × the caller’s quantity, once joined.",
             "nullable": true,
             "type": "string"
           },
@@ -30753,6 +30792,12 @@
           "quantity": {
             "description": "The quantity taken in all.",
             "type": "number"
+          },
+          "reconfirmClosesAt": {
+            "description": "Re-confirming: the participants re-confirm the higher price by then, or leave.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
           },
           "status": {
             "allOf": [
@@ -30788,7 +30833,11 @@
           "quantity",
           "myInterest",
           "myQuantity",
-          "mySaving"
+          "mySaving",
+          "finalPrice",
+          "reconfirmClosesAt",
+          "contractedAt",
+          "myReconfirmNeeded"
         ],
         "type": "object"
       },
@@ -39673,10 +39722,25 @@
       },
       "MarketSettingsView": {
         "properties": {
+          "allowedCategories": {
+            "description": "The categories a new or edited listing may take (ADR 0083).",
+            "items": {
+              "$ref": "#/components/schemas/MarketListingCategory"
+            },
+            "type": "array"
+          },
+          "commercialBlocked": {
+            "description": "No services and nothing under a shop on a new or edited listing (ADR 0083).",
+            "type": "boolean"
+          },
           "expiryDays": {
             "type": "number"
           },
           "maxLivePerAccount": {
+            "type": "number"
+          },
+          "maxLivePerUnit": {
+            "description": "Listings one unit may have open at once (ADR 0083).",
             "type": "number"
           },
           "reportHideThreshold": {
@@ -39690,7 +39754,10 @@
           "requiresReview",
           "maxLivePerAccount",
           "expiryDays",
-          "reportHideThreshold"
+          "reportHideThreshold",
+          "commercialBlocked",
+          "allowedCategories",
+          "maxLivePerUnit"
         ],
         "type": "object"
       },
@@ -77302,6 +77369,17 @@
       },
       "UpdateMarketSettingsDto": {
         "properties": {
+          "allowedCategories": {
+            "description": "The categories a new or edited listing may take (ADR 0083), one at least. Listings already open stay.",
+            "items": {
+              "$ref": "#/components/schemas/MarketListingCategory"
+            },
+            "type": "array"
+          },
+          "commercialBlocked": {
+            "description": "No commercial listings (ADR 0083): a service offered, or anything under a shop, and no new shop. Listings already open stay.",
+            "type": "boolean"
+          },
           "expiryDays": {
             "description": "Days a listing stays on the market.",
             "maximum": 180,
@@ -77310,6 +77388,12 @@
           },
           "maxLivePerAccount": {
             "description": "Listings one account may have waiting, live or reported at once.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "number"
+          },
+          "maxLivePerUnit": {
+            "description": "Listings one unit may have waiting, live or reported at once, whoever posts them (ADR 0083).",
             "maximum": 50,
             "minimum": 1,
             "type": "number"
@@ -110980,7 +111064,45 @@
             "bearer": []
           }
         ],
-        "summary": "Leave a group offer I joined, while it is open",
+        "summary": "Leave a group offer I joined, while it is open or re-confirming a higher price",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/market/group-offers/{id}/reconfirm": {
+      "post": {
+        "operationId": "GroupOffersController_reconfirm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Re-confirm a group offer’s higher final price",
         "tags": [
           "market"
         ],
@@ -132715,7 +132837,9 @@
                 "open",
                 "confirmed",
                 "failed",
-                "cancelled"
+                "cancelled",
+                "reconfirming",
+                "contracted"
               ],
               "type": "string"
             }
@@ -132817,6 +132941,54 @@
           }
         ],
         "summary": "Call a group offer off",
+        "tags": [
+          "market"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/group-offers/{id}/contract": {
+      "post": {
+        "operationId": "StaffGroupOffersController_contract",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractGroupOfferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupOfferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a confirmed group offer’s contract",
         "tags": [
           "market"
         ],

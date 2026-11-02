@@ -23,6 +23,7 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import {
+  ContractGroupOfferDto,
   CreateGroupOfferDto,
   GroupOfferReasonDto,
   GroupOfferUnitDto,
@@ -84,10 +85,23 @@ export class GroupOffersController {
   @Post(':id/leave')
   @HttpCode(200)
   @NoStore()
-  @ApiOperation({ summary: 'Leave a group offer I joined, while it is open' })
+  @ApiOperation({
+    summary:
+      'Leave a group offer I joined, while it is open or re-confirming a higher price',
+  })
   @ApiOkResponse({ type: GroupOfferView })
   async leave(@Param('id', parseId()) id: string): Promise<GroupOfferView> {
     return GroupOfferView.from(await this.offers.leave(id));
+  }
+
+  /** The final price is above the group price: stay in at it (ADR 0083). */
+  @Post(':id/reconfirm')
+  @HttpCode(200)
+  @NoStore()
+  @ApiOperation({ summary: 'Re-confirm a group offer’s higher final price' })
+  @ApiOkResponse({ type: GroupOfferView })
+  async reconfirm(@Param('id', parseId()) id: string): Promise<GroupOfferView> {
+    return GroupOfferView.from(await this.offers.reconfirm(id));
   }
 }
 
@@ -125,6 +139,22 @@ export class StaffGroupOffersController {
   @ApiNoContentResponse()
   async open(@Param('id', parseId()) id: string): Promise<void> {
     await this.offers.open(id);
+  }
+
+  /**
+   * A confirmed offer's contract (ADR 0083): contracted at once at or below
+   * the group price, else held for the participants to re-confirm.
+   */
+  @Post(':id/contract')
+  @HttpCode(200)
+  @NoStore()
+  @ApiOperation({ summary: 'Record a confirmed group offer’s contract' })
+  @ApiOkResponse({ type: GroupOfferView })
+  async contract(
+    @Param('id', parseId()) id: string,
+    @Body() dto: ContractGroupOfferDto,
+  ): Promise<GroupOfferView> {
+    return GroupOfferView.from(await this.offers.contract(id, dto));
   }
 
   @Post(':id/cancel')

@@ -18,6 +18,7 @@ import {
   GROUP_BODY_LENGTH,
   GROUP_TITLE_LENGTH,
   MAX_QUANTITY,
+  RECONFIRM_HOURS,
 } from '../group-offers.service';
 
 /** A positive EGP amount of at most 1,000,000 with two decimals at most. */
@@ -28,6 +29,8 @@ const STATUSES = [
   'confirmed',
   'failed',
   'cancelled',
+  'reconfirming',
+  'contracted',
 ] as const;
 
 function Text(range: { min: number; max: number }) {
@@ -149,4 +152,50 @@ export class StaffGroupOffersQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(STATUSES, withParams({ allowed: [...STATUSES] }))
   status?: (typeof STATUSES)[number];
+}
+
+/**
+ * A confirmed offer's contract (ADR 0083): the final price, and the
+ * supplier when it is named now. Above the group price, the participants
+ * re-confirm within `reconfirmHours`.
+ */
+export class ContractGroupOfferDto {
+  @ApiProperty({
+    type: String,
+    pattern: MONEY.source,
+    example: '980.00',
+    description: 'The price agreed with the supplier, EGP.',
+  })
+  @IsString()
+  @Matches(MONEY)
+  finalPrice: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description: 'The partner it is contracted with; else the offer’s own.',
+  })
+  @IsOptional()
+  @IsUUID()
+  partnerId?: string;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    minimum: RECONFIRM_HOURS.min,
+    maximum: RECONFIRM_HOURS.max,
+    description: `Hours the participants have to re-confirm a higher price; ${RECONFIRM_HOURS.default} by default.`,
+  })
+  @IsOptional()
+  @IsInt(withParams({ min: RECONFIRM_HOURS.min, max: RECONFIRM_HOURS.max }))
+  @Min(
+    RECONFIRM_HOURS.min,
+    withParams({ min: RECONFIRM_HOURS.min, max: RECONFIRM_HOURS.max }),
+  )
+  @Max(
+    RECONFIRM_HOURS.max,
+    withParams({ min: RECONFIRM_HOURS.min, max: RECONFIRM_HOURS.max }),
+  )
+  reconfirmHours?: number;
 }

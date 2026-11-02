@@ -42,6 +42,17 @@ export class NeighbourAccess {
   }
 
   /**
+   * One unit's market quota (ADR 0083): what the unit's people may have
+   * open on the market at once is counted and then written under this
+   * lock, so two of a household listing at once cannot both take the last
+   * place. Taken after `lockQuota`, before a listed unit's row.
+   */
+  async lockUnitQuota(tx: TenantTxClient, unitId: string): Promise<void> {
+    await tx.$executeRaw`
+      SELECT pg_advisory_xact_lock(hashtext(${`neighbour-unit-quota:${this.ctx.txTenantId}:${unitId}`}))`;
+  }
+
+  /**
    * Two accounts, whatever the order they are named in: a block between
    * them and a new conversation between them are decided one at a time.
    * Taken after `lockQuota`.

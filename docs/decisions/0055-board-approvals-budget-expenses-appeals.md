@@ -277,3 +277,6 @@ Category `governance`, none critical. The params are codes only.
 
 ## Update (Phase M2-3, ADR 0073)
 - A compound may make `waiver_above_limit`'s and `payment_plan_above_limit`'s thresholds binding (`binding`). Above one, finance refuses a dispute's credit or a plan unless it names the authorization an approved request of the type granted, used once. Both request types now require a cost. `exceptional_fee` stays advisory.
+
+## Update (Phase M3-3, ADR 0086)
+- A new approval type, `capital_plan`, names a year's capital plan as its subject (`capitalPlanId`): its cost is the plan's total, submitted at the raise, locked once approved, a draft again when rejected or withdrawn. 30 days by default.

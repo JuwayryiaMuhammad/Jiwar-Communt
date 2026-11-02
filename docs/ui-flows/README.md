@@ -118,6 +118,7 @@
 | [04-spending-reports](09-finance/04-spending-reports.md) | الرسوم بتروح فين |
 | [05-payables](09-finance/05-payables.md) | فواتير الموردين واعتمادها وصرفها، الالتزامات، جدول السداد، المقدمات والمحتجزات وخطابات الضمان، المناقلة والتوزيع الشهري وأسباب الانحراف، تصدير القيود |
 | [06-treasury-and-custody](09-finance/06-treasury-and-custody.md) | الحسابات البنكية والخزن، عهدة المحصّل والكاشير وتسليمها، سجل الشيكات، كشوف البنك |
+| [07-reports-platform](09-finance/07-reports-platform.md) | منصة التقارير: التقارير بالصلاحية، المقارنات، الملفات، الجدولة، الخطة الرأسمالية للمجلس، تكلفة الطاقة للمتر، تصدير بيانات الكمبوند |
 
 استهلاك البيت في [06-maintenance/16-household-consumption](06-maintenance/16-household-consumption.md).
 

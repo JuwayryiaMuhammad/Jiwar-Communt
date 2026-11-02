@@ -411,6 +411,9 @@ const TEXT: Record<string, (p: P) => string> = {
   'experience_case.opened': (p) => `Case ${p.caseNumber} was opened: ${words(p.signal)}`,
   'experience_case.assigned': (p) => `Case ${p.caseNumber} (${words(p.caseKind)}) is yours`,
   'experience_compensation.proposed': (p) => `A compensation (${words(p.compensationKind)}) on case ${p.caseNumber} waits for your decision`,
+  // The reports platform (ADR 0086).
+  'report_run.ready': (p) => `A scheduled report for ${p.periodFrom} to ${p.periodTo} is ready to download`,
+  'compound_export.ready': () => 'The compound’s export is ready to download',
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -469,6 +472,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('experience.manage') ? `/experience/cases/${n.targetId}` : null;
   if (n.targetType === 'experience_compensation')
     return can('experience.compensate') ? '/experience/compensations' : null;
+  // The reports platform (ADR 0086): the run's file, the compound's export.
+  if (n.targetType === 'report_run') return '/reports/runs';
+  if (n.targetType === 'compound_export') return can('compound.export') ? '/compound-export' : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

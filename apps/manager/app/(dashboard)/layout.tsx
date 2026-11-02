@@ -742,6 +742,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       ],
     },
     {
+      // The reports platform (ADR 0086): each report by its own permission.
+      label: 'Reports',
+      items: [
+        {
+          href: '/reports',
+          label: 'Reports',
+          icon: <ChartColumn aria-hidden />,
+          show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'].some((p) => can(p)),
+        },
+        { href: '/reports/schedules', label: 'Scheduled reports', icon: <CalendarClock aria-hidden />, show: can('reports.schedule') },
+        {
+          href: '/reports/runs',
+          label: 'Sent reports',
+          icon: <FileChartColumn aria-hidden />,
+          show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'].some((p) => can(p)),
+        },
+        { href: '/capital-plans', label: 'Capital plans', icon: <Landmark aria-hidden />, show: can('assets.manage') },
+        { href: '/compound-export', label: 'Compound export', icon: <Boxes aria-hidden />, show: can('compound.export') },
+      ],
+    },
+    {
       label: 'Administration',
       items: [
         { href: '/roles', label: 'Roles', icon: <ShieldCheck aria-hidden />, show: can('roles.read') },

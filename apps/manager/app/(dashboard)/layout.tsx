@@ -375,6 +375,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <CalendarCheck aria-hidden />,
           show: can('compliance.manage'),
         },
+        // The field team (ADR 0078).
+        { href: '/field-team', label: 'Field team', icon: <HardHat aria-hidden />, show: can('field_team.manage') },
       ],
     },
     {

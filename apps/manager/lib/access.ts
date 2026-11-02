@@ -85,6 +85,8 @@ export const ENTRY_PERMISSIONS = [
   'compliance.manage',
   // Experience and recovery: the cases, signals, compensations and promises (ADR 0082).
   'experience.manage',
+  // The field team: the technicians' roster, instructions and calls for help (ADR 0078).
+  'field_team.manage',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

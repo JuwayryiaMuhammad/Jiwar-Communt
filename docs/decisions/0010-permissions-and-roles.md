@@ -42,3 +42,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase M2-14, ADR 0084)
 - New permission `spaces.manage` (staff, manager: the manager by default): the holiday calendar, the site map, the floor plans and the common areas open to use requests (decided with `bookings.handle`).
+
+## Update (Phase M2-13, ADR 0081)
+- New permission `tickets.sensitive` (staff, manager: the manager by default): a sensitive ticket among the compound's tickets, its clearing and the log of its reads.

@@ -40,6 +40,11 @@ export interface ConsumptionGroupRead {
   perSqm: string | null;
   /** Use an occupied unit, when one is (buildings and meters in units). */
   perOccupiedUnit: string | null;
+  /** ADR 0086: the floor area of the group's metered units (ADR 0072), when known. */
+  areaSqm: string | null;
+  /** Cost a square metre of it; null with `costPerSqmMissing` saying why. */
+  costPerSqm: string | null;
+  costPerSqmMissing: 'no_tariff' | 'no_area' | null;
   months: UsePart[];
 }
 
@@ -103,6 +108,23 @@ export class ConsumptionService {
       });
       return this.build(tx, q.kind, groupBy, period, meters);
     });
+  }
+
+  /**
+   * The report in the caller's transaction (ADR 0086: the reports
+   * platform's energy cost), over a period already resolved.
+   */
+  async reportIn(
+    tx: TenantTxClient,
+    kind: MeterKind,
+    groupBy: ConsumptionGroup,
+    period: Period,
+  ): Promise<ConsumptionReport> {
+    const meters = await tx.meter.findMany({
+      where: { kind },
+      orderBy: { code: 'asc' },
+    });
+    return this.build(tx, kind, groupBy, period, meters);
   }
 
   /** One meter's use over a period, by month. */
@@ -283,6 +305,7 @@ export class ConsumptionService {
       [...b.units].map((u) => units.get(u)?.areaSqm ?? new Prisma.Decimal(0)),
     );
     const occupied = [...b.units].filter((u) => units.get(u)?.occupied).length;
+    const cost = costOf(b.segments);
     const months = new Map<string, Segment[]>();
     for (const s of b.segments)
       months.set(s.month, [...(months.get(s.month) ?? []), s]);
@@ -291,9 +314,16 @@ export class ConsumptionService {
       label: b.label,
       meters: b.meters.size,
       use: amount(use),
-      cost: costOf(b.segments),
+      cost,
       perSqm: sqm.gt(0) ? amount(use.dividedBy(sqm)) : null,
       perOccupiedUnit: occupied ? amount(use.dividedBy(occupied)) : null,
+      areaSqm: sqm.gt(0) ? sqm.toFixed(2) : null,
+      costPerSqm:
+        cost !== null && sqm.gt(0)
+          ? money(new Prisma.Decimal(cost).dividedBy(sqm))
+          : null,
+      costPerSqmMissing:
+        cost === null ? 'no_tariff' : sqm.gt(0) ? null : 'no_area',
       months: [...months.entries()]
         .sort(([a], [z]) => (a < z ? -1 : 1))
         .map(([month, ss]) => ({

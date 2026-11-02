@@ -287,6 +287,7 @@
   "test/idempotency/idempotency.e2e-spec.ts": 10,
   "test/m21/audit-coverage.e2e-spec.ts": 6,
   "test/m23/audit-coverage.e2e-spec.ts": 7,
+  "test/m25/audit-coverage.e2e-spec.ts": 7,
   "test/mail/outbox.e2e-spec.ts": 11,
   "test/maintenance/arrival-confirmation.e2e-spec.ts": 13,
   "test/maintenance/audit-coverage.e2e-spec.ts": 19,
@@ -539,5 +540,7 @@
   "test/vehicles/schema.e2e-spec.ts": 1,
   "test/vehicles/stickers.e2e-spec.ts": 11,
   "test/vehicles/vehicle-limit.e2e-spec.ts": 10,
-  "test/vehicles/vehicles.e2e-spec.ts": 7
+  "test/vehicles/vehicles.e2e-spec.ts": 7,
+  "test/vendors/procurement-concurrency.e2e-spec.ts": 14,
+  "test/vendors/procurement.e2e-spec.ts": 14
 }

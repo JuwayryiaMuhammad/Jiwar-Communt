@@ -3244,6 +3244,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'نُقل الطلب رقم {requestNumber} إلى موضوع آخر.',
     },
   },
+  'official_letter.issued': {
+    en: {
+      title: 'Official letter issued',
+      body: 'Letter {letterNumber} was issued for you. Open the app to download it.',
+    },
+    ar: {
+      title: 'إصدار خطاب رسمي',
+      body: 'صدر لك الخطاب رقم {letterNumber}. افتح التطبيق لتحميله.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

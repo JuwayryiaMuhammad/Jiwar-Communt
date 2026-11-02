@@ -316,6 +316,14 @@ export const PERMISSIONS = {
   // It opens the queue only; each type shows to its own permission's
   // holders, and each decision is its domain's.
   'inbox.read': { kinds: ['staff', 'manager'] },
+  // Official letters (ADR 0080): a residence confirmation, a no-objection
+  // letter or one to whom it may concern, issued for an owner or a tenant,
+  // revoked with a code; their PDFs. The letter's subject reads their own
+  // with `units.read`.
+  'letters.issue': { kinds: ['manager'] },
+  // A unit's correspondence (ADR 0080): one timeline over what the unit's
+  // people and the management wrote each other, each read logged.
+  'correspondence.read': { kinds: ['manager'] },
   // Name a deputy who decides in one's place for at most 30 days (ADR
   // 0073): reading and ending one needs no permission.
   'deputies.manage': { kinds: ['manager'] },

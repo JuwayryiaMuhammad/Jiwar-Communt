@@ -113,6 +113,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'dashboard.read',
       // ADR 0084.
       'spaces.manage',
+      'letters.issue',
+      'correspondence.read',
     ],
   },
   {

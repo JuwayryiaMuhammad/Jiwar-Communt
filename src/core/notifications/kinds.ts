@@ -746,6 +746,17 @@ export const NOTIFICATION_KINDS = {
     target: 'management_request',
     params: { requestNumber: {}, topicKey: {} },
   },
+  /**
+   * ADR 0080: the management issued an official letter for the account:
+   * its number and kind, never its words or the name it bears.
+   */
+  'official_letter.issued': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'official_letter',
+    params: { letterNumber: {}, letterKind: {} },
+  },
   /** The management proposed a slot (the author accepts, or picks another). */
   'management_appointment.proposed': {
     needsDecision: true,

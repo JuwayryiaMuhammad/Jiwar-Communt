@@ -111,6 +111,56 @@ export class CommunityManagementPort {
     });
   }
 
+  /**
+   * Whom an official letter names (ADR 0080): an active account's live
+   * occupancy of the unit — its capacity and since when — read FOR SHARE,
+   * so an end of it waits for the letter's commit; and the name the
+   * account goes by. Null when the account holds none there now.
+   */
+  async letterSubject(
+    tx: TenantTxClient,
+    accountId: string,
+    unitId: string,
+  ): Promise<{
+    fullName: string;
+    occupancyType: 'owner' | 'tenant';
+    since: Date;
+  } | null> {
+    const rows = await tx.$queryRaw<
+      { type: 'owner' | 'tenant'; started_at: Date }[]
+    >`
+      SELECT o.occupancy_type::text AS type, o.started_at
+        FROM unit_occupancies o
+        JOIN accounts a ON a.id = o.account_id AND a.tenant_id = o.tenant_id
+       WHERE o.account_id = ${accountId}::uuid AND o.unit_id = ${unitId}::uuid
+         AND o.status = 'active' AND a.status = 'active'
+       ORDER BY o.started_at, o.id
+       LIMIT 1
+         FOR SHARE OF o`;
+    if (!rows.length) return null;
+    const account = await tx.account.findUniqueOrThrow({
+      where: { id: accountId },
+      select: { fullName: true },
+    });
+    if (!account.fullName?.trim()) return null;
+    return {
+      fullName: account.fullName.trim(),
+      occupancyType: rows[0].type,
+      since: rows[0].started_at,
+    };
+  }
+
+  /** A unit's code and building, for a letter (ADR 0080). */
+  unitPlace(
+    tx: TenantTxClient,
+    unitId: string,
+  ): Promise<{ id: string; code: string; building: string | null } | null> {
+    return tx.unit.findUnique({
+      where: { id: unitId },
+      select: { id: true, code: true, building: true },
+    });
+  }
+
   /** The unit's primary resident now, or null (ADR 0059: told of an appeal). */
   async primaryOf(tx: TenantTxClient, unitId: string): Promise<string | null> {
     const row = await tx.unitOccupancy.findFirst({

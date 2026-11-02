@@ -10658,6 +10658,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/official-letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the official letters issued for me */
+        get: operations["MyLettersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/official-letters/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An official letter of mine as a PDF */
+        get: operations["MyLettersController_document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/outages": {
         parameters: {
             query?: never;
@@ -13205,6 +13239,23 @@ export interface paths {
         put?: never;
         /** Download an assisted export with the link and the emailed code */
         post: operations["PublicDataExportsController_download"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/letters/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check an official letter by its code */
+        post: operations["PublicLettersController_lookup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -17049,6 +17100,75 @@ export interface paths {
         put?: never;
         /** Tick a step of the management’s side */
         post: operations["StaffMovesController_tick"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/official-letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the official letters */
+        get: operations["StaffLettersController_list"];
+        put?: never;
+        /** Issue an official letter */
+        post: operations["StaffLettersController_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/official-letters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one official letter */
+        get: operations["StaffLettersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/official-letters/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An official letter as a PDF */
+        get: operations["StaffLettersController_document"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/official-letters/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke an official letter */
+        post: operations["StaffLettersController_revoke"];
         delete?: never;
         options?: never;
         head?: never;
@@ -34819,6 +34939,26 @@ export interface components {
             /** Format: uuid */
             unitId?: string;
         };
+        IssueLetterDto: {
+            /**
+             * Format: uuid
+             * @description The owner or tenant it names: an active occupancy of the unit (OFFICIAL_LETTER_NOT_OCCUPANT).
+             */
+            accountId: string;
+            /** @description To whom, printed on the letter. */
+            addressee?: string;
+            /** @enum {string} */
+            kind: "residence_confirmation" | "no_objection" | "to_whom_it_may_concern";
+            /**
+             * Format: uuid
+             * @description The request it answers: one of the account’s.
+             */
+            requestId?: string;
+            /** @description What it is about, printed on it. Required for `no_objection`. */
+            subject?: string;
+            /** Format: uuid */
+            unitId: string;
+        };
         IssueViolationDto: {
             /** @description EGP, at most 100,000. None: a warning, never paid. */
             amount?: string;
@@ -35040,6 +35180,45 @@ export interface components {
         };
         LegalHoldResponseList: {
             data: components["schemas"]["LegalHoldResponse"][];
+            nextCursor: string | null;
+        };
+        LetterCodeDto: {
+            /** @description The 22 characters printed on the letter. */
+            code: string;
+        };
+        LetterView: {
+            /** Format: uuid */
+            accountId: string;
+            addressee: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            issuedAt: string;
+            /** @enum {string} */
+            kind: "residence_confirmation" | "no_objection" | "to_whom_it_may_concern";
+            /** @example OL-000123 */
+            number: string;
+            /** Format: date */
+            occupancySince: string;
+            occupancyType: components["schemas"]["OccupancyType"];
+            /** Format: uuid */
+            requestId: string | null;
+            revokeReason: string | null;
+            /** Format: date-time */
+            revokedAt: string | null;
+            /** @enum {string} */
+            status: "valid" | "revoked";
+            subject: string | null;
+            /** @description As written on the letter; null once its subject was erased. */
+            subjectName: string | null;
+            unitCode: string;
+            /** Format: uuid */
+            unitId: string;
+            /** @description Anyone checks it with this code on the public page. */
+            verifyCode: string;
+        };
+        LetterViewList: {
+            data: components["schemas"]["LetterView"][];
             nextCursor: string | null;
         };
         LiftBanDto: {
@@ -39091,6 +39270,17 @@ export interface components {
             /** Format: date */
             validUntil: string;
         };
+        PublicLetterView: {
+            /**
+             * Format: date
+             * @description The day it was issued, in the compound’s zone.
+             */
+            issuedOn: string;
+            /** @description The compound that issued it. */
+            issuer: string;
+            /** @enum {string} */
+            status: "valid" | "revoked";
+        };
         PublicReceiptView: {
             amount: string;
             compoundName: string;
@@ -41376,6 +41566,10 @@ export interface components {
             /** @description What the person is told (at most 1000 characters). Never stored in the audit trail. */
             reason: string;
             /** @description A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. */
+            reasonCode: string;
+        };
+        RevokeLetterDto: {
+            /** @description From the closed list `officialLetterRevoke`. */
             reasonCode: string;
         };
         RevokePermitDto: {
@@ -63967,6 +64161,50 @@ export interface operations {
             };
         };
     };
+    MyLettersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterViewList"];
+                };
+            };
+        };
+    };
+    MyLettersController_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
     MyOutagesController_mine: {
         parameters: {
             query?: never;
@@ -67858,6 +68096,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DownloadView"];
+                };
+            };
+        };
+    };
+    PublicLettersController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LetterCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicLetterView"];
                 };
             };
         };
@@ -73484,6 +73745,119 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MoveDetailView"];
                 };
+            };
+        };
+    };
+    StaffLettersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                unitId?: string;
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterViewList"];
+                };
+            };
+        };
+    };
+    StaffLettersController_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueLetterDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterView"];
+                };
+            };
+        };
+    };
+    StaffLettersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetterView"];
+                };
+            };
+        };
+    };
+    StaffLettersController_document: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    StaffLettersController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeLetterDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

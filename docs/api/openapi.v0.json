@@ -33747,6 +33747,50 @@
         ],
         "type": "object"
       },
+      "IssueLetterDto": {
+        "properties": {
+          "accountId": {
+            "description": "The owner or tenant it names: an active occupancy of the unit (OFFICIAL_LETTER_NOT_OCCUPANT).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "addressee": {
+            "description": "To whom, printed on the letter.",
+            "maxLength": 150,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "residence_confirmation",
+              "no_objection",
+              "to_whom_it_may_concern"
+            ],
+            "type": "string"
+          },
+          "requestId": {
+            "description": "The request it answers: one of the account’s.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "subject": {
+            "description": "What it is about, printed on it. Required for `no_objection`.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "unitId",
+          "accountId"
+        ],
+        "type": "object"
+      },
       "IssueViolationDto": {
         "properties": {
           "amount": {
@@ -34325,6 +34369,141 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/LegalHoldResponse"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "LetterCodeDto": {
+        "properties": {
+          "code": {
+            "description": "The 22 characters printed on the letter.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "LetterView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "addressee": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "residence_confirmation",
+              "no_objection",
+              "to_whom_it_may_concern"
+            ],
+            "type": "string"
+          },
+          "number": {
+            "example": "OL-000123",
+            "type": "string"
+          },
+          "occupancySince": {
+            "format": "date",
+            "type": "string"
+          },
+          "occupancyType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OccupancyType"
+              }
+            ]
+          },
+          "requestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "revokeReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "revoked"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectName": {
+            "description": "As written on the letter; null once its subject was erased.",
+            "nullable": true,
+            "type": "string"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "verifyCode": {
+            "description": "Anyone checks it with this code on the public page.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "kind",
+          "unitId",
+          "unitCode",
+          "accountId",
+          "subjectName",
+          "occupancyType",
+          "occupancySince",
+          "addressee",
+          "subject",
+          "requestId",
+          "issuedAt",
+          "status",
+          "revokedAt",
+          "revokeReason",
+          "verifyCode"
+        ],
+        "type": "object"
+      },
+      "LetterViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/LetterView"
             },
             "type": "array"
           },
@@ -47209,6 +47388,32 @@
         ],
         "type": "object"
       },
+      "PublicLetterView": {
+        "properties": {
+          "issuedOn": {
+            "description": "The day it was issued, in the compound’s zone.",
+            "format": "date",
+            "type": "string"
+          },
+          "issuer": {
+            "description": "The compound that issued it.",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "revoked"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "issuer",
+          "issuedOn"
+        ],
+        "type": "object"
+      },
       "PublicReceiptView": {
         "properties": {
           "amount": {
@@ -54452,6 +54657,18 @@
           "reasonCode",
           "reason",
           "permission"
+        ],
+        "type": "object"
+      },
+      "RevokeLetterDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From the closed list `officialLetterRevoke`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -106747,6 +106964,95 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/me/official-letters": {
+      "get": {
+        "operationId": "MyLettersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the official letters issued for me",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/me/official-letters/{id}/pdf": {
+      "get": {
+        "operationId": "MyLettersController_document",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An official letter of mine as a PDF",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/me/outages": {
       "get": {
         "operationId": "MyOutagesController_mine",
@@ -114189,6 +114495,40 @@
         "summary": "Download an assisted export with the link and the emailed code",
         "tags": [
           "data-exports"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/letters/lookup": {
+      "post": {
+        "operationId": "PublicLettersController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LetterCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLetterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Check an official letter by its code",
+        "tags": [
+          "public"
         ],
         "x-no-store": true,
         "x-stability": "draft"
@@ -125124,6 +125464,229 @@
         "tags": [
           "units"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/official-letters": {
+      "get": {
+        "operationId": "StaffLettersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accountId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the official letters",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "StaffLettersController_issue",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueLetterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Issue an official letter",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/official-letters/{id}": {
+      "get": {
+        "operationId": "StaffLettersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LetterView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one official letter",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/official-letters/{id}/pdf": {
+      "get": {
+        "operationId": "StaffLettersController_document",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An official letter as a PDF",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/official-letters/{id}/revoke": {
+      "post": {
+        "operationId": "StaffLettersController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeLetterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke an official letter",
+        "tags": [
+          "management-requests"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

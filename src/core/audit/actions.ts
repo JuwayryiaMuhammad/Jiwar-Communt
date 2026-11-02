@@ -463,6 +463,11 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'management_request',
   },
+  // ADR 0080: official letters. metadata: number, kind, unitId, accountId,
+  // withRequest, withAddressee, withSubject (issued); number, reasonCode
+  // (revoked). Never the name, the addressee or the subject.
+  'official_letter.issued': { log: 'tenant', target: 'official_letter' },
+  'official_letter.revoked': { log: 'tenant', target: 'official_letter' },
   // ADR 0080: reply templates. metadata: name, topicId; changes: name and
   // topicId by value, the words as `{ changed: true }`.
   'reply_template.created': { log: 'tenant', target: 'reply_template' },

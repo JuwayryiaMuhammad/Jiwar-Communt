@@ -9,6 +9,8 @@ import { AppointmentView } from '../appointments/views/appointment.views';
 import { decisionAppealReference } from '../decision-appeals/appeal-rules';
 import { DecisionAppealsService } from '../decision-appeals/decision-appeals.service';
 import { DecisionAppealView } from '../decision-appeals/views/decision-appeal.views';
+import { LetterView } from '../letters/letters.controller';
+import { LettersService } from '../letters/letters.service';
 import { MessagesService } from '../requests/messages.service';
 import { requestNumber } from '../requests/request-rules';
 import { RequestsService } from '../requests/requests.service';
@@ -39,11 +41,34 @@ export class ManagementExportSections implements OnModuleInit {
     private readonly requests: RequestsService,
     private readonly messages: MessagesService,
     private readonly appeals: DecisionAppealsService,
+    private readonly officialLetters: LettersService,
   ) {}
 
   onModuleInit(): void {
     this.sections.register('management-requests', (s) => this.authored(s));
     this.sections.register('decision-appeals', (s) => this.appealed(s));
+    this.sections.register('official-letters', (s) => this.letters(s));
+  }
+
+  /**
+   * The official letters issued for the account (ADR 0080), one file
+   * (`official-letters.json`), as the account's own list shows them: the
+   * number, kind, unit, the name as written, the capacity and since when,
+   * the addressee and subject, the day, whether it stands and its code.
+   */
+  private async *letters(s: ExportSubject): AsyncIterable<ExportEntry> {
+    const all: LetterView[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await this.officialLetters.forAccount(s.accountId, {
+        cursor,
+        limit: 100,
+      });
+      all.push(...page.items.map((r) => LetterView.from(r)));
+      cursor = page.nextCursor ?? undefined;
+    } while (cursor);
+    if (!all.length) return;
+    yield { path: 'official-letters.json', json: all };
   }
 
   /**

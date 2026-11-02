@@ -39,6 +39,13 @@ import {
 } from './requests/staff-requests.controller';
 import { RequestConversion } from './requests/conversion.service';
 import { ReplyTemplatesController } from './templates/reply-templates.controller';
+import {
+  MyLettersController,
+  PublicLettersController,
+  StaffLettersController,
+} from './letters/letters.controller';
+import { LetterPageService } from './letters/letter-page.service';
+import { LettersService } from './letters/letters.service';
 import { ReplyTemplatesService } from './templates/reply-templates.service';
 import { OfficeHoursService } from './settings/office-hours.service';
 import {
@@ -79,6 +86,9 @@ import { MaintenanceModule } from '../maintenance';
     StaffRequestsController,
     RequestOutreachController,
     ReplyTemplatesController,
+    StaffLettersController,
+    MyLettersController,
+    PublicLettersController,
     RequestAssigneesController,
     RequestRatingsController,
     RequestUnitsController,
@@ -104,6 +114,8 @@ import { MaintenanceModule } from '../maintenance';
     RequestLifecycle,
     RequestConversion,
     ReplyTemplatesService,
+    LettersService,
+    LetterPageService,
     RequestEscalation,
     AppointmentsService,
     RatingService,

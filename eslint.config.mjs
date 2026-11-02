@@ -135,6 +135,7 @@ export default tseslint.config(
       'src/gate/vendors/vendor-webhook.ts',
       'src/finance/receipts-public/receipt-page.service.ts',
       'src/finance/clearances/clearance-page.service.ts',
+      'src/management/letters/letter-page.service.ts',
       'src/gate/permits/works-certificate-page.service.ts',
       'prisma/seed.ts',
     ],

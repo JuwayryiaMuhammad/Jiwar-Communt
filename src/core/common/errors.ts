@@ -1911,6 +1911,31 @@ export const ErrorCode = {
   /** Decided already (409, params.status). */
   COMPENSATION_DECIDED: 'COMPENSATION_DECIDED',
   SERVICE_PROMISE_NOT_FOUND: 'SERVICE_PROMISE_NOT_FOUND',
+  // Transfers, dues and closed units, and the market's rules (ADR 0083).
+  OWNERSHIP_TRANSFER_NOT_FOUND: 'OWNERSHIP_TRANSFER_NOT_FOUND',
+  /** The transfer is done or cancelled already (409, params.status). */
+  OWNERSHIP_TRANSFER_NOT_PENDING: 'OWNERSHIP_TRANSFER_NOT_PENDING',
+  /** The unit has a transfer waiting already (409, params.reference). */
+  OWNERSHIP_TRANSFER_PENDING: 'OWNERSHIP_TRANSFER_PENDING',
+  /**
+   * The unit owes the compound (409, params.owed): a transfer waits until
+   * it is paid, or goes ahead as an exception with a code and a step-up.
+   */
+  TRANSFER_DUES_OWED: 'TRANSFER_DUES_OWED',
+  CLOSED_UNIT_ROUND_NOT_FOUND: 'CLOSED_UNIT_ROUND_NOT_FOUND',
+  /** The round is scheduled, done or cancelled already (409, params.status). */
+  CLOSED_UNIT_ROUND_NOT_DUE: 'CLOSED_UNIT_ROUND_NOT_DUE',
+  UNIT_ENTRY_NOT_FOUND: 'UNIT_ENTRY_NOT_FOUND',
+  /** The entry's report is written already (409). */
+  UNIT_ENTRY_REPORTED: 'UNIT_ENTRY_REPORTED',
+  /** The compound takes no commercial listings or shops now (409). */
+  MARKET_COMMERCIAL_BLOCKED: 'MARKET_COMMERCIAL_BLOCKED',
+  /** The compound does not take this category now (409, params.category). */
+  MARKET_CATEGORY_NOT_ALLOWED: 'MARKET_CATEGORY_NOT_ALLOWED',
+  /** The unit has as many listings open as the compound allows (409, params.max). */
+  MARKET_UNIT_LISTING_LIMIT_REACHED: 'MARKET_UNIT_LISTING_LIMIT_REACHED',
+  /** Nothing of the caller's waits for a re-confirmation (409). */
+  GROUP_OFFER_RECONFIRM_NOT_NEEDED: 'GROUP_OFFER_RECONFIRM_NOT_NEEDED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

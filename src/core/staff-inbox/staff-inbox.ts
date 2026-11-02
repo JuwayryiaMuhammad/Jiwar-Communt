@@ -41,6 +41,11 @@ export const INBOX_TYPES = [
   'follow_up_case',
   'recovery_case',
   'compensation',
+  // ADR 0083: a transfer to approve, a closed unit's round to schedule, an
+  // emergency entry's report to write.
+  'ownership_transfer',
+  'closed_unit_round',
+  'unit_entry_report',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

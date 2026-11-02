@@ -307,6 +307,12 @@ export const REASON_CODES = {
   lowRating: ['not_fixed', 'slow', 'poor_quality', 'staff_conduct', 'no_show', 'poor_communication', 'price', 'other'],
   experienceCaseOutcome: ['resolved', 'compensated', 'no_action_needed', 'resident_unreachable', 'resident_declined'],
   compensationReject: ['not_justified', 'already_compensated', 'outside_policy', 'other'],
+  // Transfers, dues and closed units (ADR 0083).
+  ownershipTransferCancel: ['sale_cancelled', 'documents_missing', 'raised_in_error', 'other'],
+  transferDuesException: ['dues_settled_at_sale', 'payment_plan_agreed', 'dues_disputed', 'court_order', 'other'],
+  proxyRevokeByManagement: ['misuse', 'owner_request', 'identity_doubt', 'security_concern', 'other'],
+  unitEntryReason: ['water_leak', 'fire', 'smoke', 'gas_smell', 'electrical_hazard', 'structural_danger', 'security_threat', 'other'],
+  unitEntryOutcome: ['resolved', 'contained', 'no_issue_found', 'needs_maintenance', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

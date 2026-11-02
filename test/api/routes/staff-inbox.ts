@@ -19,6 +19,9 @@ const INBOX_TYPES = [
   'follow_up_case',
   'recovery_case',
   'compensation',
+  'ownership_transfer',
+  'closed_unit_round',
+  'unit_entry_report',
 ];
 
 /**

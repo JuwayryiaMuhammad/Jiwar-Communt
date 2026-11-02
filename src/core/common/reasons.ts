@@ -1153,4 +1153,44 @@ export const REASON_CODES = {
     'outside_policy',
     'other',
   ],
+  // Transfers, dues and closed units (ADR 0083): a transfer request called
+  // off; why a transfer goes ahead while the unit owes; why the management
+  // ends an owner's proxy; why staff entered a unit, and what they found.
+  ownershipTransferCancel: [
+    'sale_cancelled',
+    'documents_missing',
+    'raised_in_error',
+    'other',
+  ],
+  transferDuesException: [
+    'dues_settled_at_sale',
+    'payment_plan_agreed',
+    'dues_disputed',
+    'court_order',
+    'other',
+  ],
+  proxyRevokeByManagement: [
+    'misuse',
+    'owner_request',
+    'identity_doubt',
+    'security_concern',
+    'other',
+  ],
+  unitEntryReason: [
+    'water_leak',
+    'fire',
+    'smoke',
+    'gas_smell',
+    'electrical_hazard',
+    'structural_danger',
+    'security_threat',
+    'other',
+  ],
+  unitEntryOutcome: [
+    'resolved',
+    'contained',
+    'no_issue_found',
+    'needs_maintenance',
+    'other',
+  ],
 } as const;

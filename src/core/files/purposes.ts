@@ -336,6 +336,14 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['permits.manage'],
   },
+  // An emergency entry's photo (ADR 0083): what staff found before and
+  // after, an image of 10 MB; neither files CHECK changes for it (the image
+  // default). Staff only, and the unit's occupants and owners' proxies.
+  unit_entry_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 10 * MB,
+    uploaders: ['guard_tasks.manage'],
+  },
   // An asset's, an asset type's or a common area's document (ADR 0064): a
   // floor plan, a manual, a warranty card; a photo or a PDF, uploaded by
   // who keeps the register, read by the technicians in the field.

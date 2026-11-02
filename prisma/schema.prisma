@@ -3649,6 +3649,8 @@ enum FilePurpose {
   compliance_evidence
   /// The compound's logo on the board's documents (ADR 0075).
   compound_logo
+  /// An emergency entry's photo (ADR 0083): an image, 10 MB, the staff's.
+  unit_entry_photo
 }
 
 enum FileStatus {
@@ -12602,6 +12604,10 @@ enum GroupOfferStatus {
   confirmed
   failed
   cancelled
+  /// The contract's final price is higher for some participants (ADR 0083): they re-confirm.
+  reconfirming
+  /// Contracted with its supplier at its final price (ADR 0083).
+  contracted
 
   @@map("group_offer_status")
 }

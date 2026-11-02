@@ -24,6 +24,10 @@ export const INBOX_TYPE: Record<string, { label: string; href: (id: string) => s
   follow_up_case: { label: 'Follow-up case', href: (id) => `/experience/cases/${id}` },
   recovery_case: { label: 'Recovery case', href: (id) => `/experience/cases/${id}` },
   compensation: { label: 'Compensation', href: () => '/experience/compensations' },
+  // ADR 0083.
+  ownership_transfer: { label: 'Ownership transfer', href: () => '/ownership-transfers' },
+  closed_unit_round: { label: 'Closed unit round', href: () => '/security/closed-units' },
+  unit_entry_report: { label: 'Emergency entry report', href: () => '/security/unit-entries' },
 };
 
 export const inboxLabel = (type: string) => INBOX_TYPE[type]?.label ?? type;

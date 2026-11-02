@@ -61,6 +61,7 @@ const values = {
   callMaxSeconds: 300,
   gateBusyNormalFrom: 10,
   gateBusyBusyFrom: 30,
+  closedUnitRoundDays: 30,
 };
 
 test('the settings form: whole numbers within each bound; only the visit length may be off', () => {

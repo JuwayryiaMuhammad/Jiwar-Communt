@@ -104,6 +104,7 @@ function GroupOffers() {
     onDone: () => toast.show('Open: those interested are told.'),
   });
   const [creating, setCreating] = useState(false);
+  const [contracting, setContracting] = useState<Group | null>(null);
   const [cancelling, setCancelling] = useState<Group | null>(null);
   const [code, setCode] = useState('');
   const cancel = useAction(
@@ -131,11 +132,23 @@ function GroupOffers() {
             empty="None yet"
             columns={[
               { key: 't', header: 'Offer', cell: (g) => g.titleEn },
-              { key: 'p', header: 'Price', cell: (g) => `${g.groupPrice} (list ${g.listPrice}) EGP` },
+              {
+                key: 'p',
+                header: 'Price',
+                cell: (g) =>
+                  g.finalPrice
+                    ? `${g.finalPrice} final (group ${g.groupPrice}) EGP`
+                    : `${g.groupPrice} (list ${g.listPrice}) EGP`,
+              },
               { key: 'n', header: 'Households', cell: (g) => <span className="t-num">{`${g.joined} / ${g.minParticipants}`}</span> },
               { key: 'i', header: 'Interested', cell: (g) => <span className="t-num">{g.interested}</span> },
               { key: 'c', header: 'Closes', cell: (g) => formatDateTime(g.closesAt) },
-              { key: 's', header: 'Status', cell: (g) => <Badge tone={g.status === 'confirmed' ? 'green' : g.status === 'failed' || g.status === 'cancelled' ? 'error' : 'beige'}>{label(g.status)}</Badge> },
+              { key: 's', header: 'Status', cell: (g) => <Badge tone={g.status === 'confirmed' || g.status === 'contracted' ? 'green' : g.status === 'failed' || g.status === 'cancelled' ? 'error' : 'beige'}>{label(g.status)}</Badge> },
+              {
+                key: 'r',
+                header: 'Re-confirm by',
+                cell: (g) => (g.status === 'reconfirming' && g.reconfirmClosesAt ? formatDateTime(g.reconfirmClosesAt) : '—'),
+              },
               {
                 key: 'a',
                 header: '',
@@ -152,6 +165,11 @@ function GroupOffers() {
                         Call off
                       </Button>
                     ) : null}
+                    {g.status === 'confirmed' ? (
+                      <Button size="sm" variant="primary" onClick={() => setContracting(g)}>
+                        Record the contract
+                      </Button>
+                    ) : null}
                   </span>
                 ),
               },
@@ -161,6 +179,7 @@ function GroupOffers() {
       </Card>
       <ErrorAlert error={open.error} />
       {creating ? <NewGroupOffer onClose={() => setCreating(false)} /> : null}
+      {contracting ? <ContractDialog offer={contracting} onClose={() => setContracting(null)} /> : null}
       {cancelling ? (
         <Dialog
           open
@@ -194,6 +213,67 @@ function GroupOffers() {
         </Dialog>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * A confirmed offer's contract (ADR 0083): the final price agreed with the
+ * supplier. At or below the group price it is contracted at once; above
+ * it, each household re-confirms within the hours given, or drops out.
+ */
+function ContractDialog({ offer, onClose }: { offer: Group; onClose: () => void }) {
+  const toast = useToast();
+  const [finalPrice, setFinalPrice] = useState(offer.groupPrice);
+  const [hours, setHours] = useState('72');
+  const higher = Number(finalPrice) > Number(offer.groupPrice);
+  const contract = useAction(
+    () =>
+      unwrap(
+        api.POST('/api/v1/staff/group-offers/{id}/contract', {
+          params: { path: { id: offer.id } },
+          body: { finalPrice, ...(higher ? { reconfirmHours: Number(hours) } : {}) },
+        }),
+      ),
+    {
+      invalidate: [GROUPS],
+      onDone: () => {
+        toast.show(higher ? 'Held for re-confirmation: the households are asked.' : 'Contracted: the households are told.');
+        onClose();
+      },
+    },
+  );
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`The contract of “${offer.titleEn}”`}
+      description={`${offer.joined} households joined at ${offer.groupPrice} EGP.`}
+      onSubmit={() => contract.mutate(undefined)}
+      footer={
+        <>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" loading={contract.isPending}>
+            {higher ? 'Ask them to re-confirm' : 'Record the contract'}
+          </Button>
+        </>
+      }
+    >
+      <div className="form">
+        <Field label="Final price, EGP" error={fieldError(contract.error, 'finalPrice')}>
+          {(p) => <Input {...p} inputMode="decimal" value={finalPrice} onChange={(e) => setFinalPrice(e.target.value)} />}
+        </Field>
+        {higher ? (
+          <Field
+            label="Hours to re-confirm"
+            hint="Above the group price, nobody is held to it without confirming: 24 to 168 hours."
+            error={fieldError(contract.error, 'reconfirmHours')}
+          >
+            {(p) => <Input {...p} inputMode="numeric" value={hours} onChange={(e) => setHours(e.target.value)} />}
+          </Field>
+        ) : null}
+        <ErrorAlert error={contract.error} />
+      </div>
+    </Dialog>
   );
 }
 

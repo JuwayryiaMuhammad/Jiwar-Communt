@@ -307,11 +307,41 @@ function Shops() {
   );
 }
 
-/** The market's settings: review, limits, days, the reports that hide. */
+/** Every category the market knows (ADR 0071's closed list). */
+const CATEGORIES = [
+  'furniture',
+  'electronics',
+  'appliances',
+  'clothing',
+  'kids',
+  'books',
+  'sports',
+  'vehicles',
+  'home_garden',
+  'services',
+  'food',
+  'real_estate',
+  'other',
+] as const;
+
+/**
+ * The market's settings: review, limits, days, the reports that hide; and
+ * its rules (ADR 0083): commercial listings blocked, the categories it
+ * takes, the listings one unit may have open. A rule applies to new and
+ * edited listings; what is open stays.
+ */
 function Settings() {
   const toast = useToast();
   const settings = useQuery({ queryKey: [...KEY, 'settings'], queryFn: () => unwrap(api.GET('/api/v1/market/settings')) });
-  const [form, setForm] = useState({ requiresReview: true, maxLivePerAccount: '10', expiryDays: '30', reportHideThreshold: '3' });
+  const [form, setForm] = useState({
+    requiresReview: true,
+    maxLivePerAccount: '10',
+    expiryDays: '30',
+    reportHideThreshold: '3',
+    commercialBlocked: false,
+    allowedCategories: [...CATEGORIES] as string[],
+    maxLivePerUnit: '10',
+  });
   useEffect(() => {
     if (settings.data)
       setForm({
@@ -319,6 +349,9 @@ function Settings() {
         maxLivePerAccount: String(settings.data.maxLivePerAccount),
         expiryDays: String(settings.data.expiryDays),
         reportHideThreshold: String(settings.data.reportHideThreshold),
+        commercialBlocked: settings.data.commercialBlocked,
+        allowedCategories: [...settings.data.allowedCategories],
+        maxLivePerUnit: String(settings.data.maxLivePerUnit),
       });
   }, [settings.data]);
   const save = useAction(
@@ -330,16 +363,26 @@ function Settings() {
             maxLivePerAccount: Number(form.maxLivePerAccount),
             expiryDays: Number(form.expiryDays),
             reportHideThreshold: Number(form.reportHideThreshold),
+            commercialBlocked: form.commercialBlocked,
+            allowedCategories: form.allowedCategories as (typeof CATEGORIES)[number][],
+            maxLivePerUnit: Number(form.maxLivePerUnit),
           },
         }),
       ),
     { invalidate: [KEY], onDone: () => toast.show('Settings saved.') },
   );
-  const number = (key: 'maxLivePerAccount' | 'expiryDays' | 'reportHideThreshold', text: string, hint: string) => (
+  const number = (key: 'maxLivePerAccount' | 'expiryDays' | 'reportHideThreshold' | 'maxLivePerUnit', text: string, hint: string) => (
     <Field label={text} hint={hint} error={fieldError(save.error, key)}>
       {(p) => <Input {...p} inputMode="numeric" value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />}
     </Field>
   );
+  const toggle = (c: string) =>
+    setForm({
+      ...form,
+      allowedCategories: form.allowedCategories.includes(c)
+        ? form.allowedCategories.filter((x) => x !== c)
+        : [...form.allowedCategories, c],
+    });
   return (
     <Card>
       <CardHeader title="Market settings" />
@@ -355,10 +398,33 @@ function Settings() {
               )}
             </Field>
             {number('maxLivePerAccount', 'Listings a resident may have open', '1 to 50.')}
+            {number('maxLivePerUnit', 'Listings one unit may have open', 'Whoever of its people posts them. 1 to 50.')}
             {number('expiryDays', 'Days a listing stays on the market', '1 to 180.')}
             {number('reportHideThreshold', 'Units whose reports take a listing off for review', '1 to 20.')}
+            <Field label="Commercial listings" hint="Services offered and anything under a shop, and new shops.">
+              {(p) => (
+                <Select
+                  {...p}
+                  value={form.commercialBlocked ? 'blocked' : 'allowed'}
+                  onChange={(e) => setForm({ ...form, commercialBlocked: e.target.value === 'blocked' })}
+                >
+                  <option value="allowed">Allowed</option>
+                  <option value="blocked">Blocked</option>
+                </Select>
+              )}
+            </Field>
+            <fieldset className="stack stack--sm">
+              <legend>Categories the market takes</legend>
+              {CATEGORIES.map((c) => (
+                <label key={c} style={{ display: 'flex', gap: 8 }}>
+                  <input type="checkbox" checked={form.allowedCategories.includes(c)} onChange={() => toggle(c)} />
+                  {c.replace(/_/g, ' ')}
+                </label>
+              ))}
+              {fieldError(save.error, 'allowedCategories') ? <p className="t-error">{fieldError(save.error, 'allowedCategories')}</p> : null}
+            </fieldset>
             <div>
-              <Button variant="primary" loading={save.isPending} onClick={() => save.mutate(undefined)}>
+              <Button variant="primary" loading={save.isPending} disabled={form.allowedCategories.length === 0} onClick={() => save.mutate(undefined)}>
                 Save
               </Button>
             </div>

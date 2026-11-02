@@ -76,6 +76,13 @@ export default function MovesPage() {
               },
               { key: 'day', header: 'Planned', cell: (m) => formatDate(m.plannedOn) },
               {
+                // ADR 0083: what the unit owes the compound now.
+                key: 'owed',
+                header: 'Owed',
+                cell: (m) =>
+                  Number(m.owed) > 0 ? <Badge tone="terracotta">{m.owed} EGP</Badge> : <span className="t-secondary">Nothing</span>,
+              },
+              {
                 key: 'act',
                 header: '',
                 cell: (m) => (
@@ -153,6 +160,11 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
         }
       >
         <ErrorAlert error={tick.error ?? done.error} />
+        {detail.data && Number(detail.data.owed) > 0 ? (
+          <p className="t-secondary">
+            The unit owes {detail.data.owed} EGP. A clearance is refused until it is paid; the handover still goes ahead.
+          </p>
+        ) : null}
         <QueryState query={detail}>
           <DataTable<Step>
             rows={detail.data?.checklist}

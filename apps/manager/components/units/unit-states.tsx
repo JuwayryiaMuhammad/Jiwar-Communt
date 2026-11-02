@@ -78,10 +78,23 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
     (reason: Reason) => unwrap(api.POST('/api/v1/units/{id}/end-household', { params: path, body: reason })),
     options('Household ended. Its members, delegations and worker engagements have ended.'),
   );
+  // A transfer is requested here and approved on the Transfers page, past
+  // the dues check (ADR 0083).
   const transfer = useAction(
     (reason: Reason) =>
-      unwrap(api.POST('/api/v1/units/{id}/transfer-ownership', { params: path, body: { ...reason, toAccountId: buyerId, resides } })),
-    options('Ownership transferred. The previous occupancies, household and worker engagements have ended.'),
+      unwrap(
+        api.POST('/api/v1/staff/units/{unitId}/ownership-transfers', {
+          params: { path: { unitId: unit.id } },
+          body: { ...reason, toAccountId: buyerId, resides },
+        }),
+      ),
+    {
+      invalidate: [...refresh, ['ownership-transfers']],
+      onDone: () => {
+        toast.show('Transfer requested. Approve it on the Transfers page once the dues are checked.');
+        close();
+      },
+    },
   );
   const clear = useAction(
     (v: { flag: Flag; reasonCode: string }) =>
@@ -186,10 +199,10 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
       <ReasonDialog
         open={open === 'transfer'}
         onClose={close}
-        title={`Transfer the ownership of unit ${unit.code}?`}
-        description="Every current occupancy of the unit ends and the household ends with it, including every domestic worker engagement of the household; each person is told. The new owner's occupancy starts now and must register their own workers. The previous family keeps no access. This cannot be undone."
+        title={`Request the transfer of unit ${unit.code}?`}
+        description="It waits on the Transfers page and in the inbox. When it is approved, every current occupancy of the unit ends and the household ends with it, including every domestic worker engagement of the household; each person is told. A unit that owes the compound is not transferred unless the approval is an exception with a reason."
         codes={REASON_CODES.householdEnd}
-        confirmLabel="Transfer ownership"
+        confirmLabel="Request the transfer"
         danger
         pending={transfer.isPending}
         error={

@@ -13,17 +13,20 @@ import { keys, type GuardTaskKind } from '@/lib/queries';
 /**
  * A new guard task (ADR 0050), for one guard or for whoever is on shift at
  * a post. Given `request`, it is the closed-unit inspection that answers an
- * owner's inspection request (ADR 0063): the kind and the unit are the
- * request's.
+ * owner's inspection request (ADR 0063); given `round`, the one that carries
+ * out a closed unit's round (ADR 0083): the kind and the unit are theirs.
  */
 export function NewTaskDialog({
   onClose,
-  request,
+  request: asked,
+  round,
 }: {
   onClose: () => void;
   request?: { id: string; unitId: string; unitCode: string };
+  round?: { id: string; unitId: string; unitCode: string };
 }) {
   const toast = useToast();
+  const request = asked ?? round;
   const [kind, setKind] = useState<GuardTaskKind>(request ? 'closed_unit_inspection' : 'custom');
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
@@ -45,12 +48,13 @@ export function NewTaskDialog({
             ...(details.trim() ? { details: details.trim() } : {}),
             ...target,
             ...(dueAt ? { dueAt: instantOf(dueAt) } : {}),
-            ...(request ? { requestId: request.id } : {}),
+            ...(asked ? { requestId: asked.id } : {}),
+            ...(round ? { roundId: round.id } : {}),
           },
         }),
       ),
     {
-      invalidate: [keys.guardTasksAll, ['inspection-requests']],
+      invalidate: [keys.guardTasksAll, ['inspection-requests'], ['closed-units']],
       onDone: () => {
         toast.show('Task given. The guard, or the guards on shift there, are told.');
         onClose();
@@ -77,7 +81,9 @@ export function NewTaskDialog({
     >
       <div className="form">
         {request ? (
-          <p className="t-secondary">Inspection of {request.unitCode}, as its owner asked.</p>
+          <p className="t-secondary">
+            Inspection of {request.unitCode}, {round ? 'its round due.' : 'as its owner asked.'}
+          </p>
         ) : (
           <Segmented<GuardTaskKind>
             label="Kind"

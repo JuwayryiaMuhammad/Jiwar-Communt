@@ -391,6 +391,10 @@ const TEXT: Record<string, (p: P) => string> = {
   // Money and the unit (ADR 0069): what the finance staff are asked for.
   'instalment_plan_request.submitted': () => 'A resident asked for a payment plan on an invoice',
   'collector_visit.requested': () => 'A resident asked for a collector to take cash at their unit',
+  // Treasury and custody (ADR 0085).
+  'finance.custody_variance': (p) => `Hand-in ${p.handinNumber} was counted other than expected`,
+  'finance.custody_investigation_assigned': (p) => `The variance of hand-in ${p.handinNumber} is yours to investigate by ${p.dueOn}`,
+  'cheque.due': (p) => `A post-dated cheque is due on ${p.dueOn}: deposit it`,
   // Community (ADR 0071): the staff's.
   'market_listing.under_review': () => 'Several homes reported a listing: it is off the market for review',
   'gallery_photo.reported': () => 'A resident reported a gallery photo',

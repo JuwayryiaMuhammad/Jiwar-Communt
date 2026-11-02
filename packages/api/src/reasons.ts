@@ -323,6 +323,11 @@ export const REASON_CODES = {
   proxyRevokeByManagement: ['misuse', 'owner_request', 'identity_doubt', 'security_concern', 'other'],
   unitEntryReason: ['water_leak', 'fire', 'smoke', 'gas_smell', 'electrical_hazard', 'structural_danger', 'security_threat', 'other'],
   unitEntryOutcome: ['resolved', 'contained', 'no_issue_found', 'needs_maintenance', 'other'],
+  custodyVariance: ['counting_error', 'missing_cash', 'excess_cash', 'change_given', 'unrecorded_payment', 'other'],
+  custodyOutcome: ['recovered', 'written_off', 'explained', 'other'],
+  chequeBounce: ['insufficient_funds', 'signature_mismatch', 'stopped', 'stale', 'account_closed', 'other'],
+  chequeReturn: ['replaced', 'paid_otherwise', 'payer_asked', 'other'],
+  cashAdjust: ['bank_charge', 'interest', 'refund_paid', 'counting_correction', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

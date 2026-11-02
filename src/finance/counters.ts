@@ -11,7 +11,8 @@ export type CounterKind =
   | 'deposit'
   | 'vendor_invoice'
   | 'disbursement'
-  | 'payout';
+  | 'payout'
+  | 'handin';
 
 /**
  * The one order in which a transaction takes numbers (ADR 0048). A counter
@@ -33,6 +34,8 @@ export const COUNTER_ORDER: readonly CounterKind[] = [
   'vendor_invoice',
   'disbursement',
   'payout',
+  // A custody hand-in takes no other counter (ADR 0085).
+  'handin',
 ];
 
 const lastTaken = new WeakMap<object, number>();
@@ -81,6 +84,7 @@ const PREFIX: Record<CounterKind, string> = {
   vendor_invoice: 'VI',
   disbursement: 'VD',
   payout: 'VP',
+  handin: 'HI',
 };
 
 /** `INV-000123`: six digits at least, as the house numbers are. */

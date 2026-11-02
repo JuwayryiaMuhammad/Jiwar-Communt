@@ -3674,6 +3674,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يستلم أحد طلب مساعدة من فني. افتح الفريق الميداني.',
     },
   },
+  'finance.custody_variance': {
+    en: {
+      title: 'Custody variance',
+      body: 'Hand-in {handinNumber} was counted other than expected. Settle it in the app.',
+    },
+    ar: {
+      title: 'فرق في العهدة',
+      body: 'جاء عدّ التسليم {handinNumber} مختلفًا عن المتوقع. سوِّه من التطبيق.',
+    },
+  },
+  'finance.custody_investigation_assigned': {
+    en: {
+      title: 'Investigation assigned',
+      body: 'The variance of hand-in {handinNumber} is yours to investigate by {dueOn}.',
+    },
+    ar: {
+      title: 'تحقيق مُسند إليك',
+      body: 'أُسند إليك التحقيق في فرق التسليم {handinNumber} حتى {dueOn}.',
+    },
+  },
+  'cheque.due': {
+    en: {
+      title: 'Cheque due',
+      body: 'A post-dated cheque is due on {dueOn}. It can be deposited now.',
+    },
+    ar: {
+      title: 'شيك مستحق',
+      body: 'حلّ موعد شيك مؤجل في {dueOn}. يمكن إيداعه الآن.',
+    },
+  },
+  'cheque.bounced': {
+    en: {
+      title: 'Cheque bounced',
+      body: 'A cheque paid for your unit bounced, so its payment was reversed. See your statement in the app.',
+    },
+    ar: {
+      title: 'شيك مرتجع',
+      body: 'ارتد شيك دُفع لوحدتك، فأُلغيت دفعته. راجع كشف الحساب في التطبيق.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

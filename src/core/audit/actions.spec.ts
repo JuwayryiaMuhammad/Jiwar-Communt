@@ -294,6 +294,15 @@ describe('audit catalog', () => {
         'tender',
         'tender_invitation',
         'tender_bid',
+        // ADR 0085.
+        'cash_account',
+        'cash_transfer',
+        'cash_movement',
+        'custody_handin',
+        'custody_investigation',
+        'cheque',
+        'statement_import',
+        'statement_match',
       ]).toContain(def.target);
     }
   });

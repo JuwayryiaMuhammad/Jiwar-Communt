@@ -95,6 +95,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'governance.manage',
       'governance.approvals',
       'finance.budget',
+      // ADR 0085.
+      'finance.treasury',
+      'finance.custody',
       'patrols.manage',
       'incidents.manage',
       'blocklist.manage',
@@ -296,6 +299,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.payables',
       // The second person at a tender's opening (ADR 0088).
       'tenders.open',
+      // ADR 0085: the bank and cash accounts, never a custody variance.
+      'finance.treasury',
     ],
   },
   {

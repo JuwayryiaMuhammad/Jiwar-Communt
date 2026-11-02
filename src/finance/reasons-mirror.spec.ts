@@ -9,7 +9,7 @@ const mirror = readFileSync(
 const quoted = (codes: readonly string[]) =>
   codes.map((c) => `'${c}'`).join(', ');
 
-describe('money and the unit’s reason codes in the dashboards’ mirror (ADR 0069)', () => {
+describe('money and the unit’s and the treasury’s reason codes in the dashboards’ mirror (ADR 0069, 0085)', () => {
   it.each([
     'planRequestDecline',
     'collectorVisitFail',
@@ -20,6 +20,12 @@ describe('money and the unit’s reason codes in the dashboards’ mirror (ADR 0
     'disbursementReject',
     'disbursementCancel',
     'budgetVariance',
+    // ADR 0085.
+    'custodyVariance',
+    'custodyOutcome',
+    'chequeBounce',
+    'chequeReturn',
+    'cashAdjust',
   ] as const)('%s is the backend’s list', (list) => {
     expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });

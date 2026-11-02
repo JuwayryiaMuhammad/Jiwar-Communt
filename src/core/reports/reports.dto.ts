@@ -24,6 +24,10 @@ import { REPORT_KEYS, type ReportKey } from './report-registry';
 const GROUPING = /^[a-z][a-z0-9_]{1,39}$/;
 
 export class ReportQueryDto {
+  @ApiProperty({ enum: REPORT_KEYS, enumName: 'ReportKey' })
+  @IsIn(REPORT_KEYS, withParams({ allowed: [...REPORT_KEYS] }))
+  report: ReportKey;
+
   @ApiPropertyOptional({
     type: String,
     format: 'date',

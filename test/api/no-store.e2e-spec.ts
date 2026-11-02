@@ -61,6 +61,7 @@ import { m211Calls } from './no-store-m211';
 import { fieldTeamCalls } from './no-store-field-team';
 import { payableCalls } from './no-store-payables';
 import { contractorCalls } from './no-store-contractors';
+import { reportsCalls } from './no-store-reports';
 import { proxyCalls } from './no-store-proxies';
 import { inspectionCalls } from './no-store-inspections';
 import { decisionAppealCalls } from './no-store-decision-appeals';
@@ -3439,6 +3440,7 @@ describe('API v0 — no-store', () => {
     ...fieldTeamCalls(() => w),
     ...payableCalls(() => w, aSittingBoard),
     ...contractorCalls(() => w, aSittingBoard),
+    ...reportsCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

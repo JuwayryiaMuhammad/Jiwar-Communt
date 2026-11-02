@@ -21373,24 +21373,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/staff/reports/{key}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** A report over a period, grouped, compared with the period before and/or a year earlier */
-        get: operations["ReportsController_read"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/staff/reports/{key}/export": {
+    "/api/v1/staff/reports/export": {
         parameters: {
             query?: never;
             header?: never;
@@ -21399,6 +21382,23 @@ export interface paths {
         };
         /** A report as a PDF, a workbook or CSV (audited) */
         get: operations["ReportsController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/reports/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A report over a period, grouped, compared with the period before and/or a year earlier */
+        get: operations["ReportsController_read"];
         put?: never;
         post?: never;
         delete?: never;
@@ -87392,39 +87392,10 @@ export interface operations {
             };
         };
     };
-    ReportsController_read: {
-        parameters: {
-            query?: {
-                /** @description The first day, the compound’s; 29 days before `to` when left out. */
-                from?: string;
-                /** @description The last day, included; today when left out. At most 366 days. */
-                to?: string;
-                /** @description One of the report’s groupings (the catalog lists them); its first by default. */
-                groupBy?: string;
-                /** @description The period before (as many days), the same days a year earlier, both, or none (default). */
-                compare?: components["schemas"]["ReportComparison"];
-            };
-            header?: never;
-            path: {
-                key: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReportView"];
-                };
-            };
-        };
-    };
     ReportsController_export: {
         parameters: {
             query: {
+                report: components["schemas"]["ReportKey"];
                 /** @description The first day, the compound’s; 29 days before `to` when left out. */
                 from?: string;
                 /** @description The last day, included; today when left out. At most 366 days. */
@@ -87436,9 +87407,7 @@ export interface operations {
                 format: components["schemas"]["ReportFormat"];
             };
             header?: never;
-            path: {
-                key: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -87451,6 +87420,35 @@ export interface operations {
                     "application/pdf": string;
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
                     "text/csv": string;
+                };
+            };
+        };
+    };
+    ReportsController_read: {
+        parameters: {
+            query: {
+                report: components["schemas"]["ReportKey"];
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. At most 366 days. */
+                to?: string;
+                /** @description One of the report’s groupings (the catalog lists them); its first by default. */
+                groupBy?: string;
+                /** @description The period before (as many days), the same days a year earlier, both, or none (default). */
+                compare?: components["schemas"]["ReportComparison"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportView"];
                 };
             };
         };

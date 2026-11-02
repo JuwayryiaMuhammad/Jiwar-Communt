@@ -1282,3 +1282,24 @@ export const M32_COVERAGE: readonly string[] = [
   'statement_line.matched',
   'statement_match.undone',
 ];
+
+/** The reports platform (ADR 0086), covered by test/reports/audit-coverage.e2e-spec.ts. */
+export const M33_COVERAGE: readonly string[] = [
+  'report.exported',
+  'report_schedule.created',
+  'report_schedule.changed',
+  'report_run.written',
+  'report_run.downloaded',
+  'report_run.expired',
+  'capital_plan.created',
+  'capital_plan.line_added',
+  'capital_plan.line_removed',
+  'capital_plan.submitted',
+  'capital_plan.decided',
+  'capital_plan.returned',
+  'compound_export.requested',
+  'compound_export.ready',
+  'compound_export.downloaded',
+  'compound_export.failed',
+  'compound_export.expired',
+];

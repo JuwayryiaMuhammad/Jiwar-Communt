@@ -149140,93 +149140,16 @@
         "x-stability": "draft"
       }
     },
-    "/api/v1/staff/reports/{key}": {
-      "get": {
-        "operationId": "ReportsController_read",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "The first day, the compound’s; 29 days before `to` when left out.",
-            "in": "query",
-            "name": "from",
-            "required": false,
-            "schema": {
-              "format": "date",
-              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
-              "type": "string"
-            }
-          },
-          {
-            "description": "The last day, included; today when left out. At most 366 days.",
-            "in": "query",
-            "name": "to",
-            "required": false,
-            "schema": {
-              "format": "date",
-              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
-              "type": "string"
-            }
-          },
-          {
-            "description": "One of the report’s groupings (the catalog lists them); its first by default.",
-            "in": "query",
-            "name": "groupBy",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
-            "in": "query",
-            "name": "compare",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/ReportComparison"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportView"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "A report over a period, grouped, compared with the period before and/or a year earlier",
-        "tags": [
-          "reports"
-        ],
-        "x-stability": "draft"
-      }
-    },
-    "/api/v1/staff/reports/{key}/export": {
+    "/api/v1/staff/reports/export": {
       "get": {
         "operationId": "ReportsController_export",
         "parameters": [
           {
-            "in": "path",
-            "name": "key",
+            "in": "query",
+            "name": "report",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/ReportKey"
             }
           },
           {
@@ -149313,6 +149236,83 @@
           "reports"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/reports/view": {
+      "get": {
+        "operationId": "ReportsController_read",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "report",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ReportKey"
+            }
+          },
+          {
+            "description": "The first day, the compound’s; 29 days before `to` when left out.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, included; today when left out. At most 366 days.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One of the report’s groupings (the catalog lists them); its first by default.",
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReportComparison"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A report over a period, grouped, compared with the period before and/or a year earlier",
+        "tags": [
+          "reports"
+        ],
         "x-stability": "draft"
       }
     },

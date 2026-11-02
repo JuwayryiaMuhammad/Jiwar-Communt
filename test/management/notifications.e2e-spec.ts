@@ -299,9 +299,11 @@ describe('Management requests — notifications', () => {
     const id = await open();
     await staff(id, 'close', { reasonCode: 'resolved' }).expect(204);
     const before = await told(id);
-    await mine(id, 'rating', { rating: 1, comment: `${MARKER} slow` }).expect(
-      201,
-    );
+    await mine(id, 'rating', {
+      rating: 1,
+      lowReasonCode: 'slow',
+      comment: `${MARKER} slow`,
+    }).expect(201);
     expect(await since(id, before)).toEqual([]);
   });
 

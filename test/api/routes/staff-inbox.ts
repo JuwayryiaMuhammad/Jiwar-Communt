@@ -115,7 +115,11 @@ export const BOARD_AUTHORITY_ROUTES: Row[] = [
           field: 'type',
           code: 'INVALID_VALUE',
           params: {
-            allowed: ['waiver_above_limit', 'payment_plan_above_limit'],
+            allowed: [
+              'waiver_above_limit',
+              'payment_plan_above_limit',
+              'compensation_above_limit',
+            ],
           },
         },
       ],

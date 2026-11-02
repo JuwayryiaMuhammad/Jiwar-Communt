@@ -842,7 +842,11 @@ describe('API v0 — PII leak scan', () => {
     }).expect(204);
     await call(w, 'POST', `/management-requests/${mgmtRequest}/rating`, {
       token: primaryToken,
-      body: { rating: 2, comment: 'PII-REQUEST-comment' },
+      body: {
+        rating: 2,
+        lowReasonCode: 'slow',
+        comment: 'PII-REQUEST-comment',
+      },
     }).expect(201);
 
     // Community life (ADR 0040): an announcement that is out; an event the
@@ -1833,6 +1837,9 @@ describe('API v0 — PII leak scan', () => {
       '/maintenance/tickets/{id}/sensitive-reads': ticket.id,
       '/maintenance/plan-suggestions/{id}': w.bPlanSuggestionId,
       '/maintenance/cases/{id}': w.bMaintenanceCaseId,
+      // ADR 0082.
+      '/staff/experience/cases/{id}': w.bExperienceCaseId,
+      '/staff/experience/compensations/{id}': w.bCompensationId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,

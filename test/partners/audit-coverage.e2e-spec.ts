@@ -428,6 +428,7 @@ describe('Audit coverage — partners', () => {
       await p
         .http('post', `/partner-requests/${id}/rating`, s.alice.token, {
           stars: 2,
+          lowReasonCode: 'no_show',
           comment: `${MARKER} late again`,
         })
         .expect(200);

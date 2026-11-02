@@ -551,6 +551,7 @@ describe('Audit coverage — management requests', () => {
       await m
         .http('post', `/management-requests/${id}/rating`, s.owner.token, {
           rating: 1,
+          lowReasonCode: 'poor_communication',
           comment: `${MARKER} nobody answered`,
         })
         .expect(201);

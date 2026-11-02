@@ -224,6 +224,7 @@ describe('Management requests — export, erasure and handlers who leave', () =>
       await staff(id, 'close', { reasonCode: 'resolved' }).expect(204);
       await mine(id, 'rating', {
         rating: 2,
+        lowReasonCode: 'slow',
         comment: 'ERASE-ME comment',
       }).expect(201);
       // Taken down for them by staff: staff's message, about them.

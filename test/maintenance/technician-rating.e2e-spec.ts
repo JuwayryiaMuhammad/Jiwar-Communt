@@ -100,6 +100,40 @@ describe('Maintenance — the technician’s rating', () => {
     expect((await d.ticketRow(s.c, id)).status).toBe('completed');
   });
 
+  it('a service rating of 1 or 2 says why (ADR 0082): stored, shown to dispatch, never on a higher one; optional for now', async () => {
+    const plain = await completed();
+    await confirm(plain, { rating: 1 }).expect(204);
+    expect(await feedback(plain)).toMatchObject({
+      rating: 1,
+      lowReasonCode: null,
+    });
+    const id = await completed();
+    const high = await confirm(id, {
+      rating: 3,
+      lowReasonCode: 'slow',
+    }).expect(400);
+    expect(high.body).toMatchObject({
+      fields: [{ field: 'lowReasonCode', code: 'FIELD_NOT_ALLOWED' }],
+    });
+    // The technician's own rating has no reason of its own.
+    await confirm(id, {
+      rating: 1,
+      technicianRating: 5,
+      lowReasonCode: 'not_fixed',
+    }).expect(204);
+    expect(await feedback(id)).toMatchObject({
+      rating: 1,
+      technicianRating: 5,
+      lowReasonCode: 'not_fixed',
+    });
+    const detail = await d
+      .http('get', `/maintenance/tickets/${id}`, s.supervisor.token)
+      .expect(200);
+    expect(
+      (detail.body as { feedback: Record<string, unknown>[] }).feedback[0],
+    ).toMatchObject({ rating: 1, lowReasonCode: 'not_fixed' });
+  });
+
   it('never reaches the technician', async () => {
     const id = await completed();
     // Still theirs to see while completed: confirm, then read as them.
@@ -107,7 +141,11 @@ describe('Maintenance — the technician’s rating', () => {
       .http('get', `/technician/tickets/${id}`, tech().token)
       .expect(200);
     expect(JSON.stringify(before.body)).not.toMatch(/rating/i);
-    await confirm(id, { rating: 2, technicianRating: 1 }).expect(204);
+    await confirm(id, {
+      rating: 2,
+      technicianRating: 1,
+      lowReasonCode: 'poor_quality',
+    }).expect(204);
     const after = await d
       .http('get', `/technician/tickets/${id}`, tech().token)
       .expect(200);

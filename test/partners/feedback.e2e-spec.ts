@@ -49,9 +49,11 @@ describe('Partners: ratings and complaints (ADR 0060)', () => {
     await p.http('post', `/partner-requests/${id}/done`, who.token).expect(200);
     return id;
   }
+  /** A rating of 1 or 2 says why (ADR 0082). */
   const rate = (who: Who, id: string, stars: number, comment?: string) =>
     p.http('post', `/partner-requests/${id}/rating`, who.token, {
       stars,
+      ...(stars <= 2 ? { lowReasonCode: 'no_show' } : {}),
       ...(comment ? { comment } : {}),
     });
 
@@ -73,6 +75,34 @@ describe('Partners: ratings and complaints (ADR 0060)', () => {
         404,
         'PARTNER_REQUEST_NOT_FOUND',
       ]);
+    });
+
+    it('one or two stars say why (ADR 0082), optional for now; more never do', async () => {
+      const plain = await done();
+      const without = await p
+        .http('post', `/partner-requests/${plain}/rating`, s.alice.token, {
+          stars: 1,
+        })
+        .expect(200);
+      expect((without.body as RequestBody).rating).toMatchObject({
+        stars: 1,
+        lowReasonCode: null,
+      });
+      const id = await done();
+      const high = await p
+        .http('post', `/partner-requests/${id}/rating`, s.alice.token, {
+          stars: 5,
+          lowReasonCode: 'price',
+        })
+        .expect(400);
+      expect(high.body).toMatchObject({
+        fields: [{ field: 'lowReasonCode', code: 'FIELD_NOT_ALLOWED' }],
+      });
+      const res = await rate(s.alice, id, 1).expect(200);
+      expect((res.body as RequestBody).rating).toMatchObject({
+        stars: 1,
+        lowReasonCode: 'no_show',
+      });
     });
 
     it('only a request done; within the compound’s rating days', async () => {

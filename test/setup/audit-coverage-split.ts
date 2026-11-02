@@ -1141,3 +1141,18 @@ export const M26_COVERAGE: readonly string[] = [
   'incident_action.cancelled',
   'incident_action.text_cleared',
 ];
+
+/** Experience and recovery (ADR 0082), covered by test/experience/audit-coverage.e2e-spec.ts. */
+export const M210_COVERAGE: readonly string[] = [
+  'experience.settings_changed',
+  'experience.compensation_rules_changed',
+  'experience_signal.raised',
+  'experience_case.opened',
+  'experience_case.assigned',
+  'experience_case.closed',
+  'experience_compensation.proposed',
+  'experience_compensation.approved',
+  'experience_compensation.rejected',
+  'service_promise.created',
+  'service_promise.updated',
+];

@@ -48,6 +48,7 @@ describe('Management requests — rating', () => {
     expect(res.body).toEqual({
       rating: 4,
       comment: COMMENT,
+      lowReasonCode: null,
       createdAt: expect.any(String) as string,
     });
     const detail = await m
@@ -56,8 +57,40 @@ describe('Management requests — rating', () => {
     expect((detail.body as { rating: unknown }).rating).toEqual(res.body);
   });
 
+  it('a rating of 1 or 2 says why, from lowRating, optional for now; a higher one never does (ADR 0082)', async () => {
+    const without = await rate(await closed(), { rating: 2 }).expect(201);
+    expect(without.body).toMatchObject({ rating: 2, lowReasonCode: null });
+    const id = await closed();
+    const unknown = await rate(id, {
+      rating: 1,
+      lowReasonCode: 'rude',
+    }).expect(400);
+    expect(unknown.body).toMatchObject({
+      fields: [{ field: 'lowReasonCode', code: 'INVALID_REASON_CODE' }],
+    });
+    const high = await rate(id, {
+      rating: 4,
+      lowReasonCode: 'slow',
+    }).expect(400);
+    expect(high.body).toMatchObject({
+      fields: [{ field: 'lowReasonCode', code: 'FIELD_NOT_ALLOWED' }],
+    });
+    // Nothing was recorded by the refused attempts.
+    const res = await rate(id, {
+      rating: 2,
+      lowReasonCode: 'poor_communication',
+    }).expect(201);
+    expect(res.body).toMatchObject({
+      rating: 2,
+      lowReasonCode: 'poor_communication',
+    });
+  });
+
   it('a comment is optional: none, or blank, is no comment', async () => {
-    for (const body of [{ rating: 5 }, { rating: 1, comment: '   ' }]) {
+    for (const body of [
+      { rating: 5 },
+      { rating: 1, lowReasonCode: 'slow', comment: '   ' },
+    ]) {
       const res = await rate(await closed(), body).expect(201);
       expect(res.body).toMatchObject({ rating: body.rating, comment: null });
     }
@@ -82,7 +115,11 @@ describe('Management requests — rating', () => {
 
   it('once per request: a second rating is refused, and the first stands', async () => {
     const id = await closed();
-    await rate(id, { rating: 2, comment: 'Slow' }).expect(201);
+    await rate(id, {
+      rating: 2,
+      lowReasonCode: 'slow',
+      comment: 'Slow',
+    }).expect(201);
     const again = await rate(id, {
       rating: 5,
       comment: 'Changed my mind',
@@ -102,7 +139,7 @@ describe('Management requests — rating', () => {
     for (let round = 0; round < 5; round++) {
       const id = await closed();
       const results = await Promise.all([
-        rate(id, { rating: 1 }),
+        rate(id, { rating: 1, lowReasonCode: 'slow' }),
         rate(id, { rating: 5 }),
       ]);
       expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
@@ -161,11 +198,12 @@ describe('Management requests — rating', () => {
     const id = await closed();
     const member = await m.x.joinFamily(s.c, s.unit.id, s.owner);
     const family = await m.who(s.c, member.id, 'family');
-    await rate(id, { rating: 1 }, family).expect(404);
+    const low = { rating: 1, lowReasonCode: 'slow' };
+    await rate(id, low, family).expect(404);
     const other = await m.setUp();
-    await rate(id, { rating: 1 }, other.owner).expect(404);
-    await rate(id, { rating: 1 }, handler).expect(403);
-    await rate(id, { rating: 1 }, s.manager).expect(403);
+    await rate(id, low, other.owner).expect(404);
+    await rate(id, low, handler).expect(403);
+    await rate(id, low, s.manager).expect(403);
   });
 
   describe('who reads ratings', () => {
@@ -173,7 +211,11 @@ describe('Management requests — rating', () => {
 
     beforeAll(async () => {
       id = await closed();
-      await rate(id, { rating: 2, comment: COMMENT }).expect(201);
+      await rate(id, {
+        rating: 2,
+        lowReasonCode: 'slow',
+        comment: COMMENT,
+      }).expect(201);
     });
 
     it('requests.manage reads a request’s rating, and null before there is one', async () => {
@@ -184,6 +226,7 @@ describe('Management requests — rating', () => {
         rating: {
           rating: 2,
           comment: COMMENT,
+          lowReasonCode: 'slow',
           createdAt: expect.any(String) as string,
         },
       });

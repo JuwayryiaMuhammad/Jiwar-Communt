@@ -60,20 +60,18 @@ export class ReportsController {
     return bounded(await this.reports.catalog(), ReportCatalogView.from);
   }
 
-  @Get(':key')
+  @Get('view')
   @ApiOperation({
     summary:
       'A report over a period, grouped, compared with the period before and/or a year earlier',
   })
   @ApiOkResponse({ type: ReportView })
-  async read(
-    @Param('key') key: string,
-    @Query() q: ReportQueryDto,
-  ): Promise<ReportView> {
-    return ReportView.from(await this.reports.read(key, q));
+  async read(@Query() q: ReportQueryDto): Promise<ReportView> {
+    const { report, ...rest } = q;
+    return ReportView.from(await this.reports.read(report, rest));
   }
 
-  @Get(':key/export')
+  @Get('export')
   @NoStore()
   @ApiProduces(
     'application/pdf',
@@ -82,12 +80,9 @@ export class ReportsController {
   )
   @ApiOperation({ summary: 'A report as a PDF, a workbook or CSV (audited)' })
   @ApiOkResponse({ schema: { type: 'string', format: 'binary' } })
-  async export(
-    @Param('key') key: string,
-    @Query() q: ReportExportQueryDto,
-  ): Promise<StreamableFile> {
-    const { format, ...rest } = q;
-    const file = await this.reports.export(key, rest, format);
+  async export(@Query() q: ReportExportQueryDto): Promise<StreamableFile> {
+    const { report, format, ...rest } = q;
+    const file = await this.reports.export(report, rest, format);
     // Type and name travel with the stream, never through @Header (csvFile).
     return new StreamableFile(file.body, {
       type:

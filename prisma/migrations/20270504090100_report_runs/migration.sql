@@ -3,7 +3,7 @@
 --
 -- A schedule sends one curated report (the report registry's key, in core)
 -- on a cadence of the compound's days: daily (the day before), weekly (the
--- week before, Monday to Sunday) or monthly (the month before), as a PDF, a
+-- week before, Saturday to Friday) or monthly (the month before), as a PDF, a
 -- workbook or CSV, compared with the period before and/or the same period a
 -- year earlier. A schedule is made by a holder of `reports.schedule` who
 -- may read the report itself; it is paused and resumed, never deleted (its

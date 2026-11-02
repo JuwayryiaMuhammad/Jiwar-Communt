@@ -18,6 +18,7 @@ const APPROVAL_TYPES = [
   'compensation_above_limit',
   'manager_handover_override',
   'budget_transfer',
+  'capital_plan',
 ];
 
 /** Approval requests, the staff's side (ADR 0055). */

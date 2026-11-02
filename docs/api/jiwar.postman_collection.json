@@ -56967,60 +56967,6 @@
           }
         },
         {
-          "name": "A report over a period, grouped, compared with the period before and/or a year earlier",
-          "request": {
-            "description": "**Responses:** 200",
-            "header": [],
-            "method": "GET",
-            "url": {
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "staff",
-                "reports",
-                ":key"
-              ],
-              "query": [
-                {
-                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
-                  "disabled": true,
-                  "key": "from",
-                  "value": ""
-                },
-                {
-                  "description": "The last day, included; today when left out. At most 366 days.",
-                  "disabled": true,
-                  "key": "to",
-                  "value": ""
-                },
-                {
-                  "description": "One of the report’s groupings (the catalog lists them); its first by default.",
-                  "disabled": true,
-                  "key": "groupBy",
-                  "value": ""
-                },
-                {
-                  "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
-                  "disabled": true,
-                  "key": "compare",
-                  "value": ""
-                }
-              ],
-              "raw": "{{baseUrl}}/api/v1/staff/reports/:key",
-              "variable": [
-                {
-                  "description": "",
-                  "key": "key",
-                  "value": ""
-                }
-              ]
-            }
-          }
-        },
-        {
           "name": "A report as a PDF, a workbook or CSV (audited)",
           "request": {
             "description": "**Responses:** 200",
@@ -57035,10 +56981,14 @@
                 "v1",
                 "staff",
                 "reports",
-                ":key",
                 "export"
               ],
               "query": [
+                {
+                  "description": "(required)",
+                  "key": "report",
+                  "value": ""
+                },
                 {
                   "description": "The first day, the compound’s; 29 days before `to` when left out.",
                   "disabled": true,
@@ -57069,14 +57019,59 @@
                   "value": ""
                 }
               ],
-              "raw": "{{baseUrl}}/api/v1/staff/reports/:key/export?format=",
-              "variable": [
+              "raw": "{{baseUrl}}/api/v1/staff/reports/export?report=&format="
+            }
+          }
+        },
+        {
+          "name": "A report over a period, grouped, compared with the period before and/or a year earlier",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "reports",
+                "view"
+              ],
+              "query": [
                 {
-                  "description": "",
-                  "key": "key",
+                  "description": "(required)",
+                  "key": "report",
+                  "value": ""
+                },
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out. At most 366 days.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "One of the report’s groupings (the catalog lists them); its first by default.",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                },
+                {
+                  "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
+                  "disabled": true,
+                  "key": "compare",
                   "value": ""
                 }
-              ]
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/reports/view?report="
             }
           }
         }

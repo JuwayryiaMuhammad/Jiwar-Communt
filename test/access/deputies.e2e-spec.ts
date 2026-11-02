@@ -162,6 +162,8 @@ describe('Deputies', () => {
       'deputies.manage',
       // ADR 0082: a compensation's decision is money.
       'experience.compensate',
+      // ADR 0086: the compound's whole export is never a deputy's.
+      'compound.export',
       'tickets.work',
       // ADR 0088: an opening takes two people, each on their own.
       'tenders.open',

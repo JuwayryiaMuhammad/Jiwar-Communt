@@ -142,7 +142,8 @@ BEGIN
   SELECT "status" INTO plan_status FROM "capital_plans"
    WHERE "tenant_id" = COALESCE(NEW."tenant_id", OLD."tenant_id")
      AND "id" = COALESCE(NEW."plan_id", OLD."plan_id");
-  IF plan_status IS DISTINCT FROM 'draft' THEN
+  -- A plan it cannot see is left to the foreign key and RLS to refuse.
+  IF plan_status IS NOT NULL AND plan_status <> 'draft' THEN
     RAISE EXCEPTION 'only a draft capital plan''s lines change' USING ERRCODE = 'insufficient_privilege';
   END IF;
   RETURN COALESCE(NEW, OLD);

@@ -96,6 +96,11 @@ export default function UnitPage() {
             <ButtonLink href={`/units/${id}/papers`} size="sm">
               Papers: contracts, documents, deposits
             </ButtonLink>
+            {can('correspondence.read') ? (
+              <ButtonLink href={`/units/${id}/correspondence`} size="sm">
+                Correspondence
+              </ButtonLink>
+            ) : null}
           </>
         }
         title={

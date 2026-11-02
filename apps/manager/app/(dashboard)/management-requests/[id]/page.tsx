@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { personName, ResponseBadges, TYPE_TEXT } from '@/components/management-requests/bits';
 import { RequestActions } from '@/components/management-requests/request-actions';
+import { RequestDesk } from '@/components/office-queue/request-desk';
 import { RequestAppointment } from '@/components/management-requests/request-appointment';
 import { RequestThread } from '@/components/management-requests/request-thread';
 import { usePermissions } from '@/lib/permissions';
@@ -172,7 +173,14 @@ export default function ManagementRequestPage() {
           )
         }
         description={r ? `${TYPE_TEXT[r.type]} · ${r.topic.nameEn} · ${personName(r.author)}` : undefined}
-        actions={r ? <RequestActions request={r} /> : undefined}
+        actions={
+          r ? (
+            <>
+              <RequestDesk request={r} />
+              <RequestActions request={r} />
+            </>
+          ) : undefined
+        }
       />
       <QueryState query={request}>
         {r ? (

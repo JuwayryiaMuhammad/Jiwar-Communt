@@ -388,6 +388,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         // A staff decision appealed by those it is about (ADR 0059).
         { href: '/appeals', label: 'Decision appeals', icon: <Gavel aria-hidden />, show: can('appeals.decide') },
         { href: '/announcements', label: 'Announcements', icon: <Megaphone aria-hidden />, show: can('community.publish') },
+        // ADR 0080: the office's templates and letters.
+        { href: '/message-templates', label: 'Message templates', icon: <Megaphone aria-hidden />, show: can('community.publish') || can('requests.manage') },
+        { href: '/official-letters', label: 'Official letters', icon: <MessagesSquare aria-hidden />, show: can('letters.issue') },
         { href: '/events', label: 'Events', icon: <CalendarDays aria-hidden />, show: can('community.publish') },
         { href: '/polls', label: 'Polls', icon: <Vote aria-hidden />, show: can('community.publish') },
         {

@@ -56,6 +56,7 @@
 | [06-delegation](03-community/06-delegation.md) | تفويض الساكن الأساسي لفرد بالغ من الأسرة |
 | [07-member-permissions](03-community/07-member-permissions.md) | صلاحيات أفراد الأسرة، والإجراءات المؤجلة |
 | [08-unit-register](03-community/08-unit-register.md) | سجل الوحدات: المباني، تعديل الوحدة، الفلاتر والـCSV، تاريخ الإشغال والعمالة، الاستيراد، والبحث |
+| [09-transfers-closed-units](03-community/09-transfers-closed-units.md) | نقل الملكية والمستحقات، الوحدات المغلقة وجولاتها، إنهاء التوكيل، الدخول الطارئ، ضوابط السوق، وتعاقد العروض الجماعية |
 
 ### 04 — العمالة المنزلية
 | الملف | الفيتشر |

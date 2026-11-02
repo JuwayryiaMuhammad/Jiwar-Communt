@@ -412,3 +412,14 @@ The full notes are in [`notes/board-work.md`](notes/board-work.md).
 - **Meetings.** `/board/meetings…` (schedule, change, hold, cancel, minutes, actions) and `/board/meeting-actions…` (list, done, cancel).
 - **Handovers.** `GET /board/handover-pack` (+ `/pdf`); `GET/PUT /staff/governance/handover`, `POST …/deliver`; `GET /board/manager-handovers…` (+ `/pdf`); a manager's deactivation answers `409 HANDOVER_PENDING` while a board sits; a new approval type `manager_handover_override` naming `managerAccountId`.
 - **Reports.** `GET/POST /board/reports`, `GET …/{id}` (+ `/pdf`); a file purpose `compound_logo`.
+### Transfers, dues and closed units, and the market's completion (ADR 0083)
+
+The full notes are in [`notes/transfers-closed-units.md`](notes/transfers-closed-units.md).
+
+- **Transfers.** `POST /staff/units/{unitId}/ownership-transfers` (`residents.manage`; one pending a unit, `409 OWNERSHIP_TRANSFER_PENDING`); `GET /staff/ownership-transfers`, `…/{id}` (`owedNow`); `POST …/{id}/approve { duesExceptionCode? }` (`409 TRANSFER_DUES_OWED {owed}`, `403 STEP_UP_REQUIRED`), `…/cancel`. The direct `POST /units/{id}/transfer-ownership` takes `duesExceptionCode` and passes the same gate.
+- **Moves.** `owed` on `GET /staff/moves` and `GET /staff/moves/{id}`.
+- **Closed units.** `GET /staff/security/closed-units` (`guard_tasks.manage`); a round is scheduled with `roundId` on `POST /staff/security/tasks` (`409 CLOSED_UNIT_ROUND_NOT_DUE`); `closedUnitRoundDays` on the gate settings.
+- **Proxies.** `POST /staff/units/{unitId}/proxies/{id}/revoke { reasonCode }`; `revokeCode` on `ProxyView`.
+- **Emergency entries.** `POST /staff/security/unit-entries`, `GET …`, `GET …/{id}`, `POST …/{id}/report` (`409 UNIT_ENTRY_REPORTED`); `GET /units/{unitId}/entries` for the unit's people. All no-store.
+- **Market.** `commercialBlocked`, `allowedCategories`, `maxLivePerUnit` on `/market/settings` (`409 MARKET_COMMERCIAL_BLOCKED`, `MARKET_CATEGORY_NOT_ALLOWED`, `MARKET_UNIT_LISTING_LIMIT_REACHED`).
+- **Group offers.** `POST /staff/group-offers/{id}/contract { finalPrice, partnerId?, reconfirmHours? }`; `POST /market/group-offers/{id}/reconfirm` (`409 GROUP_OFFER_RECONFIRM_NOT_NEEDED`); statuses `reconfirming`, `contracted`.

@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { egp } from '@/components/club/logic';
 import { SectionHeader } from '@/components/community/bits';
+import { PayoutAccountField } from '@/components/finance/payout-account';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Disbursement } from '@/lib/queries';
@@ -31,6 +32,7 @@ function DisbursementActions({ d }: { d: Disbursement }) {
   const path = { params: { path: { id: d.id } } };
   const [key] = useState(() => crypto.randomUUID());
   const [rejecting, setRejecting] = useState(false);
+  const [account, setAccount] = useState('');
   const approve = useAction(() => unwrap(api.POST('/api/v1/staff/finance/contract-disbursements/{id}/approve', path)), {
     invalidate: [keys.payablesAll],
     onDone: () => toast.show(`${d.number} is approved.`),
@@ -40,10 +42,13 @@ function DisbursementActions({ d }: { d: Disbursement }) {
       unwrap(
         api.POST('/api/v1/staff/finance/contract-disbursements/{id}/pay', {
           params: { path: { id: d.id }, header: { 'Idempotency-Key': key } },
-          body: { paidOn: today(), method: 'bank_transfer' },
+          body: { paidOn: today(), method: 'bank_transfer', ...(account ? { cashAccountId: account } : {}) },
         }),
       ),
-    { invalidate: [keys.payablesAll], onDone: (r) => toast.show(`${r.number} is paid as ${r.payout?.number}.`) },
+    {
+      invalidate: [keys.payablesAll, ['finance', 'cash-accounts']],
+      onDone: (r) => toast.show(`${r.number} is paid as ${r.payout?.number}.`),
+    },
   );
   const reject = useAction(
     (reasonCode: string) =>
@@ -70,9 +75,12 @@ function DisbursementActions({ d }: { d: Disbursement }) {
         </>
       ) : null}
       {d.status === 'approved' && can('finance.payables') ? (
-        <Button size="sm" loading={pay.isPending} onClick={() => pay.mutate()}>
-          Pay today
-        </Button>
+        <>
+          <PayoutAccountField method="bank_transfer" value={account} onChange={setAccount} error={pay.error} />
+          <Button size="sm" loading={pay.isPending} disabled={!account} onClick={() => pay.mutate()}>
+            Pay today
+          </Button>
+        </>
       ) : null}
       <ReasonCodeDialog
         open={rejecting}

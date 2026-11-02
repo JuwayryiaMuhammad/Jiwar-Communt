@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { egp } from '@/components/club/logic';
 import { SectionHeader } from '@/components/community/bits';
+import { PayoutAccountField } from '@/components/finance/payout-account';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type VendorInvoice } from '@/lib/queries';
@@ -24,6 +25,7 @@ function Decide({ i }: { i: VendorInvoice }) {
   const [method, setMethod] = useState<'bank_transfer' | 'cheque' | 'cash'>('bank_transfer');
   const [reference, setReference] = useState('');
   const [setOff, setSetOff] = useState('');
+  const [account, setAccount] = useState('');
   const done = { invalidate: [keys.payablesAll, keys.budgetsAll] };
   const close = useAction(
     (v: { to: 'reject' | 'cancel'; reasonCode: string }) =>
@@ -55,10 +57,14 @@ function Decide({ i }: { i: VendorInvoice }) {
             method,
             ...(reference.trim() ? { reference: reference.trim() } : {}),
             ...(setOff.trim() ? { advanceSetOff: setOff.trim() } : {}),
+            ...(account ? { cashAccountId: account } : {}),
           },
         }),
       ),
-    { ...done, onDone: (r) => toast.show(`Paid as ${r.payout?.number}; its expense is written.`) },
+    {
+      invalidate: [...done.invalidate, ['finance', 'cash-accounts']],
+      onDone: (r) => toast.show(`Paid as ${r.payout?.number}; its expense is written and its account moved.`),
+    },
   );
   return (
     <>
@@ -81,13 +87,21 @@ function Decide({ i }: { i: VendorInvoice }) {
             <Field label="Paid on">{(p) => <Input {...p} type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />}</Field>
             <Field label="How">
               {(p) => (
-                <Select {...p} value={method} onChange={(e) => setMethod(e.target.value as typeof method)}>
+                <Select
+                  {...p}
+                  value={method}
+                  onChange={(e) => {
+                    setMethod(e.target.value as typeof method);
+                    setAccount('');
+                  }}
+                >
                   <option value="bank_transfer">Bank transfer</option>
                   <option value="cheque">Cheque</option>
                   <option value="cash">Cash</option>
                 </Select>
               )}
             </Field>
+            <PayoutAccountField method={method} value={account} onChange={setAccount} error={pay.error} />
             <Field label="Reference">{(p) => <Input {...p} maxLength={100} value={reference} onChange={(e) => setReference(e.target.value)} />}</Field>
             {i.contractId ? (
               <Field label="Set off of advances (EGP)">

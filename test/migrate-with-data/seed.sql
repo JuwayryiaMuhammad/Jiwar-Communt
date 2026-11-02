@@ -59,6 +59,11 @@
 -- left (20270511090000 cancels the request with it).
 -- Fit-out (ADR 0074): the compound's deposit rule, a finishing-works
 -- deposit naming the works permit and a move deposit naming none.
+-- Maintenance analytics (ADR 0081): two more repairs on the pump (three of
+-- one category on one asset, what a plan suggestion counts) and two
+-- residents' tickets of one category in a building's units (what a case
+-- counts): `tickets` gains `sensitive` and `maintenance_settings` its
+-- analytics' numbers, both with defaults, over these rows.
 -- ============================================================================
 
 DO $$
@@ -485,6 +490,27 @@ BEGIN
       INSERT INTO warranty_claims (id, tenant_id, asset_id, ticket_id, description, opened_by_account_id,
                                    opened_at) VALUES
         (gen_random_uuid(), t, pump, wo, 'The seal failed within the warranty', mgr, now());
+      INSERT INTO tickets (id, tenant_id, number, common_area, common_area_id, category_id,
+                           created_by_account_id, reporter_account_id, priority, description,
+                           origin, asset_id, created_at, updated_at) VALUES
+        (gen_random_uuid(), t, 5, 'Pool', area, cat, mgr, mgr, 'normal', 'The pump hums again', 'staff', pump,
+         now() - interval '20 days', now()),
+        (gen_random_uuid(), t, 6, 'Pool', area, cat, mgr, mgr, 'normal', 'The pump stopped', 'staff', pump,
+         now() - interval '5 days', now());
+    END;
+    DECLARE
+      tower uuid := gen_random_uuid();
+      ua uuid := gen_random_uuid();
+      ub uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO buildings (id, tenant_id, name) VALUES (tower, t, 'Analytics ' || s);
+      INSERT INTO units (id, tenant_id, code, building_id, updated_at) VALUES
+        (ua, t, 'AN-A-' || s, tower, now()),
+        (ub, t, 'AN-B-' || s, tower, now());
+      INSERT INTO tickets (id, tenant_id, number, unit_id, category_id, created_by_account_id,
+                           reporter_account_id, priority, description, created_at, updated_at) VALUES
+        (gen_random_uuid(), t, 7, ua, cat, mgr, mgr, 'normal', 'Low pressure', now() - interval '3 days', now()),
+        (gen_random_uuid(), t, 8, ub, cat, mgr, mgr, 'normal', 'Low pressure too', now() - interval '1 day', now());
     END;
     -- ADR 0077: a vendor of the register, a contract naming it with its
     -- terms and a payment schedule (one paid), and a purchase request.

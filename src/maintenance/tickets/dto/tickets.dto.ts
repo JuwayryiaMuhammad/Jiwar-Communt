@@ -544,6 +544,16 @@ export class ConfirmDto {
   @ApiProperty({
     type: String,
     required: false,
+    description:
+      'Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one.',
+  })
+  @IsOptional()
+  @IsString()
+  lowReasonCode?: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
     minLength: COMMENT_LENGTH.min,
     maxLength: COMMENT_LENGTH.max,
     description: 'For the maintenance team. Never in the audit trail.',

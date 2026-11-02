@@ -37535,7 +37535,7 @@
               },
               "raw": "{\n  \"rating\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  |  |\n| `rating` | number | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  |  |\n| `lowReasonCode` | string |  | Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one. |\n| `rating` | number | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -44778,7 +44778,7 @@
               },
               "raw": "{\n  \"stars\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  | Read by the management alone; never by the partner. |\n| `stars` | number | yes |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  | Read by the management alone; never by the partner. |\n| `lowReasonCode` | string |  | Why 1 or 2 `stars` are low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on more. |\n| `stars` | number | yes |  |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -53700,7 +53700,7 @@
               },
               "raw": "{\n  \"rating\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  | For the maintenance team. Never in the audit trail. |\n| `rating` | number | yes | The service. |\n| `technicianRating` | number |  | The technician who did the work (ADR 0038); optional. Dispatch only. |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `comment` | string |  | For the maintenance team. Never in the audit trail. |\n| `lowReasonCode` | string |  | Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one. |\n| `rating` | number | yes | The service. |\n| `technicianRating` | number |  | The technician who did the work (ADR 0038); optional. Dispatch only. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",

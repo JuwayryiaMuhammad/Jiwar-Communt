@@ -149,6 +149,7 @@ export class ResidentTicketsController {
       dto.rating,
       dto.comment,
       dto.technicianRating,
+      dto.lowReasonCode,
     );
   }
 

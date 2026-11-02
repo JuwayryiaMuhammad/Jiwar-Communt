@@ -258,6 +258,12 @@ export class PartnerRequestRatingView {
   stars: number;
   @ApiProperty({ type: String, nullable: true })
   comment: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Why 1 or 2 stars are low (`lowRating`, ADR 0082).',
+  })
+  lowReasonCode: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 }
@@ -319,6 +325,7 @@ export class ResidentPartnerRequestView extends PartnerRequestBaseView {
       rating: r.rating && {
         stars: r.rating.stars,
         comment: r.rating.comment,
+        lowReasonCode: r.rating.lowReasonCode,
         createdAt: r.rating.createdAt,
       },
       complaint: r.complaint && {

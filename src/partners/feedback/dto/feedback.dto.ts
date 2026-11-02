@@ -45,6 +45,16 @@ export class RatePartnerRequestDto {
   @IsString()
   @Length(COMMENT.min, COMMENT.max, withParams(COMMENT))
   comment?: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    description:
+      'Why 1 or 2 `stars` are low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on more.',
+  })
+  @IsOptional()
+  @IsString()
+  lowReasonCode?: string;
 }
 
 export class ComplainPartnerRequestDto {

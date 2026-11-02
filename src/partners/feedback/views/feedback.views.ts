@@ -14,11 +14,22 @@ export class RatingView {
     description: 'As written; null once erased.',
   })
   comment: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Why 1 or 2 stars are low (`lowRating`, ADR 0082).',
+  })
+  lowReasonCode: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
   static from(r: PartnerRating): RatingView {
-    return { stars: r.stars, comment: r.comment, createdAt: r.createdAt };
+    return {
+      stars: r.stars,
+      comment: r.comment,
+      lowReasonCode: r.lowReasonCode,
+      createdAt: r.createdAt,
+    };
   }
 }
 

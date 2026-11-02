@@ -236,11 +236,23 @@ export class RequestRatingView {
     description: 'Optional; null too once its author was erased.',
   })
   comment: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'Why a rating of 1 or 2 is low (`lowRating`, ADR 0082); null on a higher one and on one given before.',
+  })
+  lowReasonCode: string | null;
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
   static from(r: ManagementRequestRating): RequestRatingView {
-    return { rating: r.rating, comment: r.comment, createdAt: r.createdAt };
+    return {
+      rating: r.rating,
+      comment: r.comment,
+      lowReasonCode: r.lowReasonCode,
+      createdAt: r.createdAt,
+    };
   }
 }
 

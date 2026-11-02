@@ -16,6 +16,7 @@ import {
   TenantTx,
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
+import { lowRatingReason } from '../../core/experience/low-ratings';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
 import { MaintenanceSettingsService } from '../settings/maintenance-settings.service';
@@ -101,14 +102,17 @@ export class ConfirmationService implements OnModuleInit {
 
   /**
    * Done well: closed, with the service's rating, an optional comment and
-   * an optional rating of the technician who did the work (ADR 0038).
+   * an optional rating of the technician who did the work (ADR 0038). A
+   * rating of 1 or 2 says why, from `lowRating` (ADR 0082).
    */
   confirm(
     id: string,
     rating: number,
     comment?: string,
     technicianRating?: number,
+    lowReasonCode?: string,
   ): Promise<void> {
+    const lowReason = lowRatingReason(rating, lowReasonCode);
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.resident(tx, id);
@@ -130,6 +134,7 @@ export class ConfirmationService implements OnModuleInit {
           kind: 'confirmed',
           authorId: me,
           rating,
+          lowReasonCode: lowReason,
           comment: comment?.trim() || null,
           // A completed ticket always has its technician (a CHECK).
           ...(technicianRating !== undefined

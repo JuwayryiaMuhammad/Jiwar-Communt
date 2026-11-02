@@ -13528,6 +13528,10 @@
             "minLength": 1,
             "type": "string"
           },
+          "lowReasonCode": {
+            "description": "Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one.",
+            "type": "string"
+          },
           "rating": {
             "description": "The service.",
             "maximum": 5,
@@ -25868,6 +25872,11 @@
               }
             ]
           },
+          "lowReasonCode": {
+            "description": "Why a confirmation’s rating of 1 or 2 is low (`lowRating`, ADR 0082).",
+            "nullable": true,
+            "type": "string"
+          },
           "ratedTechnician": {
             "allOf": [
               {
@@ -25900,6 +25909,7 @@
           "technicianRating",
           "ratedTechnician",
           "reasonCode",
+          "lowReasonCode",
           "comment",
           "author",
           "createdAt"
@@ -44181,6 +44191,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "lowReasonCode": {
+            "description": "Why 1 or 2 stars are low (`lowRating`, ADR 0082).",
+            "nullable": true,
+            "type": "string"
+          },
           "stars": {
             "maximum": 5,
             "minimum": 1,
@@ -44190,6 +44205,7 @@
         "required": [
           "stars",
           "comment",
+          "lowReasonCode",
           "createdAt"
         ],
         "type": "object"
@@ -50123,6 +50139,10 @@
             "nullable": true,
             "type": "string"
           },
+          "lowReasonCode": {
+            "description": "Why 1 or 2 `stars` are low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on more.",
+            "type": "string"
+          },
           "stars": {
             "maximum": 5,
             "minimum": 1,
@@ -50138,6 +50158,10 @@
         "properties": {
           "comment": {
             "maxLength": 1000,
+            "type": "string"
+          },
+          "lowReasonCode": {
+            "description": "Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one.",
             "type": "string"
           },
           "rating": {
@@ -50162,6 +50186,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "lowReasonCode": {
+            "description": "Why a rating of 1 or 2 is low (`lowRating`, ADR 0082); null on a higher one and on one given before.",
+            "nullable": true,
+            "type": "string"
+          },
           "rating": {
             "maximum": 5,
             "minimum": 1,
@@ -50174,6 +50203,7 @@
         "required": [
           "rating",
           "comment",
+          "lowReasonCode",
           "createdAt",
           "request"
         ],
@@ -53628,6 +53658,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "lowReasonCode": {
+            "description": "Why a rating of 1 or 2 is low (`lowRating`, ADR 0082); null on a higher one and on one given before.",
+            "nullable": true,
+            "type": "string"
+          },
           "rating": {
             "maximum": 5,
             "minimum": 1,
@@ -53637,6 +53672,7 @@
         "required": [
           "rating",
           "comment",
+          "lowReasonCode",
           "createdAt"
         ],
         "type": "object"
@@ -66417,6 +66453,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "lowReasonCode": {
+            "description": "Why 1 or 2 stars are low (`lowRating`, ADR 0082).",
+            "nullable": true,
+            "type": "string"
+          },
           "partnerId": {
             "format": "uuid",
             "type": "string"
@@ -66438,6 +66479,7 @@
         "required": [
           "stars",
           "comment",
+          "lowReasonCode",
           "createdAt",
           "requestId",
           "requestNumber",

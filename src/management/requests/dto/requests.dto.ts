@@ -330,6 +330,15 @@ export class RateRequestDto {
     withParams({ ...RATING_COMMENT_LENGTH }),
   )
   comment?: string;
+  @ApiProperty({
+    type: String,
+    required: false,
+    description:
+      'Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one.',
+  })
+  @IsOptional()
+  @IsString()
+  lowReasonCode?: string;
 }
 
 /** A conversation the management starts with a resident (ADR 0080). */

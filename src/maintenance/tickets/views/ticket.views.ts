@@ -775,6 +775,13 @@ export class FeedbackView {
   @ApiProperty({
     type: String,
     nullable: true,
+    description:
+      'Why a confirmation’s rating of 1 or 2 is low (`lowRating`, ADR 0082).',
+  })
+  lowReasonCode: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
     description: "The confirmation's comment; null once its author is erased.",
   })
   comment: string | null;
@@ -844,6 +851,7 @@ export class DispatchTicketDetailView extends DispatchTicketView {
           ? full(d, f.ratedTechnicianId)
           : null,
         reasonCode: f.reasonCode,
+        lowReasonCode: f.lowReasonCode,
         comment: f.comment,
         author: full(d, f.authorId),
         createdAt: f.createdAt,

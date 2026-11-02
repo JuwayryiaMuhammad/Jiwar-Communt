@@ -6,6 +6,7 @@ import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import { appError, ErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
+import { lowRatingReason } from '../../core/experience/low-ratings';
 import { PartnersAccess } from '../access';
 import { dbNow } from '../db-clock';
 import {
@@ -61,8 +62,14 @@ export class RatingsService {
 
   rate(
     requestId: string,
-    input: { stars: number; comment?: string | null },
+    input: {
+      stars: number;
+      comment?: string | null;
+      /** REASON_CODES.lowRating: required on 1 or 2 stars (ADR 0082). */
+      lowReasonCode?: string;
+    },
   ): Promise<void> {
+    const lowReasonCode = lowRatingReason(input.stars, input.lowReasonCode);
     const comment = input.comment?.trim() || null;
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
@@ -108,6 +115,7 @@ export class RatingsService {
           partnerId: request.partnerId,
           raterAccountId: this.ctx.accountId,
           stars: input.stars,
+          lowReasonCode,
           comment,
           createdAt: now,
         },

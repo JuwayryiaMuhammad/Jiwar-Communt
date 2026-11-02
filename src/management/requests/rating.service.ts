@@ -6,6 +6,7 @@ import { clampLimit, type Page } from '../../core/common/cursor';
 import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { TenantTx } from '../../core/database/tenant-tx.service';
+import { lowRatingReason } from '../../core/experience/low-ratings';
 import { dbNow } from '../db-clock';
 import { RequestAccess } from './request-access';
 import { assertCan } from './request-rules';
@@ -16,6 +17,8 @@ export const RATING_COMMENT_LENGTH = { min: 1, max: 1000 } as const;
 export interface NewRating {
   rating: number;
   comment?: string;
+  /** REASON_CODES.lowRating: required on 1 or 2 (ADR 0082). */
+  lowReasonCode?: string;
 }
 
 /**
@@ -34,6 +37,7 @@ export class RatingService {
   ) {}
 
   rate(requestId: string, input: NewRating): Promise<ManagementRequestRating> {
+    const lowReasonCode = lowRatingReason(input.rating, input.lowReasonCode);
     const comment = input.comment?.trim() || null;
     if (comment && comment.length > RATING_COMMENT_LENGTH.max)
       throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid rating', {
@@ -62,6 +66,7 @@ export class RatingService {
           requestId,
           authorId: this.ctx.accountId,
           rating: input.rating,
+          lowReasonCode,
           comment,
           createdAt: await dbNow(tx),
         },

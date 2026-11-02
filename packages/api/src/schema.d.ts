@@ -28881,6 +28881,8 @@ export interface components {
         ConfirmDto: {
             /** @description For the maintenance team. Never in the audit trail. */
             comment?: string;
+            /** @description Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one. */
+            lowReasonCode?: string;
             /** @description The service. */
             rating: number;
             /** @description The technician who did the work (ADR 0038); optional. Dispatch only. */
@@ -33179,6 +33181,8 @@ export interface components {
             createdAt: string;
             cycle: number;
             kind: components["schemas"]["TicketFeedbackKind"];
+            /** @description Why a confirmation’s rating of 1 or 2 is low (`lowRating`, ADR 0082). */
+            lowReasonCode: string | null;
             /** @description Who `technicianRating` rates. */
             ratedTechnician: components["schemas"]["AccountRefView"] | null;
             /** @description 1–5, confirmed only. */
@@ -38778,6 +38782,8 @@ export interface components {
             comment: string | null;
             /** Format: date-time */
             createdAt: string;
+            /** @description Why 1 or 2 stars are low (`lowRating`, ADR 0082). */
+            lowReasonCode: string | null;
             stars: number;
         };
         /** @enum {string} */
@@ -40705,10 +40711,14 @@ export interface components {
         RatePartnerRequestDto: {
             /** @description Read by the management alone; never by the partner. */
             comment?: string | null;
+            /** @description Why 1 or 2 `stars` are low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on more. */
+            lowReasonCode?: string;
             stars: number;
         };
         RateRequestDto: {
             comment?: string;
+            /** @description Why a `rating` of 1 or 2 is low (ADR 0082), from `lowRating`: optional until the resident apps ship the picker; refused on a higher one. */
+            lowReasonCode?: string;
             rating: number;
         };
         RatingListItemView: {
@@ -40716,6 +40726,8 @@ export interface components {
             comment: string | null;
             /** Format: date-time */
             createdAt: string;
+            /** @description Why a rating of 1 or 2 is low (`lowRating`, ADR 0082); null on a higher one and on one given before. */
+            lowReasonCode: string | null;
             rating: number;
             request: components["schemas"]["StaffRequestView"];
         };
@@ -41829,6 +41841,8 @@ export interface components {
             comment: string | null;
             /** Format: date-time */
             createdAt: string;
+            /** @description Why a rating of 1 or 2 is low (`lowRating`, ADR 0082); null on a higher one and on one given before. */
+            lowReasonCode: string | null;
             rating: number;
         };
         RequestSettingsResponse: {
@@ -45569,6 +45583,8 @@ export interface components {
             comment: string | null;
             /** Format: date-time */
             createdAt: string;
+            /** @description Why 1 or 2 stars are low (`lowRating`, ADR 0082). */
+            lowReasonCode: string | null;
             /** Format: uuid */
             partnerId: string;
             /** Format: uuid */

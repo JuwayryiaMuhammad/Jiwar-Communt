@@ -84,6 +84,8 @@ export const GATE_SETTINGS = [
   // How busy a gate reads (ADR 0071): entries in fifteen minutes; busy above normal.
   { name: 'gateBusyNormalFrom', label: 'Entries in 15 minutes from which a gate reads normal', min: 1, max: 1000 },
   { name: 'gateBusyBusyFrom', label: 'Entries in 15 minutes from which a gate reads busy (above normal)', min: 2, max: 1000 },
+  // A closed unit's rounds (ADR 0083).
+  { name: 'closedUnitRoundDays', label: 'Days between a closed unit’s rounds, after it closed or was last inspected', min: 7, max: 180 },
 ] as const;
 
 export type GateSettingName = (typeof GATE_SETTINGS)[number]['name'];

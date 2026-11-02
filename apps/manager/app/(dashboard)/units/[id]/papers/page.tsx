@@ -80,12 +80,17 @@ export default function UnitPapersPage() {
 }
 
 /**
- * The unit's proxies (ADR 0063), read only: its owners appoint and revoke
- * them from the app; a proxy acts while the unit is closed or has no primary.
+ * The unit's proxies (ADR 0063): its owners appoint and revoke them from
+ * the app; a proxy acts while the unit is closed or has no primary. The
+ * management ends one with a reason (ADR 0083): the proxy and the owner who
+ * appointed it are told.
  */
 function Proxies({ unitId }: { unitId: string }) {
+  const toast = useToast();
+  const [revoking, setRevoking] = useState<Schema<'ProxyView'> | null>(null);
+  const key = ['unit-proxies', unitId] as const;
   const list = useQuery({
-    queryKey: ['unit-proxies', unitId],
+    queryKey: key,
     queryFn: () =>
       unwrap(
         api.GET('/api/v1/staff/units/{unitId}/proxies', {
@@ -93,6 +98,22 @@ function Proxies({ unitId }: { unitId: string }) {
         }),
       ),
   });
+  const revoke = useAction(
+    (v: { id: string; reasonCode: string }) =>
+      unwrap(
+        api.POST('/api/v1/staff/units/{unitId}/proxies/{id}/revoke', {
+          params: { path: { unitId, id: v.id } },
+          body: { reasonCode: v.reasonCode },
+        }),
+      ),
+    {
+      invalidate: [key],
+      onDone: () => {
+        toast.show('Proxy ended. The proxy and the owner who appointed it are told.');
+        setRevoking(null);
+      },
+    },
+  );
   return (
     <Card flush>
       <CardHeader title="Proxies" />
@@ -104,7 +125,14 @@ function Proxies({ unitId }: { unitId: string }) {
           emptyHint="An owner appoints one from the app, for a closed or vacant unit."
           columns={[
             { key: 'name', header: 'Who', cell: (p) => p.name ?? '—' },
-            { key: 'status', header: 'Status', cell: (p) => p.status },
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (p) =>
+                p.status === 'ended' && p.revokeCode
+                  ? `ended by the management (${p.revokeCode.replace(/_/g, ' ')})`
+                  : p.status,
+            },
             {
               key: 'scopes',
               header: 'May',
@@ -115,9 +143,33 @@ function Proxies({ unitId }: { unitId: string }) {
               header: 'Until',
               cell: (p) => formatDate(p.expiresAt),
             },
+            {
+              key: 'act',
+              header: '',
+              cell: (p) =>
+                p.status === 'ended' ? null : (
+                  <Button size="sm" onClick={() => setRevoking(p)}>
+                    End
+                  </Button>
+                ),
+            },
           ]}
         />
       </QueryState>
+      <ReasonCodeDialog
+        open={revoking !== null}
+        onClose={() => setRevoking(null)}
+        title="End the proxy"
+        description="The proxy and the owner who appointed it are told, with the reason."
+        codes={REASON_CODES.proxyRevokeByManagement}
+        confirmLabel="End the proxy"
+        danger
+        pending={revoke.isPending}
+        error={revoke.error ? errorText(revoke.error) : undefined}
+        onConfirm={(reasonCode) =>
+          revoking && revoke.mutate({ id: revoking.id, reasonCode })
+        }
+      />
     </Card>
   );
 }

@@ -315,6 +315,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/identity-changes', label: 'Name & phone changes', icon: <Users aria-hidden />, show: can('residents.manage') },
         { href: '/contract-renewals', label: 'Lease renewals', icon: <FileText aria-hidden />, show: can('contracts.manage') },
         { href: '/moves', label: 'Moves', icon: <Building aria-hidden />, show: can('residents.manage') },
+        // ADR 0083.
+        { href: '/ownership-transfers', label: 'Ownership transfers', icon: <Building aria-hidden />, show: can('residents.manage') },
         { href: '/compound-documents', label: 'Compound documents', icon: <BookOpen aria-hidden />, show: can('content.manage') },
         {
           href: '/workers',
@@ -559,6 +561,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/security/handovers', label: 'Handovers', icon: <ClipboardPen aria-hidden />, show: can('guard_roster.manage') },
         { href: '/security/tasks', label: 'Guard tasks', icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
         { href: '/security/inspection-requests', label: 'Inspection requests', icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
+        // ADR 0083.
+        { href: '/security/closed-units', label: 'Closed units', icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
+        { href: '/security/unit-entries', label: 'Emergency entries', icon: <ClipboardPen aria-hidden />, show: can('guard_tasks.manage') },
         {
           href: '/security/instructions',
           label: 'Instructions',

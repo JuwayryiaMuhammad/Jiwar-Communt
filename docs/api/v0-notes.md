@@ -384,4 +384,13 @@ The full notes are in [`notes/office-queue.md`](notes/office-queue.md).
 - **Suggestions.** `deferred`; an answer on done, deferred and declined.
 - **Letters.** `/staff/official-letters…`, `/me/official-letters…`, `POST /public/letters/lookup` (validity, issuer, day only).
 - **Correspondence.** `GET /staff/units/{unitId}/correspondence` (each read logged).
+### Maintenance analytics and cases (ADR 0081)
+
+The full notes are in [`notes/maintenance-analytics.md`](notes/maintenance-analytics.md).
+
+- **Sensitive tickets.** `PUT /maintenance/tickets/{id}/sensitivity` (`ticketSensitive` / `ticketSensitiveClear`); without `tickets.sensitive` such a ticket is out of every staff list, search, export, timeline and report, and `TICKET_NOT_FOUND` by id; `GET …/sensitive-reads` for the holders. Views gain `sensitive`; the list and export take `sensitive=`.
+- **Settings.** `GET/PATCH /maintenance/settings/analytics`: the recurrence and case thresholds and windows.
+- **Repeat faults.** `GET /maintenance/recurrence?from&to&by&min`; `/maintenance/plan-suggestions…` (accept into a plan, dismiss).
+- **The map.** `GET /maintenance/complaints-map?from&to`: per building and common area, counts only.
+- **Cases.** `/maintenance/cases…` (resolve, dismiss); `caseId` on `POST /maintenance/work-orders`.
 

@@ -86,7 +86,8 @@ export class MaintenanceDashboardSections implements OnModuleInit {
              count(*) FILTER (WHERE t.created_at >= ${day.start} AND t.created_at < ${day.end}) AS opened_today,
              count(*) FILTER (WHERE t.completed_at >= ${day.start} AND t.completed_at < ${day.end}) AS completed_today,
              count(*) FILTER (WHERE t.closed_at >= ${day.start} AND t.closed_at < ${day.end}) AS closed_today
-        FROM tickets t`;
+        FROM tickets t
+       WHERE ${await this.countable('t')}`;
     const overdue = await this.overdue(tx, day.now);
     const atRisk = overdue.enabled ? await this.atRisk(tx, day.now) : 0;
     const [{ planned }] = await tx.$queryRaw<{ planned: bigint }[]>`
@@ -132,7 +133,7 @@ export class MaintenanceDashboardSections implements OnModuleInit {
       SELECT count(*) AS total,
              count(*) FILTER (WHERE t.priority = 'emergency') AS emergency
         FROM tickets t
-       WHERE ${Prisma.join(flags, ' AND ')}`;
+       WHERE ${Prisma.join(flags, ' AND ')} AND ${await this.countable('t')}`;
     return {
       enabled: true,
       total: Number(r.total),
@@ -152,7 +153,7 @@ export class MaintenanceDashboardSections implements OnModuleInit {
         JOIN tickets t ON t.id = c.ticket_id
         JOIN maintenance_sla_settings s ON s.tenant_id = c.tenant_id
        WHERE c.state = 'running' AND c.due_at > ${now}
-         AND ${OPEN}
+         AND ${OPEN} AND ${await this.countable('t')}
          AND ${PERCENT} IS NOT NULL
          AND c.due_at - (c.target_minutes * (100 - ${PERCENT})) * interval '600 milliseconds' <= ${now}`;
     return Number(n);
@@ -170,14 +171,14 @@ export class MaintenanceDashboardSections implements OnModuleInit {
       SELECT b.id AS building_id, count(*) AS open,
              count(*) FILTER (WHERE t.priority = 'emergency') AS emergency_open
         FROM tickets t ${BUILDING_JOIN}
-       WHERE ${OPEN}
+       WHERE ${OPEN} AND ${await this.countable('t')}
        GROUP BY b.id`;
     const flags = await this.sla.conditions(tx, { overdue: true }, day.now);
     const late = flags
       ? await tx.$queryRaw<{ building_id: string; overdue: bigint }[]>`
           SELECT b.id AS building_id, count(*) AS overdue
             FROM tickets t ${BUILDING_JOIN}
-           WHERE ${Prisma.join(flags, ' AND ')}
+           WHERE ${Prisma.join(flags, ' AND ')} AND ${await this.countable('t')}
            GROUP BY b.id`
       : [];
     const out = new Map<
@@ -199,6 +200,19 @@ export class MaintenanceDashboardSections implements OnModuleInit {
       out.set(r.building_id, { ...b, overdue: Number(r.overdue) });
     }
     return out;
+  }
+
+  /**
+   * The tickets the caller may count, as a condition on `alias`: every one
+   * today. Every ticket query of the dashboard ANDs it in. When sensitive
+   * tickets land (M2-13, ADR 0081), it becomes their filter
+   * (`SensitiveTickets.sql(alias)`): a caller without `tickets.sensitive`,
+   * and the brief the sweep writes for every reader, count none of them.
+   */
+  private countable(alias: string): Promise<Prisma.Sql> {
+    return Promise.resolve(
+      Prisma.sql`${Prisma.raw(`"${alias}"`)}.id IS NOT NULL`,
+    );
   }
 
   private async energy(

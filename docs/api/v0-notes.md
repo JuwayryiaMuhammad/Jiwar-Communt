@@ -452,3 +452,13 @@ The full notes are in [`notes/treasury.md`](notes/treasury.md).
 - **Cheques** (`finance.payments`). `POST /staff/units/{unitId}/cheques`; `GET /staff/finance/cheques`; `…/{id}/deposit|clear|bounce|return` (`409 CHEQUE_STATE`, `CHEQUE_NOT_DUE`). An office payment by cheque is in the register.
 - **Statements** (`finance.treasury`). `POST /staff/finance/cash-accounts/{id}/statement-imports` (the dry run), `…/statement-imports/{id}/apply`; `GET /staff/finance/statement-lines`, `…/{id}/candidates`, `POST …/{id}/match`; `POST /staff/finance/statement-matches/{id}/undo`.
 - **Inbox types** `cash_custody`, `custody_variance`; **notices** `finance.custody_variance` (critical), `finance.custody_investigation_assigned`, `cheque.due`, `cheque.bounced`.
+
+### The reports platform (ADR 0086)
+
+The full notes are in [`notes/reports-platform.md`](notes/reports-platform.md).
+
+- **Reports.** `GET /staff/reports` (the caller's), `GET /staff/reports/view?report&from&to&groupBy&compare`, `GET /staff/reports/export?…&format=pdf|xlsx|csv` (no-store, audited). Each report by its own permission (`403 REPORT_NOT_YOURS`).
+- **Schedules.** `/staff/report-schedules` (`reports.schedule`); runs once per period; `report_run.ready` (key and period only); `GET /staff/report-runs[/{id}/download]`.
+- **Capital plans.** `/maintenance/capital-plans[/{id}[/lines[/{lineId}]]]` (`assets.manage`); approval type `capital_plan` (`capitalPlanId`).
+- **Energy.** The consumption groups gain `areaSqm`, `costPerSqm`, `costPerSqmMissing`.
+- **The compound's export.** `POST|GET /staff/compound-exports`, `GET …/{id}/download` (`compound.export`, step-up, once a day).

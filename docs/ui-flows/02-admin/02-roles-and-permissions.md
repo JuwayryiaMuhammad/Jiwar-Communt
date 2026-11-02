@@ -240,6 +240,8 @@ sequenceDiagram
 | `tickets.contract_work` | مقاول المورد (ADR 0088): البلاغات المحالة إلى شركته التي استلمها، يعمل عليها من مسارات الفني نفسها ويرى ما يراه الفني فقط | contractor | contractor | `/contractor/dispatches…`، `/technician/tickets…` |
 | `tenders.bid` | تقديم عطاء شركته المختوم على المناقصات المدعوة إليها وسحبه قبل الموعد (ADR 0088) | contractor | contractor | `/contractor/tenders…` |
 | `vendor_invoices.submit` | إرسال فواتير شركته إلى المجمع عبر قناة المقاول، على عقودها فقط، ثم تعتمدها الإدارة كأي فاتورة (ADR 0088) | contractor | contractor | `/contractor/invoices`، `GET /contractor/contracts` |
+| `reports.schedule` | جدولة تقرير يومي أو أسبوعي أو شهري لمن يملك صلاحية التقرير، وإيقافه؛ المُجدول يملك صلاحية التقرير نفسه (ADR 0086) | manager | manager | `/staff/report-schedules` |
+| `compound.export` | تصدير بيانات الكمبوند التشغيلية (جداول ثابتة، بلا بيانات شخصية) بعد تحقق جديد، مرة في اليوم؛ لا يُفوَّض لنائب (ADR 0086) | manager | manager | `/staff/compound-exports` |
 
 ملاحظات على الجدول:
 - بعض الشاشات تحتاج **صلاحيتين معًا**: قائمة "من يمكن أن يكون صاحب البلاغ" (`GET /maintenance/units/{unitId}/reporters`) تحتاج `tickets.dispatch` + `residents.read`. وشاشات وحدات طلبات الإدارة (`/management/units/*`) وجزء من `/management/requests` تحتاج `requests.handle` + `residents.read`. إذا أعطى المدير مشرفًا `tickets.dispatch` فقط فلن يرى هذه القوائم.

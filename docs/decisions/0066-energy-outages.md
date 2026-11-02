@@ -125,3 +125,6 @@ An outage, an alert and a measure are each locked FOR UPDATE alone. The UPDATE g
 - Leaks (use on days a unit stands empty) and other rules than spikes.
 - Bills to residents from their meters (R11c, finance).
 - A meter reading that ticks the move step `meters_read` (ADR 0063).
+
+## Update (Phase M3-3, ADR 0086)
+- A consumption group gains `areaSqm` (its metered units' area), `costPerSqm`, and `costPerSqmMissing` (`no_tariff`, `no_area`) instead of a number. The reports platform's `energy_cost` divides a building's cost by the area of all its units.

@@ -45,3 +45,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase M2-13, ADR 0081)
 - New permission `tickets.sensitive` (staff, manager: the manager by default): a sensitive ticket among the compound's tickets, its clearing and the log of its reads.
+
+## Update (Phase M3-3, ADR 0086)
+- New permissions: `reports.schedule` (manager: send a report on a cadence to the holders of its own permission) and `compound.export` (manager: the compound's operational export behind a step-up; never delegated to a deputy, ADR 0073).

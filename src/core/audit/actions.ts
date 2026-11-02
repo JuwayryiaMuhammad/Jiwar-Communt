@@ -583,6 +583,9 @@ export const AUDIT_ACTIONS = {
   // ADR 0080: its non-readers reminded, once ever. metadata: recipients and
   // audience, counts; never who.
   'announcement.reminded': { log: 'tenant', target: 'announcement' },
+  // ADR 0080: a unit's correspondence was read (a logged read: it shows who
+  // wrote to whom about the unit). metadata: rows (a count), type (a filter).
+  'unit.correspondence_read': { log: 'tenant', target: 'unit' },
   // ADR 0080: the compound's announcement templates. metadata: name;
   // changes: name by value, the words as `{ changed: true }`.
   'announcement_template.created': {

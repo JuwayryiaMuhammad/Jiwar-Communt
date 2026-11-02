@@ -13777,6 +13777,80 @@
         ],
         "type": "object"
       },
+      "CorrespondenceView": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "direction": {
+            "description": "Who wrote first: the unit’s people, or to them.",
+            "enum": [
+              "from_unit",
+              "to_unit"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "description": "What it is within its type: a topic’s or category’s key, a letter’s kind.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "MR-000123",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "management_request",
+              "official_letter",
+              "announcement",
+              "neighbour_complaint",
+              "formal_notice",
+              "ticket"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "number",
+          "kind",
+          "status",
+          "direction",
+          "at"
+        ],
+        "type": "object"
+      },
+      "CorrespondenceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CorrespondenceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "CostTotalsView": {
         "properties": {
           "contractor": {
@@ -134396,6 +134470,80 @@
           }
         ],
         "summary": "Open a unit’s contract",
+        "tags": [
+          "units"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/units/{unitId}/correspondence": {
+      "get": {
+        "operationId": "UnitCorrespondenceController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "enum": [
+                "management_request",
+                "official_letter",
+                "announcement",
+                "neighbour_complaint",
+                "formal_notice",
+                "ticket"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrespondenceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a unit’s correspondence, newest first",
         "tags": [
           "units"
         ],

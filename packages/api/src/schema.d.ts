@@ -20145,6 +20145,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/units/{unitId}/correspondence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a unit’s correspondence, newest first */
+        get: operations["UnitCorrespondenceController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/units/{unitId}/deposits": {
         parameters: {
             query?: never;
@@ -28402,6 +28419,28 @@ export interface components {
             reasonCode: string;
             reset?: boolean;
             value: string;
+        };
+        CorrespondenceView: {
+            /** Format: date-time */
+            at: string;
+            /**
+             * @description Who wrote first: the unit’s people, or to them.
+             * @enum {string}
+             */
+            direction: "from_unit" | "to_unit";
+            /** Format: uuid */
+            id: string;
+            /** @description What it is within its type: a topic’s or category’s key, a letter’s kind. */
+            kind: string | null;
+            /** @example MR-000123 */
+            number: string | null;
+            status: string | null;
+            /** @enum {string} */
+            type: "management_request" | "official_letter" | "announcement" | "neighbour_complaint" | "formal_notice" | "ticket";
+        };
+        CorrespondenceViewList: {
+            data: components["schemas"]["CorrespondenceView"][];
+            nextCursor: string | null;
         };
         CostTotalsView: {
             contractor: string;
@@ -78131,6 +78170,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContractReadView"];
+                };
+            };
+        };
+    };
+    UnitCorrespondenceController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                type?: "management_request" | "official_letter" | "announcement" | "neighbour_complaint" | "formal_notice" | "ticket";
+            };
+            header?: never;
+            path: {
+                unitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrespondenceViewList"];
                 };
             };
         };

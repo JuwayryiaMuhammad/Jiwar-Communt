@@ -63,6 +63,7 @@ import { WelcomeService } from './welcome/welcome.service';
 import { WelcomeTemplateService } from './welcome/welcome-template.service';
 import { NeighbourSettingsController } from './settings/neighbour-settings.controller';
 import { NeighbourSettingsService } from './settings/neighbour-settings.service';
+import { ComplaintCorrespondence } from './complaints/complaint-correspondence';
 
 /**
  * What happens between units (ADR 0042): complaints against a unit, lost
@@ -99,6 +100,7 @@ import { NeighbourSettingsService } from './settings/neighbour-settings.service'
     MarketReportsController,
   ],
   providers: [
+    ComplaintCorrespondence,
     ResidentComplaintItems,
     NeighbourAccess,
     NeighboursProvisioning,

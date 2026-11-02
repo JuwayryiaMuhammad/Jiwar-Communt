@@ -63,6 +63,7 @@ import { UtilitiesMoveStep } from './requests/utilities-move-step';
 import { ManagementInboxItems } from './management-inbox-items';
 
 import { MaintenanceModule } from '../maintenance';
+import { ManagementCorrespondence } from './management-correspondence';
 /**
  * Requests to the management (ADR 0039), and the appeals of staff
  * decisions it decides (ADR 0059). The domain imports core freely,
@@ -99,6 +100,7 @@ import { MaintenanceModule } from '../maintenance';
     StaffDecisionAppealsController,
   ],
   providers: [
+    ManagementCorrespondence,
     ManagementPartnersPort,
     ManagementProvisioning,
     TopicsService,

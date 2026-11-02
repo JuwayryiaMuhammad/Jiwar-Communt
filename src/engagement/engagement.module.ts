@@ -60,6 +60,7 @@ import {
   SuggestionTopicsController,
 } from './topics/topics.controller';
 import { SuggestionTopicsService } from './topics/topics.service';
+import { EngagementCorrespondence } from './engagement-correspondence';
 
 /**
  * The compound's community life (ADR 0040): announcements, works and
@@ -100,6 +101,7 @@ import { SuggestionTopicsService } from './topics/topics.service';
     StaffGalleryController,
   ],
   providers: [
+    EngagementCorrespondence,
     EngagementProvisioning,
     EngagementAccess,
     OpaqueRefs,

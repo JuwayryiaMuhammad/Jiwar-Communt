@@ -225,6 +225,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
  * the gate.
  */
 import { MaintenanceManagementPort } from './management-port';
+import { TicketCorrespondence } from './tickets/ticket-correspondence';
 @Module({
   imports: [AccountsModule, CommunityMaintenancePortModule, FilesModule],
   controllers: [
@@ -308,6 +309,7 @@ import { MaintenanceManagementPort } from './management-port';
     TechnicianStatsController,
   ],
   providers: [
+    TicketCorrespondence,
     MaintenanceManagementPort,
     MaintenanceProvisioning,
     CategoriesService,

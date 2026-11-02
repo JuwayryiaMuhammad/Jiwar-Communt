@@ -255,6 +255,10 @@ describe('audit catalog', () => {
         'holiday',
         'floor_plan',
         'space_use',
+        // ADR 0080.
+        'announcement_template',
+        'reply_template',
+        'official_letter',
       ]).toContain(def.target);
     }
   });

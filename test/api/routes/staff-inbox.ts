@@ -27,6 +27,9 @@ const INBOX_TYPES = [
   'contract_disbursement',
   // ADR 0088.
   'tender_opening',
+  // ADR 0085.
+  'cash_custody',
+  'custody_variance',
 ];
 
 /**

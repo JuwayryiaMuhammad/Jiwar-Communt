@@ -6,14 +6,17 @@ import { deferred } from '../setup/permits';
 
 /**
  * ADR 0089's races: two approvals of one invoice, one invoice paid twice,
- * a commitment and a budget transfer meeting on one line, and one vendor's
- * invoice number recorded twice at once.
+ * two payouts out of one cash box that fit alone but not together (ADR
+ * 0085), a commitment and a budget transfer meeting on one line, and one
+ * vendor's invoice number recorded twice at once.
  */
 describe('Payables and commitments — concurrency (ADR 0089)', () => {
   let h: HttpHarness;
   let f: ReturnType<typeof budgetHelpers>;
   let s: Awaited<ReturnType<ReturnType<typeof budgetHelpers>['setUp']>>;
   let budget: BudgetBody;
+  /** The bank account payouts leave (ADR 0085). */
+  let bank: { id: string };
 
   beforeAll(async () => {
     h = await createHttpHarness();
@@ -33,12 +36,22 @@ describe('Payables and commitments — concurrency (ADR 0089)', () => {
         items: [{ type: 'major_contract', threshold: '100000.00' }],
       })
       .expect(200);
+    bank = await cashAccount({ kind: 'bank', name: 'Race bank' });
   }, 240_000);
 
   afterAll(() => h.close());
 
   const m = () => s.manager.token;
   const acc = () => s.accountant.token;
+  const cashAccount = async (body: object) =>
+    (
+      await f
+        .http('post', '/staff/finance/cash-accounts', s.manager.token, {
+          openedOn: clock().today,
+          ...body,
+        })
+        .expect(201)
+    ).body as { id: string };
   const line = (c: string) => budget.lines.find((l) => l.category === c)!;
   const availableOf = async (c: string) =>
     Number(
@@ -128,6 +141,7 @@ describe('Payables and commitments — concurrency (ADR 0089)', () => {
         f.http('post', `/staff/finance/vendor-invoices/${inv}/pay`, acc(), {
           paidOn: clock().today,
           method: 'bank_transfer',
+          cashAccountId: bank.id,
         });
       const results = await Promise.all([pay(), pay()]);
       expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
@@ -138,8 +152,62 @@ describe('Payables and commitments — concurrency (ADR 0089)', () => {
         expenses: await tx.financeExpense.count({
           where: { vendorInvoiceId: inv },
         }),
+        movements: await tx.financeCashMovement.count({
+          where: { kind: 'payout', accountId: bank.id },
+        }),
       }));
-      expect(counts).toEqual({ payouts: 1, expenses: 1 });
+      expect(counts).toMatchObject({ payouts: 1, expenses: 1 });
+      expect(counts.movements).toBe(i + 1);
+    }
+  });
+
+  it('two payouts out of one cash box that fit alone but not together: one is paid', async () => {
+    for (let i = 0; i < 3; i++) {
+      const box = await cashAccount({
+        kind: 'cash',
+        name: `Race box ${uniqueSuffix()}`,
+        openingBalance: '1500.00',
+      });
+      const invoices: string[] = [];
+      for (const c of [await contract(), await contract()]) {
+        const inv = (
+          (await (await record(c)).expect(201)).body as { id: string }
+        ).id;
+        await f
+          .http(
+            'post',
+            `/staff/finance/vendor-invoices/${inv}/approve`,
+            m(),
+            {},
+          )
+          .expect(200);
+        invoices.push(inv);
+      }
+      const results = await Promise.all(
+        invoices.map((inv) =>
+          f.http('post', `/staff/finance/vendor-invoices/${inv}/pay`, acc(), {
+            paidOn: clock().today,
+            method: 'cash',
+            cashAccountId: box.id,
+          }),
+        ),
+      );
+      expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+      expect(results.find((r) => r.status === 409)!.body).toMatchObject({
+        code: 'CASH_ACCOUNT_INSUFFICIENT',
+      });
+      const left = await f.inTx(s.c, async (tx) => ({
+        payouts: await tx.financeVendorPayout.count({
+          where: { vendorInvoiceId: { in: invoices } },
+        }),
+        balance: (
+          await tx.financeCashMovement.aggregate({
+            where: { accountId: box.id },
+            _sum: { amount: true },
+          })
+        )._sum.amount?.toString(),
+      }));
+      expect(left).toEqual({ payouts: 1, balance: '500' });
     }
   });
 

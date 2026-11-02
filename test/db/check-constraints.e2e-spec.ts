@@ -3064,6 +3064,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   finance_cash_movements_kind_known: {},
   finance_cash_movements_amount_range: {},
   finance_cash_movements_kind_shape: {},
+  // A payout names its account exactly when it pays something (ADR 0089).
+  finance_vendor_payouts_cash_account: {},
   finance_cash_movements_reason: {
     guarded:
       'reason_code IS NULL is tested first; the list runs only on a value',

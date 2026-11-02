@@ -1256,3 +1256,29 @@ export const M27_COVERAGE: readonly string[] = [
   'tender_bid.submitted',
   'tender_bid.withdrawn',
 ];
+
+/**
+ * Treasury and custody (ADR 0085), covered by
+ * test/treasury/audit-coverage.e2e-spec.ts.
+ */
+export const M32_COVERAGE: readonly string[] = [
+  'cash_account.created',
+  'cash_account.updated',
+  'cash_account.retired',
+  'cash_transfer.recorded',
+  'cash_adjustment.recorded',
+  'custody_handin.recorded',
+  'custody_handin.resolved',
+  'custody_investigation.opened',
+  'custody_investigation.decided',
+  'cheque.received',
+  'cheque.deposited',
+  'cheque.cleared',
+  'cheque.bounced',
+  'cheque.returned',
+  'statement_import.checked',
+  'statement_import.applied',
+  'statement_import.expired',
+  'statement_line.matched',
+  'statement_match.undone',
+];

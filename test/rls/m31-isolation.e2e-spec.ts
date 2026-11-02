@@ -18,6 +18,8 @@ interface Side {
   otherLineId: string;
   commitmentId: string;
   disbursementId: string;
+  /** A bank account payouts leave (ADR 0085). */
+  cashAccountId: string;
 }
 
 interface Table {
@@ -213,7 +215,21 @@ const TABLES: Table[] = [
           method: 'bank_transfer',
           paidOn: day,
           paidById: link.accountId,
+          cashAccountId: link.cashAccountId,
           createdAt: dbClock(),
+        },
+      });
+      // What it paid left its account (checked at commit).
+      await tx.financeCashMovement.create({
+        data: {
+          id: newId(),
+          tenantId: own.tenantId,
+          accountId: link.cashAccountId,
+          kind: 'payout',
+          amount: '-10',
+          onDay: day,
+          payoutId: id,
+          recordedById: link.accountId,
         },
       });
       return id;
@@ -265,6 +281,7 @@ describe('RLS isolation — payables and commitments (ADR 0089)', () => {
       otherLineId: newId(),
       commitmentId: newId(),
       disbursementId: newId(),
+      cashAccountId: newId(),
     };
     await inTenant(s, async (tx) => {
       await tx.vendor.create({
@@ -326,6 +343,16 @@ describe('RLS isolation — payables and commitments (ADR 0089)', () => {
           contractPaymentId: newId(),
           amount: '10',
           createdAt: dbClock(),
+        },
+      });
+      await tx.financeCashAccount.create({
+        data: {
+          id: s.cashAccountId,
+          tenantId,
+          kind: 'bank',
+          name: 'Isolated bank',
+          openedOn: day,
+          createdById: s.accountId,
         },
       });
       await tx.financeContractDisbursement.create({

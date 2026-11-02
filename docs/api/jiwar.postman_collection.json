@@ -7696,7 +7696,7 @@
               },
               "raw": "{\n  \"status\": \"received\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `response` | string |  | What the staff tell the author. Required to decline. Replaces an earlier answer. |\n| `status` | `received` \\| `under_review` \\| `planned` \\| `done` \\| `declined` | yes | A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. |\n\n**Responses:** 204",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `response` | string |  | What the staff tell the author. Required to decline. Replaces an earlier answer. |\n| `status` | `received` \\| `under_review` \\| `planned` \\| `deferred` \\| `done` \\| `declined` | yes | A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. |\n\n**Responses:** 204",
             "header": [
               {
                 "description": "",

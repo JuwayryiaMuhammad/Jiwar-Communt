@@ -2762,6 +2762,40 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'purpose IS NULL is tested first and its length read only on a value',
   },
   space_use_requests_status_shape: {},
+  // Announcements and the office queue (ADR 0080).
+  announcements_audience_units: {},
+  announcements_reminded_after_publication: {
+    guarded:
+      'reminded_at IS NULL is tested first, and publish_at IS NOT NULL before the two compare',
+  },
+  announcement_templates_text: {
+    guarded:
+      'each text IS NULL is tested first; the length runs only on a value',
+  },
+  management_requests_converted_shape: {
+    guarded:
+      'close_reason IS NULL is tested first; it compares only on a value. status is NOT NULL',
+  },
+  request_reply_templates_text: {
+    guarded:
+      'each body IS NULL is tested first; the length runs only on a value',
+  },
+  suggestions_deferred_answered: {},
+  official_letter_counters_positive: {},
+  official_letters_number_positive: {},
+  official_letters_kind_known: {},
+  official_letters_template_known: {},
+  official_letters_verify_code: {},
+  official_letters_text: {
+    guarded:
+      'each text IS NULL is tested first; the length runs only on a value',
+  },
+  official_letters_no_objection_subject: {},
+  official_letters_revoked_shape: {
+    guarded:
+      'revoke_reason IS NULL and revoked_at IS NULL are tested first; the list and the comparison run only on a value',
+  },
+  official_letter_links_code_hash_hex: {},
 };
 
 interface Check {

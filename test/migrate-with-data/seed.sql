@@ -543,5 +543,62 @@ BEGIN
       SELECT gen_random_uuid(), t, 2, u2, o.id, 'move', 1000.00, current_date, 'bank_transfer', mgr, now()
         FROM unit_occupancies o
        WHERE o.unit_id = u2 AND o.account_id = res2 AND o.status = 'active';
+    -- The office queue as M2-9 leaves it (ADR 0080): an announcement put to
+    -- one unit and reminded once, a template of each kind, a conversation
+    -- the management started, a request closed as converted into its ticket
+    -- (the on-behalf and closed-shape CHECKs recreated), a deferred
+    -- suggestion with its answer, and an official letter with its pointer.
+    DECLARE
+      ann uuid := gen_random_uuid();
+      topic uuid := gen_random_uuid();
+      stopic uuid := gen_random_uuid();
+      tk uuid := gen_random_uuid();
+      letter uuid := gen_random_uuid();
+      code text := substr(md5(s || 'letter'), 1, 22);
+    BEGIN
+      INSERT INTO announcements (id, tenant_id, kind, priority, publish_at, audience_occupancy, audience_units,
+                                 notified_at, reminded_at, created_by_account_id, updated_at) VALUES
+        (ann, t, 'general', 'important', now() - interval '2 days', 'everyone', ARRAY[u1],
+         now() - interval '2 days', now() - interval '1 day', mgr, now());
+      INSERT INTO announcement_versions (id, tenant_id, announcement_id, version, title_en, body_en,
+                                         edited_by_account_id) VALUES
+        (gen_random_uuid(), t, ann, 1, 'Water cut', 'The water is off on Sunday morning.', mgr);
+      INSERT INTO announcement_templates (id, tenant_id, name, title_en, body_en, created_by_account_id,
+                                          updated_at) VALUES
+        (gen_random_uuid(), t, 'Water cut', 'Water cut', 'The water is off on [day].', mgr, now());
+      INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours, updated_at)
+      VALUES (topic, t, 'seed_letters', 'خطابات', 'Letters', 72, now());
+      INSERT INTO request_reply_templates (id, tenant_id, topic_id, name, body_en, created_by_account_id,
+                                           updated_at) VALUES
+        (gen_random_uuid(), t, topic, 'Letter ready', 'Your letter is ready at the office.', mgr, now());
+      INSERT INTO tickets (id, tenant_id, number, unit_id, category_id, created_by_account_id,
+                           reporter_account_id, priority, description, updated_at) VALUES
+        (tk, t, 4, u1, cat, mgr, res1, 'normal', 'The balcony door sticks', now());
+      INSERT INTO management_requests (id, tenant_id, number, type, topic_id, author_account_id,
+                                       opened_by_account_id, unit_id, status, cycle_started_at, response_due_at,
+                                       first_response_at, answered_at, last_activity_at, outreach, updated_at) VALUES
+        (gen_random_uuid(), t, 901, 'general', topic, res1, mgr, u1, 'answered', now() - interval '1 day',
+         now() + interval '2 days', now() - interval '1 day', now() - interval '1 day', now() - interval '1 day',
+         true, now());
+      INSERT INTO management_requests (id, tenant_id, number, type, topic_id, author_account_id, unit_id,
+                                       status, cycle_started_at, response_due_at, last_activity_at, closed_at,
+                                       close_reason, closed_by_side, converted_ticket_id, updated_at) VALUES
+        (gen_random_uuid(), t, 902, 'general', topic, res1, u1, 'closed', now() - interval '3 days',
+         now(), now() - interval '2 days', now() - interval '2 days', 'converted', 'staff', tk, now());
+      INSERT INTO suggestion_topics (id, tenant_id, key, name_ar, name_en, updated_at) VALUES
+        (stopic, t, 'seed_ideas', 'أفكار', 'Ideas', now());
+      INSERT INTO suggestions (id, tenant_id, author_account_id, topic_id, body, status, response,
+                               responded_at, updated_at) VALUES
+        (gen_random_uuid(), t, res1, stopic, 'A bench by the pool.', 'deferred',
+         'Next year, with the pool works.', now(), now());
+      INSERT INTO official_letters (id, tenant_id, number, kind, unit_id, account_id, subject_name,
+                                    occupancy_type, occupancy_since, addressee, issued_by_account_id,
+                                    issued_at, verify_code, template) VALUES
+        (letter, t, 1, 'residence_confirmation', u1, res1, 'Seed Resident One', 'owner',
+         current_date - 400, 'The bank', mgr, now(), code, 'certificate.v2');
+      INSERT INTO official_letter_counters (tenant_id, last_number) VALUES (t, 1);
+      INSERT INTO official_letter_links (code_hash, tenant_id, letter_id, created_at) VALUES
+        (encode(sha256(convert_to(code, 'UTF8')), 'hex'), t, letter, now());
+    END;
   END LOOP;
 END $$;

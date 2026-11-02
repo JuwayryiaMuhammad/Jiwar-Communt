@@ -5019,6 +5019,10 @@ model ManagementRequest {
   aboutType       String?                 @map("about_type")
   aboutId         String?                 @map("about_id") @db.Uuid
   aboutReason     String?                 @map("about_reason")
+  /// ADR 0080: the management wrote first (`openedById` started it).
+  outreach        Boolean                 @default(false)
+  /// ADR 0080: the ticket it became; closed `converted` for good.
+  convertedTicketId String?               @map("converted_ticket_id") @db.Uuid
   createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -5036,6 +5040,7 @@ model ManagementRequest {
   @@index([tenantId, authorId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "management_requests_author_activity_idx")
   @@index([tenantId, status, lastActivityAt(sort: Desc), id(sort: Desc)], map: "management_requests_status_activity_idx")
   @@index([tenantId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "management_requests_activity_idx")
+  @@index([tenantId, unitId, createdAt, id], map: "management_requests_unit_idx")
   @@map("management_requests")
 }
 
@@ -5323,11 +5328,15 @@ model Announcement {
   archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(3)
   audienceBuildings String[]             @default([]) @map("audience_buildings")
   audienceOccupancy AudienceOccupancy    @default(everyone) @map("audience_occupancy")
+  /// ADR 0080: the units it is put to instead of buildings (empty: not by unit).
+  audienceUnits     String[]             @default([]) @map("audience_units") @db.Uuid
   currentVersion    Int                  @default(1) @map("current_version")
   /// The last edit made after it was out: what "edited" shows.
   editedAt          DateTime?            @map("edited_at") @db.Timestamptz(3)
   /// When its audience was told (important ones only).
   notifiedAt        DateTime?            @map("notified_at") @db.Timestamptz(3)
+  /// ADR 0080: when its non-readers were reminded, once ever.
+  remindedAt        DateTime?            @map("reminded_at") @db.Timestamptz(3)
   worksStartsAt     DateTime?            @map("works_starts_at") @db.Timestamptz(3)
   worksEndsAt       DateTime?            @map("works_ends_at") @db.Timestamptz(3)
   worksAreaKind     WorksAreaKind?       @map("works_area_kind")
@@ -5569,6 +5578,8 @@ enum SuggestionStatus {
   received
   under_review
   planned
+  /// ADR 0080: not now, with the answer; not final.
+  deferred
   done
   declined
 
@@ -12580,4 +12591,97 @@ model SpaceUseRequest {
   @@index([tenantId, status, createdAt, id], map: "space_use_requests_status_idx")
   @@index([tenantId, requestedById], map: "space_use_requests_requester_idx")
   @@map("space_use_requests")
+}
+
+// ============================================================================
+// Announcements and the office queue (ADR 0080). Foreign keys and CHECKs are
+// in the migrations (20270323…); no relations are declared here.
+// ============================================================================
+
+/// The compound's announcement templates: a name and the words, copied into a draft.
+model AnnouncementTemplate {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String
+  titleEn     String?  @map("title_en")
+  bodyEn      String?  @map("body_en")
+  titleAr     String?  @map("title_ar")
+  bodyAr      String?  @map("body_ar")
+  createdById String   @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name])
+  @@map("announcement_templates")
+}
+
+/// What staff pick from when they answer in the queue: for a topic, or for any.
+model RequestReplyTemplate {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  topicId     String?  @map("topic_id") @db.Uuid
+  name        String
+  bodyEn      String?  @map("body_en")
+  bodyAr      String?  @map("body_ar")
+  createdById String   @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name])
+  @@index([tenantId, topicId], map: "request_reply_templates_topic_idx")
+  @@map("request_reply_templates")
+}
+
+model OfficialLetterCounter {
+  tenantId   String @id @map("tenant_id") @db.Uuid
+  lastNumber Int    @map("last_number")
+
+  @@map("official_letter_counters")
+}
+
+/// An official letter (`OL-`): a record, drawn as a PDF on demand.
+model OfficialLetter {
+  id                 String        @id @db.Uuid
+  tenantId           String        @map("tenant_id") @db.Uuid
+  number             Int
+  /// residence_confirmation, no_objection, to_whom_it_may_concern.
+  kind               String
+  unitId             String        @map("unit_id") @db.Uuid
+  accountId          String        @map("account_id") @db.Uuid
+  /// The `documents` request it answers, if any.
+  requestId          String?       @map("request_id") @db.Uuid
+  /// As written on the letter; NULL once erased.
+  subjectName        String?       @map("subject_name")
+  erasedAt           DateTime?     @map("erased_at") @db.Timestamptz(3)
+  occupancyType      OccupancyType @map("occupancy_type")
+  occupancySince     DateTime      @map("occupancy_since") @db.Date
+  /// Staff's words printed on the letter.
+  addressee          String?
+  subject            String?
+  issuedById         String        @map("issued_by_account_id") @db.Uuid
+  issuedAt           DateTime      @map("issued_at") @db.Timestamptz(3)
+  verifyCode         String        @map("verify_code") @db.Char(22)
+  template           String
+  revokedAt          DateTime?     @map("revoked_at") @db.Timestamptz(3)
+  revokedById        String?       @map("revoked_by_account_id") @db.Uuid
+  revokeReason       String?       @map("revoke_reason")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number])
+  @@index([tenantId, issuedAt, id], map: "official_letters_issued_idx")
+  @@index([tenantId, accountId], map: "official_letters_account_idx")
+  @@index([tenantId, unitId, issuedAt, id], map: "official_letters_unit_idx")
+  @@map("official_letters")
+}
+
+/// Global: the public check's pointer (the code's SHA-256), as clearance_links.
+model OfficialLetterLink {
+  codeHash  String   @id @map("code_hash") @db.Char(64)
+  tenantId  String   @map("tenant_id") @db.Uuid
+  letterId  String   @map("letter_id") @db.Uuid
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@map("official_letter_links")
 }

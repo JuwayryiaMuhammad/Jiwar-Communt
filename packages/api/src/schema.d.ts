@@ -44610,7 +44610,7 @@ export interface components {
             id: string;
         };
         /** @enum {string} */
-        SuggestionStatus: "received" | "under_review" | "planned" | "done" | "declined";
+        SuggestionStatus: "received" | "under_review" | "planned" | "deferred" | "done" | "declined";
         SuggestionTopicOptionView: {
             /** Format: uuid */
             id: string;

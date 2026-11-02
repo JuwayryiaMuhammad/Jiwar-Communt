@@ -66194,6 +66194,7 @@
           "received",
           "under_review",
           "planned",
+          "deferred",
           "done",
           "declined"
         ],

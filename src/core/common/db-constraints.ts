@@ -1036,4 +1036,15 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   floor_plans_file_key: null,
   floor_plan_units_one_plan: null,
   space_use_requests_tenant_id_id_key: null,
+  // Announcements and the office queue (ADR 0080). A template's name is the
+  // compound's own, once; a request becomes one ticket at most, under the
+  // request's lock (a second convert finds it closed); a letter's number
+  // comes from its counter.
+  announcement_templates_tenant_id_id_key: null,
+  announcement_templates_tenant_id_name_key: ['name'],
+  request_reply_templates_tenant_id_id_key: null,
+  request_reply_templates_tenant_id_name_key: ['name'],
+  management_requests_one_per_ticket: null,
+  official_letters_tenant_id_id_key: null,
+  official_letters_tenant_id_number_key: null,
 };

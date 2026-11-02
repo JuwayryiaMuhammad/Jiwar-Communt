@@ -177,16 +177,15 @@ export class MaintenanceReports implements OnModuleInit {
         columns: [
           DIMENSION.building,
           col('kind', 'Kind', 'النوع', 'text'),
-          col('use', 'Use', 'الاستهلاك', 'number', true),
+          col('use', 'Use', 'الاستهلاك', 'number'),
           col('unit', 'Unit', 'الوحدة', 'text'),
           col('cost', 'Cost', 'التكلفة', 'money', true),
-          col('areaSqm', 'Floor area m²', 'المساحة م²', 'number', true),
+          col('areaSqm', 'Floor area m²', 'المساحة م²', 'number'),
           col(
             'unitsWithoutArea',
             'Units with no area',
             'وحدات بلا مساحة',
             'number',
-            true,
           ),
           col('costPerSqm', 'Cost per m²', 'التكلفة لكل م²', 'money'),
           col('note', 'Why not', 'السبب', 'text'),

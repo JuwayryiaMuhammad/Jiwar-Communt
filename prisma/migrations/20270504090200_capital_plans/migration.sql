@@ -63,9 +63,11 @@ CREATE UNIQUE INDEX "capital_plans_year_key" ON "capital_plans"("tenant_id", "ye
 ALTER TABLE "capital_plans" ADD CONSTRAINT "capital_plans_tenant_id_created_by_fkey"
   FOREIGN KEY ("tenant_id", "created_by_account_id") REFERENCES "accounts"("tenant_id", "id")
   ON DELETE RESTRICT ON UPDATE RESTRICT;
+-- Deferred: the plan is submitted (in governance's raise) before its
+-- request row is written, in the same transaction (as a budget, ADR 0055).
 ALTER TABLE "capital_plans" ADD CONSTRAINT "capital_plans_tenant_id_request_fkey"
   FOREIGN KEY ("tenant_id", "approval_request_id") REFERENCES "governance_approval_requests"("tenant_id", "id")
-  ON DELETE RESTRICT ON UPDATE RESTRICT;
+  ON DELETE RESTRICT ON UPDATE RESTRICT DEFERRABLE INITIALLY DEFERRED;
 -- A draft names no request (a rejected or withdrawn one is history in the
 -- audit trail); a submitted plan names the pending one, an approved plan
 -- the one that approved it, and when.
@@ -135,18 +137,28 @@ ALTER TABLE "capital_plan_lines" ADD CONSTRAINT "capital_plan_lines_computed_ass
 CREATE FUNCTION "capital_plan_lines_draft_only"() RETURNS trigger AS $$
 DECLARE
   plan_status TEXT;
+  line_tenant UUID;
+  line_plan UUID;
 BEGIN
   IF TG_OP = 'UPDATE' THEN
     RAISE EXCEPTION 'a capital plan line is never edited' USING ERRCODE = 'insufficient_privilege';
+  ELSIF TG_OP = 'DELETE' THEN
+    line_tenant := OLD."tenant_id";
+    line_plan := OLD."plan_id";
+  ELSE
+    line_tenant := NEW."tenant_id";
+    line_plan := NEW."plan_id";
   END IF;
   SELECT "status" INTO plan_status FROM "capital_plans"
-   WHERE "tenant_id" = COALESCE(NEW."tenant_id", OLD."tenant_id")
-     AND "id" = COALESCE(NEW."plan_id", OLD."plan_id");
+   WHERE "tenant_id" = line_tenant AND "id" = line_plan;
   -- A plan it cannot see is left to the foreign key and RLS to refuse.
   IF plan_status IS NOT NULL AND plan_status <> 'draft' THEN
     RAISE EXCEPTION 'only a draft capital plan''s lines change' USING ERRCODE = 'insufficient_privilege';
   END IF;
-  RETURN COALESCE(NEW, OLD);
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+  RETURN NEW;
 END $$ LANGUAGE plpgsql;
 CREATE TRIGGER "capital_plan_lines_draft_only" BEFORE INSERT OR UPDATE OR DELETE ON "capital_plan_lines"
   FOR EACH ROW EXECUTE FUNCTION "capital_plan_lines_draft_only"();

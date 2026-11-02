@@ -28423,7 +28423,7 @@ export interface components {
         /** @enum {string} */
         ApprovalStatus: "pending" | "approved" | "rejected" | "withdrawn";
         /** @enum {string} */
-        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "budget_transfer";
+        ApprovalType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "budget_transfer" | "capital_plan";
         ApprovalView: {
             alternatives: components["schemas"]["ApprovalAlternativeView"][];
             attachments: components["schemas"]["ApprovalAttachmentView"][];
@@ -37392,7 +37392,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo" | "tender_document" | "tender_bid";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "report_file" | "compound_export" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo" | "tender_document" | "tender_bid";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -38388,7 +38388,7 @@ export interface components {
             type: components["schemas"]["GovernanceSettingType"];
         };
         /** @enum {string} */
-        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "budget_transfer" | "board_appeal" | "objection";
+        GovernanceSettingType: "annual_budget" | "budget_increase" | "major_contract" | "exceptional_fee" | "waiver_above_limit" | "payment_plan_above_limit" | "legal_escalation" | "compensation_above_limit" | "manager_handover_override" | "budget_transfer" | "capital_plan" | "board_appeal" | "objection";
         GovernanceSettingsResponse: {
             items: components["schemas"]["GovernanceSettingResponse"][];
         };
@@ -42718,7 +42718,7 @@ export interface components {
              * @description Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED).
              * @enum {string}
              */
-            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "application/zip" | "audio/mp4" | "video/mp4" | "video/quicktime" | "text/csv";
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "application/zip" | "audio/mp4" | "video/mp4" | "video/quicktime" | "text/csv" | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
             purpose: components["schemas"]["FilePurpose"];
             /** @description Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). */
             size: number;
@@ -45544,6 +45544,11 @@ export interface components {
              * @description budget_transfer only (ADR 0089): a transfer waiting for the board; its amount is the cost.
              */
             budgetTransferId?: string;
+            /**
+             * Format: uuid
+             * @description capital_plan only (ADR 0086): a draft capital plan; its total is the cost.
+             */
+            capitalPlanId?: string;
             context: string;
             /** @description EGP. Required for budget_increase (what it adds) and major_contract; not for annual_budget (its total). */
             cost?: string;

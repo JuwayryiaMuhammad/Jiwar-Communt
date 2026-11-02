@@ -4,25 +4,20 @@ import { FILE_PURPOSES, FILE_TYPES, mediaOf } from './purposes';
 import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
-/** Both CHECKs as they stand now (ADR 0074 recreated both, with every purpose). */
+/**
+ * Both CHECKs as they stand now: ADR 0086's, recreated after the later-dated
+ * ADR 0087 and 0088 with every purpose, the size CHECK first.
+ */
 const both = readFileSync(
-  join(
-    __dirname,
-    migrations,
-    '20270209090100_fitout_file_purposes/migration.sql',
-  ),
+  join(__dirname, migrations, '20270609090100_reports_checks/migration.sql'),
   'utf8',
 );
-/** The content type CHECK as ADR 0088 recreated it, with every purpose. */
-const types = readFileSync(
-  join(__dirname, migrations, '20270608090100_contractors/migration.sql'),
-  'utf8',
+/** The size CHECK's statements, then the content type CHECK's: each alone. */
+const sizeCheck = both.slice(
+  both.indexOf('"files_size_for_purpose"'),
+  both.indexOf('"files_content_type_for_purpose"'),
 );
-/** The content type CHECK's statements, then the size CHECK's: each alone. */
-const typeCheck = types.slice(
-  types.indexOf('"files_content_type_for_purpose"'),
-);
-const sizeCheck = both.slice(both.indexOf('"files_size_for_purpose"'));
+const typeCheck = both.slice(both.indexOf('"files_content_type_for_purpose"'));
 
 describe('file purposes', () => {
   it('match the CHECKs in the database', () => {
@@ -242,7 +237,7 @@ describe('file purposes', () => {
     // A signature (ADR 0056): a PNG only.
     expect(FILE_PURPOSES.incident_signature.types).toEqual(['image/png']);
     expect(typeCheck).toContain(
-      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature', 'compound_document', 'data_import'))`,
+      `("content_type" IN ('image/jpeg', 'image/png', 'image/webp') AND "purpose" NOT IN ('data_export', 'patrol_note_audio', 'patrol_note_video', 'incident_audio', 'incident_video', 'incident_signature', 'compound_document', 'data_import', 'report_file', 'compound_export'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'image/png' AND "purpose" = 'incident_signature')`,
@@ -254,10 +249,10 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing', 'compliance_evidence', 'tender_document', 'tender_bid'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing', 'compliance_evidence', 'tender_document', 'tender_bid', 'report_file'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,
+      `("content_type" = 'application/zip' AND "purpose" IN ('data_export', 'compound_export'))`,
     );
     // Assets (ADR 0064): a document is an image or a PDF like any other, a
     // checklist photo an image; a sheet is CSV and nothing else.
@@ -306,7 +301,24 @@ describe('file purposes', () => {
       `WHEN 'data_import' THEN ${FILE_PURPOSES.data_import.maxBytes}`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'text/csv' AND "purpose" = 'data_import')`,
+      `("content_type" = 'text/csv' AND "purpose" IN ('data_import', 'report_file'))`,
+    );
+    // Reports (ADR 0086): a run's file is a PDF, a workbook or CSV of 20 MB;
+    // the compound's export a zip as large as a personal one.
+    expect(FILE_PURPOSES.report_file.types).toEqual([
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+    ]);
+    expect(typeCheck).toContain(
+      `("content_type" = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' AND "purpose" = 'report_file')`,
+    );
+    expect(sizeCheck).toContain(
+      `WHEN 'report_file' THEN ${FILE_PURPOSES.report_file.maxBytes}`,
+    );
+    expect(FILE_PURPOSES.compound_export.types).toEqual(['application/zip']);
+    expect(sizeCheck).toContain(
+      `WHEN 'compound_export' THEN ${FILE_PURPOSES.compound_export.maxBytes}`,
     );
     // Guard vendors (ADR 0068): a face probe and an ID scan are images, 5 MB.
     for (const purpose of ['gate_face_probe', 'gate_id_scan'] as const) {
@@ -360,7 +372,7 @@ describe('file purposes', () => {
     expect(typeCheck).not.toContain(`'damage_appeal_photo'`);
   });
 
-  it('only the nine types', () => {
+  it('only the ten types', () => {
     expect([...FILE_TYPES]).toEqual([
       'image/jpeg',
       'image/png',
@@ -371,6 +383,7 @@ describe('file purposes', () => {
       'video/mp4',
       'video/quicktime',
       'text/csv',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ]);
   });
 
@@ -386,8 +399,10 @@ describe('file purposes', () => {
     ]);
   });
 
-  it('nobody uploads an export', () => {
+  it('nobody uploads an export or a report’s file', () => {
     expect(FILE_PURPOSES.data_export.uploaders).toEqual([]);
+    expect(FILE_PURPOSES.compound_export.uploaders).toEqual([]);
+    expect(FILE_PURPOSES.report_file.uploaders).toEqual([]);
   });
 
   it('a face probe and an ID scan are the guard’s alone (ADR 0068)', () => {

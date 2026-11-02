@@ -1185,4 +1185,17 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   finance_statement_matches_one_per_payment: null,
   finance_statement_matches_one_per_cheque: null,
   finance_statement_matches_one_per_movement: null,
+  // The reports platform (ADR 0086). A run once per period is the sweep's
+  // ON CONFLICT; one plan a year is answered before it can fire (the year's
+  // plan exists) and names the year; an asset once per plan names it; one
+  // export at a time is checked under the compound's advisory lock first.
+  report_schedules_tenant_id_id_key: null,
+  report_runs_tenant_id_id_key: null,
+  report_runs_once_per_period: null,
+  capital_plans_tenant_id_id_key: null,
+  capital_plans_year_key: ['year'],
+  capital_plan_lines_tenant_id_id_key: null,
+  capital_plan_lines_asset_once: ['assetId'],
+  compound_exports_tenant_id_id_key: null,
+  compound_exports_one_active: null,
 };

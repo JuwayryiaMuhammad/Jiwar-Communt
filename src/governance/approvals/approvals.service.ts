@@ -60,6 +60,7 @@ const REQUIRED_HANDLERS: ApprovalType[] = [
   'major_contract',
   'manager_handover_override',
   'budget_transfer',
+  'capital_plan',
 ];
 const PAGE = keysetCursor('createdAt', 'desc');
 const DAY = 86_400_000;
@@ -71,6 +72,8 @@ export interface NewApproval {
   /** A manager_handover_override's subject: the manager (ADR 0075). */
   managerAccountId?: string;
   budgetTransferId?: string;
+  /** A capital_plan's subject: the year's plan (ADR 0086). */
+  capitalPlanId?: string;
   context: string;
   impact: string;
   cost?: string;
@@ -212,6 +215,7 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
       input.budgetLineId ??
       input.managerAccountId ??
       input.budgetTransferId ??
+      input.capitalPlanId ??
       null;
     const handler = this.matters.approval(input.type);
     if (SUBJECT_TYPES.includes(input.type) && !handler)
@@ -259,7 +263,9 @@ export class ApprovalsService implements OnModuleInit, OnApplicationBootstrap {
                     ? 'budgetLineId'
                     : input.managerAccountId
                       ? 'managerAccountId'
-                      : 'budgetTransferId',
+                      : input.budgetTransferId
+                        ? 'budgetTransferId'
+                        : 'capitalPlanId',
                 code: FieldErrorCode.DUPLICATE_VALUE,
               },
             ],
@@ -862,10 +868,15 @@ function packageProblems(input: NewApproval): FieldError[] {
     budget_increase: 'budgetLineId',
     manager_handover_override: 'managerAccountId',
     budget_transfer: 'budgetTransferId',
+    capital_plan: 'capitalPlanId',
   } as Partial<
     Record<
       ApprovalType,
-      'budgetId' | 'budgetLineId' | 'managerAccountId' | 'budgetTransferId'
+      | 'budgetId'
+      | 'budgetLineId'
+      | 'managerAccountId'
+      | 'budgetTransferId'
+      | 'capitalPlanId'
     >
   >;
   const wanted = subject[input.type];
@@ -874,6 +885,7 @@ function packageProblems(input: NewApproval): FieldError[] {
     'budgetLineId',
     'managerAccountId',
     'budgetTransferId',
+    'capitalPlanId',
   ] as const) {
     if (field === wanted && !input[field])
       fields.push({ field, code: FieldErrorCode.FIELD_REQUIRED });
@@ -883,9 +895,12 @@ function packageProblems(input: NewApproval): FieldError[] {
   // An annual budget's cost is its total; an increase and a contract name
   // one, and so do a waiver, a payment plan and a compensation: what the
   // board approves is what finance may then credit or spread, once (ADR
-  // 0073, 0082). A transfer's amount is its cost (ADR 0089).
+  // 0073, 0082). A transfer's amount is its cost (ADR 0089), and a capital
+  // plan's total (ADR 0086).
   if (
-    (input.type === 'annual_budget' || input.type === 'budget_transfer') &&
+    (input.type === 'annual_budget' ||
+      input.type === 'budget_transfer' ||
+      input.type === 'capital_plan') &&
     input.cost !== undefined
   )
     fields.push({ field: 'cost', code: FieldErrorCode.FIELD_NOT_ALLOWED });

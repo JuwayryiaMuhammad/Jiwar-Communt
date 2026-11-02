@@ -3652,6 +3652,10 @@ enum FilePurpose {
   site_map
   /// A building floor's plan (ADR 0084): an image, 10 MB, `spaces.manage`.
   floor_plan
+  /// A scheduled report's file (ADR 0086), the server's.
+  report_file
+  /// The compound's export (ADR 0086), the server's.
+  compound_export
   @@map("file_purpose")
   vendor_document
   /// A compliance item's evidence (ADR 0087): a photo or a PDF, 10 MB.
@@ -14132,4 +14136,118 @@ model FinanceStatementMatch {
   @@unique([tenantId, id])
   @@index([tenantId, lineId, matchedAt(sort: Desc)], map: "finance_statement_matches_line_idx")
   @@map("finance_statement_matches")
+}
+
+// ============================================================================
+// The reports platform (ADR 0086)
+// ============================================================================
+
+/// A curated report sent on a cadence to the staff who may read it.
+model ReportSchedule {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  /// REPORT_KEYS (the core registry).
+  reportKey   String   @map("report_key")
+  /// daily, weekly, monthly: the period before, by the compound's days.
+  cadence     String
+  /// pdf, xlsx, csv.
+  format      String
+  /// none, previous, last_year, both.
+  compare     String   @default("none")
+  /// One of the report's own groupings, or its default.
+  groupBy     String?  @map("group_by")
+  active      Boolean  @default(true)
+  createdById String   @map("created_by_account_id") @db.Uuid
+  createdAt   DateTime @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, createdAt, id], map: "report_schedules_list_idx")
+  @@map("report_schedules")
+}
+
+/// A schedule's run for one period: written once, its file kept 90 days.
+model ReportRun {
+  id         String    @id @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  scheduleId String    @map("schedule_id") @db.Uuid
+  reportKey  String    @map("report_key")
+  periodFrom DateTime  @map("period_from") @db.Date
+  periodTo   DateTime  @map("period_to") @db.Date
+  format     String
+  rows       Int
+  /// ready, expired.
+  status     String    @default("ready")
+  fileId     String?   @map("file_id") @db.Uuid
+  writtenAt  DateTime  @map("written_at") @db.Timestamptz(3)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  expiredAt  DateTime? @map("expired_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, scheduleId, periodFrom], map: "report_runs_once_per_period")
+  @@index([tenantId, writtenAt(sort: Desc), id(sort: Desc)], map: "report_runs_list_idx")
+  @@index([tenantId, status, expiresAt], map: "report_runs_expiry_idx")
+  @@map("report_runs")
+}
+
+/// A year's capital plan for the board (ADR 0086): one a year, locked once approved.
+model CapitalPlan {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  year              Int       @db.SmallInt
+  /// draft, submitted, approved.
+  status            String    @default("draft")
+  /// The pending request while submitted, the approving one once approved.
+  approvalRequestId String?   @map("approval_request_id") @db.Uuid
+  createdById       String    @map("created_by_account_id") @db.Uuid
+  createdAt         DateTime  @map("created_at") @db.Timestamptz(3)
+  submittedAt       DateTime? @map("submitted_at") @db.Timestamptz(3)
+  approvedAt        DateTime? @map("approved_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, year], map: "capital_plans_year_key")
+  @@map("capital_plans")
+}
+
+/// A line of a capital plan: an asset's replacement or the staff's words, an amount.
+model CapitalPlanLine {
+  id          String   @id @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  planId      String   @map("plan_id") @db.Uuid
+  assetId     String?  @map("asset_id") @db.Uuid
+  /// Plain data: never in the audit trail or a notification.
+  description String
+  amount      Decimal  @db.Decimal(14, 2)
+  /// computed (the register's replacement), manual.
+  source      String
+  createdAt   DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, planId, createdAt, id], map: "capital_plan_lines_plan_idx")
+  @@map("capital_plan_lines")
+}
+
+/// The compound's operational data as one archive (ADR 0086): no person's.
+model CompoundExport {
+  id                   String    @id @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  requestedByAccountId String    @map("requested_by_account_id") @db.Uuid
+  requestedAt          DateTime  @map("requested_at") @db.Timestamptz(3)
+  /// pending, building, ready, expired, failed.
+  status               String    @default("pending")
+  attempts             Int       @default(0)
+  lockedUntil          DateTime? @map("locked_until") @db.Timestamptz(3)
+  objectId             String?   @map("object_id") @db.Uuid
+  fileId               String?   @map("file_id") @db.Uuid
+  tables               Int?
+  rows                 BigInt?
+  readyAt              DateTime? @map("ready_at") @db.Timestamptz(3)
+  expiresAt            DateTime? @map("expires_at") @db.Timestamptz(3)
+  endedAt              DateTime? @map("ended_at") @db.Timestamptz(3)
+  failureCode          String?   @map("failure_code")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, requestedAt(sort: Desc), id(sort: Desc)], map: "compound_exports_list_idx")
+  @@index([tenantId, status], map: "compound_exports_status_idx")
+  @@map("compound_exports")
 }

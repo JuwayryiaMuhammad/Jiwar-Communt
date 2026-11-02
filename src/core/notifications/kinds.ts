@@ -3438,6 +3438,27 @@ export const NOTIFICATION_KINDS = {
     target: 'payment',
     params: {},
   },
+  // The reports platform (ADR 0086).
+  /**
+   * A scheduled report's file is ready: to the staff who hold the report's
+   * permission. The report's key and its period only, never a figure; the
+   * file is downloaded with the recipient's own session.
+   */
+  'report_run.ready': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'report_run',
+    params: { reportKey: {}, periodFrom: {}, periodTo: {} },
+  },
+  /** The compound's export is ready, to who asked for it: no link. */
+  'compound_export.ready': {
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'compound_export',
+    params: { expiresAt: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

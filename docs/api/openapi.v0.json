@@ -2109,7 +2109,8 @@
           "legal_escalation",
           "compensation_above_limit",
           "manager_handover_override",
-          "budget_transfer"
+          "budget_transfer",
+          "capital_plan"
         ],
         "type": "string"
       },
@@ -29754,6 +29755,8 @@
           "damage_appeal_photo",
           "site_map",
           "floor_plan",
+          "report_file",
+          "compound_export",
           "vendor_document",
           "compliance_evidence",
           "compound_logo",
@@ -33118,6 +33121,7 @@
           "compensation_above_limit",
           "manager_handover_override",
           "budget_transfer",
+          "capital_plan",
           "board_appeal",
           "objection"
         ],
@@ -47007,7 +47011,8 @@
               "audio/mp4",
               "video/mp4",
               "video/quicktime",
-              "text/csv"
+              "text/csv",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             ],
             "type": "string"
           },
@@ -55845,6 +55850,11 @@
           },
           "budgetTransferId": {
             "description": "budget_transfer only (ADR 0089): a transfer waiting for the board; its amount is the cost.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "capitalPlanId": {
+            "description": "capital_plan only (ADR 0086): a draft capital plan; its total is the cost.",
             "format": "uuid",
             "type": "string"
           },
@@ -82017,7 +82027,7 @@
             "items": {
               "$ref": "#/components/schemas/GovernanceSettingDto"
             },
-            "maxItems": 12,
+            "maxItems": 13,
             "minItems": 1,
             "type": "array"
           }

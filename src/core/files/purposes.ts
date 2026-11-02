@@ -9,6 +9,9 @@ export const AUDIO_TYPES = ['audio/mp4'] as const;
 export const VIDEO_TYPES = ['video/mp4', 'video/quicktime'] as const;
 /** A sheet the management imports (ADR 0064): read whole, then parsed. */
 export const CSV_TYPES = ['text/csv'] as const;
+/** A workbook the server writes (ADR 0086): never uploaded. */
+export const XLSX_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 export const FILE_TYPES = [
   ...IMAGE_TYPES,
   'application/pdf',
@@ -16,6 +19,7 @@ export const FILE_TYPES = [
   ...AUDIO_TYPES,
   ...VIDEO_TYPES,
   ...CSV_TYPES,
+  XLSX_TYPE,
 ] as const;
 export type FileContentType = (typeof FILE_TYPES)[number];
 
@@ -480,6 +484,19 @@ export const FILE_PURPOSES = {
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {
+    types: ['application/zip'],
+    maxBytes: 512 * MB,
+    uploaders: [],
+  },
+  // A scheduled report's file (ADR 0086): drawn by the server as a PDF, a
+  // workbook or CSV and attached to its run; nobody uploads one.
+  report_file: {
+    types: ['application/pdf', XLSX_TYPE, 'text/csv'],
+    maxBytes: 20 * MB,
+    uploaders: [],
+  },
+  // The compound's export (ADR 0086): a zip of fixed tables, the server's.
+  compound_export: {
     types: ['application/zip'],
     maxBytes: 512 * MB,
     uploaders: [],

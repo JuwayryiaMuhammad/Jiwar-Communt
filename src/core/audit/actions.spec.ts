@@ -303,6 +303,11 @@ describe('audit catalog', () => {
         'cheque',
         'statement_import',
         'statement_match',
+        // ADR 0086.
+        'report_schedule',
+        'report_run',
+        'capital_plan',
+        'compound_export',
       ]).toContain(def.target);
     }
   });

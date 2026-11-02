@@ -24,17 +24,23 @@ const requests = read(
 );
 /**
  * ADR 0082 widened the types (`compensation_above_limit`), then ADR 0075
- * (`manager_handover_override`): the newest migration that sets each CHECK
- * is the one the lists match; the backfills are in each one's own.
+ * (`manager_handover_override`); the backfills are in each one's own.
  */
 const authority = `${read(
   'prisma/migrations/20270406090200_compensation_authority/migration.sql',
 )} ${read('prisma/migrations/20270518090610_handover_approval_type/migration.sql')}`;
-/** ADR 0089 then widened the request and setting types with `budget_transfer`. */
+/** ADR 0089 widened the request and setting types with `budget_transfer`. */
 const planning = read(
   'prisma/migrations/20270601090000_budget_planning/migration.sql',
 );
-const latest = planning;
+/**
+ * The newest migration that sets the type CHECKs (dated after ADR 0089's):
+ * the one the lists match. The backfills are in each type's own, but ADR
+ * 0086's `capital_plan`, which is here: ADR 0089's CHECK comes between.
+ */
+const latest = read(
+  'prisma/migrations/20270609090100_reports_checks/migration.sql',
+);
 const mirror = read('packages/api/src/reasons.ts');
 const quoted = (list: readonly string[]) =>
   list.map((c) => `'${c}'`).join(', ');
@@ -48,7 +54,9 @@ describe('board matters’ lists (ADR 0055)', () => {
 
   it('the backfill gives every compound the defaults a new one gets', () => {
     for (const type of SETTING_TYPES)
-      expect(`${settings} ${voice} ${authority} ${planning}`).toContain(
+      expect(
+        `${settings} ${voice} ${authority} ${planning} ${latest}`,
+      ).toContain(
         type === 'compensation_above_limit'
           ? `(t."id", '${type}', ${DEFAULT_DEADLINE_DAYS[type]}, true)`
           : `(t."id", '${type}', ${DEFAULT_DEADLINE_DAYS[type]})`,

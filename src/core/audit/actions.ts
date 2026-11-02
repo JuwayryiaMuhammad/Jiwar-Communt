@@ -1088,7 +1088,8 @@ export const AUDIT_ACTIONS = {
 
   // Permits (ADR 0049). Ids, kinds, statuses, codes, dates and counts only:
   // never a name, a plate, a last 4 or what a resident or a guard wrote.
-  // changes: workDays, workHours, daysOff by value.
+  // changes: workDays, workHours by value (the days off are the holiday
+  // calendar's since ADR 0084: holiday.*).
   'permit_settings.changed': { log: 'tenant', target: 'tenant' },
   // metadata: number, kind, unitId, startsAt, endsAt, approvedAtOnce; works:
   // workType, dailyFrom, dailyTo, and contractorCompany and description as

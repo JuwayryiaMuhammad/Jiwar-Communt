@@ -35,6 +35,12 @@ describe('Spaces: common-area use requests (ADR 0084)', () => {
 
   afterAll(() => h.close());
 
+  /** A home of its own and its owner: a unit's three live requests stay free. */
+  const home = async () => {
+    const unit = await sp.unit(s.c, 'A');
+    return { unitId: unit.id, who: await sp.owner(s.c, unit.id) };
+  };
+
   it('asked for an open area within the rules; refused when too soon, too far, too long or closed', async () => {
     const soon = await sp.askRaw(
       s.alice,
@@ -245,16 +251,17 @@ describe('Spaces: common-area use requests (ADR 0084)', () => {
     'round %i: two overlapping requests approved at once — one wins',
     async (round) => {
       const area = await sp.area(s.c, { manager: s.manager });
+      const [one, two] = [await home(), await home()];
       const x = await sp.ask(
-        s.alice,
-        s.homeA.id,
+        one.who,
+        one.unitId,
         area,
         at(day(20 + round), 10),
         3,
       );
       const y = await sp.ask(
-        s.bob,
-        s.homeB.id,
+        two.who,
+        two.unitId,
         area,
         at(day(20 + round), 11),
         3,
@@ -286,7 +293,8 @@ describe('Spaces: common-area use requests (ADR 0084)', () => {
         manager: s.manager,
       });
       const when = at(day(10 + round), 10);
-      const r = await sp.ask(s.alice, s.homeA.id, courtArea, when, 2);
+      const asker = await home();
+      const r = await sp.ask(asker.who, asker.unitId, courtArea, when, 2);
       const [booking, approval] = await Promise.all([
         sp.bookRaw(s.bob, s.homeB.id, court, when),
         sp.decide(s.handler, r.id, 'approve'),

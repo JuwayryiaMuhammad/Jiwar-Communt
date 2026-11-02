@@ -144,7 +144,7 @@ export class SpaceUsesService {
                o.opened_at
           FROM space_use_areas o
           JOIN common_areas a ON a.id = o.common_area_id
-         WHERE ${audience === 'staff'} OR a.active
+         WHERE ${audience === 'staff'}::boolean OR a.active
          ORDER BY a.code`;
       return rows.map((r) => ({
         commonAreaId: r.common_area_id,

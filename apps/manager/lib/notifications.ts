@@ -312,6 +312,11 @@ const TEXT: Record<string, (p: P) => string> = {
   'booking_waitlist.offered': () => 'A place you wait for is free: book it soon',
   'booking_waitlist.closed': () => 'A slot you waited for is closed',
   'booking.reminder': () => 'Your booking starts in about two hours',
+  // Common-area use requests (ADR 0084).
+  'space_use.approved': (p) => `Your request to use ${p.area ?? 'a common area'} was approved`,
+  'space_use.refused': (p) => `Your request to use ${p.area ?? 'a common area'} was refused (${words(p.reason)})`,
+  'space_use.cancelled': (p) => `Your approved use of ${p.area ?? 'a common area'} was cancelled (${words(p.reason)})`,
+  'space_use.expired': (p) => `Your request to use ${p.area ?? 'a common area'} was not decided in time`,
   'booking_suspension.started': () => 'Your unit cannot make new bookings for a while',
   'facility_ban.started': (p) =>
     `You may not book ${p.scope === 'all' ? 'any facility' : 'this facility'}${p.until ? ` until ${p.until}` : ''}`,

@@ -233,72 +233,80 @@ export class PlansService implements OnModuleInit {
     return this.tenantTx.withTenantTx(async (tx) => {
       const id = newId();
       await this.idempotency.claim(tx, { type: PLAN_RESOURCE, id });
-      await this.access.lockSelf(tx);
-      const ownerId = input.ownerId ?? this.ctx.accountId;
-      await this.requireOwner(tx, ownerId);
-      const asset = await this.assets.requireActive(tx, input.assetId);
-      if (asset.unitId !== null)
-        throw appError.conflict(
-          ErrorCode.PLAN_FOR_UNIT_ASSET,
-          'An asset in a unit takes no plan: its household books the check-ups',
-        );
-      const categoryId =
-        input.categoryId ??
-        (await tx.assetType.findUniqueOrThrow({ where: { id: asset.typeId } }))
-          .categoryId;
-      await this.requireCategory(
-        tx,
-        categoryId,
-        input.categoryId !== undefined,
-      );
-      if (input.checklistId !== undefined)
-        await this.checklists.requireUsable(tx, input.checklistId, 'pm');
-      const fields = shapeProblems(input);
-      if (fields.length) throw invalid(fields);
-      const { today } = await this.calendar.now(tx);
-      const series = input.trigger === 'calendar' ? seriesOf(input) : null;
-      const last =
-        input.trigger === 'usage'
-          ? await this.lastValue(tx, input.assetId, input.metricKey!)
-          : null;
-      const plan = await tx.maintenancePlan.create({
-        data: {
-          id,
-          tenantId: this.ctx.tenantId,
-          assetId: asset.id,
-          checklistId: input.checklistId ?? null,
-          title: input.title.trim(),
-          categoryId,
-          priority: input.priority ?? 'normal',
-          trigger: input.trigger,
-          ...(series
-            ? {
-                every: series.every,
-                unit: series.unit,
-                anchorOn: dateColumn(series.anchorOn),
-                basis: series.basis,
-                nextDueOn: dateColumn(firstDue(series, today)),
-              }
-            : {
-                metricKey: input.metricKey!,
-                usageInterval: input.usageInterval!,
-                usageLastValue: last,
-              }),
-          leadDays: input.leadDays ?? 7,
-          graceDays: input.graceDays ?? 3,
-          ownerId,
-        },
-      });
-      await this.event(tx, plan.tenantId, id, null, 'created', {
-        to: ofDateColumnOrNull(plan.nextDueOn),
-      });
-      await this.audit.record(tx, {
-        action: 'maintenance_plan.created',
-        targetId: id,
-        changes: diffChanges(null, audited(plan), 'maintenance_plan.created'),
-      });
-      return this.read(tx, plan);
+      return this.createIn(tx, id, input);
     });
+  }
+
+  /**
+   * A plan made in the caller's transaction (ADR 0081: a plan suggestion
+   * accepted into a new plan), by `create`'s rules, locks and audit.
+   */
+  async createIn(
+    tx: TenantTxClient,
+    id: string,
+    input: PlanInput,
+  ): Promise<PlanRead> {
+    await this.access.lockSelf(tx);
+    const ownerId = input.ownerId ?? this.ctx.accountId;
+    await this.requireOwner(tx, ownerId);
+    const asset = await this.assets.requireActive(tx, input.assetId);
+    if (asset.unitId !== null)
+      throw appError.conflict(
+        ErrorCode.PLAN_FOR_UNIT_ASSET,
+        'An asset in a unit takes no plan: its household books the check-ups',
+      );
+    const categoryId =
+      input.categoryId ??
+      (await tx.assetType.findUniqueOrThrow({ where: { id: asset.typeId } }))
+        .categoryId;
+    await this.requireCategory(tx, categoryId, input.categoryId !== undefined);
+    if (input.checklistId !== undefined)
+      await this.checklists.requireUsable(tx, input.checklistId, 'pm');
+    const fields = shapeProblems(input);
+    if (fields.length) throw invalid(fields);
+    const { today } = await this.calendar.now(tx);
+    const series = input.trigger === 'calendar' ? seriesOf(input) : null;
+    const last =
+      input.trigger === 'usage'
+        ? await this.lastValue(tx, input.assetId, input.metricKey!)
+        : null;
+    const plan = await tx.maintenancePlan.create({
+      data: {
+        id,
+        tenantId: this.ctx.tenantId,
+        assetId: asset.id,
+        checklistId: input.checklistId ?? null,
+        title: input.title.trim(),
+        categoryId,
+        priority: input.priority ?? 'normal',
+        trigger: input.trigger,
+        ...(series
+          ? {
+              every: series.every,
+              unit: series.unit,
+              anchorOn: dateColumn(series.anchorOn),
+              basis: series.basis,
+              nextDueOn: dateColumn(firstDue(series, today)),
+            }
+          : {
+              metricKey: input.metricKey!,
+              usageInterval: input.usageInterval!,
+              usageLastValue: last,
+            }),
+        leadDays: input.leadDays ?? 7,
+        graceDays: input.graceDays ?? 3,
+        ownerId,
+      },
+    });
+    await this.event(tx, plan.tenantId, id, null, 'created', {
+      to: ofDateColumnOrNull(plan.nextDueOn),
+    });
+    await this.audit.record(tx, {
+      action: 'maintenance_plan.created',
+      targetId: id,
+      changes: diffChanges(null, audited(plan), 'maintenance_plan.created'),
+    });
+    return this.read(tx, plan);
   }
 
   /**

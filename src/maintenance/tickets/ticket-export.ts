@@ -11,6 +11,7 @@ import {
   type LocalDate,
 } from '../schedules/local-dates';
 import { SlaService } from '../sla/sla.service';
+import { SensitiveTickets } from './sensitive-tickets';
 import { dispatchSql, type DispatchQuery } from './tickets.service';
 import { ticketNumber } from './ticket-rules';
 
@@ -20,6 +21,8 @@ export const TICKET_EXPORT_DAYS = 366;
 export const TICKET_EXPORT_MAX_ROWS = 50_000;
 
 interface ExportRow {
+  id: string;
+  sensitive: boolean;
   number: number;
   status: string;
   priority: string;
@@ -67,6 +70,9 @@ const COLUMNS = [
  * oldest first, at most `TICKET_EXPORT_MAX_ROWS` (EXPORT_TOO_LARGE beyond).
  * Codes, numbers and times only: never a ticket's words, a common area's
  * free label (an area is its code), or anyone's name.
+ *
+ * ADR 0081: a sensitive ticket only for `tickets.sensitive`, whatever the
+ * query says; each one exported is logged as read.
  */
 @Injectable()
 export class TicketExport {
@@ -74,10 +80,17 @@ export class TicketExport {
     private readonly tenantTx: TenantTx,
     private readonly calendar: CompoundCalendar,
     private readonly sla: SlaService,
+    private readonly sensitive: SensitiveTickets,
   ) {}
 
-  csv(q: DispatchQuery & { from: LocalDate; to: LocalDate }): Promise<Buffer> {
-    requirePeriod(q.from, q.to);
+  async csv(
+    query: DispatchQuery & { from: LocalDate; to: LocalDate },
+  ): Promise<Buffer> {
+    requirePeriod(query.from, query.to);
+    const q = {
+      ...query,
+      hideSensitive: !(await this.sensitive.mayRead()),
+    };
     return this.tenantTx.withTenantTx(async (tx) => {
       const { now, timeZone } = await this.calendar.now(tx);
       const flags =
@@ -91,7 +104,7 @@ export class TicketExport {
       ];
       const max = TICKET_EXPORT_MAX_ROWS;
       const rows = await tx.$queryRaw<ExportRow[]>`
-        SELECT t.number, t.status::text AS status, t.priority::text AS priority,
+        SELECT t.id, t.sensitive, t.number, t.status::text AS status, t.priority::text AS priority,
                t.origin, t.kind::text AS kind, c.key AS category_key,
                u.code AS unit_code, COALESCE(u.building, ca.building) AS building,
                ca.code AS area_code, a.code AS asset_code,
@@ -107,6 +120,7 @@ export class TicketExport {
          ORDER BY t.created_at, t.id
          LIMIT ${max + 1}`;
       if (rows.length > max) throw exportTooLarge(max);
+      await this.sensitive.logReads(tx, rows, 'export');
       const at = (d: Date | null) => (d ? d.toISOString() : null);
       return toCsv(
         COLUMNS,

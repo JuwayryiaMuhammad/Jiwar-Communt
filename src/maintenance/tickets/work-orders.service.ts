@@ -15,13 +15,17 @@ import {
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { categoryNotFound } from '../categories/categories.service';
 import { MeterAlertsService } from '../energy/alerts.service';
+import { lockOpenCase } from '../analytics/cases.service';
 import { TicketAccess } from './ticket-access';
+import { ticketNumber } from './ticket-rules';
 import { TICKET_RESOURCE, TicketsService } from './tickets.service';
 
 export interface NewStaffWorkOrder {
   assetId?: string;
   commonAreaId?: string;
   meterAlertId?: string;
+  /** ADR 0081: the community case it is the one work order of. */
+  caseId?: string;
   categoryId: string;
   priority?: TicketPriority;
   description: string;
@@ -43,6 +47,11 @@ const invalid = (fields: FieldError[]) =>
  * For a spike, the alert is taken under its lock first: one work order per
  * alert, the alert acknowledged with it if nobody had, and the meter's asset
  * or area the place unless the body names one.
+ *
+ * For a community case (ADR 0081), `caseId`: once the work order is written
+ * (under the ticket counter's lock), the case is locked, still open and
+ * without one, and takes it (MAINTENANCE_CASE_HAS_WORK_ORDER otherwise):
+ * the counter, then the case, the order every writer of a case keeps.
  */
 @Injectable()
 export class WorkOrdersService {
@@ -119,7 +128,7 @@ export class WorkOrdersService {
       where: { id: input.categoryId, active: true },
     });
     if (!category) throw categoryNotFound();
-    return this.tickets.createWorkOrder(tx, {
+    const opened = await this.tickets.createWorkOrder(tx, {
       id,
       tenantId: this.ctx.tenantId,
       origin: 'staff',
@@ -130,6 +139,26 @@ export class WorkOrdersService {
       responsibleId: me,
       actorId: me,
       ...(input.meterAlertId ? { meterAlertId: input.meterAlertId } : {}),
+      ...(input.caseId ? { caseId: input.caseId } : {}),
     });
+    if (input.caseId) {
+      const c = await lockOpenCase(tx, input.caseId);
+      if (c.workOrderTicketId) {
+        const held = await tx.ticket.findUniqueOrThrow({
+          where: { id: c.workOrderTicketId },
+          select: { number: true },
+        });
+        throw appError.conflict(
+          ErrorCode.MAINTENANCE_CASE_HAS_WORK_ORDER,
+          'This case has its work order already',
+          { params: { ticketNumber: ticketNumber(held.number) } },
+        );
+      }
+      await tx.maintenanceCase.update({
+        where: { id: input.caseId },
+        data: { workOrderTicketId: opened.id },
+      });
+    }
+    return opened;
   }
 }

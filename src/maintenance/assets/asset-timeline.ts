@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
 import { appError, ErrorCode } from '../../core/common/errors';
 import { TenantTx } from '../../core/database/tenant-tx.service';
+import { SensitiveTickets } from '../tickets/sensitive-tickets';
 import { ticketNumber } from '../tickets/ticket-rules';
 
 /** What happened, in one place (ADR 0076). */
@@ -51,6 +52,8 @@ interface Row {
   amount: Prisma.Decimal | null;
   quantity: Prisma.Decimal | null;
   item_id: string | null;
+  /** ADR 0081: the row's ticket is sensitive (a holder's read is logged). */
+  sensitive: boolean | null;
 }
 
 const PAGE = keysetCursor('at');
@@ -62,17 +65,25 @@ const PAGE = keysetCursor('at');
  * ones left out), and the warranty claims made and decided. Codes,
  * numbers and amounts only, never anyone's words; a keyset on the time
  * and the row's id, so a page is full and its cursor true.
+ *
+ * ADR 0081: for a reader without `tickets.sensitive`, a sensitive ticket's
+ * rows are left out, and a warranty claim made of one names no ticket; a
+ * holder's read of one is logged.
  */
 @Injectable()
 export class AssetTimeline {
-  constructor(private readonly tenantTx: TenantTx) {}
+  constructor(
+    private readonly tenantTx: TenantTx,
+    private readonly sensitive: SensitiveTickets,
+  ) {}
 
-  read(
+  async read(
     assetId: string,
     q: { cursor?: string; limit?: number },
   ): Promise<Page<TimelineEntry>> {
     const limit = clampLimit(q.limit);
     const after = q.cursor ? PAGE.decode(q.cursor) : null;
+    const may = await this.sensitive.mayRead();
     return this.tenantTx.withTenantTx(async (tx) => {
       const asset = await tx.asset.findUnique({
         where: { id: assetId },
@@ -82,7 +93,8 @@ export class AssetTimeline {
         throw appError.notFound(ErrorCode.ASSET_NOT_FOUND, 'Asset not found');
       const rows = await tx.$queryRaw<Row[]>`
         WITH k AS (SELECT id, number, origin, created_at, closed_at
-                     FROM tickets WHERE asset_id = ${assetId}::uuid),
+                     FROM tickets WHERE asset_id = ${assetId}::uuid
+                      AND (${may} OR NOT sensitive)),
         e AS (
           SELECT ev.id, ev.occurred_at AS at, 'asset_event' AS kind, ev.kind AS code,
                  NULL::uuid AS ticket_id, NULL::int AS ticket_number,
@@ -122,9 +134,12 @@ export class AssetTimeline {
             FROM warranty_claims w
            WHERE w.asset_id = ${assetId}::uuid AND w.decided_at IS NOT NULL
         )
-        SELECT e.id, e.at, e.kind, e.code, e.ticket_id,
-               COALESCE(e.ticket_number, t.number) AS ticket_number,
-               e.from_value, e.to_value, e.reason_code, e.amount, e.quantity, e.item_id
+        SELECT e.id, e.at, e.kind, e.code,
+               CASE WHEN t.sensitive AND NOT ${may} THEN NULL ELSE e.ticket_id END AS ticket_id,
+               CASE WHEN t.sensitive AND NOT ${may} THEN NULL
+                    ELSE COALESCE(e.ticket_number, t.number) END AS ticket_number,
+               e.from_value, e.to_value, e.reason_code, e.amount, e.quantity, e.item_id,
+               t.sensitive
           FROM e LEFT JOIN tickets t ON t.id = e.ticket_id
          ${
            after
@@ -133,6 +148,17 @@ export class AssetTimeline {
          }
          ORDER BY e.at DESC, e.id DESC, e.kind
          LIMIT ${limit + 1}`;
+      await this.sensitive.logReads(
+        tx,
+        rows
+          .slice(0, limit)
+          .flatMap((r) =>
+            r.ticket_id && r.sensitive
+              ? [{ id: r.ticket_id, sensitive: true }]
+              : [],
+          ),
+        'list',
+      );
       const items: TimelineEntry[] = rows.slice(0, limit).map((r) => ({
         id: r.id,
         at: r.at,

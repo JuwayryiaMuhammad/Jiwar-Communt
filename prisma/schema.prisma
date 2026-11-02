@@ -3961,6 +3961,14 @@ model MaintenanceSettings {
   /// A spike is a period's daily use above the mean of the last `anomalyPeriods` times this (ADR 0066).
   anomalyFactor       Decimal  @default(2.00) @map("anomaly_factor") @db.Decimal(4, 2)
   anomalyPeriods      Int      @default(6) @map("anomaly_periods") @db.SmallInt
+  /// ADR 0081: this many repairs of a category on one asset (else in one
+  /// unit) within the window make a plan suggestion.
+  recurrenceMinTickets Int     @default(3) @map("recurrence_min_tickets")
+  recurrenceWindowDays Int     @default(90) @map("recurrence_window_days")
+  /// ADR 0081: this many residents' tickets of a category in one building
+  /// within the window make a community case.
+  caseMinTickets       Int     @default(3) @map("case_min_tickets")
+  caseWindowDays       Int     @default(30) @map("case_window_days")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -4029,6 +4037,9 @@ model Ticket {
   commonAreaId        String?                   @map("common_area_id") @db.Uuid
   /// ADR 0076: the meter's spike a staff work order answers; one work order per alert.
   meterAlertId        String?                   @map("meter_alert_id") @db.Uuid
+  /// ADR 0081: marked sensitive by the dispatch; only `tickets.sensitive`
+  /// sees it among the compound's tickets, and every staff read is logged.
+  sensitive           Boolean                   @default(false)
 
   unit              Unit?              @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
   category          TicketCategory     @relation(fields: [tenantId, categoryId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
@@ -4056,6 +4067,86 @@ model Ticket {
   @@index([tenantId, lastActivityAt(sort: Desc), id(sort: Desc)], map: "tickets_tenant_id_last_activity_idx")
   @@index([tenantId, origin, createdAt(sort: Desc), id(sort: Desc)], map: "tickets_origin_idx")
   @@map("tickets")
+}
+
+/// ADR 0081: every staff read of a sensitive ticket, append-only, no foreign
+/// keys. `via`: detail (its page or a part of it), list, export, search.
+model TicketSensitiveRead {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  via       String
+  readAt    DateTime @map("read_at") @db.Timestamptz(3)
+
+  @@index([tenantId, ticketId, readAt(sort: Desc), id(sort: Desc)], map: "ticket_sensitive_reads_ticket_idx")
+  @@map("ticket_sensitive_reads")
+}
+
+/// ADR 0081: repeat faults of a category on an asset or in a unit that ask
+/// for planned work; accepted into a plan or dismissed, once.
+model MaintenancePlanSuggestion {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  assetId       String?   @map("asset_id") @db.Uuid
+  unitId        String?   @map("unit_id") @db.Uuid
+  categoryId    String    @map("category_id") @db.Uuid
+  ticketCount   Int       @map("ticket_count")
+  windowDays    Int       @map("window_days")
+  firstTicketAt DateTime  @map("first_ticket_at") @db.Timestamptz(3)
+  lastTicketAt  DateTime  @map("last_ticket_at") @db.Timestamptz(3)
+  /// open, accepted, dismissed.
+  status        String    @default("open")
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+  decidedAt     DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedById   String?   @map("decided_by_account_id") @db.Uuid
+  planId        String?   @map("plan_id") @db.Uuid
+  /// Whether the plan was made for it (else it covered it already).
+  planCreated   Boolean?  @map("plan_created")
+  /// REASON_CODES.planSuggestionDismiss.
+  reasonCode    String?   @map("reason_code")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt(sort: Desc), id(sort: Desc)], map: "maintenance_plan_suggestions_list_idx")
+  @@map("maintenance_plan_suggestions")
+}
+
+/// ADR 0081: a community case, one category's residents' tickets in one
+/// building; resolved or dismissed once. The building has no foreign key.
+model MaintenanceCase {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  categoryId        String    @map("category_id") @db.Uuid
+  buildingId        String    @map("building_id") @db.Uuid
+  /// open, resolved, dismissed.
+  status            String    @default("open")
+  openedAt          DateTime  @map("opened_at") @db.Timestamptz(3)
+  /// Null when it opened itself.
+  openedById        String?   @map("opened_by_account_id") @db.Uuid
+  /// Its one work order (ADR 0076's path).
+  workOrderTicketId String?   @map("work_order_ticket_id") @db.Uuid
+  closedAt          DateTime? @map("closed_at") @db.Timestamptz(3)
+  closedById        String?   @map("closed_by_account_id") @db.Uuid
+  /// REASON_CODES.maintenanceCaseResolve or maintenanceCaseDismiss.
+  reasonCode        String?   @map("reason_code")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, openedAt(sort: Desc), id(sort: Desc)], map: "maintenance_cases_list_idx")
+  @@map("maintenance_cases")
+}
+
+/// ADR 0081: a ticket in a case (one case per ticket, ever), never changed.
+model MaintenanceCaseTicket {
+  tenantId   String   @map("tenant_id") @db.Uuid
+  ticketId   String   @map("ticket_id") @db.Uuid
+  caseId     String   @map("case_id") @db.Uuid
+  linkedAt   DateTime @map("linked_at") @db.Timestamptz(3)
+  /// Null when it joined by itself.
+  linkedById String?  @map("linked_by_account_id") @db.Uuid
+
+  @@id([tenantId, ticketId])
+  @@index([tenantId, caseId, linkedAt, ticketId], map: "maintenance_case_tickets_case_idx")
+  @@map("maintenance_case_tickets")
 }
 
 /// Append-only (ADR 0032): SELECT and INSERT for jiwar_app, triggers refuse

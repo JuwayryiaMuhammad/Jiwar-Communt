@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { toCsv } from '../../core/common/csv';
 import { TenantTx } from '../../core/database/tenant-tx.service';
 import { CompoundCalendar } from '../schedules/compound-calendar';
 import { dateColumn, type LocalDate } from '../schedules/local-dates';
+import { SensitiveTickets } from '../tickets/sensitive-tickets';
 import { requirePeriod } from '../tickets/ticket-export';
 
 export interface SlaReportRow {
@@ -36,16 +38,20 @@ const rate = (met: number, breached: number) =>
  * category, priority and clock, with the share met; and the totals per
  * clock. A stopped clock (the SLA turned off, a new cycle) is no verdict
  * and is not counted. Keys and counts only. As JSON and CSV.
+ *
+ * ADR 0081: a sensitive ticket's clocks count only for `tickets.sensitive`.
  */
 @Injectable()
 export class SlaReports {
   constructor(
     private readonly tenantTx: TenantTx,
     private readonly calendar: CompoundCalendar,
+    private readonly sensitive: SensitiveTickets,
   ) {}
 
-  report(from: LocalDate, to: LocalDate): Promise<SlaReport> {
+  async report(from: LocalDate, to: LocalDate): Promise<SlaReport> {
     requirePeriod(from, to);
+    const hide = await this.sensitive.sql('t');
     return this.tenantTx.withTenantTx(async (tx) => {
       const { timeZone } = await this.calendar.now(tx);
       const rows = await tx.$queryRaw<
@@ -64,6 +70,7 @@ export class SlaReports {
           JOIN tickets t ON t.id = c.ticket_id
           JOIN ticket_categories k ON k.id = t.category_id
          WHERE c.state IN ('met', 'breached')
+           ${hide.length ? Prisma.sql`AND ${Prisma.join(hide, ' AND ')}` : Prisma.empty}
            AND (c.ended_at AT TIME ZONE ${timeZone})::date
                BETWEEN ${dateColumn(from)}::date AND ${dateColumn(to)}::date
          GROUP BY k.key, t.priority, c.clock

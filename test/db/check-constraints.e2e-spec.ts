@@ -2796,6 +2796,14 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'revoke_reason IS NULL and revoked_at IS NULL are tested first; the list and the comparison run only on a value',
   },
   official_letter_links_code_hash_hex: {},
+  // Maintenance analytics and cases (ADR 0081).
+  ticket_sensitive_reads_via_known: {},
+  maintenance_settings_analytics_range: {},
+  maintenance_plan_suggestions_place: {},
+  maintenance_plan_suggestions_counts: {},
+  maintenance_plan_suggestions_decided_shape: {},
+  maintenance_cases_status_known: {},
+  maintenance_cases_closed_shape: {},
 };
 
 interface Check {

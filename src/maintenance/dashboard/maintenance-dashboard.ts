@@ -11,6 +11,7 @@ import { ServicePressure } from '../dispatch/service-pressure';
 import { PERCENT } from '../sla/sla-at-risk';
 import { SlaRecorder } from '../sla/sla-recorder';
 import { SlaService } from '../sla/sla.service';
+import { SensitiveTickets } from '../tickets/sensitive-tickets';
 import { IN_HAND } from '../tickets/ticket-rules';
 
 /** Work to do: new, or in a technician's hands (not completed). */
@@ -54,6 +55,7 @@ export class MaintenanceDashboardSections implements OnModuleInit {
     private readonly sla: SlaService,
     private readonly recorder: SlaRecorder,
     private readonly pressure: ServicePressure,
+    private readonly sensitive: SensitiveTickets,
   ) {}
 
   onModuleInit(): void {
@@ -203,16 +205,15 @@ export class MaintenanceDashboardSections implements OnModuleInit {
   }
 
   /**
-   * The tickets the caller may count, as a condition on `alias`: every one
-   * today. Every ticket query of the dashboard ANDs it in. When sensitive
-   * tickets land (M2-13, ADR 0081), it becomes their filter
-   * (`SensitiveTickets.sql(alias)`): a caller without `tickets.sensitive`,
-   * and the brief the sweep writes for every reader, count none of them.
+   * The tickets the caller may count, as a condition on `alias` (ADR 0081):
+   * every ticket ANDs it in. A caller without `tickets.sensitive`, and the
+   * brief the sweep writes for every reader, count no sensitive ticket.
    */
-  private countable(alias: string): Promise<Prisma.Sql> {
-    return Promise.resolve(
-      Prisma.sql`${Prisma.raw(`"${alias}"`)}.id IS NOT NULL`,
-    );
+  private async countable(alias: string): Promise<Prisma.Sql> {
+    const hide = await this.sensitive.sql(alias);
+    return hide.length
+      ? Prisma.join(hide, ' AND ')
+      : Prisma.sql`${Prisma.raw(`"${alias}"`)}.id IS NOT NULL`;
   }
 
   private async energy(

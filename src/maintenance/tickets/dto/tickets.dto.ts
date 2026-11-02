@@ -171,6 +171,17 @@ export class CreateWorkOrderDto {
   @IsUUID()
   meterAlertId?: string;
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'ADR 0081: the community case it is the one work order of; the case must be open and without one.',
+  })
+  @IsOptional()
+  @IsUUID()
+  caseId?: string;
+
   @ApiProperty({ type: String, format: 'uuid' })
   @IsUUID()
   categoryId: string;
@@ -333,6 +344,16 @@ export class DispatchTicketsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
   escalated?: (typeof BOOL)[number];
+
+  @ApiProperty({
+    required: false,
+    enum: BOOL,
+    description:
+      'ADR 0081: `true`, only the sensitive tickets; `false`, only the others. A reader without `tickets.sensitive` never sees a sensitive one.',
+  })
+  @IsOptional()
+  @IsIn(BOOL, withParams({ allowed: [...BOOL] }))
+  sensitive?: (typeof BOOL)[number];
 
   @ApiProperty({
     type: String,

@@ -5,6 +5,7 @@ import { StaffRecipients } from '../../core/access/staff-recipients';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import type { NotificationKind } from '../../core/notifications/kinds';
 import { Notifier } from '../../core/notifications/notifier';
+import { SensitiveTickets } from './sensitive-tickets';
 import { ticketNumber } from './ticket-rules';
 
 /** The ticket's own notification params, besides the kind's extras. */
@@ -15,6 +16,9 @@ type Extra = Record<string, string | number>;
  * Params are the ticket number, the unit code and codes (a status, a
  * priority, a category key): never the description, the common-area label
  * (free text), a message, or anyone's contact data.
+ *
+ * ADR 0081: of a sensitive ticket, the staff told are only its technician
+ * and the holders of `tickets.sensitive`; the residents as before.
  */
 @Injectable()
 export class TicketNotices {
@@ -22,6 +26,7 @@ export class TicketNotices {
     private readonly notifier: Notifier,
     private readonly staff: StaffRecipients,
     private readonly community: CommunityMaintenancePort,
+    private readonly sensitive: SensitiveTickets,
   ) {}
 
   /** Every account holding tickets.dispatch now (managers by default). */
@@ -42,15 +47,13 @@ export class TicketNotices {
     extra: Extra = {},
     except: string | null = null,
   ): Promise<void> {
-    const gone = await this.formerReporter(tx, ticket.id);
+    const row = await this.row(tx, ticket.id);
+    const gone = await this.formerReporter(tx, row);
     const ids = [...new Set(to)].filter(
       (id): id is string => id !== null && id !== except && id !== gone,
     );
     if (!ids.length) return;
-    const active = await tx.account.findMany({
-      where: { id: { in: ids }, status: 'active' },
-      select: { id: true },
-    });
+    const active = await this.allowed(tx, row, ids);
     if (!active.length) return;
     const params: Extra = {
       ticketNumber: ticketNumber(ticket.number),
@@ -60,11 +63,11 @@ export class TicketNotices {
       params.unitCode = (
         await this.community.unitCodes(tx, [ticket.unitId])
       ).get(ticket.unitId)!;
-    await this.notifier.notify(
-      tx,
-      active.map((a) => a.id),
-      { kind, params, targetId: ticket.id },
-    );
+    await this.notifier.notify(tx, active, {
+      kind,
+      params,
+      targetId: ticket.id,
+    });
   }
 
   /**
@@ -84,20 +87,46 @@ export class TicketNotices {
       (id): id is string => id !== null && id !== except,
     );
     if (!ids.length) return;
+    const active = await this.allowed(tx, await this.row(tx, ticket.id), ids);
+    if (!active.length) return;
+    await this.notifier.notify(tx, active, {
+      kind,
+      params: { ticketNumber: ticketNumber(ticket.number), ...params },
+      targetId: ticket.id,
+    });
+  }
+
+  /** What the recipients' rules read of the ticket, in the writing transaction. */
+  private row(tx: TenantTxClient, ticketId: string) {
+    return tx.ticket.findUnique({
+      where: { id: ticketId },
+      select: {
+        reporterId: true,
+        unitId: true,
+        origin: true,
+        sensitive: true,
+        technicianId: true,
+      },
+    });
+  }
+
+  /**
+   * The active accounts among `ids`; of a sensitive ticket (ADR 0081), the
+   * staff among them only if they are its technician or hold
+   * `tickets.sensitive`.
+   */
+  private async allowed(
+    tx: TenantTxClient,
+    ticket: { sensitive: boolean; technicianId: string | null } | null,
+    ids: string[],
+  ): Promise<string[]> {
     const active = await tx.account.findMany({
       where: { id: { in: ids }, status: 'active' },
-      select: { id: true },
+      select: { id: true, type: true },
     });
-    if (!active.length) return;
-    await this.notifier.notify(
-      tx,
-      active.map((a) => a.id),
-      {
-        kind,
-        params: { ticketNumber: ticketNumber(ticket.number), ...params },
-        targetId: ticket.id,
-      },
-    );
+    return ticket
+      ? this.sensitive.recipients(tx, ticket, active)
+      : active.map((a) => a.id);
   }
 
   /**
@@ -107,12 +136,8 @@ export class TicketNotices {
    */
   private async formerReporter(
     tx: TenantTxClient,
-    ticketId: string,
+    t: { reporterId: string; unitId: string | null; origin: string } | null,
   ): Promise<string | null> {
-    const t = await tx.ticket.findUnique({
-      where: { id: ticketId },
-      select: { reporterId: true, unitId: true, origin: true },
-    });
     // A work order's reporter is staff (ADR 0064): never "a reporter who
     // left the unit".
     if (!t?.unitId || t.origin !== 'resident') return null;

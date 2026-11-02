@@ -25942,6 +25942,168 @@
           }
         },
         {
+          "name": "List the community cases",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "cases"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "buildingId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/cases"
+            }
+          }
+        },
+        {
+          "name": "Get a community case and its tickets",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "cases",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/cases/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dismiss a community case",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "cases",
+                ":id",
+                "dismiss"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/cases/:id/dismiss",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolve a community case",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "cases",
+                ":id",
+                "resolve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/cases/:id/resolve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List ticket categories",
           "request": {
             "description": "**Responses:** 200",
@@ -26416,6 +26578,44 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "Where the tickets are, by building and area",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "complaints-map"
+              ],
+              "query": [
+                {
+                  "description": "(required) Tickets created on or after, the compound’s day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Created on or before; at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "categoryId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/complaints-map?from=&to="
             }
           }
         },
@@ -29049,6 +29249,162 @@
           }
         },
         {
+          "name": "List the plan suggestions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plan-suggestions"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plan-suggestions"
+            }
+          }
+        },
+        {
+          "name": "Get a plan suggestion",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plan-suggestions",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plan-suggestions/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept a plan suggestion into a plan",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"plan\": {\n    \"assetId\": \"\",\n    \"title\": \"\",\n    \"trigger\": \"calendar\"\n  },\n  \"planId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `plan` | object |  | A new plan, by the plans’ own rules (an asset not in a unit; the suggestion’s own when it names one); its category is the suggestion’s by default. |\n| `planId` | string (uuid) |  | An active plan that covers it already (of the suggestion’s asset, when it names one); nothing of the plan changes. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plan-suggestions",
+                ":id",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plan-suggestions/:id/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dismiss a plan suggestion",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "plan-suggestions",
+                ":id",
+                "dismiss"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/plan-suggestions/:id/dismiss",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List plans, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -30213,6 +30569,56 @@
           }
         },
         {
+          "name": "Repeat faults by place and category",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "recurrence"
+              ],
+              "query": [
+                {
+                  "description": "(required) Tickets created on or after, the compound’s day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Created on or before; at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "categoryId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "by",
+                  "value": ""
+                },
+                {
+                  "description": "Tickets a row needs; the compound’s `recurrenceMinTickets` by default.",
+                  "disabled": true,
+                  "key": "min",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/recurrence?from=&to="
+            }
+          }
+        },
+        {
           "name": "List recommendations to replace, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -30438,6 +30844,63 @@
                 "settings"
               ],
               "raw": "{{baseUrl}}/api/v1/maintenance/settings"
+            }
+          }
+        },
+        {
+          "name": "Get the maintenance analytics settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "settings",
+                "analytics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/settings/analytics"
+            }
+          }
+        },
+        {
+          "name": "Update the maintenance analytics settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"caseMinTickets\": 2,\n  \"caseWindowDays\": 1,\n  \"recurrenceMinTickets\": 2,\n  \"recurrenceWindowDays\": 7\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `caseMinTickets` | number |  |  |\n| `caseWindowDays` | number |  |  |\n| `recurrenceMinTickets` | number |  |  |\n| `recurrenceWindowDays` | number |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "settings",
+                "analytics"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/settings/analytics"
             }
           }
         },
@@ -31530,6 +31993,12 @@
                   "value": ""
                 },
                 {
+                  "description": "ADR 0081: `true`, only the sensitive tickets; `false`, only the others. A reader without `tickets.sensitive` never sees a sensitive one.",
+                  "disabled": true,
+                  "key": "sensitive",
+                  "value": ""
+                },
+                {
                   "description": "Only tickets in this building (ADR 0076): of a unit in it (ADR 0072), or of a common area it names.",
                   "disabled": true,
                   "key": "buildingId",
@@ -31680,6 +32149,12 @@
                   "description": "`true`: only tickets with an `escalatedAt` (ADR 0038). None while the SLA is off.",
                   "disabled": true,
                   "key": "escalated",
+                  "value": ""
+                },
+                {
+                  "description": "ADR 0081: `true`, only the sensitive tickets; `false`, only the others. A reader without `tickets.sensitive` never sees a sensitive one.",
+                  "disabled": true,
+                  "key": "sensitive",
                   "value": ""
                 },
                 {
@@ -32664,6 +33139,93 @@
           }
         },
         {
+          "name": "Who read a sensitive ticket",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "sensitive-reads"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/sensitive-reads",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a ticket sensitive, or clear it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"sensitive\": false,\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From `ticketSensitive` to mark, `ticketSensitiveClear` to clear; see `allowed` on INVALID_REASON_CODE. |\n| `sensitive` | boolean | yes | `true` marks the ticket sensitive (`tickets.dispatch`); `false` clears it (`tickets.sensitive`). |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "tickets",
+                ":id",
+                "sensitivity"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/tickets/:id/sensitivity",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get a ticket's SLA events",
           "request": {
             "description": "**Responses:** 200",
@@ -33313,7 +33875,7 @@
               },
               "raw": "{\n  \"categoryId\": \"\",\n  \"description\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  | The asset; or `commonAreaId` instead. |\n| `categoryId` | string (uuid) | yes |  |\n| `commonAreaId` | string (uuid) |  | A common area (ADR 0064), instead of `assetId`. |\n| `description` | string | yes | What is to be done: staff’s words. |\n| `meterAlertId` | string (uuid) |  | The meter’s spike it answers (ADR 0066): acknowledged with it if nobody had; one work order per alert. Without `assetId` or `commonAreaId`, the meter’s asset or area. |\n| `priority` | `normal` \\| `urgent` \\| `emergency` |  | The category's default when absent. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  | The asset; or `commonAreaId` instead. |\n| `caseId` | string (uuid) |  | ADR 0081: the community case it is the one work order of; the case must be open and without one. |\n| `categoryId` | string (uuid) | yes |  |\n| `commonAreaId` | string (uuid) |  | A common area (ADR 0064), instead of `assetId`. |\n| `description` | string | yes | What is to be done: staff’s words. |\n| `meterAlertId` | string (uuid) |  | The meter’s spike it answers (ADR 0066): acknowledged with it if nobody had; one work order per alert. Without `assetId` or `commonAreaId`, the meter’s asset or area. |\n| `priority` | `normal` \\| `urgent` \\| `emergency` |  | The category's default when absent. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

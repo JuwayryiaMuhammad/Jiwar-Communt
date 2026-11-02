@@ -15774,6 +15774,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/compound-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s latest exports */
+        get: operations["CompoundExportsController_list"];
+        put?: never;
+        /** Export the compound’s operational data (step-up required) */
+        post: operations["CompoundExportsController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/compound-exports/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A short-lived download URL for a ready export */
+        get: operations["CompoundExportsController_download"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/contract-renewals": {
         parameters: {
             query?: never;
@@ -21177,6 +21212,126 @@ export interface paths {
         put?: never;
         /** Reverse a refund: the money is the unit’s credit again */
         post: operations["RefundsController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/report-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The runs of the reports I may read */
+        get: operations["ReportRunsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/report-runs/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A short-lived download URL for a run’s file */
+        get: operations["ReportRunsController_download"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/report-schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s report schedules */
+        get: operations["ReportSchedulesController_list"];
+        put?: never;
+        /** Send a report daily, weekly or monthly to the staff who may read it */
+        post: operations["ReportSchedulesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/report-schedules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a schedule’s format, comparison or grouping, or pause it */
+        patch: operations["ReportSchedulesController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The reports I may read, and their groupings */
+        get: operations["ReportsController_catalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/reports/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A report over a period, grouped, compared with the period before and/or a year earlier */
+        get: operations["ReportsController_read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/reports/{key}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A report as a PDF, a workbook or CSV (audited) */
+        get: operations["ReportsController_export"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -32392,6 +32547,26 @@ export interface components {
             /** @description The ten that cost most. */
             topAssets: components["schemas"]["AssetSpendView"][];
         };
+        CompoundExportView: {
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            readyAt: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description Its rows. */
+            rows: number | null;
+            /** @enum {string} */
+            status: "pending" | "building" | "ready" | "expired" | "failed";
+            /** @description Its tables. */
+            tables: number | null;
+        };
+        CompoundExportViewList: {
+            data: components["schemas"]["CompoundExportView"][];
+            nextCursor: string | null;
+        };
         ConfirmDto: {
             /** @description For the maintenance team. Never in the audit trail. */
             comment?: string;
@@ -34365,6 +34540,13 @@ export interface components {
              * @description A topic of the compound; null for any topic.
              */
             topicId?: string | null;
+        };
+        CreateReportScheduleDto: {
+            cadence: components["schemas"]["ReportCadence"];
+            compare?: components["schemas"]["ReportComparison"];
+            format: components["schemas"]["ReportFormat"];
+            groupBy?: string;
+            reportKey: components["schemas"]["ReportKey"];
         };
         CreateRequestDto: {
             /** @description A request to release a hold (ADR 0058), on the `release_request` topic: something the author sees that is held now (HELD_ITEM_NOT_FOUND). One live request per held item. Refused on a request opened on someone’s behalf. */
@@ -37377,6 +37559,12 @@ export interface components {
             /** @description Its last 20 events, newest first. */
             events: components["schemas"]["AssetEventView"][];
             readings: components["schemas"]["MetricReadingsView"][];
+        };
+        FileLinkView: {
+            /** Format: date-time */
+            expiresAt: string;
+            /** @description A presigned GET of the file, valid a few minutes. */
+            url: string;
         };
         FileManagementComplaintDto: {
             /** @description The caller’s uploads of purpose `board_appeal_attachment` (FILE_NOT_AVAILABLE). */
@@ -46501,6 +46689,31 @@ export interface components {
             data: components["schemas"]["ReplyTemplateView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        ReportCadence: "daily" | "weekly" | "monthly";
+        ReportCatalogView: {
+            /** @description Its groupings, the default first. */
+            groupBy: string[];
+            key: components["schemas"]["ReportKey"];
+            /** @description What reads it. */
+            permission: string;
+            title: components["schemas"]["ReportTitleView"];
+        };
+        ReportCatalogViewList: {
+            data: components["schemas"]["ReportCatalogView"][];
+            nextCursor: string | null;
+        };
+        ReportColumnView: {
+            ar: string;
+            en: string;
+            key: string;
+            /** @enum {string} */
+            kind: "text" | "number" | "money";
+            /** @description Summed in the totals; 0 where a period has no row. */
+            sum: boolean;
+        };
+        /** @enum {string} */
+        ReportComparison: "none" | "previous" | "last_year" | "both";
         ReportConversationDto: {
             /** @description For the staff alone. */
             note?: string;
@@ -46533,6 +46746,8 @@ export interface components {
             /** @default normal */
             priority: components["schemas"]["TicketPriority"];
         };
+        /** @enum {string} */
+        ReportFormat: "pdf" | "xlsx" | "csv";
         ReportIncidentDto: {
             /** @description What happened, in the author’s words. Never a resident’s to read. */
             description: string;
@@ -46562,6 +46777,8 @@ export interface components {
             /** @description A unit’s code; and/or a place. */
             unitCode?: string;
         };
+        /** @enum {string} */
+        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building";
         ReportListingDto: {
             /** @description For the staff alone; the seller never reads it. */
             note?: string;
@@ -46588,6 +46805,13 @@ export interface components {
             building: string | null;
             unitCode: string | null;
         };
+        ReportPeriodView: {
+            days: number;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+        };
         ReportPostView: {
             body: string | null;
             /** Format: uuid */
@@ -46595,6 +46819,55 @@ export interface components {
             kind: components["schemas"]["NeighbourPostKind"];
             /** @enum {string} */
             state: "open" | "expired" | "closed";
+        };
+        ReportRowView: {
+            lastYear: (string | null)[] | null;
+            previous: (string | null)[] | null;
+            /** @description The cells, in column order: figures as decimal strings. */
+            values: (string | null)[];
+        };
+        ReportRunView: {
+            /** Format: date-time */
+            expiresAt: string;
+            format: components["schemas"]["ReportFormat"];
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            periodFrom: string;
+            /** Format: date */
+            periodTo: string;
+            reportKey: components["schemas"]["ReportKey"];
+            rows: number;
+            /** Format: uuid */
+            scheduleId: string;
+            /** @enum {string} */
+            status: "ready" | "expired";
+            /** Format: date-time */
+            writtenAt: string;
+        };
+        ReportRunViewList: {
+            data: components["schemas"]["ReportRunView"][];
+            nextCursor: string | null;
+        };
+        ReportScheduleView: {
+            active: boolean;
+            cadence: components["schemas"]["ReportCadence"];
+            compare: components["schemas"]["ReportComparison"];
+            /** Format: date-time */
+            createdAt: string;
+            format: components["schemas"]["ReportFormat"];
+            groupBy: string | null;
+            /** Format: uuid */
+            id: string;
+            reportKey: components["schemas"]["ReportKey"];
+        };
+        ReportScheduleViewList: {
+            data: components["schemas"]["ReportScheduleView"][];
+            nextCursor: string | null;
+        };
+        ReportTitleView: {
+            ar: string;
+            en: string;
         };
         ReportUnitEntryDto: {
             /** @description What staff found and did: their words, read by the unit’s people. */
@@ -46606,6 +46879,20 @@ export interface components {
             outcome: "resolved" | "contained" | "no_issue_found" | "needs_maintenance" | "other";
             /** @description Finalized `unit_entry_photo` files of the caller: after. */
             photoFileIds: string[];
+        };
+        ReportView: {
+            columns: components["schemas"]["ReportColumnView"][];
+            compare: components["schemas"]["ReportComparison"];
+            /** @description The leading columns that name a row. */
+            dimensions: number;
+            groupBy: string;
+            key: components["schemas"]["ReportKey"];
+            lastYearPeriod: components["schemas"]["ReportPeriodView"] | null;
+            period: components["schemas"]["ReportPeriodView"];
+            previousPeriod: components["schemas"]["ReportPeriodView"] | null;
+            rows: components["schemas"]["ReportRowView"][];
+            title: components["schemas"]["ReportTitleView"];
+            totals: components["schemas"]["ReportRowView"];
         };
         ReportedMessageView: {
             /** @description Null once its sender was erased. */
@@ -53782,6 +54069,13 @@ export interface components {
              * @description A topic of the compound; null for any topic.
              */
             topicId?: string | null;
+        };
+        UpdateReportScheduleDto: {
+            /** @description false pauses it. */
+            active?: boolean;
+            compare?: components["schemas"]["ReportComparison"];
+            format?: components["schemas"]["ReportFormat"];
+            groupBy?: string;
         };
         UpdateRequestSettingsDto: {
             /** @description Appointments one slot takes. */
@@ -78691,6 +78985,65 @@ export interface operations {
             };
         };
     };
+    CompoundExportsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundExportViewList"];
+                };
+            };
+        };
+    };
+    CompoundExportsController_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompoundExportView"];
+                };
+            };
+        };
+    };
+    CompoundExportsController_download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileLinkView"];
+                };
+            };
+        };
+    };
     StaffContractsController_renewals: {
         parameters: {
             query?: never;
@@ -86674,6 +87027,200 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RefundView"];
+                };
+            };
+        };
+    };
+    ReportRunsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                scheduleId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportRunViewList"];
+                };
+            };
+        };
+    };
+    ReportRunsController_download: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileLinkView"];
+                };
+            };
+        };
+    };
+    ReportSchedulesController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleViewList"];
+                };
+            };
+        };
+    };
+    ReportSchedulesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportScheduleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleView"];
+                };
+            };
+        };
+    };
+    ReportSchedulesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReportScheduleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleView"];
+                };
+            };
+        };
+    };
+    ReportsController_catalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportCatalogViewList"];
+                };
+            };
+        };
+    };
+    ReportsController_read: {
+        parameters: {
+            query?: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. At most 366 days. */
+                to?: string;
+                /** @description One of the report’s groupings (the catalog lists them); its first by default. */
+                groupBy?: string;
+                /** @description The period before (as many days), the same days a year earlier, both, or none (default). */
+                compare?: components["schemas"]["ReportComparison"];
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportView"];
+                };
+            };
+        };
+    };
+    ReportsController_export: {
+        parameters: {
+            query: {
+                /** @description The first day, the compound’s; 29 days before `to` when left out. */
+                from?: string;
+                /** @description The last day, included; today when left out. At most 366 days. */
+                to?: string;
+                /** @description One of the report’s groupings (the catalog lists them); its first by default. */
+                groupBy?: string;
+                /** @description The period before (as many days), the same days a year earlier, both, or none (default). */
+                compare?: components["schemas"]["ReportComparison"];
+                format: components["schemas"]["ReportFormat"];
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                    "text/csv": string;
                 };
             };
         };

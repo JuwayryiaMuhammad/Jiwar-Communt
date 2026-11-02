@@ -48,6 +48,18 @@ export class ZipStream {
     await this.flush();
   }
 
+  /** An entry of text written in pieces (ADR 0086: a table's CSV), deflated. */
+  async addChunks(path: string, chunks: AsyncIterable<Buffer>): Promise<void> {
+    const entry = new ZipDeflate(path, { level: 6 });
+    this.zip.add(entry);
+    for await (const chunk of chunks) {
+      if (chunk.length) entry.push(chunk);
+      await this.flush();
+    }
+    entry.push(new Uint8Array(0), true);
+    await this.flush();
+  }
+
   async addStream(path: string, source: Readable): Promise<void> {
     const entry = new ZipPassThrough(path);
     this.zip.add(entry);

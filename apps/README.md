@@ -61,7 +61,7 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 
 - A ticket opened for a resident in a common area takes its reporter from the first 100 residents (for a unit, the API lists who may report there).
 
-- No count endpoints: overview numbers come from one page of up to 100 rows and show `100+` beyond that.
+- The overview's numbers come from the dashboard's summary (ADR 0079), counted in the database; other pages' counts still come from one page of up to 100 rows and show `100+` beyond that.
 - The unit register (ADR 0072): Units searches by part of the code, and the manager (`units.manage`) filters by building and status, downloads the CSV, keeps the Buildings tab (a building is added ahead of its units or by the first unit that names it, deleted only when empty, never renamed) and imports sheets of units or residents (checked whole, applied once within a day; a residents sheet is deleted once applied, found invalid or expired, and no one imported is emailed). A unit's page edits its building, floor, type and area (never its code) and shows its occupancy history (`residents.read`) and workers (`workers.review`). The unit picker still lists the first 100 units by code. The top bar's search (`/`) finds units, buildings, residents, staff, tickets (by `MT-` number) and assets, each kind only with the permission of its own list.
 - Managers cannot read `GET /gate/inside` (it needs `gate.operate`, which only guards have), so the overview shows today's entries instead of who is inside.
 - A unit's closed mode needs `household.manage`, which only residents have, so the unit page leaves it out; its workers come from `GET /worker-engagements?unitId=` (ADR 0072).

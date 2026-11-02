@@ -384,6 +384,21 @@ class ConsumptionGroupView {
     description: 'Use an occupied unit: to compare buildings by.',
   })
   perOccupiedUnit: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'ADR 0086: the floor area of the group’s metered units, when known.',
+  })
+  areaSqm: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'EGP a square metre; null when `costPerSqmMissing` says why.',
+  })
+  costPerSqm: string | null;
+  @ApiProperty({ enum: ['no_tariff', 'no_area'], nullable: true })
+  costPerSqmMissing: 'no_tariff' | 'no_area' | null;
   @ApiProperty({ type: [UsePartView] })
   months: UsePartView[];
 

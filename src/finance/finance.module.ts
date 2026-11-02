@@ -129,6 +129,7 @@ import {
   TreasuryController,
 } from './treasury/treasury.controller';
 import { TreasuryInboxItems } from './treasury/treasury-inbox-items';
+import { FinanceReports } from './reports/finance-reports';
 
 /**
  * Finance (ADR 0046, 0048, 0055): invoices per unit, recurring billing,
@@ -207,6 +208,7 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
   ],
   providers: [
     FinanceCompensationCredits,
+    FinanceReports,
     ClearancesService,
     ClearancePageService,
     DepositsService,

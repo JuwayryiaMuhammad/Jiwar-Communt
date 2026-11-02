@@ -8589,6 +8589,147 @@
         ],
         "type": "object"
       },
+      "CapitalPlanLineDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "CapitalPlanLineView": {
+        "properties": {
+          "amount": {
+            "type": "string"
+          },
+          "assetCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetTypeKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "computed",
+              "manual"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "assetCode",
+          "assetTypeKey",
+          "description",
+          "amount",
+          "source"
+        ],
+        "type": "object"
+      },
+      "CapitalPlanView": {
+        "properties": {
+          "approvalRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "approvedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/CapitalPlanLineView"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "submitted",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "description": "EGP, its lines together.",
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "year",
+          "status",
+          "approvalRequestId",
+          "total",
+          "submittedAt",
+          "approvedAt",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "CapitalPlanViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CapitalPlanView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "CapitalYearView": {
         "properties": {
           "amount": {
@@ -15427,7 +15568,25 @@
       },
       "ConsumptionGroupView": {
         "properties": {
+          "areaSqm": {
+            "description": "ADR 0086: the floor area of the group’s metered units, when known.",
+            "nullable": true,
+            "type": "string"
+          },
           "cost": {
+            "nullable": true,
+            "type": "string"
+          },
+          "costPerSqm": {
+            "description": "EGP a square metre; null when `costPerSqmMissing` says why.",
+            "nullable": true,
+            "type": "string"
+          },
+          "costPerSqmMissing": {
+            "enum": [
+              "no_tariff",
+              "no_area"
+            ],
             "nullable": true,
             "type": "string"
           },
@@ -15471,6 +15630,9 @@
           "cost",
           "perSqm",
           "perOccupiedUnit",
+          "areaSqm",
+          "costPerSqm",
+          "costPerSqmMissing",
           "months"
         ],
         "type": "object"
@@ -17813,6 +17975,24 @@
         "required": [
           "nameEn",
           "nameAr"
+        ],
+        "type": "object"
+      },
+      "CreateCapitalPlanDto": {
+        "properties": {
+          "seed": {
+            "description": "Start from the register’s replacements due that year (ADR 0065).",
+            "type": "boolean"
+          },
+          "year": {
+            "description": "This year or one of the next five, by the compound’s day.",
+            "maximum": 2100,
+            "minimum": 2000,
+            "type": "number"
+          }
+        },
+        "required": [
+          "year"
         ],
         "type": "object"
       },
@@ -105279,6 +105459,199 @@
           }
         ],
         "summary": "An asset’s whole history: its events, tickets, parts, costs and warranty claims, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/capital-plans": {
+      "get": {
+        "operationId": "CapitalPlansController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapitalPlanViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s capital plans, latest year first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "CapitalPlansController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCapitalPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapitalPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Draw a year’s capital plan (one a year)",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/capital-plans/{id}": {
+      "get": {
+        "operationId": "CapitalPlansController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapitalPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A capital plan and its lines",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/capital-plans/{id}/lines": {
+      "post": {
+        "operationId": "CapitalPlansController_addLine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CapitalPlanLineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapitalPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a line to a draft plan",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/capital-plans/{id}/lines/{lineId}": {
+      "delete": {
+        "operationId": "CapitalPlansController_removeLine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lineId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapitalPlanView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a line from a draft plan",
         "tags": [
           "maintenance"
         ],

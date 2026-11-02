@@ -31056,6 +31056,168 @@
           }
         },
         {
+          "name": "The compound’s capital plans, latest year first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "capital-plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/capital-plans"
+            }
+          }
+        },
+        {
+          "name": "Draw a year’s capital plan (one a year)",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"year\": 2000\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `seed` | boolean |  | Start from the register’s replacements due that year (ADR 0065). |\n| `year` | number | yes | This year or one of the next five, by the compound’s day. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "capital-plans"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/capital-plans"
+            }
+          }
+        },
+        {
+          "name": "A capital plan and its lines",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "capital-plans",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/capital-plans/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a line to a draft plan",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"description\": \"\",\n  \"amount\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP. |\n| `assetId` | string (uuid) |  |  |\n| `description` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "capital-plans",
+                ":id",
+                "lines"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/capital-plans/:id/lines",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a line from a draft plan",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "capital-plans",
+                ":id",
+                "lines",
+                ":lineId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/capital-plans/:id/lines/:lineId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "lineId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the community cases",
           "request": {
             "description": "**Responses:** 200",

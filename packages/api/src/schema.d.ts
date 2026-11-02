@@ -6649,6 +6649,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/capital-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s capital plans, latest year first */
+        get: operations["CapitalPlansController_list"];
+        put?: never;
+        /** Draw a year’s capital plan (one a year) */
+        post: operations["CapitalPlansController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/capital-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A capital plan and its lines */
+        get: operations["CapitalPlansController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/capital-plans/{id}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a line to a draft plan */
+        post: operations["CapitalPlansController_addLine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/capital-plans/{id}/lines/{lineId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a line from a draft plan */
+        delete: operations["CapitalPlansController_removeLine"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/cases": {
         parameters: {
             query?: never;
@@ -30560,6 +30629,45 @@ export interface components {
             visitorsNotify: boolean;
             warrantyClaims: boolean;
         };
+        CapitalPlanLineDto: {
+            /** @description EGP. */
+            amount: string;
+            /** Format: uuid */
+            assetId?: string;
+            description: string;
+        };
+        CapitalPlanLineView: {
+            amount: string;
+            assetCode: string | null;
+            /** Format: uuid */
+            assetId: string | null;
+            assetTypeKey: string | null;
+            description: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            source: "computed" | "manual";
+        };
+        CapitalPlanView: {
+            /** Format: uuid */
+            approvalRequestId: string | null;
+            /** Format: date-time */
+            approvedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["CapitalPlanLineView"][];
+            /** @enum {string} */
+            status: "draft" | "submitted" | "approved";
+            /** Format: date-time */
+            submittedAt: string | null;
+            /** @description EGP, its lines together. */
+            total: string;
+            year: number;
+        };
+        CapitalPlanViewList: {
+            data: components["schemas"]["CapitalPlanView"][];
+            nextCursor: string | null;
+        };
         CapitalYearView: {
             /** @description EGP of replacements due. */
             amount: string;
@@ -32626,7 +32734,13 @@ export interface components {
         /** @enum {string} */
         ConsumptionGroup: "meter" | "building" | "area";
         ConsumptionGroupView: {
+            /** @description ADR 0086: the floor area of the group’s metered units, when known. */
+            areaSqm: string | null;
             cost: string | null;
+            /** @description EGP a square metre; null when `costPerSqmMissing` says why. */
+            costPerSqm: string | null;
+            /** @enum {string|null} */
+            costPerSqmMissing: "no_tariff" | "no_area" | null;
             /** @description The meter’s id, the building’s name or the common area’s id; null: none. */
             key: string | null;
             label: string | null;
@@ -33429,6 +33543,12 @@ export interface components {
         CreateBusRouteDto: {
             nameAr: string;
             nameEn: string;
+        };
+        CreateCapitalPlanDto: {
+            /** @description Start from the register’s replacements due that year (ADR 0065). */
+            seed?: boolean;
+            /** @description This year or one of the next five, by the compound’s day. */
+            year: number;
         };
         CreateCashAccountDto: {
             /** @description A bank account’s only. */
@@ -64743,6 +64863,116 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssetTimelineEntryViewList"];
+                };
+            };
+        };
+    };
+    CapitalPlansController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalPlanViewList"];
+                };
+            };
+        };
+    };
+    CapitalPlansController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCapitalPlanDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalPlanView"];
+                };
+            };
+        };
+    };
+    CapitalPlansController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalPlanView"];
+                };
+            };
+        };
+    };
+    CapitalPlansController_addLine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CapitalPlanLineDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalPlanView"];
+                };
+            };
+        };
+    };
+    CapitalPlansController_removeLine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapitalPlanView"];
                 };
             };
         };

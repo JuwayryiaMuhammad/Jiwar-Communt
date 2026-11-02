@@ -5968,6 +5968,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/assets/{id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An asset’s whole history: its events, tickets, parts, costs and warranty claims, newest first */
+        get: operations["AssetsController_timeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/categories": {
         parameters: {
             query?: never;
@@ -6906,6 +6923,23 @@ export interface paths {
         put?: never;
         /** Hold the part in a store for the ticket */
         post: operations["PartRequestsController_reserve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/plan-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The planned work due over up to 93 days: generated dates and the ones still to come */
+        get: operations["PlanCalendarController_read"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -23399,6 +23433,35 @@ export interface components {
             data: components["schemas"]["AssetSummaryView"][];
             nextCursor: string | null;
         };
+        AssetTimelineEntryView: {
+            /** @description EGP. */
+            amount: string | null;
+            /** Format: date-time */
+            at: string;
+            /** @description The asset event’s kind, the ticket’s origin, what was done, the cost’s kind, the claim’s status. */
+            code: string | null;
+            fromValue: string | null;
+            /**
+             * Format: uuid
+             * @description The row it is read from.
+             */
+            id: string;
+            /** Format: uuid */
+            itemId: string | null;
+            /** @enum {string} */
+            kind: "asset_event" | "ticket_opened" | "ticket_completed" | "ticket_closed" | "part_issued" | "part_returned" | "cost" | "warranty_claim_opened" | "warranty_claim_decided";
+            quantity: string | null;
+            reasonCode: string | null;
+            /** Format: uuid */
+            ticketId: string | null;
+            /** @example MT-000123 */
+            ticketNumber: string | null;
+            toValue: string | null;
+        };
+        AssetTimelineEntryViewList: {
+            data: components["schemas"]["AssetTimelineEntryView"][];
+            nextCursor: string | null;
+        };
         AssetTypeRefView: {
             /** Format: uuid */
             categoryId: string;
@@ -36098,6 +36161,31 @@ export interface components {
         };
         PlaceViewList: {
             data: components["schemas"]["PlaceView"][];
+            nextCursor: string | null;
+        };
+        PlanCalendarEntryView: {
+            assetCode: string;
+            /** Format: uuid */
+            assetId: string;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            occurrenceId: string | null;
+            /** Format: uuid */
+            planId: string;
+            /** @enum {string} */
+            priority: "normal" | "urgent" | "emergency";
+            /**
+             * @description `projected`: a date the plan will still come due on.
+             * @enum {string}
+             */
+            status: "open" | "done" | "skipped" | "cancelled" | "projected";
+            /** Format: uuid */
+            ticketId: string | null;
+            title: string;
+        };
+        PlanCalendarEntryViewList: {
+            data: components["schemas"]["PlanCalendarEntryView"][];
             nextCursor: string | null;
         };
         PlanEventView: {
@@ -53342,6 +53430,31 @@ export interface operations {
             };
         };
     };
+    AssetsController_timeline: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetTimelineEntryViewList"];
+                };
+            };
+        };
+    };
     CategoriesController_list: {
         parameters: {
             query?: never;
@@ -55104,6 +55217,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PartRequestView"];
+                };
+            };
+        };
+    };
+    PlanCalendarController_read: {
+        parameters: {
+            query: {
+                from: string;
+                /** @description At most 93 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanCalendarEntryViewList"];
                 };
             };
         };

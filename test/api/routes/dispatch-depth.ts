@@ -263,4 +263,28 @@ export const DISPATCH_DEPTH_ROUTES: Row[] = [
       fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
     },
   },
+  {
+    method: 'GET',
+    path: '/maintenance/assets/{id}/timeline',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bAssetId }),
+      code: 'ASSET_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/plan-calendar',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { from: '2026-02-30', to: '2026-03-10' },
+      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    },
+  },
 ];

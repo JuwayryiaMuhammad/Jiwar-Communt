@@ -966,7 +966,7 @@ export class PlansService implements OnModuleInit {
 }
 
 /** A calendar plan's series and basis, from its row. */
-function seriesOfPlan(p: MaintenancePlan): CalendarSeries {
+export function seriesOfPlan(p: MaintenancePlan): CalendarSeries {
   return {
     every: p.every!,
     unit: p.unit as RecurrenceUnit,

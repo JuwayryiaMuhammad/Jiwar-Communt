@@ -63,6 +63,8 @@ import { SlaReports } from './sla/sla-report';
 import { SlaReportController } from './sla/sla-report.controller';
 import { WarrantyClaimsController } from './assets/warranty-claims.controller';
 import { WarrantyClaimsService } from './assets/warranty-claims.service';
+import { AssetTimeline } from './assets/asset-timeline';
+import { PlanCalendar } from './plans/plan-calendar';
 import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketSummary } from './tickets/resident-ticket-summary';
 import { ResidentTicketItems } from './tickets/resident-ticket-items';
@@ -109,6 +111,7 @@ import {
 import { ChecklistsService } from './checklists/checklists.service';
 import { TicketChecklists } from './checklists/ticket-checklists.service';
 import {
+  PlanCalendarController,
   PlanOccurrencesController,
   PlansController,
 } from './plans/plans.controller';
@@ -251,6 +254,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     DispatchChecklistController,
     PlansController,
     PlanOccurrencesController,
+    PlanCalendarController,
     InspectionRoundsController,
     InspectionsController,
     InspectionReportController,
@@ -312,6 +316,8 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     SlaAtRisk,
     SlaReports,
     WarrantyClaimsService,
+    AssetTimeline,
+    PlanCalendar,
     TechnicianRelease,
     MessagesService,
     ConfirmationService,

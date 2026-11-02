@@ -2514,6 +2514,108 @@
         ],
         "type": "object"
       },
+      "AssetTimelineEntryView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "code": {
+            "description": "The asset event’s kind, the ticket’s origin, what was done, the cost’s kind, the claim’s status.",
+            "nullable": true,
+            "type": "string"
+          },
+          "fromValue": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "The row it is read from.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "itemId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "asset_event",
+              "ticket_opened",
+              "ticket_completed",
+              "ticket_closed",
+              "part_issued",
+              "part_returned",
+              "cost",
+              "warranty_claim_opened",
+              "warranty_claim_decided"
+            ],
+            "type": "string"
+          },
+          "quantity": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "ticketNumber": {
+            "example": "MT-000123",
+            "nullable": true,
+            "type": "string"
+          },
+          "toValue": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "kind",
+          "code",
+          "ticketId",
+          "ticketNumber",
+          "fromValue",
+          "toValue",
+          "reasonCode",
+          "amount",
+          "quantity",
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "AssetTimelineEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AssetTimelineEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "AssetTypeRefView": {
         "properties": {
           "categoryId": {
@@ -42344,6 +42446,88 @@
           "data": {
             "items": {
               "$ref": "#/components/schemas/PlaceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PlanCalendarEntryView": {
+        "properties": {
+          "assetCode": {
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "occurrenceId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "priority": {
+            "enum": [
+              "normal",
+              "urgent",
+              "emergency"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "`projected`: a date the plan will still come due on.",
+            "enum": [
+              "open",
+              "done",
+              "skipped",
+              "cancelled",
+              "projected"
+            ],
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dueOn",
+          "planId",
+          "title",
+          "assetId",
+          "assetCode",
+          "priority",
+          "status",
+          "occurrenceId",
+          "ticketId"
+        ],
+        "type": "object"
+      },
+      "PlanCalendarEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PlanCalendarEntryView"
             },
             "type": "array"
           },
@@ -87280,6 +87464,63 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/assets/{id}/timeline": {
+      "get": {
+        "operationId": "AssetsController_timeline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetTimelineEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An asset’s whole history: its events, tickets, parts, costs and warranty claims, newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/categories": {
       "get": {
         "operationId": "CategoriesController_list",
@@ -90756,6 +90997,54 @@
           }
         ],
         "summary": "Hold the part in a store for the ticket",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/plan-calendar": {
+      "get": {
+        "operationId": "PlanCalendarController_read",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "At most 93 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanCalendarEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The planned work due over up to 93 days: generated dates and the ones still to come",
         "tags": [
           "maintenance"
         ],

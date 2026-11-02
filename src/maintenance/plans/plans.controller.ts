@@ -15,6 +15,7 @@ import {
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
+  bounded,
   ListOf,
   PageQueryDto,
   toList,
@@ -26,14 +27,17 @@ import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import {
   CreatePlanDto,
   DeferPlanDto,
+  PlanCalendarQueryDto,
   PlansQueryDto,
   UpdatePlanDto,
 } from './dto/plans.dto';
 import { PlansService } from './plans.service';
+import { PlanCalendar } from './plan-calendar';
 import {
   MaintenancePlanSummaryView,
   MaintenancePlanView,
   PlanEventView,
+  PlanCalendarEntryView,
   PlanOccurrenceView,
 } from './views/plan.views';
 
@@ -181,5 +185,27 @@ export class PlanOccurrencesController {
     @Body() dto: DeferPlanDto,
   ): Promise<PlanOccurrenceView> {
     return PlanOccurrenceView.from(await this.plans.deferOccurrence(id, dto));
+  }
+}
+
+/** The planned work due over a period, across every plan (ADR 0076). */
+@ApiArea('maintenance')
+@RequirePermissions('assets.read')
+@Controller('maintenance/plan-calendar')
+export class PlanCalendarController {
+  constructor(private readonly calendar: PlanCalendar) {}
+
+  @Get()
+  @ApiOperation({
+    summary:
+      'The planned work due over up to 93 days: generated dates and the ones still to come',
+  })
+  @ApiOkResponse({ type: ListOf(PlanCalendarEntryView) })
+  async read(
+    @Query() q: PlanCalendarQueryDto,
+  ): Promise<ListResponse<PlanCalendarEntryView>> {
+    return bounded(await this.calendar.read(q.from, q.to), (e) =>
+      PlanCalendarEntryView.from(e),
+    );
   }
 }

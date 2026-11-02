@@ -11,6 +11,11 @@ import {
   type AssetStatus,
 } from '../asset-rules';
 import type { AssetCard } from '../assets.service';
+import {
+  TIMELINE_KINDS,
+  type TimelineEntry,
+  type TimelineKind,
+} from '../asset-timeline';
 
 const money = (d: { toFixed(n: number): string } | null) =>
   d === null ? null : d.toFixed(2);
@@ -281,4 +286,45 @@ export class AssetImpactView {
   units: number;
   @ApiProperty({ type: Number })
   occupiedUnits: number;
+}
+
+/** One entry of an asset's whole history (ADR 0076): codes and amounts, never words. */
+export class AssetTimelineEntryView {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'The row it is read from.',
+  })
+  id: string;
+  @ApiProperty({ type: String, format: 'date-time' })
+  at: Date;
+  @ApiProperty({ enum: TIMELINE_KINDS })
+  kind: TimelineKind;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      'The asset event’s kind, the ticket’s origin, what was done, the cost’s kind, the claim’s status.',
+  })
+  code: string | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  ticketId: string | null;
+  @ApiProperty({ type: String, nullable: true, example: 'MT-000123' })
+  ticketNumber: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  fromValue: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  toValue: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  reasonCode: string | null;
+  @ApiProperty({ type: String, nullable: true, description: 'EGP.' })
+  amount: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  quantity: string | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  itemId: string | null;
+
+  static from(e: TimelineEntry): AssetTimelineEntryView {
+    return { ...e };
+  }
 }

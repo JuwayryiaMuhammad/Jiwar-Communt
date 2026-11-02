@@ -8,6 +8,7 @@ import {
 import { ofDateColumn, ofDateColumnOrNull } from '../../schedules/local-dates';
 import { OCCURRENCE_STATUSES, PLAN_BASES, PLAN_TRIGGERS } from '../plan-rules';
 import type { PlanRead } from '../plans.service';
+import type { CalendarEntry } from '../plan-calendar';
 
 class PlanStatsView {
   @ApiProperty({ type: Number })
@@ -223,5 +224,34 @@ export class PlanEventView {
       actorId: e.actorId,
       occurredAt: e.occurredAt,
     };
+  }
+}
+
+/** One date of planned work (ADR 0076): generated, or still to come. */
+export class PlanCalendarEntryView {
+  @ApiProperty({ type: String, format: 'date' })
+  dueOn: string;
+  @ApiProperty({ type: String, format: 'uuid' })
+  planId: string;
+  @ApiProperty({ type: String })
+  title: string;
+  @ApiProperty({ type: String, format: 'uuid' })
+  assetId: string;
+  @ApiProperty({ type: String })
+  assetCode: string;
+  @ApiProperty({ enum: ['normal', 'urgent', 'emergency'] })
+  priority: string;
+  @ApiProperty({
+    enum: ['open', 'done', 'skipped', 'cancelled', 'projected'],
+    description: '`projected`: a date the plan will still come due on.',
+  })
+  status: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  occurrenceId: string | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  ticketId: string | null;
+
+  static from(e: CalendarEntry): PlanCalendarEntryView {
+    return { ...e };
   }
 }

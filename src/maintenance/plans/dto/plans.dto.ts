@@ -230,3 +230,20 @@ export class PlansQueryDto extends PageQueryDto {
   @IsIn(BOOL, allowed(BOOL))
   active?: (typeof BOOL)[number];
 }
+
+/** ADR 0076: up to 93 of the compound's days. */
+export class PlanCalendarQueryDto {
+  @ApiProperty({ type: String, format: 'date' })
+  @IsString()
+  @IsLocalDate()
+  from: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'At most 93 days after `from`.',
+  })
+  @IsString()
+  @IsLocalDate()
+  to: string;
+}

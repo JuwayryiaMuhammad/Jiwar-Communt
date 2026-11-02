@@ -24,6 +24,7 @@ import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { Idempotent } from '../../core/idempotency/idempotent.decorator';
 import { IssuedTagView } from '../locations/views/common-area.views';
 import { AssetsService } from './assets.service';
+import { AssetTimeline } from './asset-timeline';
 import {
   AssetsQueryDto,
   AssetStatusDto,
@@ -34,6 +35,7 @@ import {
 } from './dto/assets.dto';
 import {
   AssetEventView,
+  AssetTimelineEntryView,
   AssetImpactView,
   AssetSummaryView,
   AssetView,
@@ -43,7 +45,10 @@ import {
 @ApiArea('maintenance')
 @Controller('maintenance/assets')
 export class AssetsController {
-  constructor(private readonly assets: AssetsService) {}
+  constructor(
+    private readonly assets: AssetsService,
+    private readonly timelines: AssetTimeline,
+  ) {}
 
   @Get()
   @RequirePermissions('assets.read')
@@ -140,6 +145,23 @@ export class AssetsController {
   ): Promise<ListResponse<AssetEventView>> {
     return toList(await this.assets.events(id, q), (e) =>
       AssetEventView.from(e),
+    );
+  }
+
+  /** ADR 0076: everything that happened to it, in one list. */
+  @Get(':id/timeline')
+  @RequirePermissions('assets.read')
+  @ApiOperation({
+    summary:
+      'An asset’s whole history: its events, tickets, parts, costs and warranty claims, newest first',
+  })
+  @ApiOkResponse({ type: ListOf(AssetTimelineEntryView) })
+  async timeline(
+    @Param('id', parseId()) id: string,
+    @Query() q: PageQueryDto,
+  ): Promise<ListResponse<AssetTimelineEntryView>> {
+    return toList(await this.timelines.read(id, q), (e) =>
+      AssetTimelineEntryView.from(e),
     );
   }
 

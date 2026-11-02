@@ -69,13 +69,16 @@ test('withheld counts say why; shown counts say nothing', () => {
   assert.equal(percent(0, 0), 0);
 });
 
-test('a suggestion moves forward only, and a decline is answered', () => {
-  assert.deepEqual(nextStatuses('received'), ['under_review', 'planned', 'done', 'declined']);
-  assert.deepEqual(nextStatuses('planned'), ['done', 'declined']);
+test('a suggestion moves forward or is deferred, and done, deferred and declined are answered', () => {
+  assert.deepEqual(nextStatuses('received'), ['under_review', 'planned', 'deferred', 'done', 'declined']);
+  assert.deepEqual(nextStatuses('planned'), ['deferred', 'done', 'declined']);
+  assert.deepEqual(nextStatuses('deferred'), ['under_review', 'planned', 'done', 'declined']);
   assert.deepEqual(nextStatuses('done'), []);
   assert.deepEqual(nextStatuses('declined'), []);
   assert.equal(needsResponse('declined'), true);
-  assert.equal(needsResponse('done'), false);
+  assert.equal(needsResponse('deferred'), true);
+  assert.equal(needsResponse('done'), true);
+  assert.equal(needsResponse('planned'), false);
 });
 
 test('a poll’s options: two to ten, each in exactly the question’s languages', () => {

@@ -441,7 +441,7 @@ describe('Audit coverage — community life', () => {
     });
 
     it('suggestion.done_noted — a count of photos, never the note', async () => {
-      await e.move(s.manager, id, 'done').expect(204);
+      await e.move(s.manager, id, 'done', 'Done.').expect(204);
       const photo = await e.attachment(s.manager);
       await e
         .http(

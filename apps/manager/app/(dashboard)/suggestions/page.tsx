@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Suggestion, type SuggestionFilters, type SuggestionStatus } from '@/lib/queries';
 
-const STATUSES: SuggestionStatus[] = ['received', 'under_review', 'planned', 'done', 'declined'];
+const STATUSES: SuggestionStatus[] = ['received', 'under_review', 'planned', 'deferred', 'done', 'declined'];
 type Board = 'all' | 'true' | 'false';
 
 /**

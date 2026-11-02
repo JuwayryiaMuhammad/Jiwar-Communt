@@ -35982,9 +35982,9 @@ export interface components {
             step: string;
         };
         MoveSuggestionDto: {
-            /** @description What the staff tell the author. Required to decline. Replaces an earlier answer. */
+            /** @description What the staff tell the author. Required for `done`, `deferred` and `declined` (ADR 0080). Replaces an earlier answer. */
             response?: string;
-            /** @description A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final. */
+            /** @description A step forward: `under_review`, `planned`, `done`, or `declined`; or `deferred`, not now (ADR 0080), from which it may go on later. `done` and `declined` are final. */
             status: components["schemas"]["SuggestionStatus"];
         };
         MoveView: {

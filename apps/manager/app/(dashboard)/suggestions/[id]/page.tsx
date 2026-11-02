@@ -62,7 +62,7 @@ function AnswerDialog({ suggestion, move, onClose }: { suggestion: SuggestionDet
     >
       <div className="form">
         {move ? (
-          <Field label="New status" hint="A suggestion only moves forward. Done and declined are final." error={fieldError(save.error, 'status')}>
+          <Field label="New status" hint="A suggestion moves forward, or is deferred and taken up later. Done and declined are final." error={fieldError(save.error, 'status')}>
             {(p) => (
               <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as SuggestionStatus)}>
                 {steps.map((s) => (

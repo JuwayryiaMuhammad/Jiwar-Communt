@@ -373,7 +373,7 @@ describe('API v0 — no-store', () => {
     const id = await aSuggestion();
     await call(w, 'POST', `/community/suggestions/${id}/status`, {
       token: w.a.tokens.manager,
-      body: { status: 'done' },
+      body: { status: 'done', response: 'Done.' },
     }).expect(204);
     return id;
   }

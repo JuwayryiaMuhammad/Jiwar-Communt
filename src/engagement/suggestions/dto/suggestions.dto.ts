@@ -71,7 +71,7 @@ export class MoveSuggestionDto {
     enum: SuggestionStatus,
     enumName: 'SuggestionStatus',
     description:
-      'A step forward: `under_review`, `planned`, `done`, or `declined`. `done` and `declined` are final.',
+      'A step forward: `under_review`, `planned`, `done`, or `declined`; or `deferred`, not now (ADR 0080), from which it may go on later. `done` and `declined` are final.',
   })
   @IsEnum(SuggestionStatus, withParams({ allowed: STATUSES }))
   status: SuggestionStatus;
@@ -82,7 +82,7 @@ export class MoveSuggestionDto {
     minLength: RESPONSE.min,
     maxLength: RESPONSE.max,
     description:
-      'What the staff tell the author. Required to decline. Replaces an earlier answer.',
+      'What the staff tell the author. Required for `done`, `deferred` and `declined` (ADR 0080). Replaces an earlier answer.',
   })
   @IsOptional()
   @IsString()

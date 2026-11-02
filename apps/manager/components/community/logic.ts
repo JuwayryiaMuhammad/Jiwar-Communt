@@ -97,21 +97,22 @@ export function percent(part: number, whole: number): number {
   return whole > 0 ? Math.round((part / whole) * 100) : 0;
 }
 
-export type SuggestionStatus = 'received' | 'under_review' | 'planned' | 'done' | 'declined';
+export type SuggestionStatus = 'received' | 'under_review' | 'planned' | 'deferred' | 'done' | 'declined';
 
 const NEXT: Record<SuggestionStatus, SuggestionStatus[]> = {
-  received: ['under_review', 'planned', 'done', 'declined'],
-  under_review: ['planned', 'done', 'declined'],
-  planned: ['done', 'declined'],
+  received: ['under_review', 'planned', 'deferred', 'done', 'declined'],
+  under_review: ['planned', 'deferred', 'done', 'declined'],
+  planned: ['deferred', 'done', 'declined'],
+  deferred: ['under_review', 'planned', 'done', 'declined'],
   done: [],
   declined: [],
 };
 
-/** The steps forward a suggestion may take; `done` and `declined` are final. */
+/** The steps a suggestion may take: forward, or deferred (ADR 0080); `done` and `declined` are final. */
 export const nextStatuses = (status: SuggestionStatus): SuggestionStatus[] => NEXT[status];
 
-/** Declining is answered: the resident is told why. */
-export const needsResponse = (status: SuggestionStatus): boolean => status === 'declined';
+/** Done, deferred and declined are answered: the resident is told why (ADR 0080). */
+export const needsResponse = (status: SuggestionStatus): boolean => status === 'done' || status === 'deferred' || status === 'declined';
 
 /** A poll's options as the builder holds them: at least two, each with the labels the question's languages need. */
 export function optionsReady(options: readonly { labelEn: string; labelAr: string }[], hasEn: boolean, hasAr: boolean): boolean {

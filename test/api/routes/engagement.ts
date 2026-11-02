@@ -703,6 +703,8 @@ const SUGGESTION_STATUS = [
   'received',
   'under_review',
   'planned',
+  // ADR 0080.
+  'deferred',
   'done',
   'declined',
 ];

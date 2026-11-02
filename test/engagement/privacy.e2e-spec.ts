@@ -245,7 +245,7 @@ describe('Community life — export and erasure', () => {
       );
       expect(JSON.stringify(everything)).not.toContain('ERASE-MY-WORDS');
       // The staff may still move and answer it; the erased author is told nothing.
-      await e.move(s.manager, id, 'done').expect(204);
+      await e.move(s.manager, id, 'done', 'Done.').expect(204);
       expect(
         (
           await e.notifications(

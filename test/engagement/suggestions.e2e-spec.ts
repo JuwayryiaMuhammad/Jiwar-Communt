@@ -179,15 +179,19 @@ describe('Community life — suggestions, the board and "you said, we did"', () 
         params: { status: 'planned', published: false },
       });
       await staff(id, 'response', { response: 'Three, in fact.' }).expect(204);
-      await e.move(s.manager, id, 'done').expect(204);
+      // ADR 0080: done is answered too.
+      expect(fieldsOf(await e.move(s.manager, id, 'done').expect(400))).toEqual(
+        [{ field: 'response', code: 'FIELD_REQUIRED' }],
+      );
+      await e.move(s.manager, id, 'done', 'Three benches are in.').expect(204);
       expect(await mine(s.owner, id)).toMatchObject({
         status: 'done',
-        response: 'Three, in fact.',
+        response: 'Three benches are in.',
         updates: [
           { status: 'under_review', response: null },
           { status: 'planned', response: 'We will buy two.' },
           { status: 'planned', response: 'Three, in fact.' },
-          { status: 'done', response: null },
+          { status: 'done', response: 'Three benches are in.' },
         ],
       });
       // No staff member is named to the author.
@@ -202,7 +206,7 @@ describe('Community life — suggestions, the board and "you said, we did"', () 
         fieldsOf(await e.move(s.manager, other, 'declined').expect(400)),
       ).toEqual([{ field: 'response', code: 'FIELD_REQUIRED' }]);
       await e.move(s.manager, other, 'declined', 'Not possible.').expect(204);
-      await e.move(s.manager, other, 'done').expect(409);
+      await e.move(s.manager, other, 'done', 'x').expect(409);
     });
 
     it('the author is told of each move and each answer, by status and topic key and nothing else', async () => {
@@ -405,7 +409,7 @@ describe('Community life — suggestions, the board and "you said, we did"', () 
         params: { status: 'received' },
       });
       await e.publish(s.manager, id).expect(204);
-      await e.move(s.manager, id, 'done').expect(204);
+      await e.move(s.manager, id, 'done', 'Done.').expect(204);
       const done = async (who: Who) =>
         (
           (await e.http('get', '/suggestion-board/done', who.token).expect(200))
@@ -478,7 +482,7 @@ describe('Community life — suggestions, the board and "you said, we did"', () 
 
     it('a done suggestion that was never published is listed by its note alone, without a summary or a word of it', async () => {
       const id = await e.suggestion(s.c, s.owner, { body: WORDS });
-      await e.move(s.manager, id, 'done').expect(204);
+      await e.move(s.manager, id, 'done', 'Done.').expect(204);
       await staff(id, 'done-note', { noteAr: 'تم الإصلاح.' }).expect(204);
       const list = (
         (

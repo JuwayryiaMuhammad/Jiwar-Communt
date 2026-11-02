@@ -1,22 +1,34 @@
 import { SuggestionStatus } from '@prisma/client';
 import { canMove, needsResponse, nextStatuses } from './suggestion-rules';
 
-describe('suggestion rules (ADR 0040)', () => {
-  it('a suggestion only moves forward, and may be declined until it ends', () => {
+describe('suggestion rules (ADR 0040, 0080)', () => {
+  it('a suggestion only moves forward, and may be deferred or declined until it ends', () => {
     expect(nextStatuses('received')).toEqual([
       'under_review',
       'planned',
+      'deferred',
       'done',
       'declined',
     ]);
     expect(nextStatuses('under_review')).toEqual([
       'planned',
+      'deferred',
       'done',
       'declined',
     ]);
-    expect(nextStatuses('planned')).toEqual(['done', 'declined']);
+    expect(nextStatuses('planned')).toEqual(['deferred', 'done', 'declined']);
     expect(canMove('planned', 'under_review')).toBe(false);
     expect(canMove('under_review', 'received')).toBe(false);
+  });
+
+  it('a deferred suggestion is not final: it may go on to any step but back to received', () => {
+    expect(nextStatuses('deferred')).toEqual([
+      'under_review',
+      'planned',
+      'done',
+      'declined',
+    ]);
+    expect(canMove('deferred', 'received')).toBe(false);
   });
 
   it('done and declined are final, and nothing moves to where it is', () => {
@@ -26,9 +38,9 @@ describe('suggestion rules (ADR 0040)', () => {
       expect(canMove(status, status)).toBe(false);
   });
 
-  it('only a decline must be answered', () => {
+  it('done, deferred and declined must be answered', () => {
     expect(
       Object.values(SuggestionStatus).filter((s) => needsResponse(s)),
-    ).toEqual(['declined']);
+    ).toEqual(['deferred', 'done', 'declined']);
   });
 });

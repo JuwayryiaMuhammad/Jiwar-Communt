@@ -89,6 +89,7 @@ For an owner of the unit, or its proxy with `inspections`:
 - **`POST /units/{unitId}/inspection-requests/{id}/cancel {reasonCode}`:** cancel an open one.
   - `reasonCode` comes from `inspectionRequestCancel`.
   - A scheduled one is cancelled by the management (`409 INSPECTION_REQUEST_CLOSED`).
+- A scheduled request is cancelled with its task, `cancelReason: "task_cancelled"`: when the management cancels the task, and when the guard it was given to leaves (deactivated or erased). The unit may then ask again.
 - **`GET /units/{unitId}/inspections`:** the inspections done, newest first, never cached: `{ taskId, requestId, doneAt, outcome, note, photos[{url, expiresAt}] }`.
   - Open the photo URLs at once.
   - Never the guard's name.

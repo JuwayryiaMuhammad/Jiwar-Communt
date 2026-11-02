@@ -4,6 +4,7 @@ import { AuditService } from '../../core/audit/audit.service';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import { dbNow } from '../db-clock';
 import { SwapsService } from '../swaps/swaps.service';
+import { TasksService } from '../tasks/tasks.service';
 import { RosterCore } from './roster-core';
 import { RosterService } from './roster.service';
 
@@ -16,15 +17,18 @@ import { RosterService } from './roster.service';
  * - **Deactivated** (an erasure deactivates first): their live swaps are
  *   cancelled (`guard_left`), their live templates ended and their slots to
  *   come that nobody opened cancelled (`guard_left`), and the tasks still
- *   theirs cancelled (`assignee_left`). Their shifts, handovers and
- *   attendance stay: the compound's record.
+ *   theirs cancelled (`assignee_left`), as the management cancels one
+ *   (TasksService.cancelIn): an inspection request a task answers is
+ *   cancelled with it (`task_cancelled`, ADR 0063). Their shifts,
+ *   handovers and attendance stay: the compound's record.
  * - **Erased**: what they wrote goes, once each: their handovers' notes,
  *   their tasks' result notes, their swaps' reasons. A found item's
  *   description and a task's photos stay: they describe an object or a
  *   unit, not the guard.
  *
  * Locks: the guard's roster lock (RosterCore's order: the account row is
- * already held), then rows by id, FOR UPDATE.
+ * already held), then rows by id, FOR UPDATE; a task's request after its
+ * task, as the management's cancel takes them.
  */
 @Injectable()
 export class GuardDutyLifecycle implements OnModuleInit {
@@ -34,6 +38,7 @@ export class GuardDutyLifecycle implements OnModuleInit {
     private readonly core: RosterCore,
     private readonly roster: RosterService,
     private readonly swaps: SwapsService,
+    private readonly tasks: TasksService,
   ) {}
 
   onModuleInit(): void {
@@ -106,22 +111,10 @@ export class GuardDutyLifecycle implements OnModuleInit {
               OR taken_by_account_id = ${guardId}::uuid)
          AND status IN ('open', 'in_progress')
        ORDER BY id FOR UPDATE`;
-    for (const { id } of tasks) {
-      await tx.guardTask.update({
-        where: { id },
-        data: {
-          status: 'cancelled',
-          cancelledAt: now,
-          cancelledById: null,
-          cancelReason: 'assignee_left',
-        },
-      });
-      await this.audit.record(tx, {
-        action: 'guard_task.cancelled',
-        targetId: id,
-        metadata: { reasonCode: 'assignee_left' },
-      });
-    }
+    // As the management's cancel: the inspection request a task answers
+    // goes with it, so the unit may ask again.
+    for (const { id } of tasks)
+      await this.tasks.cancelIn(tx, id, 'assignee_left', null, now);
   }
 
   /** What the guard wrote, once each. */

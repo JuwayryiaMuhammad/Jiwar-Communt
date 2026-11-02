@@ -52,6 +52,8 @@
 -- turned off, an asset whose warranty starts, ends and names its warrantor,
 -- a work order of the management's own on it, and an open claim under its
 -- warranty.
+-- A scheduled inspection request whose task was cancelled when its guard
+-- left (20270511090000 cancels the request with it).
 -- ============================================================================
 
 DO $$
@@ -475,6 +477,20 @@ BEGIN
       INSERT INTO purchase_requests (id, tenant_id, number, title, vendor_id, estimated_amount,
                                      requested_by_account_id, requested_at, updated_at) VALUES
         (gen_random_uuid(), t, 1, 'Two pump seals', ven, 3500.00, mgr, now(), now());
+    END;
+    -- An inspection request whose task went with its guard (`assignee_left`)
+    -- and that stayed scheduled: 20270511090000 cancels it with its task.
+    DECLARE
+      req uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO unit_inspection_requests (id, tenant_id, number, unit_id, requested_by, preferred_on,
+                                            status, created_at, scheduled_at) VALUES
+        (req, t, 1, u2, res2, current_date + 3, 'scheduled', now() - interval '2 days',
+         now() - interval '1 day');
+      INSERT INTO guard_tasks (id, tenant_id, kind, unit_id, assignee_account_id, created_by_account_id,
+                               status, cancelled_at, cancel_reason, request_id, updated_at) VALUES
+        (gen_random_uuid(), t, 'closed_unit_inspection', u2, guard, mgr, 'cancelled', now(), 'assignee_left',
+         req, now());
     END;
   END LOOP;
 END $$;

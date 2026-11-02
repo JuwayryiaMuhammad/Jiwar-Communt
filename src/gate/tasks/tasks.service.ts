@@ -270,24 +270,48 @@ export class TasksService implements OnModuleInit {
       if (!task) throw taskNotFound();
       if (task.status === 'done' || task.status === 'cancelled')
         throw closed(task);
-      const cancelled = await tx.guardTask.update({
-        where: { id },
-        data: {
-          status: 'cancelled',
-          cancelledAt: await dbNow(tx),
-          cancelledById: this.ctx.accountId,
-          cancelReason: reason,
-        },
-      });
-      await this.audit.record(tx, {
-        action: 'guard_task.cancelled',
-        targetId: id,
-        metadata: { reasonCode: reason },
-      });
-      if (cancelled.requestId)
-        await this.inspections.taskCancelled(tx, cancelled.requestId);
+      const cancelled = await this.cancelIn(
+        tx,
+        id,
+        reason,
+        this.ctx.accountId,
+        await dbNow(tx),
+      );
       return this.staffView(tx, cancelled);
     });
+  }
+
+  /**
+   * A task cancelled, in the caller's transaction, the task's row locked
+   * and still open or in progress: the row, its audit entry, and the
+   * inspection request it answers cancelled with it (ADR 0063), after the
+   * task in the lock order. The management's cancel and a guard's going
+   * (GuardDutyLifecycle: `assignee_left`, by nobody) both end a task here.
+   */
+  async cancelIn(
+    tx: TenantTxClient,
+    id: string,
+    reason: string,
+    by: string | null,
+    now: Date,
+  ): Promise<GuardTask> {
+    const cancelled = await tx.guardTask.update({
+      where: { id },
+      data: {
+        status: 'cancelled',
+        cancelledAt: now,
+        cancelledById: by,
+        cancelReason: reason,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'guard_task.cancelled',
+      targetId: id,
+      metadata: { reasonCode: reason },
+    });
+    if (cancelled.requestId)
+      await this.inspections.taskCancelled(tx, cancelled.requestId, by);
+    return cancelled;
   }
 
   // --------------------------------------------------------------------------

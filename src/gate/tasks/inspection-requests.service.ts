@@ -75,7 +75,8 @@ function read(r: UnitInspectionRequest): InspectionRequestRead {
  * advisory lock per unit, after the caller's account. The management
  * (`guard_tasks.manage`) schedules it as a closed-unit inspection task
  * that names it (TasksService.create), whose completion marks it done and
- * whose cancellation cancels it; either side cancels an open one.
+ * whose cancellation — by the management, or because its guard left —
+ * cancels it (`task_cancelled`); either side cancels an open one.
  *
  * The same people read the unit's inspections: when, the outcome, the
  * guard's note and photos (presigned, no-store) — never the guard's name.
@@ -268,8 +269,15 @@ export class InspectionRequestsService {
     return row.requestedBy;
   }
 
-  /** The task was cancelled: the request with it. */
-  async taskCancelled(tx: TenantTxClient, requestId: string): Promise<void> {
+  /**
+   * The task was cancelled: the request with it, by whoever cancelled the
+   * task (nobody when its guard left), so the unit may ask again.
+   */
+  async taskCancelled(
+    tx: TenantTxClient,
+    requestId: string,
+    cancelledBy: string | null,
+  ): Promise<void> {
     const row = await this.locked(tx, requestId);
     if (!row || row.status !== 'scheduled') return;
     await tx.unitInspectionRequest.update({
@@ -277,7 +285,7 @@ export class InspectionRequestsService {
       data: {
         status: 'cancelled',
         cancelledAt: await dbNow(tx),
-        cancelledBy: this.ctx.accountId,
+        cancelledBy,
         cancelReason: 'task_cancelled',
       },
     });

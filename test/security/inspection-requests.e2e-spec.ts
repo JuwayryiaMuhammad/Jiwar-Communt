@@ -1,6 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { Client } from 'pg';
+import { auditReaders } from '../setup/audit';
 import { day } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { securityHelpers, type Who } from '../setup/security';
+import { required } from '../setup/test-env';
+
+const LEFT_TASK_MIGRATION = join(
+  __dirname,
+  '../../prisma/migrations/20270511090000_inspection_request_left_task/migration.sql',
+);
 
 interface RequestBody {
   id: string;
@@ -189,6 +199,161 @@ describe('Inspection requests', () => {
     expect(await row(s, second.id)).toMatchObject({
       status: 'cancelled',
       cancelReason: 'task_cancelled',
+    });
+  });
+
+  // The task a guard held when they left was cancelled without its request
+  // until 20270511090000: the request stayed scheduled, the unit stuck.
+  describe('a guard who leaves with the task', () => {
+    const deactivate = (s: SetUp, id: string) =>
+      x
+        .http('patch', `/accounts/${id}/status`, s.manager.token, {
+          status: 'inactive',
+        })
+        .expect(200);
+    const scheduled = async (s: SetUp, supervisor: Who) => {
+      const asked = (await ask(s).expect(201)).body as RequestBody;
+      const guard = await x.guard(s.c);
+      const task = (
+        await x
+          .http('post', '/staff/security/tasks', supervisor.token, {
+            kind: 'closed_unit_inspection',
+            unitId: s.home.id,
+            guardId: guard.id,
+            requestId: asked.id,
+          })
+          .expect(201)
+      ).body as { id: string };
+      return { asked, guard, task };
+    };
+    const cancellations = (s: SetUp, id: string) =>
+      auditReaders(h).tenant(s.c.tenantId, {
+        action: 'unit_inspection.cancelled',
+        targetId: id,
+      });
+
+    it('cancels the request with the task, by nobody, as the management’s cancel does; the owner reads why and asks again', async () => {
+      const s = await x.setUp('Inspection Leaver Court');
+      const supervisor = await x.supervisor(s.c);
+      await close(s);
+      const { asked, guard, task } = await scheduled(s, supervisor);
+
+      await deactivate(s, guard.id);
+
+      expect(
+        await x.inTx(s.c, (tx) =>
+          tx.guardTask.findUniqueOrThrow({ where: { id: task.id } }),
+        ),
+      ).toMatchObject({ status: 'cancelled', cancelReason: 'assignee_left' });
+      expect(await row(s, asked.id)).toMatchObject({
+        status: 'cancelled',
+        cancelReason: 'task_cancelled',
+        cancelledBy: null,
+      });
+      expect((await cancellations(s, asked.id)).map((e) => e.metadata)).toEqual(
+        [{ unitId: s.home.id, reasonCode: 'task_cancelled' }],
+      );
+      const mine = (
+        await x
+          .http('get', `/units/${s.home.id}/inspection-requests`, s.alice.token)
+          .expect(200)
+      ).body as RequestBody[];
+      expect(mine.find((r) => r.id === asked.id)).toMatchObject({
+        status: 'cancelled',
+        cancelReason: 'task_cancelled',
+      });
+      // The unit holds no live request now: the owner asks again.
+      expect(((await ask(s).expect(201)).body as RequestBody).status).toBe(
+        'open',
+      );
+    });
+
+    it('race: the guard’s going against the management’s cancel — the request is cancelled once, with the task', async () => {
+      for (let i = 0; i < 3; i++) {
+        const s = await x.setUp(`Inspection Leaver Race ${i}`);
+        const supervisor = await x.supervisor(s.c);
+        await close(s);
+        const { asked, guard, task } = await scheduled(s, supervisor);
+        const [, cancelled] = await Promise.all([
+          deactivate(s, guard.id),
+          x.http(
+            'post',
+            `/staff/security/tasks/${task.id}/cancel`,
+            supervisor.token,
+            { reasonCode: 'no_longer_needed' },
+          ),
+        ]);
+        expect([200, 409]).toContain(cancelled.status);
+        const left = await x.inTx(s.c, (tx) =>
+          tx.guardTask.findUniqueOrThrow({ where: { id: task.id } }),
+        );
+        // Whoever cancelled the task cancelled its request.
+        expect(left.cancelReason).toBe(
+          cancelled.status === 200 ? 'no_longer_needed' : 'assignee_left',
+        );
+        expect(await row(s, asked.id)).toMatchObject({
+          status: 'cancelled',
+          cancelReason: 'task_cancelled',
+          cancelledBy: cancelled.status === 200 ? supervisor.id : null,
+        });
+        expect(await cancellations(s, asked.id)).toHaveLength(1);
+      }
+    });
+
+    it('20270511090000 cancels the requests already left scheduled, in every compound, once; a live task’s request stays', async () => {
+      // Two compounds as the old code left them: the task cancelled by the
+      // guard's going, its request still scheduled. A third whose task is live.
+      const stuck: { s: SetUp; asked: RequestBody; cancelledAt: Date }[] = [];
+      for (const name of ['Inspection Stuck Court', 'Inspection Stuck Hills']) {
+        const s = await x.setUp(name);
+        await close(s);
+        const { asked, task } = await scheduled(s, await x.supervisor(s.c));
+        const left = await x.inTx(s.c, (tx) =>
+          tx.guardTask.update({
+            where: { id: task.id },
+            data: {
+              status: 'cancelled',
+              cancelledAt: new Date(),
+              cancelledById: null,
+              cancelReason: 'assignee_left',
+            },
+          }),
+        );
+        expect((await row(s, asked.id)).status).toBe('scheduled');
+        stuck.push({ s, asked, cancelledAt: left.cancelledAt! });
+      }
+      const live = await x.setUp('Inspection Live Court');
+      await close(live);
+      const { asked: kept } = await scheduled(live, await x.supervisor(live.c));
+
+      const migrator = new Client({
+        connectionString: required('TEST_MIGRATOR_DATABASE_URL'),
+      });
+      await migrator.connect();
+      try {
+        const sql = readFileSync(LEFT_TASK_MIGRATION, 'utf8');
+        await migrator.query(sql);
+        // Once: a second run finds nothing to change.
+        await migrator.query(sql);
+      } finally {
+        await migrator.end();
+      }
+
+      for (const { s, asked, cancelledAt } of stuck) {
+        expect(await row(s, asked.id)).toMatchObject({
+          status: 'cancelled',
+          cancelReason: 'task_cancelled',
+          cancelledBy: null,
+          cancelledAt,
+        });
+        expect(((await ask(s).expect(201)).body as RequestBody).status).toBe(
+          'open',
+        );
+      }
+      expect(await row(live, kept.id)).toMatchObject({
+        status: 'scheduled',
+        cancelledAt: null,
+      });
     });
   });
 

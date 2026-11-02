@@ -2804,6 +2804,49 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   maintenance_plan_suggestions_decided_shape: {},
   maintenance_cases_status_known: {},
   maintenance_cases_closed_shape: {},
+  // Compliance, corrective actions, drills and the office's lockdown (ADR 0087).
+  compliance_settings_lead_days: {},
+  compliance_items_kind_known: {},
+  compliance_items_text_length: {
+    guarded:
+      'title is NOT NULL; authority, reference and notes are each tested IS NULL first, and their length or pattern runs only on a value',
+  },
+  compliance_items_one_subject: {
+    guarded:
+      'num_nonnulls counts asset_id and common_area_id, NULL or not: it is never NULL',
+  },
+  compliance_items_responsible: {
+    guarded:
+      'num_nonnulls counts vendor_id and owner_account_id, NULL or not: it is never NULL',
+  },
+  compliance_items_schedule: {
+    guarded:
+      'recurrence_months is tested IS NULL first; lead_days is NOT NULL and its elements are refused NULL by array_position',
+  },
+  compliance_items_retired_shape: {
+    guarded:
+      'retired_at, retired_by_account_id and retire_reason are compared by IS [NOT] NULL; the reason list runs only after its IS NULL test',
+  },
+  compliance_occurrences_status_known: {},
+  compliance_occurrences_state_shape: {
+    guarded:
+      'status is NOT NULL; the done and cancel columns are compared by IS [NOT] NULL; certificate_number, expires_on, note, lead_alerted_days and previous_id are each tested IS NULL first',
+  },
+  compliance_evidence_removed_shape: {},
+  incident_actions_status_known: {},
+  incident_actions_text_length: {
+    guarded:
+      'description and done_note are each tested IS NULL first, and their length runs only on a value',
+  },
+  incident_actions_state_shape: {
+    guarded:
+      'status is NOT NULL; the done and cancel columns are compared by IS [NOT] NULL; the reason list runs only after its IS NULL test',
+  },
+  readiness_items_drill_shape: {
+    guarded:
+      'kind is NOT NULL; drill_type, drill_outcome, drill_participants and drill_minutes are each tested IS NULL first, and their lists and ranges run only on a value; done_at only by IS [NOT] NULL',
+  },
+  gate_lockdowns_started_from: {},
 };
 
 interface Check {

@@ -10566,7 +10566,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` \\| `text/csv` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` \\| `contract` \\| `asset_document` \\| `checklist_photo` \\| `data_import` \\| `works_inspection_photo` \\| `gate_face_probe` \\| `gate_id_scan` \\| `market_listing_photo` \\| `gallery_photo` \\| `permit_drawing` \\| `fitout_photo` \\| `damage_appeal_photo` \\| `site_map` \\| `floor_plan` \\| `vendor_document` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` \\| `text/csv` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` \\| `contract` \\| `asset_document` \\| `checklist_photo` \\| `data_import` \\| `works_inspection_photo` \\| `gate_face_probe` \\| `gate_id_scan` \\| `market_listing_photo` \\| `gallery_photo` \\| `permit_drawing` \\| `fitout_photo` \\| `damage_appeal_photo` \\| `site_map` \\| `floor_plan` \\| `vendor_document` \\| `compliance_evidence` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -34091,6 +34091,484 @@
                   "value": ""
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "The compliance calendar",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s first day: today by default.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day: 90 days by default, 366 at most (PERIOD_TOO_LONG).",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/calendar"
+            }
+          }
+        },
+        {
+          "name": "Remove evidence filed by mistake",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "evidence",
+                ":evidenceId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/evidence/:evidenceId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "evidenceId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the compliance items",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "items"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "ownerId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "vendorId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/items"
+            }
+          }
+        },
+        {
+          "name": "Add a compliance item",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"fire_system\",\n  \"title\": \"\",\n  \"firstDueOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  | An asset of the compound’s own, not retired (a lift); never with `commonAreaId`. |\n| `authority` | string |  | Who issues it: the civil defence, the insurer, the city. |\n| `commonAreaId` | string (uuid) |  | An active common area (a building, the pool); never with `assetId`. |\n| `firstDueOn` | string (date) | yes | Its first due day: from today, ten years ahead at most. |\n| `kind` | `fire_system` \\| `lift` \\| `insurance` \\| `licence` \\| `permit` \\| `other` | yes |  |\n| `leadDays` | number[] |  | Its own lead times, 1 to 365 days each, at most three; empty or none: the compound’s. |\n| `notes` | string |  |  |\n| `ownerId` | string (uuid) |  | The staff member who answers for it: an active staff member or the manager. Told. With `vendorId`, or alone. |\n| `recurrenceMonths` | number |  | Every how many months it is due again; none: once. |\n| `reference` | string |  | Its licence, policy or file number. |\n| `title` | string | yes | The compound’s words: “Civil defence certificate, tower A”. |\n| `vendorId` | string (uuid) |  | The vendor of the register who answers for it (ADR 0077); not a suspended one. With `ownerId`, or alone. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "items"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/items"
+            }
+          }
+        },
+        {
+          "name": "Get a compliance item",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "items",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/items/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a compliance item",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"assetId\": \"\",\n  \"authority\": \"\",\n  \"commonAreaId\": \"\",\n  \"leadDays\": [],\n  \"nextDueOn\": \"2026-01-01\",\n  \"notes\": \"\",\n  \"ownerId\": \"\",\n  \"recurrenceMonths\": 1,\n  \"reference\": \"\",\n  \"title\": \"\",\n  \"vendorId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) |  |  |\n| `authority` | string |  |  |\n| `commonAreaId` | string (uuid) |  |  |\n| `leadDays` | number[] |  | Empty: the compound’s lead times. |\n| `nextDueOn` | string (date) |  | Moves the open due day (the authority gave another): from today. Its notices start again. |\n| `notes` | string |  |  |\n| `ownerId` | string (uuid) |  | Null takes the staff member away, when a vendor answers. A new one is told. |\n| `recurrenceMonths` | number |  | Null: once. |\n| `reference` | string |  |  |\n| `title` | string |  |  |\n| `vendorId` | string (uuid) |  | Null takes the vendor away, when a staff member answers. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "items",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/items/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retire a compliance item",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "items",
+                ":id",
+                "retire"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/items/:id/retire",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a due day done",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"doneOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `certificateNumber` | string |  | The certificate’s, licence’s or policy’s number it gave. |\n| `doneOn` | string (date) | yes | The day it was done: not after today, a year back at most. |\n| `expiresOn` | string (date) |  | When what it gave expires, after `doneOn`: the next due day, unless `nextDueOn` is given. |\n| `fileIds` | string (uuid)[] |  | Finalized `compliance_evidence` uploads, filed with it. |\n| `nextDueOn` | string (date) |  | The next due day, after `doneOn`; by default the expiry, else so many months on, else none. |\n| `note` | string |  | About the work, never a person. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "occurrences",
+                ":occurrenceId",
+                "complete"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/occurrences/:occurrenceId/complete",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "occurrenceId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "File evidence on a due day",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | A finalized `compliance_evidence` upload. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "occurrences",
+                ":occurrenceId",
+                "evidence"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/occurrences/:occurrenceId/evidence",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "occurrenceId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The compliance status report",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "report"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/report"
+            }
+          }
+        },
+        {
+          "name": "Export the compliance status as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "report",
+                "export"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/report/export"
+            }
+          }
+        },
+        {
+          "name": "The compound’s compliance lead times",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/settings"
+            }
+          }
+        },
+        {
+          "name": "Set the compound’s compliance lead times",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"leadDays\": [\n    0\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `leadDays` | number[] | yes | One to three lead times, 1 to 365 days each. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compliance",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compliance/settings"
             }
           }
         },

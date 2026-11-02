@@ -516,6 +516,19 @@
         ],
         "type": "object"
       },
+      "AddEvidenceDto": {
+        "properties": {
+          "fileId": {
+            "description": "A finalized `compliance_evidence` upload.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
       "AddPermitDrawingDto": {
         "properties": {
           "fileId": {
@@ -12272,6 +12285,48 @@
         ],
         "type": "object"
       },
+      "CompleteOccurrenceDto": {
+        "properties": {
+          "certificateNumber": {
+            "description": "The certificate’s, licence’s or policy’s number it gave.",
+            "pattern": "^[A-Za-z0-9/. -]{1,60}$",
+            "type": "string"
+          },
+          "doneOn": {
+            "description": "The day it was done: not after today, a year back at most.",
+            "format": "date",
+            "type": "string"
+          },
+          "expiresOn": {
+            "description": "When what it gave expires, after `doneOn`: the next due day, unless `nextDueOn` is given.",
+            "format": "date",
+            "type": "string"
+          },
+          "fileIds": {
+            "description": "Finalized `compliance_evidence` uploads, filed with it.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "nextDueOn": {
+            "description": "The next due day, after `doneOn`; by default the expiry, else so many months on, else none.",
+            "format": "date",
+            "type": "string"
+          },
+          "note": {
+            "description": "About the work, never a person.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "doneOn"
+        ],
+        "type": "object"
+      },
       "CompleteProxyDto": {
         "properties": {
           "code": {
@@ -12411,6 +12466,167 @@
         },
         "type": "object"
       },
+      "ComplianceArchiveView": {
+        "properties": {
+          "certificateNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "doneOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ComplianceEvidenceView"
+            },
+            "type": "array"
+          },
+          "expiresOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "About the work.",
+            "nullable": true,
+            "type": "string"
+          },
+          "previousId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceOccurrenceStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dueOn",
+          "status",
+          "doneOn",
+          "certificateNumber",
+          "expiresOn",
+          "note",
+          "previousId",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "ComplianceCalendarEntryView": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "itemId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "description": "ComplianceKind, or the paper’s VendorDocumentKind.",
+            "type": "string"
+          },
+          "source": {
+            "description": "`compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077).",
+            "enum": [
+              "compliance",
+              "vendor_document"
+            ],
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceCalendarState"
+              }
+            ]
+          },
+          "title": {
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "id",
+          "day",
+          "kind",
+          "state",
+          "itemId",
+          "title",
+          "vendorId",
+          "vendorName"
+        ],
+        "type": "object"
+      },
+      "ComplianceCalendarState": {
+        "enum": [
+          "valid",
+          "due_soon",
+          "overdue",
+          "done",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "ComplianceCalendarView": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ComplianceCalendarEntryView"
+            },
+            "type": "array"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "truncated": {
+            "description": "More than 1000 entries: ask for fewer days.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "entries",
+          "truncated"
+        ],
+        "type": "object"
+      },
       "ComplianceCaseResponse": {
         "properties": {
           "closedAt": {
@@ -12479,6 +12695,616 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ComplianceEvidenceView": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileUrl": {
+            "description": "A short-lived link to read the file; null when it is gone.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "addedAt",
+          "fileUrl"
+        ],
+        "type": "object"
+      },
+      "ComplianceItemDetailView": {
+        "properties": {
+          "asset": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceSubjectView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "authority": {
+            "nullable": true,
+            "type": "string"
+          },
+          "commonArea": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceSubjectView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "current": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceOccurrenceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceKind"
+              }
+            ]
+          },
+          "lastDone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceOccurrenceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "leadDays": {
+            "description": "The lead times in force, longest first.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "nullable": true,
+            "type": "string"
+          },
+          "occurrences": {
+            "description": "Its due days, the latest first (100 at most), with their evidence.",
+            "items": {
+              "$ref": "#/components/schemas/ComplianceArchiveView"
+            },
+            "type": "array"
+          },
+          "ownLeadDays": {
+            "description": "Its own lead times, not the compound’s.",
+            "type": "boolean"
+          },
+          "owner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "recurrenceMonths": {
+            "description": "Null: once.",
+            "nullable": true,
+            "type": "number"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "retireReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceRetireReason"
+              }
+            ],
+            "nullable": true
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceState"
+              }
+            ],
+            "description": "On the compound’s today."
+          },
+          "title": {
+            "type": "string"
+          },
+          "vendor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceVendorView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "authority",
+          "reference",
+          "asset",
+          "commonArea",
+          "vendor",
+          "owner",
+          "recurrenceMonths",
+          "leadDays",
+          "ownLeadDays",
+          "notes",
+          "state",
+          "current",
+          "lastDone",
+          "retiredAt",
+          "retireReason",
+          "occurrences"
+        ],
+        "type": "object"
+      },
+      "ComplianceItemView": {
+        "properties": {
+          "asset": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceSubjectView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "authority": {
+            "nullable": true,
+            "type": "string"
+          },
+          "commonArea": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceSubjectView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "current": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceOccurrenceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceKind"
+              }
+            ]
+          },
+          "lastDone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceOccurrenceView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "leadDays": {
+            "description": "The lead times in force, longest first.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "notes": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ownLeadDays": {
+            "description": "Its own lead times, not the compound’s.",
+            "type": "boolean"
+          },
+          "owner": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "recurrenceMonths": {
+            "description": "Null: once.",
+            "nullable": true,
+            "type": "number"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "retireReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceRetireReason"
+              }
+            ],
+            "nullable": true
+          },
+          "retiredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceState"
+              }
+            ],
+            "description": "On the compound’s today."
+          },
+          "title": {
+            "type": "string"
+          },
+          "vendor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceVendorView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "authority",
+          "reference",
+          "asset",
+          "commonArea",
+          "vendor",
+          "owner",
+          "recurrenceMonths",
+          "leadDays",
+          "ownLeadDays",
+          "notes",
+          "state",
+          "current",
+          "lastDone",
+          "retiredAt",
+          "retireReason"
+        ],
+        "type": "object"
+      },
+      "ComplianceItemViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ComplianceItemView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ComplianceKind": {
+        "enum": [
+          "fire_system",
+          "lift",
+          "insurance",
+          "licence",
+          "permit",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ComplianceKindCountsView": {
+        "properties": {
+          "completed": {
+            "description": "Done once; nothing recurs.",
+            "type": "number"
+          },
+          "dueSoon": {
+            "type": "number"
+          },
+          "items": {
+            "description": "Not retired.",
+            "type": "number"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceKind"
+              }
+            ]
+          },
+          "overdue": {
+            "type": "number"
+          },
+          "retired": {
+            "type": "number"
+          },
+          "valid": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "valid",
+          "dueSoon",
+          "overdue",
+          "completed",
+          "retired",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "ComplianceOccurrenceStatus": {
+        "enum": [
+          "open",
+          "done",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "ComplianceOccurrenceView": {
+        "properties": {
+          "certificateNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "doneOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "expiresOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "About the work.",
+            "nullable": true,
+            "type": "string"
+          },
+          "previousId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceOccurrenceStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dueOn",
+          "status",
+          "doneOn",
+          "certificateNumber",
+          "expiresOn",
+          "note",
+          "previousId"
+        ],
+        "type": "object"
+      },
+      "ComplianceReportView": {
+        "properties": {
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          },
+          "kinds": {
+            "description": "Every kind, in a fixed order, with zeros.",
+            "items": {
+              "$ref": "#/components/schemas/ComplianceKindCountsView"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ComplianceStatusCountsView"
+          },
+          "vendorPapers": {
+            "$ref": "#/components/schemas/VendorPapersCountsView"
+          }
+        },
+        "required": [
+          "asOf",
+          "totals",
+          "kinds",
+          "vendorPapers"
+        ],
+        "type": "object"
+      },
+      "ComplianceRetireReason": {
+        "enum": [
+          "not_applicable",
+          "asset_retired",
+          "replaced",
+          "duplicate",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ComplianceSettingsDto": {
+        "properties": {
+          "leadDays": {
+            "description": "One to three lead times, 1 to 365 days each.",
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "leadDays"
+        ],
+        "type": "object"
+      },
+      "ComplianceSettingsView": {
+        "properties": {
+          "leadDays": {
+            "description": "Longest first.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "leadDays"
+        ],
+        "type": "object"
+      },
+      "ComplianceState": {
+        "description": "On the compound’s today.",
+        "enum": [
+          "valid",
+          "due_soon",
+          "overdue",
+          "completed",
+          "retired"
+        ],
+        "type": "string"
+      },
+      "ComplianceStatusCountsView": {
+        "properties": {
+          "completed": {
+            "description": "Done once; nothing recurs.",
+            "type": "number"
+          },
+          "dueSoon": {
+            "type": "number"
+          },
+          "items": {
+            "description": "Not retired.",
+            "type": "number"
+          },
+          "overdue": {
+            "type": "number"
+          },
+          "retired": {
+            "type": "number"
+          },
+          "valid": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "valid",
+          "dueSoon",
+          "overdue",
+          "completed",
+          "retired"
+        ],
+        "type": "object"
+      },
+      "ComplianceSubjectView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "ComplianceVendorView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status"
         ],
         "type": "object"
       },
@@ -15096,6 +15922,82 @@
           "categoryId",
           "targetUnitCode",
           "body"
+        ],
+        "type": "object"
+      },
+      "CreateComplianceItemDto": {
+        "properties": {
+          "assetId": {
+            "description": "An asset of the compound’s own, not retired (a lift); never with `commonAreaId`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "authority": {
+            "description": "Who issues it: the civil defence, the insurer, the city.",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "description": "An active common area (a building, the pool); never with `assetId`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "firstDueOn": {
+            "description": "Its first due day: from today, ten years ahead at most.",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceKind"
+              }
+            ]
+          },
+          "leadDays": {
+            "description": "Its own lead times, 1 to 365 days each, at most three; empty or none: the compound’s.",
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "notes": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "The staff member who answers for it: an active staff member or the manager. Told. With `vendorId`, or alone.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "recurrenceMonths": {
+            "description": "Every how many months it is due again; none: once.",
+            "maximum": 120,
+            "minimum": 1,
+            "type": "number"
+          },
+          "reference": {
+            "description": "Its licence, policy or file number.",
+            "pattern": "^[A-Za-z0-9/. -]{1,60}$",
+            "type": "string"
+          },
+          "title": {
+            "description": "The compound’s words: “Civil defence certificate, tower A”.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "The vendor of the register who answers for it (ADR 0077); not a suspended one. With `ownerId`, or alone.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "title",
+          "firstDueOn"
         ],
         "type": "object"
       },
@@ -25058,7 +25960,8 @@
           "damage_appeal_photo",
           "site_map",
           "floor_plan",
-          "vendor_document"
+          "vendor_document",
+          "compliance_evidence"
         ],
         "type": "string"
       },
@@ -71999,6 +72902,73 @@
         },
         "type": "object"
       },
+      "UpdateComplianceItemDto": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "authority": {
+            "maxLength": 120,
+            "nullable": true,
+            "type": "string"
+          },
+          "commonAreaId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "leadDays": {
+            "description": "Empty: the compound’s lead times.",
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "nextDueOn": {
+            "description": "Moves the open due day (the authority gave another): from today. Its notices start again.",
+            "format": "date",
+            "type": "string"
+          },
+          "notes": {
+            "maxLength": 1000,
+            "nullable": true,
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "Null takes the staff member away, when a vendor answers. A new one is told.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "recurrenceMonths": {
+            "description": "Null: once.",
+            "maximum": 120,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "reference": {
+            "nullable": true,
+            "pattern": "^[A-Za-z0-9/. -]{1,60}$",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "Null takes the vendor away, when a staff member answers.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateContractDto": {
         "properties": {
           "annualValue": {
@@ -74412,6 +75382,26 @@
         "required": [
           "count",
           "averages"
+        ],
+        "type": "object"
+      },
+      "VendorPapersCountsView": {
+        "properties": {
+          "expired": {
+            "type": "number"
+          },
+          "expiringSoon": {
+            "description": "Within 30 days.",
+            "type": "number"
+          },
+          "valid": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "valid",
+          "expiringSoon",
+          "expired"
         ],
         "type": "object"
       },
@@ -119272,6 +120262,583 @@
         "summary": "List who may be given a collector visit",
         "tags": [
           "finance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/calendar": {
+      "get": {
+        "description": "The due days of the days asked (90 by default, 366 at most) and the vendors’ papers expiring then, by day.",
+        "operationId": "ComplianceController_calendar",
+        "parameters": [
+          {
+            "description": "The compound’s first day: today by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2027-05-01",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day: 90 days by default, 366 at most (PERIOD_TOO_LONG).",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2027-07-29",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceCalendarView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compliance calendar",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/evidence/{evidenceId}": {
+      "delete": {
+        "operationId": "ComplianceController_removeEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "evidenceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove evidence filed by mistake",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/items": {
+      "get": {
+        "description": "In the order they were made, each with its open due day and its state today.",
+        "operationId": "ComplianceController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ComplianceKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "retired"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ownerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vendorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compliance items",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Its first due day is made with it. The responsible staff member is told.",
+        "operationId": "ComplianceController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateComplianceItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceItemDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a compliance item",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/items/{id}": {
+      "get": {
+        "description": "With its due days, the latest first, and their evidence.",
+        "operationId": "ComplianceController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceItemDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a compliance item",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "`nextDueOn` moves its open due day; its notices start again.",
+        "operationId": "ComplianceController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateComplianceItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceItemDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a compliance item",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/items/{id}/retire": {
+      "post": {
+        "description": "Once: its open due day is called off.",
+        "operationId": "ComplianceController_retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceItemDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retire a compliance item",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/occurrences/{occurrenceId}/complete": {
+      "post": {
+        "description": "Once (COMPLIANCE_OCCURRENCE_ENDED after), with what it gave and its evidence. The next due day is made: the one given, else the expiry, else so many months on; none for an item done once.",
+        "operationId": "ComplianceController_complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "occurrenceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteOccurrenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceItemDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a due day done",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/occurrences/{occurrenceId}/evidence": {
+      "post": {
+        "description": "Open or done, 20 live files at most.",
+        "operationId": "ComplianceController_addEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "occurrenceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddEvidenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceArchiveView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "File evidence on a due day",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/report": {
+      "get": {
+        "description": "Per kind, how many items are valid, due soon, overdue, done once or retired today; and the vendors’ papers. Counts only.",
+        "operationId": "ComplianceController_report",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compliance status report",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/report/export": {
+      "get": {
+        "description": "UTF-8 with a byte-order mark, CRLF; one row per item not retired, the soonest due first.",
+        "operationId": "ComplianceController_export",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the compliance status as CSV",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/compliance/settings": {
+      "get": {
+        "operationId": "ComplianceController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s compliance lead times",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "description": "One to three, 1 to 365 days each; 60, 30 and 7 by default.",
+        "operationId": "ComplianceController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplianceSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the compound’s compliance lead times",
+        "tags": [
+          "maintenance"
         ],
         "x-stability": "draft"
       }

@@ -423,3 +423,11 @@ The full notes are in [`notes/transfers-closed-units.md`](notes/transfers-closed
 - **Emergency entries.** `POST /staff/security/unit-entries`, `GET …`, `GET …/{id}`, `POST …/{id}/report` (`409 UNIT_ENTRY_REPORTED`); `GET /units/{unitId}/entries` for the unit's people. All no-store.
 - **Market.** `commercialBlocked`, `allowedCategories`, `maxLivePerUnit` on `/market/settings` (`409 MARKET_COMMERCIAL_BLOCKED`, `MARKET_CATEGORY_NOT_ALLOWED`, `MARKET_UNIT_LISTING_LIMIT_REACHED`).
 - **Group offers.** `POST /staff/group-offers/{id}/contract { finalPrice, partnerId?, reconfirmHours? }`; `POST /market/group-offers/{id}/reconfirm` (`409 GROUP_OFFER_RECONFIRM_NOT_NEEDED`); statuses `reconfirming`, `contracted`.
+### The field team (ADR 0078)
+
+The full notes for the apps are in [`notes/field-team.md`](notes/field-team.md).
+
+- **Roster.** The guards' roster for the technicians (`field_team.manage`): `/staff/field-team/{technicians,zones}`, `roster/templates[/{id}/end]`, `roster/slots[/{id}/cancel]`, `attendance`; a technician's own `GET /maintenance/my-roster[/attendance]`. A slot is filled by going on duty (`POST /technician/availability`) and closed by going off it: `dutyStartedAt`, `dutyEndedAt`, `lateMinutes`, `overtimeMinutes`, `absentAt`.
+- **Instructions.** `POST/GET /staff/field-team/instructions`, `…/{id}`, `…/{id}/archive`; the technician's `GET /maintenance/instructions`, `…/{id}`, `…/{id}/acknowledge`. The audience enum gains `technicians`, the reach enum `on_duty`.
+- **Calls for help.** `POST /maintenance/help-requests`, `GET …/mine`, `…/{id}/resolve|cancel`; the field team's `GET /staff/field-team/help-requests[/{id}]`, `…/{id}/take|resolve`. Pushes `technician_help.requested|taken|assigned|escalated` with `helpKind` only.
+

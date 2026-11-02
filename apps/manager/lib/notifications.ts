@@ -161,6 +161,14 @@ const TEXT: Record<string, (p: P) => string> = {
   'gate_service.closed': (p) => `Security closed your request (${words(p.reason)})`,
   // Guard shifts and tasks (ADR 0050): codes only, never a name or a post.
   'guard_shift.absent': () => 'A guard did not start their shift',
+  // The field team (ADR 0078).
+  'technician_shift.absent': () => 'A technician did not go on duty for their shift',
+  'technician_instruction.issued': () => 'An instruction went to the technicians',
+  'technician_instruction.urgent': () => 'An urgent instruction went to the technicians',
+  'technician_help.requested': (p) => `A technician called for help (${String(p.helpKind ?? '').replace(/_/g, ' ')})`,
+  'technician_help.taken': () => 'A call for help was taken',
+  'technician_help.assigned': () => 'A technician was sent to help a colleague',
+  'technician_help.escalated': (p) => `Nobody took a technician's call for help (${String(p.helpKind ?? '').replace(/_/g, ' ')})`,
   'guard_shift.absent_unmanned': () => 'A guard did not start their shift and nobody is on duty there',
   'guard_task.assigned': (p) => `A ${words(p.taskKind)} task for you`,
   'guard_task.unit_inspected': (p) => `Security inspected your closed unit (${words(p.outcome)})`,
@@ -464,6 +472,10 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('appeals.decide') ? `/appeals/${n.targetId}` : null;
   // Guard shifts and tasks (ADR 0050): the keepers' pages. A task, an
   // instruction or a swap to answer is a guard's, in the app.
+  // The field team (ADR 0078): a technician's slot, call or instruction.
+  if (n.kind === 'technician_shift.absent' || n.kind.startsWith('technician_instruction.'))
+    return can('field_team.manage') ? '/field-team' : null;
+  if (n.targetType === 'technician_help_request') return can('field_team.manage') ? '/field-team' : null;
   if (n.targetType === 'guard_roster_slot') return can('guard_roster.manage') ? '/security/roster' : null;
   if (n.targetType === 'guard_shift_swap') return can('guard_roster.manage') ? '/security/swaps' : null;
   if (n.targetType === 'guard_task') return can('guard_tasks.manage') ? '/security/tasks' : null;

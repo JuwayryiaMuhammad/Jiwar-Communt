@@ -452,3 +452,15 @@ test('the board’s work: meetings, action items, handovers and reports', () => 
   assert.equal(notificationHref(n('board_report.ready', {}, 'board_report', 'r-1'), all), '/board/reports');
   assert.equal(notificationHref(n('board_report.ready', {}, 'board_report', 'r-1'), () => false), null);
 });
+
+test('a technician’s call for help says its kind, never the words, and leads the field team to its page (ADR 0078)', () => {
+  const n = {
+    kind: 'technician_help.requested',
+    params: { helpKind: 'extra_hands' },
+    targetType: 'technician_help_request',
+    targetId: '00000000-0000-0000-0000-000000000001',
+  };
+  assert.equal(notificationText(n), 'A technician called for help (extra hands)');
+  assert.equal(notificationHref(n, (p) => p === 'field_team.manage'), '/field-team');
+  assert.equal(notificationHref(n, () => false), null);
+});

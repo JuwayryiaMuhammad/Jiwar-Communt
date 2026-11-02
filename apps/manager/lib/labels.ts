@@ -85,6 +85,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'vendor_invoices.submit': 'Send your company’s invoices to the compound',
   'tenders.manage': 'Run tenders: documents, invited vendors, bid links, the award',
   'tenders.open': 'Open a tender’s sealed bids with a second person',
+  'reports.schedule': 'Send a report on a cadence to the staff who may read it',
+  'compound.export': 'Export the compound’s operational data, never a person’s, after a fresh code',
   'facilities.book': 'See the facilities and book them for a unit',
   'facilities.manage': 'Set up facilities, their rules, opening hours, peak times and closures, and the club’s plans',
   'bookings.handle': 'Approve and cancel bookings, mark no-shows, lift suspensions',

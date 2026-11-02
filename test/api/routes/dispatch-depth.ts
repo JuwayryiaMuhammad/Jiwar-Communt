@@ -96,4 +96,22 @@ export const DISPATCH_DEPTH_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  {
+    method: 'PATCH',
+    path: '/maintenance/sla-settings/escalation',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      body: { normal: 10 },
+      fields: [
+        {
+          field: 'normal',
+          code: 'INVALID_NUMBER',
+          params: { min: 50, max: 95 },
+        },
+      ],
+    },
+  },
 ];

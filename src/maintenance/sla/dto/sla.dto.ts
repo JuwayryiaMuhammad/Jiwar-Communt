@@ -7,6 +7,7 @@ import {
   IsOptional,
   Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { withParams } from '../../../core/common/validation/validation-errors';
@@ -25,6 +26,55 @@ export class UpdateSlaSettingsDto {
   @IsOptional()
   @IsBoolean()
   slaEnabled?: boolean;
+}
+
+const AT_RISK = { min: 50, max: 95 };
+
+/** ADR 0076: the at-risk share (%) per priority; `null` for no warning. */
+export class UpdateSlaEscalationDto {
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    required: false,
+    minimum: AT_RISK.min,
+    maximum: AT_RISK.max,
+    description:
+      'At this share of its target a normal ticket’s running clock is at risk: its technician and the dispatch are told once. `null`: no warning.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsInt(withParams(AT_RISK))
+  @Min(AT_RISK.min, withParams(AT_RISK))
+  @Max(AT_RISK.max, withParams(AT_RISK))
+  normal?: number | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    required: false,
+    minimum: AT_RISK.min,
+    maximum: AT_RISK.max,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsInt(withParams(AT_RISK))
+  @Min(AT_RISK.min, withParams(AT_RISK))
+  @Max(AT_RISK.max, withParams(AT_RISK))
+  urgent?: number | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    required: false,
+    minimum: AT_RISK.min,
+    maximum: AT_RISK.max,
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsInt(withParams(AT_RISK))
+  @Min(AT_RISK.min, withParams(AT_RISK))
+  @Max(AT_RISK.max, withParams(AT_RISK))
+  emergency?: number | null;
 }
 
 export class SlaTargetDto {

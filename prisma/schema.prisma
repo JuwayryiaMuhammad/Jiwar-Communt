@@ -4419,12 +4419,33 @@ model MaintenanceSlaSettings {
   slaEnabled Boolean   @default(false) @map("sla_enabled")
   /// The last activation: an older clock is stopped, never resumed.
   enabledAt  DateTime? @map("enabled_at") @db.Timestamptz(3)
+  /// ADR 0076: the share (%) of a clock's target after which it is at risk,
+  /// per priority; null for no warning at that priority.
+  atRiskPercentNormal    Int? @default(75) @map("at_risk_percent_normal")
+  atRiskPercentUrgent    Int? @default(75) @map("at_risk_percent_urgent")
+  atRiskPercentEmergency Int? @default(75) @map("at_risk_percent_emergency")
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@map("maintenance_sla_settings")
+}
+
+/// ADR 0076: an escalation level a ticket's clock reached, once per cycle.
+/// Append-only, no foreign keys, like the SLA's events.
+model TicketSlaAlert {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  ticketId  String   @map("ticket_id") @db.Uuid
+  /// The SLA's cycle (ADR 0034), not the ticket's.
+  cycle     Int
+  clock     SlaClock
+  /// `at_risk`.
+  level     String
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@id([tenantId, ticketId, cycle, clock, level])
+  @@map("ticket_sla_alerts")
 }
 
 model SlaTarget {

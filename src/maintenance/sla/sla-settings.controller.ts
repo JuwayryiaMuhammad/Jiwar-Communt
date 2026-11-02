@@ -17,7 +17,11 @@ import {
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
-import { SlaTargetsDto, UpdateSlaSettingsDto } from './dto/sla.dto';
+import {
+  SlaTargetsDto,
+  UpdateSlaEscalationDto,
+  UpdateSlaSettingsDto,
+} from './dto/sla.dto';
 import { SlaSettingsService } from './sla-settings.service';
 import { SlaSweep } from './sla-sweep';
 import { SlaTargetsService } from './sla-targets.service';
@@ -62,6 +66,16 @@ export class SlaSettingsController {
           ),
         );
     return SlaSettingsResponse.from(updated);
+  }
+
+  /** The escalation levels (ADR 0076): the at-risk share per priority. */
+  @Patch('escalation')
+  @ApiOperation({ summary: 'Set when an SLA clock is at risk, per priority' })
+  @ApiOkResponse({ type: SlaSettingsResponse })
+  async escalation(
+    @Body() dto: UpdateSlaEscalationDto,
+  ): Promise<SlaSettingsResponse> {
+    return SlaSettingsResponse.from(await this.settings.updateEscalation(dto));
   }
 }
 

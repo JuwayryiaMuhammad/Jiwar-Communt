@@ -53111,6 +53111,28 @@
         ],
         "type": "object"
       },
+      "SlaAtRiskView": {
+        "properties": {
+          "emergency": {
+            "nullable": true,
+            "type": "number"
+          },
+          "normal": {
+            "nullable": true,
+            "type": "number"
+          },
+          "urgent": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "normal",
+          "urgent",
+          "emergency"
+        ],
+        "type": "object"
+      },
       "SlaClock": {
         "enum": [
           "response",
@@ -53209,6 +53231,14 @@
       },
       "SlaSettingsResponse": {
         "properties": {
+          "atRiskPercent": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SlaAtRiskView"
+              }
+            ],
+            "description": "ADR 0076: the share (%) of a clock’s target at which it is at risk, per priority; `null` for no warning."
+          },
           "enabledAt": {
             "description": "The last time it was turned on: no clock starts before it (nothing is backdated).",
             "format": "date-time",
@@ -53227,6 +53257,7 @@
         "required": [
           "slaEnabled",
           "enabledAt",
+          "atRiskPercent",
           "updatedAt"
         ],
         "type": "object"
@@ -68108,6 +68139,30 @@
             "maxLength": 2000,
             "nullable": true,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateSlaEscalationDto": {
+        "properties": {
+          "emergency": {
+            "maximum": 95,
+            "minimum": 50,
+            "nullable": true,
+            "type": "number"
+          },
+          "normal": {
+            "description": "At this share of its target a normal ticket’s running clock is at risk: its technician and the dispatch are told once. `null`: no warning.",
+            "maximum": 95,
+            "minimum": 50,
+            "nullable": true,
+            "type": "number"
+          },
+          "urgent": {
+            "maximum": 95,
+            "minimum": 50,
+            "nullable": true,
+            "type": "number"
           }
         },
         "type": "object"
@@ -92072,6 +92127,44 @@
           }
         ],
         "summary": "Turn the SLA on or off",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/sla-settings/escalation": {
+      "patch": {
+        "operationId": "SlaSettingsController_escalation",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSlaEscalationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaSettingsResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set when an SLA clock is at risk, per priority",
         "tags": [
           "maintenance"
         ],

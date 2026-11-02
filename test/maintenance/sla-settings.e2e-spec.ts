@@ -42,6 +42,8 @@ describe('Maintenance — SLA settings and targets', () => {
     expect(res.body).toEqual({
       slaEnabled: false,
       enabledAt: null,
+      // ADR 0076: the escalation levels, 75 % at every priority by default.
+      atRiskPercent: { normal: 75, urgent: 75, emergency: 75 },
       updatedAt: expect.any(String) as string,
     });
   });

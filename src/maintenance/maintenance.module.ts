@@ -58,6 +58,7 @@ import { WorkService } from './tickets/work.service';
 import { WorkOrdersController } from './tickets/work-orders.controller';
 import { WorkOrdersService } from './tickets/work-orders.service';
 import { TicketExport } from './tickets/ticket-export';
+import { SlaAtRisk } from './sla/sla-at-risk';
 import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketSummary } from './tickets/resident-ticket-summary';
 import { ResidentTicketItems } from './tickets/resident-ticket-items';
@@ -302,6 +303,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     WorkService,
     WorkOrdersService,
     TicketExport,
+    SlaAtRisk,
     TechnicianRelease,
     MessagesService,
     ConfirmationService,

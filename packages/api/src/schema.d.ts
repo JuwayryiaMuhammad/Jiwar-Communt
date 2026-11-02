@@ -7397,6 +7397,23 @@ export interface paths {
         patch: operations["SlaSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/sla-settings/escalation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set when an SLA clock is at risk, per priority */
+        patch: operations["SlaSettingsController_escalation"];
+        trace?: never;
+    };
     "/api/v1/maintenance/specialties": {
         parameters: {
             query?: never;
@@ -39292,6 +39309,11 @@ export interface components {
             /** @description `author`: who reported it (INCIDENT_SIGNER_NOT_ELIGIBLE otherwise). `reviewer`: a keeper who did not. */
             role: components["schemas"]["IncidentSignatureRole"];
         };
+        SlaAtRiskView: {
+            emergency: number | null;
+            normal: number | null;
+            urgent: number | null;
+        };
         /** @enum {string} */
         SlaClock: "response" | "resolution";
         /** @enum {string} */
@@ -39318,6 +39340,8 @@ export interface components {
             nextCursor: string | null;
         };
         SlaSettingsResponse: {
+            /** @description ADR 0076: the share (%) of a clock’s target at which it is at risk, per priority; `null` for no warning. */
+            atRiskPercent: components["schemas"]["SlaAtRiskView"];
             /**
              * Format: date-time
              * @description The last time it was turned on: no clock starts before it (nothing is backdated).
@@ -43723,6 +43747,12 @@ export interface components {
             timezone?: string;
             /** @description What the compound tells its visitors on the public pass page (ADR 0030). `null` clears it. */
             visitorDirections?: string | null;
+        };
+        UpdateSlaEscalationDto: {
+            emergency?: number | null;
+            /** @description At this share of its target a normal ticket’s running clock is at risk: its technician and the dispatch are told once. `null`: no warning. */
+            normal?: number | null;
+            urgent?: number | null;
         };
         UpdateSlaSettingsDto: {
             /** @description Measure response and resolution times. Off until the manager turns it on; turning it on starts clocks for the open tickets from that moment, never earlier. */
@@ -55720,6 +55750,29 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateSlaSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlaSettingsResponse"];
+                };
+            };
+        };
+    };
+    SlaSettingsController_escalation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSlaEscalationDto"];
             };
         };
         responses: {

@@ -44,6 +44,15 @@ export class SlaEventView {
   }
 }
 
+export class SlaAtRiskView {
+  @ApiProperty({ type: Number, nullable: true })
+  normal: number | null;
+  @ApiProperty({ type: Number, nullable: true })
+  urgent: number | null;
+  @ApiProperty({ type: Number, nullable: true })
+  emergency: number | null;
+}
+
 export class SlaSettingsResponse {
   @ApiProperty({
     type: Boolean,
@@ -58,6 +67,12 @@ export class SlaSettingsResponse {
       'The last time it was turned on: no clock starts before it (nothing is backdated).',
   })
   enabledAt: Date | null;
+  @ApiProperty({
+    type: () => SlaAtRiskView,
+    description:
+      'ADR 0076: the share (%) of a clock’s target at which it is at risk, per priority; `null` for no warning.',
+  })
+  atRiskPercent: SlaAtRiskView;
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt: Date;
 
@@ -65,6 +80,7 @@ export class SlaSettingsResponse {
     return {
       slaEnabled: s.slaEnabled,
       enabledAt: s.enabledAt,
+      atRiskPercent: { ...s.atRiskPercent },
       updatedAt: s.updatedAt,
     };
   }

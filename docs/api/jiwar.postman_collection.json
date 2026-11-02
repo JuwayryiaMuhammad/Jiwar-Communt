@@ -29893,6 +29893,42 @@
           }
         },
         {
+          "name": "Set when an SLA clock is at risk, per priority",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"emergency\": 50,\n  \"normal\": 50,\n  \"urgent\": 50\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `emergency` | number |  |  |\n| `normal` | number |  | At this share of its target a normal ticket’s running clock is at risk: its technician and the dispatch are told once. `null`: no warning. |\n| `urgent` | number |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "sla-settings",
+                "escalation"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/sla-settings/escalation"
+            }
+          }
+        },
+        {
           "name": "List specialties",
           "request": {
             "description": "**Responses:** 200",

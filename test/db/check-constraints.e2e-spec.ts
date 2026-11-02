@@ -2659,6 +2659,11 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   },
   // Dispatch depth (ADR 0076).
   tickets_meter_alert_staff_only: {},
+  maintenance_sla_settings_at_risk_range: {
+    guarded:
+      'each percent is tested IS NULL first; the range runs only on a value',
+  },
+  ticket_sla_alerts_level_known: {},
 };
 
 interface Check {

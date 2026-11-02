@@ -2079,6 +2079,27 @@ export const ErrorCode = {
   MATCH_TARGET_INVALID: 'MATCH_TARGET_INVALID',
   /** It is another line's match already (409, params.lineId). */
   MATCH_TARGET_TAKEN: 'MATCH_TARGET_TAKEN',
+  // The reports platform (ADR 0086).
+  REPORT_NOT_FOUND: 'REPORT_NOT_FOUND',
+  /** The report's own permission is not the caller's (403, params.permission). */
+  REPORT_NOT_YOURS: 'REPORT_NOT_YOURS',
+  /** More rows than one report file holds (422, params.max): narrow it. */
+  REPORT_TOO_LARGE: 'REPORT_TOO_LARGE',
+  REPORT_SCHEDULE_NOT_FOUND: 'REPORT_SCHEDULE_NOT_FOUND',
+  /** The compound has as many schedules as it may (409, params.max). */
+  REPORT_SCHEDULES_FULL: 'REPORT_SCHEDULES_FULL',
+  REPORT_RUN_NOT_FOUND: 'REPORT_RUN_NOT_FOUND',
+  CAPITAL_PLAN_NOT_FOUND: 'CAPITAL_PLAN_NOT_FOUND',
+  CAPITAL_PLAN_LINE_NOT_FOUND: 'CAPITAL_PLAN_LINE_NOT_FOUND',
+  /** Only a draft is changed or put to the board (409, params.status). */
+  CAPITAL_PLAN_NOT_DRAFT: 'CAPITAL_PLAN_NOT_DRAFT',
+  /** A plan with no line is not put to the board (409). */
+  CAPITAL_PLAN_EMPTY: 'CAPITAL_PLAN_EMPTY',
+  /** An export of the compound is being prepared already (409). */
+  COMPOUND_EXPORT_ACTIVE: 'COMPOUND_EXPORT_ACTIVE',
+  /** One export of the compound a day (429, params.retryAfter). */
+  COMPOUND_EXPORT_RATE_LIMITED: 'COMPOUND_EXPORT_RATE_LIMITED',
+  COMPOUND_EXPORT_NOT_FOUND: 'COMPOUND_EXPORT_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

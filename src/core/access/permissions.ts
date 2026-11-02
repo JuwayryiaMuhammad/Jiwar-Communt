@@ -398,6 +398,13 @@ export const PERMISSIONS = {
   // own: never a deputy's (ADR 0073).
   'tenders.manage': { kinds: ['staff', 'manager'] },
   'tenders.open': { kinds: ['staff', 'manager'] },
+  // The reports platform (ADR 0086). Each report is read by its own
+  // domain's permission; `reports.schedule` sends one on a cadence to the
+  // staff who hold that permission (the scheduler must hold it too).
+  'reports.schedule': { kinds: ['manager'] },
+  // The compound's operational data as one archive of fixed tables and
+  // columns, never a person's, behind a fresh step-up, once a day.
+  'compound.export': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

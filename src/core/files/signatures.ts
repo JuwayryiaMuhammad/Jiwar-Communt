@@ -33,6 +33,9 @@ const SIGNATURES: Record<FileContentType, (b: Buffer) => boolean> = {
   // byte but tab, LF and CR, and no NUL, so a binary renamed to .csv goes.
   // The import reads the whole file as strict UTF-8 later.
   'text/csv': (b) => b.length > 0 && b.every(isTextByte),
+  // A workbook is a zip (ADR 0086; written by the server).
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': (b) =>
+    startsWith(b, [0x50, 0x4b, 0x03, 0x04]),
 };
 
 const isTextByte = (x: number) =>

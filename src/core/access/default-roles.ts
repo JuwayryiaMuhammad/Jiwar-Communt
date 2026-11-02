@@ -132,6 +132,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       // opening, the accountant by default.
       'tenders.manage',
       'tenders.open',
+      'reports.schedule',
+      'compound.export',
     ],
   },
   {

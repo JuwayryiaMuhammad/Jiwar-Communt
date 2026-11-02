@@ -723,6 +723,19 @@ const ERROR_TEXT: Record<string, string> = {
   MATCH_TARGET_NOT_FOUND: 'What you named was not found.',
   MATCH_TARGET_INVALID: 'That cannot be this line’s match.',
   MATCH_TARGET_TAKEN: 'That is another line’s match already.',
+  REPORT_NOT_FOUND: 'Report not found.',
+  REPORT_NOT_YOURS: 'You may not read this report.',
+  REPORT_TOO_LARGE: 'Too many rows for one report. Narrow the period.',
+  REPORT_SCHEDULE_NOT_FOUND: 'Report schedule not found.',
+  REPORT_SCHEDULES_FULL: 'The compound has as many report schedules as it may.',
+  REPORT_RUN_NOT_FOUND: 'Report not found.',
+  CAPITAL_PLAN_NOT_FOUND: 'Capital plan not found.',
+  CAPITAL_PLAN_LINE_NOT_FOUND: 'Capital plan line not found.',
+  CAPITAL_PLAN_NOT_DRAFT: 'Only a draft plan can be changed or sent to the board.',
+  CAPITAL_PLAN_EMPTY: 'The plan has no line.',
+  COMPOUND_EXPORT_ACTIVE: 'An export of the compound is being prepared already.',
+  COMPOUND_EXPORT_RATE_LIMITED: 'One export of the compound a day. Try again later.',
+  COMPOUND_EXPORT_NOT_FOUND: 'Export not found.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

@@ -252,6 +252,10 @@ export const REASON_CODES = {
   // Readiness, facility bans and field safety (ADR 0067).
   readinessItemCancel: ['not_needed', 'covered_elsewhere', 'out_of_budget', 'other'],
   contractReviewDecision: ['renew', 'replace', 'end'],
+  // Compliance and safety (ADR 0087).
+  drillOutcome: ['passed', 'issues_found', 'failed'],
+  complianceRetire: ['not_applicable', 'asset_retired', 'replaced', 'duplicate', 'other'],
+  incidentActionCancel: ['not_needed', 'duplicate', 'superseded', 'other'],
   facilityBan: ['rules_violation', 'damage', 'safety', 'misconduct', 'other'],
   facilityBanLift: ['staff_error', 'exception_granted', 'other'],
   facilityBanSystemLift: ['ended'],

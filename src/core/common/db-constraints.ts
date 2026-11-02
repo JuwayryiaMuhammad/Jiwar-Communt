@@ -1056,4 +1056,13 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   maintenance_cases_tenant_id_id_key: null,
   maintenance_cases_one_open: null,
   maintenance_cases_one_work_order: null,
+  // Compliance (ADR 0087): one open due date an item, made and ended under
+  // the item's lock (COMPLIANCE_OCCURRENCE_ENDED); a violation is a race.
+  compliance_items_tenant_id_id_key: null,
+  compliance_occurrences_tenant_id_id_key: null,
+  compliance_occurrences_one_open: null,
+  compliance_evidence_tenant_id_id_key: null,
+  compliance_evidence_file_key: null,
+  // Corrective actions (ADR 0087).
+  incident_actions_tenant_id_id_key: null,
 };

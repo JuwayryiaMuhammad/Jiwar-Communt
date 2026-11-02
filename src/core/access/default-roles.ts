@@ -117,6 +117,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'spaces.manage',
       'letters.issue',
       'correspondence.read',
+      // Compliance and safety (ADR 0087).
+      'compliance.manage',
+      'lockdown.start',
     ],
   },
   {

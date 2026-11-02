@@ -2862,6 +2862,56 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تأخرت مهمة الاستعداد المسندة إليك والمستحقة يوم {dueOn}.',
     },
   },
+  'compliance_item.assigned': {
+    en: {
+      title: 'A compliance item is yours',
+      body: 'You answer for a compliance item, next due {dueOn}.',
+    },
+    ar: {
+      title: 'التزام مسند إليك',
+      body: 'أصبحت مسؤولًا عن التزام يستحق التالي منه يوم {dueOn}.',
+    },
+  },
+  'compliance.due_soon': {
+    en: {
+      title: 'A compliance date is near',
+      body: 'A compliance item is due on {dueOn}, in {daysLeft} days.',
+    },
+    ar: {
+      title: 'موعد التزام يقترب',
+      body: 'يستحق أحد الالتزامات يوم {dueOn}، بعد {daysLeft} يومًا.',
+    },
+  },
+  'compliance.overdue': {
+    en: {
+      title: 'A compliance date has passed',
+      body: 'A compliance item due on {dueOn} is not done.',
+    },
+    ar: {
+      title: 'فات موعد التزام',
+      body: 'لم يُنجز التزام كان مستحقًا يوم {dueOn}.',
+    },
+  },
+  'incident_action.assigned': {
+    en: {
+      title: 'A corrective action is yours',
+      body: 'A corrective action of an incident is yours, due {dueOn}.',
+    },
+    ar: {
+      title: 'إجراء تصحيحي مسند إليك',
+      body: 'أُسند إليك إجراء تصحيحي لحادثة، مستحق يوم {dueOn}.',
+    },
+  },
+  'incident_action.overdue': {
+    en: {
+      title: 'A corrective action is overdue',
+      body: 'A corrective action due {dueOn} is still open.',
+    },
+    ar: {
+      title: 'إجراء تصحيحي متأخر',
+      body: 'ما زال إجراء تصحيحي مستحق يوم {dueOn} مفتوحًا.',
+    },
+  },
   'inspection.overdue': {
     en: {
       title: 'Inspection overdue',

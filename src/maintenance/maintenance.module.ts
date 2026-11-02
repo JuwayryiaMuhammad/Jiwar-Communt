@@ -263,6 +263,9 @@ import {
 import { TechnicianStatsService } from './economics/technician-stats.service';
 import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
 import { TicketExperience } from './tickets/ticket-experience';
+import { CapitalPlansController } from './capital-plans/capital-plans.controller';
+import { CapitalPlansService } from './capital-plans/capital-plans.service';
+import { MaintenanceReports } from './reports/maintenance-reports';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -274,6 +277,7 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
 @Module({
   imports: [AccountsModule, CommunityMaintenancePortModule, FilesModule],
   controllers: [
+    CapitalPlansController,
     CategoriesController,
     CategoryOptionsController,
     PreventiveServicesController,
@@ -372,6 +376,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     TicketCorrespondence,
     MaintenanceManagementPort,
     TicketExperience,
+    CapitalPlansService,
+    MaintenanceReports,
     MaintenanceProvisioning,
     CategoriesService,
     PreventiveServicesService,

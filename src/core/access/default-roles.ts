@@ -53,6 +53,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'gate.manage',
       'gate.read',
       'tickets.dispatch',
+      // ADR 0081.
+      'tickets.sensitive',
       'maintenance.manage',
       'assets.read',
       'assets.manage',

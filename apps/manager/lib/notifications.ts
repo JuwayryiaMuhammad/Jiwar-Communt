@@ -235,6 +235,11 @@ const TEXT: Record<string, (p: P) => string> = {
   'ticket.sla_at_risk': (p) => `${ticket(p)} is close to its ${words(p.clock)} target`,
   'ticket.sla_at_risk_emergency': (p) => `Emergency ${aTicket(p)} is close to its ${words(p.clock)} target`,
   'ticket.closed_by_staff': (p) => `${ticket(p)} was closed by the management${inUnit(p)}`,
+  // Maintenance analytics and cases (ADR 0081).
+  'maintenance_case.opened': (p) => `A community case opened: ${p.ticketCount} ${words(p.categoryKey)} tickets in one building`,
+  'ticket.case_linked': (p) => `${ticket(p)} joined a community case${inUnit(p)}`,
+  'ticket.case_resolved': (p) => `The case of ${aTicket(p)} was resolved${inUnit(p)}`,
+  'maintenance.plan_suggested': (p) => `${p.ticketCount} repeat ${words(p.categoryKey)} faults suggest planned work`,
   'ticket.resident_escalated': (p) => `A resident asked for attention on overdue ${aTicket(p)}`,
   'ticket.resident_escalated_emergency': (p) => `A resident asked for attention on overdue emergency ${aTicket(p)}`,
   'ticket.visit_proposed': (p) => `${ticket(p)}: a visit is proposed for ${windowText(p)}`,
@@ -378,6 +383,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'ticket' && n.targetId) return can('tickets.dispatch') ? `/maintenance/${n.targetId}` : null;
   // The asset register (ADR 0064).
   if (n.targetType === 'asset' && n.targetId) return can('assets.read') ? `/assets/${n.targetId}` : null;
+  // Maintenance analytics and cases (ADR 0081).
+  if (n.targetType === 'maintenance_case' && n.targetId) return can('tickets.dispatch') ? `/cases/${n.targetId}` : null;
+  if (n.targetType === 'plan_suggestion') return can('assets.manage') ? '/recurrence' : null;
   if (n.targetType === 'stock_item' && n.targetId) return can('stock.manage') ? `/stock/${n.targetId}` : null;
   if (n.targetType === 'maintenance_contract' && n.targetId) return can('assets.manage') ? `/contracts/${n.targetId}` : null;
   // Vendors and purchase requests (ADR 0077).

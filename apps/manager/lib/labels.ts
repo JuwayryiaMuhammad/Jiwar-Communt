@@ -70,6 +70,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'inbox.read': 'Open the inbox of what waits for a decision, each type by its own permission',
   'letters.issue': 'Issue official letters (residence, no objection, to whom it may concern) and revoke them',
   'correspondence.read': 'Read a unit’s whole correspondence with the management; every read is logged',
+  'tickets.sensitive': 'See and handle the tickets marked sensitive; every read is logged',
   'deputies.manage': 'Name a deputy who decides in your place for up to 30 days',
   'vendors.manage': 'Keep the vendor register: its papers, evaluations and suspensions',
   'purchases.request': 'Ask to buy a part, a supply or a service the compound lacks',

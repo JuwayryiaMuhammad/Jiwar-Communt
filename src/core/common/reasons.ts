@@ -1078,4 +1078,29 @@ export const REASON_CODES = {
   ],
   spaceUseCancel: ['area_unavailable', 'safety', 'requester_asked', 'other'],
   spaceUseWithdraw: ['no_longer_needed', 'plans_changed', 'other'],
+  // Maintenance analytics and cases (ADR 0081): a ticket marked sensitive
+  // and cleared; a community case resolved or dismissed; a plan suggestion
+  // dismissed.
+  ticketSensitive: [
+    'resident_privacy',
+    'safeguarding',
+    'security',
+    'legal',
+    'staff_conduct',
+    'other',
+  ],
+  ticketSensitiveClear: ['marked_in_error', 'no_longer_sensitive', 'other'],
+  maintenanceCaseResolve: ['fixed', 'work_planned', 'external_cause', 'other'],
+  maintenanceCaseDismiss: [
+    'not_related',
+    'isolated_faults',
+    'raised_in_error',
+    'other',
+  ],
+  planSuggestionDismiss: [
+    'already_planned',
+    'not_recurring',
+    'replacement_planned',
+    'other',
+  ],
 } as const;

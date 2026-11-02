@@ -3022,6 +3022,48 @@ export const NOTIFICATION_KINDS = {
     target: 'space_use',
     params: { area: {} },
   },
+  // Maintenance analytics and cases (ADR 0081).
+  /**
+   * A community case opened itself: as many tickets of one category in one
+   * building within the window as the compound's setting says. The
+   * dispatch; the category's code and the count only.
+   */
+  'maintenance_case.opened': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'maintenance_case',
+    params: { categoryKey: {}, ticketCount: {} },
+  },
+  /** The reporter: their ticket is one of a case the management handles. */
+  'ticket.case_linked': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
+  /** The reporter: the case their ticket is in was resolved. */
+  'ticket.case_resolved': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, unitCode: { optional: true } },
+  },
+  /**
+   * Repeat faults of one category on one asset or in one unit passed the
+   * compound's threshold: whoever keeps the plans (`assets.manage`) is asked
+   * to take it into a plan or dismiss it. Codes and the count only.
+   */
+  'maintenance.plan_suggested': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'plan_suggestion',
+    params: { categoryKey: {}, ticketCount: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

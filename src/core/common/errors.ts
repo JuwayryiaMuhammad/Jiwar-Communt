@@ -1829,6 +1829,17 @@ export const ErrorCode = {
   OFFICIAL_LETTER_REVOKED: 'OFFICIAL_LETTER_REVOKED',
   /** Its subject's account was erased: the PDF is no longer drawn (409). */
   OFFICIAL_LETTER_ERASED: 'OFFICIAL_LETTER_ERASED',
+  // Maintenance analytics and cases (ADR 0081).
+  MAINTENANCE_CASE_NOT_FOUND: 'MAINTENANCE_CASE_NOT_FOUND',
+  /** The case is resolved or dismissed already (409, params.status). */
+  MAINTENANCE_CASE_CLOSED: 'MAINTENANCE_CASE_CLOSED',
+  /** The case has its work order already (409, params.ticketNumber). */
+  MAINTENANCE_CASE_HAS_WORK_ORDER: 'MAINTENANCE_CASE_HAS_WORK_ORDER',
+  PLAN_SUGGESTION_NOT_FOUND: 'PLAN_SUGGESTION_NOT_FOUND',
+  /** The suggestion is accepted or dismissed already (409, params.status). */
+  PLAN_SUGGESTION_DECIDED: 'PLAN_SUGGESTION_DECIDED',
+  /** That plan is not an active plan of the suggestion's asset (409). */
+  PLAN_NOT_OF_ASSET: 'PLAN_NOT_OF_ASSET',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

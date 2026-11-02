@@ -128,11 +128,17 @@ export class PdfRenderer {
    * so the same record gives the same bytes.
    */
   render(
-    meta: { title: string; createdAt: Date },
+    meta: {
+      title: string;
+      createdAt: Date;
+      /** A report's wide table (ADR 0086); portrait otherwise. */
+      layout?: 'portrait' | 'landscape';
+    },
     draw: (page: PdfPage) => void,
   ): Promise<Buffer> {
     const doc = new PDFDocument({
       size: 'A4',
+      layout: meta.layout ?? 'portrait',
       margin: 50,
       info: {
         Title: meta.title,

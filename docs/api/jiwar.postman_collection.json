@@ -56549,6 +56549,381 @@
     {
       "item": [
         {
+          "name": "The compound’s latest exports",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compound-exports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compound-exports"
+            }
+          }
+        },
+        {
+          "name": "Export the compound’s operational data (step-up required)",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compound-exports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compound-exports"
+            }
+          }
+        },
+        {
+          "name": "A short-lived download URL for a ready export",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "compound-exports",
+                ":id",
+                "download"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/compound-exports/:id/download",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The runs of the reports I may read",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "report-runs"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "scheduleId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/report-runs"
+            }
+          }
+        },
+        {
+          "name": "A short-lived download URL for a run’s file",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "report-runs",
+                ":id",
+                "download"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/report-runs/:id/download",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The compound’s report schedules",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "report-schedules"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/report-schedules"
+            }
+          }
+        },
+        {
+          "name": "Send a report daily, weekly or monthly to the staff who may read it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reportKey\": \"maintenance_spend\",\n  \"cadence\": \"daily\",\n  \"format\": \"pdf\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "report-schedules"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/report-schedules"
+            }
+          }
+        },
+        {
+          "name": "Change a schedule’s format, comparison or grouping, or pause it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"compare\": \"none\",\n  \"format\": \"pdf\",\n  \"groupBy\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | false pauses it. |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` |  |  |\n| `groupBy` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "report-schedules",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/report-schedules/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The reports I may read, and their groupings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "reports"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/reports"
+            }
+          }
+        },
+        {
+          "name": "A report over a period, grouped, compared with the period before and/or a year earlier",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "reports",
+                ":key"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out. At most 366 days.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "One of the report’s groupings (the catalog lists them); its first by default.",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                },
+                {
+                  "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
+                  "disabled": true,
+                  "key": "compare",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/reports/:key",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "key",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A report as a PDF, a workbook or CSV (audited)",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "reports",
+                ":key",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "The first day, the compound’s; 29 days before `to` when left out.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, included; today when left out. At most 366 days.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "One of the report’s groupings (the catalog lists them); its first by default.",
+                  "disabled": true,
+                  "key": "groupBy",
+                  "value": ""
+                },
+                {
+                  "description": "The period before (as many days), the same days a year earlier, both, or none (default).",
+                  "disabled": true,
+                  "key": "compare",
+                  "value": ""
+                },
+                {
+                  "description": "(required)",
+                  "key": "format",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/reports/:key/export?format=",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "key",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "name": "reports"
+    },
+    {
+      "item": [
+        {
           "name": "List residents",
           "request": {
             "description": "**Responses:** 200",

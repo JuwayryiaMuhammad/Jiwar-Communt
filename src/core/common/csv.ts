@@ -37,6 +37,21 @@ export function toCsv(
 }
 
 /**
+ * Rows alone, no header and no byte-order mark, for a file written page by
+ * page after its `toCsv` header (ADR 0086: the compound's export).
+ */
+export function csvRows(
+  columns: readonly CsvColumn[],
+  rows: readonly (readonly (string | null)[])[],
+): Buffer {
+  if (!rows.length) return Buffer.alloc(0);
+  return Buffer.from(
+    `${rows.map((r) => r.map((v, i) => cell(v, columns[i].kind)).join(',')).join('\r\n')}\r\n`,
+    'utf8',
+  );
+}
+
+/**
  * The CSV as a download. Its type and name travel with the stream, never
  * through `@Header`: Nest sets those before validation, so an error would
  * go out labelled as CSV.

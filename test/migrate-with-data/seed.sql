@@ -659,5 +659,50 @@ BEGIN
       INSERT INTO official_letter_links (code_hash, tenant_id, letter_id, created_at) VALUES
         (encode(sha256(convert_to(code, 'UTF8')), 'hex'), t, letter, now());
     END;
+    -- Experience and recovery (ADR 0082): a ticket confirmed low with its
+    -- reason, a management request rated 1 with its reason, the compensation
+    -- threshold (binding), a rule off, a follow-up a signal opened with an
+    -- approved credit on the unit's invoice, and a measured promise.
+    DECLARE
+      topic uuid := gen_random_uuid();
+      req uuid := gen_random_uuid();
+      ec uuid := gen_random_uuid();
+      cn uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO ticket_feedback (id, tenant_id, ticket_id, cycle, kind, author_account_id, rating,
+                                   low_reason_code) VALUES
+        (gen_random_uuid(), t, (SELECT id FROM tickets WHERE tenant_id = t AND number = 1), 1,
+         'confirmed', res1, 2, 'slow');
+      INSERT INTO management_request_topics (id, tenant_id, key, name_ar, name_en, target_response_hours,
+                                             updated_at) VALUES
+        (topic, t, 'seed_experience', 'تجربة', 'Experience', 24, now());
+      INSERT INTO management_requests (id, tenant_id, number, type, topic_id, author_account_id, unit_id,
+                                       cycle_started_at, response_due_at, last_activity_at, updated_at) VALUES
+        (req, t, 900, 'question', topic, res1, u1, now(), now() + interval '24 hours', now(), now());
+      INSERT INTO management_request_ratings (tenant_id, request_id, author_account_id, rating,
+                                              low_reason_code) VALUES
+        (t, req, res1, 1, 'poor_communication');
+      INSERT INTO governance_approval_settings (tenant_id, type, deadline_days, threshold, binding) VALUES
+        (t, 'compensation_above_limit', 14, 500.00, true)
+        ON CONFLICT (tenant_id, type) DO UPDATE SET threshold = 500.00, binding = true;
+      INSERT INTO experience_settings (tenant_id, complaints_count) VALUES (t, NULL);
+      INSERT INTO experience_cases (id, tenant_id, number, unit_id, kind, origin, opened_at) VALUES
+        (ec, t, 1, u1, 'follow_up', 'signal', now());
+      INSERT INTO experience_signals (id, tenant_id, unit_id, code, basis_id, count, window_days,
+                                      detected_at, case_id) VALUES
+        (gen_random_uuid(), t, u1, 'repeated_low_ratings', req, 2, 90, now(), ec);
+      INSERT INTO credit_notes (id, tenant_id, number, invoice_id, amount, reason_code, compensation_reason,
+                                created_by_account_id) VALUES
+        (cn, t, 2, inv, 50.00, 'compensation', 'maintenance_delay', mgr);
+      INSERT INTO experience_compensations (id, tenant_id, case_id, unit_id, kind, failure_code, amount,
+                                            status, proposed_by_account_id, proposed_at,
+                                            decided_by_account_id, decided_at, credit_note_id) VALUES
+        (gen_random_uuid(), t, ec, u1, 'credit', 'maintenance_delay', 50.00, 'approved', mgr, now(),
+         mgr, now(), cn);
+      INSERT INTO service_promises (id, tenant_id, title_en, title_ar, metric, target, created_by_account_id,
+                                    created_at, updated_at) VALUES
+        (gen_random_uuid(), t, 'Requests rated 4 or better', 'تقييم 4 فأكثر', 'request_rating', 4, mgr,
+         now(), now());
+    END;
   END LOOP;
 END $$;

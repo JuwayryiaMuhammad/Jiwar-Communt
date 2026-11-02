@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { fetchers, keys } from '@/lib/queries';
 import { Categories } from './categories';
 import { SlaEscalation } from './sla-escalation';
+import { AnalyticsSettingsCard } from './analytics-settings';
 
 /**
  * The SLA (ADR 0034): whether the compound measures response and resolution
@@ -50,6 +51,8 @@ export function Sla() {
         </QueryState>
       </Card>
       <SlaEscalation settings={settings.data} />
+      {/* ADR 0081. */}
+      <AnalyticsSettingsCard />
       <div className="stack stack--sm">
         <h2 className="t-title-md">Targets by category</h2>
         <p className="t-secondary">Response / resolution, per priority. A change retargets the clocks still running.</p>

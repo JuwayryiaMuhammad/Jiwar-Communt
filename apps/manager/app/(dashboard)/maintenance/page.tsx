@@ -38,7 +38,8 @@ function Queue() {
   const [creating, setCreating] = useState(false);
   const [ordering, setOrdering] = useState(false);
   // ADR 0076: a building (ADR 0072), and a number or a unit code.
-  const [buildingId, setBuildingId] = useState('');
+  // ADR 0081: the complaints map links a building here.
+  const [buildingId, setBuildingId] = useState(params.get('buildingId') ?? '');
   const [q, setQ] = useState('');
   const [csvError, setCsvError] = useState<unknown>(null);
   // A technician's tickets are linked from the technicians tab.

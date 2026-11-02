@@ -10,6 +10,7 @@ import { useParams } from 'next/navigation';
 import { personName, PriorityBadge, SlaBadges, ticketPlace } from '@/components/maintenance/sla';
 import { TicketActions } from '@/components/maintenance/ticket-actions';
 import { TicketStaffMoves } from '@/components/maintenance/ticket-staff-moves';
+import { SensitiveReads, TicketSensitivity } from '@/components/maintenance/ticket-sensitivity';
 import { TicketQuotes } from '@/components/maintenance/ticket-quotes';
 import { TicketPermits } from '@/components/maintenance/ticket-permits';
 import { TicketThread } from '@/components/maintenance/ticket-thread';
@@ -257,6 +258,7 @@ export default function TicketPage() {
           t ? (
             <span className="row" style={{ gap: 6 }}>
               <TicketStaffMoves ticket={t} />
+              <TicketSensitivity ticket={t} />
               <TicketActions ticket={t} />
             </span>
           ) : undefined
@@ -266,6 +268,7 @@ export default function TicketPage() {
         {t ? (
           <div className="grid grid--main-aside">
             <div className="stack">
+              <SensitiveReads ticket={t} />
               <Details ticket={t} />
               <WorkOrder ticket={t} />
               <TicketCompletion ticket={t} />

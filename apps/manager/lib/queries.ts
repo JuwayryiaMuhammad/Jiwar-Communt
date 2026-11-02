@@ -144,6 +144,15 @@ export type BriefKind = Schema<'BriefKind'>;
 export type ServicePressure = Schema<'ServicePressureView'>;
 export type TrafficReport = Schema<'TrafficReportView'>;
 export type LogSearchResult = Schema<'LogSearchView'>;
+// Maintenance analytics and cases (ADR 0081).
+export type AnalyticsSettings = Schema<'AnalyticsSettingsView'>;
+export type RecurrenceReport = Schema<'RecurrenceReportView'>;
+export type RecurrencePlace = RecurrenceReport['by'];
+export type ComplaintsMap = Schema<'ComplaintsMapView'>;
+export type PlanSuggestion = Schema<'PlanSuggestionView'>;
+export type MaintenanceCase = Schema<'MaintenanceCaseView'>;
+export type MaintenanceCaseDetail = Schema<'MaintenanceCaseDetailView'>;
+export type SensitiveRead = Schema<'SensitiveReadView'>;
 export type AccountDetail = Schema<'AccountDetailView'>;
 export type Erasure = Schema<'PendingErasureView'>;
 export type ErasureScope = Schema<'ErasureScopeView'>;
@@ -592,6 +601,13 @@ export const keys = {
   spaceUseAreas: ['spaces', 'use-areas'] as const,
   warrantyClaims: (filters: object) => ['assets', 'warranty-claims', filters] as const,
   assetTimeline: (id: string) => ['assets', 'timeline', id] as const,
+  analyticsSettings: ['maintenance-settings', 'analytics'] as const,
+  recurrence: (q: object) => ['tickets', 'recurrence', q] as const,
+  complaintsMap: (from: string, to: string) => ['tickets', 'complaints-map', from, to] as const,
+  planSuggestions: (status: string) => ['assets', 'plan-suggestions', status] as const,
+  cases: (status: string) => ['tickets', 'cases', status] as const,
+  case: (id: string) => ['tickets', 'cases', 'detail', id] as const,
+  sensitiveReads: (id: string) => ['tickets', 'detail', id, 'sensitive-reads'] as const,
   ticket: (id: string) => ['tickets', 'detail', id] as const,
   ticketPart: (id: string, part: string) => ['tickets', 'detail', id, part] as const,
   technicians: ['technicians'] as const,
@@ -996,6 +1012,25 @@ export const fetchers = {
     ),
   assetTimeline: (id: string, cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/maintenance/assets/{id}/timeline', { params: { path: { id }, query: { cursor, limit } } })),
+  // Maintenance analytics and cases (ADR 0081).
+  analyticsSettings: () => unwrap(api.GET('/api/v1/maintenance/settings/analytics')),
+  recurrence: (q: { from: string; to: string; by: RecurrencePlace; min?: number }) =>
+    unwrap(api.GET('/api/v1/maintenance/recurrence', { params: { query: q } })),
+  complaintsMap: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/maintenance/complaints-map', { params: { query: { from, to } } })),
+  planSuggestions: (status: PlanSuggestion['status'] | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/plan-suggestions', {
+        params: { query: { ...(status ? { status } : {}), cursor, limit } },
+      }),
+    ),
+  cases: (status: MaintenanceCase['status'] | '', cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/cases', { params: { query: { ...(status ? { status } : {}), cursor, limit } } })),
+  case: (id: string) => unwrap(api.GET('/api/v1/maintenance/cases/{id}', { params: { path: { id } } })),
+  sensitiveReads: (id: string, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/tickets/{id}/sensitive-reads', { params: { path: { id }, query: { cursor, limit } } }),
+    ),
   technicians: () => unwrap(api.GET('/api/v1/maintenance/technicians')),
   ticketReporters: (unitId: string) =>
     unwrap(api.GET('/api/v1/maintenance/units/{unitId}/reporters', { params: { path: { unitId } } })),

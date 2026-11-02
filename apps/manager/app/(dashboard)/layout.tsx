@@ -377,6 +377,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         },
         // Whether the SLA was kept (ADR 0076).
         { href: '/sla-report', label: 'SLA report', icon: <Gauge aria-hidden />, show: can('tickets.dispatch') },
+        // Maintenance analytics and cases (ADR 0081).
+        { href: '/recurrence', label: 'Repeat faults', icon: <Repeat aria-hidden />, show: can('tickets.dispatch') },
+        { href: '/complaints-map', label: 'Complaints map', icon: <MapPinned aria-hidden />, show: can('tickets.dispatch') },
+        { href: '/cases', label: 'Community cases', icon: <Users aria-hidden />, show: can('tickets.dispatch') },
         {
           href: '/management-requests',
           label: 'Management requests',

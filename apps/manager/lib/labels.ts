@@ -73,6 +73,7 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'purchases.request': 'Ask to buy a part, a supply or a service the compound lacks',
   'purchases.approve': 'Approve purchase requests up to the manager’s limit, and above it under the board’s approval',
   'dashboard.read': 'Open the operations dashboard and the daily briefs, each part by its own permission',
+  'spaces.manage': 'Keep the holiday calendar, the site map, the floor plans and the areas open to use requests',
   'facilities.book': 'See the facilities and book them for a unit',
   'facilities.manage': 'Set up facilities, their rules, opening hours, peak times and closures, and the club’s plans',
   'bookings.handle': 'Approve and cancel bookings, mark no-shows, lift suspensions',

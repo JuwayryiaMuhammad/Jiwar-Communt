@@ -71,6 +71,9 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
     what: 'An image or a PDF, up to 10 MB.',
   },
   data_import: { types: ['text/csv'], maxBytes: 1024 * 1024, what: 'A CSV file (UTF-8), up to 1 MB.' },
+  // The site map and a building floor's plan (ADR 0084).
+  site_map: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 10 MB.' },
+  floor_plan: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 10 MB.' },
 };
 
 /**

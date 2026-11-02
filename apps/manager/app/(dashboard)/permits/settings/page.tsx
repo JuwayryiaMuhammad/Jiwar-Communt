@@ -5,24 +5,32 @@ import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { Button, Card, Checkbox, Field, ForbiddenState, Input, PageHeader, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { addDayOff, describeDays, toggleDay, validHours, WEEKDAYS } from '@/components/permits/logic';
+import Link from 'next/link';
+import { describeDays, toggleDay, validHours, WEEKDAYS } from '@/components/permits/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PermitSettings } from '@/lib/queries';
 
-/** The compound's work days, hours and days off for works and moves (ADR 0049). */
+/**
+ * The compound's work days and hours for works and moves (ADR 0049). Its
+ * days off are the holiday calendar's that stop works (ADR 0084): shown
+ * here, kept on the holidays page.
+ */
 export default function PermitSettingsPage() {
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('permits.manage');
   const settings = useQuery({ queryKey: keys.permitSettings, queryFn: fetchers.permitSettings, enabled: allowed });
   const [form, setForm] = useState<PermitSettings | null>(null);
-  const [newDay, setNewDay] = useState('');
   useEffect(() => {
     if (settings.data) setForm(settings.data);
   }, [settings.data]);
   const save = useAction(
-    (body: PermitSettings) => unwrap(api.PATCH('/api/v1/staff/permit-settings', { body })),
+    // The days off are not the permits' to change any more (ADR 0084).
+    (body: PermitSettings) =>
+      unwrap(api.PATCH('/api/v1/staff/permit-settings', {
+          body: { workDays: body.workDays, workHours: body.workHours, worksDepositRequired: body.worksDepositRequired },
+        })),
     {
       invalidate: [keys.permitSettings],
       onDone: () => toast.show('Saved. The guard applies them from the next entry; permits already approved keep their own dates.'),
@@ -88,31 +96,21 @@ export default function PermitSettingsPage() {
                   )}
                 </Field>
               </div>
-              <Field label="Days off (feasts)" error={fieldError(save.error, 'daysOff')}>
-                {(p) => (
+              <Field label="Days off" hint="The holidays that stop works and moves. Kept on the holiday calendar.">
+                {() => (
                   <div className="stack stack--sm">
-                    <div className="row" style={{ gap: 8 }}>
-                      <Input {...p} type="date" value={newDay} onChange={(e) => setNewDay(e.target.value)} />
-                      <Button
-                        onClick={() => {
-                          const next = addDayOff(form.daysOff, newDay);
-                          if (next) {
-                            setForm({ ...form, daysOff: next });
-                            setNewDay('');
-                          }
-                        }}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                    {form.daysOff.map((d) => (
-                      <span key={d} className="row" style={{ gap: 8 }}>
-                        <span className="t-mono">{d}</span>
-                        <Button variant="text" onClick={() => setForm({ ...form, daysOff: form.daysOff.filter((x) => x !== d) })}>
-                          Remove
-                        </Button>
-                      </span>
-                    ))}
+                    {form.daysOff.length ? (
+                      form.daysOff.map((d) => (
+                        <span key={d} className="t-mono">
+                          {d}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="muted">None</span>
+                    )}
+                    <Link className="table__link" href="/holidays">
+                      Open the holiday calendar
+                    </Link>
                   </div>
                 )}
               </Field>

@@ -88,6 +88,10 @@ import {
   Sun,
   Newspaper,
   Search,
+  Map as MapIcon,
+  LayoutGrid,
+  CalendarOff,
+  TreePine,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -436,6 +440,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <ChartColumn aria-hidden />,
           show: can('facilities.manage') || can('bookings.handle'),
         },
+        // Spaces (ADR 0084).
+        {
+          href: '/space-uses',
+          label: 'Common-area uses',
+          icon: <TreePine aria-hidden />,
+          show: can('bookings.handle') || can('spaces.manage'),
+        },
+        { href: '/holidays', label: 'Holidays', icon: <CalendarOff aria-hidden />, show: can('spaces.manage') },
+        { href: '/site-map', label: 'Site map', icon: <MapIcon aria-hidden />, show: can('spaces.manage') },
+        { href: '/floor-plans', label: 'Floor plans', icon: <LayoutGrid aria-hidden />, show: can('spaces.manage') },
         { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, exact: true, show: can('gate.read') },
         // The gate's traffic and its log search (ADR 0056, 0079).
         { href: '/gate/traffic', label: 'Gate traffic', icon: <ChartColumn aria-hidden />, show: can('gate.read') },

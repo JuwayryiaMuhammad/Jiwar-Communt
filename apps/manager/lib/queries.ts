@@ -119,6 +119,15 @@ export type SlaSettings = Schema<'SlaSettingsResponse'>;
 // Dispatch depth (ADR 0076).
 export type SlaReport = Schema<'SlaReportView'>;
 export type PlanCalendarEntry = Schema<'PlanCalendarEntryView'>;
+// Spaces (ADR 0084).
+export type Holiday = Schema<'HolidayView'>;
+export type SiteMap = Schema<'SiteMapView'>;
+export type MapPoint = Schema<'MapPointView'>;
+export type FloorPlanSummary = Schema<'FloorPlanSummaryView'>;
+export type FloorPlan = Schema<'FloorPlanView'>;
+export type SpaceUse = Schema<'SpaceUseView'>;
+export type SpaceUseArea = Schema<'SpaceUseAreaView'>;
+export type SpaceUseStatus = SpaceUse['status'];
 export type WarrantyClaim = Schema<'WarrantyClaimView'>;
 export type AssetTimelineEntry = Schema<'AssetTimelineEntryView'>;
 // The operations dashboard (ADR 0079).
@@ -573,6 +582,14 @@ export const keys = {
   tickets: (filters: object) => ['tickets', 'list', filters] as const,
   slaReport: (from: string, to: string) => ['tickets', 'sla-report', from, to] as const,
   planCalendar: (from: string, to: string) => ['assets', 'plan-calendar', from, to] as const,
+  // Spaces (ADR 0084).
+  spacesAll: ['spaces'] as const,
+  holidays: (from: string, to: string) => ['spaces', 'holidays', from, to] as const,
+  siteMap: ['spaces', 'site-map'] as const,
+  floorPlans: ['spaces', 'floor-plans'] as const,
+  floorPlan: (id: string) => ['spaces', 'floor-plans', id] as const,
+  spaceUses: (status: SpaceUseStatus | '') => ['spaces', 'uses', status] as const,
+  spaceUseAreas: ['spaces', 'use-areas'] as const,
   warrantyClaims: (filters: object) => ['assets', 'warranty-claims', filters] as const,
   assetTimeline: (id: string) => ['assets', 'timeline', id] as const,
   ticket: (id: string) => ['tickets', 'detail', id] as const,
@@ -959,6 +976,18 @@ export const fetchers = {
     unwrap(api.GET('/api/v1/maintenance/sla-report', { params: { query: { from, to } } })),
   planCalendar: (from: string, to: string) =>
     unwrap(api.GET('/api/v1/maintenance/plan-calendar', { params: { query: { from, to } } })),
+  // Spaces (ADR 0084).
+  holidays: (from: string, to: string) => unwrap(api.GET('/api/v1/staff/holidays', { params: { query: { from, to } } })),
+  siteMap: () => unwrap(api.GET('/api/v1/staff/site-map')),
+  floorPlans: () => unwrap(api.GET('/api/v1/staff/floor-plans')),
+  floorPlan: (id: string) => unwrap(api.GET('/api/v1/staff/floor-plans/{id}', { params: { path: { id } } })),
+  spaceUses: (status: SpaceUseStatus | '', cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/space-uses', {
+        params: { query: { ...(status ? { status } : {}), cursor, limit } },
+      }),
+    ),
+  spaceUseAreas: () => unwrap(api.GET('/api/v1/staff/space-use-areas')),
   warrantyClaims: (filters: { assetId?: string; status?: WarrantyClaim['status'] | '' }, cursor?: string, limit = 50) =>
     unwrap(
       api.GET('/api/v1/maintenance/warranty-claims', {

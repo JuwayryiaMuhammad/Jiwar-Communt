@@ -52,7 +52,22 @@ export default function PlanCalendarPage() {
             rowKey={(e) => `${e.planId}:${e.dueOn}`}
             empty="No planned work in this period"
             columns={[
-              { key: 'due', header: 'Due', cell: (e) => <span className="t-mono">{e.dueOn}</span> },
+              {
+                key: 'due',
+                header: 'Due',
+                cell: (e) => (
+                  <>
+                    <span className="t-mono">{e.dueOn}</span>
+                    {/* ADR 0084: a holiday flags the date; it is not moved. */}
+                    {e.holiday ? (
+                      <>
+                        {' '}
+                        <Badge tone="terracotta">Holiday · {e.holiday.nameEn}</Badge>
+                      </>
+                    ) : null}
+                  </>
+                ),
+              },
               {
                 key: 'asset',
                 header: 'Asset',

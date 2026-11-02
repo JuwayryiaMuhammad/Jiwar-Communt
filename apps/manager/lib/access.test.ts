@@ -129,5 +129,7 @@ test('a role that handles the market enters; a resident who posts on it does not
   assert.equal(mayEnter({ type: 'staff', permissions: ['market.handle'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['inbox.read'] }), true);
   assert.equal(mayEnter({ type: 'staff', permissions: ['dashboard.read'] }), true);
+  // ADR 0084.
+  assert.equal(mayEnter({ type: 'staff', permissions: ['spaces.manage'] }), true);
   assert.equal(mayEnter({ type: 'resident', permissions: ['market.post'] }), false);
 });

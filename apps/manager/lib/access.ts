@@ -79,6 +79,8 @@ export const ENTRY_PERMISSIONS = [
   'purchases.approve',
   // The operations dashboard (ADR 0079).
   'dashboard.read',
+  // The holidays, the site map and the floor plans (ADR 0084).
+  'spaces.manage',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

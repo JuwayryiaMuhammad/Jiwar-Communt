@@ -130,11 +130,25 @@ describe('Bookings: stays (ADR 0070)', () => {
       await stay(s.alice, s.homeA.id, id, day(11), day(13)).expect(201)
     ).body as Stay;
     expect(b.charge?.amount).toBe('200.00');
+    const window = {
+      startsAt: at(day(12), 9).toISOString(),
+      endsAt: at(day(12), 18).toISOString(),
+    };
+    // A fee at stake: previewed first (ADR 0084).
+    const { previewToken } = (
+      await f
+        .http(
+          'get',
+          `/staff/facilities/${id}/closure-preview?${new URLSearchParams(window).toString()}`,
+          s.manager.token,
+        )
+        .expect(200)
+    ).body as { previewToken: string };
     await f
       .http('post', `/staff/facilities/${id}/closures`, s.manager.token, {
-        startsAt: at(day(12), 9).toISOString(),
-        endsAt: at(day(12), 18).toISOString(),
+        ...window,
         reasonCode: 'maintenance',
+        previewToken,
       })
       .expect(201);
     expect((await f.row(s.c, b.id)).status).toBe('cancelled');

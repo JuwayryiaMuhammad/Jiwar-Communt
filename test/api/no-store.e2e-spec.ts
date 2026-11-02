@@ -1647,7 +1647,7 @@ describe('API v0 — no-store', () => {
       as('manager', 'GET', '/staff/permit-settings'),
     'PATCH /staff/permit-settings': () =>
       as('manager', 'PATCH', '/staff/permit-settings', {
-        daysOff: ['2026-12-25'],
+        workDays: [0, 1, 2, 3, 4, 6],
       }),
   });
 

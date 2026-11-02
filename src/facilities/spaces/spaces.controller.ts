@@ -291,7 +291,6 @@ export class UnitSpaceUsesController {
   ) {}
 
   @Post()
-  @NoStore()
   @ApiOperation({
     summary: 'Ask to use a common area for a time',
     description:
@@ -309,7 +308,6 @@ export class UnitSpaceUsesController {
   }
 
   @Get()
-  @NoStore()
   @ApiOperation({
     summary: 'List the unit’s use requests the caller sees, newest first',
     description:
@@ -357,7 +355,6 @@ export class StaffSpaceUsesController {
   constructor(private readonly uses: SpaceUsesService) {}
 
   @Get()
-  @NoStore()
   @ApiOperation({ summary: 'List use requests, newest first' })
   @ApiOkResponse({ type: ListOf(SpaceUseView) })
   async list(
@@ -367,7 +364,6 @@ export class StaffSpaceUsesController {
   }
 
   @Get(':id')
-  @NoStore()
   @ApiOperation({ summary: 'Get a use request' })
   @ApiOkResponse({ type: SpaceUseView })
   async get(@Param('id', parseId()) id: string): Promise<SpaceUseView> {
@@ -375,7 +371,6 @@ export class StaffSpaceUsesController {
   }
 
   @Post(':id/approve')
-  @NoStore()
   @HttpCode(200)
   @ApiOperation({
     summary: 'Approve a use request',
@@ -388,7 +383,6 @@ export class StaffSpaceUsesController {
   }
 
   @Post(':id/refuse')
-  @NoStore()
   @HttpCode(200)
   @ApiOperation({ summary: 'Refuse a use request, with a reason code' })
   @ApiOkResponse({ type: SpaceUseView })
@@ -400,7 +394,6 @@ export class StaffSpaceUsesController {
   }
 
   @Post(':id/cancel')
-  @NoStore()
   @HttpCode(200)
   @ApiOperation({
     summary: 'Cancel an approved use before it ends, with a reason code',

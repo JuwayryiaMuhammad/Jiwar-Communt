@@ -37,13 +37,15 @@ export const PERMIT_SETTINGS_ROUTES: Row[] = [
         worksDepositRequired: 'yes',
       },
       fields: [
+        // ADR 0084: the days off are the holiday calendar's. An unknown
+        // field is reported before the DTO's own.
+        { field: 'daysOff', code: 'FIELD_NOT_ALLOWED' },
         {
           field: 'workDays',
           code: 'INVALID_LENGTH',
           params: { min: 1, max: 7 },
         },
         { field: 'workHours.from', code: 'INVALID_FORMAT' },
-        { field: 'daysOff', code: 'INVALID_FORMAT' },
         { field: 'worksDepositRequired', code: 'INVALID_TYPE' },
       ],
     },

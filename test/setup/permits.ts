@@ -236,14 +236,45 @@ export function permitHelpers(h: HttpHarness) {
     };
   }
 
-  /** `PATCH /staff/permit-settings` as `as`: the new rules. */
+  /**
+   * `PATCH /staff/permit-settings` as `as`, the week days and hours; and,
+   * with `daysOff`, the compound's holidays that stop works set to exactly
+   * those days (ADR 0084: the days off are the calendar's), through
+   * `/staff/holidays`. The rules as the management then reads them.
+   */
   async function setRules(
     as: Who,
     body: Partial<PermitSettingsBody>,
   ): Promise<PermitSettingsBody> {
-    return (
-      await http('patch', '/staff/permit-settings', as.token, body).expect(200)
-    ).body as PermitSettingsBody;
+    const { daysOff, ...rules } = body;
+    if (Object.keys(rules).length)
+      await http('patch', '/staff/permit-settings', as.token, rules).expect(
+        200,
+      );
+    if (daysOff) {
+      const known = (
+        await http(
+          'get',
+          `/staff/holidays?from=${addDays(day(0), -365)}&to=${day(0)}`,
+          as.token,
+        ).expect(200)
+      ).body as { data: { id: string }[] };
+      const coming = (
+        await http('get', '/staff/holidays', as.token).expect(200)
+      ).body as { data: { id: string }[] };
+      for (const id of new Set(
+        [...known.data, ...coming.data].map((x) => x.id),
+      ))
+        await http('delete', `/staff/holidays/${id}`, as.token).expect(204);
+      for (const d of [...new Set(daysOff)])
+        await http('post', '/staff/holidays', as.token, {
+          day: d,
+          nameEn: 'Day off',
+          nameAr: 'يوم عطلة',
+        }).expect(201);
+    }
+    return (await http('get', '/staff/permit-settings', as.token).expect(200))
+      .body as PermitSettingsBody;
   }
 
   /** The compound's rules as `as` reads them (`GET /community/permit-rules`). */

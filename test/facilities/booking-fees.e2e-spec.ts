@@ -188,11 +188,25 @@ describe('Bookings: fees through finance (ADR 0070)', () => {
   it('a closure credits the fees of what it cancels, as `closure`', async () => {
     const court = await paying();
     const b = await f.book(s.alice, s.homeA.id, court, at(day(8), 10));
+    const window = {
+      startsAt: at(day(8), 9).toISOString(),
+      endsAt: at(day(8), 12).toISOString(),
+    };
+    // A fee at stake: previewed first (ADR 0084).
+    const { previewToken } = (
+      await f
+        .http(
+          'get',
+          `/staff/facilities/${court}/closure-preview?${new URLSearchParams(window).toString()}`,
+          s.manager.token,
+        )
+        .expect(200)
+    ).body as { previewToken: string };
     await f
       .http('post', `/staff/facilities/${court}/closures`, s.manager.token, {
-        startsAt: at(day(8), 9).toISOString(),
-        endsAt: at(day(8), 12).toISOString(),
+        ...window,
         reasonCode: 'weather',
+        previewToken,
       })
       .expect(201);
     expect(await chargeOf(b.id)).toMatchObject({ cancelReason: 'closure' });

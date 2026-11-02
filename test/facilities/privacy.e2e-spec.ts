@@ -141,6 +141,8 @@ describe('Facilities — export, erasure, deactivation and leaving', () => {
       'facilities/club-requests.json',
       `facilities/club/${home.code}.json`,
       'facilities/companions.json',
+      // ADR 0084.
+      'facilities/space-uses.json',
       'facilities/waitlist.json',
     ]);
     expect(JSON.parse(archive.text('facilities/bans.json'))).toMatchObject([

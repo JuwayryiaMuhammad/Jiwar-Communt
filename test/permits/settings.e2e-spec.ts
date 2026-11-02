@@ -30,7 +30,7 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
     });
   });
 
-  it('the manager changes them: sorted, repeats dropped, audited by value; the same again records nothing', async () => {
+  it('the manager changes them: sorted, repeats dropped, audited by value; the same again records nothing; the days off are the calendar’s', async () => {
     const c = await p.setUp('Permit Rules Change Court');
     const body = await p.setRules(c.manager, {
       workDays: [4, 0, 4, 1],
@@ -59,7 +59,6 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
           from: { from: '09:00', to: '17:00' },
           to: { from: '08:30', to: '16:00' },
         },
-        daysOff: { from: [], to: body.daysOff },
       },
     });
     await p.setRules(c.manager, { workDays: [1, 0, 4] });
@@ -72,7 +71,7 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
     ).toBe(1);
   });
 
-  it('refuses hours that end before they start, an empty week, a bad day and too many days off', async () => {
+  it('refuses hours that end before they start, an empty week, and days off (the calendar’s now)', async () => {
     const bad = async (body: object) =>
       (
         (
@@ -97,18 +96,9 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
     expect(await bad({ workDays: [7] })).toEqual([
       { field: 'workDays', code: 'INVALID_NUMBER', params: { min: 0, max: 6 } },
     ]);
-    expect(await bad({ daysOff: ['2026-13-01'] })).toEqual([
-      { field: 'daysOff', code: 'INVALID_FORMAT' },
-    ]);
-    const many = Array.from({ length: PERMIT_LIMITS.daysOff + 1 }, (_, i) =>
-      addDays(today(), i),
-    );
-    expect(await bad({ daysOff: many })).toEqual([
-      {
-        field: 'daysOff',
-        code: 'INVALID_LENGTH',
-        params: { min: 0, max: PERMIT_LIMITS.daysOff },
-      },
+    // ADR 0084: the days off are kept on the holiday calendar.
+    expect(await bad({ daysOff: [addDays(today(), 3)] })).toEqual([
+      { field: 'daysOff', code: 'FIELD_NOT_ALLOWED' },
     ]);
     // Nothing changed.
     expect(
@@ -125,8 +115,6 @@ describe('Permits — the compound’s rules (ADR 0049)', () => {
       `UPDATE permit_settings SET work_days = '{}'`,
       `UPDATE permit_settings SET work_days = '{7}'`,
       `UPDATE permit_settings SET work_days = '{1,NULL}'`,
-      `UPDATE permit_settings SET days_off = ARRAY[NULL]::date[]`,
-      `UPDATE permit_settings SET days_off = (SELECT array_agg(current_date + i) FROM generate_series(0, 100) i)`,
     ])
       await expect(write(sql)).rejects.toThrow(/permit_settings_/);
   });

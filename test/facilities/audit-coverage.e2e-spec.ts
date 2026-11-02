@@ -273,6 +273,10 @@ describe('Audit coverage — facilities', () => {
         startsAt: at(day(4), 9).toISOString(),
         endsAt: at(day(4), 12).toISOString(),
         cancelledCount: 1,
+        // ADR 0084: no fee at stake, closed without a preview.
+        previewed: false,
+        invoicesCredited: '0.00',
+        unitCredit: '0.00',
       });
       const [cancelled] = await rows('booking.cancelled', b.id);
       expect(cancelled).toMatchObject({ actorId: s.manager.id });

@@ -66,7 +66,7 @@ describe('Audit coverage — permits', () => {
   });
 
   describe('the rules', () => {
-    it('changed: the days, hours and days off by value', async () => {
+    it('changed: the days and hours by value; a day off is the calendar’s (ADR 0084)', async () => {
       const dayOff = day(80);
       await p.setRules(s.manager, {
         workDays: [0, 1, 2],
@@ -81,8 +81,18 @@ describe('Audit coverage — permits', () => {
           from: { from: '09:00', to: '17:00' },
           to: { from: '10:00', to: '16:00' },
         },
-        daysOff: { from: [], to: [dayOff] },
       });
+      // The day off went to the calendar, audited there by its day.
+      expect(
+        await p.v.x.asManager(s.c, () =>
+          p.v.x.prisma.tenant.auditLog.count({
+            where: {
+              action: 'holiday.created',
+              metadata: { path: ['day'], equals: dayOff },
+            },
+          }),
+        ),
+      ).toBe(1);
     });
   });
 

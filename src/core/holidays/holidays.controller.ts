@@ -19,7 +19,7 @@ import {
   RequireAnyPermission,
   RequirePermissions,
 } from '../access/require-permissions.decorator';
-import { ApiArea, NoStore } from '../common/http/decorators';
+import { ApiArea } from '../common/http/decorators';
 import { bounded, ListOf, type ListResponse } from '../common/http/list';
 import { parseId } from '../common/validation/parse-id.pipe';
 import {
@@ -41,7 +41,6 @@ export class StaffHolidaysController {
   constructor(private readonly holidays: HolidaysService) {}
 
   @Get()
-  @NoStore()
   @RequireAnyPermission(
     'spaces.manage',
     'permits.manage',
@@ -59,7 +58,6 @@ export class StaffHolidaysController {
   }
 
   @Post()
-  @NoStore()
   @RequirePermissions('spaces.manage')
   @ApiOperation({
     summary: 'Add a holiday',
@@ -72,7 +70,6 @@ export class StaffHolidaysController {
   }
 
   @Patch(':id')
-  @NoStore()
   @RequirePermissions('spaces.manage')
   @ApiOperation({
     summary: 'Change a holiday’s names, or whether works stop on it',
@@ -103,7 +100,6 @@ export class HolidaysController {
   constructor(private readonly holidays: HolidaysService) {}
 
   @Get()
-  @NoStore()
   @RequireAnyPermission(
     'facilities.book',
     'permits.request',

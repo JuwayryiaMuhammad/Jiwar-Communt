@@ -3211,4 +3211,58 @@ describe('Permission sync', () => {
       });
     });
   });
+
+  describe('Phase M3-3 (ADR 0086)', () => {
+    const m33 = ['reports.schedule', 'compound.export'];
+    /** The catalog before M3-3: neither permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m33.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m33.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: reports.schedule and compound.export to the manager alone', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M3-3 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m33].sort());
+      expect(report.rolesCreated).toEqual([]);
+      for (const p of m33)
+        expect((await role(t, 'manager')).permissions).toContain(p);
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'accountant',
+        'collector',
+        'unit_proxy',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m33.includes(p)),
+        ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
 });

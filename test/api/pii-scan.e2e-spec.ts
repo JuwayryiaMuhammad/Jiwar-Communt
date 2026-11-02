@@ -1879,6 +1879,10 @@ describe('API v0 — PII leak scan', () => {
       '/staff/finance/custody-handins/{id}': w.bHandinId,
       '/staff/finance/statement-imports/{id}': w.bStatementImportId,
       '/staff/finance/statement-lines/{id}/candidates': w.bStatementLineId,
+      // ADR 0086: B's run, export and plan, not found for everyone of A.
+      '/staff/report-runs/{id}/download': w.bReportRunId,
+      '/staff/compound-exports/{id}/download': w.bCompoundExportId,
+      '/maintenance/capital-plans/{id}': w.bCapitalPlanId,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,
@@ -2022,6 +2026,13 @@ describe('API v0 — PII leak scan', () => {
       '/staff/facilities/{id}/closure-preview': {
         startsAt: at(day(30), 0).toISOString(),
         endsAt: at(day(31), 0).toISOString(),
+      },
+      // ADR 0086: a report is named in the query; groups only, never a person.
+      '/staff/reports/view': { report: 'maintenance_spend', ...period },
+      '/staff/reports/export': {
+        report: 'maintenance_spend',
+        format: 'csv',
+        ...period,
       },
     };
 

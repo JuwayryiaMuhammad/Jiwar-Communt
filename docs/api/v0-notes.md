@@ -393,4 +393,13 @@ The full notes are in [`notes/maintenance-analytics.md`](notes/maintenance-analy
 - **Repeat faults.** `GET /maintenance/recurrence?from&to&by&min`; `/maintenance/plan-suggestions…` (accept into a plan, dismiss).
 - **The map.** `GET /maintenance/complaints-map?from&to`: per building and common area, counts only.
 - **Cases.** `/maintenance/cases…` (resolve, dismiss); `caseId` on `POST /maintenance/work-orders`.
+### Experience and recovery (ADR 0082)
+
+The full notes are in [`notes/experience.md`](notes/experience.md).
+
+- **Low ratings.** A rating of 1 or 2 on a ticket's confirmation, a management request or a partner request takes `lowReasonCode` (`lowRating`, optional for now); it is refused on a higher one.
+- **Signals.** `GET`/`PATCH /staff/experience/settings` (three rules, a count within days or off); `GET /staff/experience/signals`.
+- **Cases.** `/staff/experience/cases…` (one open per unit, `409 EXPERIENCE_CASE_OPEN`); owner, close with an outcome; due by the inbox's `follow_up_case` and `recovery_case` hours.
+- **Compensations.** Proposed on a case, decided once (`/staff/experience/compensations/{id}/decide`, `experience.compensate`). A credit is finance's compensation credit note; above the binding `compensation_above_limit` threshold it names the board's authorization (`409 NEEDS_BOARD_APPROVAL` without). The rules are at `/staff/experience/compensation-rules`.
+- **Promises and reports.** `/staff/experience/promises…` and `…/promises/report`; `/staff/experience/ratings-report`; `sections.experience` in `GET /board/overview`.
 

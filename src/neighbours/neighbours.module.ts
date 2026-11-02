@@ -64,6 +64,7 @@ import { WelcomeTemplateService } from './welcome/welcome-template.service';
 import { NeighbourSettingsController } from './settings/neighbour-settings.controller';
 import { NeighbourSettingsService } from './settings/neighbour-settings.service';
 import { ComplaintCorrespondence } from './complaints/complaint-correspondence';
+import { ComplaintExperience } from './complaints/complaint-experience';
 
 /**
  * What happens between units (ADR 0042): complaints against a unit, lost
@@ -101,6 +102,7 @@ import { ComplaintCorrespondence } from './complaints/complaint-correspondence';
   ],
   providers: [
     ComplaintCorrespondence,
+    ComplaintExperience,
     ResidentComplaintItems,
     NeighbourAccess,
     NeighboursProvisioning,

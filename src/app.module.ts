@@ -38,6 +38,7 @@ import { StaffInboxModule } from './core/staff-inbox/staff-inbox.module';
 import { StaffDashboardModule } from './core/staff-dashboard/staff-dashboard.module';
 import { HolidaysModule } from './core/holidays/holidays.module';
 import { UnitCorrespondenceModule } from './core/unit-correspondence/unit-correspondence.module';
+import { ExperienceModule } from './core/experience/experience.module';
 import { MoveStepsModule } from './core/moves/move-steps.module';
 import { VendorDirectoryModule } from './core/vendors/vendor-directory.module';
 import { WorksCompletionsModule } from './core/works/works-completions.module';
@@ -136,6 +137,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     StaffDashboardModule,
     HolidaysModule,
     UnitCorrespondenceModule,
+    ExperienceModule,
     MoveStepsModule,
     WorksCompletionsModule,
     VendorDirectoryModule,

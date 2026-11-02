@@ -15299,6 +15299,271 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/experience/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the cases, the newest first */
+        get: operations["ExperienceController_listCases"];
+        put?: never;
+        /** Open a follow-up or recovery case for a unit */
+        post: operations["ExperienceController_openCase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/cases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one case, with its signals and compensations */
+        get: operations["ExperienceController_getCase"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/cases/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Name an open case’s owner, who is told */
+        post: operations["ExperienceController_assign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/cases/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a case once with an outcome; never while a compensation waits */
+        post: operations["ExperienceController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/cases/{id}/compensations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Propose a compensation on an open case, for the manager */
+        post: operations["ExperienceController_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/compensation-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the compound recommends for each failure */
+        get: operations["ExperienceController_rules"];
+        /** Set some failures’ recommendations; `kind: null` removes one */
+        put: operations["ExperienceController_setRules"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/compensations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the compensations, the oldest first
+         * @description A proposed one says who decides it now: `board` above a binding compensation_above_limit threshold.
+         */
+        get: operations["ExperienceController_listCompensations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/compensations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one compensation */
+        get: operations["ExperienceController_getCompensation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/compensations/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve or reject a compensation, once
+         * @description Approving a credit issues a credit note on `invoiceId` through finance (ADR 0058’s compensation); above the binding compensation_above_limit threshold it names `authorizationId`, what the board approved (ADR 0073). Two decisions at once: one wins, the other is COMPENSATION_DECIDED.
+         */
+        post: operations["CompensationDecisionsController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/promises": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The service promises register */
+        get: operations["ExperienceController_listPromises"];
+        put?: never;
+        /** Add a service promise, measured or not */
+        post: operations["ExperienceController_createPromise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/promises/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The active promises against their targets over a period */
+        get: operations["ExperienceController_promisesReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/promises/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change or retire a service promise */
+        patch: operations["ExperienceController_updatePromise"];
+        trace?: never;
+    };
+    "/api/v1/staff/experience/ratings-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The ratings over a period: by source and building, the low ratings’ reasons, the units with repeated low ratings */
+        get: operations["ExperienceController_ratingsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/experience/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The dissatisfaction rules’ thresholds */
+        get: operations["ExperienceController_getSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change some rules’ thresholds; `count: null` turns one off */
+        patch: operations["ExperienceController_updateSettings"];
+        trace?: never;
+    };
+    "/api/v1/staff/experience/signals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the signals raised, the newest first */
+        get: operations["ExperienceController_listSignals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/facilities": {
         parameters: {
             query?: never;
@@ -25810,6 +26075,10 @@ export interface components {
              */
             warrantyStartsOn: string | null;
         };
+        AssignCaseDto: {
+            /** Format: uuid */
+            ownerId: string;
+        };
         AssignCollectorDto: {
             /** Format: uuid */
             collectorId: string;
@@ -27931,6 +28200,12 @@ export interface components {
             /** @description Anyone checks it with this code on the public page. */
             verifyCode: string;
         };
+        CloseCaseDto: {
+            /** @description Staff’s words on how it ended, plain data. */
+            note?: string;
+            /** @description From the closed list `experienceCaseOutcome`. */
+            outcome: string;
+        };
         CloseGateServiceDto: {
             /** @description Security’s own words, kept for the management. */
             note?: string;
@@ -28371,6 +28646,79 @@ export interface components {
             descriptionEn: string;
             /** @description Null: added. */
             previousAmount: string | null;
+        };
+        CompensationAuthorityView: {
+            binding: boolean;
+            /**
+             * @description `board` above a binding threshold: approving names the board’s authorization.
+             * @enum {string}
+             */
+            decider: "manager" | "board";
+            /** @description compensation_above_limit’s threshold, EGP. */
+            threshold: string | null;
+        };
+        /** @enum {string} */
+        CompensationKind: "credit" | "apology" | "redo" | "priority";
+        CompensationRuleDto: {
+            /** @description EGP: a credit’s recommended amount. */
+            amount?: string | null;
+            /** @description A code of `creditNoteCompensation`. */
+            failureCode: string;
+            /** @description What is recommended; null removes the rule. */
+            kind: components["schemas"]["CompensationKind"] | null;
+        };
+        CompensationRuleView: {
+            amount: string | null;
+            failureCode: string;
+            kind: components["schemas"]["CompensationKind"];
+        };
+        CompensationRuleViewList: {
+            data: components["schemas"]["CompensationRuleView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
+        CompensationStatus: "proposed" | "approved" | "rejected";
+        CompensationView: {
+            /** @description EGP; a credit. */
+            amount: string | null;
+            /** @description Who decides it now; a proposed one only. */
+            authority: components["schemas"]["CompensationAuthorityView"] | null;
+            /**
+             * Format: uuid
+             * @description The board’s authorization it used, above the threshold.
+             */
+            authorizationId: string | null;
+            /** Format: uuid */
+            caseId: string;
+            /**
+             * Format: uuid
+             * @description The credit note finance issued for an approved credit.
+             */
+            creditNoteId: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: uuid */
+            decidedById: string | null;
+            /** @description `creditNoteCompensation`. */
+            failureCode: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["CompensationKind"];
+            /** @description Staff’s words. */
+            note: string | null;
+            /** Format: date-time */
+            proposedAt: string;
+            /** Format: uuid */
+            proposedById: string;
+            /** @description `compensationReject`. */
+            rejectReason: string | null;
+            status: components["schemas"]["CompensationStatus"];
+            /** Format: uuid */
+            unitId: string;
+        };
+        CompensationViewList: {
+            data: components["schemas"]["CompensationView"][];
+            nextCursor: string | null;
         };
         ComplainPartnerRequestDto: {
             /** @description From the closed list `partnerCompensationAsk`. */
@@ -30546,6 +30894,16 @@ export interface components {
             startsOn: string;
             title: string;
         };
+        CreatePromiseDto: {
+            /** @description How it is measured; null: listed, not measured. */
+            metric?: components["schemas"]["ServicePromiseMetric"] | null;
+            /** @description Hours (1–8760) for an hours metric, an average rating (1–5) for a rating one. */
+            target?: number | null;
+            /** @description The share of items within the hours, %: an hours metric only. */
+            targetShare?: number | null;
+            titleAr: string;
+            titleEn: string;
+        };
         CreatePurchaseRequestDto: {
             /**
              * Format: uuid
@@ -31448,6 +31806,22 @@ export interface components {
              */
             decision: "upheld" | "cancelled";
             /** @description With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`). */
+            reasonCode?: string;
+        };
+        DecideCompensationDto: {
+            /**
+             * Format: uuid
+             * @description Approving a credit above the binding compensation_above_limit threshold (ADR 0073): what the board approved for it, used once; NEEDS_BOARD_APPROVAL without it, FIELD_NOT_ALLOWED within the threshold.
+             */
+            authorizationId?: string;
+            /** @enum {string} */
+            decision: "approve" | "reject";
+            /**
+             * Format: uuid
+             * @description Approving a credit: the unit’s invoice the credit note is issued on (not under an open dispute).
+             */
+            invoiceId?: string;
+            /** @description Rejecting: from the closed list `compensationReject`. */
             reasonCode?: string;
         };
         DecideComplaintDto: {
@@ -32789,6 +33163,110 @@ export interface components {
             /** Format: date-time */
             voidedAt: string;
         };
+        ExperienceBuildingTotalsView: {
+            average: number | null;
+            building: string | null;
+            count: number;
+            /** @description Ratings of 1 or 2. */
+            low: number;
+        };
+        /** @enum {string} */
+        ExperienceCaseKind: "follow_up" | "recovery";
+        /** @enum {string} */
+        ExperienceCaseStatus: "open" | "closed";
+        ExperienceCaseView: {
+            building: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            closedById: string | null;
+            /** @description One case only: its compensations. */
+            compensations?: components["schemas"]["CompensationView"][];
+            /**
+             * Format: date-time
+             * @description An open case’s due time: the staff inbox’s for its kind.
+             */
+            dueAt: string | null;
+            failureCode: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ExperienceCaseKind"];
+            /** @description Staff’s words. */
+            note: string | null;
+            /** @example EC-000123 */
+            number: string;
+            /** Format: date-time */
+            openedAt: string;
+            /** Format: uuid */
+            openedById: string | null;
+            /** @enum {string} */
+            origin: "signal" | "manual";
+            /** @description `experienceCaseOutcome`. */
+            outcome: string | null;
+            outcomeNote: string | null;
+            /** Format: uuid */
+            ownerId: string | null;
+            /** @description One case only: the signals that joined it. */
+            signals?: components["schemas"]["ExperienceSignalView"][];
+            /** Format: uuid */
+            sourceId: string | null;
+            sourceType: components["schemas"]["ExperienceSourceType"] | null;
+            status: components["schemas"]["ExperienceCaseStatus"];
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string;
+        };
+        ExperienceCaseViewList: {
+            data: components["schemas"]["ExperienceCaseView"][];
+            nextCursor: string | null;
+        };
+        ExperienceRatingTotalsView: {
+            average: number | null;
+            count: number;
+            /** @description Ratings of 1 or 2. */
+            low: number;
+        };
+        ExperienceRuleView: {
+            code: components["schemas"]["ExperienceSignalCode"];
+            /** @description How many events make a signal; null: the rule is off. */
+            count: number | null;
+            /** @description Within how many days. */
+            days: number;
+        };
+        ExperienceSettingsView: {
+            rules: components["schemas"]["ExperienceRuleView"][];
+        };
+        /** @enum {string} */
+        ExperienceSignalCode: "repeated_low_ratings" | "reopened_tickets" | "repeated_complaints";
+        ExperienceSignalView: {
+            building: string | null;
+            /** Format: uuid */
+            caseId: string | null;
+            code: components["schemas"]["ExperienceSignalCode"];
+            /** @description Events within the window. */
+            count: number;
+            /** Format: date-time */
+            detectedAt: string;
+            /** Format: uuid */
+            id: string;
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string;
+            windowDays: number;
+        };
+        ExperienceSignalViewList: {
+            data: components["schemas"]["ExperienceSignalView"][];
+            nextCursor: string | null;
+        };
+        ExperienceSourceTotalsView: {
+            average: number | null;
+            count: number;
+            /** @description Ratings of 1 or 2. */
+            low: number;
+            source: components["schemas"]["ExperienceSourceType"];
+        };
+        /** @enum {string} */
+        ExperienceSourceType: "ticket" | "management_request" | "partner_request";
         ExportDownloadDto: {
             /** @description The code sent to the account’s email for this link. */
             code: string;
@@ -35149,7 +35627,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -36459,6 +36937,19 @@ export interface components {
         LoginViewList: {
             data: components["schemas"]["LoginView"][];
             nextCursor: string | null;
+        };
+        LowRatedUnitView: {
+            low: number;
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string;
+        };
+        LowRatingReasonCountView: {
+            /** @description `lowRating`. */
+            code: string;
+            count: number;
+            /** @description Of the stated, %. */
+            share: number;
         };
         MaintenanceCaseDetailView: {
             /** @description Opened by itself, at the threshold. */
@@ -38378,6 +38869,24 @@ export interface components {
             results: components["schemas"]["OfflineActionResultView"][];
             /** Format: date-time */
             serverTime: string;
+        };
+        OpenCaseDto: {
+            /** @description What failed: `creditNoteCompensation` (the compensation reasons, ADR 0058). */
+            failureCode?: string;
+            kind: components["schemas"]["ExperienceCaseKind"];
+            /** @description Staff’s words, plain data: never in the audit trail. */
+            note?: string;
+            /**
+             * Format: uuid
+             * @description An active staff or manager account, told.
+             */
+            ownerId?: string;
+            /** Format: uuid */
+            sourceId?: string;
+            /** @description What it is about, with `sourceId`: both or neither. */
+            sourceType?: components["schemas"]["ExperienceSourceType"];
+            /** Format: uuid */
+            unitId: string;
         };
         OpenDisputeDto: {
             /**
@@ -40318,6 +40827,22 @@ export interface components {
             /** @description From the closed list `ticketPriority`. */
             reasonCode: string;
         };
+        PromiseMeasurementView: {
+            items: number;
+            /** @description False: no metric. */
+            measured: boolean;
+            met: boolean | null;
+            promise: components["schemas"]["ServicePromiseView"];
+            /** @description The share within the hours (%), or the average rating. */
+            value: number | null;
+        };
+        PromisesReportView: {
+            /** Format: date */
+            from: string;
+            items: components["schemas"]["PromiseMeasurementView"][];
+            /** Format: date */
+            to: string;
+        };
         ProposeAgendaDto: {
             body: string;
             title: string;
@@ -40333,6 +40858,15 @@ export interface components {
             outcome: components["schemas"]["ApprovalMotionOutcome"];
             /** @description The board’s reasons, as they will stand with the decision. Write no one’s name: they are kept with the record. */
             rationale: string;
+        };
+        ProposeCompensationDto: {
+            /** @description EGP: required on a credit, refused on the other kinds. */
+            amount?: string;
+            /** @description What failed: `creditNoteCompensation`. A credit carries it to the credit note. */
+            failureCode: string;
+            kind: components["schemas"]["CompensationKind"];
+            /** @description Staff’s words, plain data: never in the audit trail. */
+            note?: string;
         };
         ProposePartnerRequestDto: {
             /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
@@ -40742,6 +41276,19 @@ export interface components {
              */
             average: string;
             count: number;
+        };
+        RatingsReportView: {
+            byBuilding: components["schemas"]["ExperienceBuildingTotalsView"][];
+            bySource: components["schemas"]["ExperienceSourceTotalsView"][];
+            /** Format: date */
+            from: string;
+            reasons: components["schemas"]["LowRatingReasonCountView"][];
+            /** Format: date */
+            to: string;
+            totals: components["schemas"]["ExperienceRatingTotalsView"];
+            units: components["schemas"]["LowRatedUnitView"][];
+            /** @description Low ratings with no reason. */
+            unstated: number;
         };
         ReadAllView: {
             read: number;
@@ -43328,6 +43875,26 @@ export interface components {
             /** @description open ≥ threshold × available (one at least). */
             underPressure: boolean;
         };
+        /** @enum {string} */
+        ServicePromiseMetric: "ticket_resolution_hours" | "request_response_hours" | "ticket_rating" | "request_rating" | "partner_rating";
+        ServicePromiseView: {
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            metric: components["schemas"]["ServicePromiseMetric"] | null;
+            target: number | null;
+            targetShare: number | null;
+            titleAr: string;
+            titleEn: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ServicePromiseViewList: {
+            data: components["schemas"]["ServicePromiseView"][];
+            nextCursor: string | null;
+        };
         ServiceStandingView: {
             /** Format: date-time */
             appealUntil: string | null;
@@ -43576,6 +44143,13 @@ export interface components {
             fileId: string;
             /** @description `author`: who reported it (INCIDENT_SIGNER_NOT_ELIGIBLE otherwise). `reviewer`: a keeper who did not. */
             role: components["schemas"]["IncidentSignatureRole"];
+        };
+        SignalRuleDto: {
+            code: components["schemas"]["ExperienceSignalCode"];
+            /** @description How many events make a signal; null turns the rule off. */
+            count?: number | null;
+            /** @description Within how many days back from now. */
+            days?: number;
         };
         SiteMapView: {
             /** @description Null until the management sets one. */
@@ -47672,6 +48246,9 @@ export interface components {
             nameAr?: string;
             nameEn?: string;
         };
+        UpdateCompensationRulesDto: {
+            items: components["schemas"]["CompensationRuleDto"][];
+        };
         UpdateComplaintCategoryDto: {
             /** @description False retires the category: no new complaint may use it. */
             active?: boolean;
@@ -47791,6 +48368,9 @@ export interface components {
             titleAr?: string | null;
             /** @description A language is whole or absent; at least one is there. */
             titleEn?: string | null;
+        };
+        UpdateExperienceSettingsDto: {
+            items: components["schemas"]["SignalRuleDto"][];
         };
         UpdateFacilityDto: {
             /** @description False retires the facility: no new booking, not listed to residents. Bookings already made stay. */
@@ -48208,6 +48788,18 @@ export interface components {
             /** Format: date */
             startsOn?: string;
             title?: string;
+        };
+        UpdatePromiseDto: {
+            /** @description false retires it. */
+            active?: boolean;
+            /** @description How it is measured; null: listed, not measured. */
+            metric?: components["schemas"]["ServicePromiseMetric"] | null;
+            /** @description Hours (1–8760) for an hours metric, an average rating (1–5) for a rating one. */
+            target?: number | null;
+            /** @description The share of items within the hours, %: an hours metric only. */
+            targetShare?: number | null;
+            titleAr?: string;
+            titleEn?: string;
         };
         UpdateReplyTemplateDto: {
             bodyAr?: string | null;
@@ -72361,6 +72953,449 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeputyView"];
+                };
+            };
+        };
+    };
+    ExperienceController_listCases: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["ExperienceCaseStatus"];
+                kind?: components["schemas"]["ExperienceCaseKind"];
+                unitId?: string;
+                ownerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceCaseViewList"];
+                };
+            };
+        };
+    };
+    ExperienceController_openCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenCaseDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceCaseView"];
+                };
+            };
+        };
+    };
+    ExperienceController_getCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceCaseView"];
+                };
+            };
+        };
+    };
+    ExperienceController_assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignCaseDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceCaseView"];
+                };
+            };
+        };
+    };
+    ExperienceController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseCaseDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceCaseView"];
+                };
+            };
+        };
+    };
+    ExperienceController_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeCompensationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationView"];
+                };
+            };
+        };
+    };
+    ExperienceController_rules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationRuleViewList"];
+                };
+            };
+        };
+    };
+    ExperienceController_setRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCompensationRulesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationRuleViewList"];
+                };
+            };
+        };
+    };
+    ExperienceController_listCompensations: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["CompensationStatus"];
+                caseId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationViewList"];
+                };
+            };
+        };
+    };
+    ExperienceController_getCompensation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationView"];
+                };
+            };
+        };
+    };
+    CompensationDecisionsController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideCompensationDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationView"];
+                };
+            };
+        };
+    };
+    ExperienceController_listPromises: {
+        parameters: {
+            query?: {
+                active?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePromiseViewList"];
+                };
+            };
+        };
+    };
+    ExperienceController_createPromise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePromiseDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePromiseView"];
+                };
+            };
+        };
+    };
+    ExperienceController_promisesReport: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day; 30 days before `to` by default. */
+                from?: string;
+                /** @description The last day, today by default; at most 366 days. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromisesReportView"];
+                };
+            };
+        };
+    };
+    ExperienceController_updatePromise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePromiseDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServicePromiseView"];
+                };
+            };
+        };
+    };
+    ExperienceController_ratingsReport: {
+        parameters: {
+            query?: {
+                /** @description The compound’s first day; 30 days before `to` by default. */
+                from?: string;
+                /** @description The last day, today by default; at most 366 days. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingsReportView"];
+                };
+            };
+        };
+    };
+    ExperienceController_getSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceSettingsView"];
+                };
+            };
+        };
+    };
+    ExperienceController_updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateExperienceSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceSettingsView"];
+                };
+            };
+        };
+    };
+    ExperienceController_listSignals: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                unitId?: string;
+                code?: components["schemas"]["ExperienceSignalCode"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperienceSignalViewList"];
                 };
             };
         };

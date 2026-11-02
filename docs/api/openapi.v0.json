@@ -3323,6 +3323,18 @@
         ],
         "type": "object"
       },
+      "AssignCaseDto": {
+        "properties": {
+          "ownerId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ownerId"
+        ],
+        "type": "object"
+      },
       "AssignCollectorDto": {
         "properties": {
           "collectorId": {
@@ -10298,6 +10310,24 @@
         ],
         "type": "object"
       },
+      "CloseCaseDto": {
+        "properties": {
+          "note": {
+            "description": "Staff’s words on how it ended, plain data.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "outcome": {
+            "description": "From the closed list `experienceCaseOutcome`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "type": "object"
+      },
       "CloseGateServiceDto": {
         "properties": {
           "note": {
@@ -11721,6 +11751,247 @@
           "change",
           "cause",
           "decision"
+        ],
+        "type": "object"
+      },
+      "CompensationAuthorityView": {
+        "properties": {
+          "binding": {
+            "type": "boolean"
+          },
+          "decider": {
+            "description": "`board` above a binding threshold: approving names the board’s authorization.",
+            "enum": [
+              "manager",
+              "board"
+            ],
+            "type": "string"
+          },
+          "threshold": {
+            "description": "compensation_above_limit’s threshold, EGP.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "threshold",
+          "binding",
+          "decider"
+        ],
+        "type": "object"
+      },
+      "CompensationKind": {
+        "enum": [
+          "credit",
+          "apology",
+          "redo",
+          "priority"
+        ],
+        "type": "string"
+      },
+      "CompensationRuleDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP: a credit’s recommended amount.",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "failureCode": {
+            "description": "A code of `creditNoteCompensation`.",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompensationKind"
+              }
+            ],
+            "description": "What is recommended; null removes the rule.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "failureCode",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "CompensationRuleView": {
+        "properties": {
+          "amount": {
+            "nullable": true,
+            "type": "string"
+          },
+          "failureCode": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompensationKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "failureCode",
+          "kind",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "CompensationRuleViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CompensationRuleView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CompensationStatus": {
+        "enum": [
+          "proposed",
+          "approved",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "CompensationView": {
+        "properties": {
+          "amount": {
+            "description": "EGP; a credit.",
+            "nullable": true,
+            "type": "string"
+          },
+          "authority": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompensationAuthorityView"
+              }
+            ],
+            "description": "Who decides it now; a proposed one only.",
+            "nullable": true,
+            "type": "object"
+          },
+          "authorizationId": {
+            "description": "The board’s authorization it used, above the threshold.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "caseId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "creditNoteId": {
+            "description": "The credit note finance issued for an approved credit.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "failureCode": {
+            "description": "`creditNoteCompensation`.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompensationKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "Staff’s words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "proposedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "proposedById": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "`compensationReject`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompensationStatus"
+              }
+            ]
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "caseId",
+          "unitId",
+          "kind",
+          "failureCode",
+          "amount",
+          "note",
+          "status",
+          "proposedById",
+          "proposedAt",
+          "decidedById",
+          "decidedAt",
+          "rejectReason",
+          "creditNoteId",
+          "authorizationId",
+          "authority"
+        ],
+        "type": "object"
+      },
+      "CompensationViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CompensationView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -17910,6 +18181,46 @@
         ],
         "type": "object"
       },
+      "CreatePromiseDto": {
+        "properties": {
+          "metric": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServicePromiseMetric"
+              }
+            ],
+            "description": "How it is measured; null: listed, not measured.",
+            "nullable": true
+          },
+          "target": {
+            "description": "Hours (1–8760) for an hours metric, an average rating (1–5) for a rating one.",
+            "nullable": true,
+            "type": "number"
+          },
+          "targetShare": {
+            "description": "The share of items within the hours, %: an hours metric only.",
+            "maximum": 100,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "titleAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "titleEn",
+          "titleAr"
+        ],
+        "type": "object"
+      },
       "CreatePurchaseRequestDto": {
         "properties": {
           "budgetLineId": {
@@ -20331,6 +20642,35 @@
           },
           "reasonCode": {
             "description": "With `cancelled` only, from `vehicleFineCancel` (default `appeal_accepted`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
+      "DecideCompensationDto": {
+        "properties": {
+          "authorizationId": {
+            "description": "Approving a credit above the binding compensation_above_limit threshold (ADR 0073): what the board approved for it, used once; NEEDS_BOARD_APPROVAL without it, FIELD_NOT_ALLOWED within the threshold.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "type": "string"
+          },
+          "invoiceId": {
+            "description": "Approving a credit: the unit’s invoice the credit note is issued on (not under an open dispute).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "Rejecting: from the closed list `compensationReject`.",
             "type": "string"
           }
         },
@@ -24697,6 +25037,388 @@
           "reasonCode"
         ],
         "type": "object"
+      },
+      "ExperienceBuildingTotalsView": {
+        "properties": {
+          "average": {
+            "nullable": true,
+            "type": "number"
+          },
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "low": {
+            "description": "Ratings of 1 or 2.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "average",
+          "low",
+          "building"
+        ],
+        "type": "object"
+      },
+      "ExperienceCaseKind": {
+        "enum": [
+          "follow_up",
+          "recovery"
+        ],
+        "type": "string"
+      },
+      "ExperienceCaseStatus": {
+        "enum": [
+          "open",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "ExperienceCaseView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "compensations": {
+            "description": "One case only: its compensations.",
+            "items": {
+              "$ref": "#/components/schemas/CompensationView"
+            },
+            "type": "array"
+          },
+          "dueAt": {
+            "description": "An open case’s due time: the staff inbox’s for its kind.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "failureCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceCaseKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "Staff’s words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "EC-000123",
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "openedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "signal",
+              "manual"
+            ],
+            "type": "string"
+          },
+          "outcome": {
+            "description": "`experienceCaseOutcome`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "outcomeNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ownerId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "signals": {
+            "description": "One case only: the signals that joined it.",
+            "items": {
+              "$ref": "#/components/schemas/ExperienceSignalView"
+            },
+            "type": "array"
+          },
+          "sourceId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "sourceType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceSourceType"
+              }
+            ],
+            "nullable": true
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceCaseStatus"
+              }
+            ]
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "unitId",
+          "unitCode",
+          "building",
+          "kind",
+          "origin",
+          "sourceType",
+          "sourceId",
+          "failureCode",
+          "note",
+          "ownerId",
+          "status",
+          "openedById",
+          "openedAt",
+          "dueAt",
+          "closedById",
+          "closedAt",
+          "outcome",
+          "outcomeNote"
+        ],
+        "type": "object"
+      },
+      "ExperienceCaseViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceCaseView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ExperienceRatingTotalsView": {
+        "properties": {
+          "average": {
+            "nullable": true,
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          },
+          "low": {
+            "description": "Ratings of 1 or 2.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "average",
+          "low"
+        ],
+        "type": "object"
+      },
+      "ExperienceRuleView": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceSignalCode"
+              }
+            ]
+          },
+          "count": {
+            "description": "How many events make a signal; null: the rule is off.",
+            "nullable": true,
+            "type": "number"
+          },
+          "days": {
+            "description": "Within how many days.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "count",
+          "days"
+        ],
+        "type": "object"
+      },
+      "ExperienceSettingsView": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceRuleView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rules"
+        ],
+        "type": "object"
+      },
+      "ExperienceSignalCode": {
+        "enum": [
+          "repeated_low_ratings",
+          "reopened_tickets",
+          "repeated_complaints"
+        ],
+        "type": "string"
+      },
+      "ExperienceSignalView": {
+        "properties": {
+          "building": {
+            "nullable": true,
+            "type": "string"
+          },
+          "caseId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceSignalCode"
+              }
+            ]
+          },
+          "count": {
+            "description": "Events within the window.",
+            "type": "number"
+          },
+          "detectedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "windowDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitCode",
+          "building",
+          "code",
+          "count",
+          "windowDays",
+          "detectedAt",
+          "caseId"
+        ],
+        "type": "object"
+      },
+      "ExperienceSignalViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceSignalView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ExperienceSourceTotalsView": {
+        "properties": {
+          "average": {
+            "nullable": true,
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          },
+          "low": {
+            "description": "Ratings of 1 or 2.",
+            "type": "number"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceSourceType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "count",
+          "average",
+          "low",
+          "source"
+        ],
+        "type": "object"
+      },
+      "ExperienceSourceType": {
+        "enum": [
+          "ticket",
+          "management_request",
+          "partner_request"
+        ],
+        "type": "string"
       },
       "ExportDownloadDto": {
         "properties": {
@@ -32679,7 +33401,10 @@
           "management_request",
           "purchase_request",
           "space_use_request",
-          "plan_suggestion"
+          "plan_suggestion",
+          "follow_up_case",
+          "recovery_case",
+          "compensation"
         ],
         "type": "string"
       },
@@ -36645,6 +37370,48 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "LowRatedUnitView": {
+        "properties": {
+          "low": {
+            "type": "number"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "unitCode",
+          "low"
+        ],
+        "type": "object"
+      },
+      "LowRatingReasonCountView": {
+        "properties": {
+          "code": {
+            "description": "`lowRating`.",
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "share": {
+            "description": "Of the stated, %.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "count",
+          "share"
         ],
         "type": "object"
       },
@@ -42870,6 +43637,53 @@
         ],
         "type": "object"
       },
+      "OpenCaseDto": {
+        "properties": {
+          "failureCode": {
+            "description": "What failed: `creditNoteCompensation` (the compensation reasons, ADR 0058).",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceCaseKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "Staff’s words, plain data: never in the audit trail.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "An active staff or manager account, told.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "sourceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sourceType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceSourceType"
+              }
+            ],
+            "description": "What it is about, with `sourceId`: both or neither."
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unitId",
+          "kind"
+        ],
+        "type": "object"
+      },
       "OpenDisputeDto": {
         "properties": {
           "photoFileId": {
@@ -48967,6 +49781,61 @@
         ],
         "type": "object"
       },
+      "PromiseMeasurementView": {
+        "properties": {
+          "items": {
+            "type": "number"
+          },
+          "measured": {
+            "description": "False: no metric.",
+            "type": "boolean"
+          },
+          "met": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "promise": {
+            "$ref": "#/components/schemas/ServicePromiseView"
+          },
+          "value": {
+            "description": "The share within the hours (%), or the average rating.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "promise",
+          "measured",
+          "items",
+          "value",
+          "met"
+        ],
+        "type": "object"
+      },
+      "PromisesReportView": {
+        "properties": {
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PromiseMeasurementView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "items"
+        ],
+        "type": "object"
+      },
       "ProposeAgendaDto": {
         "properties": {
           "body": {
@@ -49033,6 +49902,37 @@
         "required": [
           "rationale",
           "outcome"
+        ],
+        "type": "object"
+      },
+      "ProposeCompensationDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP: required on a credit, refused on the other kinds.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "failureCode": {
+            "description": "What failed: `creditNoteCompensation`. A credit carries it to the credit note.",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompensationKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "Staff’s words, plain data: never in the audit trail.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "failureCode"
         ],
         "type": "object"
       },
@@ -50242,6 +51142,60 @@
         "required": [
           "average",
           "count"
+        ],
+        "type": "object"
+      },
+      "RatingsReportView": {
+        "properties": {
+          "byBuilding": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceBuildingTotalsView"
+            },
+            "type": "array"
+          },
+          "bySource": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceSourceTotalsView"
+            },
+            "type": "array"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/LowRatingReasonCountView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ExperienceRatingTotalsView"
+          },
+          "units": {
+            "items": {
+              "$ref": "#/components/schemas/LowRatedUnitView"
+            },
+            "type": "array"
+          },
+          "unstated": {
+            "description": "Low ratings with no reason.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "totals",
+          "bySource",
+          "reasons",
+          "unstated",
+          "byBuilding",
+          "units"
         ],
         "type": "object"
       },
@@ -58510,6 +59464,88 @@
         ],
         "type": "object"
       },
+      "ServicePromiseMetric": {
+        "enum": [
+          "ticket_resolution_hours",
+          "request_response_hours",
+          "ticket_rating",
+          "request_rating",
+          "partner_rating"
+        ],
+        "type": "string"
+      },
+      "ServicePromiseView": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "metric": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServicePromiseMetric"
+              }
+            ],
+            "nullable": true
+          },
+          "target": {
+            "nullable": true,
+            "type": "number"
+          },
+          "targetShare": {
+            "nullable": true,
+            "type": "number"
+          },
+          "titleAr": {
+            "type": "string"
+          },
+          "titleEn": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "titleEn",
+          "titleAr",
+          "metric",
+          "target",
+          "targetShare",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ServicePromiseViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ServicePromiseView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ServiceStandingView": {
         "properties": {
           "appealUntil": {
@@ -59335,6 +60371,34 @@
         "required": [
           "role",
           "fileId"
+        ],
+        "type": "object"
+      },
+      "SignalRuleDto": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExperienceSignalCode"
+              }
+            ]
+          },
+          "count": {
+            "description": "How many events make a signal; null turns the rule off.",
+            "maximum": 20,
+            "minimum": 2,
+            "nullable": true,
+            "type": "number"
+          },
+          "days": {
+            "description": "Within how many days back from now.",
+            "maximum": 365,
+            "minimum": 7,
+            "type": "number"
+          }
+        },
+        "required": [
+          "code"
         ],
         "type": "object"
       },
@@ -73517,6 +74581,22 @@
         },
         "type": "object"
       },
+      "UpdateCompensationRulesDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CompensationRuleDto"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "UpdateComplaintCategoryDto": {
         "properties": {
           "active": {
@@ -73824,6 +74904,22 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "UpdateExperienceSettingsDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SignalRuleDto"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
         "type": "object"
       },
       "UpdateFacilityDto": {
@@ -74305,7 +75401,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 15,
+            "maxItems": 18,
             "minItems": 1,
             "type": "array"
           }
@@ -74994,6 +76090,46 @@
           },
           "title": {
             "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePromiseDto": {
+        "properties": {
+          "active": {
+            "description": "false retires it.",
+            "type": "boolean"
+          },
+          "metric": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServicePromiseMetric"
+              }
+            ],
+            "description": "How it is measured; null: listed, not measured.",
+            "nullable": true
+          },
+          "target": {
+            "description": "Hours (1–8760) for an hours metric, an average rating (1–5) for a rating one.",
+            "nullable": true,
+            "type": "number"
+          },
+          "targetShare": {
+            "description": "The share of items within the hours, %: an hours metric only.",
+            "maximum": 100,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          },
+          "titleAr": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "titleEn": {
+            "maxLength": 200,
             "minLength": 1,
             "type": "string"
           }
@@ -122382,6 +123518,871 @@
           "staff"
         ],
         "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/cases": {
+      "get": {
+        "operationId": "ExperienceController_listCases",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ExperienceCaseStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ExperienceCaseKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ownerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceCaseViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the cases, the newest first",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ExperienceController_openCase",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenCaseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceCaseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a follow-up or recovery case for a unit",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/cases/{id}": {
+      "get": {
+        "operationId": "ExperienceController_getCase",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceCaseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one case, with its signals and compensations",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/cases/{id}/assign": {
+      "post": {
+        "operationId": "ExperienceController_assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCaseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceCaseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Name an open case’s owner, who is told",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/cases/{id}/close": {
+      "post": {
+        "operationId": "ExperienceController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseCaseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceCaseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a case once with an outcome; never while a compensation waits",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/cases/{id}/compensations": {
+      "post": {
+        "operationId": "ExperienceController_propose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeCompensationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Propose a compensation on an open case, for the manager",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/compensation-rules": {
+      "get": {
+        "operationId": "ExperienceController_rules",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationRuleViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What the compound recommends for each failure",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      },
+      "put": {
+        "operationId": "ExperienceController_setRules",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompensationRulesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationRuleViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set some failures’ recommendations; `kind: null` removes one",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/compensations": {
+      "get": {
+        "description": "A proposed one says who decides it now: `board` above a binding compensation_above_limit threshold.",
+        "operationId": "ExperienceController_listCompensations",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CompensationStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "caseId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the compensations, the oldest first",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/compensations/{id}": {
+      "get": {
+        "operationId": "ExperienceController_getCompensation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one compensation",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/compensations/{id}/decide": {
+      "post": {
+        "description": "Approving a credit issues a credit note on `invoiceId` through finance (ADR 0058’s compensation); above the binding compensation_above_limit threshold it names `authorizationId`, what the board approved (ADR 0073). Two decisions at once: one wins, the other is COMPENSATION_DECIDED.",
+        "operationId": "CompensationDecisionsController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideCompensationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject a compensation, once",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/promises": {
+      "get": {
+        "operationId": "ExperienceController_listPromises",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServicePromiseViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The service promises register",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ExperienceController_createPromise",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromiseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServicePromiseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a service promise, measured or not",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/promises/report": {
+      "get": {
+        "operationId": "ExperienceController_promisesReport",
+        "parameters": [
+          {
+            "description": "The compound’s first day; 30 days before `to` by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, today by default; at most 366 days.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromisesReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The active promises against their targets over a period",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/promises/{id}": {
+      "patch": {
+        "operationId": "ExperienceController_updatePromise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromiseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServicePromiseView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change or retire a service promise",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/ratings-report": {
+      "get": {
+        "operationId": "ExperienceController_ratingsReport",
+        "parameters": [
+          {
+            "description": "The compound’s first day; 30 days before `to` by default.",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, today by default; at most 366 days.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingsReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The ratings over a period: by source and building, the low ratings’ reasons, the units with repeated low ratings",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/settings": {
+      "get": {
+        "operationId": "ExperienceController_getSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The dissatisfaction rules’ thresholds",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "ExperienceController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExperienceSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change some rules’ thresholds; `count: null` turns one off",
+        "tags": [
+          "staff"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/experience/signals": {
+      "get": {
+        "operationId": "ExperienceController_listSignals",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ExperienceSignalCode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperienceSignalViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the signals raised, the newest first",
+        "tags": [
+          "staff"
+        ],
         "x-stability": "draft"
       }
     },

@@ -52,6 +52,7 @@ import {
 } from './setup/subcategories.controller';
 import { SubcategoriesService } from './setup/subcategories.service';
 import { SuspensionService } from './setup/suspension.service';
+import { PartnerExperience } from './feedback/partner-experience';
 
 /**
  * The compound's service partners (ADR 0060): the catalogue residents find
@@ -84,6 +85,7 @@ import { SuspensionService } from './setup/suspension.service';
     StaffGroupOffersController,
   ],
   providers: [
+    PartnerExperience,
     PartnersAccess,
     PartnersProvisioning,
     PartnerSettingsService,

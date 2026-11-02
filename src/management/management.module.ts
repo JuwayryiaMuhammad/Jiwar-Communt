@@ -61,6 +61,7 @@ import {
 import { TopicsService } from './topics/topics.service';
 import { UtilitiesMoveStep } from './requests/utilities-move-step';
 import { ManagementInboxItems } from './management-inbox-items';
+import { RequestExperience } from './requests/request-experience';
 
 import { MaintenanceModule } from '../maintenance';
 import { ManagementCorrespondence } from './management-correspondence';
@@ -101,6 +102,7 @@ import { ManagementCorrespondence } from './management-correspondence';
   ],
   providers: [
     ManagementCorrespondence,
+    RequestExperience,
     ManagementPartnersPort,
     ManagementProvisioning,
     TopicsService,

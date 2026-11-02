@@ -236,6 +236,7 @@ import {
 } from './economics/technician-stats.controller';
 import { TechnicianStatsService } from './economics/technician-stats.service';
 import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
+import { TicketExperience } from './tickets/ticket-experience';
 
 /**
  * The maintenance domain (ADR 0032). It imports core freely and the
@@ -336,6 +337,7 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
   providers: [
     TicketCorrespondence,
     MaintenanceManagementPort,
+    TicketExperience,
     MaintenanceProvisioning,
     CategoriesService,
     PreventiveServicesService,

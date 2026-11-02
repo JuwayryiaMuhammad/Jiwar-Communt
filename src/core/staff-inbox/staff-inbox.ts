@@ -36,6 +36,11 @@ export const INBOX_TYPES = [
   'space_use_request',
   // ADR 0081: an open plan suggestion, for whoever keeps the plans.
   'plan_suggestion',
+  // ADR 0082: an open follow-up or recovery case, and a compensation
+  // waiting for its decision.
+  'follow_up_case',
+  'recovery_case',
+  'compensation',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

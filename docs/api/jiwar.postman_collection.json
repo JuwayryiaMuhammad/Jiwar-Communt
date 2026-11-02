@@ -52395,6 +52395,727 @@
           }
         },
         {
+          "name": "List the cases, the newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "cases"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "ownerId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/cases"
+            }
+          }
+        },
+        {
+          "name": "Open a follow-up or recovery case for a unit",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"unitId\": \"\",\n  \"kind\": \"follow_up\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `failureCode` | string |  | What failed: `creditNoteCompensation` (the compensation reasons, ADR 0058). |\n| `kind` | `follow_up` \\| `recovery` | yes |  |\n| `note` | string |  | Staff’s words, plain data: never in the audit trail. |\n| `ownerId` | string (uuid) |  | An active staff or manager account, told. |\n| `sourceId` | string (uuid) |  |  |\n| `sourceType` | `ticket` \\| `management_request` \\| `partner_request` |  | What it is about, with `sourceId`: both or neither. |\n| `unitId` | string (uuid) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "cases"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/cases"
+            }
+          }
+        },
+        {
+          "name": "Get one case, with its signals and compensations",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "cases",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/cases/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Name an open case’s owner, who is told",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"ownerId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `ownerId` | string (uuid) | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "cases",
+                ":id",
+                "assign"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/cases/:id/assign",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close a case once with an outcome; never while a compensation waits",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"outcome\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  | Staff’s words on how it ended, plain data. |\n| `outcome` | string | yes | From the closed list `experienceCaseOutcome`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "cases",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/cases/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Propose a compensation on an open case, for the manager",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"credit\",\n  \"failureCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string |  | EGP: required on a credit, refused on the other kinds. |\n| `failureCode` | string | yes | What failed: `creditNoteCompensation`. A credit carries it to the credit note. |\n| `kind` | `credit` \\| `apology` \\| `redo` \\| `priority` | yes |  |\n| `note` | string |  | Staff’s words, plain data: never in the audit trail. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "cases",
+                ":id",
+                "compensations"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/cases/:id/compensations",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "What the compound recommends for each failure",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "compensation-rules"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/compensation-rules"
+            }
+          }
+        },
+        {
+          "name": "Set some failures’ recommendations; `kind: null` removes one",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": [\n    {\n      \"failureCode\": \"\",\n      \"kind\": \"credit\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "compensation-rules"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/compensation-rules"
+            }
+          }
+        },
+        {
+          "name": "List the compensations, the oldest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "compensations"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "caseId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/compensations"
+            }
+          }
+        },
+        {
+          "name": "Get one compensation",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "compensations",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/compensations/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve or reject a compensation, once",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"decision\": \"approve\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `authorizationId` | string (uuid) |  | Approving a credit above the binding compensation_above_limit threshold (ADR 0073): what the board approved for it, used once; NEEDS_BOARD_APPROVAL without it, FIELD_NOT_ALLOWED within the threshold. |\n| `decision` | `approve` \\| `reject` | yes |  |\n| `invoiceId` | string (uuid) |  | Approving a credit: the unit’s invoice the credit note is issued on (not under an open dispute). |\n| `reasonCode` | string |  | Rejecting: from the closed list `compensationReject`. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "compensations",
+                ":id",
+                "decide"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/compensations/:id/decide",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The service promises register",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "promises"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "active",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/promises"
+            }
+          }
+        },
+        {
+          "name": "Add a service promise, measured or not",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"titleEn\": \"\",\n  \"titleAr\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `metric` | `ticket_resolution_hours` \\| `request_response_hours` \\| `ticket_rating` \\| `request_rating` \\| `partner_rating` |  | How it is measured; null: listed, not measured. |\n| `target` | number |  | Hours (1–8760) for an hours metric, an average rating (1–5) for a rating one. |\n| `targetShare` | number |  | The share of items within the hours, %: an hours metric only. |\n| `titleAr` | string | yes |  |\n| `titleEn` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "promises"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/promises"
+            }
+          }
+        },
+        {
+          "name": "The active promises against their targets over a period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "promises",
+                "report"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s first day; 30 days before `to` by default.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, today by default; at most 366 days.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/promises/report"
+            }
+          }
+        },
+        {
+          "name": "Change or retire a service promise",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"active\": false,\n  \"metric\": \"ticket_resolution_hours\",\n  \"target\": 0,\n  \"targetShare\": 1,\n  \"titleAr\": \"\",\n  \"titleEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `active` | boolean |  | false retires it. |\n| `metric` | `ticket_resolution_hours` \\| `request_response_hours` \\| `ticket_rating` \\| `request_rating` \\| `partner_rating` |  | How it is measured; null: listed, not measured. |\n| `target` | number |  | Hours (1–8760) for an hours metric, an average rating (1–5) for a rating one. |\n| `targetShare` | number |  | The share of items within the hours, %: an hours metric only. |\n| `titleAr` | string |  |  |\n| `titleEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "promises",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/promises/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The ratings over a period: by source and building, the low ratings’ reasons, the units with repeated low ratings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "ratings-report"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s first day; 30 days before `to` by default.",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "The last day, today by default; at most 366 days.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/ratings-report"
+            }
+          }
+        },
+        {
+          "name": "The dissatisfaction rules’ thresholds",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/settings"
+            }
+          }
+        },
+        {
+          "name": "Change some rules’ thresholds; `count: null` turns one off",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"items\": [\n    {\n      \"code\": \"repeated_low_ratings\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `items` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/settings"
+            }
+          }
+        },
+        {
+          "name": "List the signals raised, the newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "experience",
+                "signals"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "unitId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "code",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/experience/signals"
+            }
+          }
+        },
+        {
           "name": "List what waits for my decision, oldest first",
           "request": {
             "description": "**Responses:** 200",

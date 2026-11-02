@@ -21,6 +21,7 @@ import { AuthModule } from '../core/auth/auth.module';
 import { PlatformModule } from '../core/platform/platform.module';
 import { FinanceAccess } from './access';
 import { BoardAuthority } from './budgets/board-authority';
+import { FinanceCompensationCredits } from './invoices/compensation-credits';
 import { BoardAuthorizationsController } from './budgets/board-authorizations.controller';
 import { BudgetMatters } from './budgets/budget-matters';
 import { BudgetReportController } from './budgets/budget-report.controller';
@@ -167,6 +168,7 @@ import { FinanceInboxItems } from './finance-inbox-items';
     BudgetReportController,
   ],
   providers: [
+    FinanceCompensationCredits,
     ClearancesService,
     ClearancePageService,
     DepositsService,

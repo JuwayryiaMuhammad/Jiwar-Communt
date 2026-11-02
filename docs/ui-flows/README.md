@@ -86,6 +86,7 @@
 | [04-dispatch-dashboard](06-maintenance/04-dispatch-dashboard.md) | لوحة التوزيع ومحرك التوزيع الآلي |
 | [05-technician-app](06-maintenance/05-technician-app.md) | تطبيق الفني |
 | [06-maintenance-setup](06-maintenance/06-maintenance-setup.md) | إعدادات الصيانة: الفئات، التخصصات، الـSLA، التوزيع، ساعات الزيارة |
+| [18-dispatch-depth](06-maintenance/18-dispatch-depth.md) | أوامر شغل الإدارة، الإقفال والفتح والاستكمال من التوزيع، القائمة بالمبنى والبحث والتصدير، مستويات تصعيد الـSLA وتقريره، سجل الأصل والضمان والمطالبات، تقويم الشغل المخطط |
 
 ### 07 — الطلبات للإدارة
 | الملف | الفيتشر |

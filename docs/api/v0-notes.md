@@ -342,3 +342,15 @@ The full notes for the dashboard are in [`notes/unit-register.md`](notes/unit-re
 - **History and workers.** `GET /staff/units/{unitId}/occupancy-history`; `GET /worker-engagements?unitId=`.
 - **Sheets.** `POST/GET /staff/unit-imports`, `GET …/{id}`, `POST …/{id}/apply` (`409 UNIT_IMPORT_NOT_VALID`, `422 UNIT_IMPORT_UNREADABLE`).
 - **Search.** `GET /staff/search?q=`.
+
+### Dispatch depth (ADR 0076)
+
+The full notes are in [`notes/dispatch-depth.md`](notes/dispatch-depth.md).
+
+- **Work orders.** `POST /maintenance/work-orders` (`tickets.dispatch`): on an asset or a common area, or for a meter's spike (`meterAlertId`, one per alert, `409 METER_ALERT_HAS_WORK_ORDER`); `origin: staff`.
+- **Dispatch's moves.** `POST /maintenance/tickets/{id}/close` (`ticketStaffClose`; `confirmationStatus: closed_by_staff`), `…/reopen` (within 30 days), `…/resume`.
+- **The list.** `GET /maintenance/tickets` gains `buildingId` and `q`; `GET /maintenance/tickets/export` (CSV, at most 366 creation days).
+- **The SLA.** `atRiskPercent` on the settings, `PATCH /maintenance/sla-settings/escalation`; notices `ticket.sla_at_risk[_emergency]`; `GET /maintenance/sla-report` and `…/export`.
+- **An asset.** `GET /maintenance/assets/{id}/timeline`; the card's `warrantyStartsOn`, `warrantor`, `warrantyCovers`; `/maintenance/warranty-claims…`.
+- **Planned work.** `GET /maintenance/plan-calendar?from&to` (at most 93 days).
+

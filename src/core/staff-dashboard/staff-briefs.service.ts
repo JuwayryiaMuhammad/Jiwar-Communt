@@ -148,6 +148,22 @@ export class StaffBriefsService implements OnModuleInit {
     );
   }
 
+  /**
+   * One compound's due briefs, in the caller's transaction: the sweep's
+   * two steps in one (the suites run a compound's own this way, so no
+   * other compound's managers are told).
+   */
+  async runIn(
+    tx: TenantTxClient,
+    tenantId: string,
+    now: Date,
+  ): Promise<number> {
+    let written = 0;
+    for (const one of await this.due(tx, tenantId, now))
+      written += await this.write(tx, tenantId, one, now);
+    return written;
+  }
+
   /** What is due now and not yet written: the kinds whose time passed today. */
   private async due(
     tx: TenantTxClient,

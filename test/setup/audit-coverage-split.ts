@@ -1041,3 +1041,10 @@ export const M25_COVERAGE: readonly string[] = [
   'purchase_request.cancelled',
   'purchase_request.fulfilled',
 ];
+
+/** The operations dashboard (ADR 0079), covered by test/staff-dashboard/audit-coverage.e2e-spec.ts. */
+export const M24_COVERAGE: readonly string[] = [
+  'staff_dashboard.settings_changed',
+  'maintenance.service_pressure_changed',
+  'gate.log_exported',
+];

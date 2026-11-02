@@ -137,6 +137,15 @@ export type SpaceUse = Schema<'SpaceUseView'>;
 export type SpaceUseArea = Schema<'SpaceUseAreaView'>;
 export type SpaceUseStatus = SpaceUse['status'];
 export type WarrantyClaim = Schema<'WarrantyClaimView'>;
+// Experience and recovery (ADR 0082).
+export type ExperienceCase = Schema<'ExperienceCaseView'>;
+export type ExperienceSignal = Schema<'ExperienceSignalView'>;
+export type Compensation = Schema<'CompensationView'>;
+export type CompensationRule = Schema<'CompensationRuleView'>;
+export type ServicePromise = Schema<'ServicePromiseView'>;
+export type PromisesReport = Schema<'PromisesReportView'>;
+export type RatingsReport = Schema<'RatingsReportView'>;
+export type ExperienceSettings = Schema<'ExperienceSettingsView'>;
 export type AssetTimelineEntry = Schema<'AssetTimelineEntryView'>;
 // The operations dashboard (ADR 0079).
 export type DashboardSummary = Schema<'DashboardSummaryView'>;
@@ -608,6 +617,16 @@ export const keys = {
   spaceUses: (status: SpaceUseStatus | '') => ['spaces', 'uses', status] as const,
   spaceUseAreas: ['spaces', 'use-areas'] as const,
   warrantyClaims: (filters: object) => ['assets', 'warranty-claims', filters] as const,
+  experienceAll: ['experience'] as const,
+  experienceCases: (filters: object) => ['experience', 'cases', filters] as const,
+  experienceCase: (id: string) => ['experience', 'case', id] as const,
+  experienceSignals: (filters: object) => ['experience', 'signals', filters] as const,
+  compensations: (filters: object) => ['experience', 'compensations', filters] as const,
+  compensationRules: ['experience', 'compensation-rules'] as const,
+  servicePromises: ['experience', 'promises'] as const,
+  promisesReport: (from: string, to: string) => ['experience', 'promises-report', from, to] as const,
+  ratingsReport: (from: string, to: string) => ['experience', 'ratings-report', from, to] as const,
+  experienceSettings: ['experience', 'settings'] as const,
   assetTimeline: (id: string) => ['assets', 'timeline', id] as const,
   analyticsSettings: ['maintenance-settings', 'analytics'] as const,
   recurrence: (q: object) => ['tickets', 'recurrence', q] as const,
@@ -1027,6 +1046,50 @@ export const fetchers = {
         params: { query: { ...(clean(filters) as { assetId?: string; status?: WarrantyClaim['status'] }), cursor, limit } },
       }),
     ),
+  // Experience and recovery (ADR 0082).
+  experienceCases: (
+    filters: { status?: 'open' | 'closed' | ''; kind?: 'follow_up' | 'recovery' | ''; unitId?: string },
+    cursor?: string,
+    limit = 50,
+  ) =>
+    unwrap(
+      api.GET('/api/v1/staff/experience/cases', {
+        params: {
+          query: {
+            ...(clean(filters) as { status?: 'open' | 'closed'; kind?: 'follow_up' | 'recovery'; unitId?: string }),
+            cursor,
+            limit,
+          },
+        },
+      }),
+    ),
+  experienceCase: (id: string) =>
+    unwrap(api.GET('/api/v1/staff/experience/cases/{id}', { params: { path: { id } } })),
+  experienceSignals: (filters: { unitId?: string }, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/experience/signals', { params: { query: { ...filters, cursor, limit } } })),
+  compensations: (
+    filters: { status?: 'proposed' | 'approved' | 'rejected' | ''; caseId?: string },
+    cursor?: string,
+    limit = 50,
+  ) =>
+    unwrap(
+      api.GET('/api/v1/staff/experience/compensations', {
+        params: {
+          query: {
+            ...(clean(filters) as { status?: 'proposed' | 'approved' | 'rejected'; caseId?: string }),
+            cursor,
+            limit,
+          },
+        },
+      }),
+    ),
+  compensationRules: () => unwrap(api.GET('/api/v1/staff/experience/compensation-rules')),
+  servicePromises: () => unwrap(api.GET('/api/v1/staff/experience/promises')),
+  promisesReport: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/staff/experience/promises/report', { params: { query: { from, to } } })),
+  ratingsReport: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/staff/experience/ratings-report', { params: { query: { from, to } } })),
+  experienceSettings: () => unwrap(api.GET('/api/v1/staff/experience/settings')),
   assetTimeline: (id: string, cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/maintenance/assets/{id}/timeline', { params: { path: { id }, query: { cursor, limit } } })),
   // Maintenance analytics and cases (ADR 0081).

@@ -83,6 +83,8 @@ export const ENTRY_PERMISSIONS = [
   'spaces.manage',
   // The compliance calendar (ADR 0087).
   'compliance.manage',
+  // Experience and recovery: the cases, signals, compensations and promises (ADR 0082).
+  'experience.manage',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

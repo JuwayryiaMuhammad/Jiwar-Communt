@@ -20,6 +20,10 @@ export const INBOX_TYPE: Record<string, { label: string; href: (id: string) => s
   space_use_request: { label: 'Common-area use', href: () => '/space-uses' },
   // ADR 0081.
   plan_suggestion: { label: 'Plan suggestion', href: () => '/recurrence' },
+  // ADR 0082.
+  follow_up_case: { label: 'Follow-up case', href: (id) => `/experience/cases/${id}` },
+  recovery_case: { label: 'Recovery case', href: (id) => `/experience/cases/${id}` },
+  compensation: { label: 'Compensation', href: () => '/experience/compensations' },
 };
 
 export const inboxLabel = (type: string) => INBOX_TYPE[type]?.label ?? type;

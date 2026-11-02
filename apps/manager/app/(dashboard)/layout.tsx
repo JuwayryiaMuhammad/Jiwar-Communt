@@ -92,6 +92,8 @@ import {
   LayoutGrid,
   CalendarOff,
   TreePine,
+  HeartPulse,
+  HandCoins,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -397,6 +399,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           show: can('requests.handle'),
         },
         { href: '/appointments', label: 'Appointments', icon: <CalendarClock aria-hidden />, show: can('requests.handle') },
+        // Experience and recovery (ADR 0082): the cases and signals, the compensations, the setup and the reports.
+        { href: '/experience', label: 'Resident experience', icon: <HeartPulse aria-hidden />, show: can('experience.manage') },
+        { href: '/experience/compensations', label: 'Compensations', icon: <HandCoins aria-hidden />, show: can('experience.manage') },
         // A staff decision appealed by those it is about (ADR 0059).
         { href: '/appeals', label: 'Decision appeals', icon: <Gavel aria-hidden />, show: can('appeals.decide') },
         { href: '/announcements', label: 'Announcements', icon: <Megaphone aria-hidden />, show: can('community.publish') },

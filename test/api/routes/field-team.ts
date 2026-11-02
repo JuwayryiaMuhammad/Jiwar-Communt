@@ -287,3 +287,123 @@ export const TECHNICIAN_INSTRUCTION_ROUTES: Row[] = [
     noStore: true,
   },
 ];
+
+/**
+ * A technician's calls for help (ADR 0078). The other compound has no call
+ * in the world: any id of it (its instruction's) is not found as a call.
+ */
+export const TECHNICIAN_HELP_ROUTES: Row[] = [
+  {
+    method: 'POST',
+    path: '/maintenance/help-requests',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: {
+      body: { kind: 'coffee', ticketId: 'ticket-1', note: '' },
+      fields: [
+        { field: 'kind', code: 'INVALID_VALUE' },
+        { field: 'ticketId', code: 'INVALID_UUID' },
+        {
+          field: 'note',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 500 },
+        },
+      ],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/help-requests/mine',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: 'none',
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/help-requests/{id}/resolve',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'TECHNICIAN_HELP_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/help-requests/{id}/cancel',
+    auth: 'tenant',
+    as: 'technician',
+    denied: 'guard',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'TECHNICIAN_HELP_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/field-team/help-requests',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { status: 'urgent' },
+      fields: [{ field: 'status', code: 'INVALID_VALUE' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'GET',
+    path: '/staff/field-team/help-requests/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'TECHNICIAN_HELP_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/field-team/help-requests/{id}/take',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      body: () => ({}),
+      code: 'TECHNICIAN_HELP_NOT_FOUND',
+    },
+    invalid: {
+      body: { helperId: 'tech-1' },
+      fields: [{ field: 'helperId', code: 'INVALID_UUID' }],
+    },
+    noStore: true,
+  },
+  {
+    method: 'POST',
+    path: '/staff/field-team/help-requests/{id}/resolve',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: {
+      params: (w) => ({ id: w.bInstructionId }),
+      code: 'TECHNICIAN_HELP_NOT_FOUND',
+    },
+    invalid: 'none',
+    noStore: true,
+  },
+];

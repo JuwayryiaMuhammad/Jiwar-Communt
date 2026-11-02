@@ -1,3 +1,9 @@
+import {
+  StaffHelpController,
+  TechnicianHelpController,
+} from './help/help-requests.controller';
+import { HelpRequestsService } from './help/help-requests.service';
+import { HelpExportSections } from './help/help-export-sections';
 import { Module } from '@nestjs/common';
 import { MaintenanceExportSections } from './export/export-sections';
 import { CommunityMaintenancePortModule } from '../community';
@@ -334,6 +340,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     AssetTypeHazardsController,
     MyTechnicianStatsController,
     TechnicianStatsController,
+    TechnicianHelpController,
+    StaffHelpController,
   ],
   providers: [
     TicketCorrespondence,
@@ -344,6 +352,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     PreventiveServicesService,
     SpecialtiesService,
     AvailabilityService,
+    HelpRequestsService,
+    HelpExportSections,
     DispatchSettingsService,
     DispatchLimiter,
     DispatchEngine,

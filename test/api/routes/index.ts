@@ -34,6 +34,7 @@ import { EXPERIENCE_ROUTES } from './experience';
 import { BOARD_WORK_ROUTES } from './board-work';
 import {
   DUTY_ROSTER_ROUTES,
+  TECHNICIAN_HELP_ROUTES,
   TECHNICIAN_INSTRUCTION_ROUTES,
 } from './field-team';
 import { READINESS_ROUTES } from './readiness';
@@ -463,4 +464,5 @@ export const ROUTES: Row[] = [
   // ADR 0078.
   ...DUTY_ROSTER_ROUTES,
   ...TECHNICIAN_INSTRUCTION_ROUTES,
+  ...TECHNICIAN_HELP_ROUTES,
 ];

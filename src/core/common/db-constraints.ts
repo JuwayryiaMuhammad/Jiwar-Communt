@@ -1110,4 +1110,8 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   unit_entries_number_key: null,
   unit_entry_photos_tenant_id_id_key: null,
   unit_entry_photos_file_id_key: null,
+  // A technician's call for help (ADR 0078): one live a technician, checked
+  // first under their help lock (TECHNICIAN_HELP_LIVE).
+  technician_help_requests_tenant_id_id_key: null,
+  technician_help_requests_one_live_key: null,
 };

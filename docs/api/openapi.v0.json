@@ -33061,6 +33061,147 @@
         ],
         "type": "object"
       },
+      "HelpRequestView": {
+        "properties": {
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "escalatedAt": {
+            "description": "When the managers were told nobody had taken it.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "helper": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The technician sent to help, if any.",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TechnicianHelpKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "The caller’s own words, staff-only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "requester": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "The technician who called."
+          },
+          "resolvedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TechnicianHelpStatus"
+              }
+            ],
+            "description": "`open` until the field team takes it, `taken` (with a helper or none), then `resolved`; `cancelled` when the caller calls it off."
+          },
+          "takenAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "takenBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "ticket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HelpTicketView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "requester",
+          "ticket",
+          "note",
+          "takenBy",
+          "takenAt",
+          "helper",
+          "escalatedAt",
+          "resolvedAt",
+          "cancelledAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "HelpRequestViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/HelpRequestView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "HelpTicketView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "number": {
+            "example": "T-000123",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number"
+        ],
+        "type": "object"
+      },
       "HoldDto": {
         "properties": {
           "holdReason": {
@@ -56198,6 +56339,32 @@
         ],
         "type": "object"
       },
+      "RequestHelpDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TechnicianHelpKind"
+              }
+            ]
+          },
+          "note": {
+            "description": "Their own words, for the field team and the helper only.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "ticketId": {
+            "description": "One of the caller’s own tickets (assigned to them); otherwise TICKET_NOT_FOUND.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
       "RequestMessageCreatedView": {
         "properties": {
           "createdAt": {
@@ -72643,6 +72810,16 @@
         ],
         "type": "object"
       },
+      "TakeHelpDto": {
+        "properties": {
+          "helperId": {
+            "description": "Another active technician to send (GUARD_NOT_ELIGIBLE otherwise); absent to handle it without one.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TariffView": {
         "properties": {
           "createdAt": {
@@ -72768,6 +72945,25 @@
         "enum": [
           "available",
           "unavailable"
+        ],
+        "type": "string"
+      },
+      "TechnicianHelpKind": {
+        "enum": [
+          "extra_hands",
+          "expertise",
+          "parts",
+          "safety"
+        ],
+        "type": "string"
+      },
+      "TechnicianHelpStatus": {
+        "description": "`open` until the field team takes it, `taken` (with a helper or none), then `resolved`; `cancelled` when the caller calls it off.",
+        "enum": [
+          "open",
+          "taken",
+          "resolved",
+          "cancelled"
         ],
         "type": "string"
       },
@@ -101491,6 +101687,154 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/help-requests": {
+      "post": {
+        "description": "More hands, someone who knows the fault, parts, or a second person for safety, about one of my tickets or none. One live call at a time (409 TECHNICIAN_HELP_LIVE). The field team is told at once; the managers if nobody takes it in fifteen minutes.",
+        "operationId": "TechnicianHelpController_request",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestHelpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call for help",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/help-requests/mine": {
+      "get": {
+        "description": "Mine and those I was sent to help, newest first.",
+        "operationId": "TechnicianHelpController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my calls for help",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/help-requests/{id}/cancel": {
+      "post": {
+        "description": "While open or taken.",
+        "operationId": "TechnicianHelpController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off my call for help",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/help-requests/{id}/resolve": {
+      "post": {
+        "description": "Mine or one I was sent to help, once taken (409 TECHNICIAN_HELP_CLOSED otherwise).",
+        "operationId": "TechnicianHelpController_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a call for help resolved",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/inspection-report": {
       "get": {
         "operationId": "InspectionReportController_report",
@@ -128895,6 +129239,172 @@
           }
         ],
         "summary": "Read the technicians’ attendance and overtime",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/help-requests": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffHelpController_list",
+        "parameters": [
+          {
+            "description": "Default: all.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TechnicianHelpStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the calls for help",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/help-requests/{id}": {
+      "get": {
+        "operationId": "StaffHelpController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a call for help",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/help-requests/{id}/resolve": {
+      "post": {
+        "description": "Once taken (409 TECHNICIAN_HELP_CLOSED otherwise).",
+        "operationId": "StaffHelpController_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a call for help resolved",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/help-requests/{id}/take": {
+      "post": {
+        "description": "Once, while open (409 TECHNICIAN_HELP_CLOSED): sending another technician or none. The caller and the helper are told.",
+        "operationId": "StaffHelpController_take",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeHelpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpRequestView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a call for help",
         "tags": [
           "field-team"
         ],

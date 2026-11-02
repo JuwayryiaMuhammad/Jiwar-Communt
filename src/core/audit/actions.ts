@@ -2717,6 +2717,11 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'technician_help_request',
   },
+  // The caller was erased: their note goes (ADR 0036). By the system.
+  'technician_help.note_cleared': {
+    log: 'tenant',
+    target: 'technician_help_request',
+  },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

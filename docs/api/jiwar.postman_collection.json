@@ -10555,6 +10555,120 @@
     {
       "item": [
         {
+          "name": "Call for help",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"extra_hands\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `kind` | `extra_hands` \\| `expertise` \\| `parts` \\| `safety` | yes |  |\n| `note` | string |  | Their own words, for the field team and the helper only. |\n| `ticketId` | string (uuid) |  | One of the caller’s own tickets (assigned to them); otherwise TICKET_NOT_FOUND. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "help-requests"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/help-requests"
+            }
+          }
+        },
+        {
+          "name": "List my calls for help",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "help-requests",
+                "mine"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/help-requests/mine"
+            }
+          }
+        },
+        {
+          "name": "Call off my call for help",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "help-requests",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/help-requests/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a call for help resolved",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "help-requests",
+                ":id",
+                "resolve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/help-requests/:id/resolve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the instructions that reach me",
           "request": {
             "description": "**Responses:** 200",
@@ -10764,6 +10878,139 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/field-team/attendance"
+            }
+          }
+        },
+        {
+          "name": "List the calls for help",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "help-requests"
+              ],
+              "query": [
+                {
+                  "description": "Default: all.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/help-requests"
+            }
+          }
+        },
+        {
+          "name": "Get a call for help",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "help-requests",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/help-requests/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark a call for help resolved",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "help-requests",
+                ":id",
+                "resolve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/help-requests/:id/resolve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take a call for help",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"helperId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `helperId` | string (uuid) |  | Another active technician to send (GUARD_NOT_ELIGIBLE otherwise); absent to handle it without one. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "help-requests",
+                ":id",
+                "take"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/help-requests/:id/take",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },

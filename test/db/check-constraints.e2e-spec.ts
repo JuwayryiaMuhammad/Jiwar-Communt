@@ -2664,6 +2664,19 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'each percent is tested IS NULL first; the range runs only on a value',
   },
   ticket_sla_alerts_level_known: {},
+  assets_warranty_shape: {
+    guarded:
+      'either date IS NULL is tested first, the dates compare only when both are set; each text IS NULL first',
+  },
+  warranty_claims_status_known: {},
+  warranty_claims_text_length: {
+    guarded:
+      'reference IS NULL is tested first; the length runs only on a value',
+  },
+  warranty_claims_decided_shape: {
+    guarded:
+      'status is NOT NULL; the nullable columns only under IS [NOT] NULL; recovered_amount IS NULL is tested first and compared only on a value',
+  },
 };
 
 interface Check {

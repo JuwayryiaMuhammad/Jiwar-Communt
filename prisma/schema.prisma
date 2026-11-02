@@ -10605,6 +10605,10 @@ model Asset {
   vendorName         String?   @map("vendor_name")
   vendorPhone        String?   @map("vendor_phone")
   warrantyEndsOn     DateTime? @map("warranty_ends_on") @db.Date
+  /// ADR 0076: when the warranty starts, who gives it, what it covers (plain data).
+  warrantyStartsOn   DateTime? @map("warranty_starts_on") @db.Date
+  warrantor          String?
+  warrantyCovers     String?   @map("warranty_covers")
   /// The warranty end the managers were told of (once per date).
   warrantyAlertedFor DateTime? @map("warranty_alerted_for") @db.Date
   /// low, medium, high, critical.
@@ -10630,6 +10634,34 @@ model Asset {
   @@index([tenantId, unitId], map: "assets_unit_idx")
   @@index([tenantId, commonAreaId], map: "assets_common_area_idx")
   @@map("assets")
+}
+
+/// A claim under an asset's warranty (ADR 0076): the management's, decided once.
+model WarrantyClaim {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  assetId         String    @map("asset_id") @db.Uuid
+  /// The ticket whose fault it is, if it came of one.
+  ticketId        String?   @map("ticket_id") @db.Uuid
+  /// Staff's words on what failed, plain data: never in the audit trail.
+  description     String
+  /// The warrantor's own reference, once they give one.
+  reference       String?
+  /// open, accepted, rejected, withdrawn.
+  status          String    @default("open")
+  openedById      String    @map("opened_by_account_id") @db.Uuid
+  openedAt        DateTime  @map("opened_at") @db.Timestamptz(3)
+  decidedById     String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt       DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.warrantyClaimReject or warrantyClaimWithdraw.
+  reasonCode      String?   @map("reason_code")
+  /// What the warrantor paid or covered, on an acceptance.
+  recoveredAmount Decimal?  @map("recovered_amount") @db.Decimal(12, 2)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, assetId, openedAt(sort: Desc), id(sort: Desc)], map: "warranty_claims_asset_idx")
+  @@index([tenantId, status, openedAt(sort: Desc), id(sort: Desc)], map: "warranty_claims_list_idx")
+  @@map("warranty_claims")
 }
 
 /// An asset's own history (ADR 0064): codes only, append-only.

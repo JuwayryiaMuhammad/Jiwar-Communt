@@ -8291,6 +8291,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/warranty-claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the warranty claims, the newest first */
+        get: operations["WarrantyClaimsController_list"];
+        put?: never;
+        /** Claim under an asset’s warranty */
+        post: operations["WarrantyClaimsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/warranty-claims/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one warranty claim */
+        get: operations["WarrantyClaimsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Record the warrantor’s reference of an open claim */
+        patch: operations["WarrantyClaimsController_reference"];
+        trace?: never;
+    };
+    "/api/v1/maintenance/warranty-claims/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accepted by the warrantor, with what it recovered */
+        post: operations["WarrantyClaimsController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/warranty-claims/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rejected by the warrantor; `reasonCode` from `warrantyClaimReject` */
+        post: operations["WarrantyClaimsController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/warranty-claims/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdrawn by the compound; `reasonCode` from `warrantyClaimWithdraw` */
+        post: operations["WarrantyClaimsController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/work-orders": {
         parameters: {
             query?: never;
@@ -22544,6 +22631,10 @@ export interface components {
             /** @description How many of its staff come (the gate pass lets in as many). Default 1. */
             staffCount?: number;
         };
+        AcceptWarrantyClaimDto: {
+            /** @description What the warrantor paid or covered, EGP. */
+            recoveredAmount?: string;
+        };
         AccessCodeView: {
             /** @description 8 digits, shown once. */
             accessCode: string | null;
@@ -23385,7 +23476,7 @@ export interface components {
             type: components["schemas"]["AssetTypeRefView"];
             /** Format: uuid */
             typeId: string;
-            /** @description The warranty runs today (the compound’s). */
+            /** @description The warranty runs today (the compound’s): started, not ended. */
             underWarranty: boolean;
             /** @description The unit’s code, when it is in one. */
             unitCode: string | null;
@@ -23395,8 +23486,17 @@ export interface components {
             updatedAt: string;
             vendorName: string | null;
             vendorPhone: string | null;
+            /** @description Who gives it. */
+            warrantor: string | null;
+            /** @description What it covers. */
+            warrantyCovers: string | null;
             /** Format: date */
             warrantyEndsOn: string | null;
+            /**
+             * Format: date
+             * @description ADR 0076: when the warranty starts.
+             */
+            warrantyStartsOn: string | null;
         };
         AssignCollectorDto: {
             /** Format: uuid */
@@ -26623,8 +26723,17 @@ export interface components {
             vendorName?: string | null;
             /** @description The vendor’s business line. */
             vendorPhone?: string | null;
+            /** @description Who gives the warranty (ADR 0076): a business, plain data. */
+            warrantor?: string | null;
+            /** @description What it covers (ADR 0076), plain data. */
+            warrantyCovers?: string | null;
             /** Format: date */
             warrantyEndsOn?: string | null;
+            /**
+             * Format: date
+             * @description ADR 0076: on or before `warrantyEndsOn`.
+             */
+            warrantyStartsOn?: string | null;
         };
         CreateAssetTypeDto: {
             /**
@@ -28006,6 +28115,17 @@ export interface components {
             /** @description Never returned after creation; deleted with the name. */
             visitorPhone?: string;
         };
+        CreateWarrantyClaimDto: {
+            /** Format: uuid */
+            assetId: string;
+            /** @description What failed: staff’s words, plain data. */
+            description: string;
+            /**
+             * Format: uuid
+             * @description The ticket whose fault it is: one of the asset’s.
+             */
+            ticketId?: string;
+        };
         CreateWorkOrderDto: {
             /**
              * Format: uuid
@@ -28313,6 +28433,10 @@ export interface components {
             decision: "upheld" | "cancelled";
             /** @description With `cancelled` only, from `violationCancel` (default `appeal_accepted`). */
             reasonCode?: string;
+        };
+        DecideWarrantyClaimDto: {
+            /** @description `warrantyClaimReject` (not_covered, misuse, expired, no_fault_found, other) to reject; `warrantyClaimWithdraw` (repaired_otherwise, raised_in_error, other) to withdraw. */
+            reasonCode: string;
         };
         DecisionAppealAttachmentView: {
             /** Format: uuid */
@@ -43174,8 +43298,17 @@ export interface components {
             vendorName?: string | null;
             /** @description The vendor’s business line. */
             vendorPhone?: string | null;
+            /** @description Who gives the warranty (ADR 0076): a business, plain data. */
+            warrantor?: string | null;
+            /** @description What it covers (ADR 0076), plain data. */
+            warrantyCovers?: string | null;
             /** Format: date */
             warrantyEndsOn?: string | null;
+            /**
+             * Format: date
+             * @description ADR 0076: on or before `warrantyEndsOn`.
+             */
+            warrantyStartsOn?: string | null;
         };
         UpdateAssetTypeDto: {
             /** @description False retires it. */
@@ -44461,6 +44594,40 @@ export interface components {
         WarningView: {
             /** @enum {string} */
             code: "WORKER_SCHEDULE_CONFLICT";
+        };
+        WarrantyClaimReferenceDto: {
+            /** @description The warrantor’s own reference for the claim. */
+            reference: string;
+        };
+        WarrantyClaimView: {
+            /** Format: uuid */
+            assetId: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: uuid */
+            decidedById: string | null;
+            /** @description What failed: staff’s words. */
+            description: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            openedAt: string;
+            /** Format: uuid */
+            openedById: string;
+            /** @description A rejection’s or a withdrawal’s code. */
+            reasonCode: string | null;
+            /** @description What the warrantor paid or covered, EGP; an acceptance only. */
+            recoveredAmount: string | null;
+            /** @description The warrantor’s own reference. */
+            reference: string | null;
+            /** @enum {string} */
+            status: "open" | "accepted" | "rejected" | "withdrawn";
+            /** Format: uuid */
+            ticketId: string | null;
+        };
+        WarrantyClaimViewList: {
+            data: components["schemas"]["WarrantyClaimView"][];
+            nextCursor: string | null;
         };
         WeeklyScheduleDto: {
             /** @description Weekdays, 0 = Sunday … 6 = Saturday. */
@@ -57308,6 +57475,178 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketReporterViewList"];
+                };
+            };
+        };
+    };
+    WarrantyClaimsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                assetId?: string;
+                status?: "open" | "accepted" | "rejected" | "withdrawn";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarrantyClaimViewList"];
+                };
+            };
+        };
+    };
+    WarrantyClaimsController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWarrantyClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarrantyClaimView"];
+                };
+            };
+        };
+    };
+    WarrantyClaimsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarrantyClaimView"];
+                };
+            };
+        };
+    };
+    WarrantyClaimsController_reference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WarrantyClaimReferenceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarrantyClaimView"];
+                };
+            };
+        };
+    };
+    WarrantyClaimsController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptWarrantyClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarrantyClaimView"];
+                };
+            };
+        };
+    };
+    WarrantyClaimsController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideWarrantyClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarrantyClaimView"];
+                };
+            };
+        };
+    };
+    WarrantyClaimsController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideWarrantyClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarrantyClaimView"];
                 };
             };
         };

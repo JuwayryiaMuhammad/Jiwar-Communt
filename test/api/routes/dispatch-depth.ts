@@ -139,4 +139,128 @@ export const DISPATCH_DEPTH_ROUTES: Row[] = [
     },
     noStore: true,
   },
+  {
+    method: 'GET',
+    path: '/maintenance/warranty-claims',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: 'none',
+    invalid: {
+      query: { assetId: 'x', status: 'lost' },
+      fields: [
+        { field: 'assetId', code: 'INVALID_UUID' },
+        {
+          field: 'status',
+          code: 'INVALID_VALUE',
+          params: { allowed: ['open', 'accepted', 'rejected', 'withdrawn'] },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/warranty-claims',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: () => ({}),
+      body: (w) => ({ assetId: w.bAssetId, description: 'Seal failed' }),
+      code: 'ASSET_NOT_FOUND',
+    },
+    invalid: {
+      body: { assetId: 'x', description: '' },
+      fields: [
+        { field: 'assetId', code: 'INVALID_UUID' },
+        {
+          field: 'description',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 1000 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/warranty-claims/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bWarrantyClaimId }),
+      code: 'WARRANTY_CLAIM_NOT_FOUND',
+    },
+    invalid: 'none',
+  },
+  {
+    method: 'PATCH',
+    path: '/maintenance/warranty-claims/{id}',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bWarrantyClaimId }),
+      body: () => ({ reference: 'WR-1' }),
+      code: 'WARRANTY_CLAIM_NOT_FOUND',
+    },
+    invalid: {
+      body: { reference: '' },
+      fields: [
+        {
+          field: 'reference',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 80 },
+        },
+      ],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/warranty-claims/{id}/accept',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bWarrantyClaimId }),
+      body: () => ({ recoveredAmount: '10' }),
+      code: 'WARRANTY_CLAIM_NOT_FOUND',
+    },
+    invalid: {
+      body: { recoveredAmount: '1.234' },
+      fields: [{ field: 'recoveredAmount', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/warranty-claims/{id}/reject',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bWarrantyClaimId }),
+      body: () => ({ reasonCode: 'misuse' }),
+      code: 'WARRANTY_CLAIM_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
+  {
+    method: 'POST',
+    path: '/maintenance/warranty-claims/{id}/withdraw',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'owner',
+    foreign: {
+      params: (w) => ({ id: w.bWarrantyClaimId }),
+      body: () => ({ reasonCode: 'raised_in_error' }),
+      code: 'WARRANTY_CLAIM_NOT_FOUND',
+    },
+    invalid: {
+      body: { reasonCode: ['x'] },
+      fields: [{ field: 'reasonCode', code: 'INVALID_TYPE' }],
+    },
+  },
 ];

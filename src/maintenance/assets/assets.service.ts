@@ -57,6 +57,10 @@ export interface AssetFacts {
   vendorName?: string | null;
   vendorPhone?: string | null;
   warrantyEndsOn?: LocalDate | null;
+  /** ADR 0076: when it starts (not after its end), who gives it, what it covers. */
+  warrantyStartsOn?: LocalDate | null;
+  warrantor?: string | null;
+  warrantyCovers?: string | null;
   criticality?: AssetCriticality;
   condition?: AssetCondition;
   servesBuildings?: string[];
@@ -340,6 +344,7 @@ export class AssetsService implements OnModuleInit {
     r: ResolvedAsset,
     kind: 'created' | 'imported',
   ): Promise<Asset> {
+    warrantyInOrder(r.warrantyStartsOn ?? null, r.warrantyEndsOn ?? null);
     const asset = await tx.asset.create({
       data: {
         id,
@@ -368,6 +373,14 @@ export class AssetsService implements OnModuleInit {
       if (before.status === 'retired') throw assetRetired();
       if (input.servesBuildings !== undefined)
         await this.requireBuildings(tx, input.servesBuildings);
+      warrantyInOrder(
+        input.warrantyStartsOn !== undefined
+          ? input.warrantyStartsOn
+          : ofDateColumnOrNull(before.warrantyStartsOn),
+        input.warrantyEndsOn !== undefined
+          ? input.warrantyEndsOn
+          : ofDateColumnOrNull(before.warrantyEndsOn),
+      );
       const asset = await tx.asset.update({
         where: { id },
         data: facts(input),
@@ -723,6 +736,9 @@ function facts(f: Partial<AssetFacts>) {
     vendorName: text(f.vendorName),
     vendorPhone: text(f.vendorPhone),
     warrantyEndsOn: date(f.warrantyEndsOn),
+    warrantyStartsOn: date(f.warrantyStartsOn),
+    warrantor: text(f.warrantor),
+    warrantyCovers: text(f.warrantyCovers),
     criticality: f.criticality,
     condition: f.condition,
     servesBuildings:
@@ -760,8 +776,22 @@ export function audited(a: Asset) {
     vendorName: a.vendorName,
     vendorPhone: a.vendorPhone,
     warrantyEndsOn: ofDateColumnOrNull(a.warrantyEndsOn),
+    warrantyStartsOn: ofDateColumnOrNull(a.warrantyStartsOn),
+    warrantor: a.warrantor,
+    warrantyCovers: a.warrantyCovers,
     criticality: a.criticality,
     condition: a.condition,
     servesBuildings: a.servesBuildings.join(','),
   };
+}
+
+/** A warranty starts on or before it ends (ADR 0076): ENDS_BEFORE_START. */
+function warrantyInOrder(
+  startsOn: LocalDate | null,
+  endsOn: LocalDate | null,
+): void {
+  if (startsOn !== null && endsOn !== null && startsOn > endsOn)
+    throw invalid([
+      { field: 'warrantyEndsOn', code: FieldErrorCode.ENDS_BEFORE_START },
+    ]);
 }

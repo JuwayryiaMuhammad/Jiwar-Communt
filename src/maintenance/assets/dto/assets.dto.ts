@@ -37,6 +37,10 @@ const allowed = (xs: readonly string[]) => withParams({ allowed: [...xs] });
 const BUILDING = { min: 1, max: 80 };
 
 /** The card's facts; on an update each may be null to clear it. */
+/** ADR 0076: who gives an asset's warranty, and what it covers. */
+const WARRANTOR = { min: 1, max: 120 };
+const WARRANTY_COVERS = { min: 1, max: 500 };
+
 class AssetFactsDto {
   @ApiPropertyOptional({
     type: String,
@@ -167,6 +171,44 @@ class AssetFactsDto {
   @IsString()
   @IsLocalDate()
   warrantyEndsOn?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date',
+    nullable: true,
+    description: 'ADR 0076: on or before `warrantyEndsOn`.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @IsLocalDate()
+  warrantyStartsOn?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    minLength: WARRANTOR.min,
+    maxLength: WARRANTOR.max,
+    description: 'Who gives the warranty (ADR 0076): a business, plain data.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(WARRANTOR.min, WARRANTOR.max, withParams(WARRANTOR))
+  warrantor?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    minLength: WARRANTY_COVERS.min,
+    maxLength: WARRANTY_COVERS.max,
+    description: 'What it covers (ADR 0076), plain data.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Length(WARRANTY_COVERS.min, WARRANTY_COVERS.max, withParams(WARRANTY_COVERS))
+  warrantyCovers?: string | null;
 
   @ApiPropertyOptional({ enum: ASSET_CRITICALITIES, default: 'medium' })
   @IsOptional()

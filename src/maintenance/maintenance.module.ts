@@ -61,6 +61,8 @@ import { TicketExport } from './tickets/ticket-export';
 import { SlaAtRisk } from './sla/sla-at-risk';
 import { SlaReports } from './sla/sla-report';
 import { SlaReportController } from './sla/sla-report.controller';
+import { WarrantyClaimsController } from './assets/warranty-claims.controller';
+import { WarrantyClaimsService } from './assets/warranty-claims.service';
 import { ResidentTicketFeed } from './tickets/resident-ticket-feed';
 import { ResidentTicketSummary } from './tickets/resident-ticket-summary';
 import { ResidentTicketItems } from './tickets/resident-ticket-items';
@@ -224,6 +226,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     DispatchTicketsController,
     WorkOrdersController,
     SlaReportController,
+    WarrantyClaimsController,
     DispatchUnitsController,
     TechnicianTicketsController,
     TechniciansController,
@@ -308,6 +311,7 @@ import { WorkPermitInboxItems } from './field-safety/work-permit-inbox-items';
     TicketExport,
     SlaAtRisk,
     SlaReports,
+    WarrantyClaimsService,
     TechnicianRelease,
     MessagesService,
     ConfirmationService,

@@ -25246,7 +25246,7 @@
               },
               "raw": "{\n  \"code\": \"\",\n  \"typeId\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | Unique; never changes. |\n| `commissionedOn` | string (date) |  | The compound’s day it went into service, `YYYY-MM-DD`. |\n| `commonAreaId` | string (uuid) |  | A root in an active common area. |\n| `condition` | `good` \\| `fair` \\| `poor` \\| `critical` |  |  |\n| `criticality` | `low` \\| `medium` \\| `high` \\| `critical` |  |  |\n| `downtimeCostPerDay` | string |  | EGP a day it is down. |\n| `expectedLifeYears` | number |  | Overrides its type’s. |\n| `manufacturer` | string |  |  |\n| `model` | string |  |  |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `parentId` | string (uuid) |  | The asset it is part of: it goes where its parent is (no `unitId` or `commonAreaId`). |\n| `purchaseValue` | string |  | EGP. |\n| `replacementCost` | string |  | EGP: what a new one would cost. |\n| `serialNumber` | string |  |  |\n| `servesBuildings` | string[] |  | The buildings it serves (a pump, a generator), as the units have them. |\n| `typeId` | string (uuid) | yes | An active asset type. |\n| `unitId` | string (uuid) |  | A root in a unit. |\n| `vendorName` | string |  | A business, plain data. |\n| `vendorPhone` | string |  | The vendor’s business line. |\n| `warrantyEndsOn` | string (date) |  |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | Unique; never changes. |\n| `commissionedOn` | string (date) |  | The compound’s day it went into service, `YYYY-MM-DD`. |\n| `commonAreaId` | string (uuid) |  | A root in an active common area. |\n| `condition` | `good` \\| `fair` \\| `poor` \\| `critical` |  |  |\n| `criticality` | `low` \\| `medium` \\| `high` \\| `critical` |  |  |\n| `downtimeCostPerDay` | string |  | EGP a day it is down. |\n| `expectedLifeYears` | number |  | Overrides its type’s. |\n| `manufacturer` | string |  |  |\n| `model` | string |  |  |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `parentId` | string (uuid) |  | The asset it is part of: it goes where its parent is (no `unitId` or `commonAreaId`). |\n| `purchaseValue` | string |  | EGP. |\n| `replacementCost` | string |  | EGP: what a new one would cost. |\n| `serialNumber` | string |  |  |\n| `servesBuildings` | string[] |  | The buildings it serves (a pump, a generator), as the units have them. |\n| `typeId` | string (uuid) | yes | An active asset type. |\n| `unitId` | string (uuid) |  | A root in a unit. |\n| `vendorName` | string |  | A business, plain data. |\n| `vendorPhone` | string |  | The vendor’s business line. |\n| `warrantor` | string |  | Who gives the warranty (ADR 0076): a business, plain data. |\n| `warrantyCovers` | string |  | What it covers (ADR 0076), plain data. |\n| `warrantyEndsOn` | string (date) |  |  |\n| `warrantyStartsOn` | string (date) |  | ADR 0076: on or before `warrantyEndsOn`. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -25312,9 +25312,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"commissionedOn\": \"2026-01-01\",\n  \"condition\": \"good\",\n  \"criticality\": \"low\",\n  \"downtimeCostPerDay\": \"\",\n  \"expectedLifeYears\": 1,\n  \"manufacturer\": \"\",\n  \"model\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"purchaseValue\": \"\",\n  \"replacementCost\": \"\",\n  \"serialNumber\": \"\",\n  \"servesBuildings\": [],\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\",\n  \"warrantyEndsOn\": \"2026-01-01\"\n}"
+              "raw": "{\n  \"commissionedOn\": \"2026-01-01\",\n  \"condition\": \"good\",\n  \"criticality\": \"low\",\n  \"downtimeCostPerDay\": \"\",\n  \"expectedLifeYears\": 1,\n  \"manufacturer\": \"\",\n  \"model\": \"\",\n  \"nameAr\": \"\",\n  \"nameEn\": \"\",\n  \"purchaseValue\": \"\",\n  \"replacementCost\": \"\",\n  \"serialNumber\": \"\",\n  \"servesBuildings\": [],\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\",\n  \"warrantor\": \"\",\n  \"warrantyCovers\": \"\",\n  \"warrantyEndsOn\": \"2026-01-01\",\n  \"warrantyStartsOn\": \"2026-01-01\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `commissionedOn` | string (date) |  | The compound’s day it went into service, `YYYY-MM-DD`. |\n| `condition` | `good` \\| `fair` \\| `poor` \\| `critical` |  |  |\n| `criticality` | `low` \\| `medium` \\| `high` \\| `critical` |  |  |\n| `downtimeCostPerDay` | string |  | EGP a day it is down. |\n| `expectedLifeYears` | number |  | Overrides its type’s. |\n| `manufacturer` | string |  |  |\n| `model` | string |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `purchaseValue` | string |  | EGP. |\n| `replacementCost` | string |  | EGP: what a new one would cost. |\n| `serialNumber` | string |  |  |\n| `servesBuildings` | string[] |  | The buildings it serves (a pump, a generator), as the units have them. |\n| `vendorName` | string |  | A business, plain data. |\n| `vendorPhone` | string |  | The vendor’s business line. |\n| `warrantyEndsOn` | string (date) |  |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `commissionedOn` | string (date) |  | The compound’s day it went into service, `YYYY-MM-DD`. |\n| `condition` | `good` \\| `fair` \\| `poor` \\| `critical` |  |  |\n| `criticality` | `low` \\| `medium` \\| `high` \\| `critical` |  |  |\n| `downtimeCostPerDay` | string |  | EGP a day it is down. |\n| `expectedLifeYears` | number |  | Overrides its type’s. |\n| `manufacturer` | string |  |  |\n| `model` | string |  |  |\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n| `purchaseValue` | string |  | EGP. |\n| `replacementCost` | string |  | EGP: what a new one would cost. |\n| `serialNumber` | string |  |  |\n| `servesBuildings` | string[] |  | The buildings it serves (a pump, a generator), as the units have them. |\n| `vendorName` | string |  | A business, plain data. |\n| `vendorPhone` | string |  | The vendor’s business line. |\n| `warrantor` | string |  | Who gives the warranty (ADR 0076): a business, plain data. |\n| `warrantyCovers` | string |  | What it covers (ADR 0076), plain data. |\n| `warrantyEndsOn` | string (date) |  |  |\n| `warrantyStartsOn` | string (date) |  | ADR 0076: on or before `warrantyEndsOn`. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -32402,6 +32402,295 @@
                 {
                   "description": "",
                   "key": "unitId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the warranty claims, the newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "warranty-claims"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "assetId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/warranty-claims"
+            }
+          }
+        },
+        {
+          "name": "Claim under an asset’s warranty",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"assetId\": \"\",\n  \"description\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `assetId` | string (uuid) | yes |  |\n| `description` | string | yes | What failed: staff’s words, plain data. |\n| `ticketId` | string (uuid) |  | The ticket whose fault it is: one of the asset’s. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "warranty-claims"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/warranty-claims"
+            }
+          }
+        },
+        {
+          "name": "Get one warranty claim",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "warranty-claims",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/warranty-claims/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record the warrantor’s reference of an open claim",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reference\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reference` | string | yes | The warrantor’s own reference for the claim. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "warranty-claims",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/warranty-claims/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accepted by the warrantor, with what it recovered",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"recoveredAmount\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `recoveredAmount` | string |  | What the warrantor paid or covered, EGP. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "warranty-claims",
+                ":id",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/warranty-claims/:id/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rejected by the warrantor; `reasonCode` from `warrantyClaimReject`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | `warrantyClaimReject` (not_covered, misuse, expired, no_fault_found, other) to reject; `warrantyClaimWithdraw` (repaired_otherwise, raised_in_error, other) to withdraw. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "warranty-claims",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/warranty-claims/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdrawn by the compound; `reasonCode` from `warrantyClaimWithdraw`",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | `warrantyClaimReject` (not_covered, misuse, expired, no_fault_found, other) to reject; `warrantyClaimWithdraw` (repaired_otherwise, raised_in_error, other) to withdraw. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "warranty-claims",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/warranty-claims/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
                   "value": ""
                 }
               ]

@@ -143,8 +143,20 @@ export class AssetView extends AssetSummaryView {
   @ApiProperty({ type: String, nullable: true })
   vendorPhone: string | null;
   @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    description: 'ADR 0076: when the warranty starts.',
+  })
+  warrantyStartsOn: string | null;
+  @ApiProperty({ type: String, nullable: true, description: 'Who gives it.' })
+  warrantor: string | null;
+  @ApiProperty({ type: String, nullable: true, description: 'What it covers.' })
+  warrantyCovers: string | null;
+  @ApiProperty({
     type: Boolean,
-    description: 'The warranty runs today (the compound’s).',
+    description:
+      'The warranty runs today (the compound’s): started, not ended.',
   })
   underWarranty: boolean;
   @ApiProperty({
@@ -169,6 +181,7 @@ export class AssetView extends AssetSummaryView {
   static fromCard(c: AssetCard): AssetView {
     const a = c.asset;
     const warranty = ofDateColumnOrNull(a.warrantyEndsOn);
+    const starts = ofDateColumnOrNull(a.warrantyStartsOn);
     return {
       ...AssetSummaryView.from(a),
       type: {
@@ -191,7 +204,13 @@ export class AssetView extends AssetSummaryView {
       ageYears: c.ageYears,
       vendorName: a.vendorName,
       vendorPhone: a.vendorPhone,
-      underWarranty: warranty !== null && warranty >= c.today,
+      warrantyStartsOn: starts,
+      warrantor: a.warrantor,
+      warrantyCovers: a.warrantyCovers,
+      underWarranty:
+        warranty !== null &&
+        warranty >= c.today &&
+        (starts === null || starts <= c.today),
       statusReason: a.statusReason,
       servesBuildings: a.servesBuildings,
       retiredAt: a.retiredAt,

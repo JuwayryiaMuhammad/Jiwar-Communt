@@ -73,6 +73,16 @@
         },
         "type": "object"
       },
+      "AcceptWarrantyClaimDto": {
+        "properties": {
+          "recoveredAmount": {
+            "description": "What the warrantor paid or covered, EGP.",
+            "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "AccessCodeView": {
         "properties": {
           "accessCode": {
@@ -2750,7 +2760,7 @@
             "type": "string"
           },
           "underWarranty": {
-            "description": "The warranty runs today (the compound’s).",
+            "description": "The warranty runs today (the compound’s): started, not ended.",
             "type": "boolean"
           },
           "unitCode": {
@@ -2775,7 +2785,23 @@
             "nullable": true,
             "type": "string"
           },
+          "warrantor": {
+            "description": "Who gives it.",
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyCovers": {
+            "description": "What it covers.",
+            "nullable": true,
+            "type": "string"
+          },
           "warrantyEndsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyStartsOn": {
+            "description": "ADR 0076: when the warranty starts.",
             "format": "date",
             "nullable": true,
             "type": "string"
@@ -2810,6 +2836,9 @@
           "ageYears",
           "vendorName",
           "vendorPhone",
+          "warrantyStartsOn",
+          "warrantor",
+          "warrantyCovers",
           "underWarranty",
           "statusReason",
           "servesBuildings",
@@ -13328,7 +13357,27 @@
             "pattern": "^[0-9+() -]{3,30}$",
             "type": "string"
           },
+          "warrantor": {
+            "description": "Who gives the warranty (ADR 0076): a business, plain data.",
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyCovers": {
+            "description": "What it covers (ADR 0076), plain data.",
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
           "warrantyEndsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyStartsOn": {
+            "description": "ADR 0076: on or before `warrantyEndsOn`.",
             "format": "date",
             "nullable": true,
             "type": "string"
@@ -16663,6 +16712,30 @@
         ],
         "type": "object"
       },
+      "CreateWarrantyClaimDto": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "description": {
+            "description": "What failed: staff’s words, plain data.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "ticketId": {
+            "description": "The ticket whose fault it is: one of the asset’s.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "description"
+        ],
+        "type": "object"
+      },
       "CreateWorkOrderDto": {
         "properties": {
           "assetId": {
@@ -17564,6 +17637,18 @@
         },
         "required": [
           "decision"
+        ],
+        "type": "object"
+      },
+      "DecideWarrantyClaimDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "`warrantyClaimReject` (not_covered, misuse, expired, no_fault_found, other) to reject; `warrantyClaimWithdraw` (repaired_otherwise, raised_in_error, other) to withdraw.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -66456,7 +66541,27 @@
             "pattern": "^[0-9+() -]{3,30}$",
             "type": "string"
           },
+          "warrantor": {
+            "description": "Who gives the warranty (ADR 0076): a business, plain data.",
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyCovers": {
+            "description": "What it covers (ADR 0076), plain data.",
+            "maxLength": 500,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
           "warrantyEndsOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "warrantyStartsOn": {
+            "description": "ADR 0076: on or before `warrantyEndsOn`.",
             "format": "date",
             "nullable": true,
             "type": "string"
@@ -70282,6 +70387,117 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "WarrantyClaimReferenceDto": {
+        "properties": {
+          "reference": {
+            "description": "The warrantor’s own reference for the claim.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference"
+        ],
+        "type": "object"
+      },
+      "WarrantyClaimView": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedById": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "description": {
+            "description": "What failed: staff’s words.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "openedById": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A rejection’s or a withdrawal’s code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "recoveredAmount": {
+            "description": "What the warrantor paid or covered, EGP; an acceptance only.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "description": "The warrantor’s own reference.",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "accepted",
+              "rejected",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "ticketId",
+          "description",
+          "reference",
+          "status",
+          "openedById",
+          "openedAt",
+          "decidedById",
+          "decidedAt",
+          "reasonCode",
+          "recoveredAmount"
+        ],
+        "type": "object"
+      },
+      "WarrantyClaimViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WarrantyClaimView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -95241,6 +95457,347 @@
           }
         ],
         "summary": "List who a ticket may be opened for in a unit",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/warranty-claims": {
+      "get": {
+        "operationId": "WarrantyClaimsController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "accepted",
+                "rejected",
+                "withdrawn"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarrantyClaimViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the warranty claims, the newest first",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "WarrantyClaimsController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWarrantyClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarrantyClaimView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Claim under an asset’s warranty",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/warranty-claims/{id}": {
+      "get": {
+        "operationId": "WarrantyClaimsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarrantyClaimView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one warranty claim",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "WarrantyClaimsController_reference",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarrantyClaimReferenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarrantyClaimView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record the warrantor’s reference of an open claim",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/warranty-claims/{id}/accept": {
+      "post": {
+        "operationId": "WarrantyClaimsController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptWarrantyClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarrantyClaimView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accepted by the warrantor, with what it recovered",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/warranty-claims/{id}/reject": {
+      "post": {
+        "operationId": "WarrantyClaimsController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideWarrantyClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarrantyClaimView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rejected by the warrantor; `reasonCode` from `warrantyClaimReject`",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/warranty-claims/{id}/withdraw": {
+      "post": {
+        "operationId": "WarrantyClaimsController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideWarrantyClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarrantyClaimView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdrawn by the compound; `reasonCode` from `warrantyClaimWithdraw`",
         "tags": [
           "maintenance"
         ],

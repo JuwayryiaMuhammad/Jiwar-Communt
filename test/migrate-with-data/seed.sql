@@ -68,6 +68,9 @@
 -- meeting held with its agenda, attendance and an open action item, a
 -- unit's ownership share, the governance rules, a manager's delivered
 -- handover and a month's board report.
+-- Transfers, closed units and the market (ADR 0083): a confirmed group
+-- offer with a participant, and a proxy its owner revoked (the offers' and
+-- participants' triggers are recreated, the proxies gain `revoke_code`).
 -- ============================================================================
 
 DO $$
@@ -748,6 +751,27 @@ BEGIN
          now() - interval '1 day', now(), now());
       INSERT INTO board_reports (id, tenant_id, period, version, contents, generated_at) VALUES
         (gen_random_uuid(), t, date_trunc('month', current_date)::date, 1, '{"month": "2027-01"}'::jsonb, now());
+    END;
+    DECLARE
+      offer uuid := gen_random_uuid();
+      owner_occ uuid;
+    BEGIN
+      INSERT INTO group_offers (id, tenant_id, title_en, title_ar, body_en, body_ar, list_price,
+                                group_price, min_participants, closes_at, status, created_by,
+                                closed_at, updated_at) VALUES
+        (offer, t, 'Seed filters', 'فلاتر', 'One a home.', 'لكل وحدة.', 1200, 950, 2,
+         now() - interval '1 day', 'confirmed', mgr, now() - interval '1 day', now());
+      INSERT INTO group_offer_participants (id, tenant_id, offer_id, account_id, unit_id, kind,
+                                            quantity, joined_at) VALUES
+        (gen_random_uuid(), t, offer, res1, u1, 'join', 1, now() - interval '3 days');
+      SELECT id INTO owner_occ FROM unit_occupancies
+       WHERE tenant_id = t AND unit_id = u1 AND account_id = res1 AND status = 'active';
+      INSERT INTO unit_proxies (id, tenant_id, unit_id, appointed_by_occupancy_id, created_by,
+                                created_at, scopes, expires_at, status, invite_expires_at,
+                                ended_at, end_reason, ended_by) VALUES
+        (gen_random_uuid(), t, u1, owner_occ, res1, now() - interval '10 days', ARRAY['inspections'],
+         now() + interval '50 days', 'ended', now() - interval '3 days',
+         now() - interval '5 days', 'revoked', res1);
     END;
   END LOOP;
 END $$;

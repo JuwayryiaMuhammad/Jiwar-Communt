@@ -282,6 +282,13 @@ describe('audit catalog', () => {
         'unit_entry',
         // ADR 0078.
         'technician_help_request',
+        // ADR 0089.
+        'budget_transfer',
+        'finance_commitment',
+        'vendor_invoice',
+        'contract_disbursement',
+        'vendor_payout',
+        'vendor_guarantee',
       ]).toContain(def.target);
     }
   });

@@ -114,6 +114,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'lockdown.end': 'End a lockdown of the gates',
   'governance.approvals': 'Raise matters for the owners’ board to decide, with their reasons, costs and attachments',
   'finance.budget': 'Draft the annual budget, record expenses against it, and void them',
+  'finance.payables': 'Record vendors’ invoices, ask for advances and retention releases, keep guarantees, and pay out what was approved',
+  'finance.payables_approve': 'Approve vendors’ invoices, advances and retention releases against the budget (never your own)',
   'gate_exceptions.decide': 'Answer the guards’ field exceptions: let in, once, someone the gate refused (the first answer wins)',
   'gate_log.search': 'Search the gate log by a visitor’s exact full name (audited)',
   'gate_devices.manage': 'Keep the guard devices the gate works offline on: their sync, the flags their uploads raised, revoke one',

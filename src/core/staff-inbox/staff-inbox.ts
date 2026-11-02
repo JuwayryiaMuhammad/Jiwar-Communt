@@ -46,6 +46,10 @@ export const INBOX_TYPES = [
   'ownership_transfer',
   'closed_unit_round',
   'unit_entry_report',
+  // ADR 0089: a vendor's invoice, an advance or a retention's release
+  // waiting for its approver.
+  'vendor_invoice',
+  'contract_disbursement',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

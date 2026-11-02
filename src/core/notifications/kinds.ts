@@ -2790,6 +2790,41 @@ export const NOTIFICATION_KINDS = {
     target: 'purchase_request',
     params: { requestRef: {}, decision: {} },
   },
+  // Payables (ADR 0089): references and codes, never an amount.
+  /** A vendor's invoice waits for its approver. */
+  'vendor_invoice.received': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'vendor_invoice',
+    params: { invoiceRef: {} },
+  },
+  /** Who recorded it: the invoice was approved or turned down. */
+  'vendor_invoice.decided': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'vendor_invoice',
+    params: { invoiceRef: {}, decision: {} },
+  },
+  /** An advance or a retention's release waits for its approver. */
+  'contract_disbursement.requested': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'contract_disbursement',
+    params: { disbursementRef: {}, disbursementKind: {} },
+  },
+  /** A vendor's guarantee on a contract expires within 30 days, once. */
+  'vendor_guarantee.expiring': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'vendor_guarantee',
+    params: { guaranteeKind: {}, expiresOn: {} },
+  },
   'asset.warranty_expiring': {
     priority: 'normal',
     category: 'maintenance',

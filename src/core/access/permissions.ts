@@ -225,6 +225,13 @@ export const PERMISSIONS = {
   // them, and sets the month the fiscal year starts. The board approves
   // the budget; budget vs actual is `finance.reports`.
   'finance.budget': { kinds: ['staff', 'manager'] },
+  // Payables (ADR 0089): `finance.payables` records a vendor's invoice,
+  // asks for an advance or a retention's release, keeps the guarantees and
+  // pays out what was approved; `finance.payables_approve` approves them
+  // against the budget line, never what the caller recorded or asked for.
+  // Both are `finance.*`, so a deputy never holds them (ADR 0073).
+  'finance.payables': { kinds: ['staff', 'manager'] },
+  'finance.payables_approve': { kinds: ['staff', 'manager'] },
   // Permits (ADR 0049). Residents and family ask for a unit's permits: the
   // unit's primary for works, moves and material exits, anyone who may
   // invite visitors for an event (the service decides per unit);

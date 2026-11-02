@@ -89,6 +89,17 @@ export class RaiseApprovalDto {
   @IsUUID()
   managerAccountId?: string;
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    required: false,
+    description:
+      'budget_transfer only (ADR 0089): a transfer waiting for the board; its amount is the cost.',
+  })
+  @IsOptional()
+  @IsUUID()
+  budgetTransferId?: string;
+
   @ApiProperty({ type: String, minLength: 1, maxLength: L.context })
   @IsString()
   @Length(1, L.context, withParams({ min: 1, max: L.context }))

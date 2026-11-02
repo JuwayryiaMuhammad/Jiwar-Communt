@@ -14,6 +14,12 @@ describe('money and the unit’s reason codes in the dashboards’ mirror (ADR 0
     'planRequestDecline',
     'collectorVisitFail',
     'collectorVisitCancel',
+    // ADR 0089.
+    'vendorInvoiceReject',
+    'vendorInvoiceCancel',
+    'disbursementReject',
+    'disbursementCancel',
+    'budgetVariance',
   ] as const)('%s is the backend’s list', (list) => {
     expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });

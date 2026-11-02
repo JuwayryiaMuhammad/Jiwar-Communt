@@ -196,6 +196,12 @@ export const REASON_CODES = {
   ],
   boardActionCancel: ['not_needed', 'superseded', 'other'],
   expenseVoid: ['entered_in_error', 'duplicate', 'vendor_refund', 'other'],
+  // Payables and commitments (ADR 0089).
+  vendorInvoiceReject: ['wrong_amount', 'not_delivered', 'duplicate', 'not_ours', 'other'],
+  vendorInvoiceCancel: ['entered_in_error', 'vendor_withdrew', 'duplicate', 'other'],
+  disbursementReject: ['not_due', 'too_much', 'not_agreed', 'other'],
+  disbursementCancel: ['entered_in_error', 'not_needed', 'other'],
+  budgetVariance: ['timing', 'price_change', 'unplanned_work', 'saving', 'scope_change', 'emergency', 'other'],
   patrolRunCancel: ['not_needed', 'post_closed', 'other'],
   patrolRunCancelSystem: ['route_changed', 'route_retired', 'post_out_of_service'],
   patrolRunEnd: ['guard', 'shift_ended'],

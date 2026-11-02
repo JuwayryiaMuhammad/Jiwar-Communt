@@ -2060,7 +2060,8 @@
           "payment_plan_above_limit",
           "legal_escalation",
           "compensation_above_limit",
-          "manager_handover_override"
+          "manager_handover_override",
+          "budget_transfer"
         ],
         "type": "string"
       },
@@ -30806,6 +30807,7 @@
           "legal_escalation",
           "compensation_above_limit",
           "manager_handover_override",
+          "budget_transfer",
           "board_appeal",
           "objection"
         ],
@@ -34366,7 +34368,9 @@
           "compensation",
           "ownership_transfer",
           "closed_unit_round",
-          "unit_entry_report"
+          "unit_entry_report",
+          "vendor_invoice",
+          "contract_disbursement"
         ],
         "type": "string"
       },
@@ -52643,6 +52647,11 @@
           },
           "budgetLineId": {
             "description": "budget_increase only: a line of the active budget.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "budgetTransferId": {
+            "description": "budget_transfer only (ADR 0089): a transfer waiting for the board; its amount is the cost.",
             "format": "uuid",
             "type": "string"
           },
@@ -77848,7 +77857,7 @@
             "items": {
               "$ref": "#/components/schemas/GovernanceSettingDto"
             },
-            "maxItems": 11,
+            "maxItems": 12,
             "minItems": 1,
             "type": "array"
           }
@@ -77901,7 +77910,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 21,
+            "maxItems": 23,
             "minItems": 1,
             "type": "array"
           }

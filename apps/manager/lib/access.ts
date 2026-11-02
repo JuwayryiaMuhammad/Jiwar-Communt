@@ -65,6 +65,9 @@ export const ENTRY_PERMISSIONS = [
   'lockdown.end',
   'governance.approvals',
   'finance.budget',
+  // Payables (ADR 0089).
+  'finance.payables',
+  'finance.payables_approve',
   'governance.board',
   // The compound's service partners, their requests and complaints (ADR 0060).
   'partners.manage',

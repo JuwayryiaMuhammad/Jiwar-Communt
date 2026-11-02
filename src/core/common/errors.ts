@@ -1081,6 +1081,54 @@ export const ErrorCode = {
   EXPENSE_AUTHORIZATION_EXCEEDED: 'EXPENSE_AUTHORIZATION_EXCEEDED',
   /** Voided already (409). */
   EXPENSE_ALREADY_VOIDED: 'EXPENSE_ALREADY_VOIDED',
+  // Payables and commitments (ADR 0089)
+  /** Written by a vendor's payout: it is never voided (409, params.invoiceId). */
+  EXPENSE_FROM_PAYOUT: 'EXPENSE_FROM_PAYOUT',
+  /**
+   * More than the line has available: its allowance less what was spent,
+   * what is committed and what is approved to pay (409, params.available).
+   */
+  BUDGET_LINE_INSUFFICIENT: 'BUDGET_LINE_INSUFFICIENT',
+  /** Unknown, or another compound's. */
+  BUDGET_TRANSFER_NOT_FOUND: 'BUDGET_TRANSFER_NOT_FOUND',
+  /** Not in a status this allows (409, params.status). */
+  BUDGET_TRANSFER_STATE: 'BUDGET_TRANSFER_STATE',
+  /** Unknown, or another compound's. */
+  VENDOR_INVOICE_NOT_FOUND: 'VENDOR_INVOICE_NOT_FOUND',
+  /** The vendor's invoice number is on a live invoice already (409, params.invoiceId). */
+  VENDOR_INVOICE_DUPLICATE: 'VENDOR_INVOICE_DUPLICATE',
+  /** Not in a status this allows (409, params.status). */
+  VENDOR_INVOICE_STATE: 'VENDOR_INVOICE_STATE',
+  /**
+   * What it is against cannot take it: another vendor's, not fulfilled,
+   * paid, terminated or invoiced already (409, params.reason).
+   */
+  VENDOR_INVOICE_SOURCE_INVALID: 'VENDOR_INVOICE_SOURCE_INVALID',
+  /** Who recorded or asked for it never approves it (409). */
+  PAYABLE_SELF_APPROVAL: 'PAYABLE_SELF_APPROVAL',
+  /** Unknown, or another compound's. */
+  DISBURSEMENT_NOT_FOUND: 'DISBURSEMENT_NOT_FOUND',
+  /** Not in a status this allows (409, params.status). */
+  DISBURSEMENT_STATE: 'DISBURSEMENT_STATE',
+  /**
+   * Above the manager's limit on a contract the board did not sign (409,
+   * params.limit).
+   */
+  DISBURSEMENT_NEEDS_APPROVAL: 'DISBURSEMENT_NEEDS_APPROVAL',
+  /** More than the contract's value leaves for advances (409, params.max). */
+  ADVANCE_EXCEEDED: 'ADVANCE_EXCEEDED',
+  /** More than the contract's advances have open (409, params.open). */
+  ADVANCE_SET_OFF_EXCEEDED: 'ADVANCE_SET_OFF_EXCEEDED',
+  /** The contract runs on: its retention is released at its end (409, params.endsOn). */
+  RETENTION_NOT_DUE: 'RETENTION_NOT_DUE',
+  /** More than the contract holds in retention (409, params.held). */
+  RETENTION_EXCEEDED: 'RETENTION_EXCEEDED',
+  /** Unknown, or another compound's. */
+  GUARANTEE_NOT_FOUND: 'GUARANTEE_NOT_FOUND',
+  /** Returned or called already (409, params.status). */
+  GUARANTEE_STATE: 'GUARANTEE_STATE',
+  /** A live vendor invoice names the payment: it stays (409, params.invoiceId). */
+  CONTRACT_PAYMENT_INVOICED: 'CONTRACT_PAYMENT_INVOICED',
   // patrols (ADR 0052)
   /** Unknown, or another compound's. */
   PATROL_CHECKPOINT_NOT_FOUND: 'PATROL_CHECKPOINT_NOT_FOUND',

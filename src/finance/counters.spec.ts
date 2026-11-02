@@ -35,6 +35,10 @@ describe('finance counters (ADR 0046, 0048, 0055)', () => {
       'expense',
       'clearance',
       'deposit',
+      // A payout writes its expense first (ADR 0089).
+      'vendor_invoice',
+      'disbursement',
+      'payout',
     ]);
     expect(formatNumber('expense', 12)).toBe('EX-000012');
   });

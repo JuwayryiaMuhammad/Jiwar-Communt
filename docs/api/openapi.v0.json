@@ -26931,7 +26931,8 @@
           "floor_plan",
           "vendor_document",
           "compliance_evidence",
-          "compound_logo"
+          "compound_logo",
+          "unit_entry_photo"
         ],
         "type": "string"
       },
@@ -30442,7 +30443,9 @@
           "open",
           "confirmed",
           "failed",
-          "cancelled"
+          "cancelled",
+          "reconfirming",
+          "contracted"
         ],
         "type": "string"
       },
@@ -33672,7 +33675,10 @@
           "plan_suggestion",
           "follow_up_case",
           "recovery_case",
-          "compensation"
+          "compensation",
+          "ownership_transfer",
+          "closed_unit_round",
+          "unit_entry_report"
         ],
         "type": "string"
       },
@@ -76422,7 +76428,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 18,
+            "maxItems": 21,
             "minItems": 1,
             "type": "array"
           }

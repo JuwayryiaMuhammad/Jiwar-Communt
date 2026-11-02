@@ -83,6 +83,7 @@ export const FILES_ROUTES: Row[] = [
               'vendor_document',
               'compliance_evidence',
               'compound_logo',
+              'unit_entry_photo',
             ],
           },
         },

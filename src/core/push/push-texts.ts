@@ -3434,6 +3434,66 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تعويض على الحالة {caseNumber} بانتظار قرارك.',
     },
   },
+  'unit_proxy.revoked_by_management': {
+    en: {
+      title: 'Proxy ended',
+      body: 'The management ended a proxy for unit {unitCode}.',
+    },
+    ar: {
+      title: 'انتهى التوكيل',
+      body: 'أنهت الإدارة توكيلًا للوحدة {unitCode}.',
+    },
+  },
+  'unit_entry.recorded': {
+    en: {
+      title: 'Emergency entry to your unit',
+      body: 'Staff entered unit {unitCode} in an emergency. Open the app for the record.',
+    },
+    ar: {
+      title: 'دخول طارئ إلى وحدتك',
+      body: 'دخل فريق المجمع الوحدة {unitCode} لحالة طارئة. افتح التطبيق لترى السجل.',
+    },
+  },
+  'unit_entry.reported': {
+    en: {
+      title: 'Emergency entry report',
+      body: 'The report on the emergency entry to unit {unitCode} is ready.',
+    },
+    ar: {
+      title: 'تقرير الدخول الطارئ',
+      body: 'تقرير الدخول الطارئ إلى الوحدة {unitCode} جاهز.',
+    },
+  },
+  'group_offer.reconfirm_requested': {
+    en: {
+      title: 'Confirm the new price',
+      body: 'The final price is {finalPrice} (you joined at {joinedPrice}). Confirm it or leave the offer.',
+    },
+    ar: {
+      title: 'أكّد السعر الجديد',
+      body: 'السعر النهائي {finalPrice} (انضممت بسعر {joinedPrice}). أكّده أو انسحب من العرض.',
+    },
+  },
+  'group_offer.contracted': {
+    en: {
+      title: 'Group offer contracted',
+      body: 'The offer is contracted at {finalPrice}.',
+    },
+    ar: {
+      title: 'تم التعاقد على العرض الجماعي',
+      body: 'تم التعاقد على العرض بسعر {finalPrice}.',
+    },
+  },
+  'group_offer.dropped': {
+    en: {
+      title: 'You left a group offer',
+      body: 'You did not confirm the final price of {finalPrice} in time.',
+    },
+    ar: {
+      title: 'خرجت من عرض جماعي',
+      body: 'لم تؤكد السعر النهائي {finalPrice} في الوقت المحدد.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

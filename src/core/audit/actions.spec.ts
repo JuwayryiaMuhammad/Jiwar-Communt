@@ -276,6 +276,10 @@ describe('audit catalog', () => {
         'experience_case',
         'experience_compensation',
         'service_promise',
+        // ADR 0083.
+        'ownership_transfer',
+        'closed_unit_round',
+        'unit_entry',
       ]).toContain(def.target);
     }
   });

@@ -648,6 +648,19 @@ const ERROR_TEXT: Record<string, string> = {
   COMPENSATION_NOT_FOUND: 'This compensation was not found.',
   COMPENSATION_DECIDED: 'This compensation is decided already.',
   SERVICE_PROMISE_NOT_FOUND: 'This service promise was not found.',
+  // Transfers, dues and closed units, and the market's rules (ADR 0083).
+  OWNERSHIP_TRANSFER_NOT_FOUND: 'This transfer was not found.',
+  OWNERSHIP_TRANSFER_NOT_PENDING: 'This transfer is done or cancelled already.',
+  OWNERSHIP_TRANSFER_PENDING: 'This unit has a transfer waiting already.',
+  TRANSFER_DUES_OWED: 'The unit owes the compound. Collect it first, or approve as an exception with a reason.',
+  CLOSED_UNIT_ROUND_NOT_FOUND: 'This round was not found.',
+  CLOSED_UNIT_ROUND_NOT_DUE: 'This round is scheduled, done or cancelled already.',
+  UNIT_ENTRY_NOT_FOUND: 'This entry was not found.',
+  UNIT_ENTRY_REPORTED: 'This entry’s report is written already.',
+  MARKET_COMMERCIAL_BLOCKED: 'The compound takes no commercial listings now.',
+  MARKET_CATEGORY_NOT_ALLOWED: 'The compound does not take this category now.',
+  MARKET_UNIT_LISTING_LIMIT_REACHED: 'This unit has as many listings open as the compound allows.',
+  GROUP_OFFER_RECONFIRM_NOT_NEEDED: 'Nothing waits for your confirmation on this offer.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

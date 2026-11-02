@@ -2647,6 +2647,47 @@ export const AUDIT_ACTIONS = {
   // active; never the titles.
   'service_promise.created': { log: 'tenant', target: 'service_promise' },
   'service_promise.updated': { log: 'tenant', target: 'service_promise' },
+  // Transfers, dues and closed units (ADR 0083). A transfer requested (the
+  // unit, the buyer), approved (what the unit owed at that moment, the
+  // exception's code and the step-up when it owed, the new occupancy) or
+  // cancelled (the code). A closed unit's round made due by the sweep (the
+  // unit, the day), scheduled (the guard task), done or cancelled (the
+  // code). An emergency entry recorded (the unit, the reason's code, how
+  // many witnesses and photos, who was told) and reported (the outcome's
+  // code, the photos). Never anyone's words.
+  'ownership_transfer.requested': {
+    log: 'tenant',
+    target: 'ownership_transfer',
+  },
+  'ownership_transfer.approved': {
+    log: 'tenant',
+    target: 'ownership_transfer',
+  },
+  'ownership_transfer.cancelled': {
+    log: 'tenant',
+    target: 'ownership_transfer',
+  },
+  'closed_unit_round.due': { log: 'tenant', target: 'closed_unit_round' },
+  'closed_unit_round.scheduled': {
+    log: 'tenant',
+    target: 'closed_unit_round',
+  },
+  'closed_unit_round.done': { log: 'tenant', target: 'closed_unit_round' },
+  'closed_unit_round.cancelled': {
+    log: 'tenant',
+    target: 'closed_unit_round',
+  },
+  'unit_entry.recorded': { log: 'tenant', target: 'unit_entry' },
+  'unit_entry.reported': { log: 'tenant', target: 'unit_entry' },
+  // A group offer's contract (ADR 0083): the final price recorded and the
+  // offer contracted at once, or held for the participants it costs more
+  // to re-confirm (how many were asked); a participant's re-confirmation.
+  'group_offer.contracted': { log: 'tenant', target: 'group_offer' },
+  'group_offer.reconfirm_requested': {
+    log: 'tenant',
+    target: 'group_offer',
+  },
+  'group_offer.reconfirmed': { log: 'tenant', target: 'group_offer' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -3184,6 +3184,66 @@ export const NOTIFICATION_KINDS = {
     target: 'experience_compensation',
     params: { caseNumber: {}, compensationKind: {} },
   },
+  // Transfers, dues and closed units, and group offers' contracts (ADR 0083).
+  /**
+   * The management ended a proxy for a unit: to the proxy's holder and to
+   * the owner who appointed them. The unit's code and the reason's code.
+   */
+  'unit_proxy.revoked_by_management': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit',
+    params: { unitCode: {}, reason: {} },
+  },
+  /**
+   * Staff entered the unit in an emergency: at once, to every active
+   * occupant and to its proxies for inspections. Never silent: critical,
+   * delivered whatever the preferences say. The reason's code only.
+   */
+  'unit_entry.recorded': {
+    priority: 'critical',
+    category: 'household',
+    critical: true,
+    target: 'unit_entry',
+    params: { unitCode: {}, entryReason: {} },
+  },
+  /** The entry's report is written: what was found, by its code. */
+  'unit_entry.reported': {
+    priority: 'normal',
+    category: 'household',
+    critical: false,
+    target: 'unit_entry',
+    params: { unitCode: {}, outcome: {} },
+  },
+  /**
+   * The offer's final price is above the price the participant joined at:
+   * they re-confirm by the time given, or leave the offer. Both prices.
+   */
+  'group_offer.reconfirm_requested': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'group_offer',
+    params: { finalPrice: {}, joinedPrice: {} },
+  },
+  /** The offer is contracted with its supplier at its final price. */
+  'group_offer.contracted': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'group_offer',
+    params: { finalPrice: {} },
+  },
+  /** The participant did not re-confirm the higher price in time: they left. */
+  'group_offer.dropped': {
+    priority: 'normal',
+    category: 'market',
+    critical: false,
+    target: 'group_offer',
+    params: { finalPrice: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

@@ -3639,6 +3639,10 @@ enum FilePurpose {
   fitout_photo
   /// The photo a resident joins to the appeal of a damage claim (ADR 0074): an image, 5 MB.
   damage_appeal_photo
+  /// The compound's site map (ADR 0084): an image, 10 MB, `spaces.manage`.
+  site_map
+  /// A building floor's plan (ADR 0084): an image, 10 MB, `spaces.manage`.
+  floor_plan
   @@map("file_purpose")
   vendor_document
 }
@@ -8109,18 +8113,17 @@ model GateServiceRequest {
 // ============================================================================
 
 /// A compound's permit rules (ADR 0049): the week days and the hours works
-/// and moves may take place in, and dated days off. One row, created with
-/// the compound.
+/// and moves may take place in. Its days off are the holidays that stop
+/// works (ADR 0084, compound_holidays). One row, created with the compound.
 model PermitSettings {
-  tenantId  String     @id @map("tenant_id") @db.Uuid
-  workDays  Int[]      @default([0, 1, 2, 3, 4, 6]) @map("work_days") @db.SmallInt
-  workFrom  Int        @default(540) @map("work_from") @db.SmallInt
-  workTo    Int        @default(1020) @map("work_to") @db.SmallInt
-  daysOff   DateTime[] @default([]) @map("days_off") @db.Date
+  tenantId  String   @id @map("tenant_id") @db.Uuid
+  workDays  Int[]    @default([0, 1, 2, 3, 4, 6]) @map("work_days") @db.SmallInt
+  workFrom  Int      @default(540) @map("work_from") @db.SmallInt
+  workTo    Int      @default(1020) @map("work_to") @db.SmallInt
   /// A works permit is approved only once a deposit named on it holds money (ADR 0074).
   worksDepositRequired Boolean @default(true) @map("works_deposit_required")
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("permit_settings")
 }
@@ -12446,4 +12449,135 @@ model MaintenanceServicePressure {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@map("maintenance_service_pressure")
+}
+
+// ============================================================================
+// Spaces (ADR 0084)
+// ============================================================================
+
+/// A compound's holiday calendar: its lock row (a write FOR UPDATE, a
+/// permit request FOR SHARE). One row, created with the compound.
+model HolidayCalendar {
+  tenantId  String   @id @map("tenant_id") @db.Uuid
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@map("holiday_calendars")
+}
+
+/// A dated holiday of the compound, one a day. One that stops works is a
+/// day off of the permits (ADR 0049); bookings and plans are only flagged.
+model CompoundHoliday {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  day        DateTime @db.Date
+  nameEn     String   @map("name_en")
+  nameAr     String   @map("name_ar")
+  stopsWorks Boolean  @default(true) @map("stops_works")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, day], map: "compound_holidays_one_a_day")
+  @@map("compound_holidays")
+}
+
+/// The compound's site map: one image (purpose site_map), attached.
+model SiteMap {
+  tenantId  String   @id @map("tenant_id") @db.Uuid
+  fileId    String   @unique(map: "site_maps_file_key") @map("file_id") @db.Uuid
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("site_maps")
+}
+
+/// A place on the site map: a building, a gate or a facility (exactly the
+/// one its kind names, CHECK), once each (partial unique indexes in SQL), at
+/// fractions of the image's width and height from its top left corner.
+model SiteMapPoint {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  /// building, gate, facility.
+  kind       String
+  buildingId String?  @map("building_id") @db.Uuid
+  gateId     String?  @map("gate_id") @db.Uuid
+  facilityId String?  @map("facility_id") @db.Uuid
+  x          Decimal  @db.Decimal(6, 5)
+  y          Decimal  @db.Decimal(6, 5)
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@map("site_map_points")
+}
+
+/// A building floor's plan: one image (purpose floor_plan) per building and
+/// floor.
+model FloorPlan {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  buildingId String   @map("building_id") @db.Uuid
+  floor      Int
+  fileId     String   @unique(map: "floor_plans_file_key") @map("file_id") @db.Uuid
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, buildingId, floor], map: "floor_plans_one_a_floor")
+  @@map("floor_plans")
+}
+
+/// A unit's hotspot on its floor's plan: a box inside the image, in
+/// fractions of its width and height. One plan per unit.
+model FloorPlanUnit {
+  tenantId String  @map("tenant_id") @db.Uuid
+  planId   String  @map("plan_id") @db.Uuid
+  unitId   String  @map("unit_id") @db.Uuid
+  x        Decimal @db.Decimal(6, 5)
+  y        Decimal @db.Decimal(6, 5)
+  width    Decimal @db.Decimal(6, 5)
+  height   Decimal @db.Decimal(6, 5)
+
+  @@id([planId, unitId])
+  @@unique([tenantId, unitId], map: "floor_plan_units_one_plan")
+  @@map("floor_plan_units")
+}
+
+/// A common area (ADR 0064) the management opened to residents' use requests.
+model SpaceUseArea {
+  tenantId     String   @map("tenant_id") @db.Uuid
+  commonAreaId String   @map("common_area_id") @db.Uuid
+  openedAt     DateTime @map("opened_at") @db.Timestamptz(3)
+
+  @@id([tenantId, commonAreaId])
+  @@map("space_use_areas")
+}
+
+/// A resident's request to use a common area for a time (at most 12 hours).
+/// Approved uses of one area never overlap, nor a facility's bookings.
+model SpaceUseRequest {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  commonAreaId  String    @map("common_area_id") @db.Uuid
+  unitId        String    @map("unit_id") @db.Uuid
+  requestedById String    @map("requested_by_account_id") @db.Uuid
+  startsAt      DateTime  @map("starts_at") @db.Timestamptz(3)
+  endsAt        DateTime  @map("ends_at") @db.Timestamptz(3)
+  /// The requester's words, plain data: never audited; NULL once erased.
+  purpose       String?
+  guests        Int       @default(0) @db.SmallInt
+  /// pending, approved, refused, cancelled, expired.
+  status        String    @default("pending")
+  decidedById   String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt     DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.spaceUseRefuse, spaceUseCancel or spaceUseWithdraw; `requester_left`.
+  reasonCode    String?   @map("reason_code")
+  endedAt       DateTime? @map("ended_at") @db.Timestamptz(3)
+  endedById     String?   @map("ended_by_account_id") @db.Uuid
+  createdAt     DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, commonAreaId, startsAt], map: "space_use_requests_area_idx")
+  @@index([tenantId, unitId, createdAt(sort: Desc), id(sort: Desc)], map: "space_use_requests_unit_idx")
+  @@index([tenantId, status, createdAt, id], map: "space_use_requests_status_idx")
+  @@index([tenantId, requestedById], map: "space_use_requests_requester_idx")
+  @@map("space_use_requests")
 }

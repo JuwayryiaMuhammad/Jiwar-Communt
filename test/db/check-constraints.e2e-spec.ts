@@ -956,7 +956,6 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   // Permits (ADR 0049): arrays and NOT NULL minutes only.
   permit_settings_work_days: {},
   permit_settings_work_hours: {},
-  permit_settings_days_off: {},
   permit_counters_last_number: {},
   unit_permits_number_positive: {},
   unit_permits_window: {},
@@ -2751,6 +2750,18 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'status is NOT NULL; the nullable columns are tested IS [NOT] NULL; done_side, cancel_side and cancel_reason are tested IS NULL first and their lists run only on a value',
   },
+  // Spaces (ADR 0084); permit_settings_days_off went with its column.
+  compound_holidays_names: {},
+  site_map_points_place: {},
+  site_map_points_inside: {},
+  floor_plans_floor_range: {},
+  floor_plan_units_inside: {},
+  space_use_requests_window: {},
+  space_use_requests_fields: {
+    guarded:
+      'purpose IS NULL is tested first and its length read only on a value',
+  },
+  space_use_requests_status_shape: {},
 };
 
 interface Check {

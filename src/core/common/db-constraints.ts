@@ -1020,4 +1020,20 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   permit_damage_claims_number_key: null,
   permit_damage_claims_appeal_photo_key: null,
   permit_damage_claim_photos_file_id_key: null,
+  // Spaces (ADR 0084): one holiday a day, one plan a floor, one point a
+  // place, one plan a unit, a file on one record: each checked first under
+  // the calendar's, the plan's or the map's row lock (HOLIDAY_EXISTS,
+  // FLOOR_PLAN_EXISTS, DUPLICATE_VALUE, a file claimed once).
+  compound_holidays_tenant_id_id_key: null,
+  compound_holidays_one_a_day: null,
+  site_maps_file_key: null,
+  site_map_points_tenant_id_id_key: null,
+  site_map_points_one_a_building: null,
+  site_map_points_one_a_gate: null,
+  site_map_points_one_a_facility: null,
+  floor_plans_tenant_id_id_key: null,
+  floor_plans_one_a_floor: null,
+  floor_plans_file_key: null,
+  floor_plan_units_one_plan: null,
+  space_use_requests_tenant_id_id_key: null,
 };

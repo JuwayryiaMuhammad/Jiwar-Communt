@@ -1782,6 +1782,37 @@ export const ErrorCode = {
   TICKET_NOT_OF_ASSET: 'TICKET_NOT_OF_ASSET',
   // The operations dashboard (ADR 0079).
   STAFF_BRIEF_NOT_FOUND: 'STAFF_BRIEF_NOT_FOUND',
+  // Spaces (ADR 0084).
+  HOLIDAY_NOT_FOUND: 'HOLIDAY_NOT_FOUND',
+  /** The compound has a holiday on that day already (409, params.day). */
+  HOLIDAY_EXISTS: 'HOLIDAY_EXISTS',
+  /** As many holidays from today on as the calendar keeps (409, params.max). */
+  HOLIDAYS_TOO_MANY: 'HOLIDAYS_TOO_MANY',
+  /** The compound has no site map image yet: set one first (409). */
+  SITE_MAP_NOT_SET: 'SITE_MAP_NOT_SET',
+  FLOOR_PLAN_NOT_FOUND: 'FLOOR_PLAN_NOT_FOUND',
+  /** The building's floor has its plan already (409, params.planId). */
+  FLOOR_PLAN_EXISTS: 'FLOOR_PLAN_EXISTS',
+  SPACE_USE_NOT_FOUND: 'SPACE_USE_NOT_FOUND',
+  /** The common area is not open to use requests (409). */
+  SPACE_USE_AREA_CLOSED: 'SPACE_USE_AREA_CLOSED',
+  /** The request is not pending, or not live, any more (409, params.status). */
+  SPACE_USE_DECIDED: 'SPACE_USE_DECIDED',
+  /** Its time has started: too late to decide or withdraw it (409). */
+  SPACE_USE_STARTED: 'SPACE_USE_STARTED',
+  /** An approved use of the area overlaps it (409). */
+  SPACE_USE_OVERLAP: 'SPACE_USE_OVERLAP',
+  /** The facility's bookings hold the area then (409, params.bookings). */
+  SPACE_USE_BOOKED: 'SPACE_USE_BOOKED',
+  /** The unit has as many live requests as it may (409, params.max). */
+  SPACE_USE_LIMIT: 'SPACE_USE_LIMIT',
+  /**
+   * The closure would cancel bookings with a fee: preview it first and send
+   * the preview's token (409).
+   */
+  FACILITY_CLOSURE_PREVIEW_REQUIRED: 'FACILITY_CLOSURE_PREVIEW_REQUIRED',
+  /** What the closure would cancel or credit changed since its preview (409). */
+  FACILITY_CLOSURE_PREVIEW_STALE: 'FACILITY_CLOSURE_PREVIEW_STALE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -2053,6 +2084,18 @@ export const FieldErrorCode = {
   CONTRACT_NOT_OF_VENDOR: 'CONTRACT_NOT_OF_VENDOR',
   /** ADR 0077: a payment is due within the contract's dates. */
   PAYMENT_OUTSIDE_CONTRACT: 'PAYMENT_OUTSIDE_CONTRACT',
+  /** ADR 0084: not an active building, gate or facility of the compound. */
+  MAP_PLACE_NOT_AVAILABLE: 'MAP_PLACE_NOT_AVAILABLE',
+  /** ADR 0084: a hotspot's box goes past the image's edge. */
+  HOTSPOT_OUTSIDE_IMAGE: 'HOTSPOT_OUTSIDE_IMAGE',
+  /** ADR 0084: the unit is not on the plan's building and floor. */
+  UNIT_NOT_ON_FLOOR: 'UNIT_NOT_ON_FLOOR',
+  /** ADR 0084: a use starts at least params.hours from now. */
+  SPACE_USE_TOO_SOON: 'SPACE_USE_TOO_SOON',
+  /** ADR 0084: a use starts within params.days from now. */
+  SPACE_USE_TOO_FAR: 'SPACE_USE_TOO_FAR',
+  /** ADR 0084: a use lasts at most params.hours. */
+  SPACE_USE_TOO_LONG: 'SPACE_USE_TOO_LONG',
 } as const;
 
 export type FieldErrorCode =

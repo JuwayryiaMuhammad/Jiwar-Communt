@@ -2940,6 +2940,40 @@ export const NOTIFICATION_KINDS = {
     target: 'service_pressure',
     params: { open: {}, available: {}, threshold: {} },
   },
+  // Spaces (ADR 0084): a resident's common-area use request, to its
+  // requester. The area's code (`area`) at most, and a reason code.
+  /** The staff approved the use. */
+  'space_use.approved': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'space_use',
+    params: { area: {} },
+  },
+  /** The staff refused it, with a reason code. */
+  'space_use.refused': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'space_use',
+    params: { area: {}, reason: {} },
+  },
+  /** The staff cancelled an approved use, with a reason code. */
+  'space_use.cancelled': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'space_use',
+    params: { area: {}, reason: {} },
+  },
+  /** Nobody decided it before its time came. */
+  'space_use.expired': {
+    priority: 'normal',
+    category: 'bookings',
+    critical: false,
+    target: 'space_use',
+    params: { area: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

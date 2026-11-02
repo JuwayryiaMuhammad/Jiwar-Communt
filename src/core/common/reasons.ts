@@ -1055,4 +1055,15 @@ export const REASON_CODES = {
     'issued_in_error',
     'other',
   ],
+  // Spaces (ADR 0084): a common-area use request refused or cancelled by the
+  // staff, or withdrawn by its requester or the unit's primary.
+  spaceUseRefuse: [
+    'area_unavailable',
+    'conflicts_with_event',
+    'not_suitable',
+    'too_many_guests',
+    'other',
+  ],
+  spaceUseCancel: ['area_unavailable', 'safety', 'requester_asked', 'other'],
+  spaceUseWithdraw: ['no_longer_needed', 'plans_changed', 'other'],
 } as const;

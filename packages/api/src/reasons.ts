@@ -284,6 +284,9 @@ export const REASON_CODES = {
   debrisSlotCancel: ['plans_changed', 'not_needed', 'other'],
   damageClaim: ['common_area_damage', 'lift_damage', 'facade_damage', 'debris_left', 'other'],
   damageClaimWithdraw: ['appeal_accepted', 'repaired_by_unit', 'issued_in_error', 'other'],
+  spaceUseRefuse: ['area_unavailable', 'conflicts_with_event', 'not_suitable', 'too_many_guests', 'other'],
+  spaceUseCancel: ['area_unavailable', 'safety', 'requester_asked', 'other'],
+  spaceUseWithdraw: ['no_longer_needed', 'plans_changed', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

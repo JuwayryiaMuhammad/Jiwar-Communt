@@ -333,6 +333,11 @@ export const PERMISSIONS = {
   // It opens the page only; each section shows to the holders of its own
   // domain's permission, as the inbox's types do.
   'dashboard.read': { kinds: ['staff', 'manager'] },
+  // Spaces (ADR 0084): the compound's holiday calendar, its site map, the
+  // buildings' floor plans with their units' hotspots, and the common areas
+  // open to residents' use requests (decided with `bookings.handle`). The
+  // manager's by default; a compound may give it to a staff role.
+  'spaces.manage': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

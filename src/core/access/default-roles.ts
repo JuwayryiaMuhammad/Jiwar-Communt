@@ -111,6 +111,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'purchases.request',
       'purchases.approve',
       'dashboard.read',
+      // ADR 0084.
+      'spaces.manage',
     ],
   },
   {

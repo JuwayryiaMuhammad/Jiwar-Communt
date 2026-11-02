@@ -595,6 +595,22 @@ const ERROR_TEXT: Record<string, string> = {
   TICKET_NOT_OF_ASSET: 'That ticket is not one of this asset’s.',
   // The operations dashboard (ADR 0079).
   STAFF_BRIEF_NOT_FOUND: 'This brief was not found.',
+  // Spaces (ADR 0084).
+  HOLIDAY_NOT_FOUND: 'This holiday was not found.',
+  HOLIDAY_EXISTS: 'The compound has a holiday on that day already.',
+  HOLIDAYS_TOO_MANY: 'The calendar holds as many coming holidays as it may.',
+  SITE_MAP_NOT_SET: 'Set the site map’s image first.',
+  FLOOR_PLAN_NOT_FOUND: 'No floor plan was found.',
+  FLOOR_PLAN_EXISTS: 'This floor has its plan already.',
+  SPACE_USE_NOT_FOUND: 'This request was not found.',
+  SPACE_USE_AREA_CLOSED: 'This area does not take use requests.',
+  SPACE_USE_DECIDED: 'This request is decided already.',
+  SPACE_USE_STARTED: 'This request’s time has started.',
+  SPACE_USE_OVERLAP: 'An approved use of this area overlaps this time.',
+  SPACE_USE_BOOKED: 'The facility is booked at that time.',
+  SPACE_USE_LIMIT: 'The unit has as many open requests as it may.',
+  FACILITY_CLOSURE_PREVIEW_REQUIRED: 'Preview the closure first: it cancels bookings with a fee.',
+  FACILITY_CLOSURE_PREVIEW_STALE: 'The bookings changed since the preview. Preview again.',
 };
 
 const FIELD_TEXT: Record<string, string> = {
@@ -707,6 +723,12 @@ const FIELD_TEXT: Record<string, string> = {
   PARTNER_PRICE_ITEM_NOT_AVAILABLE: 'Not one of the partner’s prices now.',
   PARTNER_AMOUNT_NOT_ASKED: 'An amount goes with a refund or damages only.',
   PARTNER_COMPENSATION_NOT_UPHELD: 'A complaint not upheld arranges nothing.',
+  MAP_PLACE_NOT_AVAILABLE: 'Not a building, gate or facility in use.',
+  HOTSPOT_OUTSIDE_IMAGE: 'The box goes past the image’s edge.',
+  UNIT_NOT_ON_FLOOR: 'This unit is not on this building’s floor.',
+  SPACE_USE_TOO_SOON: 'Too soon: ask further ahead.',
+  SPACE_USE_TOO_FAR: 'Too far ahead.',
+  SPACE_USE_TOO_LONG: 'Too long.',
 };
 
 export function errorText(error: unknown): string {

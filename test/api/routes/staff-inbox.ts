@@ -14,6 +14,7 @@ const INBOX_TYPES = [
   'decision_appeal',
   'management_request',
   'purchase_request',
+  'space_use_request',
 ];
 
 /**

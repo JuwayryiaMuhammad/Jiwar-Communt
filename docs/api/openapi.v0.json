@@ -30717,7 +30717,8 @@
           "invoice_dispute",
           "decision_appeal",
           "management_request",
-          "purchase_request"
+          "purchase_request",
+          "space_use_request"
         ],
         "type": "string"
       },
@@ -70004,7 +70005,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 13,
+            "maxItems": 14,
             "minItems": 1,
             "type": "array"
           }

@@ -2390,6 +2390,31 @@ export const AUDIT_ACTIONS = {
   // The gate log searched to a CSV (ADR 0079), as its search is audited
   // (ADR 0056). metadata: from, to, unitId, byName, rows — never the name.
   'gate.log_exported': { log: 'tenant', target: 'tenant' },
+  // Spaces (ADR 0084). A holiday added, changed or removed: its day and
+  // whether it stops works (changes on a change; the names are the
+  // management's own and plain). The site map's image set (the old file's
+  // id when one was replaced) and its points replaced (the counts by kind).
+  // A floor plan made (building, floor), its image replaced, its hotspots
+  // replaced (the count) or removed. A common area opened to or closed for
+  // use requests. A use request made (area, unit, times), approved, refused
+  // or cancelled (the code, the side), or expired by the sweep. Never the
+  // requester's purpose.
+  'holiday.created': { log: 'tenant', target: 'holiday' },
+  'holiday.changed': { log: 'tenant', target: 'holiday' },
+  'holiday.removed': { log: 'tenant', target: 'holiday' },
+  'site_map.image_set': { log: 'tenant', target: 'tenant' },
+  'site_map.points_set': { log: 'tenant', target: 'tenant' },
+  'floor_plan.created': { log: 'tenant', target: 'floor_plan' },
+  'floor_plan.image_set': { log: 'tenant', target: 'floor_plan' },
+  'floor_plan.hotspots_set': { log: 'tenant', target: 'floor_plan' },
+  'floor_plan.removed': { log: 'tenant', target: 'floor_plan' },
+  'space_use_area.opened': { log: 'tenant', target: 'common_area' },
+  'space_use_area.closed': { log: 'tenant', target: 'common_area' },
+  'space_use.requested': { log: 'tenant', target: 'space_use' },
+  'space_use.approved': { log: 'tenant', target: 'space_use' },
+  'space_use.refused': { log: 'tenant', target: 'space_use' },
+  'space_use.cancelled': { log: 'tenant', target: 'space_use' },
+  'space_use.expired': { log: 'tenant', target: 'space_use' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

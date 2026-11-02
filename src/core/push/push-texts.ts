@@ -3164,6 +3164,46 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: '{open} بلاغًا مفتوحًا مقابل {available} فنيين متاحين. افتح قائمة التوزيع.',
     },
   },
+  'space_use.approved': {
+    en: {
+      title: 'Use approved',
+      body: 'Your request to use {area} was approved.',
+    },
+    ar: {
+      title: 'تمت الموافقة على الاستخدام',
+      body: 'تمت الموافقة على طلبك استخدام {area}.',
+    },
+  },
+  'space_use.refused': {
+    en: {
+      title: 'Use refused',
+      body: 'Your request to use {area} was refused. Open the app for the reason.',
+    },
+    ar: {
+      title: 'رُفض طلب الاستخدام',
+      body: 'رُفض طلبك استخدام {area}. افتح التطبيق لمعرفة السبب.',
+    },
+  },
+  'space_use.cancelled': {
+    en: {
+      title: 'Use cancelled',
+      body: 'The management cancelled your approved use of {area}.',
+    },
+    ar: {
+      title: 'أُلغي الاستخدام',
+      body: 'ألغت الإدارة استخدامك المعتمد لـ {area}.',
+    },
+  },
+  'space_use.expired': {
+    en: {
+      title: 'Request expired',
+      body: 'Your request to use {area} was not decided in time.',
+    },
+    ar: {
+      title: 'انتهت مهلة الطلب',
+      body: 'لم يُبتّ في طلبك استخدام {area} في الوقت المناسب.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

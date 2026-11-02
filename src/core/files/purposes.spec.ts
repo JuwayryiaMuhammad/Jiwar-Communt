@@ -387,6 +387,16 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.gallery_photo.uploaders).toEqual(['content.manage']);
   });
 
+  it('the site map and a floor plan are images of the 10 MB default, the spaces keeper’s (ADR 0084)', () => {
+    for (const p of ['site_map', 'floor_plan'] as const) {
+      expect(sizeCheck).not.toContain(`WHEN '${p}'`);
+      expect(typeCheck).not.toContain(`'${p}'`);
+      expect(FILE_PURPOSES[p].types).toEqual(FILE_PURPOSES.worker_photo.types);
+      expect(FILE_PURPOSES[p].maxBytes).toBe(FILE_PURPOSES.document.maxBytes);
+      expect(FILE_PURPOSES[p].uploaders).toEqual(['spaces.manage']);
+    }
+  });
+
   it('a sheet to import is uploaded by whoever keeps the register, the meters or the units (ADR 0064, 0066, 0072)', () => {
     expect(FILE_PURPOSES.data_import.uploaders).toEqual([
       'assets.manage',

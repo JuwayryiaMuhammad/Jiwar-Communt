@@ -32,6 +32,8 @@ export const INBOX_TYPES = [
   'management_request',
   // ADR 0077: a purchase request waiting for its approver.
   'purchase_request',
+  // ADR 0084: a common-area use request waiting for the staff.
+  'space_use_request',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

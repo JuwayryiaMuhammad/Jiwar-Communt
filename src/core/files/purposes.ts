@@ -418,6 +418,18 @@ export const FILE_PURPOSES = {
     maxBytes: 5 * MB,
     uploaders: ['permits.request'],
   },
+  // The compound's site map and a building floor's plan (ADR 0084): images,
+  // the 10 MB default (neither CHECK names them), `spaces.manage`'s.
+  site_map: {
+    types: IMAGE_TYPES,
+    maxBytes: 10 * MB,
+    uploaders: ['spaces.manage'],
+  },
+  floor_plan: {
+    types: IMAGE_TYPES,
+    maxBytes: 10 * MB,
+    uploaders: ['spaces.manage'],
+  },
   // A personal-data export (ADR 0036): built by the server and attached to
   // its export record; nobody uploads one.
   data_export: {

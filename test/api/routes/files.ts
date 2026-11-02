@@ -77,6 +77,8 @@ export const FILES_ROUTES: Row[] = [
               'permit_drawing',
               'fitout_photo',
               'damage_appeal_photo',
+              'site_map',
+              'floor_plan',
               // Last in the enum's order (its value sits after the map).
               'vendor_document',
             ],

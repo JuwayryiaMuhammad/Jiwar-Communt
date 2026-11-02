@@ -251,6 +251,10 @@ describe('audit catalog', () => {
         'debris_slot',
         'area_record',
         'damage_claim',
+        // ADR 0084.
+        'holiday',
+        'floor_plan',
+        'space_use',
       ]).toContain(def.target);
     }
   });

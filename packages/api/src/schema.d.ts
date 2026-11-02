@@ -33231,7 +33231,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request";
         InboxTypeCountView: {
             overdue: number;
             total: number;

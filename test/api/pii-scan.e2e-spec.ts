@@ -1818,6 +1818,13 @@ describe('API v0 — PII leak scan', () => {
       '/units/{unitId}/floor-plan': unit.id,
       '/units/{unitId}/space-uses': unit.id,
       '/staff/facilities/{id}/closure-preview': w.aFacilityId,
+      // ADR 0080: A's announcement's delivery (counts only); B's letter, not
+      // found for everyone of A, its PDF too; A's unit's correspondence.
+      '/community/announcements/{id}/delivery': piiAnnouncement,
+      '/staff/official-letters/{id}': w.bLetterId,
+      '/staff/official-letters/{id}/pdf': w.bLetterId,
+      '/me/official-letters/{id}/pdf': w.bLetterId,
+      '/staff/units/{unitId}/correspondence': unit.id,
       '/maintenance/asset-imports/{id}': w.bAssetImportId,
       '/staff/unit-imports/{id}': w.bUnitImportId,
       '/maintenance/checklists/{id}': w.bChecklistId,
@@ -2849,6 +2856,10 @@ describe('API v0 — PII leak scan', () => {
       // window, the note and the lines while the consent holds, never a
       // phone, a full name or an id (test/partners/requests, privacy).
       '/public/partner-desk/lookup',
+      // ADR 0080: an official letter's check shows its status, the issuing
+      // compound and the day, never a person, a unit or an id (below, and
+      // test/office-queue/letters-correspondence).
+      '/public/letters/lookup',
     ]);
     const ids = [...people.map((p) => p.id), ...Object.values(a.ids)].filter(
       Boolean,
@@ -2880,6 +2891,33 @@ describe('API v0 — PII leak scan', () => {
     for (const id of [...ids, unit.id])
       if (receipt.text.includes(id))
         leaks.push(`public /public/receipts/lookup: an id`);
+    // Whoever holds a letter's code (ADR 0080): the status, the issuer and
+    // the day — no person, no id, no unit, no number.
+    const issuedLetter = (
+      await call(w, 'POST', '/staff/official-letters', {
+        token: a.tokens.manager,
+        body: {
+          kind: 'residence_confirmation',
+          unitId: unit.id,
+          accountId: primary.id,
+        },
+      }).expect(201)
+    ).body as { verifyCode: string; number: string };
+    const letterCheck = await call(w, 'POST', '/public/letters/lookup', {
+      body: { code: issuedLetter.verifyCode },
+    }).expect(200);
+    expect(Object.keys(letterCheck.body as object).sort()).toEqual([
+      'issuedOn',
+      'issuer',
+      'status',
+    ]);
+    for (const p of people)
+      for (const v of [p.fullName ?? '', p.phone, p.email, p.doc])
+        if (v && letterCheck.text.includes(v))
+          leaks.push(`public /public/letters/lookup: a person's data`);
+    for (const v of [...ids, unit.id, unit.code, issuedLetter.number])
+      if (letterCheck.text.includes(v))
+        leaks.push(`public /public/letters/lookup: an id or a reference`);
     for (const [host, issued] of [
       ['family', visit],
       ['primary', primaryVisit],

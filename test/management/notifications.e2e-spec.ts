@@ -317,6 +317,65 @@ describe('Management requests — notifications', () => {
     expect((await told(id)).map(([, to]) => to)).not.toContain(gone.id);
   });
 
+  it('the office queue (ADR 0080): a conversation the management starts and a conversion tell the author, a new topic the handlers', async () => {
+    const started = (
+      await m
+        .http('post', '/management/outreach', s.manager.token, {
+          residentAccountId: s.owner.id,
+          topicId,
+          unitId: s.unit.id,
+          body: `${MARKER} please come by`,
+        })
+        .expect(201)
+    ).body as { id: string };
+    expect(await since(started.id, [])).toEqual([
+      'management_request.outreach → author',
+    ]);
+    const moved = await open();
+    const before = await told(moved);
+    await m
+      .http('post', `/management/requests/${moved}/topic`, s.manager.token, {
+        topicId: await m.topicId(s.c, 'general'),
+      })
+      .expect(204);
+    expect(await since(moved, before)).toEqual([
+      'management_request.reclassified → handler',
+      'management_request.reclassified → second',
+    ]);
+    const converted = (
+      await m.open(s.c, s.owner, {
+        topicId,
+        unitId: s.unit.id,
+        body: `${MARKER} the tap drips`,
+      })
+    ).id;
+    const told0 = await told(converted);
+    const categoryId = await m.x.asManager(
+      s.c,
+      async () =>
+        (
+          await m.x.prisma.tenant.ticketCategory.findFirstOrThrow({
+            where: { key: 'plumbing' },
+          })
+        ).id,
+    );
+    await m
+      .http(
+        'post',
+        `/management/requests/${converted}/convert`,
+        s.manager.token,
+        {
+          target: 'ticket',
+          categoryId,
+          description: `${MARKER} the kitchen tap`,
+        },
+      )
+      .expect(201);
+    expect(await since(converted, told0)).toContain(
+      'management_request.converted → author',
+    );
+  });
+
   it('every notice is of category management, never critical, and says the request number and the topic key — nothing anyone typed', async () => {
     const rows = await m.x.asManager(s.c, () =>
       m.x.prisma.tenant.notification.findMany({
@@ -336,7 +395,9 @@ describe('Management requests — notifications', () => {
       )
       .map(([kind]) => kind);
     expect([...kinds].sort()).toEqual(all.sort());
-    expect(all).toHaveLength(17);
+    // ADR 0080 adds three: outreach, reclassified and converted (which
+    // names the ticket's number too).
+    expect(all).toHaveLength(20);
     for (const kind of all) {
       const spec = NOTIFICATION_KINDS[kind as keyof typeof NOTIFICATION_KINDS];
       expect(spec).toMatchObject({
@@ -345,16 +406,21 @@ describe('Management requests — notifications', () => {
         priority: 'normal',
         target: 'management_request',
       });
-      expect(Object.keys(spec.params).sort()).toEqual([
-        'requestNumber',
-        'topicKey',
-      ]);
+      expect(Object.keys(spec.params).sort()).toEqual(
+        kind === 'management_request.converted'
+          ? ['requestNumber', 'ticketNumber', 'topicKey']
+          : ['requestNumber', 'topicKey'],
+      );
     }
     for (const row of rows) {
       expect(row.priority).toBe('normal');
       expect(row.params).toEqual({
         requestNumber: expect.stringMatching(/^MR-\d{6}$/) as string,
-        topicKey: 'billing_fees',
+        // A request put under another topic names its new key.
+        topicKey: expect.stringMatching(/^(billing_fees|general)$/) as string,
+        ...(row.kind === 'management_request.converted'
+          ? { ticketNumber: expect.stringMatching(/^MT-\d{6}$/) as string }
+          : {}),
       });
     }
     expect(JSON.stringify(rows)).not.toContain(MARKER);

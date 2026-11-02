@@ -1088,3 +1088,23 @@ export const M214_COVERAGE: readonly string[] = [
   'space_use.cancelled',
   'space_use.expired',
 ];
+
+/**
+ * Announcements and the office queue (ADR 0080), covered by
+ * test/office-queue/audit-coverage.e2e-spec.ts.
+ */
+export const M29_COVERAGE: readonly string[] = [
+  'announcement.reminded',
+  'announcement_template.created',
+  'announcement_template.changed',
+  'announcement_template.deleted',
+  'unit.correspondence_read',
+  'management_request.outreach_started',
+  'management_request.reclassified',
+  'management_request.converted',
+  'reply_template.created',
+  'reply_template.changed',
+  'reply_template.deleted',
+  'official_letter.issued',
+  'official_letter.revoked',
+];

@@ -39,9 +39,11 @@ describe('Community life — notifications', () => {
       }),
     );
 
-  it('five kinds, in the category `community`, none critical, no param that could carry text', () => {
+  it('six kinds, in the category `community`, none critical, no param that could carry text', () => {
     expect(community.map(([kind]) => kind).sort()).toEqual([
       'community_announcement.important',
+      // ADR 0080: one reminder to whoever has not opened it; no param.
+      'community_announcement.reminder',
       'community_event.cancelled',
       'community_suggestion.status_changed',
       // ADR 0062: `subject` is the document's kind, a code.
@@ -59,6 +61,7 @@ describe('Community life — notifications', () => {
     ).toEqual([
       ['compound_document.published', ['subject', 'versionNo']],
       ['community_announcement.important', []],
+      ['community_announcement.reminder', []],
       ['community_event.cancelled', []],
       ['community_suggestion.status_changed', ['status', 'topicKey']],
       ['gallery_photo.reported', ['reason']],

@@ -219,6 +219,9 @@ sequenceDiagram
 | `market.handle` | مراجعة الإعلانات والمتاجر، والتعامل مع البلاغات، وإعدادات السوق، وتشغيل العروض الجماعية (ADR 0071) | staff, manager | manager | `/market/review`، `/market/shop-review`، `/market/reports`، `/market/settings`، `/staff/group-offers` |
 | `inbox.read` | صندوق القرارات: كل ما ينتظر قرارًا من الأنواع التي يملك صلاحيتها، ومهلاته، والاعتماد الجماعي لما لا يحتاج مدخلات (ADR 0073) | staff, manager | manager, security_supervisor, maintenance_supervisor, accountant | `/staff/inbox`، `/staff/inbox/count`، `/staff/inbox/bulk-approve`، `GET /staff/inbox/settings` |
 | `deputies.manage` | تسمية نائب يقرر مكان صاحب الصلاحية حتى 30 يومًا، بصلاحيات من دوره (ليس المالية ولا الحوكمة ولا التظلمات ولا الأدوار)؛ القراءة والإنهاء لا تحتاجان صلاحية (ADR 0073) | manager | manager | `POST /staff/deputies` |
+| `vendors.manage` | سجل الموردين (ADR 0077): تسجيل المورد ومستنداته وصلاحيتها، وتقييمه، وإيقافه وإعادته | staff, manager | manager | `POST/PATCH /staff/vendors…`، `/staff/vendors/{id}/suspend`، `/reinstate`، `/documents`، `/evaluations` |
+| `purchases.request` | طلب شراء قطعة أو مستلزم أو خدمة غير موجودة، ومتابعة طلباته وإلغاؤها (ADR 0077) | staff, manager | manager, security_supervisor, technician, maintenance_supervisor, accountant | `GET/POST /staff/purchase-requests`، `/staff/purchase-requests/{id}/cancel` |
+| `purchases.approve` | اعتماد طلبات الشراء حتى حد المدير وفوقه باعتماد المجلس، ورفضها، وتسجيل الشراء؛ ولا أحد يعتمد طلبه (ADR 0077) | staff, manager | manager | `/staff/purchase-requests/{id}/approve`، `/reject`، `/fulfil` |
 
 ملاحظات على الجدول:
 - بعض الشاشات تحتاج **صلاحيتين معًا**: قائمة "من يمكن أن يكون صاحب البلاغ" (`GET /maintenance/units/{unitId}/reporters`) تحتاج `tickets.dispatch` + `residents.read`. وشاشات وحدات طلبات الإدارة (`/management/units/*`) وجزء من `/management/requests` تحتاج `requests.handle` + `residents.read`. إذا أعطى المدير مشرفًا `tickets.dispatch` فقط فلن يرى هذه القوائم.

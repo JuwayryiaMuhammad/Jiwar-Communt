@@ -924,6 +924,21 @@ export const REASON_CODES = {
     'other',
   ],
   contractReviewDecision: ['renew', 'replace', 'end'],
+  // A drill's outcome, once it is done (ADR 0087); the migration's CHECK
+  // repeats it.
+  drillOutcome: ['passed', 'issues_found', 'failed'],
+  // Compliance (ADR 0087): why an item is retired; the migration's CHECK
+  // repeats it.
+  complianceRetire: [
+    'not_applicable',
+    'asset_retired',
+    'replaced',
+    'duplicate',
+    'other',
+  ],
+  // Why a corrective action is called off (ADR 0087); the migration's CHECK
+  // repeats it.
+  incidentActionCancel: ['not_needed', 'duplicate', 'superseded', 'other'],
   facilityBan: ['rules_violation', 'damage', 'safety', 'misconduct', 'other'],
   facilityBanLift: ['staff_error', 'exception_granted', 'other'],
   // The system's: a ban that had ended, closed when the next one starts.

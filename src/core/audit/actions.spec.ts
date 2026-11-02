@@ -262,6 +262,9 @@ describe('audit catalog', () => {
         // ADR 0081.
         'plan_suggestion',
         'maintenance_case',
+        // ADR 0087.
+        'compliance_item',
+        'incident_action',
       ]).toContain(def.target);
     }
   });

@@ -1150,6 +1150,16 @@ export const ErrorCode = {
   /** The author never reviews their own incident (403). */
   INCIDENT_OWN: 'INCIDENT_OWN',
   /**
+   * ADR 0087: the incident still has corrective actions open; params.open
+   * (409). Each is done or called off first.
+   */
+  INCIDENT_ACTIONS_OPEN: 'INCIDENT_ACTIONS_OPEN',
+  INCIDENT_ACTION_NOT_FOUND: 'INCIDENT_ACTION_NOT_FOUND',
+  /** Done or called off already; params.state (409). */
+  INCIDENT_ACTION_ENDED: 'INCIDENT_ACTION_ENDED',
+  /** An incident takes at most params.max corrective actions (409). */
+  INCIDENT_ACTION_LIMIT_REACHED: 'INCIDENT_ACTION_LIMIT_REACHED',
+  /**
    * An investigator is an active holder of incidents.manage (422, field
    * investigatorId).
    */
@@ -1587,6 +1597,14 @@ export const ErrorCode = {
   PURCHASE_APPROVAL_INVALID: 'PURCHASE_APPROVAL_INVALID',
   /** Its requester never approves it: another approver does, or the board's approval named (409). */
   PURCHASE_SELF_APPROVAL: 'PURCHASE_SELF_APPROVAL',
+  // Compliance (ADR 0087)
+  COMPLIANCE_ITEM_NOT_FOUND: 'COMPLIANCE_ITEM_NOT_FOUND',
+  /** Retired once: it changes no more and takes no completion (409). */
+  COMPLIANCE_ITEM_RETIRED: 'COMPLIANCE_ITEM_RETIRED',
+  COMPLIANCE_OCCURRENCE_NOT_FOUND: 'COMPLIANCE_OCCURRENCE_NOT_FOUND',
+  /** Done or called off already; params.status (409). */
+  COMPLIANCE_OCCURRENCE_ENDED: 'COMPLIANCE_OCCURRENCE_ENDED',
+  COMPLIANCE_EVIDENCE_NOT_FOUND: 'COMPLIANCE_EVIDENCE_NOT_FOUND',
   // Energy and utilities (ADR 0066)
   METER_NOT_FOUND: 'METER_NOT_FOUND',
   /** Retired: it takes no reading and never changes again (409). */
@@ -2123,6 +2141,13 @@ export const FieldErrorCode = {
   SPACE_USE_TOO_FAR: 'SPACE_USE_TOO_FAR',
   /** ADR 0084: a use lasts at most params.hours. */
   SPACE_USE_TOO_LONG: 'SPACE_USE_TOO_LONG',
+  /**
+   * ADR 0087: who answers for a compliance item or a corrective action is
+   * an active staff member or the manager.
+   */
+  RESPONSIBLE_NOT_ELIGIBLE: 'RESPONSIBLE_NOT_ELIGIBLE',
+  /** ADR 0087: no such asset of the compound's own (not a unit's), or retired. */
+  COMPLIANCE_ASSET_NOT_AVAILABLE: 'COMPLIANCE_ASSET_NOT_AVAILABLE',
 } as const;
 
 export type FieldErrorCode =

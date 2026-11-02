@@ -1611,6 +1611,26 @@ export const AUDIT_ACTIONS = {
   'incident.text_cleared': { log: 'tenant', target: 'incident' },
   // An erasure: an internal note's words. metadata: incidentId.
   'incident_note.text_cleared': { log: 'tenant', target: 'incident_note' },
+  // Corrective actions (ADR 0087): ids, days, codes; the description and a
+  // done note are words, as changed only or booleans. metadata: incidentId.
+  'incident_action.created': {
+    log: 'tenant',
+    target: 'incident_action',
+    sensitive: ['description'],
+  },
+  'incident_action.updated': {
+    log: 'tenant',
+    target: 'incident_action',
+    sensitive: ['description'],
+  },
+  'incident_action.done': { log: 'tenant', target: 'incident_action' },
+  'incident_action.cancelled': { log: 'tenant', target: 'incident_action' },
+  // An erasure: the words the account wrote. metadata: description,
+  // doneNote (booleans: which went).
+  'incident_action.text_cleared': {
+    log: 'tenant',
+    target: 'incident_action',
+  },
   // Violations (ADR 0053), as the fines. metadata: unitId, permitId,
   // placeId, number, kind, amount (or null: a warning), currency,
   // occurredOn, shiftId, photo and note (booleans).
@@ -2268,6 +2288,31 @@ export const AUDIT_ACTIONS = {
   'readiness_item.done': { log: 'tenant', target: 'readiness_item' },
   'readiness_item.cancelled': { log: 'tenant', target: 'readiness_item' },
   'readiness_campaign.spawned': { log: 'tenant', target: 'readiness_item' },
+  // Compliance (ADR 0087): kinds, ids, days, months and codes; the title,
+  // the authority and the reference are the compound's words, the notes as
+  // changed only. A completion's certificate number and note as booleans.
+  'compliance_item.created': {
+    log: 'tenant',
+    target: 'compliance_item',
+    sensitive: ['notes'],
+  },
+  'compliance_item.updated': {
+    log: 'tenant',
+    target: 'compliance_item',
+    sensitive: ['notes'],
+  },
+  'compliance_item.retired': { log: 'tenant', target: 'compliance_item' },
+  'compliance_item.completed': { log: 'tenant', target: 'compliance_item' },
+  'compliance_item.evidence_added': {
+    log: 'tenant',
+    target: 'compliance_item',
+  },
+  'compliance_item.evidence_removed': {
+    log: 'tenant',
+    target: 'compliance_item',
+  },
+  // changes: leadDays.
+  'compliance.settings_changed': { log: 'tenant', target: 'tenant' },
   // Field safety (ADR 0067): hazards, ids, versions and codes. The
   // precautions are the technician's words: recorded as changed only.
   'work_permit.requested': {

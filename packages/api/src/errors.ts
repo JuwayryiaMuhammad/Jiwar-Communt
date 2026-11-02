@@ -336,6 +336,16 @@ const ERROR_TEXT: Record<string, string> = {
   PURCHASE_NEEDS_APPROVAL: "This amount is above the manager's limit: name the board's approval.",
   PURCHASE_APPROVAL_INVALID: 'That approval cannot cover this request.',
   PURCHASE_SELF_APPROVAL: 'You asked for this purchase: another approver decides it, or the board.',
+  // Compliance and safety (ADR 0087).
+  COMPLIANCE_ITEM_NOT_FOUND: 'This compliance item was not found.',
+  COMPLIANCE_ITEM_RETIRED: 'This compliance item is retired.',
+  COMPLIANCE_OCCURRENCE_NOT_FOUND: 'This due date was not found.',
+  COMPLIANCE_OCCURRENCE_ENDED: 'This due date is already done or called off.',
+  COMPLIANCE_EVIDENCE_NOT_FOUND: 'This evidence file was not found.',
+  INCIDENT_ACTIONS_OPEN: 'Corrective actions are still open: finish or call them off before closing the incident.',
+  INCIDENT_ACTION_NOT_FOUND: 'This corrective action was not found.',
+  INCIDENT_ACTION_ENDED: 'This corrective action is already done or called off.',
+  INCIDENT_ACTION_LIMIT_REACHED: 'This incident has as many corrective actions as it may.',
   METER_NOT_FOUND: 'This meter was not found.',
   METER_RETIRED: 'This meter is retired.',
   READING_NOT_FOUND: 'This reading was not found.',
@@ -746,6 +756,9 @@ const FIELD_TEXT: Record<string, string> = {
   SPACE_USE_TOO_SOON: 'Too soon: ask further ahead.',
   SPACE_USE_TOO_FAR: 'Too far ahead.',
   SPACE_USE_TOO_LONG: 'Too long.',
+  // Compliance and safety (ADR 0087).
+  RESPONSIBLE_NOT_ELIGIBLE: 'Pick an active staff member or the manager.',
+  COMPLIANCE_ASSET_NOT_AVAILABLE: 'Pick an asset of the compound’s own that is not retired.',
 };
 
 export function errorText(error: unknown): string {

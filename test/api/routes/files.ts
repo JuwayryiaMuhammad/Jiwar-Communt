@@ -81,6 +81,7 @@ export const FILES_ROUTES: Row[] = [
               'floor_plan',
               // Last in the enum's order (its value sits after the map).
               'vendor_document',
+              'compliance_evidence',
             ],
           },
         },

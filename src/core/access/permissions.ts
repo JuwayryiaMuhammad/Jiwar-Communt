@@ -351,6 +351,10 @@ export const PERMISSIONS = {
   // open to residents' use requests (decided with `bookings.handle`). The
   // manager's by default; a compound may give it to a staff role.
   'spaces.manage': { kinds: ['staff', 'manager'] },
+  // ADR 0087: the compliance calendar, its evidence and status report; and
+  // the management's own start of a lockdown (ADR 0053's typed confirmation).
+  'compliance.manage': { kinds: ['staff', 'manager'] },
+  'lockdown.start': { kinds: ['manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

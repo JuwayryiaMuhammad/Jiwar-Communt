@@ -2603,6 +2603,52 @@ export const NOTIFICATION_KINDS = {
     params: { dueOn: {} },
   },
   /**
+   * Compliance (ADR 0087): an item's responsible staff member is told it is
+   * theirs, and they and who keeps the calendar (`compliance.manage`) that
+   * its due day comes within a lead time (each lead time once) or passed
+   * (once). The kind and the day only.
+   */
+  'compliance_item.assigned': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'compliance_item',
+    params: { complianceKind: {}, dueOn: {} },
+  },
+  'compliance.due_soon': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'compliance_item',
+    params: { complianceKind: {}, dueOn: {}, daysLeft: {} },
+  },
+  'compliance.overdue': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'compliance_item',
+    params: { complianceKind: {}, dueOn: {} },
+  },
+  /**
+   * A corrective action of an incident (ADR 0087): its owner told it is
+   * theirs; it and the incidents' keepers once it is past its day. The day
+   * only; the target is the incident.
+   */
+  'incident_action.assigned': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'incident',
+    params: { dueOn: {} },
+  },
+  'incident_action.overdue': {
+    priority: 'normal',
+    category: 'safety',
+    critical: false,
+    target: 'incident',
+    params: { dueOn: {} },
+  },
+  /**
    * A work permit asked for (to who decides them), and its decision or
    * revocation (to the technician who asked; ADR 0067): the hazard and the
    * ticket's number, never the precautions.

@@ -13,12 +13,12 @@ const both = readFileSync(
   ),
   'utf8',
 );
-/** The content type CHECK as ADR 0074 recreated it after ADR 0077's, with every purpose. */
+/** The content type CHECK as ADR 0087 recreated it, after ADR 0074's and 0077's, with every purpose. */
 const types = readFileSync(
   join(
     __dirname,
     migrations,
-    '20270302090500_fitout_pdf_purposes/migration.sql',
+    '20270518090100_compliance_file_purposes/migration.sql',
   ),
   'utf8',
 );
@@ -258,7 +258,7 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing', 'compliance_evidence'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,
@@ -278,6 +278,14 @@ describe('file purposes', () => {
     );
     expect(sizeCheck).not.toContain(`WHEN 'vendor_document'`);
     expect(FILE_PURPOSES.vendor_document.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
+    // Compliance (ADR 0087): evidence is a document like any other.
+    expect(FILE_PURPOSES.compliance_evidence.types).toEqual(
+      FILE_PURPOSES.document.types,
+    );
+    expect(sizeCheck).not.toContain(`WHEN 'compliance_evidence'`);
+    expect(FILE_PURPOSES.compliance_evidence.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
     expect(FILE_PURPOSES.checklist_photo.types).toEqual(

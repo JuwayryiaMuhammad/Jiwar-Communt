@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { MarketListingCategory, MarketListingKind } from '@prisma/client';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -331,6 +332,37 @@ export class UpdateMarketSettingsDto {
     'Units whose reports take a live listing off for review.',
   )
   reportHideThreshold?: number;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    description:
+      'No commercial listings (ADR 0083): a service offered, or anything under a shop, and no new shop. Listings already open stay.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  commercialBlocked?: boolean;
+
+  @ApiProperty({
+    enum: MarketListingCategory,
+    enumName: 'MarketListingCategory',
+    isArray: true,
+    required: false,
+    description:
+      'The categories a new or edited listing may take (ADR 0083), one at least. Listings already open stay.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1, withParams({ min: 1 }))
+  @ArrayMaxSize(50, withParams({ max: 50 }))
+  @IsEnum(MarketListingCategory, { each: true })
+  allowedCategories?: MarketListingCategory[];
+
+  @Setting(
+    'maxLivePerUnit',
+    'Listings one unit may have waiting, live or reported at once, whoever posts them (ADR 0083).',
+  )
+  maxLivePerUnit?: number;
 }
 
 const SHOP_STATUSES = ['pending', 'active', 'suspended', 'closed'] as const;

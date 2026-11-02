@@ -237,9 +237,27 @@ export class MarketSettingsView {
   expiryDays: number;
   @ApiProperty({ type: Number })
   reportHideThreshold: number;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'No services and nothing under a shop on a new or edited listing (ADR 0083).',
+  })
+  commercialBlocked: boolean;
+  @ApiProperty({
+    enum: MarketListingCategory,
+    enumName: 'MarketListingCategory',
+    isArray: true,
+    description: 'The categories a new or edited listing may take (ADR 0083).',
+  })
+  allowedCategories: MarketListingCategory[];
+  @ApiProperty({
+    type: Number,
+    description: 'Listings one unit may have open at once (ADR 0083).',
+  })
+  maxLivePerUnit: number;
 
   static from(s: Settings): MarketSettingsView {
-    return { ...s };
+    return { ...s, allowedCategories: [...s.allowedCategories] };
   }
 }
 

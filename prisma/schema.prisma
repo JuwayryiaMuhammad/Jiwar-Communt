@@ -12421,6 +12421,12 @@ model MarketSettings {
   expiryDays          Int      @default(30) @map("expiry_days")
   /// Distinct units whose reports take a live listing off for review.
   reportHideThreshold Int      @default(3) @map("report_hide_threshold")
+  /// No services and nothing under a shop on a new or edited listing (ADR 0083).
+  commercialBlocked   Boolean  @default(false) @map("commercial_blocked")
+  /// The categories taken off (ADR 0083): the API shows those allowed.
+  blockedCategories   MarketListingCategory[] @default([]) @map("blocked_categories")
+  /// Listings one unit may have open at once (ADR 0083).
+  maxLivePerUnit      Int      @default(10) @map("max_live_per_unit")
   updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -12477,6 +12483,7 @@ model MarketListing {
   @@index([tenantId, sellerId, createdAt(sort: Desc), id(sort: Desc)], map: "market_listings_seller_idx")
   @@index([tenantId, status, expiresAt], map: "market_listings_expiry_idx")
   @@index([tenantId, shopId, status], map: "market_listings_shop_idx")
+  @@index([tenantId, sellerUnitId, status], map: "market_listings_seller_unit_idx")
   @@map("market_listings")
 }
 
@@ -12647,6 +12654,13 @@ model GroupOffer {
   closedAt         DateTime?        @map("closed_at") @db.Timestamptz(3)
   createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  /// The contract (ADR 0083): the final price, when and by whom it was set.
+  finalPrice        Decimal?        @map("final_price") @db.Decimal(12, 2)
+  pricedAt          DateTime?       @map("priced_at") @db.Timestamptz(3)
+  pricedById        String?         @map("priced_by") @db.Uuid
+  /// Re-confirming: the participants' deadline.
+  reconfirmClosesAt DateTime?       @map("reconfirm_closes_at") @db.Timestamptz(3)
+  contractedAt      DateTime?       @map("contracted_at") @db.Timestamptz(3)
 
   partner      Partner?                @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "group_offers_tenant_id_partner_fkey")
   participants GroupOfferParticipant[]
@@ -12667,6 +12681,10 @@ model GroupOfferParticipant {
   quantity  Int                     @default(1)
   joinedAt  DateTime                @map("joined_at") @db.Timestamptz(3)
   leftAt    DateTime?               @map("left_at") @db.Timestamptz(3)
+  /// The final price above the group price, re-confirmed (ADR 0083).
+  reconfirmedAt DateTime?           @map("reconfirmed_at") @db.Timestamptz(3)
+  /// Left for not re-confirming in time (ADR 0083).
+  dropped       Boolean             @default(false)
 
   offer GroupOffer @relation(fields: [tenantId, offerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict, map: "group_offer_participants_tenant_id_offer_fkey")
 

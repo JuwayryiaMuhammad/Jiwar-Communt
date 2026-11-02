@@ -33,6 +33,11 @@ export const GROUP_BODY_LENGTH = { min: 1, max: 1000 } as const;
 export const MAX_QUANTITY = 10;
 const BATCH = 200;
 const LIVE: readonly GroupOfferStatus[] = ['interest', 'open'];
+/** Taking part still counts: live, or holding for re-confirmations. */
+const TAKING_PART: readonly GroupOfferStatus[] = [...LIVE, 'reconfirming'];
+/** Hours participants get to re-confirm a higher final price (ADR 0083). */
+export const RECONFIRM_HOURS = { min: 24, max: 168, default: 72 } as const;
+const HOUR_MS = 3_600_000;
 
 export interface NewGroupOffer {
   partnerId?: string;
@@ -58,7 +63,16 @@ export interface GroupOfferRead {
   quantity: number;
   mine: GroupOfferParticipant | null;
   myInterest: boolean;
+  /**
+   * The caller joined, the final price is above the group price and they
+   * have not re-confirmed it yet, while the offer re-confirms (ADR 0083).
+   */
+  myReconfirmNeeded: boolean;
 }
+
+/** The final price is above what everyone joined at: the group price. */
+const costsMore = (offer: GroupOffer, finalPrice: Prisma.Decimal) =>
+  finalPrice.gt(offer.groupPrice);
 
 const PAGE = keysetCursor('createdAt');
 
@@ -108,7 +122,7 @@ export class GroupOffersService implements OnModuleInit {
         where: {
           accountId: account.id,
           leftAt: null,
-          offer: { status: { in: [...LIVE] } },
+          offer: { status: { in: [...TAKING_PART] } },
         },
         select: { id: true, offerId: true, unitId: true },
         orderBy: { offerId: 'asc' },
@@ -246,6 +260,123 @@ export class GroupOffersService implements OnModuleInit {
     });
   }
 
+  /**
+   * The contract of a confirmed offer (ADR 0083): the final price and,
+   * optionally, the supplier. At or below the group price everyone joined
+   * at, it is contracted at once and the participants are told. Above it,
+   * the offer holds for `reconfirmHours`: each joined participant is asked
+   * to re-confirm, and whoever has not by then is dropped by the sweep.
+   * Under the offer's lock, once.
+   */
+  contract(
+    id: string,
+    input: { finalPrice: string; partnerId?: string; reconfirmHours?: number },
+  ): Promise<GroupOfferRead> {
+    const finalPrice = new Prisma.Decimal(input.finalPrice);
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      if (input.partnerId)
+        await this.partners.lock(tx, input.partnerId, 'share');
+      const offer = await this.lock(tx, id);
+      if (offer.status !== 'confirmed') throw phase(offer.status);
+      const now = await dbNow(tx);
+      const higher = costsMore(offer, finalPrice);
+      const hours = input.reconfirmHours ?? RECONFIRM_HOURS.default;
+      const updated = await tx.groupOffer.update({
+        where: { id },
+        data: {
+          status: higher ? 'reconfirming' : 'contracted',
+          partnerId: input.partnerId ?? offer.partnerId,
+          finalPrice,
+          pricedAt: now,
+          pricedById: this.ctx.accountId,
+          reconfirmClosesAt: higher
+            ? new Date(now.getTime() + hours * HOUR_MS)
+            : null,
+          contractedAt: higher ? null : now,
+        },
+      });
+      const joined = await this.counts(tx, id);
+      if (higher) {
+        await this.audit.record(tx, {
+          action: 'group_offer.reconfirm_requested',
+          targetId: id,
+          metadata: {
+            finalPrice: finalPrice.toFixed(2),
+            groupPrice: offer.groupPrice.toFixed(2),
+            asked: joined.joined,
+            hours,
+          },
+        });
+        await this.tell(tx, id, 'join', 'group_offer.reconfirm_requested', {
+          finalPrice: finalPrice.toFixed(2),
+          joinedPrice: offer.groupPrice.toFixed(2),
+        });
+      } else {
+        await this.audit.record(tx, {
+          action: 'group_offer.contracted',
+          targetId: id,
+          metadata: {
+            finalPrice: finalPrice.toFixed(2),
+            partnerId: updated.partnerId,
+            households: joined.joined,
+            dropped: 0,
+          },
+        });
+        await this.tell(tx, id, 'join', 'group_offer.contracted', {
+          finalPrice: finalPrice.toFixed(2),
+        });
+      }
+      return this.read(tx, updated);
+    });
+  }
+
+  /**
+   * The caller re-confirms the higher final price, before the deadline and
+   * under the offer's lock: a re-confirmation and the sweep's close at once
+   * are decided one at a time by the database's clock.
+   */
+  reconfirm(id: string): Promise<GroupOfferRead> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      await this.access.lockSelf(tx);
+      const offer = await this.lock(tx, id);
+      const now = await dbNow(tx);
+      if (
+        offer.status !== 'reconfirming' ||
+        offer.reconfirmClosesAt!.getTime() <= now.getTime()
+      )
+        throw phase(offer.status);
+      const mine = await tx.groupOfferParticipant.findFirst({
+        where: {
+          offerId: id,
+          accountId: this.ctx.accountId,
+          kind: 'join',
+          leftAt: null,
+        },
+      });
+      if (!mine)
+        throw appError.conflict(
+          ErrorCode.GROUP_OFFER_NOT_JOINED,
+          'You have not joined this offer',
+        );
+      if (mine.reconfirmedAt)
+        throw appError.conflict(
+          ErrorCode.GROUP_OFFER_RECONFIRM_NOT_NEEDED,
+          'Nothing waits for your confirmation on this offer',
+        );
+      await tx.groupOfferParticipant.update({
+        where: { id: mine.id },
+        data: { reconfirmedAt: now },
+      });
+      await this.audit.record(tx, {
+        action: 'group_offer.reconfirmed',
+        targetId: id,
+        metadata: { unitId: mine.unitId, quantity: mine.quantity },
+      });
+      return this.read(tx, offer);
+    });
+  }
+
   staffList(q: {
     cursor?: string;
     limit?: number;
@@ -258,10 +389,15 @@ export class GroupOffersService implements OnModuleInit {
   // Residents
   // --------------------------------------------------------------------------
 
-  /** The offers residents see: in interest, open, or confirmed. */
+  /**
+   * The offers residents see: in interest, open, confirmed, re-confirming
+   * a higher final price, or contracted (ADR 0083).
+   */
   list(q: { cursor?: string; limit?: number }): Promise<Page<GroupOfferRead>> {
     return this.page(q, {
-      status: { in: ['interest', 'open', 'confirmed'] },
+      status: {
+        in: ['interest', 'open', 'confirmed', 'reconfirming', 'contracted'],
+      },
     });
   }
 
@@ -289,6 +425,9 @@ export class GroupOffersService implements OnModuleInit {
       quantity: number;
       joinedAt: Date;
       leftAt: Date | null;
+      finalPrice: string | null;
+      reconfirmedAt: Date | null;
+      dropped: boolean;
     }[]
   > {
     return this.tenantTx.withTenantTx(async (tx) =>
@@ -309,6 +448,9 @@ export class GroupOffersService implements OnModuleInit {
         quantity: p.quantity,
         joinedAt: p.joinedAt,
         leftAt: p.leftAt,
+        finalPrice: p.offer.finalPrice?.toFixed(2) ?? null,
+        reconfirmedAt: p.reconfirmedAt,
+        dropped: p.dropped,
       })),
     );
   }
@@ -333,8 +475,15 @@ export class GroupOffersService implements OnModuleInit {
       await this.access.lockSelf(tx);
       const offer = await this.lock(tx, id);
       const now = await dbNow(tx);
-      if (offer.status !== 'open' || offer.closesAt.getTime() <= now.getTime())
-        throw phase(offer.status);
+      // Open until it closes; or, declining a higher final price, until the
+      // re-confirmations' deadline (ADR 0083).
+      const until =
+        offer.status === 'open'
+          ? offer.closesAt
+          : offer.status === 'reconfirming'
+            ? offer.reconfirmClosesAt!
+            : null;
+      if (!until || until.getTime() <= now.getTime()) throw phase(offer.status);
       const mine = await tx.groupOfferParticipant.findFirst({
         where: {
           offerId: id,
@@ -355,7 +504,11 @@ export class GroupOffersService implements OnModuleInit {
       await this.audit.record(tx, {
         action: 'group_offer.left',
         targetId: id,
-        metadata: { unitId: mine.unitId, quantity: mine.quantity },
+        metadata: {
+          unitId: mine.unitId,
+          quantity: mine.quantity,
+          ...(offer.status === 'reconfirming' ? { declined: true } : {}),
+        },
       });
       return this.read(tx, offer);
     });
@@ -375,6 +528,7 @@ export class GroupOffersService implements OnModuleInit {
               OR: [
                 { status: 'interest', interestClosesAt: { lte: now } },
                 { status: 'open', closesAt: { lte: now } },
+                { status: 'reconfirming', reconfirmClosesAt: { lte: now } },
               ],
             },
             select: { id: true },
@@ -392,6 +546,11 @@ export class GroupOffersService implements OnModuleInit {
           await this.openLocked(tx, offer, 'system');
           return 1;
         }
+        if (
+          offer.status === 'reconfirming' &&
+          offer.reconfirmClosesAt!.getTime() <= at.getTime()
+        )
+          return this.closeReconfirming(tx, offer, at);
         if (offer.status !== 'open' || offer.closesAt.getTime() > at.getTime())
           return 0;
         const joined = await this.counts(tx, id);
@@ -487,6 +646,78 @@ export class GroupOffersService implements OnModuleInit {
     });
   }
 
+  /**
+   * The re-confirmations' deadline passed (ADR 0083): every joined
+   * participant who did not re-confirm the higher price is dropped (told),
+   * then the offer is contracted if enough households remain, or fails.
+   */
+  private async closeReconfirming(
+    tx: TenantTxClient,
+    offer: GroupOffer,
+    at: Date,
+  ): Promise<number> {
+    const silent = await tx.groupOfferParticipant.findMany({
+      where: {
+        offerId: offer.id,
+        kind: 'join',
+        leftAt: null,
+        reconfirmedAt: null,
+      },
+      select: { id: true, accountId: true },
+      orderBy: { id: 'asc' },
+    });
+    for (const p of silent)
+      await tx.groupOfferParticipant.update({
+        where: { id: p.id },
+        data: { leftAt: at, dropped: true },
+      });
+    const finalPrice = offer.finalPrice!.toFixed(2);
+    const droppedActive = await tx.account.findMany({
+      where: {
+        id: { in: [...new Set(silent.map((p) => p.accountId))] },
+        status: 'active',
+      },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+    if (droppedActive.length)
+      await this.notifier.notify(
+        tx,
+        droppedActive.map((a) => a.id),
+        {
+          kind: 'group_offer.dropped',
+          params: { finalPrice },
+          targetId: offer.id,
+        },
+      );
+    const left = await this.counts(tx, offer.id);
+    const contracted = left.joined >= offer.minParticipants;
+    await tx.groupOffer.update({
+      where: { id: offer.id },
+      data: contracted
+        ? { status: 'contracted', contractedAt: at }
+        : { status: 'failed' },
+    });
+    await this.audit.record(tx, {
+      action: contracted ? 'group_offer.contracted' : 'group_offer.failed',
+      targetId: offer.id,
+      metadata: {
+        finalPrice,
+        households: left.joined,
+        quantity: left.quantity,
+        dropped: silent.length,
+      },
+    });
+    await this.tell(
+      tx,
+      offer.id,
+      'join',
+      contracted ? 'group_offer.contracted' : 'group_offer.failed',
+      contracted ? { finalPrice } : {},
+    );
+    return 1;
+  }
+
   private async openLocked(
     tx: TenantTxClient,
     offer: GroupOffer,
@@ -579,6 +810,9 @@ export class GroupOffersService implements OnModuleInit {
       quantity: joins.reduce((n, p) => n + p.quantity, 0),
       mine: joins.find((p) => p.accountId === me) ?? null,
       myInterest: live.some((p) => p.kind === 'interest' && p.accountId === me),
+      myReconfirmNeeded:
+        offer.status === 'reconfirming' &&
+        joins.some((p) => p.accountId === me && p.reconfirmedAt === null),
     };
   }
 }

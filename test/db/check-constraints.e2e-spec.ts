@@ -2940,6 +2940,16 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'status is NOT NULL; reported_at, reported_by, outcome and report_note are tested IS NULL first and compared only on a value',
   },
   unit_entry_photos_stage: {},
+  market_settings_unit_limit: {},
+  market_settings_categories: {},
+  group_offers_contract_shape: {
+    guarded:
+      'status is NOT NULL; final_price, priced_at, priced_by, reconfirm_closes_at and contracted_at under IS [NOT] NULL; final_price IS NULL is tested before it is compared',
+  },
+  group_offer_participants_reconfirm_shape: {
+    guarded:
+      'dropped, kind and joined_at are NOT NULL; reconfirmed_at IS NULL and left_at IS NULL are tested before either is compared',
+  },
   closed_unit_rounds_state_shape: {
     guarded:
       'status is NOT NULL; task_id, scheduled_at, done_at and cancelled_at only under IS [NOT] NULL; cancel_reason IS NULL is tested first',

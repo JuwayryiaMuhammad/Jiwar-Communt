@@ -590,7 +590,15 @@ export const MARKET_ROUTES: Row[] = [
           field: 'status',
           code: 'INVALID_VALUE',
           params: {
-            allowed: ['interest', 'open', 'confirmed', 'failed', 'cancelled'],
+            allowed: [
+              'interest',
+              'open',
+              'confirmed',
+              'failed',
+              'cancelled',
+              'reconfirming',
+              'contracted',
+            ],
           },
         },
       ],

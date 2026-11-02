@@ -40286,7 +40286,7 @@
           }
         },
         {
-          "name": "Leave a group offer I joined, while it is open",
+          "name": "Leave a group offer I joined, while it is open or re-confirming a higher price",
           "request": {
             "description": "**Responses:** 200",
             "header": [],
@@ -40304,6 +40304,35 @@
                 "leave"
               ],
               "raw": "{{baseUrl}}/api/v1/market/group-offers/:id/leave",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Re-confirm a group offer’s higher final price",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "market",
+                "group-offers",
+                ":id",
+                "reconfirm"
+              ],
+              "raw": "{{baseUrl}}/api/v1/market/group-offers/:id/reconfirm",
               "variable": [
                 {
                   "description": "",
@@ -40965,9 +40994,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"expiryDays\": 1,\n  \"maxLivePerAccount\": 1,\n  \"reportHideThreshold\": 1,\n  \"requiresReview\": false\n}"
+              "raw": "{\n  \"allowedCategories\": [],\n  \"commercialBlocked\": false,\n  \"expiryDays\": 1,\n  \"maxLivePerAccount\": 1,\n  \"maxLivePerUnit\": 1,\n  \"reportHideThreshold\": 1,\n  \"requiresReview\": false\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `expiryDays` | number |  | Days a listing stays on the market. |\n| `maxLivePerAccount` | number |  | Listings one account may have waiting, live or reported at once. |\n| `reportHideThreshold` | number |  | Units whose reports take a live listing off for review. |\n| `requiresReview` | boolean |  | A new or changed listing waits for a handler first. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `allowedCategories` | `furniture` \\| `electronics` \\| `appliances` \\| `clothing` \\| `kids` \\| `books` \\| `sports` \\| `vehicles` \\| `home_garden` \\| `services` \\| `food` \\| `real_estate` \\| `other`[] |  | The categories a new or edited listing may take (ADR 0083), one at least. Listings already open stay. |\n| `commercialBlocked` | boolean |  | No commercial listings (ADR 0083): a service offered, or anything under a shop, and no new shop. Listings already open stay. |\n| `expiryDays` | number |  | Days a listing stays on the market. |\n| `maxLivePerAccount` | number |  | Listings one account may have waiting, live or reported at once. |\n| `maxLivePerUnit` | number |  | Listings one unit may have waiting, live or reported at once, whoever posts them (ADR 0083). |\n| `reportHideThreshold` | number |  | Units whose reports take a live listing off for review. |\n| `requiresReview` | boolean |  | A new or changed listing waits for a handler first. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -41431,6 +41460,50 @@
                 "cancel"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/group-offers/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a confirmed group offer’s contract",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"finalPrice\": \"980.00\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `finalPrice` | string | yes | The price agreed with the supplier, EGP. |\n| `partnerId` | string (uuid) |  | The partner it is contracted with; else the offer’s own. |\n| `reconfirmHours` | number |  | Hours the participants have to re-confirm a higher price; 72 by default. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "group-offers",
+                ":id",
+                "contract"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/group-offers/:id/contract",
               "variable": [
                 {
                   "description": "",

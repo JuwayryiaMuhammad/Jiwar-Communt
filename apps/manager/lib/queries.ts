@@ -112,6 +112,11 @@ export interface AssetFilters {
 export type MaintenanceSettings = Schema<'MaintenanceSettingsResponse'>;
 export type DispatchSettings = Schema<'DispatchSettingsResponse'>;
 export type SlaSettings = Schema<'SlaSettingsResponse'>;
+// Dispatch depth (ADR 0076).
+export type SlaReport = Schema<'SlaReportView'>;
+export type PlanCalendarEntry = Schema<'PlanCalendarEntryView'>;
+export type WarrantyClaim = Schema<'WarrantyClaimView'>;
+export type AssetTimelineEntry = Schema<'AssetTimelineEntryView'>;
 export type AccountDetail = Schema<'AccountDetailView'>;
 export type Erasure = Schema<'PendingErasureView'>;
 export type ErasureScope = Schema<'ErasureScopeView'>;
@@ -511,6 +516,9 @@ export interface TicketFilters {
   escalated?: 'true' | '';
   technicianId?: string;
   categoryId?: string;
+  /** ADR 0076: a building (ADR 0072); a ticket number or a unit code. */
+  buildingId?: string;
+  q?: string;
 }
 /** The same without the empty choices: what reaches the API. */
 type TicketQuery = { [K in keyof TicketFilters]?: Exclude<TicketFilters[K], ''> };
@@ -545,6 +553,10 @@ export const keys = {
   audit: (filters: object) => ['audit', filters] as const,
   ticketsAll: ['tickets'] as const,
   tickets: (filters: object) => ['tickets', 'list', filters] as const,
+  slaReport: (from: string, to: string) => ['tickets', 'sla-report', from, to] as const,
+  planCalendar: (from: string, to: string) => ['assets', 'plan-calendar', from, to] as const,
+  warrantyClaims: (filters: object) => ['assets', 'warranty-claims', filters] as const,
+  assetTimeline: (id: string) => ['assets', 'timeline', id] as const,
   ticket: (id: string) => ['tickets', 'detail', id] as const,
   ticketPart: (id: string, part: string) => ['tickets', 'detail', id, part] as const,
   technicians: ['technicians'] as const,
@@ -910,6 +922,18 @@ export const fetchers = {
   tickets: (filters: TicketFilters, cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/maintenance/tickets', { params: { query: { ...(clean(filters) as TicketQuery), cursor, limit } } })),
   ticket: (id: string) => unwrap(api.GET('/api/v1/maintenance/tickets/{id}', { params: { path: { id } } })),
+  slaReport: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/maintenance/sla-report', { params: { query: { from, to } } })),
+  planCalendar: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/maintenance/plan-calendar', { params: { query: { from, to } } })),
+  warrantyClaims: (filters: { assetId?: string; status?: WarrantyClaim['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/maintenance/warranty-claims', {
+        params: { query: { ...(clean(filters) as { assetId?: string; status?: WarrantyClaim['status'] }), cursor, limit } },
+      }),
+    ),
+  assetTimeline: (id: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/assets/{id}/timeline', { params: { path: { id }, query: { cursor, limit } } })),
   technicians: () => unwrap(api.GET('/api/v1/maintenance/technicians')),
   ticketReporters: (unitId: string) =>
     unwrap(api.GET('/api/v1/maintenance/units/{unitId}/reporters', { params: { path: { unitId } } })),

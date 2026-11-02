@@ -321,6 +321,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <CalendarSync aria-hidden />,
           show: can('assets.read'),
         },
+        // The planned work across every plan, and warranty claims (ADR 0076).
+        { href: '/plan-calendar', label: 'Planned work calendar', icon: <CalendarSync aria-hidden />, show: can('assets.read') },
+        { href: '/warranty-claims', label: 'Warranty claims', icon: <ShieldCheck aria-hidden />, show: can('assets.manage') },
         { href: '/inspections', label: 'Inspections', icon: <ClipboardCheck aria-hidden />, show: can('inspections.manage') },
         {
           href: '/replacement-recommendations',
@@ -351,6 +354,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           count: unassigned,
           show: can('tickets.dispatch'),
         },
+        // Whether the SLA was kept (ADR 0076).
+        { href: '/sla-report', label: 'SLA report', icon: <Gauge aria-hidden />, show: can('tickets.dispatch') },
         {
           href: '/management-requests',
           label: 'Management requests',

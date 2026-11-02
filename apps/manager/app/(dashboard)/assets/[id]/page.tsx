@@ -31,6 +31,7 @@ import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type AssetCard, type AssetEvent, type MaintenanceDocument, type PlanSummary } from '@/lib/queries';
+import { AssetTimeline, WarrantyClaims } from '@/components/assets/asset-record';
 
 type Open = 'edit' | 'out' | 'retire' | 'move' | null;
 
@@ -58,6 +59,9 @@ function Facts({ a }: { a: AssetCard }) {
           {row('Replacement cost', a.replacementCost ? `${a.replacementCost} EGP` : null)}
           {row('Vendor', a.vendorName ? `${a.vendorName}${a.vendorPhone ? ` · ${a.vendorPhone}` : ''}` : null)}
           {row('Warranty', a.warrantyEndsOn ? `${a.underWarranty ? 'Until' : 'Ended'} ${formatDate(a.warrantyEndsOn)}` : null)}
+          {row('Warranty starts', a.warrantyStartsOn ? formatDate(a.warrantyStartsOn) : null)}
+          {row('Warrantor', a.warrantor)}
+          {row('Warranty covers', a.warrantyCovers)}
           {row('Serves', a.servesBuildings.join(', ') || null)}
           {row('Parts', a.childCount)}
           {row('Tag', a.tagIssuedAt ? `Issued ${formatDateTime(a.tagIssuedAt)}` : null)}
@@ -301,6 +305,8 @@ export default function AssetPage() {
             <div className="stack">
               <Facts a={a} />
               <History id={a.id} />
+              <AssetTimeline id={a.id} />
+              <WarrantyClaims assetId={a.id} underWarranty={a.underWarranty} />
             </div>
             <div className="stack">
               <Impact id={a.id} />

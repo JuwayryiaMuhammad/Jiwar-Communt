@@ -1,14 +1,16 @@
 'use client';
 
 import { formatDateTime, humanize, relativeTime } from '@jiwar/api';
-import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, PageHeader, Segmented, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { ErrorAlert, LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
+import { Badge, Button, Card, DataTable, Field, Input, PageHeader, Segmented, Select, StatusBadge, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Download, Plus, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { NewTicketDialog } from '@/components/maintenance/new-ticket-dialog';
+import { WorkOrderDialog } from '@/components/maintenance/work-order-dialog';
+import { download } from '@/lib/download';
 import { personName, PriorityBadge, SlaBadges, ticketPlace } from '@/components/maintenance/sla';
 import { TechnicianPicker } from '@/components/maintenance/technician-picker';
 import { Technicians } from '@/components/maintenance/technicians';
@@ -34,6 +36,11 @@ function Queue() {
   const [priority, setPriority] = useState<TicketPriority | ''>('');
   const [categoryId, setCategoryId] = useState('');
   const [creating, setCreating] = useState(false);
+  const [ordering, setOrdering] = useState(false);
+  // ADR 0076: a building (ADR 0072), and a number or a unit code.
+  const [buildingId, setBuildingId] = useState('');
+  const [q, setQ] = useState('');
+  const [csvError, setCsvError] = useState<unknown>(null);
   // A technician's tickets are linked from the technicians tab.
   const technicianId = params.get('technicianId') ?? '';
   const setTechnician = (id: string) => router.replace(id ? `${pathname}?technicianId=${id}` : pathname, { scroll: false });
@@ -52,8 +59,11 @@ function Queue() {
     open: (view === 'open' || view === 'escalated') && !status ? 'true' : '',
     overdue: view === 'overdue' ? 'true' : '',
     escalated: view === 'escalated' ? 'true' : '',
+    buildingId,
+    q: q.trim(),
   };
   const categories = useQuery({ queryKey: keys.ticketCategories, queryFn: fetchers.ticketCategories });
+  const buildings = useQuery({ queryKey: keys.buildings, queryFn: fetchers.buildings });
   const list = useCursorList(keys.tickets(filters), (c) => fetchers.tickets(filters, c), { refetchInterval: 60_000 });
 
   return (
@@ -117,13 +127,47 @@ function Queue() {
             />
           )}
         </Field>
+        <Field label="Building">
+          {(p) => (
+            <Select {...p} value={buildingId} onChange={(e) => setBuildingId(e.target.value)}>
+              <option value="">Any building</option>
+              {(buildings.data?.data ?? []).map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field label="Search">
+          {(p) => <Input {...p} value={q} placeholder="MT-000123 or a unit code" onChange={(e) => setQ(e.target.value)} />}
+        </Field>
         <span className="spacer" />
+        <Button
+          icon={<Download aria-hidden />}
+          onClick={() => {
+            setCsvError(null);
+            const to = new Date().toISOString().slice(0, 10);
+            const from = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+            download('/api/v1/maintenance/tickets/export', { ...filters, from, to }, `tickets-${from}-${to}.csv`).catch(
+              setCsvError,
+            );
+          }}
+        >
+          Export 30 days
+        </Button>
+        {can('tickets.dispatch') ? (
+          <Button icon={<Wrench aria-hidden />} onClick={() => setOrdering(true)}>
+            New work order
+          </Button>
+        ) : null}
         {can('residents.read', 'units.read') ? (
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
             New ticket
           </Button>
         ) : null}
       </div>
+      {csvError ? <ErrorAlert error={csvError} /> : null}
       <Card flush>
         <QueryState query={list}>
           <DataTable<Ticket>
@@ -194,6 +238,15 @@ function Queue() {
           <LoadMore query={list} />
         </QueryState>
       </Card>
+      <WorkOrderDialog
+        open={ordering}
+        onClose={() => setOrdering(false)}
+        onCreated={(ticket) => {
+          setOrdering(false);
+          toast.show(`Work order ${ticket.number} is open.`);
+          router.push(`/maintenance/${ticket.id}`);
+        }}
+      />
       <NewTicketDialog
         open={creating}
         onClose={() => setCreating(false)}

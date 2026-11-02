@@ -148,6 +148,9 @@ export function EditAssetDialog({ asset, onClose }: { asset: AssetCard; onClose:
     vendorName: asset.vendorName ?? '',
     vendorPhone: asset.vendorPhone ?? '',
     warrantyEndsOn: asset.warrantyEndsOn ?? '',
+    warrantyStartsOn: asset.warrantyStartsOn ?? '',
+    warrantor: asset.warrantor ?? '',
+    warrantyCovers: asset.warrantyCovers ?? '',
     replacementCost: asset.replacementCost ?? '',
     criticality: asset.criticality,
     condition: asset.condition,
@@ -168,6 +171,9 @@ export function EditAssetDialog({ asset, onClose }: { asset: AssetCard; onClose:
             vendorName: orNull(f.vendorName),
             vendorPhone: orNull(f.vendorPhone),
             warrantyEndsOn: orNull(f.warrantyEndsOn),
+            warrantyStartsOn: orNull(f.warrantyStartsOn),
+            warrantor: orNull(f.warrantor),
+            warrantyCovers: orNull(f.warrantyCovers),
             replacementCost: orNull(f.replacementCost),
             criticality: f.criticality,
             condition: f.condition,
@@ -216,8 +222,13 @@ export function EditAssetDialog({ asset, onClose }: { asset: AssetCard; onClose:
         <div className="form__row">
           {field('Vendor', 'vendorName')}
           {field('Vendor phone', 'vendorPhone')}
-          {field('Warranty ends', 'warrantyEndsOn', 'date')}
         </div>
+        <div className="form__row">
+          {field('Warranty starts', 'warrantyStartsOn', 'date')}
+          {field('Warranty ends', 'warrantyEndsOn', 'date')}
+          {field('Warrantor', 'warrantor')}
+        </div>
+        <div className="form__row">{field('What the warranty covers', 'warrantyCovers')}</div>
         <div className="form__row">
           {field('Replacement cost (EGP)', 'replacementCost')}
           <Field label="Criticality">

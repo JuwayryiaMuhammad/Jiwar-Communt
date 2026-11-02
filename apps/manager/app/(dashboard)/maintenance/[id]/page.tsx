@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { personName, PriorityBadge, SlaBadges, ticketPlace } from '@/components/maintenance/sla';
 import { TicketActions } from '@/components/maintenance/ticket-actions';
+import { TicketStaffMoves } from '@/components/maintenance/ticket-staff-moves';
 import { TicketQuotes } from '@/components/maintenance/ticket-quotes';
 import { TicketPermits } from '@/components/maintenance/ticket-permits';
 import { TicketThread } from '@/components/maintenance/ticket-thread';
@@ -252,7 +253,14 @@ export default function TicketPage() {
           )
         }
         description={t ? `${ticketPlace(t)} · ${t.category.nameEn} · ${humanize(t.priority)} priority` : undefined}
-        actions={t ? <TicketActions ticket={t} /> : undefined}
+        actions={
+          t ? (
+            <span className="row" style={{ gap: 6 }}>
+              <TicketStaffMoves ticket={t} />
+              <TicketActions ticket={t} />
+            </span>
+          ) : undefined
+        }
       />
       <QueryState query={ticket}>
         {t ? (

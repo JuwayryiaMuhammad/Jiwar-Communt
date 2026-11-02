@@ -6,10 +6,12 @@ import {
   IsInt,
   IsOptional,
   Max,
+  IsString,
   Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { IsLocalDate } from '../../../core/common/validation/local-date';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import { RESOLUTION_MINUTES, RESPONSE_MINUTES } from '../sla-targets.service';
 
@@ -122,4 +124,25 @@ export class SlaTargetsDto {
   @ValidateNested()
   @Type(() => SlaTargetDto)
   normal: SlaTargetDto;
+}
+
+/** ADR 0076: a period of the compound's days, at most 366. */
+export class SlaReportQueryDto {
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'Clocks ended on or after, the compound’s day.',
+  })
+  @IsString()
+  @IsLocalDate()
+  from: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    description: 'Ended on or before; at most 366 days after `from`.',
+  })
+  @IsString()
+  @IsLocalDate()
+  to: string;
 }

@@ -7379,6 +7379,40 @@ export interface paths {
         patch: operations["MaintenanceSettingsController_update"];
         trace?: never;
     };
+    "/api/v1/maintenance/sla-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The SLA clocks met and breached over a period, by category, priority and clock */
+        get: operations["SlaReportController_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/sla-report/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the SLA report of a period as CSV */
+        get: operations["SlaReportController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/sla-settings": {
         parameters: {
             query?: never;
@@ -39339,6 +39373,32 @@ export interface components {
             data: components["schemas"]["SlaEventView"][];
             nextCursor: string | null;
         };
+        SlaReportRowView: {
+            breached: number;
+            categoryKey: string;
+            /** @enum {string} */
+            clock: "response" | "resolution";
+            met: number;
+            metRate: number;
+            /** @enum {string} */
+            priority: "normal" | "urgent" | "emergency";
+        };
+        SlaReportTotalView: {
+            breached: number;
+            /** @enum {string} */
+            clock: "response" | "resolution";
+            met: number;
+            /** @description met / (met + breached), three decimals; null with neither. */
+            metRate: number | null;
+        };
+        SlaReportView: {
+            /** Format: date */
+            from: string;
+            rows: components["schemas"]["SlaReportRowView"][];
+            /** Format: date */
+            to: string;
+            totals: components["schemas"]["SlaReportTotalView"][];
+        };
         SlaSettingsResponse: {
             /** @description ADR 0076: the share (%) of a clock’s target at which it is at risk, per priority; `null` for no warning. */
             atRiskPercent: components["schemas"]["SlaAtRiskView"];
@@ -55717,6 +55777,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MaintenanceSettingsResponse"];
+                };
+            };
+        };
+    };
+    SlaReportController_report: {
+        parameters: {
+            query: {
+                /** @description Clocks ended on or after, the compound’s day. */
+                from: string;
+                /** @description Ended on or before; at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlaReportView"];
+                };
+            };
+        };
+    };
+    SlaReportController_export: {
+        parameters: {
+            query: {
+                /** @description Clocks ended on or after, the compound’s day. */
+                from: string;
+                /** @description Ended on or before; at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

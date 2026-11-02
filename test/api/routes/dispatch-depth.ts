@@ -114,4 +114,29 @@ export const DISPATCH_DEPTH_ROUTES: Row[] = [
       ],
     },
   },
+  {
+    method: 'GET',
+    path: '/maintenance/sla-report',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { from: '2026-04-31', to: '2026-05-01' },
+      fields: [{ field: 'from', code: 'INVALID_FORMAT' }],
+    },
+  },
+  {
+    method: 'GET',
+    path: '/maintenance/sla-report/export',
+    auth: 'tenant',
+    as: 'manager',
+    denied: 'technician',
+    foreign: 'none',
+    invalid: {
+      query: { from: '2026-05-01', to: '2027-02-29' },
+      fields: [{ field: 'to', code: 'INVALID_FORMAT' }],
+    },
+    noStore: true,
+  },
 ];

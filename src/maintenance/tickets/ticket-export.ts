@@ -135,7 +135,7 @@ export class TicketExport {
   }
 }
 
-function requirePeriod(from: LocalDate, to: LocalDate): void {
+export function requirePeriod(from: LocalDate, to: LocalDate): void {
   const field = !isRealDate(from) ? 'from' : !isRealDate(to) ? 'to' : null;
   if (field)
     throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid period', {

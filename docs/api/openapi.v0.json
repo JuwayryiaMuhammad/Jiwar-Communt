@@ -53229,6 +53229,106 @@
         ],
         "type": "object"
       },
+      "SlaReportRowView": {
+        "properties": {
+          "breached": {
+            "type": "number"
+          },
+          "categoryKey": {
+            "type": "string"
+          },
+          "clock": {
+            "enum": [
+              "response",
+              "resolution"
+            ],
+            "type": "string"
+          },
+          "met": {
+            "type": "number"
+          },
+          "metRate": {
+            "type": "number"
+          },
+          "priority": {
+            "enum": [
+              "normal",
+              "urgent",
+              "emergency"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryKey",
+          "priority",
+          "clock",
+          "met",
+          "breached",
+          "metRate"
+        ],
+        "type": "object"
+      },
+      "SlaReportTotalView": {
+        "properties": {
+          "breached": {
+            "type": "number"
+          },
+          "clock": {
+            "enum": [
+              "response",
+              "resolution"
+            ],
+            "type": "string"
+          },
+          "met": {
+            "type": "number"
+          },
+          "metRate": {
+            "description": "met / (met + breached), three decimals; null with neither.",
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "clock",
+          "met",
+          "breached",
+          "metRate"
+        ],
+        "type": "object"
+      },
+      "SlaReportView": {
+        "properties": {
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/SlaReportRowView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "totals": {
+            "items": {
+              "$ref": "#/components/schemas/SlaReportTotalView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "totals",
+          "rows"
+        ],
+        "type": "object"
+      },
       "SlaSettingsResponse": {
         "properties": {
           "atRiskPercent": {
@@ -92066,6 +92166,105 @@
         "tags": [
           "maintenance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/sla-report": {
+      "get": {
+        "operationId": "SlaReportController_report",
+        "parameters": [
+          {
+            "description": "Clocks ended on or after, the compound’s day.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Ended on or before; at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The SLA clocks met and breached over a period, by category, priority and clock",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/sla-report/export": {
+      "get": {
+        "operationId": "SlaReportController_export",
+        "parameters": [
+          {
+            "description": "Clocks ended on or after, the compound’s day.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Ended on or before; at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the SLA report of a period as CSV",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

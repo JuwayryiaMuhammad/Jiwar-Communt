@@ -29838,6 +29838,71 @@
           }
         },
         {
+          "name": "The SLA clocks met and breached over a period, by category, priority and clock",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "sla-report"
+              ],
+              "query": [
+                {
+                  "description": "(required) Clocks ended on or after, the compound’s day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Ended on or before; at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/sla-report?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Export the SLA report of a period as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "sla-report",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "(required) Clocks ended on or after, the compound’s day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Ended on or before; at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/sla-report/export?from=&to="
+            }
+          }
+        },
+        {
           "name": "Get the SLA switch",
           "request": {
             "description": "**Responses:** 200",

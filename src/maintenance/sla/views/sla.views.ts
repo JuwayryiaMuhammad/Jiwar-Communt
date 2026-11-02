@@ -103,3 +103,59 @@ export class SlaTargetsView {
   @ApiProperty({ type: SlaTargetView })
   normal: SlaTargetView;
 }
+
+export class SlaReportTotalView {
+  @ApiProperty({ enum: ['response', 'resolution'] })
+  clock: string;
+  @ApiProperty({ type: Number })
+  met: number;
+  @ApiProperty({ type: Number })
+  breached: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'met / (met + breached), three decimals; null with neither.',
+  })
+  metRate: number | null;
+}
+
+export class SlaReportRowView {
+  @ApiProperty({ type: String })
+  categoryKey: string;
+  @ApiProperty({ enum: ['normal', 'urgent', 'emergency'] })
+  priority: string;
+  @ApiProperty({ enum: ['response', 'resolution'] })
+  clock: string;
+  @ApiProperty({ type: Number })
+  met: number;
+  @ApiProperty({ type: Number })
+  breached: number;
+  @ApiProperty({ type: Number })
+  metRate: number;
+}
+
+/** ADR 0076: whether the SLA was kept over a period. */
+export class SlaReportView {
+  @ApiProperty({ type: String, format: 'date' })
+  from: string;
+  @ApiProperty({ type: String, format: 'date' })
+  to: string;
+  @ApiProperty({ type: [SlaReportTotalView] })
+  totals: SlaReportTotalView[];
+  @ApiProperty({ type: [SlaReportRowView] })
+  rows: SlaReportRowView[];
+
+  static from(r: {
+    from: string;
+    to: string;
+    totals: SlaReportTotalView[];
+    rows: SlaReportRowView[];
+  }): SlaReportView {
+    return {
+      from: r.from,
+      to: r.to,
+      totals: r.totals.map((t) => ({ ...t })),
+      rows: r.rows.map((x) => ({ ...x })),
+    };
+  }
+}

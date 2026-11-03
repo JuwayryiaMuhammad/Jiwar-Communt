@@ -77,6 +77,8 @@ export const PERMISSION_TEXT: Record<string, string> = {
   'purchases.approve': 'Approve purchase requests up to the manager’s limit, and above it under the board’s approval',
   'dashboard.read': 'Open the operations dashboard and the daily briefs, each part by its own permission',
   'spaces.manage': 'Keep the holiday calendar, the site map, the floor plans and the areas open to use requests',
+  'compliance.manage': 'Keep the compliance calendar: fire systems, lifts, insurance, licences and permits, their evidence and lead times',
+  'lockdown.start': 'Lock one gate or all down from the office, with the typed confirmation',
   'facilities.book': 'See the facilities and book them for a unit',
   'facilities.manage': 'Set up facilities, their rules, opening hours, peak times and closures, and the club’s plans',
   'bookings.handle': 'Approve and cancel bookings, mark no-shows, lift suspensions',

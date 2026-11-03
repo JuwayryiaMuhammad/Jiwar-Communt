@@ -363,6 +363,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         // Readiness and field safety (ADR 0067).
         { href: '/readiness', label: 'Readiness', icon: <CalendarCheck aria-hidden />, show: can('readiness.manage') },
         { href: '/work-permits', label: 'Work permits', icon: <HardHat aria-hidden />, show: can('safety.manage') },
+        // Compliance (ADR 0087).
+        { href: '/compliance', label: 'Compliance', icon: <CalendarCheck aria-hidden />, show: can('compliance.manage') },
+        {
+          href: '/compliance/calendar',
+          label: 'Compliance calendar',
+          icon: <CalendarCheck aria-hidden />,
+          show: can('compliance.manage'),
+        },
       ],
     },
     {
@@ -575,7 +583,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           label: 'Lockdown',
           icon: <ShieldAlert aria-hidden />,
           count: liveLockdowns.length,
-          show: can('lockdown.end'),
+          show: can('lockdown.end') || can('lockdown.start'),
         },
         { href: '/security/blocklist', label: 'Blocklist', icon: <ShieldBan aria-hidden />, show: can('blocklist.manage') },
         {
@@ -598,6 +606,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <ChartPie aria-hidden />,
           show: can('incidents.manage') || can('violations.manage') || can('guard_reports.read'),
         },
+        // Safety KPIs and the owner's corrective actions (ADR 0087).
+        {
+          href: '/security/safety',
+          label: 'Safety KPIs',
+          icon: <ChartPie aria-hidden />,
+          show: can('incidents.manage') || can('guard_reports.read'),
+        },
+        { href: '/my-actions', label: 'My corrective actions', icon: <TriangleAlert aria-hidden />, show: true },
         // Children (ADR 0054): unauthorized pickups, for the keepers.
         { href: '/security/child-alerts', label: 'Child alerts', icon: <Baby aria-hidden />, show: can('guard_roster.manage') },
         // The gate's completion (ADR 0056).

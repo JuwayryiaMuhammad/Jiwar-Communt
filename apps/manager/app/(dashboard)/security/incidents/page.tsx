@@ -22,6 +22,7 @@ import {
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { CorrectiveActions } from '@/components/security/corrective-actions';
 import { addDays, personName, postName } from '@/components/security/logic';
 import { dayStart, incidentActions } from '@/components/security/ops-logic';
 import { api } from '@/lib/api';
@@ -150,7 +151,12 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
             ) : null}
             {actions.includes('assign') ? <Button onClick={() => setStep('assign')}>{i?.investigator ? 'Reassign' : 'Assign'}</Button> : null}
             {actions.includes('close') ? (
-              <Button variant="primary" onClick={() => setStep('close')}>
+              <Button
+                variant="primary"
+                disabled={(i?.actions.open ?? 0) > 0}
+                title={(i?.actions.open ?? 0) > 0 ? 'Its corrective actions are still open' : undefined}
+                onClick={() => setStep('close')}
+              >
                 Close
               </Button>
             ) : null}
@@ -245,6 +251,7 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 </div>
               </form>
               <ErrorAlert error={addNote.error ?? acknowledge.error} />
+              <CorrectiveActions incidentId={i.id} closed={i.status === 'closed'} />
             </div>
           ) : null}
         </QueryState>

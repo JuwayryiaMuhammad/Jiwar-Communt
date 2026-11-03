@@ -227,6 +227,8 @@ sequenceDiagram
 | `spaces.manage` | المساحات: تقويم العطلات (العطلة اللي بتوقف الشغل هي يوم إجازة التصاريح)، خريطة الموقع، مخططات الأدوار ومربعات الوحدات، والمساحات المشتركة المفتوحة لطلبات الاستخدام (ADR 0084) | staff, manager | manager | `/staff/holidays`، `/staff/site-map`، `/staff/floor-plans`، `/staff/space-use-areas` |
 | `letters.issue` | الخطابات الرسمية: إفادة سكن، عدم ممانعة، إلى من يهمه الأمر؛ الـPDF والإلغاء بسبب (ADR 0080) | manager | manager | `/staff/official-letters…` |
 | `correspondence.read` | مراسلات الوحدة: خط زمني واحد لكل ما كتبه سكانها والإدارة لبعض، وكل قراءة بتتسجل (ADR 0080) | manager | manager | `GET /staff/units/{unitId}/correspondence` |
+| `compliance.manage` | تقويم الامتثال (ADR 0087): الالتزامات (السلامة من الحريق، المصاعد، التأمين، التراخيص والتصاريح) ومن يتولاها ومواعيدها وتكرارها، وتسجيل الإنجاز وأدلته، وتقرير الحالة، ومهل التنبيه | staff, manager | manager | `/staff/compliance/items…`، `/staff/compliance/occurrences/{id}/complete`، `/evidence`، `/calendar`، `/report`، `/settings` |
+| `lockdown.start` | بدء الإغلاق الطارئ من المكتب بالتأكيد المكتوب نفسه الذي يكتبه الحارس (ADR 0087) | manager | manager | `POST /staff/security/lockdowns` |
 
 ملاحظات على الجدول:
 - بعض الشاشات تحتاج **صلاحيتين معًا**: قائمة "من يمكن أن يكون صاحب البلاغ" (`GET /maintenance/units/{unitId}/reporters`) تحتاج `tickets.dispatch` + `residents.read`. وشاشات وحدات طلبات الإدارة (`/management/units/*`) وجزء من `/management/requests` تحتاج `requests.handle` + `residents.read`. إذا أعطى المدير مشرفًا `tickets.dispatch` فقط فلن يرى هذه القوائم.

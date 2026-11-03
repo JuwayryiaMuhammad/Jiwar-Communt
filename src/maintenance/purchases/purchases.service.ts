@@ -20,10 +20,15 @@ import {
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { Notifier } from '../../core/notifications/notifier';
+import { PayablesBridge } from '../../core/payables/payables-bridge';
 import { dbNow } from '../db-clock';
 import { claimApproval } from './approval-claims';
 import { CompoundCalendar } from '../schedules/compound-calendar';
-import { dateColumn, type LocalDate } from '../schedules/local-dates';
+import {
+  dateColumn,
+  ofDateColumn,
+  type LocalDate,
+} from '../schedules/local-dates';
 import {
   nextProcurementNumber,
   VendorsService,
@@ -107,6 +112,7 @@ export class PurchasesService implements OnModuleInit {
     private readonly matters: BoardMatters,
     private readonly staff: StaffRecipients,
     private readonly notifier: Notifier,
+    private readonly payables: PayablesBridge,
   ) {}
 
   onModuleInit(): void {
@@ -283,6 +289,23 @@ export class PurchasesService implements OnModuleInit {
           before,
           input.approvalRequestId ?? null,
         );
+        // Approved, it keeps its line's budget until invoiced or called
+        // off (ADR 0089): refused when the line has not that much left.
+        if (before.budgetLineId)
+          await this.payables.commitments.sync(tx, {
+            source: 'purchase_request',
+            sourceId: id,
+            items: [
+              {
+                itemId: id,
+                lineId: before.budgetLineId,
+                amount: before.estimatedAmount.toFixed(2),
+                dueOn: before.neededBy ? ofDateColumn(before.neededBy) : null,
+                vendorId: before.vendorId,
+              },
+            ],
+            reason: 'changed',
+          });
         await tx.purchaseRequest.update({
           where: { id },
           data: {
@@ -364,6 +387,13 @@ export class PurchasesService implements OnModuleInit {
             cancelReason: reason,
           },
         });
+        if (before.status === 'approved')
+          await this.payables.commitments.sync(tx, {
+            source: 'purchase_request',
+            sourceId: id,
+            items: [],
+            reason: 'cancelled',
+          });
         await this.audit.record(tx, {
           action: 'purchase_request.cancelled',
           targetId: id,

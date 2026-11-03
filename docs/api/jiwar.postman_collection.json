@@ -12849,6 +12849,51 @@
           }
         },
         {
+          "name": "Say why a line ran past its plan in a month",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"month\": 1,\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `month` | number | yes | 1 is the fiscal year’s first month. |\n| `note` | string |  |  |\n| `reasonCode` | string | yes | A `budgetVariance` code. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "budget-lines",
+                ":id",
+                "variance-reasons"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/budget-lines/:id/variance-reasons",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "The month the fiscal year starts on",
           "request": {
             "description": "**Responses:** 200",
@@ -12902,6 +12947,134 @@
                 "budget-settings"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/budget-settings"
+            }
+          }
+        },
+        {
+          "name": "List a budget’s transfers",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "budget-transfers"
+              ],
+              "query": [
+                {
+                  "description": "(required)",
+                  "key": "budgetId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/budget-transfers?budgetId="
+            }
+          }
+        },
+        {
+          "name": "Move budget between two lines",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fromLineId\": \"\",\n  \"toLineId\": \"\",\n  \"amount\": \"\",\n  \"reason\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP; at most what the line it leaves has available (BUDGET_LINE_INSUFFICIENT). |\n| `fromLineId` | string (uuid) | yes | A line of the active budget. |\n| `reason` | string | yes |  |\n| `toLineId` | string (uuid) | yes | Another line of the same budget. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "budget-transfers"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/budget-transfers"
+            }
+          }
+        },
+        {
+          "name": "Read a budget transfer",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "budget-transfers",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/budget-transfers/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a transfer waiting for the board",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "budget-transfers",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/budget-transfers/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -13068,6 +13241,51 @@
           }
         },
         {
+          "name": "Split the active budget’s lines by month",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"lines\": []\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `lines` | object[] | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "budgets",
+                ":id",
+                "months"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/budgets/:id/months",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "What a collector may take above what a unit owes",
           "request": {
             "description": "**Responses:** 200",
@@ -13121,6 +13339,408 @@
                 "collector-settings"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/collector-settings"
+            }
+          }
+        },
+        {
+          "name": "List the commitments",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "commitments"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "lineId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "source",
+                  "value": ""
+                },
+                {
+                  "description": "Open only (true) or closed only (false).",
+                  "disabled": true,
+                  "key": "open",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/commitments"
+            }
+          }
+        },
+        {
+          "name": "Advances and releases waiting for a decision or a payout",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-disbursements"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-disbursements"
+            }
+          }
+        },
+        {
+          "name": "Read an advance or a retention’s release",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-disbursements",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-disbursements/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve an advance or a retention’s release",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-disbursements",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-disbursements/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off an advance or a release",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-disbursements",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-disbursements/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pay out an approved advance or release",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"paidOn\": \"\",\n  \"method\": \"bank_transfer\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `method` | `bank_transfer` \\| `cheque` \\| `cash` | yes |  |\n| `paidOn` | string | yes | The day it was paid: within its line’s budget year, not ahead. |\n| `reference` | string |  | The transfer’s or the cheque’s reference. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-disbursements",
+                ":id",
+                "pay"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-disbursements/:id/pay",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn down an advance or a release",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-disbursements",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-disbursements/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read a contract’s money with its vendor",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-payables",
+                ":contractId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-payables/:contractId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "contractId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask for an advance or a retention’s release",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"advance\",\n  \"amount\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP: an advance within what the contract’s value leaves (ADVANCE_EXCEEDED); a release within what is held (RETENTION_EXCEEDED), after its end (RETENTION_NOT_DUE). |\n| `kind` | `advance` \\| `retention_release` | yes |  |\n| `note` | string |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-payables",
+                ":contractId",
+                "disbursements"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-payables/:contractId/disbursements",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "contractId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record a guarantee on a contract",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"performance\",\n  \"issuer\": \"\",\n  \"reference\": \"\",\n  \"amount\": \"\",\n  \"issuedOn\": \"\",\n  \"expiresOn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP. |\n| `expiresOn` | string | yes | The day it expires, not before it was issued. |\n| `issuedOn` | string | yes | The day it was issued. |\n| `issuer` | string | yes | The bank that issued it. |\n| `kind` | `performance` \\| `advance_payment` \\| `warranty` \\| `other` | yes |  |\n| `reference` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "contract-payables",
+                ":contractId",
+                "guarantees"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/contract-payables/:contractId/guarantees",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "contractId",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -13661,6 +14281,41 @@
           }
         },
         {
+          "name": "Read the payment schedule",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "payment-schedule"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "At most 366 days after `from`.",
+                  "disabled": true,
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/payment-schedule"
+            }
+          }
+        },
+        {
           "name": "The compound’s payment plan terms for residents",
           "request": {
             "description": "**Responses:** 200",
@@ -13787,6 +14442,79 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/reports/aging/export"
+            }
+          }
+        },
+        {
+          "name": "Read the budget by month or quarter",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "budget-periods"
+              ],
+              "query": [
+                {
+                  "description": "By default the active budget of the year under way.",
+                  "disabled": true,
+                  "key": "budgetId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "by",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/budget-periods"
+            }
+          }
+        },
+        {
+          "name": "Export the budget by month or quarter as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "budget-periods",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "By default the active budget of the year under way.",
+                  "disabled": true,
+                  "key": "budgetId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "by",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/budget-periods/export"
             }
           }
         },
@@ -14006,6 +14734,41 @@
           }
         },
         {
+          "name": "Export every money entry of a period as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "reports",
+                "entries",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "(required) The first day.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) The last day, at most 366 days on.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/reports/entries/export?from=&to="
+            }
+          }
+        },
+        {
           "name": "Read what each unit or building owes today, and its credit",
           "request": {
             "description": "**Responses:** 200",
@@ -14159,6 +14922,422 @@
                 ":id"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/spending-reports/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Past what share of its plan a month asks for a reason",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "variance-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/variance-settings"
+            }
+          }
+        },
+        {
+          "name": "Set past what share of its plan a month asks for a reason",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"varianceReasonPct\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `varianceReasonPct` | number | yes | Past this share of a month’s plan, a closed month asks for a reason; null: never. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "variance-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/variance-settings"
+            }
+          }
+        },
+        {
+          "name": "Return a guarantee, or call it",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"outcome\": \"returned\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `outcome` | `returned` \\| `called` | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-guarantees",
+                ":id",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-guarantees/:id/close",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List vendors’ invoices",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "vendorId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "contractId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "purchaseRequestId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices"
+            }
+          }
+        },
+        {
+          "name": "Record a vendor’s invoice",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"descriptionEn\": \"\",\n      \"descriptionAr\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  | The line it is paid from; by default its contract’s or purchase’s. |\n| `contractId` | string (uuid) |  | One of its contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of the contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes | When it is to be paid, not before its date. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice`. |\n| `issuedOn` | string | yes | The invoice’s date, not ahead. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseRequestId` | string (uuid) |  | A purchase request it fulfilled. |\n| `vendorId` | string (uuid) |  | The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs). |\n| `vendorNumber` | string | yes | The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices"
+            }
+          }
+        },
+        {
+          "name": "Read a vendor’s invoice",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve a vendor’s invoice",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"authorizationId\": \"\",\n  \"budgetLineId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `authorizationId` | string (uuid) |  | Above the manager’s limit: the board’s approved major contract to spend down, if not its contract’s or purchase’s (EXPENSE_NEEDS_APPROVAL, EXPENSE_AUTHORIZATION_EXCEEDED); within it, FIELD_NOT_ALLOWED. |\n| `budgetLineId` | string (uuid) |  | A line of the active budget, if not its own. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a vendor’s invoice",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pay out an approved vendor’s invoice",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"paidOn\": \"\",\n  \"method\": \"bank_transfer\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `advanceSetOff` | string |  | Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED). |\n| `method` | `bank_transfer` \\| `cheque` \\| `cash` | yes |  |\n| `paidOn` | string | yes | The day it was paid: within its line’s budget year, not ahead. |\n| `reference` | string |  | The transfer’s or the cheque’s reference. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices",
+                ":id",
+                "pay"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id/pay",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn down a vendor’s invoice",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id/reject",
               "variable": [
                 {
                   "description": "",
@@ -29055,7 +30234,7 @@
               },
               "raw": "{\n  \"code\": \"\",\n  \"kind\": \"amc\",\n  \"startsOn\": \"2026-01-01\",\n  \"endsOn\": \"2026-01-01\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  | EGP a year. |\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once. |\n| `autoRenews` | boolean |  | Renews by itself unless notice is given; needs `renewalTermMonths`. |\n| `budgetLineId` | string (uuid) |  | The budget line it is paid from (ADR 0055). |\n| `code` | string | yes | The compound’s reference for it, unique. Never changes. |\n| `endsOn` | string (date) | yes | Its last day; after `startsOn`. |\n| `kind` | `amc` \\| `service` \\| `warranty_extension` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supply` \\| `other` | yes |  |\n| `latePenaltyPerDay` | string |  | EGP a day the vendor owes for being late (ADR 0077). |\n| `noticeDays` | number |  | How many days before its end the end is announced. |\n| `penaltyCap` | string |  | The late penalty at most in all; with `latePenaltyPerDay`. |\n| `penaltyTerms` | string |  | Its penalties and service levels, in the contract’s words. |\n| `renewalTermMonths` | number |  |  |\n| `responseHours` | number |  | Hours the vendor has to respond. |\n| `scope` | string |  | What it covers, in the compound’s words. |\n| `startsOn` | string (date) | yes |  |\n| `vendorId` | string (uuid) |  | A vendor of the register (ADR 0077); a suspended one is refused. Or `vendorName`. |\n| `vendorName` | string |  | Without `vendorId`: the register’s vendor of this name (whatever its case), or a new one registered with it. |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  | EGP a year. |\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once. |\n| `autoRenews` | boolean |  | Renews by itself unless notice is given; needs `renewalTermMonths`. |\n| `budgetLineId` | string (uuid) |  | The budget line it is paid from (ADR 0055). |\n| `code` | string | yes | The compound’s reference for it, unique. Never changes. |\n| `endsOn` | string (date) | yes | Its last day; after `startsOn`. |\n| `kind` | `amc` \\| `service` \\| `warranty_extension` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supply` \\| `other` | yes |  |\n| `latePenaltyPerDay` | string |  | EGP a day the vendor owes for being late (ADR 0077). |\n| `noticeDays` | number |  | How many days before its end the end is announced. |\n| `penaltyCap` | string |  | The late penalty at most in all; with `latePenaltyPerDay`. |\n| `penaltyTerms` | string |  | Its penalties and service levels, in the contract’s words. |\n| `renewalTermMonths` | number |  |  |\n| `responseHours` | number |  | Hours the vendor has to respond. |\n| `retentionPct` | string |  | Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); released at the contract’s end with approval. |\n| `scope` | string |  | What it covers, in the compound’s words. |\n| `startsOn` | string (date) | yes |  |\n| `vendorId` | string (uuid) |  | A vendor of the register (ADR 0077); a suspended one is refused. Or `vendorName`. |\n| `vendorName` | string |  | Without `vendorId`: the register’s vendor of this name (whatever its case), or a new one registered with it. |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -29121,9 +30300,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"annualValue\": \"\",\n  \"approvalRequestId\": \"\",\n  \"autoRenews\": false,\n  \"budgetLineId\": \"\",\n  \"endsOn\": \"2026-01-01\",\n  \"latePenaltyPerDay\": \"\",\n  \"noticeDays\": 0,\n  \"penaltyCap\": \"\",\n  \"penaltyTerms\": \"\",\n  \"renewalTermMonths\": 1,\n  \"responseHours\": 1,\n  \"scope\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"vendorId\": \"\",\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\"\n}"
+              "raw": "{\n  \"annualValue\": \"\",\n  \"approvalRequestId\": \"\",\n  \"autoRenews\": false,\n  \"budgetLineId\": \"\",\n  \"endsOn\": \"2026-01-01\",\n  \"latePenaltyPerDay\": \"\",\n  \"noticeDays\": 0,\n  \"penaltyCap\": \"\",\n  \"penaltyTerms\": \"\",\n  \"renewalTermMonths\": 1,\n  \"responseHours\": 1,\n  \"retentionPct\": \"\",\n  \"scope\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"vendorId\": \"\",\n  \"vendorName\": \"\",\n  \"vendorPhone\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  |  |\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once. |\n| `autoRenews` | boolean |  | Renews by itself unless notice is given; needs `renewalTermMonths`. |\n| `budgetLineId` | string (uuid) |  | The budget line it is paid from (ADR 0055). |\n| `endsOn` | string (date) |  |  |\n| `latePenaltyPerDay` | string |  | EGP a day the vendor owes for being late (ADR 0077). |\n| `noticeDays` | number |  |  |\n| `penaltyCap` | string |  | The late penalty at most in all; with `latePenaltyPerDay`. |\n| `penaltyTerms` | string |  | Its penalties and service levels, in the contract’s words. |\n| `renewalTermMonths` | number |  |  |\n| `responseHours` | number |  | Hours the vendor has to respond. |\n| `scope` | string |  |  |\n| `startsOn` | string (date) |  |  |\n| `vendorId` | string (uuid) |  | Another vendor of the register; a suspended one is refused. |\n| `vendorName` | string |  |  |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `annualValue` | string |  |  |\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once. |\n| `autoRenews` | boolean |  | Renews by itself unless notice is given; needs `renewalTermMonths`. |\n| `budgetLineId` | string (uuid) |  | The budget line it is paid from (ADR 0055). |\n| `endsOn` | string (date) |  |  |\n| `latePenaltyPerDay` | string |  | EGP a day the vendor owes for being late (ADR 0077). |\n| `noticeDays` | number |  |  |\n| `penaltyCap` | string |  | The late penalty at most in all; with `latePenaltyPerDay`. |\n| `penaltyTerms` | string |  | Its penalties and service levels, in the contract’s words. |\n| `renewalTermMonths` | number |  |  |\n| `responseHours` | number |  | Hours the vendor has to respond. |\n| `retentionPct` | string |  | Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); null for none. |\n| `scope` | string |  |  |\n| `startsOn` | string (date) |  |  |\n| `vendorId` | string (uuid) |  | Another vendor of the register; a suspended one is refused. |\n| `vendorName` | string |  |  |\n| `vendorPhone` | string |  |  |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",

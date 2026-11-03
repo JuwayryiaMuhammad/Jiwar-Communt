@@ -22,6 +22,7 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import { PayablesBridge } from '../../core/payables/payables-bridge';
 import { assetNotFound } from '../assets/assets.service';
 import { dbNow } from '../db-clock';
 import { CompoundCalendar } from '../schedules/compound-calendar';
@@ -33,6 +34,7 @@ import {
 } from '../schedules/local-dates';
 import { claimApproval } from '../purchases/approval-claims';
 import { VendorsService } from '../vendors/vendors.service';
+import { contractItems } from './payable-sources';
 import {
   CONTRACT_PAYMENTS_MAX,
   contractStatus,
@@ -51,6 +53,8 @@ export interface ContractTerms {
   autoRenews?: boolean;
   renewalTermMonths?: number | null;
   budgetLineId?: string | null;
+  /** Held back of each payout, a percentage up to 20 (ADR 0089). */
+  retentionPct?: string | null;
 }
 
 export interface ContractInput extends ContractTerms {
@@ -174,6 +178,7 @@ export class MaintenanceContractsService implements OnModuleInit {
     private readonly idempotency: IdempotencyService,
     private readonly vendors: VendorsService,
     private readonly matters: BoardMatters,
+    private readonly payables: PayablesBridge,
   ) {}
 
   onModuleInit(): void {
@@ -374,6 +379,14 @@ export class MaintenanceContractsService implements OnModuleInit {
               : {}),
           },
         });
+        // Its commitments follow its line (ADR 0089).
+        if (contract.budgetLineId !== before.budgetLineId)
+          await this.payables.commitments.sync(tx, {
+            source: 'contract',
+            sourceId: id,
+            items: await contractItems(tx, contract),
+            reason: 'changed',
+          });
         const changes = diffChanges(
           audited(before),
           audited(contract),
@@ -511,6 +524,13 @@ export class MaintenanceContractsService implements OnModuleInit {
             terminatedById: this.ctx.accountId,
             terminationReason: reason,
           },
+        });
+        // What it kept of its line is given back (ADR 0089).
+        await this.payables.commitments.sync(tx, {
+          source: 'contract',
+          sourceId: id,
+          items: [],
+          reason: 'terminated',
         });
         await this.audit.record(tx, {
           action: 'maintenance_contract.terminated',
@@ -667,6 +687,17 @@ export class MaintenanceContractsService implements OnModuleInit {
         const unpaid = had.filter((p) => p.paidAt === null);
         const byDay = new Map(unpaid.map((p) => [ofDateColumn(p.dueOn), p]));
         const gone = unpaid.filter((p) => !seen.has(ofDateColumn(p.dueOn)));
+        // A payment a live vendor invoice names stays as it is (ADR 0089).
+        const amounts = new Map(rows.map((r) => [r.dueOn, r.amount]));
+        await this.payables.commitments.assertNotInvoiced(tx, [
+          ...gone.map((p) => p.id),
+          ...unpaid
+            .filter((p) => {
+              const a = amounts.get(ofDateColumn(p.dueOn));
+              return a !== undefined && !new Prisma.Decimal(p.amount).equals(a);
+            })
+            .map((p) => p.id),
+        ]);
         if (gone.length)
           await tx.maintenanceContractPayment.deleteMany({
             where: { id: { in: gone.map((p) => p.id) } },
@@ -703,6 +734,13 @@ export class MaintenanceContractsService implements OnModuleInit {
           (a, r) => a.add(r.amount),
           new Prisma.Decimal(0),
         );
+        // The schedule's unpaid payments keep its line's budget (ADR 0089).
+        await this.payables.commitments.sync(tx, {
+          source: 'contract',
+          sourceId: id,
+          items: await contractItems(tx, contract),
+          reason: 'changed',
+        });
         await this.audit.record(tx, {
           action: 'maintenance_contract.payments_scheduled',
           targetId: id,
@@ -730,6 +768,8 @@ export class MaintenanceContractsService implements OnModuleInit {
       });
       if (!payment || payment.contractId !== id) throw paymentNotFound();
       if (payment.paidAt) throw paymentPaid(ofDateColumn(payment.dueOn));
+      // Paid through its vendor invoice, never by hand under it (ADR 0089).
+      await this.payables.commitments.assertNotInvoiced(tx, [paymentId]);
       const { today } = await this.calendar.now(tx);
       if (input.paidOn > today)
         throw invalid([
@@ -747,6 +787,16 @@ export class MaintenanceContractsService implements OnModuleInit {
           paidById: this.ctx.accountId,
           paidAt: await dbNow(tx),
         },
+      });
+      // Paid by hand: what it kept of the line is given back (ADR 0089).
+      const contract = await tx.maintenanceContract.findUniqueOrThrow({
+        where: { id },
+      });
+      await this.payables.commitments.sync(tx, {
+        source: 'contract',
+        sourceId: id,
+        items: await contractItems(tx, contract),
+        reason: 'paid_outside',
       });
       await this.audit.record(tx, {
         action: 'maintenance_contract.payment_paid',
@@ -939,6 +989,7 @@ function terms(t: ContractTerms) {
     autoRenews: t.autoRenews,
     renewalTermMonths: t.renewalTermMonths,
     budgetLineId: t.budgetLineId,
+    retentionPct: t.retentionPct,
   };
 }
 
@@ -984,4 +1035,5 @@ const audited = (c: MaintenanceContract) => ({
   renewalTermMonths: c.renewalTermMonths,
   approvalRequestId: c.approvalRequestId,
   budgetLineId: c.budgetLineId,
+  retentionPct: money(c.retentionPct),
 });

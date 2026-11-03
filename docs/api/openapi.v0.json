@@ -702,6 +702,34 @@
         ],
         "type": "object"
       },
+      "AdvancesView": {
+        "properties": {
+          "asked": {
+            "description": "Asked for or approved, not yet paid.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "open": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "paid": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "setOff": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "paid",
+          "setOff",
+          "open",
+          "asked"
+        ],
+        "type": "object"
+      },
       "AgendaProposalOutcome": {
         "enum": [
           "accepted",
@@ -2313,6 +2341,21 @@
           "stickerNumber",
           "permitValidUntil"
         ],
+        "type": "object"
+      },
+      "ApproveVendorInvoiceDto": {
+        "properties": {
+          "authorizationId": {
+            "description": "Above the manager’s limit: the board’s approved major contract to spend down, if not its contract’s or purchase’s (EXPENSE_NEEDS_APPROVAL, EXPENSE_AUTHORIZATION_EXCEEDED); within it, FIELD_NOT_ALLOWED.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "description": "A line of the active budget, if not its own.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "ApprovedRegistrationView": {
@@ -6924,12 +6967,17 @@
       "BudgetLineView": {
         "properties": {
           "allowance": {
-            "description": "The amount and the increases.",
+            "description": "The amount, the increases and the transfers.",
             "example": "1200.00",
             "type": "string"
           },
           "amount": {
             "description": "As budgeted.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "available": {
+            "description": "What may still be committed or spent: what is left less what is committed and approved to pay.",
             "example": "1200.00",
             "type": "string"
           },
@@ -6939,6 +6987,11 @@
                 "$ref": "#/components/schemas/BudgetCategory"
               }
             ]
+          },
+          "committed": {
+            "description": "What open commitments keep: contracts’ payments and approved purchases (ADR 0089).",
+            "example": "1200.00",
+            "type": "string"
           },
           "id": {
             "format": "uuid",
@@ -6953,13 +7006,28 @@
             "nullable": true,
             "type": "string"
           },
+          "payable": {
+            "description": "Approved vendors’ invoices not yet paid (ADR 0089).",
+            "example": "1200.00",
+            "type": "string"
+          },
           "remaining": {
-            "description": "What the line has left.",
+            "description": "What the line has left: the allowance less what was spent.",
             "example": "1200.00",
             "type": "string"
           },
           "spent": {
             "description": "Live expenses.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "transfersIn": {
+            "description": "Applied transfers into the line (ADR 0089).",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "transfersOut": {
+            "description": "Applied transfers out of the line (ADR 0089).",
             "example": "1200.00",
             "type": "string"
           }
@@ -6970,9 +7038,14 @@
           "amount",
           "note",
           "increases",
+          "transfersIn",
+          "transfersOut",
           "allowance",
           "spent",
-          "remaining"
+          "remaining",
+          "committed",
+          "payable",
+          "available"
         ],
         "type": "object"
       },
@@ -6981,6 +7054,21 @@
           "lines": {
             "items": {
               "$ref": "#/components/schemas/BudgetLineDto"
+            },
+            "maxItems": 10,
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "type": "object"
+      },
+      "BudgetPhasingDto": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LinePhasingDto"
             },
             "maxItems": 10,
             "type": "array"
@@ -7034,11 +7122,23 @@
             "example": "1200.00",
             "type": "string"
           },
+          "available": {
+            "example": "1200.00",
+            "type": "string"
+          },
           "budgeted": {
             "example": "1200.00",
             "type": "string"
           },
+          "committed": {
+            "example": "1200.00",
+            "type": "string"
+          },
           "increases": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "payable": {
             "example": "1200.00",
             "type": "string"
           },
@@ -7056,7 +7156,129 @@
           "increases",
           "allowance",
           "spent",
-          "remaining"
+          "remaining",
+          "committed",
+          "payable",
+          "available"
+        ],
+        "type": "object"
+      },
+      "BudgetTransferDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP; at most what the line it leaves has available (BUDGET_LINE_INSUFFICIENT).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "fromLineId": {
+            "description": "A line of the active budget.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "toLineId": {
+            "description": "Another line of the same budget.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromLineId",
+          "toLineId",
+          "amount",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "BudgetTransferStatus": {
+        "enum": [
+          "awaiting_board",
+          "applied",
+          "rejected",
+          "withdrawn",
+          "lapsed"
+        ],
+        "type": "string"
+      },
+      "BudgetTransferView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "approvalRequestId": {
+            "description": "Its budget_transfer request, once raised.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "budgetId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "fromCategory": {
+            "type": "string"
+          },
+          "fromLineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requestedByMe": {
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BudgetTransferStatus"
+              }
+            ]
+          },
+          "toCategory": {
+            "type": "string"
+          },
+          "toLineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "budgetId",
+          "fromLineId",
+          "fromCategory",
+          "toLineId",
+          "toCategory",
+          "amount",
+          "reason",
+          "status",
+          "approvalRequestId",
+          "requestedAt",
+          "decidedAt",
+          "requestedByMe"
         ],
         "type": "object"
       },
@@ -11749,6 +11971,114 @@
         ],
         "type": "object"
       },
+      "CommitmentView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractPaymentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueOn": {
+            "example": "2027-06-01",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "open": {
+            "description": "What it still keeps.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "purchaseRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "released": {
+            "description": "Given back so far.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "contract",
+              "purchase_request"
+            ],
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "budgetLineId",
+          "category",
+          "source",
+          "contractId",
+          "contractPaymentId",
+          "purchaseRequestId",
+          "vendorId",
+          "amount",
+          "released",
+          "open",
+          "dueOn",
+          "createdAt",
+          "closedAt"
+        ],
+        "type": "object"
+      },
+      "CommitmentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CommitmentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "CommonAreaView": {
         "properties": {
           "active": {
@@ -14559,6 +14889,24 @@
         ],
         "type": "object"
       },
+      "ContractInvoicesView": {
+        "properties": {
+          "approved": {
+            "description": "Approved, not yet paid.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "paid": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "approved",
+          "paid"
+        ],
+        "type": "object"
+      },
       "ContractPaymentDto": {
         "properties": {
           "amount": {
@@ -14658,6 +15006,57 @@
         },
         "required": [
           "payments"
+        ],
+        "type": "object"
+      },
+      "ContractPositionView": {
+        "properties": {
+          "advances": {
+            "$ref": "#/components/schemas/AdvancesView"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "disbursements": {
+            "items": {
+              "$ref": "#/components/schemas/DisbursementView"
+            },
+            "type": "array"
+          },
+          "guarantees": {
+            "items": {
+              "$ref": "#/components/schemas/GuaranteeView"
+            },
+            "type": "array"
+          },
+          "invoices": {
+            "$ref": "#/components/schemas/ContractInvoicesView"
+          },
+          "retention": {
+            "$ref": "#/components/schemas/RetentionView"
+          },
+          "retentionPct": {
+            "example": "5.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "contractId",
+          "vendorId",
+          "retentionPct",
+          "advances",
+          "retention",
+          "invoices",
+          "disbursements",
+          "guarantees"
         ],
         "type": "object"
       },
@@ -16763,6 +17162,11 @@
             "minimum": 1,
             "nullable": false,
             "type": "number"
+          },
+          "retentionPct": {
+            "description": "Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); released at the contract’s end with approval.",
+            "pattern": "^(?:20(?:\\.0{1,2})?|1\\d(?:\\.\\d{1,2})?|[1-9](?:\\.\\d{1,2})?|0\\.(?:0[1-9]|[1-9]\\d?))$",
+            "type": "string"
           },
           "scope": {
             "description": "What it covers, in the compound’s words.",
@@ -22458,6 +22862,139 @@
         "required": [
           "zone",
           "guards"
+        ],
+        "type": "object"
+      },
+      "DisbursementDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP: an advance within what the contract’s value leaves (ADVANCE_EXCEEDED); a release within what is held (RETENTION_EXCEEDED), after its end (RETENTION_NOT_DUE).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisbursementKind"
+              }
+            ]
+          },
+          "note": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "DisbursementKind": {
+        "enum": [
+          "advance",
+          "retention_release"
+        ],
+        "type": "string"
+      },
+      "DisbursementStatus": {
+        "enum": [
+          "requested",
+          "approved",
+          "rejected",
+          "cancelled",
+          "paid"
+        ],
+        "type": "string"
+      },
+      "DisbursementView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisbursementKind"
+              }
+            ]
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "VD-000001",
+            "type": "string"
+          },
+          "payout": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "rejectReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requestedByMe": {
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DisbursementStatus"
+              }
+            ]
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "kind",
+          "contractId",
+          "vendorId",
+          "amount",
+          "note",
+          "status",
+          "rejectReason",
+          "cancelReason",
+          "requestedAt",
+          "decidedAt",
+          "requestedByMe"
         ],
         "type": "object"
       },
@@ -31138,6 +31675,156 @@
         ],
         "type": "object"
       },
+      "GuaranteeCloseDto": {
+        "properties": {
+          "outcome": {
+            "enum": [
+              "returned",
+              "called"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "GuaranteeDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "expiresOn": {
+            "description": "The day it expires, not before it was issued.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "issuedOn": {
+            "description": "The day it was issued.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "issuer": {
+            "description": "The bank that issued it.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuaranteeKind"
+              }
+            ]
+          },
+          "reference": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "issuer",
+          "reference",
+          "amount",
+          "issuedOn",
+          "expiresOn"
+        ],
+        "type": "object"
+      },
+      "GuaranteeKind": {
+        "enum": [
+          "performance",
+          "advance_payment",
+          "warranty",
+          "other"
+        ],
+        "type": "string"
+      },
+      "GuaranteeStatus": {
+        "enum": [
+          "held",
+          "returned",
+          "called"
+        ],
+        "type": "string"
+      },
+      "GuaranteeView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "expiresOn": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "issuedOn": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuaranteeKind"
+              }
+            ]
+          },
+          "reference": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuaranteeStatus"
+              }
+            ]
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contractId",
+          "vendorId",
+          "kind",
+          "issuer",
+          "reference",
+          "amount",
+          "issuedOn",
+          "expiresOn",
+          "status",
+          "closedAt"
+        ],
+        "type": "object"
+      },
       "GuardAttendanceView": {
         "properties": {
           "absent": {
@@ -36521,6 +37208,38 @@
         ],
         "type": "object"
       },
+      "InvoicePayoutDto": {
+        "properties": {
+          "advanceSetOff": {
+            "description": "Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutMethod"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "The day it was paid: within its line’s budget year, not ahead.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "reference": {
+            "description": "The transfer’s or the cheque’s reference.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "paidOn",
+          "method"
+        ],
+        "type": "object"
+      },
       "InvoicePlanOfferView": {
         "properties": {
           "maxMonths": {
@@ -37648,6 +38367,33 @@
         ],
         "type": "object"
       },
+      "LinePhasingDto": {
+        "properties": {
+          "lineId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "months": {
+            "description": "Twelve amounts, the fiscal year’s first month first, adding up to the line’s amount; null splits it evenly again. Or `quarters`.",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "quarters": {
+            "description": "Four amounts, each spread on its three months (a third each).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "lineId"
+        ],
+        "type": "object"
+      },
       "LinkEvidenceDto": {
         "properties": {
           "entryId": {
@@ -38687,6 +39433,12 @@
             "nullable": true,
             "type": "number"
           },
+          "retentionPct": {
+            "description": "Held back of each payout, a percentage (ADR 0089).",
+            "example": "5.00",
+            "nullable": true,
+            "type": "string"
+          },
           "scope": {
             "nullable": true,
             "type": "string"
@@ -38752,7 +39504,8 @@
           "renewsId",
           "renewalId",
           "approvalRequestId",
-          "budgetLineId"
+          "budgetLineId",
+          "retentionPct"
         ],
         "type": "object"
       },
@@ -45688,6 +46441,22 @@
         ],
         "type": "object"
       },
+      "OverdueView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "amount"
+        ],
+        "type": "object"
+      },
       "OwnActionIncidentView": {
         "properties": {
           "id": {
@@ -48126,6 +48895,46 @@
         ],
         "type": "object"
       },
+      "PaymentScheduleView": {
+        "properties": {
+          "asOf": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "from": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "overdue": {
+            "$ref": "#/components/schemas/OverdueView"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRowView"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ScheduleTotalsView"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "asOf",
+          "rows",
+          "totals",
+          "overdue"
+        ],
+        "type": "object"
+      },
       "PaymentSessionStatus": {
         "enum": [
           "opening",
@@ -48350,6 +49159,121 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PayoutDto": {
+        "properties": {
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutMethod"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "The day it was paid: within its line’s budget year, not ahead.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "reference": {
+            "description": "The transfer’s or the cheque’s reference.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "paidOn",
+          "method"
+        ],
+        "type": "object"
+      },
+      "PayoutMethod": {
+        "enum": [
+          "bank_transfer",
+          "cheque",
+          "cash"
+        ],
+        "type": "string"
+      },
+      "PayoutView": {
+        "properties": {
+          "advanceSetOff": {
+            "description": "Of the contract’s advances.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expenseId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "gross": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invoice",
+              "advance",
+              "retention_release"
+            ],
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutMethod"
+              }
+            ]
+          },
+          "net": {
+            "description": "What was paid.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "number": {
+            "example": "VP-000001",
+            "type": "string"
+          },
+          "paidOn": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "retentionHeld": {
+            "description": "Held back at the contract’s retention share.",
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "kind",
+          "expenseId",
+          "gross",
+          "retentionHeld",
+          "advanceSetOff",
+          "net",
+          "method",
+          "reference",
+          "paidOn",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -48641,6 +49565,143 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PeriodCellView": {
+        "properties": {
+          "actual": {
+            "description": "Live expenses.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "closed": {
+            "type": "boolean"
+          },
+          "from": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "period": {
+            "type": "number"
+          },
+          "planned": {
+            "description": "Its months’ share, with the increases and transfers it brought.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VarianceReasonView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "reasonMissing": {
+            "description": "Closed, past the compound’s setting, and not explained.",
+            "type": "boolean"
+          },
+          "to": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "variance": {
+            "description": "actual − planned.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "variancePct": {
+            "example": "12.5",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "from",
+          "to",
+          "planned",
+          "actual",
+          "variance",
+          "variancePct",
+          "closed",
+          "reasonMissing",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "PeriodLineView": {
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "lineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/PeriodCellView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "lineId",
+          "category",
+          "periods"
+        ],
+        "type": "object"
+      },
+      "PeriodReportView": {
+        "properties": {
+          "asOf": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "budgetId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "by": {
+            "enum": [
+              "month",
+              "quarter"
+            ],
+            "type": "string"
+          },
+          "fiscalYear": {
+            "type": "number"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PeriodLineView"
+            },
+            "type": "array"
+          },
+          "missingReasons": {
+            "type": "number"
+          },
+          "varianceReasonPct": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "budgetId",
+          "fiscalYear",
+          "by",
+          "asOf",
+          "varianceReasonPct",
+          "lines",
+          "missingReasons"
         ],
         "type": "object"
       },
@@ -54004,6 +55065,77 @@
         ],
         "type": "object"
       },
+      "RecordVendorInvoiceDto": {
+        "properties": {
+          "budgetLineId": {
+            "description": "The line it is paid from; by default its contract’s or purchase’s.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "contractId": {
+            "description": "One of its contracts; or `purchaseRequestId`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "contractPaymentId": {
+            "description": "A line of the contract’s schedule, unpaid and not invoiced.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "description": "When it is to be paid, not before its date.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "invoiceFileId": {
+            "description": "The caller’s upload of purpose `expense_invoice`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "description": "The invoice’s date, not ahead.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "note": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "purchaseRequestId": {
+            "description": "A purchase request it fulfilled.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorNumber": {
+            "description": "The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE).",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendorNumber",
+          "issuedOn",
+          "dueOn",
+          "invoiceFileId",
+          "lines"
+        ],
+        "type": "object"
+      },
       "RecordViolationPaymentDto": {
         "properties": {
           "amount": {
@@ -59202,6 +60334,35 @@
         ],
         "type": "object"
       },
+      "RetentionView": {
+        "properties": {
+          "asked": {
+            "description": "Asked for or approved, not yet paid.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "held": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "open": {
+            "description": "What may still be asked for.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "released": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "held",
+          "released",
+          "asked",
+          "open"
+        ],
+        "type": "object"
+      },
       "RetireAlarmDeviceDto": {
         "properties": {
           "reasonCode": {
@@ -61085,6 +62246,106 @@
           "kind",
           "title",
           "scheduledAt"
+        ],
+        "type": "object"
+      },
+      "ScheduleRowView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "day": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invoice",
+              "commitment"
+            ],
+            "type": "string"
+          },
+          "purchaseRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "contract",
+              "purchase_request"
+            ],
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "day",
+          "amount",
+          "reference",
+          "source",
+          "contractId",
+          "purchaseRequestId",
+          "vendorId",
+          "vendorName",
+          "budgetLineId",
+          "category"
+        ],
+        "type": "object"
+      },
+      "ScheduleTotalsView": {
+        "properties": {
+          "all": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "commitments": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "invoices": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoices",
+          "commitments",
+          "all"
         ],
         "type": "object"
       },
@@ -72885,6 +74146,14 @@
         ],
         "type": "object"
       },
+      "TaxCode": {
+        "enum": [
+          "zero",
+          "exempt",
+          "vat_14"
+        ],
+        "type": "string"
+      },
       "TechnicianAttendanceView": {
         "properties": {
           "absent": {
@@ -77226,6 +78495,12 @@
             "nullable": true,
             "type": "number"
           },
+          "retentionPct": {
+            "description": "Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); null for none.",
+            "nullable": true,
+            "pattern": "^(?:20(?:\\.0{1,2})?|1\\d(?:\\.\\d{1,2})?|[1-9](?:\\.\\d{1,2})?|0\\.(?:0[1-9]|[1-9]\\d?))$",
+            "type": "string"
+          },
           "scope": {
             "maxLength": 1000,
             "nullable": true,
@@ -79356,6 +80631,77 @@
         ],
         "type": "object"
       },
+      "VarianceReasonDto": {
+        "properties": {
+          "month": {
+            "description": "1 is the fiscal year’s first month.",
+            "maximum": 12,
+            "minimum": 1,
+            "type": "number"
+          },
+          "note": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A `budgetVariance` code.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "VarianceReasonView": {
+        "properties": {
+          "month": {
+            "type": "number"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "note",
+          "month"
+        ],
+        "type": "object"
+      },
+      "VarianceSettingDto": {
+        "properties": {
+          "varianceReasonPct": {
+            "description": "Past this share of a month’s plan, a closed month asks for a reason; null: never.",
+            "maximum": 100,
+            "minimum": 1,
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "varianceReasonPct"
+        ],
+        "type": "object"
+      },
+      "VarianceSettingView": {
+        "properties": {
+          "varianceReasonPct": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "varianceReasonPct"
+        ],
+        "type": "object"
+      },
       "VehicleCountedView": {
         "properties": {
           "counted": {
@@ -79732,6 +81078,228 @@
         "required": [
           "count",
           "averages"
+        ],
+        "type": "object"
+      },
+      "VendorInvoiceLineView": {
+        "properties": {
+          "amount": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "tax": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "taxCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxCode"
+              }
+            ]
+          },
+          "taxRate": {
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "description",
+          "amount",
+          "taxCode",
+          "taxRate",
+          "tax"
+        ],
+        "type": "object"
+      },
+      "VendorInvoiceStatus": {
+        "enum": [
+          "received",
+          "approved",
+          "rejected",
+          "cancelled",
+          "paid"
+        ],
+        "type": "string"
+      },
+      "VendorInvoiceView": {
+        "properties": {
+          "authorizationId": {
+            "description": "The board’s approved major contract it spends down.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "channel": {
+            "description": "How it came in.",
+            "enum": [
+              "office"
+            ],
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractPaymentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "invoiceUrl": {
+            "description": "The scan, a short-lived link.",
+            "nullable": true,
+            "type": "string"
+          },
+          "issuedOn": {
+            "example": "2027-06-01",
+            "nullable": false,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/VendorInvoiceLineView"
+            },
+            "type": "array"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "VI-000001",
+            "type": "string"
+          },
+          "payout": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "purchaseRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "recordedByMe": {
+            "description": "The caller recorded it: someone else approves it.",
+            "type": "boolean"
+          },
+          "rejectReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorInvoiceStatus"
+              }
+            ]
+          },
+          "subtotal": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "tax": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "total": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "vendorNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "channel",
+          "vendorId",
+          "vendorNumber",
+          "issuedOn",
+          "dueOn",
+          "contractId",
+          "contractPaymentId",
+          "purchaseRequestId",
+          "budgetLineId",
+          "authorizationId",
+          "subtotal",
+          "tax",
+          "total",
+          "note",
+          "status",
+          "rejectReason",
+          "cancelReason",
+          "recordedAt",
+          "decidedAt",
+          "recordedByMe",
+          "invoiceUrl",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "VendorInvoiceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VendorInvoiceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -130034,6 +131602,48 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/budget-lines/{id}/variance-reasons": {
+      "post": {
+        "description": "A `budgetVariance` code and a note; the latest of a month shows.",
+        "operationId": "BudgetPlanningController_explain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VarianceReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Say why a line ran past its plan in a month",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/budget-settings": {
       "get": {
         "operationId": "BudgetsController_settings",
@@ -130094,6 +131704,174 @@
           }
         ],
         "summary": "Set the month the fiscal year starts on",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/budget-transfers": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "BudgetPlanningController_transfers",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "budgetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BudgetTransferView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a budget’s transfers",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Two lines of the active budget, at most what the line it leaves has available (BUDGET_LINE_INSUFFICIENT). Within the manager’s limit it is applied at once; above it, it waits for the board (`awaiting_board`): raise a `budget_transfer` request naming it (POST /staff/governance/approvals).",
+        "operationId": "BudgetPlanningController_transfer",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetTransferDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move budget between two lines",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/budget-transfers/{id}": {
+      "get": {
+        "operationId": "BudgetPlanningController_getTransfer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a budget transfer",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/budget-transfers/{id}/cancel": {
+      "post": {
+        "description": "Before it is raised; once raised, governance withdraws the request (BUDGET_TRANSFER_STATE).",
+        "operationId": "BudgetPlanningController_cancelTransfer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetTransferView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a transfer waiting for the board",
         "tags": [
           "finance"
         ],
@@ -130304,6 +132082,55 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/budgets/{id}/months": {
+      "put": {
+        "description": "Twelve months, or four quarters (a third on each month), adding up to the line’s amount (INVALID_VALUE with the count and total); `months: null` splits a line evenly again. Active budgets only (BUDGET_NOT_ACTIVE).",
+        "operationId": "BudgetPlanningController_phase",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BudgetPhasingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Split the active budget’s lines by month",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/collector-settings": {
       "get": {
         "operationId": "StaffCollectorVisitsController_getSettings",
@@ -130365,6 +132192,508 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/commitments": {
+      "get": {
+        "description": "Budget kept for a contract’s unpaid payment or an approved purchase, with what each still keeps; newest first.",
+        "operationId": "BudgetPlanningController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lineId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "enum": [
+                "contract",
+                "purchase_request"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Open only (true) or closed only (false).",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the commitments",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-disbursements": {
+      "get": {
+        "description": "Oldest first.",
+        "operationId": "PayablesController_pending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DisbursementView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Advances and releases waiting for a decision or a payout",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-disbursements/{id}": {
+      "get": {
+        "operationId": "PayablesController_disbursement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read an advance or a retention’s release",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-disbursements/{id}/approve": {
+      "post": {
+        "description": "Not by who asked for it (PAYABLE_SELF_APPROVAL); above the manager’s limit only on a contract the board signed (DISBURSEMENT_NEEDS_APPROVAL).",
+        "operationId": "PayablesController_approveDisbursement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve an advance or a retention’s release",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-disbursements/{id}/cancel": {
+      "post": {
+        "description": "Before it is paid; a `disbursementCancel` code.",
+        "operationId": "PayablesController_cancelDisbursement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off an advance or a release",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-disbursements/{id}/pay": {
+      "post": {
+        "description": "Once, whole.",
+        "operationId": "PayablesController_payDisbursement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Pay out an approved advance or release",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-disbursements/{id}/reject": {
+      "post": {
+        "description": "A `disbursementReject` code.",
+        "operationId": "PayablesController_rejectDisbursement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn down an advance or a release",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-payables/{contractId}": {
+      "get": {
+        "description": "Its advances, retention, invoices, requests and guarantees.",
+        "operationId": "PayablesController_position",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contractId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractPositionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a contract’s money with its vendor",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-payables/{contractId}/disbursements": {
+      "post": {
+        "description": "An advance within what the contract’s value leaves (ADVANCE_EXCEEDED); a release after its end (RETENTION_NOT_DUE), within what is held (RETENTION_EXCEEDED). The approvers are told.",
+        "operationId": "PayablesController_request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contractId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisbursementDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for an advance or a retention’s release",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/contract-payables/{contractId}/guarantees": {
+      "post": {
+        "description": "Its expiry is told 30 days ahead, once.",
+        "operationId": "PayablesController_guarantee",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contractId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuaranteeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuaranteeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a guarantee on a contract",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -131099,6 +133428,56 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/payment-schedule": {
+      "get": {
+        "description": "Approved invoices by their due day and what commitments keep by theirs; by default next month (next month’s commitments). At most 366 days.",
+        "operationId": "PayablesController_schedule",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "At most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentScheduleView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the payment schedule",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/plan-settings": {
       "get": {
         "operationId": "StaffPlanRequestsController_getSettings",
@@ -131262,6 +133641,111 @@
           }
         ],
         "summary": "Export the aging report as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/budget-periods": {
+      "get": {
+        "description": "Per line and period: planned, actual, the variance, and whether a closed period past the compound’s setting has no reason yet. By default the active budget of the year under way.",
+        "operationId": "PayablesReportsController_periods",
+        "parameters": [
+          {
+            "description": "By default the active budget of the year under way.",
+            "in": "query",
+            "name": "budgetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "by",
+            "required": false,
+            "schema": {
+              "enum": [
+                "month",
+                "quarter"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeriodReportView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the budget by month or quarter",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/reports/budget-periods/export": {
+      "get": {
+        "operationId": "PayablesReportsController_periodsCsv",
+        "parameters": [
+          {
+            "description": "By default the active budget of the year under way.",
+            "in": "query",
+            "name": "budgetId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "by",
+            "required": false,
+            "schema": {
+              "enum": [
+                "month",
+                "quarter"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the budget by month or quarter as CSV",
         "tags": [
           "finance"
         ],
@@ -131575,6 +134059,57 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/reports/entries/export": {
+      "get": {
+        "description": "For a ledger to come (ADR 0089): each expense and its void, each vendor invoice approved or called off after it, each payout, commitment and release, each applied transfer and approved increase, once, by the compound’s day; at most 366 days (EXPORT_TOO_LARGE past the row limit).",
+        "operationId": "PayablesReportsController_entries",
+        "parameters": [
+          {
+            "description": "The first day.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last day, at most 366 days on.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export every money entry of a period as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/reports/outstanding": {
       "get": {
         "operationId": "ReportsController_outstanding",
@@ -131789,6 +134324,498 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/variance-settings": {
+      "get": {
+        "operationId": "BudgetPlanningController_varianceSetting",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VarianceSettingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Past what share of its plan a month asks for a reason",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "BudgetPlanningController_setVarianceSetting",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VarianceSettingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VarianceSettingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set past what share of its plan a month asks for a reason",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-guarantees/{id}/close": {
+      "post": {
+        "description": "Once (GUARANTEE_STATE).",
+        "operationId": "PayablesController_closeGuarantee",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuaranteeCloseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuaranteeView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Return a guarantee, or call it",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "PayablesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VendorInvoiceStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vendorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contractId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "purchaseRequestId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInvoiceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List vendors’ invoices",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Against one of its contracts (a line of its schedule, or the contract) or a purchase request it fulfilled, with its scan and lines (each with a tax code, zero by default). Its number once among the vendor’s live invoices (VENDOR_INVOICE_DUPLICATE); VENDOR_INVOICE_SOURCE_INVALID with a reason. The approvers are told.",
+        "operationId": "PayablesController_record",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordVendorInvoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInvoiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a vendor’s invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices/{id}": {
+      "get": {
+        "operationId": "PayablesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInvoiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a vendor’s invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices/{id}/approve": {
+      "post": {
+        "description": "Not by who recorded it (PAYABLE_SELF_APPROVAL). On a line of the active budget: its commitment is given back, and the line must have the rest available (BUDGET_LINE_INSUFFICIENT). Above the manager’s limit, under the board’s approved major contract (EXPENSE_NEEDS_APPROVAL, EXPENSE_AUTHORIZATION_EXCEEDED).",
+        "operationId": "PayablesController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveVendorInvoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInvoiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a vendor’s invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices/{id}/cancel": {
+      "post": {
+        "description": "A `vendorInvoiceCancel` code; an approved one only by an approver (VENDOR_INVOICE_STATE).",
+        "operationId": "PayablesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInvoiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a vendor’s invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices/{id}/pay": {
+      "post": {
+        "description": "Once: writes its expense on its line, holds back the contract’s retention, sets off its open advances as asked (ADVANCE_SET_OFF_EXCEEDED), and marks a schedule payment paid.",
+        "operationId": "PayablesController_pay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoicePayoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInvoiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Pay out an approved vendor’s invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices/{id}/reject": {
+      "post": {
+        "description": "A `vendorInvoiceReject` code.",
+        "operationId": "PayablesController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeOnlyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorInvoiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn down a vendor’s invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

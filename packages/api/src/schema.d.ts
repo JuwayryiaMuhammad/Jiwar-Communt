@@ -16650,6 +16650,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/budget-lines/{id}/variance-reasons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Say why a line ran past its plan in a month
+         * @description A `budgetVariance` code and a note; the latest of a month shows.
+         */
+        post: operations["BudgetPlanningController_explain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/budget-settings": {
         parameters: {
             query?: never;
@@ -16669,6 +16689,67 @@ export interface paths {
          * @description Until a budget exists (FISCAL_YEAR_LOCKED).
          */
         patch: operations["BudgetsController_setSettings"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/budget-transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a budget’s transfers
+         * @description Newest first.
+         */
+        get: operations["BudgetPlanningController_transfers"];
+        put?: never;
+        /**
+         * Move budget between two lines
+         * @description Two lines of the active budget, at most what the line it leaves has available (BUDGET_LINE_INSUFFICIENT). Within the manager’s limit it is applied at once; above it, it waits for the board (`awaiting_board`): raise a `budget_transfer` request naming it (POST /staff/governance/approvals).
+         */
+        post: operations["BudgetPlanningController_transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/budget-transfers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a budget transfer */
+        get: operations["BudgetPlanningController_getTransfer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/budget-transfers/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a transfer waiting for the board
+         * @description Before it is raised; once raised, governance withdraws the request (BUDGET_TRANSFER_STATE).
+         */
+        post: operations["BudgetPlanningController_cancelTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/finance/budgets": {
@@ -16735,6 +16816,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/budgets/{id}/months": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Split the active budget’s lines by month
+         * @description Twelve months, or four quarters (a third on each month), adding up to the line’s amount (INVALID_VALUE with the count and total); `months: null` splits a line evenly again. Active budgets only (BUDGET_NOT_ACTIVE).
+         */
+        put: operations["BudgetPlanningController_phase"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/collector-settings": {
         parameters: {
             query?: never;
@@ -16751,6 +16852,203 @@ export interface paths {
         head?: never;
         /** Change the collector’s margin */
         patch: operations["StaffCollectorVisitsController_setSettings"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/commitments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the commitments
+         * @description Budget kept for a contract’s unpaid payment or an approved purchase, with what each still keeps; newest first.
+         */
+        get: operations["BudgetPlanningController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-disbursements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Advances and releases waiting for a decision or a payout
+         * @description Oldest first.
+         */
+        get: operations["PayablesController_pending"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-disbursements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an advance or a retention’s release */
+        get: operations["PayablesController_disbursement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-disbursements/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve an advance or a retention’s release
+         * @description Not by who asked for it (PAYABLE_SELF_APPROVAL); above the manager’s limit only on a contract the board signed (DISBURSEMENT_NEEDS_APPROVAL).
+         */
+        post: operations["PayablesController_approveDisbursement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-disbursements/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off an advance or a release
+         * @description Before it is paid; a `disbursementCancel` code.
+         */
+        post: operations["PayablesController_cancelDisbursement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-disbursements/{id}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pay out an approved advance or release
+         * @description Once, whole.
+         */
+        post: operations["PayablesController_payDisbursement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-disbursements/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn down an advance or a release
+         * @description A `disbursementReject` code.
+         */
+        post: operations["PayablesController_rejectDisbursement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-payables/{contractId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a contract’s money with its vendor
+         * @description Its advances, retention, invoices, requests and guarantees.
+         */
+        get: operations["PayablesController_position"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-payables/{contractId}/disbursements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for an advance or a retention’s release
+         * @description An advance within what the contract’s value leaves (ADVANCE_EXCEEDED); a release after its end (RETENTION_NOT_DUE), within what is held (RETENTION_EXCEEDED). The approvers are told.
+         */
+        post: operations["PayablesController_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/contract-payables/{contractId}/guarantees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a guarantee on a contract
+         * @description Its expiry is told 30 days ahead, once.
+         */
+        post: operations["PayablesController_guarantee"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/staff/finance/expense-authorizations": {
@@ -16945,6 +17243,26 @@ export interface paths {
         patch: operations["LateNoticesController_update"];
         trace?: never;
     };
+    "/api/v1/staff/finance/payment-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the payment schedule
+         * @description Approved invoices by their due day and what commitments keep by theirs; by default next month (next month’s commitments). At most 366 days.
+         */
+        get: operations["PayablesController_schedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/plan-settings": {
         parameters: {
             query?: never;
@@ -16992,6 +17310,43 @@ export interface paths {
         };
         /** Export the aging report as CSV */
         get: operations["ReportsController_agingCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/budget-periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the budget by month or quarter
+         * @description Per line and period: planned, actual, the variance, and whether a closed period past the compound’s setting has no reason yet. By default the active budget of the year under way.
+         */
+        get: operations["PayablesReportsController_periods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/reports/budget-periods/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the budget by month or quarter as CSV */
+        get: operations["PayablesReportsController_periodsCsv"];
         put?: never;
         post?: never;
         delete?: never;
@@ -17114,6 +17469,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/reports/entries/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export every money entry of a period as CSV
+         * @description For a ledger to come (ADR 0089): each expense and its void, each vendor invoice approved or called off after it, each payout, commitment and release, each applied transfer and approved increase, once, by the compound’s day; at most 366 days (EXPORT_TOO_LARGE past the row limit).
+         */
+        get: operations["PayablesReportsController_entries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/reports/outstanding": {
         parameters: {
             query?: never;
@@ -17180,6 +17555,165 @@ export interface paths {
         get: operations["StaffSpendingReportsController_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/variance-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Past what share of its plan a month asks for a reason */
+        get: operations["BudgetPlanningController_varianceSetting"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set past what share of its plan a month asks for a reason */
+        patch: operations["BudgetPlanningController_setVarianceSetting"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-guarantees/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Return a guarantee, or call it
+         * @description Once (GUARANTEE_STATE).
+         */
+        post: operations["PayablesController_closeGuarantee"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List vendors’ invoices
+         * @description Newest first.
+         */
+        get: operations["PayablesController_list"];
+        put?: never;
+        /**
+         * Record a vendor’s invoice
+         * @description Against one of its contracts (a line of its schedule, or the contract) or a purchase request it fulfilled, with its scan and lines (each with a tax code, zero by default). Its number once among the vendor’s live invoices (VENDOR_INVOICE_DUPLICATE); VENDOR_INVOICE_SOURCE_INVALID with a reason. The approvers are told.
+         */
+        post: operations["PayablesController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a vendor’s invoice */
+        get: operations["PayablesController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a vendor’s invoice
+         * @description Not by who recorded it (PAYABLE_SELF_APPROVAL). On a line of the active budget: its commitment is given back, and the line must have the rest available (BUDGET_LINE_INSUFFICIENT). Above the manager’s limit, under the board’s approved major contract (EXPENSE_NEEDS_APPROVAL, EXPENSE_AUTHORIZATION_EXCEEDED).
+         */
+        post: operations["PayablesController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a vendor’s invoice
+         * @description A `vendorInvoiceCancel` code; an approved one only by an approver (VENDOR_INVOICE_STATE).
+         */
+        post: operations["PayablesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices/{id}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pay out an approved vendor’s invoice
+         * @description Once: writes its expense on its line, holds back the contract’s retention, sets off its open advances as asked (ADVANCE_SET_OFF_EXCEEDED), and marks a schedule payment paid.
+         */
+        post: operations["PayablesController_pay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn down a vendor’s invoice
+         * @description A `vendorInvoiceReject` code.
+         */
+        post: operations["PayablesController_reject"];
         delete?: never;
         options?: never;
         head?: never;
@@ -26397,6 +26931,19 @@ export interface components {
             /** Format: uuid */
             storeId: string;
         };
+        AdvancesView: {
+            /**
+             * @description Asked for or approved, not yet paid.
+             * @example 1200.00
+             */
+            asked: string;
+            /** @example 1200.00 */
+            open: string;
+            /** @example 1200.00 */
+            paid: string;
+            /** @example 1200.00 */
+            setOff: string;
+        };
         /** @enum {string} */
         AgendaProposalOutcome: "accepted" | "declined";
         /** @enum {string} */
@@ -26889,6 +27436,18 @@ export interface components {
             stickerNumber: string;
             /** @description The `version` the staff read (VEHICLE_CHANGED otherwise). */
             version: number;
+        };
+        ApproveVendorInvoiceDto: {
+            /**
+             * Format: uuid
+             * @description Above the manager’s limit: the board’s approved major contract to spend down, if not its contract’s or purchase’s (EXPENSE_NEEDS_APPROVAL, EXPENSE_AUTHORIZATION_EXCEEDED); within it, FIELD_NOT_ALLOWED.
+             */
+            authorizationId?: string;
+            /**
+             * Format: uuid
+             * @description A line of the active budget, if not its own.
+             */
+            budgetLineId?: string;
         };
         ApprovedRegistrationView: {
             /** Format: uuid */
@@ -28260,7 +28819,7 @@ export interface components {
         };
         BudgetLineView: {
             /**
-             * @description The amount and the increases.
+             * @description The amount, the increases and the transfers.
              * @example 1200.00
              */
             allowance: string;
@@ -28269,7 +28828,17 @@ export interface components {
              * @example 1200.00
              */
             amount: string;
+            /**
+             * @description What may still be committed or spent: what is left less what is committed and approved to pay.
+             * @example 1200.00
+             */
+            available: string;
             category: components["schemas"]["BudgetCategory"];
+            /**
+             * @description What open commitments keep: contracts’ payments and approved purchases (ADR 0089).
+             * @example 1200.00
+             */
+            committed: string;
             /** Format: uuid */
             id: string;
             /**
@@ -28279,7 +28848,12 @@ export interface components {
             increases: string;
             note: string | null;
             /**
-             * @description What the line has left.
+             * @description Approved vendors’ invoices not yet paid (ADR 0089).
+             * @example 1200.00
+             */
+            payable: string;
+            /**
+             * @description What the line has left: the allowance less what was spent.
              * @example 1200.00
              */
             remaining: string;
@@ -28288,9 +28862,22 @@ export interface components {
              * @example 1200.00
              */
             spent: string;
+            /**
+             * @description Applied transfers into the line (ADR 0089).
+             * @example 1200.00
+             */
+            transfersIn: string;
+            /**
+             * @description Applied transfers out of the line (ADR 0089).
+             * @example 1200.00
+             */
+            transfersOut: string;
         };
         BudgetLinesDto: {
             lines: components["schemas"]["BudgetLineDto"][];
+        };
+        BudgetPhasingDto: {
+            lines: components["schemas"]["LinePhasingDto"][];
         };
         BudgetSettingsDto: {
             /** @description The month a fiscal year starts on; fixed once a budget exists (FISCAL_YEAR_LOCKED). */
@@ -28305,13 +28892,62 @@ export interface components {
             /** @example 1200.00 */
             allowance: string;
             /** @example 1200.00 */
+            available: string;
+            /** @example 1200.00 */
             budgeted: string;
             /** @example 1200.00 */
+            committed: string;
+            /** @example 1200.00 */
             increases: string;
+            /** @example 1200.00 */
+            payable: string;
             /** @example 1200.00 */
             remaining: string;
             /** @example 1200.00 */
             spent: string;
+        };
+        BudgetTransferDto: {
+            /** @description EGP; at most what the line it leaves has available (BUDGET_LINE_INSUFFICIENT). */
+            amount: string;
+            /**
+             * Format: uuid
+             * @description A line of the active budget.
+             */
+            fromLineId: string;
+            reason: string;
+            /**
+             * Format: uuid
+             * @description Another line of the same budget.
+             */
+            toLineId: string;
+        };
+        /** @enum {string} */
+        BudgetTransferStatus: "awaiting_board" | "applied" | "rejected" | "withdrawn" | "lapsed";
+        BudgetTransferView: {
+            /** @example 1200.00 */
+            amount: string;
+            /**
+             * Format: uuid
+             * @description Its budget_transfer request, once raised.
+             */
+            approvalRequestId: string | null;
+            /** Format: uuid */
+            budgetId: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            fromCategory: string;
+            /** Format: uuid */
+            fromLineId: string;
+            /** Format: uuid */
+            id: string;
+            reason: string;
+            /** Format: date-time */
+            requestedAt: string;
+            requestedByMe: boolean;
+            status: components["schemas"]["BudgetTransferStatus"];
+            toCategory: string;
+            /** Format: uuid */
+            toLineId: string;
         };
         BudgetView: {
             /**
@@ -29766,6 +30402,45 @@ export interface components {
             data: components["schemas"]["CollectorVisitView"][];
             nextCursor: string | null;
         };
+        CommitmentView: {
+            /** @example 1200.00 */
+            amount: string;
+            /** Format: uuid */
+            budgetLineId: string;
+            category: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            contractId: string | null;
+            /** Format: uuid */
+            contractPaymentId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @example 2027-06-01 */
+            dueOn: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description What it still keeps.
+             * @example 1200.00
+             */
+            open: string;
+            /** Format: uuid */
+            purchaseRequestId: string | null;
+            /**
+             * @description Given back so far.
+             * @example 1200.00
+             */
+            released: string;
+            /** @enum {string} */
+            source: "contract" | "purchase_request";
+            /** Format: uuid */
+            vendorId: string | null;
+        };
+        CommitmentViewList: {
+            data: components["schemas"]["CommitmentView"][];
+            nextCursor: string | null;
+        };
         CommonAreaView: {
             active: boolean;
             building: string | null;
@@ -30579,6 +31254,15 @@ export interface components {
             /** @description Hours the participants have to re-confirm a higher price; 72 by default. */
             reconfirmHours?: number;
         };
+        ContractInvoicesView: {
+            /**
+             * @description Approved, not yet paid.
+             * @example 1200.00
+             */
+            approved: string;
+            /** @example 1200.00 */
+            paid: string;
+        };
         ContractPaymentDto: {
             /** @description EGP. */
             amount: string;
@@ -30610,6 +31294,19 @@ export interface components {
         ContractPaymentsDto: {
             /** @description Every unpaid payment from now on; what is paid stays. */
             payments: components["schemas"]["ContractPaymentDto"][];
+        };
+        ContractPositionView: {
+            advances: components["schemas"]["AdvancesView"];
+            /** Format: uuid */
+            contractId: string;
+            disbursements: components["schemas"]["DisbursementView"][];
+            guarantees: components["schemas"]["GuaranteeView"][];
+            invoices: components["schemas"]["ContractInvoicesView"];
+            retention: components["schemas"]["RetentionView"];
+            /** @example 5.00 */
+            retentionPct: string | null;
+            /** Format: uuid */
+            vendorId: string;
         };
         ContractReadView: {
             /** Format: date-time */
@@ -31354,6 +32051,8 @@ export interface components {
             renewalTermMonths?: number;
             /** @description Hours the vendor has to respond. */
             responseHours?: number;
+            /** @description Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); released at the contract’s end with approval. */
+            retentionPct?: string;
             /** @description What it covers, in the compound’s words. */
             scope?: string;
             /** Format: date */
@@ -33541,6 +34240,39 @@ export interface components {
         DirectoryZoneView: {
             guards: components["schemas"]["FirstNameRefView"][];
             zone: components["schemas"]["PlaceView"];
+        };
+        DisbursementDto: {
+            /** @description EGP: an advance within what the contract’s value leaves (ADVANCE_EXCEEDED); a release within what is held (RETENTION_EXCEEDED), after its end (RETENTION_NOT_DUE). */
+            amount: string;
+            kind: components["schemas"]["DisbursementKind"];
+            note?: string;
+        };
+        /** @enum {string} */
+        DisbursementKind: "advance" | "retention_release";
+        /** @enum {string} */
+        DisbursementStatus: "requested" | "approved" | "rejected" | "cancelled" | "paid";
+        DisbursementView: {
+            /** @example 1200.00 */
+            amount: string;
+            cancelReason: string | null;
+            /** Format: uuid */
+            contractId: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["DisbursementKind"];
+            note: string | null;
+            /** @example VD-000001 */
+            number: string;
+            payout?: components["schemas"]["PayoutView"] | null;
+            rejectReason: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            requestedByMe: boolean;
+            status: components["schemas"]["DisbursementStatus"];
+            /** Format: uuid */
+            vendorId: string;
         };
         DispatchAbsenceEntryView: {
             approved: boolean;
@@ -36164,6 +36896,46 @@ export interface components {
             data: components["schemas"]["GroupOfferView"][];
             nextCursor: string | null;
         };
+        GuaranteeCloseDto: {
+            /** @enum {string} */
+            outcome: "returned" | "called";
+        };
+        GuaranteeDto: {
+            /** @description EGP. */
+            amount: string;
+            /** @description The day it expires, not before it was issued. */
+            expiresOn: string;
+            /** @description The day it was issued. */
+            issuedOn: string;
+            /** @description The bank that issued it. */
+            issuer: string;
+            kind: components["schemas"]["GuaranteeKind"];
+            reference: string;
+        };
+        /** @enum {string} */
+        GuaranteeKind: "performance" | "advance_payment" | "warranty" | "other";
+        /** @enum {string} */
+        GuaranteeStatus: "held" | "returned" | "called";
+        GuaranteeView: {
+            /** @example 1200.00 */
+            amount: string;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            contractId: string;
+            /** @example 2027-06-01 */
+            expiresOn: string;
+            /** Format: uuid */
+            id: string;
+            /** @example 2027-06-01 */
+            issuedOn: string;
+            issuer: string;
+            kind: components["schemas"]["GuaranteeKind"];
+            reference: string;
+            status: components["schemas"]["GuaranteeStatus"];
+            /** Format: uuid */
+            vendorId: string;
+        };
         GuardAttendanceView: {
             /** @description Of them, not opened an hour after they were due. */
             absent: number;
@@ -37768,6 +38540,15 @@ export interface components {
             descriptionEn: string;
             position: number;
         };
+        InvoicePayoutDto: {
+            /** @description Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED). */
+            advanceSetOff?: string;
+            method: components["schemas"]["PayoutMethod"];
+            /** @description The day it was paid: within its line’s budget year, not ahead. */
+            paidOn: string;
+            /** @description The transfer’s or the cheque’s reference. */
+            reference?: string;
+        };
         InvoicePlanOfferView: {
             /** @description The most months to ask for. */
             maxMonths: number;
@@ -38184,6 +38965,14 @@ export interface components {
             /** @description From the closed list `bookingSuspensionLift`. */
             reasonCode: string;
         };
+        LinePhasingDto: {
+            /** Format: uuid */
+            lineId: string;
+            /** @description Twelve amounts, the fiscal year’s first month first, adding up to the line’s amount; null splits it evenly again. Or `quarters`. */
+            months?: string[] | null;
+            /** @description Four amounts, each spread on its three months (a third each). */
+            quarters?: string[];
+        };
         LinkEvidenceDto: {
             /**
              * Format: uuid
@@ -38523,6 +39312,11 @@ export interface components {
              */
             renewsId: string | null;
             responseHours: number | null;
+            /**
+             * @description Held back of each payout, a percentage (ADR 0089).
+             * @example 5.00
+             */
+            retentionPct: string | null;
             scope: string | null;
             /** Format: date */
             startsOn: string;
@@ -40695,6 +41489,11 @@ export interface components {
             rows: components["schemas"]["OutstandingRowView"][];
             totals: components["schemas"]["OutstandingRowView"];
         };
+        OverdueView: {
+            /** @example 1200.00 */
+            amount: string;
+            count: number;
+        };
         OwnActionIncidentView: {
             /** Format: uuid */
             id: string;
@@ -41495,6 +42294,17 @@ export interface components {
             /** @description REASON_CODES.paymentReverse */
             reasonCode: string;
         };
+        PaymentScheduleView: {
+            /** @example 2027-06-01 */
+            asOf: string;
+            /** @example 2027-06-01 */
+            from: string;
+            overdue: components["schemas"]["OverdueView"];
+            rows: components["schemas"]["ScheduleRowView"][];
+            /** @example 2027-06-01 */
+            to: string;
+            totals: components["schemas"]["ScheduleTotalsView"];
+        };
         /** @enum {string} */
         PaymentSessionStatus: "opening" | "open" | "succeeded" | "failed" | "expired" | "superseded";
         PaymentSessionView: {
@@ -41559,6 +42369,48 @@ export interface components {
         PaymentViewList: {
             data: components["schemas"]["PaymentView"][];
             nextCursor: string | null;
+        };
+        PayoutDto: {
+            method: components["schemas"]["PayoutMethod"];
+            /** @description The day it was paid: within its line’s budget year, not ahead. */
+            paidOn: string;
+            /** @description The transfer’s or the cheque’s reference. */
+            reference?: string;
+        };
+        /** @enum {string} */
+        PayoutMethod: "bank_transfer" | "cheque" | "cash";
+        PayoutView: {
+            /**
+             * @description Of the contract’s advances.
+             * @example 1200.00
+             */
+            advanceSetOff: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            expenseId: string | null;
+            /** @example 1200.00 */
+            gross: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "invoice" | "advance" | "retention_release";
+            method: components["schemas"]["PayoutMethod"];
+            /**
+             * @description What was paid.
+             * @example 1200.00
+             */
+            net: string;
+            /** @example VP-000001 */
+            number: string;
+            /** @example 2027-06-01 */
+            paidOn: string;
+            reference: string | null;
+            /**
+             * @description Held back at the contract’s retention share.
+             * @example 1200.00
+             */
+            retentionHeld: string;
         };
         PendingErasureView: {
             /** Format: uuid */
@@ -41638,6 +42490,52 @@ export interface components {
         PendingRegistrationViewList: {
             data: components["schemas"]["PendingRegistrationView"][];
             nextCursor: string | null;
+        };
+        PeriodCellView: {
+            /**
+             * @description Live expenses.
+             * @example 1200.00
+             */
+            actual: string;
+            closed: boolean;
+            /** @example 2027-06-01 */
+            from: string;
+            period: number;
+            /**
+             * @description Its months’ share, with the increases and transfers it brought.
+             * @example 1200.00
+             */
+            planned: string;
+            reason: components["schemas"]["VarianceReasonView"] | null;
+            /** @description Closed, past the compound’s setting, and not explained. */
+            reasonMissing: boolean;
+            /** @example 2027-06-01 */
+            to: string;
+            /**
+             * @description actual − planned.
+             * @example 1200.00
+             */
+            variance: string;
+            /** @example 12.5 */
+            variancePct: string | null;
+        };
+        PeriodLineView: {
+            category: string;
+            /** Format: uuid */
+            lineId: string;
+            periods: components["schemas"]["PeriodCellView"][];
+        };
+        PeriodReportView: {
+            /** @example 2027-06-01 */
+            asOf: string;
+            /** Format: uuid */
+            budgetId: string;
+            /** @enum {string} */
+            by: "month" | "quarter";
+            fiscalYear: number;
+            lines: components["schemas"]["PeriodLineView"][];
+            missingReasons: number;
+            varianceReasonPct: number | null;
         };
         PeriodView: {
             days: number;
@@ -43390,6 +44288,46 @@ export interface components {
             /** @description Staff accounts who went in too, besides the caller: two staff at least. */
             witnessIds: string[];
         };
+        RecordVendorInvoiceDto: {
+            /**
+             * Format: uuid
+             * @description The line it is paid from; by default its contract’s or purchase’s.
+             */
+            budgetLineId?: string;
+            /**
+             * Format: uuid
+             * @description One of its contracts; or `purchaseRequestId`.
+             */
+            contractId?: string;
+            /**
+             * Format: uuid
+             * @description A line of the contract’s schedule, unpaid and not invoiced.
+             */
+            contractPaymentId?: string;
+            /** @description When it is to be paid, not before its date. */
+            dueOn: string;
+            /**
+             * Format: uuid
+             * @description The caller’s upload of purpose `expense_invoice`.
+             */
+            invoiceFileId: string;
+            /** @description The invoice’s date, not ahead. */
+            issuedOn: string;
+            lines: components["schemas"]["InvoiceLineDto"][];
+            note?: string;
+            /**
+             * Format: uuid
+             * @description A purchase request it fulfilled.
+             */
+            purchaseRequestId?: string;
+            /**
+             * Format: uuid
+             * @description The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs).
+             */
+            vendorId?: string;
+            /** @description The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). */
+            vendorNumber: string;
+        };
         RecordViolationPaymentDto: {
             /** @description The whole amount of the violation (AMOUNT_MISMATCH, params.amount). */
             amount: string;
@@ -44979,6 +45917,22 @@ export interface components {
              */
             phone: string | null;
         };
+        RetentionView: {
+            /**
+             * @description Asked for or approved, not yet paid.
+             * @example 1200.00
+             */
+            asked: string;
+            /** @example 1200.00 */
+            held: string;
+            /**
+             * @description What may still be asked for.
+             * @example 1200.00
+             */
+            open: string;
+            /** @example 1200.00 */
+            released: string;
+        };
         RetireAlarmDeviceDto: {
             /** @description From the closed list `alarmDeviceRetire`. */
             reasonCode: string;
@@ -45564,6 +46518,37 @@ export interface components {
              */
             scheduledAt: string;
             title: string;
+        };
+        ScheduleRowView: {
+            /** @example 1200.00 */
+            amount: string;
+            /** Format: uuid */
+            budgetLineId: string;
+            category: string;
+            /** Format: uuid */
+            contractId: string | null;
+            /** @example 2027-06-01 */
+            day: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "invoice" | "commitment";
+            /** Format: uuid */
+            purchaseRequestId: string | null;
+            reference: string | null;
+            /** @enum {string} */
+            source: "contract" | "purchase_request";
+            /** Format: uuid */
+            vendorId: string | null;
+            vendorName: string | null;
+        };
+        ScheduleTotalsView: {
+            /** @example 1200.00 */
+            all: string;
+            /** @example 1200.00 */
+            commitments: string;
+            /** @example 1200.00 */
+            invoices: string;
         };
         SecurityEventView: {
             /** Format: uuid */
@@ -48990,6 +49975,8 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        /** @enum {string} */
+        TaxCode: "zero" | "exempt" | "vat_14";
         TechnicianAttendanceView: {
             /** @description Of them, not on duty an hour after they were due. */
             absent: number;
@@ -50306,6 +51293,8 @@ export interface components {
             renewalTermMonths?: number | null;
             /** @description Hours the vendor has to respond. */
             responseHours?: number | null;
+            /** @description Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); null for none. */
+            retentionPct?: string | null;
             scope?: string | null;
             /** Format: date */
             startsOn?: string;
@@ -51065,6 +52054,25 @@ export interface components {
             /** @description In the kind’s unit, four decimals. */
             use: string;
         };
+        VarianceReasonDto: {
+            /** @description 1 is the fiscal year’s first month. */
+            month: number;
+            note?: string;
+            /** @description A `budgetVariance` code. */
+            reasonCode: string;
+        };
+        VarianceReasonView: {
+            month: number;
+            note: string | null;
+            reasonCode: string;
+        };
+        VarianceSettingDto: {
+            /** @description Past this share of a month’s plan, a closed month asks for a reason; null: never. */
+            varianceReasonPct: number | null;
+        };
+        VarianceSettingView: {
+            varianceReasonPct: number | null;
+        };
         VehicleCountedView: {
             /** @enum {boolean} */
             counted: true;
@@ -51174,6 +52182,74 @@ export interface components {
             averages: components["schemas"]["VendorScoresView"];
             /** @description In the last year. */
             count: number;
+        };
+        VendorInvoiceLineView: {
+            /** @example 1200.00 */
+            amount: string;
+            description: string;
+            position: number;
+            /** @example 1200.00 */
+            tax: string;
+            taxCode: components["schemas"]["TaxCode"];
+            /** @example 0.00 */
+            taxRate: string;
+        };
+        /** @enum {string} */
+        VendorInvoiceStatus: "received" | "approved" | "rejected" | "cancelled" | "paid";
+        VendorInvoiceView: {
+            /**
+             * Format: uuid
+             * @description The board’s approved major contract it spends down.
+             */
+            authorizationId: string | null;
+            /** Format: uuid */
+            budgetLineId: string | null;
+            cancelReason: string | null;
+            /**
+             * @description How it came in.
+             * @enum {string}
+             */
+            channel: "office";
+            /** Format: uuid */
+            contractId: string | null;
+            /** Format: uuid */
+            contractPaymentId: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** @example 2027-06-01 */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The scan, a short-lived link. */
+            invoiceUrl: string | null;
+            /** @example 2027-06-01 */
+            issuedOn: string;
+            lines: components["schemas"]["VendorInvoiceLineView"][];
+            note: string | null;
+            /** @example VI-000001 */
+            number: string;
+            payout?: components["schemas"]["PayoutView"] | null;
+            /** Format: uuid */
+            purchaseRequestId: string | null;
+            /** Format: date-time */
+            recordedAt: string;
+            /** @description The caller recorded it: someone else approves it. */
+            recordedByMe: boolean;
+            rejectReason: string | null;
+            status: components["schemas"]["VendorInvoiceStatus"];
+            /** @example 1200.00 */
+            subtotal: string;
+            /** @example 1200.00 */
+            tax: string;
+            /** @example 1200.00 */
+            total: string;
+            /** Format: uuid */
+            vendorId: string;
+            vendorNumber: string;
+        };
+        VendorInvoiceViewList: {
+            data: components["schemas"]["VendorInvoiceView"][];
+            nextCursor: string | null;
         };
         VendorPapersCountsView: {
             expired: number;
@@ -76983,6 +78059,29 @@ export interface operations {
             };
         };
     };
+    BudgetPlanningController_explain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VarianceReasonDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     BudgetsController_settings: {
         parameters: {
             query?: never;
@@ -77021,6 +78120,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BudgetSettingsView"];
+                };
+            };
+        };
+    };
+    BudgetPlanningController_transfers: {
+        parameters: {
+            query: {
+                budgetId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetTransferView"][];
+                };
+            };
+        };
+    };
+    BudgetPlanningController_transfer: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetTransferDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetTransferView"];
+                };
+            };
+        };
+    };
+    BudgetPlanningController_getTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetTransferView"];
+                };
+            };
+        };
+    };
+    BudgetPlanningController_cancelTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetTransferView"];
                 };
             };
         };
@@ -77122,6 +78310,31 @@ export interface operations {
             };
         };
     };
+    BudgetPlanningController_phase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BudgetPhasingDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BudgetView"];
+                };
+            };
+        };
+    };
     StaffCollectorVisitsController_getSettings: {
         parameters: {
             query?: never;
@@ -77160,6 +78373,249 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectorSettingsView"];
+                };
+            };
+        };
+    };
+    BudgetPlanningController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                lineId?: string;
+                source?: "contract" | "purchase_request";
+                /** @description Open only (true) or closed only (false). */
+                open?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentViewList"];
+                };
+            };
+        };
+    };
+    PayablesController_pending: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisbursementView"][];
+                };
+            };
+        };
+    };
+    PayablesController_disbursement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisbursementView"];
+                };
+            };
+        };
+    };
+    PayablesController_approveDisbursement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisbursementView"];
+                };
+            };
+        };
+    };
+    PayablesController_cancelDisbursement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisbursementView"];
+                };
+            };
+        };
+    };
+    PayablesController_payDisbursement: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayoutDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisbursementView"];
+                };
+            };
+        };
+    };
+    PayablesController_rejectDisbursement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisbursementView"];
+                };
+            };
+        };
+    };
+    PayablesController_position: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contractId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractPositionView"];
+                };
+            };
+        };
+    };
+    PayablesController_request: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                contractId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisbursementDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisbursementView"];
+                };
+            };
+        };
+    };
+    PayablesController_guarantee: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                contractId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuaranteeDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuaranteeView"];
                 };
             };
         };
@@ -77495,6 +78951,29 @@ export interface operations {
             };
         };
     };
+    PayablesController_schedule: {
+        parameters: {
+            query?: {
+                from?: string;
+                /** @description At most 366 days after `from`. */
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentScheduleView"];
+                };
+            };
+        };
+    };
     StaffPlanRequestsController_getSettings: {
         parameters: {
             query?: never;
@@ -77566,6 +79045,52 @@ export interface operations {
                 groupBy?: "unit" | "building";
                 /** @description Units whose building reads exactly this. */
                 building?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    PayablesReportsController_periods: {
+        parameters: {
+            query?: {
+                /** @description By default the active budget of the year under way. */
+                budgetId?: string;
+                by?: "month" | "quarter";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodReportView"];
+                };
+            };
+        };
+    };
+    PayablesReportsController_periodsCsv: {
+        parameters: {
+            query?: {
+                /** @description By default the active budget of the year under way. */
+                budgetId?: string;
+                by?: "month" | "quarter";
             };
             header?: never;
             path?: never;
@@ -77725,6 +79250,30 @@ export interface operations {
             };
         };
     };
+    PayablesReportsController_entries: {
+        parameters: {
+            query: {
+                /** @description The first day. */
+                from: string;
+                /** @description The last day, at most 366 days on. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
     ReportsController_outstanding: {
         parameters: {
             query?: {
@@ -77833,6 +79382,250 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpendingReportView"];
+                };
+            };
+        };
+    };
+    BudgetPlanningController_varianceSetting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianceSettingView"];
+                };
+            };
+        };
+    };
+    BudgetPlanningController_setVarianceSetting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VarianceSettingDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VarianceSettingView"];
+                };
+            };
+        };
+    };
+    PayablesController_closeGuarantee: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuaranteeCloseDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuaranteeView"];
+                };
+            };
+        };
+    };
+    PayablesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["VendorInvoiceStatus"];
+                vendorId?: string;
+                contractId?: string;
+                purchaseRequestId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInvoiceViewList"];
+                };
+            };
+        };
+    };
+    PayablesController_record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordVendorInvoiceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInvoiceView"];
+                };
+            };
+        };
+    };
+    PayablesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInvoiceView"];
+                };
+            };
+        };
+    };
+    PayablesController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveVendorInvoiceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInvoiceView"];
+                };
+            };
+        };
+    };
+    PayablesController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInvoiceView"];
+                };
+            };
+        };
+    };
+    PayablesController_pay: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvoicePayoutDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInvoiceView"];
+                };
+            };
+        };
+    };
+    PayablesController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorInvoiceView"];
                 };
             };
         };

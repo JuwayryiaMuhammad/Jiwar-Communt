@@ -25,12 +25,26 @@ export class BudgetLineView {
   note: string | null;
   @money('Approved increases.')
   increases: string;
-  @money('The amount and the increases.')
+  @money('Applied transfers into the line (ADR 0089).')
+  transfersIn: string;
+  @money('Applied transfers out of the line (ADR 0089).')
+  transfersOut: string;
+  @money('The amount, the increases and the transfers.')
   allowance: string;
   @money('Live expenses.')
   spent: string;
-  @money('What the line has left.')
+  @money('What the line has left: the allowance less what was spent.')
   remaining: string;
+  @money(
+    'What open commitments keep: contracts’ payments and approved purchases (ADR 0089).',
+  )
+  committed: string;
+  @money('Approved vendors’ invoices not yet paid (ADR 0089).')
+  payable: string;
+  @money(
+    'What may still be committed or spent: what is left less what is committed and approved to pay.',
+  )
+  available: string;
 
   static from(f: LineFigures): BudgetLineView {
     return {
@@ -39,9 +53,14 @@ export class BudgetLineView {
       amount: show(f.line.amount),
       note: f.line.note,
       increases: show(f.increases),
+      transfersIn: show(f.transfersIn),
+      transfersOut: show(f.transfersOut),
       allowance: show(f.allowance),
       spent: show(f.spent),
       remaining: show(f.remaining),
+      committed: show(f.committed),
+      payable: show(f.payable),
+      available: show(f.available),
     };
   }
 }
@@ -52,6 +71,9 @@ export class BudgetTotalsView {
   @money() allowance: string;
   @money() spent: string;
   @money() remaining: string;
+  @money() committed: string;
+  @money() payable: string;
+  @money() available: string;
 }
 
 /** A fiscal year's budget (ADR 0055), with every line's figures. */
@@ -106,6 +128,9 @@ export class BudgetView {
         allowance: show(r.totals.allowance),
         spent: show(r.totals.spent),
         remaining: show(r.totals.remaining),
+        committed: show(r.totals.committed),
+        payable: show(r.totals.payable),
+        available: show(r.totals.available),
       },
     };
   }

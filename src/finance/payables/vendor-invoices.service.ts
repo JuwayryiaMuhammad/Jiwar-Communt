@@ -90,7 +90,6 @@ const invoiceState = (status: string) =>
   );
 const sourceInvalid = (
   reason:
-    | 'not_found'
     | 'vendor_mismatch'
     | 'not_fulfilled'
     | 'paid'
@@ -231,7 +230,11 @@ export class VendorInvoicesService implements OnModuleInit {
       let approvalRequestId: string | null = null;
       if (input.contractId) {
         const c = await this.bridge.source.contract(tx, input.contractId);
-        if (!c) throw sourceInvalid('not_found');
+        if (!c)
+          throw appError.notFound(
+            ErrorCode.MAINTENANCE_CONTRACT_NOT_FOUND,
+            'Contract not found',
+          );
         vendorId = c.vendorId;
         lineId = c.budgetLineId;
         approvalRequestId = c.approvalRequestId;
@@ -240,7 +243,11 @@ export class VendorInvoicesService implements OnModuleInit {
             tx,
             input.contractPaymentId,
           );
-          if (!p) throw sourceInvalid('not_found');
+          if (!p)
+            throw appError.notFound(
+              ErrorCode.CONTRACT_PAYMENT_NOT_FOUND,
+              'Payment not found',
+            );
           if (p.contractId !== c.id) throw sourceInvalid('not_its_contract');
           if (p.paid) throw sourceInvalid('paid');
           if (
@@ -259,7 +266,11 @@ export class VendorInvoicesService implements OnModuleInit {
           tx,
           input.purchaseRequestId!,
         );
-        if (!r) throw sourceInvalid('not_found');
+        if (!r)
+          throw appError.notFound(
+            ErrorCode.PURCHASE_REQUEST_NOT_FOUND,
+            'Purchase request not found',
+          );
         if (r.status !== 'fulfilled') throw sourceInvalid('not_fulfilled');
         vendorId = r.vendorId;
         lineId = r.budgetLineId;

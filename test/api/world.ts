@@ -289,6 +289,13 @@ export interface World
   bComplianceItemId: string;
   bComplianceOccurrenceId: string;
   bComplianceEvidenceId: string;
+  /** ADR 0089: compound B's budget line, a transfer, a vendor's invoice, an advance and a guarantee. */
+  bBudgetId: string;
+  bBudgetLineId: string;
+  bBudgetTransferId: string;
+  bVendorInvoiceId: string;
+  bDisbursementId: string;
+  bGuaranteeId: string;
   /** ADR 0066: compound B's meter, in its common area. */
   bMeterId: string;
   /** ADR 0066: a reading of it, and a spike alert on it. */
@@ -1117,6 +1124,138 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     });
   });
+  // ADR 0089: compound B's payables, as rows (a draft budget's lines).
+  const bPayables = await helpers.asManager(b, () =>
+    h.moduleRef.get(TenantTx).withTenantTx(async (tx) => {
+      const now = new Date();
+      const ids = {
+        budget: newId(),
+        line: newId(),
+        other: newId(),
+        transfer: newId(),
+        file: newId(),
+        invoice: newId(),
+        disbursement: newId(),
+        guarantee: newId(),
+      };
+      const y = new Date('2027-01-01T00:00:00.000Z');
+      const z = new Date('2027-12-31T00:00:00.000Z');
+      await tx.financeBudget.create({
+        data: {
+          id: ids.budget,
+          tenantId: b.tenantId,
+          fiscalYear: 2027,
+          startsOn: y,
+          endsOn: z,
+          createdById: b.managerId,
+          createdAt: now,
+        },
+      });
+      await tx.financeBudgetLine.createMany({
+        data: [
+          {
+            id: ids.line,
+            tenantId: b.tenantId,
+            budgetId: ids.budget,
+            category: 'maintenance',
+            amount: '1000',
+          },
+          {
+            id: ids.other,
+            tenantId: b.tenantId,
+            budgetId: ids.budget,
+            category: 'cleaning',
+            amount: '1000',
+          },
+        ],
+      });
+      await tx.financeBudgetTransfer.create({
+        data: {
+          id: ids.transfer,
+          tenantId: b.tenantId,
+          budgetId: ids.budget,
+          fromLineId: ids.line,
+          toLineId: ids.other,
+          amount: '1',
+          reason: 'World transfer',
+          status: 'awaiting_board',
+          requestedById: b.managerId,
+          requestedAt: now,
+        },
+      });
+      await tx.storedFile.create({
+        data: {
+          id: ids.file,
+          tenantId: b.tenantId,
+          purpose: 'expense_invoice',
+          contentType: 'application/pdf',
+          sizeBytes: 100,
+          status: 'ready',
+          uploadExpiresAt: now,
+          finalizedAt: now,
+          attachedAt: now,
+        },
+      });
+      await tx.financeVendorInvoice.create({
+        data: {
+          id: ids.invoice,
+          tenantId: b.tenantId,
+          number: 9001,
+          vendorId: bVendor.id,
+          vendorNumber: 'WORLD-1',
+          issuedOn: y,
+          dueOn: y,
+          contractId: bContract.id,
+          budgetLineId: ids.line,
+          invoiceFileId: ids.file,
+          subtotal: '100',
+          tax: '0',
+          total: '100',
+          recordedById: b.managerId,
+          recordedAt: now,
+        },
+      });
+      await tx.financeVendorInvoiceLine.create({
+        data: {
+          tenantId: b.tenantId,
+          invoiceId: ids.invoice,
+          position: 1,
+          description: 'World work',
+          amount: '100',
+        },
+      });
+      await tx.financeContractDisbursement.create({
+        data: {
+          id: ids.disbursement,
+          tenantId: b.tenantId,
+          number: 9001,
+          kind: 'advance',
+          contractId: bContract.id,
+          vendorId: bVendor.id,
+          amount: '10',
+          requestedById: b.managerId,
+          requestedAt: now,
+        },
+      });
+      await tx.financeVendorGuarantee.create({
+        data: {
+          id: ids.guarantee,
+          tenantId: b.tenantId,
+          contractId: bContract.id,
+          vendorId: bVendor.id,
+          kind: 'performance',
+          issuer: 'World Bank',
+          reference: 'WORLD-G1',
+          amount: '10',
+          issuedOn: y,
+          expiresOn: z,
+          recordedById: b.managerId,
+          recordedAt: now,
+        },
+      });
+      return ids;
+    }),
+  );
   const bMeter = await helpers.asManager(b, () =>
     helpers.prisma.tenant.meter.create({
       data: {
@@ -1854,6 +1993,12 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bComplianceItemId: bComplianceItem.id,
     bComplianceOccurrenceId: bComplianceOccurrence.id,
     bComplianceEvidenceId: bComplianceEvidence.id,
+    bBudgetId: bPayables.budget,
+    bBudgetLineId: bPayables.line,
+    bBudgetTransferId: bPayables.transfer,
+    bVendorInvoiceId: bPayables.invoice,
+    bDisbursementId: bPayables.disbursement,
+    bGuaranteeId: bPayables.guarantee,
     bMeterId: bMeter.id,
     bReadingId: bReading.id,
     bMeterAlertId: bMeterAlert.id,

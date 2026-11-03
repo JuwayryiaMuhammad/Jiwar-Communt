@@ -464,3 +464,17 @@ test('a technician’s call for help says its kind, never the words, and leads t
   assert.equal(notificationHref(n, (p) => p === 'field_team.manage'), '/field-team');
   assert.equal(notificationHref(n, () => false), null);
 });
+
+test('a vendor’s invoice, an advance and a guarantee (ADR 0089) read as references, never amounts, and open for who keeps payables', () => {
+  const received = { kind: 'vendor_invoice.received', params: { invoiceRef: 'VI-000004' }, targetType: 'vendor_invoice', targetId: 'i1' };
+  assert.equal(notificationText(received), 'Vendor invoice VI-000004 waits for approval');
+  assert.equal(notificationHref(received, (p) => p === 'finance.payables_approve'), '/finance/payables/i1');
+  assert.equal(notificationHref(received, () => false), null);
+  const decided = { kind: 'vendor_invoice.decided', params: { invoiceRef: 'VI-000004', decision: 'rejected' }, targetType: 'vendor_invoice', targetId: 'i1' };
+  assert.equal(notificationText(decided), 'Vendor invoice VI-000004 was turned down');
+  const asked = { kind: 'contract_disbursement.requested', params: { disbursementRef: 'VD-000002', disbursementKind: 'advance' }, targetType: 'contract_disbursement', targetId: 'd1' };
+  assert.equal(notificationText(asked), 'An advance VD-000002 waits for approval');
+  assert.equal(notificationHref(asked, (p) => p === 'finance.payables'), '/finance/payables/contracts');
+  const expiring = { kind: 'vendor_guarantee.expiring', params: { guaranteeKind: 'performance', expiresOn: '2027-03-01' }, targetType: 'vendor_guarantee', targetId: 'g1' };
+  assert.equal(notificationText(expiring), 'A vendor’s guarantee expires on 2027-03-01');
+});

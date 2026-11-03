@@ -8,6 +8,8 @@ const ITEM_KINDS = [
   'inspection_campaign',
   'contract_review',
   'estimate',
+  // ADR 0087.
+  'drill',
 ];
 const BOOL = ['true', 'false'];
 const TITLE = { min: 1, max: 120 };

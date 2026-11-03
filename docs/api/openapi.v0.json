@@ -636,6 +636,25 @@
         ],
         "type": "object"
       },
+      "AddTenderDocumentDto": {
+        "properties": {
+          "fileId": {
+            "description": "A `tender_document` file I uploaded.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "title"
+        ],
+        "type": "object"
+      },
       "AddVendorDocumentDto": {
         "properties": {
           "expiresOn": {
@@ -4056,6 +4075,172 @@
         "required": [
           "state",
           "since"
+        ],
+        "type": "object"
+      },
+      "AwardTenderDto": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "The board’s approved major contract: needed above the manager’s limit, of at least the bid’s amount; it signs this contract and no other.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "bidId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "description": "The contract’s code, unique in the compound.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+            "type": "string"
+          },
+          "endsOn": {
+            "description": "Its last day; after `startsOn`.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bidId",
+          "code",
+          "startsOn",
+          "endsOn"
+        ],
+        "type": "object"
+      },
+      "BidLinkBidDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, more than zero; sealed until the opening.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "durationDays": {
+            "description": "How many days the work takes.",
+            "maximum": 3650,
+            "minimum": 1,
+            "type": "number"
+          },
+          "note": {
+            "description": "The terms in words.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "token": {
+            "maxLength": 43,
+            "minLength": 43,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "token"
+        ],
+        "type": "object"
+      },
+      "BidLinkPageView": {
+        "properties": {
+          "bid": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InviteeBidView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "bidsDueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorCategory"
+              }
+            ]
+          },
+          "companyName": {
+            "description": "The company the link is for.",
+            "type": "string"
+          },
+          "compoundName": {
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/TenderDocumentView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "awarded",
+              "not_awarded",
+              "cancelled"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "description": "TN-000123.",
+            "type": "string"
+          },
+          "scope": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "`closed`: past the deadline, being opened or decided; never more.",
+            "enum": [
+              "open",
+              "closed",
+              "awarded",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title",
+          "scope",
+          "category",
+          "status",
+          "bidsDueAt",
+          "documents",
+          "bid",
+          "outcome",
+          "compoundName",
+          "companyName"
+        ],
+        "type": "object"
+      },
+      "BidLinkTokenDto": {
+        "properties": {
+          "token": {
+            "maxLength": 43,
+            "minLength": 43,
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
         ],
         "type": "object"
       },
@@ -14908,6 +15093,21 @@
         ],
         "type": "object"
       },
+      "ContractKind": {
+        "description": "The contract its award signs.",
+        "enum": [
+          "amc",
+          "service",
+          "warranty_extension",
+          "cleaning",
+          "security",
+          "landscaping",
+          "pest_control",
+          "supply",
+          "other"
+        ],
+        "type": "string"
+      },
       "ContractPaymentDto": {
         "properties": {
           "amount": {
@@ -15255,6 +15455,36 @@
           "hasFile",
           "partyOccupancyIds",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "ContractorBidDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, more than zero; sealed until the opening.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "durationDays": {
+            "description": "How many days the work takes.",
+            "maximum": 3650,
+            "minimum": 1,
+            "type": "number"
+          },
+          "fileId": {
+            "description": "A `tender_bid` file I uploaded: the offer.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "description": "The terms in words.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount"
         ],
         "type": "object"
       },
@@ -19999,6 +20229,59 @@
         "required": [
           "name",
           "manager"
+        ],
+        "type": "object"
+      },
+      "CreateTenderDto": {
+        "properties": {
+          "bidsDueAt": {
+            "description": "With its offset: bids are taken until then (not at it), a year ahead at most; an hour ahead at least when it is published.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "description": "The budget line its contract is paid from.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorCategory"
+              }
+            ]
+          },
+          "contractKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContractKind"
+              }
+            ],
+            "description": "The contract its award signs."
+          },
+          "estimatedValue": {
+            "description": "The management’s own estimate, EGP; bidders never see it.",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "scope": {
+            "description": "The scope of the work, in words; never a person.",
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "description": "What is asked for; never a person.",
+            "maxLength": 200,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "category",
+          "contractKind",
+          "bidsDueAt"
         ],
         "type": "object"
       },
@@ -36885,6 +37168,26 @@
         ],
         "type": "object"
       },
+      "InviteDto": {
+        "properties": {
+          "companyName": {
+            "description": "Not registered: its bid link is shown once.",
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "contactEmail": {
+            "description": "Its business contact, for the management’s reference.",
+            "format": "email",
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "InviteTokenDto": {
         "properties": {
           "token": {
@@ -36894,6 +37197,135 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "InviteeBidView": {
+        "properties": {
+          "amount": {
+            "description": "EGP; only once the tender is opened.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "sealed": {
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "submittedAt",
+          "withdrawnAt",
+          "sealed",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "InviteeTenderView": {
+        "properties": {
+          "bid": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InviteeBidView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "bidsDueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorCategory"
+              }
+            ]
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/TenderDocumentView"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "awarded",
+              "not_awarded",
+              "cancelled"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "description": "TN-000123.",
+            "type": "string"
+          },
+          "scope": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "description": "`closed`: past the deadline, being opened or decided; never more.",
+            "enum": [
+              "open",
+              "closed",
+              "awarded",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title",
+          "scope",
+          "category",
+          "status",
+          "bidsDueAt",
+          "documents",
+          "bid",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "InviteeTenderViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/InviteeTenderView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -75301,6 +75733,432 @@
         ],
         "type": "object"
       },
+      "TenderBidView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "bidder": {
+            "nullable": true,
+            "type": "string"
+          },
+          "durationDays": {
+            "nullable": true,
+            "type": "number"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invitationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "offerUrl": {
+            "nullable": true,
+            "type": "string"
+          },
+          "sealed": {
+            "description": "Its amount and terms are the database’s until the opening.",
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "invitationId",
+          "bidder",
+          "submittedAt",
+          "withdrawnAt",
+          "sealed",
+          "amount",
+          "durationDays",
+          "note",
+          "offerUrl"
+        ],
+        "type": "object"
+      },
+      "TenderDeadlineDto": {
+        "properties": {
+          "bidsDueAt": {
+            "description": "Later than the one before, which has not passed.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bidsDueAt"
+        ],
+        "type": "object"
+      },
+      "TenderDocumentView": {
+        "properties": {
+          "fileUrl": {
+            "description": "A short-lived link to read the file; null when it is gone.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "fileUrl"
+        ],
+        "type": "object"
+      },
+      "TenderInvitationKind": {
+        "enum": [
+          "vendor",
+          "link"
+        ],
+        "type": "string"
+      },
+      "TenderInvitationView": {
+        "properties": {
+          "contactEmail": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invitedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TenderInvitationKind"
+              }
+            ]
+          },
+          "linkExpiresAt": {
+            "description": "A link invitation’s live link: until when it opens.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "The registered vendor’s name, or the link invitee’s company.",
+            "nullable": true,
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "vendorId",
+          "name",
+          "contactEmail",
+          "invitedAt",
+          "revokedAt",
+          "linkExpiresAt"
+        ],
+        "type": "object"
+      },
+      "TenderLinkView": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "invitation": {
+            "$ref": "#/components/schemas/TenderInvitationView"
+          },
+          "url": {
+            "description": "The bid link, its token in the fragment: shown once.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invitation",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "TenderStatus": {
+        "enum": [
+          "draft",
+          "open",
+          "opening",
+          "opened",
+          "awarded",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "TenderSummaryView": {
+        "properties": {
+          "bidCount": {
+            "description": "The live bids its opening unsealed.",
+            "nullable": true,
+            "type": "number"
+          },
+          "bidsDueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "estimatedValue": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "reference": {
+            "description": "TN-000123.",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TenderStatus"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title",
+          "category",
+          "status",
+          "bidsDueAt",
+          "estimatedValue",
+          "bidCount",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "TenderSummaryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TenderSummaryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TenderView": {
+        "properties": {
+          "awardedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "awardedBidId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "bidCount": {
+            "description": "The live bids its opening unsealed.",
+            "nullable": true,
+            "type": "number"
+          },
+          "bids": {
+            "items": {
+              "$ref": "#/components/schemas/TenderBidView"
+            },
+            "type": "array"
+          },
+          "bidsDueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "From the closed list `tenderCancel`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorCategory"
+              }
+            ]
+          },
+          "contractCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContractKind"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/TenderDocumentView"
+            },
+            "type": "array"
+          },
+          "estimatedValue": {
+            "description": "EGP.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "invitations": {
+            "items": {
+              "$ref": "#/components/schemas/TenderInvitationView"
+            },
+            "type": "array"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "openedById": {
+            "description": "Who confirmed it: never who began it.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "openingStartedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "openingStartedById": {
+            "description": "Who began the opening.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "description": "TN-000123.",
+            "type": "string"
+          },
+          "scope": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TenderStatus"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "title",
+          "category",
+          "status",
+          "bidsDueAt",
+          "estimatedValue",
+          "bidCount",
+          "createdAt",
+          "scope",
+          "contractKind",
+          "budgetLineId",
+          "publishedAt",
+          "openingStartedById",
+          "openingStartedAt",
+          "openedById",
+          "openedAt",
+          "awardedBidId",
+          "awardedAt",
+          "contractId",
+          "contractCode",
+          "cancelReason",
+          "documents",
+          "invitations",
+          "bids"
+        ],
+        "type": "object"
+      },
       "TicketAssignmentType": {
         "enum": [
           "manual",
@@ -80480,6 +81338,50 @@
           "nameEn": {
             "maxLength": 80,
             "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTenderDto": {
+        "properties": {
+          "bidsDueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorCategory"
+              }
+            ]
+          },
+          "contractKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContractKind"
+              }
+            ]
+          },
+          "estimatedValue": {
+            "nullable": true,
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "scope": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 3,
             "type": "string"
           }
         },
@@ -91161,6 +92063,152 @@
           }
         ],
         "summary": "Turn the ticket down",
+        "tags": [
+          "contractor"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/tenders": {
+      "get": {
+        "description": "Published ones, newest invitation first; 100 at most.",
+        "operationId": "ContractorTendersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteeTenderViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the tenders my company is invited to",
+        "tags": [
+          "contractor"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/tenders/{id}": {
+      "get": {
+        "operationId": "ContractorTendersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteeTenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a tender my company is invited to",
+        "tags": [
+          "contractor"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/tenders/{id}/bid": {
+      "post": {
+        "description": "Sealed: nobody reads its amount before the opening, me included. One live bid; withdraw it to send another.",
+        "operationId": "ContractorTendersController_bid",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractorBidDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteeTenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send my company’s bid",
+        "tags": [
+          "contractor"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/tenders/{id}/bid/withdraw": {
+      "post": {
+        "operationId": "ContractorTendersController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw my company’s bid, before the deadline",
         "tags": [
           "contractor"
         ],
@@ -125479,6 +126527,102 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/public/tender-bids/bid": {
+      "post": {
+        "description": "Sealed until the opening; one live bid.",
+        "operationId": "BidLinkController_bid",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BidLinkBidDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidLinkPageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Send the company’s bid through its link",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/tender-bids/lookup": {
+      "post": {
+        "operationId": "BidLinkController_lookup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BidLinkTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidLinkPageView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Open a tender from its bid link",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/tender-bids/withdraw": {
+      "post": {
+        "operationId": "BidLinkController_withdraw",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BidLinkTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Withdraw the company’s bid, before the deadline",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/public/visitor-passes/lookup": {
       "post": {
         "operationId": "VisitorPageController_lookup",
@@ -148306,6 +149450,651 @@
         "tags": [
           "spaces"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "TendersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TenderStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderSummaryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the tenders",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "TendersController_create",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Draft a tender",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}": {
+      "get": {
+        "description": "Its bids show who sent them and when; their amounts and terms only once it is opened.",
+        "operationId": "TendersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a tender",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "TendersController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a draft’s terms",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/award": {
+      "post": {
+        "operationId": "TendersController_award",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AwardTenderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Award the tender: the contract is signed with the bid’s vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/cancel": {
+      "post": {
+        "operationId": "TendersController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call the tender off",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/deadline": {
+      "post": {
+        "operationId": "TendersController_extend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenderDeadlineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move the deadline later, before it passes",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/documents": {
+      "post": {
+        "operationId": "TendersController_addDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTenderDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a document to the tender",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/documents/{documentId}": {
+      "delete": {
+        "operationId": "TendersController_removeDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a document of the tender",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/invitations": {
+      "post": {
+        "operationId": "TendersController_invite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderLinkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite a vendor, or make a bid link",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/invitations/{invitationId}/link": {
+      "post": {
+        "operationId": "TendersController_rotate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invitationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderLinkView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Make a new bid link; the one before stops at once",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/invitations/{invitationId}/revoke": {
+      "post": {
+        "description": "Its link opens nothing any more; its bid is withdrawn while bids are taken.",
+        "operationId": "TendersController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invitationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke an invitation",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/opening": {
+      "post": {
+        "operationId": "TendersController_open",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open the bids, as one of two people",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/tenders/{id}/publish": {
+      "post": {
+        "operationId": "TendersController_publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish it: bids are taken until the deadline",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

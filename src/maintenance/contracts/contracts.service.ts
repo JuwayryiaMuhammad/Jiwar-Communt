@@ -236,6 +236,28 @@ export class MaintenanceContractsService implements OnModuleInit {
 
   /** A duplicate code is DUPLICATE_RESOURCE on `code` (db-constraints). */
   create(input: ContractInput): Promise<ContractRead> {
+    return this.tenantTx
+      .withTenantTx(async (tx) => {
+        const id = newId();
+        await this.idempotency.claim(tx, { type: CONTRACT_RESOURCE, id });
+        await this.createIn(tx, id, input);
+        return id;
+      })
+      .then((id) => this.get(id));
+  }
+
+  /**
+   * A new contract in the caller's transaction (a tender's award, ADR 0088,
+   * signs one this way): the same checks, the same locks after the
+   * caller's — the vendor (shared, or the name's lock) → the threshold's row
+   * (shared) → the approval request (shared) → the approval's claim lock —
+   * so an approval signs one contract, whichever path signs it.
+   */
+  async createIn(
+    tx: TenantTxClient,
+    id: string,
+    input: ContractInput,
+  ): Promise<void> {
     if (input.endsOn <= input.startsOn)
       throw invalid([
         { field: 'endsOn', code: FieldErrorCode.ENDS_BEFORE_START },
@@ -246,54 +268,47 @@ export class MaintenanceContractsService implements OnModuleInit {
       latePenaltyPerDay: input.latePenaltyPerDay ?? null,
       penaltyCap: input.penaltyCap ?? null,
     });
-    return this.tenantTx
-      .withTenantTx(async (tx) => {
-        const id = newId();
-        await this.idempotency.claim(tx, { type: CONTRACT_RESOURCE, id });
-        const vendor = input.vendorId
-          ? await this.vendors.lockUsable(tx, input.vendorId)
-          : await this.vendors.findOrCreate(
-              tx,
-              input.vendorName ?? '',
-              input.vendorPhone?.trim() || null,
-            );
-        await this.requireBudgetLine(tx, input.budgetLineId);
-        const approvalRequestId = await this.signedUnder(tx, {
-          value: input.annualValue ?? null,
-          approvalRequestId: input.approvalRequestId ?? null,
-          contractId: null,
-        });
-        const contract = await tx.maintenanceContract.create({
-          data: {
-            id,
-            tenantId: this.ctx.tenantId,
-            code: input.code,
-            kind: input.kind,
-            vendorId: vendor.id,
-            vendorName: vendor.name,
-            vendorPhone: input.vendorPhone?.trim() || vendor.phone || null,
-            scope: input.scope?.trim() || null,
-            startsOn: dateColumn(input.startsOn),
-            endsOn: dateColumn(input.endsOn),
-            annualValue: input.annualValue ?? null,
-            noticeDays: input.noticeDays ?? 30,
-            ...terms(input),
-            approvalRequestId,
-            createdById: this.ctx.accountId,
-          },
-        });
-        await this.audit.record(tx, {
-          action: 'maintenance_contract.created',
-          targetId: id,
-          changes: diffChanges(
-            null,
-            audited(contract),
-            'maintenance_contract.created',
-          ),
-        });
-        return id;
-      })
-      .then((id) => this.get(id));
+    const vendor = input.vendorId
+      ? await this.vendors.lockUsable(tx, input.vendorId)
+      : await this.vendors.findOrCreate(
+          tx,
+          input.vendorName ?? '',
+          input.vendorPhone?.trim() || null,
+        );
+    await this.requireBudgetLine(tx, input.budgetLineId);
+    const approvalRequestId = await this.signedUnder(tx, {
+      value: input.annualValue ?? null,
+      approvalRequestId: input.approvalRequestId ?? null,
+      contractId: null,
+    });
+    const contract = await tx.maintenanceContract.create({
+      data: {
+        id,
+        tenantId: this.ctx.tenantId,
+        code: input.code,
+        kind: input.kind,
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+        vendorPhone: input.vendorPhone?.trim() || vendor.phone || null,
+        scope: input.scope?.trim() || null,
+        startsOn: dateColumn(input.startsOn),
+        endsOn: dateColumn(input.endsOn),
+        annualValue: input.annualValue ?? null,
+        noticeDays: input.noticeDays ?? 30,
+        ...terms(input),
+        approvalRequestId,
+        createdById: this.ctx.accountId,
+      },
+    });
+    await this.audit.record(tx, {
+      action: 'maintenance_contract.created',
+      targetId: id,
+      changes: diffChanges(
+        null,
+        audited(contract),
+        'maintenance_contract.created',
+      ),
+    });
   }
 
   /**

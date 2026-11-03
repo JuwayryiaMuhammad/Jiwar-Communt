@@ -283,6 +283,10 @@ export interface World
   bVendorId: string;
   bContractPaymentId: string;
   bPurchaseRequestId: string;
+  /** ADR 0087: its compliance item, the item's open due day and evidence on it. */
+  bComplianceItemId: string;
+  bComplianceOccurrenceId: string;
+  bComplianceEvidenceId: string;
   /** ADR 0066: compound B's meter, in its common area. */
   bMeterId: string;
   /** ADR 0066: a reading of it, and a spike alert on it. */
@@ -1064,6 +1068,53 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
       },
     }),
   );
+  const bComplianceItem = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.complianceItem.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        kind: 'insurance',
+        title: 'World policy',
+        vendorId: bVendor.id,
+      },
+    }),
+  );
+  const bComplianceOccurrence = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.complianceOccurrence.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        itemId: bComplianceItem.id,
+        dueOn: new Date('2031-01-01T00:00:00.000Z'),
+      },
+    }),
+  );
+  const bComplianceEvidence = await helpers.asManager(b, async () => {
+    const fileId = newId();
+    await helpers.prisma.tenant.storedFile.create({
+      data: {
+        id: fileId,
+        tenantId: b.tenantId,
+        purpose: 'compliance_evidence',
+        contentType: 'application/pdf',
+        sizeBytes: 100,
+        status: 'ready',
+        uploadExpiresAt: new Date(),
+        finalizedAt: new Date(),
+        attachedAt: new Date(),
+      },
+    });
+    return helpers.prisma.tenant.complianceEvidence.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        occurrenceId: bComplianceOccurrence.id,
+        fileId,
+        addedById: b.managerId,
+        addedAt: new Date(),
+      },
+    });
+  });
   const bMeter = await helpers.asManager(b, () =>
     helpers.prisma.tenant.meter.create({
       data: {
@@ -1796,6 +1847,9 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bVendorId: bVendor.id,
     bContractPaymentId: bContractPayment.id,
     bPurchaseRequestId: bPurchaseRequest.id,
+    bComplianceItemId: bComplianceItem.id,
+    bComplianceOccurrenceId: bComplianceOccurrence.id,
+    bComplianceEvidenceId: bComplianceEvidence.id,
     bMeterId: bMeter.id,
     bReadingId: bReading.id,
     bMeterAlertId: bMeterAlert.id,

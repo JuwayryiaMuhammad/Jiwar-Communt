@@ -1434,6 +1434,9 @@ describe('API v0 — PII leak scan', () => {
       '/staff/vendors/{id}': w.bVendorId,
       '/staff/vendors/{id}/evaluations': w.bVendorId,
       '/staff/purchase-requests/{id}': w.bPurchaseRequestId,
+      // ADR 0087: B's compliance item and its incident's actions.
+      '/staff/compliance/items/{id}': w.bComplianceItemId,
+      '/staff/security/incidents/{id}/actions': w.bIncidentId,
       '/maintenance/meters/{id}': w.bMeterId,
       '/maintenance/meters/{id}/readings': w.bMeterId,
       '/technician/meters/{id}': w.bMeterId,

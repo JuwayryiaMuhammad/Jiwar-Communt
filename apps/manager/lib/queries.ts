@@ -90,6 +90,9 @@ export type Disbursement = Schema<'DisbursementView'>;
 // Vendors and purchase requests (ADR 0077).
 export type VendorSummary = Schema<'VendorSummaryView'>;
 export type Vendor = Schema<'VendorView'>;
+// Tenders (ADR 0088).
+export type TenderSummary = Schema<'TenderSummaryView'>;
+export type Tender = Schema<'TenderView'>;
 export type PurchaseRequest = Schema<'PurchaseRequestView'>;
 // Compliance and safety (ADR 0087).
 export type ComplianceItem = Schema<'ComplianceItemView'>;
@@ -685,6 +688,9 @@ export const keys = {
   vendorsAll: ['vendors'] as const,
   vendors: (filters: object) => ['vendors', 'list', filters] as const,
   vendor: (id: string) => ['vendors', 'detail', id] as const,
+  tendersAll: ['tenders'] as const,
+  tenders: (filters: object) => ['tenders', 'list', filters] as const,
+  tender: (id: string) => ['tenders', 'detail', id] as const,
   purchasesAll: ['purchases'] as const,
   purchases: (filters: object) => ['purchases', 'list', filters] as const,
   complianceAll: ['compliance'] as const,
@@ -1244,6 +1250,13 @@ export const fetchers = {
   myIncidentActions: () => unwrap(api.GET('/api/v1/staff/incident-actions')),
   safetyReport: (period: { from?: string; to?: string }) =>
     unwrap(api.GET('/api/v1/staff/security/reports/safety', { params: { query: clean(period) as { from?: string; to?: string } } })),
+  tenders: (filters: { status?: TenderSummary['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/tenders', {
+        params: { query: { ...(clean(filters) as { status?: TenderSummary['status'] }), cursor, limit } },
+      }),
+    ),
+  tender: (id: string) => unwrap(api.GET('/api/v1/staff/tenders/{id}', { params: { path: { id } } })),
   vendorInvoices: (filters: { status?: VendorInvoice['status'] | '' }, cursor?: string, limit = 50) =>
     unwrap(
       api.GET('/api/v1/staff/finance/vendor-invoices', {

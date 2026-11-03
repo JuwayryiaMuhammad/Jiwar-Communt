@@ -100,6 +100,8 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 - Topic names are entered in English and Arabic (the residents' app shows the Arabic one); the Arabic field is the only right-to-left input.
 - English only for now. Error texts are keyed by API error code in `packages/api/src/errors.ts`, ready for an Arabic dictionary.
 
+- Tenders (ADR 0088): the award, the deadline move, documents, a vendor's invitation and a link's rotation or revocation have API routes but no page controls yet; the vendor page's contractors and the dispatch page's "offer to a vendor" are API-only too. The bid link's page (`/b#<token>`) is the public app's, not built.
+
 ## Checks
 
 ```bash

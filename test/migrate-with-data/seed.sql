@@ -534,6 +534,39 @@ BEGIN
       INSERT INTO purchase_requests (id, tenant_id, number, title, vendor_id, estimated_amount,
                                      requested_by_account_id, requested_at, updated_at) VALUES
         (gen_random_uuid(), t, 1, 'Two pump seals', ven, 3500.00, mgr, now(), now());
+      -- ADR 0087: a compliance item answered for by that vendor and the
+      -- manager, done once with its next due day open.
+      DECLARE
+        itm uuid := gen_random_uuid();
+        occ uuid := gen_random_uuid();
+      BEGIN
+        INSERT INTO compliance_items (id, tenant_id, kind, title, vendor_id, owner_account_id,
+                                      recurrence_months, created_by_account_id) VALUES
+          (itm, t, 'lift', 'Lift licence', ven, mgr, 12, mgr);
+        INSERT INTO compliance_occurrences (id, tenant_id, item_id, due_on, status, done_on, done_at,
+                                            done_by_account_id, expires_on) VALUES
+          (occ, t, itm, current_date - 5, 'done', current_date - 6, now(), mgr, current_date + 360);
+        INSERT INTO compliance_occurrences (id, tenant_id, item_id, due_on, previous_id) VALUES
+          (gen_random_uuid(), t, itm, current_date + 360, occ);
+      END;
+    END;
+    -- ADR 0087: a drill done with its outcome, and a lockdown the management
+    -- started from the office, ended.
+    DECLARE
+      prog uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO readiness_programs (id, tenant_id, kind, title, starts_on, ends_on, updated_at) VALUES
+        (prog, t, 'emergency', 'Fire readiness', current_date - 10, current_date + 20, now());
+      INSERT INTO readiness_items (id, tenant_id, program_id, kind, title, owner_account_id, due_on,
+                                   drill_type, drill_outcome, drill_participants, drill_minutes,
+                                   done_at, done_by_account_id, updated_at) VALUES
+        (gen_random_uuid(), t, prog, 'drill', 'Evacuation drill', mgr, current_date - 2,
+         'evacuation', 'passed', 40, 8, now(), mgr, now());
+      INSERT INTO gate_lockdowns (id, tenant_id, gate_id, reason_code, started_by_account_id, started_shift_id,
+                                  started_from, started_at, ended_at, ended_by_account_id, end_reason,
+                                  updated_at) VALUES
+        (gen_random_uuid(), t, NULL, 'drill', mgr, NULL, 'office', now() - interval '2 hours',
+         now() - interval '1 hour', mgr, 'drill_over', now());
     END;
     -- An inspection request whose task went with its guard (`assignee_left`)
     -- and that stayed scheduled: 20270511090000 cancels it with its task.

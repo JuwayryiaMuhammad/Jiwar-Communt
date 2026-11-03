@@ -431,3 +431,14 @@ The full notes for the apps are in [`notes/field-team.md`](notes/field-team.md).
 - **Instructions.** `POST/GET /staff/field-team/instructions`, `…/{id}`, `…/{id}/archive`; the technician's `GET /maintenance/instructions`, `…/{id}`, `…/{id}/acknowledge`. The audience enum gains `technicians`, the reach enum `on_duty`.
 - **Calls for help.** `POST /maintenance/help-requests`, `GET …/mine`, `…/{id}/resolve|cancel`; the field team's `GET /staff/field-team/help-requests[/{id}]`, `…/{id}/take|resolve`. Pushes `technician_help.requested|taken|assigned|escalated` with `helpKind` only.
 
+### Payables and commitments (ADR 0089)
+
+The full notes are in [`notes/payables.md`](notes/payables.md).
+
+- **A line's figures.** `BudgetLineView` gains `transfersIn`, `transfersOut`, `committed`, `payable`, `available`; an expense spends only what is available.
+- **Commitments.** A contract's schedule and an approved purchase keep their line (`BUDGET_LINE_INSUFFICIENT`); `GET /staff/finance/commitments`.
+- **Vendors' invoices.** `/staff/finance/vendor-invoices…` (`finance.payables`, `finance.payables_approve`): recorded, approved by another (`PAYABLE_SELF_APPROVAL`), paid once into an expense; `GET /staff/finance/payment-schedule`.
+- **A contract's money.** `/staff/finance/contract-payables/{contractId}…`, `/staff/finance/contract-disbursements…`, `/staff/finance/vendor-guarantees/{id}/close`; a contract's `retentionPct`.
+- **Planning.** `/staff/finance/budget-transfers…` (a `budget_transfer` request above the limit), `PUT /staff/finance/budgets/{id}/months`, `/staff/finance/variance-settings`, `/staff/finance/budget-lines/{id}/variance-reasons`, `GET /staff/finance/reports/budget-periods[/export]`.
+- **Entries.** `GET /staff/finance/reports/entries/export` (CSV, every money event once).
+

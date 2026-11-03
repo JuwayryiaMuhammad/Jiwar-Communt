@@ -81,6 +81,8 @@ export const ENTRY_PERMISSIONS = [
   'dashboard.read',
   // The holidays, the site map and the floor plans (ADR 0084).
   'spaces.manage',
+  // The compliance calendar (ADR 0087).
+  'compliance.manage',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

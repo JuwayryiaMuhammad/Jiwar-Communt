@@ -10,13 +10,16 @@ import {
   Dialog,
   Field,
   ForbiddenState,
+  Input,
   PageHeader,
   ReasonCodeDialog,
   Segmented,
+  Select,
   StatusBadge,
   Textarea,
   useToast,
 } from '@jiwar/ui';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { personName } from '@/components/security/logic';
 import { lockdownScope } from '@/components/security/ops-logic';
@@ -62,6 +65,84 @@ function EndLockdown({ lockdown, onClose }: { lockdown: StaffLockdown; onClose: 
         {(p) => <Textarea {...p} rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />}
       </Field>
     </ReasonCodeDialog>
+  );
+}
+
+/**
+ * The management locks the gates down from the office (ADR 0087): one gate
+ * or all, a reason code, and the same typed confirmation a guard gives.
+ */
+function StartLockdown({ onClose }: { onClose: () => void }) {
+  const toast = useToast();
+  const gates = useQuery({ queryKey: keys.gates, queryFn: () => fetchers.gates() });
+  const [gateId, setGateId] = useState('');
+  const [reasonCode, setReasonCode] = useState<string>(REASON_CODES.gateLockdownStart[0]);
+  const [typed, setTyped] = useState('');
+  const start = useAction(
+    () =>
+      unwrap(
+        api.POST('/api/v1/staff/security/lockdowns', {
+          body: {
+            scope: gateId ? 'gate' : 'all',
+            ...(gateId ? { gateId } : {}),
+            reasonCode,
+            confirmation: 'LOCKDOWN',
+          },
+        }),
+      ),
+    {
+      invalidate: [keys.lockdownsAll],
+      onDone: () => {
+        toast.show('The gates are locked down. The guards on shift and the residents are told.');
+        onClose();
+      },
+    },
+  );
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Lock the gates down"
+      onSubmit={() => typed === 'LOCKDOWN' && start.mutate()}
+      footer={
+        <>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="danger" loading={start.isPending} disabled={typed !== 'LOCKDOWN'}>
+            Lock down now
+          </Button>
+        </>
+      }
+    >
+      <div className="form">
+        <ErrorAlert error={start.error} />
+        <Field label="Gates">
+          {(p) => (
+            <Select {...p} value={gateId} onChange={(e) => setGateId(e.target.value)}>
+              <option value="">Every gate</option>
+              {(gates.data?.data ?? []).map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field label="Reason">
+          {(p) => (
+            <Select {...p} value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>
+              {REASON_CODES.gateLockdownStart.map((r) => (
+                <option key={r} value={r}>
+                  {humanize(r)}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field label="Type LOCKDOWN to confirm" hint="It starts at once: only residents come in until it ends.">
+          {(p) => <Input {...p} value={typed} onChange={(e) => setTyped(e.target.value)} />}
+        </Field>
+      </div>
+    </Dialog>
   );
 }
 
@@ -126,6 +207,7 @@ export default function LockdownsPage() {
   const { ready, can } = usePermissions();
   const allowed = can('lockdown.end');
   const [view, setView] = useState<View>('live');
+  const [starting, setStarting] = useState(false);
   const [open, setOpen] = useState<StaffLockdown | null>(null);
   const [ending, setEnding] = useState<StaffLockdown | null>(null);
   const state = view === 'all' ? '' : view;
@@ -139,7 +221,17 @@ export default function LockdownsPage() {
     );
   return (
     <>
-      <PageHeader title="Lockdown" description="A guard locks the gates from the app; it ends here. Exits stay open, and emergency vehicles pass." />
+      <PageHeader
+        title="Lockdown"
+        description="A guard locks the gates from the app, or the management from here; it ends here. Exits stay open, and emergency vehicles pass."
+        actions={
+          can('lockdown.start') ? (
+            <Button variant="danger" onClick={() => setStarting(true)}>
+              Lock down
+            </Button>
+          ) : null
+        }
+      />
       <div className="toolbar">
         <Segmented<View>
           label="Lockdowns shown"
@@ -170,7 +262,12 @@ export default function LockdownsPage() {
               },
               { key: 'status', header: 'Status', cell: (l) => <StatusBadge status={l.endedAt ? 'ended' : 'live'} /> },
               { key: 'reason', header: 'Reason', cell: (l) => humanize(l.reasonCode) },
-              { key: 'started', header: 'Started', cell: (l) => `${formatDateTime(l.startedAt)} · ${personName(l.startedBy)}` },
+              {
+                key: 'started',
+                header: 'Started',
+                cell: (l) =>
+                  `${formatDateTime(l.startedAt)} · ${personName(l.startedBy)}${l.startedFrom === 'office' ? ' · from the office' : ''}`,
+              },
               { key: 'ended', header: 'Ended', cell: (l) => (l.endedAt ? `${formatDateTime(l.endedAt)} · ${humanize(l.endReason)}` : '—') },
               { key: 'overrides', header: 'Overrides', cell: (l) => <span className="t-num">{l.overrides.length}</span> },
               {
@@ -191,6 +288,7 @@ export default function LockdownsPage() {
       </Card>
       {open ? <LockdownDetail lockdown={open} onClose={() => setOpen(null)} /> : null}
       {ending ? <EndLockdown lockdown={ending} onClose={() => setEnding(null)} /> : null}
+      {starting ? <StartLockdown onClose={() => setStarting(false)} /> : null}
     </>
   );
 }

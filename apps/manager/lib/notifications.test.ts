@@ -361,6 +361,18 @@ test('a vendor’s paper, a contract payment and a purchase request (ADR 0077) r
   assert.equal(notificationText(decided), 'Your purchase request PR-0003 was turned down');
 });
 
+test('a compliance item’s notices and a corrective action’s (ADR 0087) read as their kind and day, and open for who keeps them', () => {
+  const soon = { kind: 'compliance.due_soon', params: { complianceKind: 'fire_system', dueOn: '2027-06-01', daysLeft: 30 }, targetType: 'compliance_item', targetId: 'c1' };
+  assert.equal(notificationText(soon), 'A compliance item (fire system) is due on 2027-06-01, in 30 days');
+  assert.equal(notificationHref(soon, (p) => p === 'compliance.manage'), '/compliance/c1');
+  assert.equal(notificationHref(soon, () => false), null);
+  const late = { kind: 'compliance.overdue', params: { complianceKind: 'lift', dueOn: '2027-06-01' }, targetType: 'compliance_item', targetId: 'c1' };
+  assert.equal(notificationText(late), 'A compliance item (lift) due on 2027-06-01 is not done');
+  const action = { kind: 'incident_action.overdue', params: { dueOn: '2027-06-01' }, targetType: 'incident', targetId: 'i1' };
+  assert.equal(notificationText(action), 'A corrective action due 2027-06-01 is still open');
+  assert.equal(notificationHref(action, (p) => p === 'incidents.manage'), '/security/incidents?incident=i1');
+});
+
 test('a meter’s spike (ADR 0066) reads as its code and day, and opens the meter for who reads energy', () => {
   const high = { kind: 'meter.anomaly', params: { meterRef: 'W-POOL', readOn: '2026-12-20' }, targetType: 'meter', targetId: 'm1' };
   assert.equal(notificationText(high), 'Meter W-POOL used far more than usual up to 2026-12-20');

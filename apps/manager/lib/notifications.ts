@@ -336,6 +336,12 @@ const TEXT: Record<string, (p: P) => string> = {
   'maintenance_contract.payment_due': (p) => `Contract ${p.contractRef} has ${p.amount} EGP due on ${p.dueOn}`,
   'vendor_document.expiring': (p) => `A paper of vendor ${p.vendorRef} expires on ${p.expiresOn}`,
   'purchase_request.submitted': (p) => `Purchase request ${p.requestRef} (${p.amount} EGP) waits for approval`,
+  // Compliance and corrective actions (ADR 0087).
+  'compliance_item.assigned': (p) => `A compliance item (${words(p.complianceKind)}) is yours, next due ${p.dueOn}`,
+  'compliance.due_soon': (p) => `A compliance item (${words(p.complianceKind)}) is due on ${p.dueOn}, in ${p.daysLeft} days`,
+  'compliance.overdue': (p) => `A compliance item (${words(p.complianceKind)}) due on ${p.dueOn} is not done`,
+  'incident_action.assigned': (p) => `A corrective action is yours, due ${p.dueOn}`,
+  'incident_action.overdue': (p) => `A corrective action due ${p.dueOn} is still open`,
   'purchase_request.decided': (p) =>
     `Your purchase request ${p.requestRef} was ${p.decision === 'approved' ? 'approved' : 'turned down'}`,
   'meter.anomaly': (p) => `Meter ${p.meterRef} used far more than usual up to ${p.readOn}`,
@@ -392,6 +398,8 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'vendor' && n.targetId) return can('vendors.manage') ? `/vendors/${n.targetId}` : null;
   if (n.targetType === 'purchase_request' && n.targetId)
     return can('purchases.approve') || can('purchases.request') ? `/purchases/${n.targetId}` : null;
+  // Compliance (ADR 0087).
+  if (n.targetType === 'compliance_item' && n.targetId) return can('compliance.manage') ? `/compliance/${n.targetId}` : null;
   // Energy (ADR 0066).
   if (n.targetType === 'meter' && n.targetId) return can('energy.read') ? `/meters/${n.targetId}` : null;
   // Readiness (ADR 0067): the program, for who keeps readiness.

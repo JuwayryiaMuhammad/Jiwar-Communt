@@ -83,6 +83,14 @@ export type MaintenanceContract = Schema<'MaintenanceContractView'>;
 export type VendorSummary = Schema<'VendorSummaryView'>;
 export type Vendor = Schema<'VendorView'>;
 export type PurchaseRequest = Schema<'PurchaseRequestView'>;
+// Compliance and safety (ADR 0087).
+export type ComplianceItem = Schema<'ComplianceItemView'>;
+export type ComplianceItemDetail = Schema<'ComplianceItemDetailView'>;
+export type ComplianceCalendar = Schema<'ComplianceCalendarView'>;
+export type ComplianceReport = Schema<'ComplianceReportView'>;
+export type IncidentAction = Schema<'IncidentActionView'>;
+export type OwnIncidentAction = Schema<'OwnIncidentActionView'>;
+export type SafetyReport = Schema<'SafetyReportView'>;
 export type AssetEconomics = Schema<'AssetEconomicsView'>;
 export type CompoundEconomics = Schema<'CompoundEconomicsView'>;
 export type MaintenanceKpis = Schema<'MaintenanceKpisView'>;
@@ -652,6 +660,15 @@ export const keys = {
   vendor: (id: string) => ['vendors', 'detail', id] as const,
   purchasesAll: ['purchases'] as const,
   purchases: (filters: object) => ['purchases', 'list', filters] as const,
+  complianceAll: ['compliance'] as const,
+  complianceItems: (filters: object) => ['compliance', 'items', filters] as const,
+  complianceItem: (id: string) => ['compliance', 'item', id] as const,
+  complianceCalendar: (period: object) => ['compliance', 'calendar', period] as const,
+  complianceReport: ['compliance', 'report'] as const,
+  complianceSettings: ['compliance', 'settings'] as const,
+  incidentActions: (incidentId: string) => ['incidents', 'detail', incidentId, 'actions'] as const,
+  myIncidentActions: ['incident-actions', 'mine'] as const,
+  safetyReport: (period: object) => ['security', 'reports', 'safety', period] as const,
   contracts: (filters: object) => ['contracts', 'list', filters] as const,
   contract: (id: string) => ['contracts', 'detail', id] as const,
   assetEconomics: (id: string) => ['assets', 'detail', id, 'economics'] as const,
@@ -1128,6 +1145,25 @@ export const fetchers = {
       }),
     ),
   vendor: (id: string) => unwrap(api.GET('/api/v1/staff/vendors/{id}', { params: { path: { id } } })),
+  // Compliance and safety (ADR 0087).
+  complianceItems: (filters: { kind?: ComplianceItem['kind'] | ''; status?: 'active' | 'retired' | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/compliance/items', {
+        params: {
+          query: { ...(clean(filters) as { kind?: ComplianceItem['kind']; status?: 'active' | 'retired' }), cursor, limit },
+        },
+      }),
+    ),
+  complianceItem: (id: string) => unwrap(api.GET('/api/v1/staff/compliance/items/{id}', { params: { path: { id } } })),
+  complianceCalendar: (period: { from?: string; to?: string }) =>
+    unwrap(api.GET('/api/v1/staff/compliance/calendar', { params: { query: clean(period) as { from?: string; to?: string } } })),
+  complianceReport: () => unwrap(api.GET('/api/v1/staff/compliance/report')),
+  complianceSettings: () => unwrap(api.GET('/api/v1/staff/compliance/settings')),
+  incidentActions: (incidentId: string) =>
+    unwrap(api.GET('/api/v1/staff/security/incidents/{id}/actions', { params: { path: { id: incidentId } } })),
+  myIncidentActions: () => unwrap(api.GET('/api/v1/staff/incident-actions')),
+  safetyReport: (period: { from?: string; to?: string }) =>
+    unwrap(api.GET('/api/v1/staff/security/reports/safety', { params: { query: clean(period) as { from?: string; to?: string } } })),
   purchases: (filters: { status?: PurchaseRequest['status'] | '' }, cursor?: string, limit = 50) =>
     unwrap(
       api.GET('/api/v1/staff/purchase-requests', {

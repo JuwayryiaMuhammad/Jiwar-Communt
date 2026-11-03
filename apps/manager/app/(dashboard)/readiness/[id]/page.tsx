@@ -17,14 +17,17 @@ import {
   Stat,
   useToast,
 } from '@jiwar/ui';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type QueryKey } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ContractDue, type ReadinessItem, type ReadinessProgram } from '@/lib/queries';
 
-const ITEM_KINDS = ['task', 'estimate', 'contract_review', 'inspection_campaign'] as const;
+const ITEM_KINDS = ['task', 'estimate', 'contract_review', 'inspection_campaign', 'drill'] as const;
+/** What a drill rehearses (ADR 0087). */
+const DRILL_TYPES = ['fire', 'evacuation', 'lockdown', 'medical', 'earthquake', 'other'] as const;
+const OUTCOMES = REASON_CODES.drillOutcome;
 const DECISIONS = REASON_CODES.contractReviewDecision;
 
 /** Who may own an item: an active staff member or the manager. */
@@ -45,6 +48,7 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
     estimateAmount: '',
     contractId: '',
     checklistId: '',
+    drillType: 'fire' as (typeof DRILL_TYPES)[number],
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const save = useAction(
@@ -60,6 +64,7 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
             ...(f.estimateAmount && (f.kind === 'estimate' || f.kind === 'task') ? { estimateAmount: f.estimateAmount } : {}),
             ...(f.kind === 'contract_review' && f.contractId ? { contractId: f.contractId } : {}),
             ...(f.kind === 'inspection_campaign' && f.checklistId ? { checklistId: f.checklistId } : {}),
+            ...(f.kind === 'drill' ? { drillType: f.drillType } : {}),
           },
         }),
       ),
@@ -146,6 +151,19 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
             )}
           </Field>
         ) : null}
+        {f.kind === 'drill' ? (
+          <Field label="Drill" error={fieldError(save.error, 'drillType')}>
+            {(p) => (
+              <Select {...p} value={f.drillType} onChange={set('drillType')}>
+                {DRILL_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {humanize(t)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        ) : null}
         {f.kind === 'inspection_campaign' ? (
           <Field label="Checklist" error={fieldError(save.error, 'checklistId')}>
             {(p) => (
@@ -160,6 +178,72 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
             )}
           </Field>
         ) : null}
+      </div>
+    </Dialog>
+  );
+}
+
+/** A drill done (ADR 0087): its outcome, how many took part, and its minutes when counted. */
+function DrillDoneDialog({ item, refresh, onClose }: { item: ReadinessItem; refresh: QueryKey[]; onClose: () => void }) {
+  const toast = useToast();
+  const [f, setF] = useState({ outcome: OUTCOMES[0] as (typeof OUTCOMES)[number], participants: '', minutes: '' });
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const save = useAction(
+    () =>
+      unwrap(
+        api.POST('/api/v1/maintenance/readiness/items/{itemId}/done', {
+          params: { path: { itemId: item.id } },
+          body: {
+            outcome: f.outcome,
+            participants: Number(f.participants),
+            ...(f.minutes ? { minutes: Number(f.minutes) } : {}),
+          },
+        }),
+      ),
+    {
+      invalidate: refresh,
+      onDone: () => {
+        toast.show('The drill is recorded.');
+        onClose();
+      },
+    },
+  );
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`Record the drill: ${item.title}`}
+      onSubmit={() => f.participants !== '' && save.mutate()}
+      footer={
+        <>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" loading={save.isPending} disabled={f.participants === ''}>
+            Record
+          </Button>
+        </>
+      }
+    >
+      <div className="form">
+        <ErrorAlert error={save.error} />
+        <Field label="Outcome" error={fieldError(save.error, 'outcome')}>
+          {(p) => (
+            <Select {...p} value={f.outcome} onChange={set('outcome')}>
+              {OUTCOMES.map((o) => (
+                <option key={o} value={o}>
+                  {humanize(o)}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <div className="form__row">
+          <Field label="Took part" error={fieldError(save.error, 'participants')}>
+            {(p) => <Input {...p} inputMode="numeric" value={f.participants} onChange={set('participants')} />}
+          </Field>
+          <Field label="Minutes" hint="Optional: an evacuation’s time." error={fieldError(save.error, 'minutes')}>
+            {(p) => <Input {...p} inputMode="numeric" value={f.minutes} onChange={set('minutes')} />}
+          </Field>
+        </div>
       </div>
     </Dialog>
   );
@@ -308,6 +392,7 @@ export default function ReadinessProgramPage() {
   const [deciding, setDeciding] = useState<ReadinessItem | null>(null);
   const [cancelling, setCancelling] = useState<ReadinessItem | null>(null);
   const [campaign, setCampaign] = useState<ReadinessItem | null>(null);
+  const [drill, setDrill] = useState<ReadinessItem | null>(null);
   const refresh = [keys.readinessProgram(id), keys.readinessItems(id), keys.contractsDue(id)];
   const done = useAction(
     ({ itemId, decision }: { itemId: string; decision?: (typeof DECISIONS)[number] }) =>
@@ -404,7 +489,12 @@ export default function ReadinessProgramPage() {
               {
                 key: 's',
                 header: 'State',
-                cell: (i) => (i.decision ? `${humanize(i.state)} · ${humanize(i.decision)}` : humanize(i.state)),
+                cell: (i) =>
+                  i.decision
+                    ? `${humanize(i.state)} · ${humanize(i.decision)}`
+                    : i.drillOutcome
+                      ? `${humanize(i.state)} · ${humanize(i.drillOutcome)} · ${i.drillParticipants ?? 0} took part`
+                      : humanize(i.state),
               },
               {
                 key: 'x',
@@ -420,6 +510,10 @@ export default function ReadinessProgramPage() {
                       ) : i.kind === 'contract_review' ? (
                         <Button size="sm" onClick={() => setDeciding(i)}>
                           Decide
+                        </Button>
+                      ) : i.kind === 'drill' ? (
+                        <Button size="sm" onClick={() => setDrill(i)}>
+                          Record
                         </Button>
                       ) : (
                         <Button size="sm" loading={done.isPending} onClick={() => done.mutate({ itemId: i.id })}>
@@ -455,6 +549,7 @@ export default function ReadinessProgramPage() {
       {adding && p ? <NewItemDialog program={p} due={due.data?.data ?? []} onClose={() => setAdding(false)} /> : null}
       {copying && p ? <CopyDialog program={p} onClose={() => setCopying(false)} /> : null}
       {campaign ? <CampaignDialog item={campaign} onClose={() => setCampaign(null)} /> : null}
+      {drill ? <DrillDoneDialog item={drill} refresh={refresh} onClose={() => setDrill(null)} /> : null}
       <ReasonCodeDialog
         open={deciding !== null}
         onClose={() => setDeciding(null)}

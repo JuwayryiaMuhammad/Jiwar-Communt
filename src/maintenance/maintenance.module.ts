@@ -202,6 +202,15 @@ import {
 } from './contractors/contractors.controller';
 import { ContractorsService } from './contractors/contractors.service';
 import { VendorDispatchService } from './contractors/vendor-dispatch.service';
+import { BidLinkService } from './tenders/bid-link.service';
+import { TenderBidsService } from './tenders/tender-bids.service';
+import { TenderInboxItems } from './tenders/tender-inbox-items';
+import {
+  BidLinkController,
+  ContractorTendersController,
+  TendersController,
+} from './tenders/tenders.controller';
+import { TendersService } from './tenders/tenders.service';
 import { MeterAlertsService } from './energy/alerts.service';
 import { ConsumptionService } from './energy/consumption.service';
 import { HouseholdConsumptionController } from './energy/household-consumption.controller';
@@ -333,6 +342,9 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     VendorContractorsController,
     VendorDispatchController,
     ContractorPortalController,
+    TendersController,
+    ContractorTendersController,
+    BidLinkController,
     EconomicsController,
     MetersController,
     MeterAlertsController,
@@ -451,6 +463,10 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     ContractorExportSections,
     ContractorsService,
     VendorDispatchService,
+    TendersService,
+    TenderBidsService,
+    BidLinkService,
+    TenderInboxItems,
     PurchasesService,
     PurchaseInboxItems,
     ComplianceService,

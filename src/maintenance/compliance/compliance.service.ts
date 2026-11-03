@@ -441,6 +441,21 @@ export class ComplianceService implements OnModuleInit {
 
   create(input: ComplianceItemInput): Promise<ComplianceItemDetail> {
     const title = input.title.trim();
+    const fields: FieldError[] = [];
+    if (!title)
+      fields.push({
+        field: 'title',
+        code: FieldErrorCode.INVALID_LENGTH,
+        params: { min: 1, max: 120 },
+      });
+    if (input.assetId && input.commonAreaId)
+      fields.push({
+        field: 'commonAreaId',
+        code: FieldErrorCode.FIELD_NOT_ALLOWED,
+      });
+    if (!input.vendorId && !input.ownerId)
+      fields.push({ field: 'vendorId', code: FieldErrorCode.FIELD_REQUIRED });
+    if (fields.length) throw invalid(fields);
     return this.tenantTx
       .withTenantTx(async (tx) => {
         const id = newId();
@@ -518,6 +533,12 @@ export class ComplianceService implements OnModuleInit {
           ownerId: input.ownerId === undefined ? before.ownerId : input.ownerId,
         };
         const fields: FieldError[] = [];
+        if (input.title !== undefined && !input.title.trim())
+          fields.push({
+            field: 'title',
+            code: FieldErrorCode.INVALID_LENGTH,
+            params: { min: 1, max: 120 },
+          });
         if (next.assetId && next.commonAreaId)
           fields.push({
             field: input.assetId ? 'assetId' : 'commonAreaId',

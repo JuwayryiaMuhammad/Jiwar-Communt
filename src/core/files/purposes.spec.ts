@@ -13,13 +13,9 @@ const both = readFileSync(
   ),
   'utf8',
 );
-/** The content type CHECK as ADR 0087 recreated it, after ADR 0074's and 0077's, with every purpose. */
+/** The content type CHECK as ADR 0088 recreated it, with every purpose. */
 const types = readFileSync(
-  join(
-    __dirname,
-    migrations,
-    '20270518090100_compliance_file_purposes/migration.sql',
-  ),
+  join(__dirname, migrations, '20270608090100_contractors/migration.sql'),
   'utf8',
 );
 /** The content type CHECK's statements, then the size CHECK's: each alone. */
@@ -258,7 +254,7 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing', 'compliance_evidence'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing', 'compliance_evidence', 'tender_document', 'tender_bid'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" = 'data_export')`,
@@ -288,6 +284,17 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.compliance_evidence.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
+    // Tenders (ADR 0088): a tender's document and a bid's offer are
+    // documents like any other.
+    for (const purpose of ['tender_document', 'tender_bid'] as const) {
+      expect(FILE_PURPOSES[purpose].types).toEqual(
+        FILE_PURPOSES.document.types,
+      );
+      expect(sizeCheck).not.toContain(`WHEN '${purpose}'`);
+      expect(FILE_PURPOSES[purpose].maxBytes).toBe(
+        FILE_PURPOSES.document.maxBytes,
+      );
+    }
     expect(FILE_PURPOSES.checklist_photo.types).toEqual(
       FILE_PURPOSES.worker_photo.types,
     );

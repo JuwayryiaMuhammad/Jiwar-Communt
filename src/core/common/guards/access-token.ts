@@ -18,4 +18,6 @@ export const ACCOUNT_TYPES: readonly AccountType[] = [
   'manager',
   'family',
   'proxy',
+  // A vendor's contractor (ADR 0088).
+  'contractor',
 ];

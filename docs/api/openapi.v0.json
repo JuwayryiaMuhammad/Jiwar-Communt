@@ -35057,7 +35057,8 @@
           "closed_unit_round",
           "unit_entry_report",
           "vendor_invoice",
-          "contract_disbursement"
+          "contract_disbursement",
+          "tender_opening"
         ],
         "type": "string"
       },
@@ -79185,7 +79186,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 23,
+            "maxItems": 24,
             "minItems": 1,
             "type": "array"
           }

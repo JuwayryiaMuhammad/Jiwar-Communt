@@ -2382,6 +2382,56 @@ export const AUDIT_ACTIONS = {
   'purchase_request.rejected': { log: 'tenant', target: 'purchase_request' },
   'purchase_request.cancelled': { log: 'tenant', target: 'purchase_request' },
   'purchase_request.fulfilled': { log: 'tenant', target: 'purchase_request' },
+  // The contractor portal and tenders (ADR 0088): ids, numbers, codes and
+  // instants; a dispatcher's note to the vendor, a tender's title and scope
+  // as changed. A sealed bid's amount is never audited before its tender is
+  // opened: a bid is ids and when; the opening records who opened it and
+  // how many bids it unsealed; the award, the winning amount.
+  // A ticket offered to a vendor, its contractor's answer, taken back.
+  'vendor_dispatch.offered': {
+    log: 'tenant',
+    target: 'vendor_dispatch',
+    sensitive: ['note'],
+  },
+  'vendor_dispatch.accepted': { log: 'tenant', target: 'vendor_dispatch' },
+  'vendor_dispatch.declined': { log: 'tenant', target: 'vendor_dispatch' },
+  'vendor_dispatch.withdrawn': { log: 'tenant', target: 'vendor_dispatch' },
+  'tender.created': {
+    log: 'tenant',
+    target: 'tender',
+    sensitive: ['title', 'scope'],
+  },
+  'tender.updated': {
+    log: 'tenant',
+    target: 'tender',
+    sensitive: ['title', 'scope'],
+  },
+  'tender.published': { log: 'tenant', target: 'tender' },
+  'tender.cancelled': { log: 'tenant', target: 'tender' },
+  // The first holder of tenders.open began the opening; the second
+  // confirmed it and the bids were unsealed. metadata: the two openers.
+  'tender.opening_started': { log: 'tenant', target: 'tender' },
+  'tender.opened': { log: 'tenant', target: 'tender' },
+  'tender.awarded': { log: 'tenant', target: 'tender' },
+  'tender.document_added': { log: 'tenant', target: 'tender' },
+  'tender.document_removed': { log: 'tenant', target: 'tender' },
+  // A registered vendor invited, or a link made for one that is not.
+  'tender_invitation.created': {
+    log: 'tenant',
+    target: 'tender_invitation',
+    sensitive: ['companyName', 'contactEmail'],
+  },
+  'tender_invitation.revoked': {
+    log: 'tenant',
+    target: 'tender_invitation',
+  },
+  // A bid link opened (the system acts; `via` the link).
+  'tender_invitation.link_opened': {
+    log: 'tenant',
+    target: 'tender_invitation',
+  },
+  'tender_bid.submitted': { log: 'tenant', target: 'tender_bid' },
+  'tender_bid.withdrawn': { log: 'tenant', target: 'tender_bid' },
   // Energy and utilities (ADR 0066): codes, kinds, ids, days and values;
   // nothing here names a person.
   'meter.created': { log: 'tenant', target: 'meter' },

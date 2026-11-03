@@ -48,8 +48,8 @@ export const CONFIRMATION_WORDS = ['حذف', 'DELETE'] as const;
  * deletion is asked for and again in the transaction that executes it:
  * - `primary_resident`: the primary of a unit must hand it over (ADR 0021)
  *   or end the occupancy first (the community domain);
- * - `active_staff_role`: an active staff or manager account (roles never
- *   cross account kinds, ADR 0010);
+ * - `active_staff_role`: an active staff, manager or contractor account
+ *   (roles never cross account kinds, ADR 0010; contractors, ADR 0088);
  * - `legal_hold`: an obligation to keep the data (ADR 0023);
  * - `open_worker_obligations`: a worker's wage not yet settled, which an
  *   erasure would leave without its employer (ADR 0022; the community).
@@ -180,8 +180,11 @@ export class AccountDeletionService implements OnModuleInit {
         where: { id: account.id },
         select: { type: true, status: true },
       });
+      // A vendor's contractor (ADR 0088) is deactivated first, as staff.
       if (
-        (row.type === 'staff' || row.type === 'manager') &&
+        (row.type === 'staff' ||
+          row.type === 'manager' ||
+          row.type === 'contractor') &&
         row.status === 'active'
       )
         codes.push('active_staff_role');

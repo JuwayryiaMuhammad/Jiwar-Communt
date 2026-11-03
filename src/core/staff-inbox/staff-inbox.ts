@@ -50,6 +50,8 @@ export const INBOX_TYPES = [
   // waiting for its approver.
   'vendor_invoice',
   'contract_disbursement',
+  // ADR 0088: a tender past its deadline, waiting to be opened by two.
+  'tender_opening',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

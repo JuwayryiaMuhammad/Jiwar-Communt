@@ -1690,6 +1690,46 @@ export const ErrorCode = {
   /** Done or called off already; params.status (409). */
   COMPLIANCE_OCCURRENCE_ENDED: 'COMPLIANCE_OCCURRENCE_ENDED',
   COMPLIANCE_EVIDENCE_NOT_FOUND: 'COMPLIANCE_EVIDENCE_NOT_FOUND',
+  // The contractor portal and tenders (ADR 0088)
+  /** Unknown, another compound's, or not offered to the caller's vendor. */
+  VENDOR_DISPATCH_NOT_FOUND: 'VENDOR_DISPATCH_NOT_FOUND',
+  /** The offer was decided or taken back already (409, params.status). */
+  VENDOR_DISPATCH_STATE: 'VENDOR_DISPATCH_STATE',
+  /**
+   * The ticket is offered to a vendor: dispatch takes the offer back before
+   * giving it to anyone else (409, params.vendorId).
+   */
+  TICKET_OFFERED_TO_VENDOR: 'TICKET_OFFERED_TO_VENDOR',
+  /** Unknown, or another compound's; a contractor's own: not invited. */
+  TENDER_NOT_FOUND: 'TENDER_NOT_FOUND',
+  /** Not in a status this allows (409, params.status). */
+  TENDER_STATE: 'TENDER_STATE',
+  /** Bids are no longer taken: the deadline passed (409, params.bidsDueAt). */
+  TENDER_CLOSED: 'TENDER_CLOSED',
+  /** The bids are opened only after the deadline (409, params.bidsDueAt). */
+  TENDER_NOT_DUE: 'TENDER_NOT_DUE',
+  /**
+   * The opening needs two people: whoever began it never confirms it,
+   * nor anyone acting in their place (409).
+   */
+  TENDER_OPENING_SAME_PERSON: 'TENDER_OPENING_SAME_PERSON',
+  /** Unknown, or another tender's. */
+  TENDER_DOCUMENT_NOT_FOUND: 'TENDER_DOCUMENT_NOT_FOUND',
+  /** A tender holds 20 documents at most (409, params.limit). */
+  TENDER_DOCUMENT_LIMIT: 'TENDER_DOCUMENT_LIMIT',
+  /** Unknown, or another tender's. */
+  TENDER_INVITATION_NOT_FOUND: 'TENDER_INVITATION_NOT_FOUND',
+  /** The vendor is invited already (409, params.invitationId). */
+  TENDER_ALREADY_INVITED: 'TENDER_ALREADY_INVITED',
+  /** Unknown, another tender's, or withdrawn. */
+  TENDER_BID_NOT_FOUND: 'TENDER_BID_NOT_FOUND',
+  /** The invitation has a live bid: withdraw it first (409, params.bidId). */
+  TENDER_BID_EXISTS: 'TENDER_BID_EXISTS',
+  /**
+   * The bid link opens nothing: malformed, unknown, revoked, expired, its
+   * tender no longer taking bids, or a suspended compound's (one answer).
+   */
+  TENDER_LINK_NOT_FOUND: 'TENDER_LINK_NOT_FOUND',
   // Energy and utilities (ADR 0066)
   METER_NOT_FOUND: 'METER_NOT_FOUND',
   /** Retired: it takes no reading and never changes again (409). */

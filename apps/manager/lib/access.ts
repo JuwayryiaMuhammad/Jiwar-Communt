@@ -90,6 +90,9 @@ export const ENTRY_PERMISSIONS = [
   'experience.manage',
   // The field team: the technicians' roster, instructions and calls for help (ADR 0078).
   'field_team.manage',
+  // Tenders and their opening (ADR 0088).
+  'tenders.manage',
+  'tenders.open',
 ] as const;
 
 export function mayEnter(me: { type?: unknown; permissions?: unknown } | null | undefined): boolean {

@@ -125,6 +125,10 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'field_team.manage',
       'finance.payables',
       'finance.payables_approve',
+      // Tenders (ADR 0088); a second holder of tenders.open confirms an
+      // opening, the accountant by default.
+      'tenders.manage',
+      'tenders.open',
     ],
   },
   {
@@ -290,6 +294,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       // Records vendors' invoices and pays out what the manager approved
       // (ADR 0089).
       'finance.payables',
+      // The second person at a tender's opening (ADR 0088).
+      'tenders.open',
     ],
   },
   {
@@ -316,6 +322,20 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'tickets.create',
       'requests.create',
       'permits.request',
+    ],
+  },
+  {
+    // A vendor's contractor (ADR 0088): the tickets dispatched to its
+    // vendor that it took, through the technician's routes; the tenders
+    // its vendor is invited to; its vendor's invoices. Nothing else of the
+    // compound: no unit, no resident beyond what its ticket shows.
+    key: 'contractor',
+    kindDefault: true,
+    kind: 'contractor',
+    permissions: [
+      'tickets.contract_work',
+      'tenders.bid',
+      'vendor_invoices.submit',
     ],
   },
 ];

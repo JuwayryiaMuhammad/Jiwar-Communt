@@ -375,6 +375,20 @@ export const PERMISSIONS = {
   // the guards' one, instructions every technician acknowledges, and the
   // technicians' calls for help.
   'field_team.manage': { kinds: ['staff', 'manager'] },
+  // The contractor portal and tenders (ADR 0088). A contractor is an
+  // account of its own kind, tied to one vendor of the register: it works
+  // the tickets dispatched to its vendor that it took, through the
+  // technician's routes (`tickets.contract_work`, never `tickets.work`),
+  // bids on the tenders its vendor is invited to, and sends its vendor's
+  // invoices in. Nothing a staff or resident kind holds can reach it.
+  'tickets.contract_work': { kinds: ['contractor'] },
+  'tenders.bid': { kinds: ['contractor'] },
+  'vendor_invoices.submit': { kinds: ['contractor'] },
+  // A tender: its documents, the vendors invited and the bid links, its
+  // award. The opening takes two holders of `tenders.open`, each on their
+  // own: never a deputy's (ADR 0073).
+  'tenders.manage': { kinds: ['staff', 'manager'] },
+  'tenders.open': { kinds: ['staff', 'manager'] },
 } as const satisfies Record<string, PermissionDefinition>;
 
 export type Permission = keyof typeof PERMISSIONS;

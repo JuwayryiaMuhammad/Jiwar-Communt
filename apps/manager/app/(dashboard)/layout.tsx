@@ -712,6 +712,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/finance/spending-reports', label: 'Where the fees went', icon: <PiggyBank aria-hidden />, show: can('finance.reports') || can('finance.budget') },
         { href: '/finance/budgets', label: 'Budgets', icon: <PiggyBank aria-hidden />, show: can('finance.budget') },
         { href: '/finance/expenses', label: 'Expenses', icon: <Wallet aria-hidden />, show: can('finance.budget') },
+        {
+          href: '/finance/budget-planning',
+          label: 'Budget planning',
+          icon: <PiggyBank aria-hidden />,
+          show: can('finance.budget'),
+        },
+        {
+          href: '/finance/payables',
+          label: 'Payables',
+          icon: <Wallet aria-hidden />,
+          show: can('finance.payables') || can('finance.payables_approve'),
+        },
         { href: '/finance/gateway', label: 'Online payments', icon: <CreditCard aria-hidden />, show: can('finance.gateway') },
       ],
     },

@@ -79,6 +79,14 @@ export type StockMovement = Schema<'StockMovementView'>;
 export type PartRequest = Schema<'PartRequestView'>;
 export type TicketParts = Schema<'TicketPartsView'>;
 export type MaintenanceContract = Schema<'MaintenanceContractView'>;
+// Payables and commitments (ADR 0089).
+export type VendorInvoice = Schema<'VendorInvoiceView'>;
+export type BudgetTransfer = Schema<'BudgetTransferView'>;
+export type Commitment = Schema<'CommitmentView'>;
+export type PaymentSchedule = Schema<'PaymentScheduleView'>;
+export type PeriodReport = Schema<'PeriodReportView'>;
+export type ContractPosition = Schema<'ContractPositionView'>;
+export type Disbursement = Schema<'DisbursementView'>;
 // Vendors and purchase requests (ADR 0077).
 export type VendorSummary = Schema<'VendorSummaryView'>;
 export type Vendor = Schema<'VendorView'>;
@@ -688,6 +696,15 @@ export const keys = {
   incidentActions: (incidentId: string) => ['incidents', 'detail', incidentId, 'actions'] as const,
   myIncidentActions: ['incident-actions', 'mine'] as const,
   safetyReport: (period: object) => ['security', 'reports', 'safety', period] as const,
+  payablesAll: ['payables'] as const,
+  vendorInvoices: (filters: object) => ['payables', 'invoices', filters] as const,
+  vendorInvoice: (id: string) => ['payables', 'invoice', id] as const,
+  paymentSchedule: (from: string, to: string) => ['payables', 'schedule', from, to] as const,
+  contractPayables: (id: string) => ['payables', 'contract', id] as const,
+  disbursements: ['payables', 'disbursements'] as const,
+  budgetTransfers: (budgetId: string) => ['budgets', 'transfers', budgetId] as const,
+  commitments: (filters: object) => ['budgets', 'commitments', filters] as const,
+  budgetPeriods: (budgetId: string, by: string) => ['budgets', 'periods', budgetId, by] as const,
   contracts: (filters: object) => ['contracts', 'list', filters] as const,
   contract: (id: string) => ['contracts', 'detail', id] as const,
   assetEconomics: (id: string) => ['assets', 'detail', id, 'economics'] as const,
@@ -1227,6 +1244,29 @@ export const fetchers = {
   myIncidentActions: () => unwrap(api.GET('/api/v1/staff/incident-actions')),
   safetyReport: (period: { from?: string; to?: string }) =>
     unwrap(api.GET('/api/v1/staff/security/reports/safety', { params: { query: clean(period) as { from?: string; to?: string } } })),
+  vendorInvoices: (filters: { status?: VendorInvoice['status'] | '' }, cursor?: string, limit = 50) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/vendor-invoices', {
+        params: { query: { ...(clean(filters) as { status?: VendorInvoice['status'] }), cursor, limit } },
+      }),
+    ),
+  vendorInvoice: (id: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/vendor-invoices/{id}', { params: { path: { id } } })),
+  paymentSchedule: (from: string, to: string) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/payment-schedule', {
+        params: { query: clean({ from, to }) as { from?: string; to?: string } },
+      }),
+    ),
+  contractPayables: (contractId: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/contract-payables/{contractId}', { params: { path: { contractId } } })),
+  disbursements: () => unwrap(api.GET('/api/v1/staff/finance/contract-disbursements')),
+  budgetTransfers: (budgetId: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/budget-transfers', { params: { query: { budgetId } } })),
+  commitments: (filters: { open?: boolean }, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/finance/commitments', { params: { query: { ...filters, cursor, limit } } })),
+  budgetPeriods: (budgetId: string, by: 'month' | 'quarter') =>
+    unwrap(api.GET('/api/v1/staff/finance/reports/budget-periods', { params: { query: { budgetId, by } } })),
   purchases: (filters: { status?: PurchaseRequest['status'] | '' }, cursor?: string, limit = 50) =>
     unwrap(
       api.GET('/api/v1/staff/purchase-requests', {

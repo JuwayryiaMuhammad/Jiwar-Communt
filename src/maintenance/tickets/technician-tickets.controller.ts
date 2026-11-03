@@ -14,7 +14,7 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import { RequireAnyPermission } from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -53,7 +53,8 @@ import { WorkService } from './work.service';
  * TICKET_NOT_FOUND.
  */
 @ApiArea('technician')
-@RequirePermissions('tickets.work')
+// A vendor's contractor on a ticket it took works it here too (ADR 0088).
+@RequireAnyPermission('tickets.work', 'tickets.contract_work')
 @Controller('technician/tickets')
 export class TechnicianTicketsController {
   constructor(

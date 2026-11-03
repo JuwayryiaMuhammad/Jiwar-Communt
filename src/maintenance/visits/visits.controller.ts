@@ -16,7 +16,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import {
@@ -228,7 +231,8 @@ export class ResidentVisitsController {
 
 /** The technician's own visits, on the tickets assigned to them now. */
 @ApiArea('technician')
-@RequirePermissions('tickets.work')
+// A vendor's contractor on a ticket it took works it here too (ADR 0088).
+@RequireAnyPermission('tickets.work', 'tickets.contract_work')
 @Controller('technician/tickets')
 export class TechnicianVisitsController {
   constructor(private readonly visits: VisitsService) {}

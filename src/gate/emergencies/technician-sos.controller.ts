@@ -13,7 +13,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import { RequireAnyPermission } from '../../core/access/require-permissions.decorator';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
@@ -24,7 +24,8 @@ import { StaffEmergencyView } from './views/staff-emergency.views';
 
 /** A technician's SOS from the ticket in their hands (ADR 0067), with no shift. */
 @ApiArea('emergencies')
-@RequirePermissions('tickets.work')
+// A vendor's contractor on a ticket it took works it here too (ADR 0088).
+@RequireAnyPermission('tickets.work', 'tickets.contract_work')
 @Controller('technician/tickets/:id/sos')
 export class TechnicianSosController {
   constructor(

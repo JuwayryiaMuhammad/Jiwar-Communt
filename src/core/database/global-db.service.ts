@@ -18,6 +18,7 @@ type GlobalTables = Pick<
   | 'registrationStatusLink'
   | 'visitorPassLink'
   | 'partnerDeskLink'
+  | 'tenderBidLink'
   | 'childPickupLink'
   | 'receiptLink'
   | 'clearanceLink'
@@ -34,7 +35,7 @@ type GlobalTables = Pick<
  * otp_challenges, sessions, platform_admins, platform_sessions, the audit
  * tables, invite_tokens, registration_links, registration_status_links,
  * visitor_pass_links,
- * partner_desk_links, child_pickup_links,
+ * partner_desk_links, tender_bid_links, child_pickup_links,
  * receipt_links, clearance_links, official_letter_links, proxy_invite_tokens,
  * works_certificate_links,
  * action_tokens, outbox_messages, push_devices and push_deliveries. Tenant
@@ -98,6 +99,11 @@ export class GlobalDbService implements GlobalTables {
 
   get partnerDeskLink() {
     return this.base.client.partnerDeskLink;
+  }
+
+  /** A tender's bid links (ADR 0088). */
+  get tenderBidLink() {
+    return this.base.client.tenderBidLink;
   }
 
   get childPickupLink() {
@@ -329,6 +335,7 @@ export class GlobalDbService implements GlobalTables {
       registrationStatusLink: tx.registrationStatusLink,
       visitorPassLink: tx.visitorPassLink,
       partnerDeskLink: tx.partnerDeskLink,
+      tenderBidLink: tx.tenderBidLink,
       childPickupLink: tx.childPickupLink,
       receiptLink: tx.receiptLink,
       clearanceLink: tx.clearanceLink,

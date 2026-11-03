@@ -69,6 +69,13 @@ export interface NewVendorInvoice {
   note?: string;
 }
 
+/**
+ * Who sent the invoice in (ADR 0088): the office (`finance.payables`), or a
+ * vendor's contractor for its own vendor (`vendor_invoices.submit`).
+ */
+export type InvoiceChannel =
+  { kind: 'office' } | { kind: 'contractor'; vendorId: string };
+
 export interface InvoiceRecord {
   invoice: FinanceVendorInvoice;
   lines: FinanceVendorInvoiceLine[];
@@ -174,7 +181,24 @@ export class VendorInvoicesService implements OnModuleInit {
   // Received
   // --------------------------------------------------------------------------
 
-  record(input: NewVendorInvoice): Promise<InvoiceRecord> {
+  /**
+   * By the office, or by a vendor's contractor (ADR 0088): the `contractor`
+   * channel, against its own vendor's contract or fulfilled purchase only —
+   * anyone else's is the same 404 as an unknown one — never naming a vendor
+   * or a line itself. Its approval and payout are the office's, unchanged.
+   */
+  record(
+    input: NewVendorInvoice,
+    channel: InvoiceChannel = { kind: 'office' },
+  ): Promise<InvoiceRecord> {
+    const contractor = channel.kind === 'contractor' ? channel : null;
+    if (contractor && (input.vendorId || input.budgetLineId))
+      throw invalid([
+        {
+          field: input.vendorId ? 'vendorId' : 'budgetLineId',
+          code: FieldErrorCode.FIELD_NOT_ALLOWED,
+        },
+      ]);
     if (!input.contractId === !input.purchaseRequestId)
       throw invalid([
         {
@@ -230,7 +254,7 @@ export class VendorInvoicesService implements OnModuleInit {
       let approvalRequestId: string | null = null;
       if (input.contractId) {
         const c = await this.bridge.source.contract(tx, input.contractId);
-        if (!c)
+        if (!c || (contractor && c.vendorId !== contractor.vendorId))
           throw appError.notFound(
             ErrorCode.MAINTENANCE_CONTRACT_NOT_FOUND,
             'Contract not found',
@@ -266,7 +290,7 @@ export class VendorInvoicesService implements OnModuleInit {
           tx,
           input.purchaseRequestId!,
         );
-        if (!r)
+        if (!r || (contractor && r.vendorId !== contractor.vendorId))
           throw appError.notFound(
             ErrorCode.PURCHASE_REQUEST_NOT_FOUND,
             'Purchase request not found',
@@ -348,6 +372,7 @@ export class VendorInvoicesService implements OnModuleInit {
           id,
           tenantId: this.ctx.txTenantId,
           number,
+          channel: channel.kind,
           vendorId,
           vendorNumber,
           issuedOn: asDate(input.issuedOn),
@@ -385,6 +410,7 @@ export class VendorInvoicesService implements OnModuleInit {
           null,
           {
             number,
+            channel: channel.kind,
             vendorId,
             vendorNumber,
             issuedOn: input.issuedOn,
@@ -805,6 +831,27 @@ export class VendorInvoicesService implements OnModuleInit {
       const i = await tx.financeVendorInvoice.findUnique({ where: { id } });
       if (!i) throw invoiceNotFound();
       return this.load(tx, i);
+    });
+  }
+
+  /**
+   * The invoices a vendor's contractors sent in (ADR 0088), newest first:
+   * the vendor's own, by the contractor channel.
+   */
+  sentIn(
+    vendorId: string,
+    q: { cursor?: string; limit?: number },
+  ): Promise<Page<FinanceVendorInvoice>> {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const limit = clampLimit(q.limit);
+      const rows = await tx.financeVendorInvoice.findMany({
+        where: {
+          AND: [{ vendorId, channel: 'contractor' }, ...PAGE.after(q.cursor)],
+        },
+        orderBy: PAGE.orderBy,
+        take: limit + 1,
+      });
+      return PAGE.toPage(rows, limit);
     });
   }
 

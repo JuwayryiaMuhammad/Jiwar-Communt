@@ -46,6 +46,11 @@ export interface NewAccount extends IdentityDocumentInput {
    * the account's own kind, else ROLE_NOT_FOUND.
    */
   roleKey?: string;
+  /**
+   * A contractor's vendor (ADR 0088): required for a contractor, refused
+   * for any other kind (CHECK accounts_contractor_vendor); never changes.
+   */
+  vendorId?: string;
 }
 
 export interface FreezeResult {
@@ -98,6 +103,10 @@ export class AccountWriter {
   ): Promise<Account> {
     const { email, phone } = normalizeContact(input);
     if (!email || !phone) throw invalidContact(!email, !phone);
+    // A programming error, never a client's: only the vendors' contractor
+    // route creates a contractor, and it always names the vendor.
+    if ((input.type === 'contractor') !== (input.vendorId !== undefined))
+      throw new Error('A contractor, and only a contractor, names a vendor');
     const document = parseIdentityDocument(input);
 
     if (input.roleKey !== undefined) {
@@ -139,6 +148,7 @@ export class AccountWriter {
         phone,
         email,
         preferredLocale: input.preferredLocale ?? 'ar',
+        vendorId: input.vendorId ?? null,
       },
     });
     await this.globalDb.in(tx).loginIdentifier.createMany({
@@ -161,6 +171,7 @@ export class AccountWriter {
           birthDate: account.birthDate,
           phone: account.phone,
           email: account.email,
+          ...(account.vendorId ? { vendorId: account.vendorId } : {}),
         },
         'account.created',
       ),

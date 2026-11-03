@@ -658,11 +658,11 @@ export class VendorsService implements OnModuleInit {
   }
 }
 
-/** The next V- or PR- number, under the counter's row lock: take it last. */
+/** The next V-, PR- or TN- number, under the counter's row lock: take it last. */
 export async function nextProcurementNumber(
   tx: TenantTxClient,
   tenantId: string,
-  kind: 'vendor' | 'purchase_request',
+  kind: 'vendor' | 'purchase_request' | 'tender',
 ): Promise<number> {
   const [{ number }] = await tx.$queryRaw<{ number: number }[]>`
     INSERT INTO procurement_counters (tenant_id, kind, last_number)

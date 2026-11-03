@@ -359,6 +359,16 @@ const TEXT: Record<string, (p: P) => string> = {
   'incident_action.overdue': (p) => `A corrective action due ${p.dueOn} is still open`,
   'purchase_request.decided': (p) =>
     `Your purchase request ${p.requestRef} was ${p.decision === 'approved' ? 'approved' : 'turned down'}`,
+  // The contractor portal and tenders (ADR 0088).
+  'vendor_dispatch.offered': (p) => `Ticket ${p.ticketNumber} is offered to your company`,
+  'vendor_dispatch.decided': (p) =>
+    `The vendor ${p.decision === 'accepted' ? 'took' : 'turned down'} ticket ${p.ticketNumber}`,
+  'vendor_dispatch.withdrawn': (p) => `Ticket ${p.ticketNumber} is no longer offered to your company`,
+  'tender.invited': (p) => `Tender ${p.tenderRef} takes your bid until ${p.bidsDueAt}`,
+  'tender.opening_started': (p) => `Tender ${p.tenderRef} waits for a second person to open it`,
+  'tender.opened': (p) => `Tender ${p.tenderRef} was opened with ${p.bidCount} bid(s)`,
+  'tender.decided': (p) =>
+    `Tender ${p.tenderRef} was ${p.outcome === 'awarded' ? 'awarded to you' : p.outcome === 'cancelled' ? 'called off' : 'awarded to another'}`,
   // Payables (ADR 0089).
   'vendor_invoice.received': (p) => `Vendor invoice ${p.invoiceRef} waits for approval`,
   'vendor_invoice.decided': (p) =>
@@ -426,6 +436,9 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('purchases.approve') || can('purchases.request') ? `/purchases/${n.targetId}` : null;
   // Compliance (ADR 0087).
   if (n.targetType === 'compliance_item' && n.targetId) return can('compliance.manage') ? `/compliance/${n.targetId}` : null;
+  // Tenders (ADR 0088); a vendor's offer is the contractor's app's.
+  if (n.targetType === 'tender' && n.targetId)
+    return can('tenders.manage') || can('tenders.open') ? `/tenders/${n.targetId}` : null;
   // Payables (ADR 0089).
   if (n.targetType === 'vendor_invoice' && n.targetId)
     return can('finance.payables') || can('finance.payables_approve') ? `/finance/payables/${n.targetId}` : null;

@@ -67,7 +67,8 @@ export const FILE_PURPOSES = {
   ticket_photo: {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
-    uploaders: ['tickets.create', 'tickets.work'],
+    // A vendor's contractor on a ticket it took, as a technician (ADR 0088).
+    uploaders: ['tickets.create', 'tickets.work', 'tickets.contract_work'],
   },
   parcel_photo: {
     types: IMAGE_TYPES,
@@ -244,7 +245,8 @@ export const FILE_PURPOSES = {
   expense_invoice: {
     types: [...IMAGE_TYPES, 'application/pdf'],
     maxBytes: 10 * MB,
-    uploaders: ['finance.budget'],
+    // A vendor's contractor sends its vendor's invoices in (ADR 0088).
+    uploaders: ['finance.budget', 'vendor_invoices.submit'],
   },
   // A visitor's photo at entry (ADR 0056), taken by the guard: seen by the
   // guards on shift and the management only, deleted 30 days after the
@@ -374,7 +376,28 @@ export const FILE_PURPOSES = {
   checklist_photo: {
     types: IMAGE_TYPES,
     maxBytes: 5 * MB,
-    uploaders: ['tickets.work', 'inspections.perform'],
+    uploaders: [
+      'tickets.work',
+      'inspections.perform',
+      // A vendor's contractor on its ticket's checklist (ADR 0088).
+      'tickets.contract_work',
+    ],
+  },
+  // A tender's documents (ADR 0088): the scope, drawings, the bill of
+  // quantities; a photo or a PDF, the tender keeper's. The size CHECK's
+  // default; the content type CHECK lists it with the PDFs.
+  tender_document: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['tenders.manage'],
+  },
+  // A bid's offer (ADR 0088): a vendor's contractor uploads it; a vendor
+  // without an account, through its bid link (the record's own upload).
+  // Never served before the tender is opened.
+  tender_bid: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['tenders.bid'],
   },
   // A sheet to import (ADR 0064): the asset register, and meter readings
   // (ADR 0066). UTF-8 CSV, 1 MB, read whole by the import and never served

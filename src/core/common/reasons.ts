@@ -942,6 +942,17 @@ export const REASON_CODES = {
     'other',
   ],
   purchaseCancel: ['not_needed', 'duplicate', 'vendor_unavailable', 'other'],
+  // The contractor portal and tenders (ADR 0088): why a vendor turns down
+  // a ticket dispatched to it, why dispatch takes an offer back, and why a
+  // tender is called off; the migrations' CHECKs repeat them.
+  vendorDispatchDecline: ['no_capacity', 'out_of_scope', 'too_far', 'other'],
+  vendorDispatchWithdraw: [
+    'handled_in_house',
+    'vendor_unresponsive',
+    'not_needed',
+    'other',
+  ],
+  tenderCancel: ['not_needed', 'no_bids', 'over_budget', 'rescoped', 'other'],
   // Energy and utilities (ADR 0066): why a meter is retired, why a reading
   // is corrected, what an outage cuts and why one is called off; the
   // migrations' CHECKs repeat them.

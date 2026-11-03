@@ -289,6 +289,11 @@ describe('audit catalog', () => {
         'contract_disbursement',
         'vendor_payout',
         'vendor_guarantee',
+        // ADR 0088.
+        'vendor_dispatch',
+        'tender',
+        'tender_invitation',
+        'tender_bid',
       ]).toContain(def.target);
     }
   });

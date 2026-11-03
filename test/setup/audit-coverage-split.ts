@@ -1210,3 +1210,27 @@ export const FIELD_TEAM_COVERAGE: readonly string[] = [
   'technician_help.escalated',
   'technician_help.note_cleared',
 ];
+
+/** ADR 0089's entries, covered by test/m31/audit-coverage.e2e-spec.ts. */
+export const M31_COVERAGE: readonly string[] = [
+  'budget_transfer.applied',
+  'budget_transfer.requested',
+  'budget_transfer.decided',
+  'budget_transfer.cancelled',
+  'budget.phased',
+  'budget_line.variance_explained',
+  'finance_commitment.reserved',
+  'finance_commitment.released',
+  'vendor_invoice.recorded',
+  'vendor_invoice.approved',
+  'vendor_invoice.rejected',
+  'vendor_invoice.cancelled',
+  'contract_disbursement.requested',
+  'contract_disbursement.approved',
+  'contract_disbursement.rejected',
+  'contract_disbursement.cancelled',
+  'vendor_payout.recorded',
+  'vendor_guarantee.recorded',
+  'vendor_guarantee.returned',
+  'vendor_guarantee.called',
+];

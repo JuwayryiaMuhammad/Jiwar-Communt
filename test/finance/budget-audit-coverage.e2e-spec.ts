@@ -1,7 +1,7 @@
 import { AUDIT_ACTIONS, SECURITY_EVENTS } from '../../src/core/audit/actions';
 import { auditReaders } from '../setup/audit';
 import * as split from '../setup/audit-coverage-split';
-import { BUDGET_COVERAGE } from '../setup/audit-coverage-split';
+import { BUDGET_COVERAGE, M31_COVERAGE } from '../setup/audit-coverage-split';
 import { budgetHelpers, type ExpenseBody } from '../setup/budgets';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
@@ -168,8 +168,12 @@ describe('Audit coverage — the budget and expenses (ADR 0055)', () => {
       expect([...covered].sort()).toEqual([...BUDGET_COVERAGE].sort());
       expect(
         all
-          .filter((k) =>
-            /^(budget|budget_line|expense|expense_authorization)\./.test(k),
+          .filter(
+            (k) =>
+              // A budget's months and a line's variance reasons are ADR
+              // 0089's own suite's (M31_COVERAGE).
+              /^(budget|budget_line|expense|expense_authorization)\./.test(k) &&
+              !M31_COVERAGE.includes(k),
           )
           .sort(),
       ).toEqual([...BUDGET_COVERAGE].sort());

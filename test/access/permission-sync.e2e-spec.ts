@@ -727,6 +727,7 @@ describe('Permission sync', () => {
       'finance.billing',
       'finance.budget',
       'finance.invoice',
+      'finance.payables',
       'finance.payments',
       'finance.reports',
       'fines.billing',
@@ -798,6 +799,7 @@ describe('Permission sync', () => {
       'finance.billing',
       'finance.budget',
       'finance.invoice',
+      'finance.payables',
       'finance.payments',
       'finance.reports',
       'governance.approvals',
@@ -814,6 +816,7 @@ describe('Permission sync', () => {
       'finance.billing',
       'finance.budget',
       'finance.invoice',
+      'finance.payables',
       'finance.payments',
       'finance.reports',
       'fines.billing',
@@ -2568,6 +2571,64 @@ describe('Permission sync', () => {
       ])
         expect(
           (await role(t, key)).permissions.filter((p) => m23.includes(p)),
+        ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M3-1 (ADR 0089)', () => {
+    const m31 = ['finance.payables', 'finance.payables_approve'];
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m31.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m31.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the manager records, approves and pays; the accountant records and pays; nobody else gains any', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M3-1 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m31].sort());
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toEqual(
+        expect.arrayContaining(m31),
+      );
+      expect(
+        (await role(t, 'accountant')).permissions.filter((p) =>
+          m31.includes(p),
+        ),
+      ).toEqual(['finance.payables']);
+      for (const key of [
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'guard',
+        'collector',
+        'resident',
+        'family_member',
+        'unit_proxy',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m31.includes(p)),
         ).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],

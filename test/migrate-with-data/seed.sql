@@ -28,7 +28,9 @@
 -- twice (ADR 0068 adds the settings' face-check switch and call times,
 -- widens the matches' CHECKs and recreates the files');
 -- (ADR 0077) a vendor, a contract naming it with its terms and payments,
--- and a purchase request;
+-- and a purchase request; (ADR 0089) a terminated contract with a
+-- retention share, the variance setting, a payables counter and an
+-- inbox overdue mark;
 -- a staff credit note, a vehicle fine paid at the office and a club plan
 -- with a membership paid at the office (ADR 0070 lets a credit note's author
 -- and a club payment's recorder be null, rewrites their CHECKs, links a fine
@@ -772,6 +774,26 @@ BEGIN
         (gen_random_uuid(), t, u1, owner_occ, res1, now() - interval '10 days', ARRAY['inspections'],
          now() + interval '50 days', 'ended', now() - interval '3 days',
          now() - interval '5 days', 'revoked', res1);
+    END;
+    -- ADR 0089: a terminated contract holding a retention share (its
+    -- trigger is recreated whole), the variance setting, the expense
+    -- counter and a purchase request's overdue mark (the counters' and the
+    -- inbox's CHECKs are widened).
+    DECLARE
+      ven2 uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO vendors (id, tenant_id, number, name, categories, updated_at) VALUES
+        (ven2, t, 2, 'Seed Gardens ' || left(gen_random_uuid()::text, 8), ARRAY['landscaping'], now());
+      INSERT INTO maintenance_contracts (id, tenant_id, code, kind, vendor_id, vendor_name, starts_on, ends_on,
+                                         annual_value, retention_pct, terminated_at, terminated_by_account_id,
+                                         termination_reason, updated_at) VALUES
+        (gen_random_uuid(), t, 'SEED-' || left(gen_random_uuid()::text, 8), 'landscaping', ven2, 'Seed Gardens',
+         current_date - 300, current_date - 1, 6000.00, 5.00, now(), mgr, 'not_needed', now());
+      UPDATE finance_settings SET variance_reason_pct = 15 WHERE tenant_id = t;
+      INSERT INTO finance_counters (tenant_id, kind, last_number) VALUES (t, 'vendor_invoice', 1)
+        ON CONFLICT (tenant_id, kind) DO NOTHING;
+      INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
+        (t, 'purchase_request', gen_random_uuid(), now());
     END;
   END LOOP;
 END $$;

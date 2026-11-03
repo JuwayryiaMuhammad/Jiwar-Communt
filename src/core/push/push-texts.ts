@@ -423,6 +423,76 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم البت في طلب الشراء {requestRef}.',
     },
   },
+  'vendor_dispatch.offered': {
+    en: {
+      title: 'A job is offered to you',
+      body: 'Ticket {ticketNumber} is offered to your company.',
+    },
+    ar: {
+      title: 'مهمة معروضة عليكم',
+      body: 'البلاغ {ticketNumber} معروض على شركتكم.',
+    },
+  },
+  'vendor_dispatch.decided': {
+    en: {
+      title: 'A vendor answered',
+      body: 'The vendor answered on ticket {ticketNumber}.',
+    },
+    ar: {
+      title: 'رد المورد',
+      body: 'رد المورد على البلاغ {ticketNumber}.',
+    },
+  },
+  'vendor_dispatch.withdrawn': {
+    en: {
+      title: 'An offer was taken back',
+      body: 'Ticket {ticketNumber} is no longer offered to you.',
+    },
+    ar: {
+      title: 'تم سحب العرض',
+      body: 'لم يعد البلاغ {ticketNumber} معروضًا عليكم.',
+    },
+  },
+  'tender.invited': {
+    en: {
+      title: 'You are invited to bid',
+      body: 'Tender {tenderRef} takes bids until {bidsDueAt}.',
+    },
+    ar: {
+      title: 'دعوة لتقديم عطاء',
+      body: 'المناقصة {tenderRef} تستقبل العطاءات حتى {bidsDueAt}.',
+    },
+  },
+  'tender.opening_started': {
+    en: {
+      title: 'A tender waits to be opened',
+      body: 'Confirm the opening of tender {tenderRef}.',
+    },
+    ar: {
+      title: 'مناقصة بانتظار الفتح',
+      body: 'أكّد فتح مظاريف المناقصة {tenderRef}.',
+    },
+  },
+  'tender.opened': {
+    en: {
+      title: 'A tender was opened',
+      body: 'Tender {tenderRef} was opened.',
+    },
+    ar: {
+      title: 'تم فتح مناقصة',
+      body: 'تم فتح مظاريف المناقصة {tenderRef}.',
+    },
+  },
+  'tender.decided': {
+    en: {
+      title: 'A tender was decided',
+      body: 'Tender {tenderRef} was decided.',
+    },
+    ar: {
+      title: 'تم البت في مناقصة',
+      body: 'تم البت في المناقصة {tenderRef}.',
+    },
+  },
   'vendor_invoice.received': {
     en: {
       title: 'A vendor invoice waits',

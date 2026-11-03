@@ -2790,6 +2790,67 @@ export const NOTIFICATION_KINDS = {
     target: 'purchase_request',
     params: { requestRef: {}, decision: {} },
   },
+  // The contractor portal and tenders (ADR 0088): references, codes and
+  // counts; never a bid's amount, never a resident.
+  /** A ticket is offered to the vendor: its contractors are asked. */
+  'vendor_dispatch.offered': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'vendor_dispatch',
+    params: { ticketNumber: {}, priority: {}, categoryKey: {} },
+  },
+  /** The dispatcher who offered it: the vendor took it or turned it down. */
+  'vendor_dispatch.decided': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'ticket',
+    params: { ticketNumber: {}, decision: {} },
+  },
+  /** The vendor's contractors: dispatch took the offer back. */
+  'vendor_dispatch.withdrawn': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'vendor_dispatch',
+    params: { ticketNumber: {} },
+  },
+  /** An invited vendor's contractors: a tender takes their bid. */
+  'tender.invited': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'tender',
+    params: { tenderRef: {}, bidsDueAt: {} },
+  },
+  /** The other holders of tenders.open: confirm an opening begun. */
+  'tender.opening_started': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'tender',
+    params: { tenderRef: {} },
+  },
+  /** The tender's keepers: the bids are open. */
+  'tender.opened': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'tender',
+    params: { tenderRef: {}, bidCount: {} },
+  },
+  /** A bidding vendor's contractors: awarded, not awarded, or called off. */
+  'tender.decided': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'tender',
+    params: { tenderRef: {}, outcome: {} },
+  },
   // Payables (ADR 0089): references and codes, never an amount.
   /** A vendor's invoice waits for its approver. */
   'vendor_invoice.received': {

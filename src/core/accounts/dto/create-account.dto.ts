@@ -13,7 +13,8 @@ import { withParams } from '../../common/validation/validation-errors';
 
 /**
  * What a manager creates (ADR 0003). A proxy's account comes only from its
- * accepted invite (ADR 0063), never from here.
+ * accepted invite (ADR 0063), and a contractor's from its vendor's page
+ * (ADR 0088), never from here.
  */
 export const CREATABLE_ACCOUNT_TYPES = [
   'resident',

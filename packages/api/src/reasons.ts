@@ -257,6 +257,10 @@ export const REASON_CODES = {
   vendorSuspend: ['performance', 'documents_lapsed', 'safety', 'fraud', 'other'],
   purchaseReject: ['no_budget', 'not_needed', 'use_stock', 'too_costly', 'other'],
   purchaseCancel: ['not_needed', 'duplicate', 'vendor_unavailable', 'other'],
+  // The contractor portal and tenders (ADR 0088).
+  vendorDispatchDecline: ['no_capacity', 'out_of_scope', 'too_far', 'other'],
+  vendorDispatchWithdraw: ['handled_in_house', 'vendor_unresponsive', 'not_needed', 'other'],
+  tenderCancel: ['not_needed', 'no_bids', 'over_budget', 'rescoped', 'other'],
   // Energy and utilities (ADR 0066).
   meterRetire: ['replaced', 'removed', 'faulty', 'other'],
   readingCorrect: ['misread', 'wrong_meter', 'wrong_day', 'other'],

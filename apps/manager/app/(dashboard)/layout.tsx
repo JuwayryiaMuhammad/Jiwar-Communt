@@ -353,6 +353,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/stock', label: 'Stock', icon: <Package aria-hidden />, show: can('stock.manage') },
         { href: '/contracts', label: 'Contracts', icon: <Handshake aria-hidden />, show: can('assets.manage') },
         { href: '/vendors', label: 'Vendors', icon: <Handshake aria-hidden />, show: can('vendors.manage') },
+        // Tenders and their opening by two people (ADR 0088).
+        { href: '/tenders', label: 'Tenders', icon: <Handshake aria-hidden />, show: can('tenders.manage') || can('tenders.open') },
         {
           href: '/purchases',
           label: 'Purchase requests',

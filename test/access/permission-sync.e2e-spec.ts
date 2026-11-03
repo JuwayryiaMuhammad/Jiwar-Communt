@@ -734,6 +734,7 @@ describe('Permission sync', () => {
       'governance.approvals',
       'inbox.read',
       'purchases.request',
+      'tenders.open',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -805,6 +806,7 @@ describe('Permission sync', () => {
       'governance.approvals',
       'inbox.read',
       'purchases.request',
+      'tenders.open',
     ]);
 
     const report = await sync(base, t);
@@ -823,6 +825,7 @@ describe('Permission sync', () => {
       'governance.approvals',
       'inbox.read',
       'purchases.request',
+      'tenders.open',
     ]);
     for (const key of ['resident', 'family_member']) {
       const { permissions } = await role(t, key);
@@ -2571,6 +2574,78 @@ describe('Permission sync', () => {
       ])
         expect(
           (await role(t, key)).permissions.filter((p) => m23.includes(p)),
+        ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M2-7 (ADR 0088)', () => {
+    const m27 = [
+      'tickets.contract_work',
+      'tenders.bid',
+      'vendor_invoices.submit',
+      'tenders.manage',
+      'tenders.open',
+    ];
+    /** The catalog before M2-7: no contractor role, no tender permission. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m27.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles
+        .filter((r) => r.key !== 'contractor')
+        .map((r) => ({
+          ...r,
+          permissions: r.permissions.filter((p) => !m27.includes(p)),
+        })),
+    };
+
+    it('reaches an existing compound: the contractor role with its three, the manager runs and opens tenders, the accountant opens them, nobody else gains any', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M2-7 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m27].sort());
+      expect(report.rolesCreated).toEqual(['contractor']);
+      expect([...(await role(t, 'contractor')).permissions].sort()).toEqual([
+        'tenders.bid',
+        'tickets.contract_work',
+        'vendor_invoices.submit',
+      ]);
+      expect(
+        (await role(t, 'manager')).permissions.filter((p) => m27.includes(p)),
+      ).toEqual(expect.arrayContaining(['tenders.manage', 'tenders.open']));
+      expect(
+        (await role(t, 'accountant')).permissions.filter((p) =>
+          m27.includes(p),
+        ),
+      ).toEqual(['tenders.open']);
+      for (const key of [
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'guard',
+        'collector',
+        'resident',
+        'family_member',
+        'unit_proxy',
+      ])
+        expect(
+          (await role(t, key)).permissions.filter((p) => m27.includes(p)),
         ).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],

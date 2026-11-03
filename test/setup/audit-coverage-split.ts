@@ -1122,3 +1122,22 @@ export const M213_COVERAGE: readonly string[] = [
   'maintenance_case.resolved',
   'maintenance_case.dismissed',
 ];
+
+/**
+ * Compliance and corrective actions (ADR 0087), covered by
+ * test/m26/audit-coverage.e2e-spec.ts.
+ */
+export const M26_COVERAGE: readonly string[] = [
+  'compliance_item.created',
+  'compliance_item.updated',
+  'compliance_item.completed',
+  'compliance_item.evidence_added',
+  'compliance_item.evidence_removed',
+  'compliance_item.retired',
+  'compliance.settings_changed',
+  'incident_action.created',
+  'incident_action.updated',
+  'incident_action.done',
+  'incident_action.cancelled',
+  'incident_action.text_cleared',
+];

@@ -21,6 +21,7 @@ import {
   RESIDENT_SCREENS_COVERAGE,
   SAFETY_COVERAGE,
   SECURITY_OPS_COVERAGE,
+  M26_COVERAGE,
   VEHICLES_COVERAGE,
 } from '../setup/audit-coverage-split';
 import { eraseNow } from '../setup/erasure';
@@ -668,9 +669,13 @@ describe('Audit coverage — security (ADR 0053)', () => {
         all
           .filter(
             (k) =>
-              /^(gate_lockdown|blocklist|incident|violation|unit_violation|permit_work)[a-z_]*\./.test(
+              // An incident's corrective actions are M2-6's own suite's
+              // (ADR 0087, M26_COVERAGE).
+              (/^(gate_lockdown|blocklist|incident|violation|unit_violation|permit_work)[a-z_]*\./.test(
                 k,
-              ) || k === 'gate.id_lookup',
+              ) &&
+                !M26_COVERAGE.includes(k)) ||
+              k === 'gate.id_lookup',
           )
           .sort(),
       ).toEqual([...SECURITY_OPS_COVERAGE].sort());

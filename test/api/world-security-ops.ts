@@ -1,7 +1,8 @@
 import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
+import { IncidentActionsService } from '../../src/gate/incidents/incident-actions.service';
 import { IncidentsService } from '../../src/gate/incidents/incidents.service';
 import { ViolationsService } from '../../src/gate/violations/violations.service';
-import { today } from '../setup/compound-clock';
+import { day, today } from '../setup/compound-clock';
 import { LockdownService } from '../../src/gate/lockdown/lockdown.service';
 import type { communityHelpers } from '../setup/community';
 import type { HttpHarness } from '../setup/http-app';
@@ -17,6 +18,8 @@ export interface SecurityOpsWorld {
   bIncidentId: string;
   /** A warning B's office issued to B's home. */
   bViolationId: string;
+  /** ADR 0087: a corrective action of that incident, B's technician's. */
+  bIncidentActionId: string;
 }
 
 export async function securityOpsWorld(
@@ -59,6 +62,13 @@ export async function securityOpsWorld(
       'staff',
     ),
   );
+  const action = await helpers.asManager(b, () =>
+    h.moduleRef.get(IncidentActionsService).create(incident.incident.id, {
+      description: 'World action',
+      ownerId: b.ids.technician,
+      dueOn: day(30),
+    }),
+  );
   const violation = await helpers.asManager(b, () =>
     h.moduleRef.get(ViolationsService).issue(
       {
@@ -74,5 +84,6 @@ export async function securityOpsWorld(
     bLockdownId: record.lockdown.id,
     bBlocklistEntryId: entry.entry.id,
     bIncidentId: incident.incident.id,
+    bIncidentActionId: action.action.id,
   };
 }

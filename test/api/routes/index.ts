@@ -28,6 +28,7 @@ import { STAFF_DASHBOARD_ROUTES } from './staff-dashboard';
 import { SPACES_ROUTES } from './spaces';
 import { OFFICE_QUEUE_ROUTES } from './office-queue';
 import { MAINTENANCE_ANALYTICS_ROUTES } from './maintenance-analytics';
+import { COMPLIANCE_ROUTES, SAFETY_ROUTES } from './compliance';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
 import { FIELD_SAFETY_ROUTES } from './field-safety';
@@ -444,4 +445,7 @@ export const ROUTES: Row[] = [
   ...OFFICE_QUEUE_ROUTES,
   // ADR 0081.
   ...MAINTENANCE_ANALYTICS_ROUTES,
+  // ADR 0087.
+  ...COMPLIANCE_ROUTES,
+  ...SAFETY_ROUTES,
 ];

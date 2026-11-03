@@ -50,6 +50,7 @@ import { unitDocumentCalls } from './no-store-unit-documents';
 import { r11c1Calls } from './no-store-r11c1';
 import { marketCalls } from './no-store-market';
 import { m23Calls } from './no-store-m23';
+import { m26Calls } from './no-store-m26';
 import { unitsCalls } from './no-store-units';
 import { dispatchDepthCalls } from './no-store-dispatch-depth';
 import { m24Calls } from './no-store-m24';
@@ -3423,6 +3424,7 @@ describe('API v0 — no-store', () => {
     ...marketCalls(() => w),
     ...unitsCalls(() => w),
     ...m23Calls(() => w),
+    ...m26Calls(() => w),
     ...dispatchDepthCalls(() => w),
     ...m24Calls(() => w),
     ...spacesCalls(() => w),

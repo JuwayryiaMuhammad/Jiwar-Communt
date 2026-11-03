@@ -115,7 +115,8 @@ export class TicketPermitsController {
 
 /** The technician's safety on their own ticket (ADR 0067). */
 @ApiArea('maintenance')
-@RequirePermissions('tickets.work')
+// A vendor's contractor on a ticket it took works it here too (ADR 0088).
+@RequireAnyPermission('tickets.work', 'tickets.contract_work')
 @Controller('technician/tickets/:id')
 export class TechnicianSafetyController {
   constructor(

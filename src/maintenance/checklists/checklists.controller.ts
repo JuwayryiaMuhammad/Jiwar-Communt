@@ -100,7 +100,8 @@ export class ChecklistsController {
 
 /** A ticket's checklist, as its technician fills it (ADR 0064). */
 @ApiArea('maintenance')
-@RequirePermissions('tickets.work')
+// A vendor's contractor on a ticket it took works it here too (ADR 0088).
+@RequireAnyPermission('tickets.work', 'tickets.contract_work')
 @Controller('technician/tickets/:id/checklist')
 export class TechnicianChecklistController {
   constructor(private readonly checklists: TicketChecklists) {}

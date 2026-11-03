@@ -126,6 +126,8 @@ export class DispatchSweep implements OnModuleInit {
              WHERE a.tenant_id = t.tenant_id AND a.ticket_id = t.id
                AND a.cycle = t.cycle) tried ON true
          WHERE t.status = 'new' AND t.technician_account_id IS NULL
+           -- Offered to a vendor (ADR 0088): its contractors answer it.
+           AND t.vendor_id IS NULL
          ORDER BY CASE t.priority
                     WHEN 'emergency' THEN 0 WHEN 'urgent' THEN 1 ELSE 2 END,
                   tried.last ASC NULLS FIRST, t.created_at, t.id

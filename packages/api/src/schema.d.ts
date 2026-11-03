@@ -2486,6 +2486,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contractor/dispatches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the tickets offered to my company
+         * @description Newest first.
+         */
+        get: operations["ContractorPortalController_offers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/dispatches/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take the ticket: it is mine to work */
+        post: operations["ContractorPortalController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/dispatches/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn the ticket down */
+        post: operations["ContractorPortalController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/vendor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My company */
+        get: operations["ContractorPortalController_vendor"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/decision-appeals": {
         parameters: {
             query?: never;
@@ -9162,6 +9233,60 @@ export interface paths {
         };
         /** Get a ticket's SLA events */
         get: operations["DispatchTicketsController_slaEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/vendor-dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Offer the ticket to a vendor
+         * @description A queued ticket with no technician; the vendor needs a contractor who can take it. The SLA clock runs on.
+         */
+        post: operations["VendorDispatchController_offer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/vendor-dispatch/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take the offer back from the vendor */
+        post: operations["VendorDispatchController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/tickets/{id}/vendor-dispatches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the ticket’s offers to vendors */
+        get: operations["VendorDispatchController_ofTicket"];
         put?: never;
         post?: never;
         delete?: never;
@@ -23070,6 +23195,27 @@ export interface paths {
         patch: operations["VendorsController_update"];
         trace?: never;
     };
+    "/api/v1/staff/vendors/{id}/contractors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a vendor’s contractor accounts */
+        get: operations["VendorContractorsController_list"];
+        put?: never;
+        /**
+         * Invite a contractor of the vendor
+         * @description An account of the `contractor` kind tied to this vendor, with the `contractor` role; it signs in as staff do. A suspended vendor takes none.
+         */
+        post: operations["VendorContractorsController_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/vendors/{id}/documents": {
         parameters: {
             query?: never;
@@ -26765,7 +26911,7 @@ export interface components {
         /** @enum {string} */
         AccountStatus: "active" | "inactive" | "frozen" | "erased";
         /** @enum {string} */
-        AccountType: "resident" | "staff" | "manager" | "family" | "proxy";
+        AccountType: "resident" | "staff" | "manager" | "family" | "proxy" | "contractor";
         AcknowledgeDto: {
             /**
              * Format: uuid
@@ -31379,6 +31525,46 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
+        ContractorOfferView: {
+            categoryKey: string;
+            commonArea: string | null;
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            /** Format: date-time */
+            offeredAt: string;
+            /**
+             * @description Where the work is: in a unit (shown once taken) or a common area.
+             * @enum {string}
+             */
+            place: "unit" | "common_area";
+            /** @enum {string} */
+            priority: "normal" | "urgent" | "emergency";
+            status: components["schemas"]["VendorDispatchStatus"];
+            /** @description I took it: it is in my technician list. */
+            takenByMe: boolean;
+            /** Format: uuid */
+            ticketId: string;
+            /** @description MT-000123. */
+            ticketNumber: string;
+        };
+        ContractorOfferViewList: {
+            data: components["schemas"]["ContractorOfferView"][];
+            nextCursor: string | null;
+        };
+        ContractorVendorView: {
+            categories: components["schemas"]["VendorCategory"][];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description V-0001. */
+            reference: string;
+            /**
+             * @description Suspended: no new work, no bid.
+             * @enum {string}
+             */
+            status: "active" | "suspended";
+        };
         /** @enum {string} */
         ControlRoomEventKind: "guard_sos_raised" | "guard_sos_escalated" | "guard_alarm" | "guard_alarm_unpaired" | "lockdown_started" | "lockdown_ended" | "blocklist_match" | "field_exception_raised" | "patrol_geofence_exit" | "device_sync_overdue" | "gate_call_missed";
         ControlRoomEventView: {
@@ -35799,7 +35985,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo" | "tender_document" | "tender_bid";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -40886,6 +41072,23 @@ export interface components {
             /** Format: date */
             startsOn: string;
         };
+        NewContractorDto: {
+            /**
+             * Format: date
+             * @description Required for a passport, ignored for a national ID.
+             */
+            birthDate?: string;
+            /** Format: email */
+            email: string;
+            fullName: string;
+            /** @description 14-digit national ID, or a passport number. */
+            idDocumentNumber: string;
+            idDocumentType: components["schemas"]["IdDocumentType"];
+            /** @description ISO 3166-1 alpha-2; required for a passport. */
+            nationality?: string;
+            /** @description Local Egyptian format, or international with `+`; stored as E.164. */
+            phone: string;
+        };
         NewDepositDto: {
             /**
              * @description EGP.
@@ -41228,6 +41431,19 @@ export interface components {
         OccupancyStatus: "active" | "ended";
         /** @enum {string} */
         OccupancyType: "owner" | "tenant";
+        OfferTakenView: {
+            /**
+             * Format: uuid
+             * @description Now under `/technician/tickets/{id}`.
+             */
+            ticketId: string;
+        };
+        OfferToVendorDto: {
+            /** @description What the vendor needs to know of the work before taking it; never a person. */
+            note?: string;
+            /** Format: uuid */
+            vendorId: string;
+        };
         OfficeHoursResponse: {
             /** @description By weekday, then start. Empty: the office is closed. */
             windows: components["schemas"]["OfficeWindowDto"][];
@@ -50252,7 +50468,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        TicketAssignmentType: "manual" | "reassignment" | "declined" | "automatic" | "released";
+        TicketAssignmentType: "manual" | "reassignment" | "declined" | "automatic" | "released" | "vendor";
         /** @enum {string} */
         TicketAttachmentKind: "report" | "before" | "after";
         TicketCategoryRefView: {
@@ -52142,6 +52358,43 @@ export interface components {
             /** @description In force on the compound’s today. */
             active: number;
             total: number;
+        };
+        /** @enum {string} */
+        VendorDispatchStatus: "offered" | "accepted" | "declined" | "withdrawn" | "returned";
+        VendorDispatchView: {
+            cycle: number;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /**
+             * Format: uuid
+             * @description The contractor who took it or turned it down.
+             */
+            decidedById: string | null;
+            /** @description From the closed list `vendorDispatchDecline`. */
+            declineReason: string | null;
+            /**
+             * Format: date-time
+             * @description Taken back, or given back once taken.
+             */
+            endedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            note: string | null;
+            /** Format: date-time */
+            offeredAt: string;
+            /** Format: uuid */
+            offeredById: string;
+            status: components["schemas"]["VendorDispatchStatus"];
+            /** Format: uuid */
+            ticketId: string;
+            /** Format: uuid */
+            vendorId: string;
+            /** @description From the closed list `vendorDispatchWithdraw`. */
+            withdrawReason: string | null;
+        };
+        VendorDispatchViewList: {
+            data: components["schemas"]["VendorDispatchView"][];
+            nextCursor: string | null;
         };
         /** @enum {string} */
         VendorDocumentKind: "commercial_register" | "tax_card" | "licence" | "insurance" | "safety_certificate" | "contract_copy" | "other";
@@ -56676,6 +56929,94 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RenewalView"];
+                };
+            };
+        };
+    };
+    ContractorPortalController_offers: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                /** @description `true`: only the offers still waiting for an answer. */
+                open?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorOfferViewList"];
+                };
+            };
+        };
+    };
+    ContractorPortalController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferTakenView"];
+                };
+            };
+        };
+    };
+    ContractorPortalController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ContractorPortalController_vendor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorVendorView"];
                 };
             };
         };
@@ -66884,6 +67225,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SlaEventViewList"];
+                };
+            };
+        };
+    };
+    VendorDispatchController_offer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferToVendorDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorDispatchView"];
+                };
+            };
+        };
+    };
+    VendorDispatchController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    VendorDispatchController_ofTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VendorDispatchViewList"];
                 };
             };
         };
@@ -87466,6 +87876,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VendorView"];
+                };
+            };
+        };
+    };
+    VendorContractorsController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountListItemViewList"];
+                };
+            };
+        };
+    };
+    VendorContractorsController_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewContractorDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetailView"];
                 };
             };
         };

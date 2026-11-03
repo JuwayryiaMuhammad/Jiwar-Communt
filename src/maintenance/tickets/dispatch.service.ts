@@ -19,7 +19,7 @@ import { points, workloads } from '../dispatch/workload';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
-import { assertCan, IN_HAND } from './ticket-rules';
+import { assertCan, assertNotOffered, IN_HAND } from './ticket-rules';
 
 export interface TechnicianOption {
   id: string;
@@ -137,6 +137,7 @@ export class DispatchService {
       await this.access.lockTechnician(tx, technicianId);
       const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
       assertCan(ticket, 'assign');
+      assertNotOffered(ticket);
       const updated = await tx.ticket.update({
         where: { id },
         data: {
@@ -185,6 +186,7 @@ export class DispatchService {
       });
       const ticket = await this.access.load(tx, id, 'dispatch', { lock: true });
       assertCan(ticket, 'assign');
+      assertNotOffered(ticket);
       const result = await this.engine.run(tx, id, 'manual');
       if (result.outcome !== 'assigned')
         return { outcome: 'no_candidate', technician: null };

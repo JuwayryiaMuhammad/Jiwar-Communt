@@ -202,7 +202,11 @@ export class VendorInvoiceLineView {
 export class VendorInvoiceView {
   @id() id: string;
   @ApiProperty({ type: String, example: 'VI-000001' }) number: string;
-  @ApiProperty({ enum: ['office'], description: 'How it came in.' })
+  @ApiProperty({
+    enum: ['office', 'contractor'],
+    description:
+      'How it came in: the office, or a vendor’s contractor (ADR 0088).',
+  })
   channel: string;
   @id() vendorId: string;
   @ApiProperty({ type: String }) vendorNumber: string;

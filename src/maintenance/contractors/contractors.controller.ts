@@ -41,6 +41,7 @@ import {
 } from './dto/contractors.dto';
 import { VendorDispatchService } from './vendor-dispatch.service';
 import {
+  ContractorContractView,
   ContractorOfferView,
   ContractorVendorView,
   OfferTakenView,
@@ -155,6 +156,20 @@ export class ContractorPortalController {
   @ApiOkResponse({ type: ContractorVendorView })
   async vendor(): Promise<ContractorVendorView> {
     return ContractorVendorView.from(await this.contractors.myVendor());
+  }
+
+  @Get('contracts')
+  @RequirePermissions('vendor_invoices.submit')
+  @ApiOperation({
+    summary: 'List my company’s contracts in force or to come',
+    description: 'With their payment schedules: what an invoice is against.',
+  })
+  @ApiOkResponse({ type: ListOf(ContractorContractView) })
+  async contracts(): Promise<ListResponse<ContractorContractView>> {
+    return toList(
+      { items: await this.contractors.myContracts(), nextCursor: null },
+      (c) => ContractorContractView.from(c),
+    );
   }
 
   @Get('dispatches')

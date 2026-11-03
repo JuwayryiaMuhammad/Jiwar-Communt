@@ -2486,6 +2486,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contractor/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my company’s contracts in force or to come
+         * @description With their payment schedules: what an invoice is against.
+         */
+        get: operations["ContractorPortalController_contracts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contractor/dispatches": {
         parameters: {
             query?: never;
@@ -2534,6 +2554,27 @@ export interface paths {
         put?: never;
         /** Turn the ticket down */
         post: operations["ContractorPortalController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the invoices my company’s contractors sent in
+         * @description Newest first.
+         */
+        get: operations["ContractorInvoicesController_list"];
+        put?: never;
+        /** Send my company’s invoice in */
+        post: operations["ContractorInvoicesController_send"];
         delete?: never;
         options?: never;
         head?: never;
@@ -31947,6 +31988,83 @@ export interface components {
             /** @description The terms in words. */
             note?: string;
         };
+        ContractorContractView: {
+            code: string;
+            /** Format: date */
+            endsOn: string;
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            payments: components["schemas"]["ContractorPaymentView"][];
+            /** Format: date */
+            startsOn: string;
+        };
+        ContractorContractViewList: {
+            data: components["schemas"]["ContractorContractView"][];
+            nextCursor: string | null;
+        };
+        ContractorInvoiceDto: {
+            /**
+             * Format: uuid
+             * @description One of my company’s contracts; or `purchaseRequestId`.
+             */
+            contractId?: string;
+            /**
+             * Format: uuid
+             * @description A line of that contract’s schedule, unpaid and not invoiced.
+             */
+            contractPaymentId?: string;
+            dueOn: string;
+            /**
+             * Format: uuid
+             * @description My upload of purpose `expense_invoice`: the invoice’s scan.
+             */
+            invoiceFileId: string;
+            issuedOn: string;
+            lines: components["schemas"]["InvoiceLineDto"][];
+            note?: string;
+            /**
+             * Format: uuid
+             * @description A purchase my company fulfilled.
+             */
+            purchaseRequestId?: string;
+            /** @description My company’s own invoice number: once among its live invoices (VENDOR_INVOICE_DUPLICATE). */
+            vendorNumber: string;
+        };
+        ContractorInvoiceView: {
+            /** Format: uuid */
+            contractId: string | null;
+            /** Format: uuid */
+            contractPaymentId: string | null;
+            /** @example 2027-06-30 */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            /** @example 2027-06-01 */
+            issuedOn: string;
+            /** @example VI-000001 */
+            number: string;
+            /** Format: date-time */
+            paidAt: string | null;
+            /** Format: uuid */
+            purchaseRequestId: string | null;
+            /** @description From the closed list `vendorInvoiceReject`. */
+            rejectReason: string | null;
+            /** Format: date-time */
+            sentAt: string;
+            status: components["schemas"]["VendorInvoiceStatus"];
+            /** @example 1200.00 */
+            subtotal: string;
+            /** @example 0.00 */
+            tax: string;
+            /** @example 1200.00 */
+            total: string;
+            vendorNumber: string;
+        };
+        ContractorInvoiceViewList: {
+            data: components["schemas"]["ContractorInvoiceView"][];
+            nextCursor: string | null;
+        };
         ContractorOfferView: {
             categoryKey: string;
             commonArea: string | null;
@@ -31973,6 +32091,15 @@ export interface components {
         ContractorOfferViewList: {
             data: components["schemas"]["ContractorOfferView"][];
             nextCursor: string | null;
+        };
+        ContractorPaymentView: {
+            /** @description EGP. */
+            amount: string;
+            /** Format: date */
+            dueOn: string;
+            /** Format: uuid */
+            id: string;
+            paid: boolean;
         };
         ContractorVendorView: {
             categories: components["schemas"]["VendorCategory"][];
@@ -53101,10 +53228,10 @@ export interface components {
             budgetLineId: string | null;
             cancelReason: string | null;
             /**
-             * @description How it came in.
+             * @description How it came in: the office, or a vendor’s contractor (ADR 0088).
              * @enum {string}
              */
-            channel: "office";
+            channel: "office" | "contractor";
             /** Format: uuid */
             contractId: string | null;
             /** Format: uuid */
@@ -57565,6 +57692,25 @@ export interface operations {
             };
         };
     };
+    ContractorPortalController_contracts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorContractViewList"];
+                };
+            };
+        };
+    };
     ContractorPortalController_offers: {
         parameters: {
             query?: {
@@ -57631,6 +57777,52 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    ContractorInvoicesController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorInvoiceViewList"];
+                };
+            };
+        };
+    };
+    ContractorInvoicesController_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContractorInvoiceDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorInvoiceView"];
+                };
             };
         };
     };

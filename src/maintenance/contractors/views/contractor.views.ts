@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { TicketVendorDispatch, Vendor } from '@prisma/client';
+import type {
+  MaintenanceContract,
+  MaintenanceContractPayment,
+  TicketVendorDispatch,
+  Vendor,
+} from '@prisma/client';
+import { ofDateColumn } from '../../schedules/local-dates';
 import { ticketNumber } from '../../tickets/ticket-rules';
 import { VENDOR_CATEGORIES, vendorReference } from '../../vendors/vendor-rules';
 import type { OfferRead } from '../vendor-dispatch.service';
@@ -169,6 +175,51 @@ export class ContractorVendorView {
       name: v.name,
       categories: v.categories,
       status: v.status,
+    };
+  }
+}
+
+export class ContractorPaymentView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String, format: 'date' })
+  dueOn: string;
+  @ApiProperty({ type: String, description: 'EGP.' })
+  amount: string;
+  @ApiProperty({ type: Boolean })
+  paid: boolean;
+}
+
+/** One of my company's contracts, to bill against (ADR 0088). */
+export class ContractorContractView {
+  @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  code: string;
+  @ApiProperty({ type: String })
+  kind: string;
+  @ApiProperty({ type: String, format: 'date' })
+  startsOn: string;
+  @ApiProperty({ type: String, format: 'date' })
+  endsOn: string;
+  @ApiProperty({ type: [ContractorPaymentView] })
+  payments: ContractorPaymentView[];
+
+  static from(
+    c: MaintenanceContract & { payments: MaintenanceContractPayment[] },
+  ): ContractorContractView {
+    return {
+      id: c.id,
+      code: c.code,
+      kind: c.kind,
+      startsOn: ofDateColumn(c.startsOn),
+      endsOn: ofDateColumn(c.endsOn),
+      payments: c.payments.map((p) => ({
+        id: p.id,
+        dueOn: ofDateColumn(p.dueOn),
+        amount: p.amount.toFixed(2),
+        paid: p.paidOn !== null,
+      })),
     };
   }
 }

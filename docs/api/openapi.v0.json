@@ -15488,6 +15488,229 @@
         ],
         "type": "object"
       },
+      "ContractorContractView": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "payments": {
+            "items": {
+              "$ref": "#/components/schemas/ContractorPaymentView"
+            },
+            "type": "array"
+          },
+          "startsOn": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "startsOn",
+          "endsOn",
+          "payments"
+        ],
+        "type": "object"
+      },
+      "ContractorContractViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ContractorContractView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ContractorInvoiceDto": {
+        "properties": {
+          "contractId": {
+            "description": "One of my company’s contracts; or `purchaseRequestId`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "contractPaymentId": {
+            "description": "A line of that contract’s schedule, unpaid and not invoiced.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dueOn": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "invoiceFileId": {
+            "description": "My upload of purpose `expense_invoice`: the invoice’s scan.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "note": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "purchaseRequestId": {
+            "description": "A purchase my company fulfilled.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorNumber": {
+            "description": "My company’s own invoice number: once among its live invoices (VENDOR_INVOICE_DUPLICATE).",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendorNumber",
+          "issuedOn",
+          "dueOn",
+          "invoiceFileId",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "ContractorInvoiceView": {
+        "properties": {
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "contractPaymentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "dueOn": {
+            "example": "2027-06-30",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "example": "2027-06-01",
+            "type": "string"
+          },
+          "number": {
+            "example": "VI-000001",
+            "type": "string"
+          },
+          "paidAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "purchaseRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "From the closed list `vendorInvoiceReject`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorInvoiceStatus"
+              }
+            ]
+          },
+          "subtotal": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "tax": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "total": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "vendorNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "vendorNumber",
+          "issuedOn",
+          "dueOn",
+          "contractId",
+          "contractPaymentId",
+          "purchaseRequestId",
+          "subtotal",
+          "tax",
+          "total",
+          "status",
+          "rejectReason",
+          "sentAt",
+          "paidAt"
+        ],
+        "type": "object"
+      },
+      "ContractorInvoiceViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ContractorInvoiceView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "ContractorOfferView": {
         "properties": {
           "categoryKey": {
@@ -15576,6 +15799,32 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ContractorPaymentView": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "type": "string"
+          },
+          "dueOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "paid": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "dueOn",
+          "amount",
+          "paid"
         ],
         "type": "object"
       },
@@ -82398,9 +82647,10 @@
             "type": "string"
           },
           "channel": {
-            "description": "How it came in.",
+            "description": "How it came in: the office, or a vendor’s contractor (ADR 0088).",
             "enum": [
-              "office"
+              "office",
+              "contractor"
             ],
             "type": "string"
           },
@@ -91957,6 +92207,35 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/contractor/contracts": {
+      "get": {
+        "description": "With their payment schedules: what an invoice is against.",
+        "operationId": "ContractorPortalController_contracts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorContractViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my company’s contracts in force or to come",
+        "tags": [
+          "contractor"
+        ],
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/contractor/dispatches": {
       "get": {
         "description": "Newest first.",
@@ -92094,6 +92373,93 @@
         "tags": [
           "contractor"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/invoices": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "ContractorInvoicesController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorInvoiceViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the invoices my company’s contractors sent in",
+        "tags": [
+          "contractor"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "operationId": "ContractorInvoicesController_send",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractorInvoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorInvoiceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send my company’s invoice in",
+        "tags": [
+          "contractor"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

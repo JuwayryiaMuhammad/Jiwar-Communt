@@ -22,6 +22,9 @@ const INBOX_TYPES = [
   'ownership_transfer',
   'closed_unit_round',
   'unit_entry_report',
+  // ADR 0089.
+  'vendor_invoice',
+  'contract_disbursement',
 ];
 
 /**

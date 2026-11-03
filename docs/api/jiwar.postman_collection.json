@@ -8851,6 +8851,128 @@
           }
         },
         {
+          "name": "List the tenders my company is invited to",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "tenders"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/tenders"
+            }
+          }
+        },
+        {
+          "name": "Get a tender my company is invited to",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "tenders",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/tenders/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send my company’s bid",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP, more than zero; sealed until the opening. |\n| `durationDays` | number |  | How many days the work takes. |\n| `fileId` | string (uuid) |  | A `tender_bid` file I uploaded: the offer. |\n| `note` | string |  | The terms in words. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "tenders",
+                ":id",
+                "bid"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/tenders/:id/bid",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw my company’s bid, before the deadline",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "tenders",
+                ":id",
+                "bid",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/tenders/:id/bid/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "My company",
           "request": {
             "description": "**Responses:** 200",
@@ -38701,6 +38823,542 @@
           }
         },
         {
+          "name": "List the tenders",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders"
+            }
+          }
+        },
+        {
+          "name": "Draft a tender",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"title\": \"\",\n  \"category\": \"maintenance\",\n  \"contractKind\": \"amc\",\n  \"bidsDueAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bidsDueAt` | string (date-time) | yes | With its offset: bids are taken until then (not at it), a year ahead at most; an hour ahead at least when it is published. |\n| `budgetLineId` | string (uuid) |  | The budget line its contract is paid from. |\n| `category` | `maintenance` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supplies` \\| `utilities` \\| `professional` \\| `other` | yes |  |\n| `contractKind` | `amc` \\| `service` \\| `warranty_extension` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supply` \\| `other` | yes | The contract its award signs. |\n| `estimatedValue` | string |  | The management’s own estimate, EGP; bidders never see it. |\n| `scope` | string |  | The scope of the work, in words; never a person. |\n| `title` | string | yes | What is asked for; never a person. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders"
+            }
+          }
+        },
+        {
+          "name": "Get a tender",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change a draft’s terms",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bidsDueAt\": \"2026-01-01T09:00:00.000Z\",\n  \"budgetLineId\": \"\",\n  \"category\": \"maintenance\",\n  \"contractKind\": \"amc\",\n  \"estimatedValue\": \"\",\n  \"scope\": \"\",\n  \"title\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bidsDueAt` | string (date-time) |  |  |\n| `budgetLineId` | string (uuid) |  |  |\n| `category` | `maintenance` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supplies` \\| `utilities` \\| `professional` \\| `other` |  |  |\n| `contractKind` | `amc` \\| `service` \\| `warranty_extension` \\| `cleaning` \\| `security` \\| `landscaping` \\| `pest_control` \\| `supply` \\| `other` |  | The contract its award signs. |\n| `estimatedValue` | string |  |  |\n| `scope` | string |  |  |\n| `title` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Award the tender: the contract is signed with the bid’s vendor",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bidId\": \"\",\n  \"code\": \"\",\n  \"startsOn\": \"2026-01-01\",\n  \"endsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `approvalRequestId` | string (uuid) |  | The board’s approved major contract: needed above the manager’s limit, of at least the bid’s amount; it signs this contract and no other. |\n| `bidId` | string (uuid) | yes |  |\n| `code` | string | yes | The contract’s code, unique in the compound. |\n| `endsOn` | string (date) | yes | Its last day; after `startsOn`. |\n| `startsOn` | string (date) | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "award"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/award",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call the tender off",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Move the deadline later, before it passes",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"bidsDueAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `bidsDueAt` | string (date-time) | yes | Later than the one before, which has not passed. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "deadline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/deadline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a document to the tender",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"fileId\": \"\",\n  \"title\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `fileId` | string (uuid) | yes | A `tender_document` file I uploaded. |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "documents"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/documents",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a document of the tender",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "documents",
+                ":documentId"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/documents/:documentId",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "documentId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Invite a vendor, or make a bid link",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"companyName\": \"\",\n  \"contactEmail\": \"\",\n  \"vendorId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `companyName` | string |  | Not registered: its bid link is shown once. |\n| `contactEmail` | string (email) |  | Its business contact, for the management’s reference. |\n| `vendorId` | string (uuid) |  |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "invitations"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/invitations",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Make a new bid link; the one before stops at once",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "invitations",
+                ":invitationId",
+                "link"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/invitations/:invitationId/link",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "invitationId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Revoke an invitation",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "invitations",
+                ":invitationId",
+                "revoke"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/invitations/:invitationId/revoke",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "invitationId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open the bids, as one of two people",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "opening"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/opening",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Publish it: bids are taken until the deadline",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "tenders",
+                ":id",
+                "publish"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/tenders/:id/publish",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the vendors",
           "request": {
             "description": "**Responses:** 200",
@@ -53774,6 +54432,123 @@
                 "uploads"
               ],
               "raw": "{{baseUrl}}/api/v1/public/registrations/uploads"
+            }
+          }
+        },
+        {
+          "name": "Send the company’s bid through its link",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\",\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP, more than zero; sealed until the opening. |\n| `durationDays` | number |  | How many days the work takes. |\n| `note` | string |  | The terms in words. |\n| `token` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tender-bids",
+                "bid"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/tender-bids/bid"
+            }
+          }
+        },
+        {
+          "name": "Open a tender from its bid link",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tender-bids",
+                "lookup"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/tender-bids/lookup"
+            }
+          }
+        },
+        {
+          "name": "Withdraw the company’s bid, before the deadline",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tender-bids",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/tender-bids/withdraw"
             }
           }
         },

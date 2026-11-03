@@ -2540,6 +2540,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contractor/tenders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the tenders my company is invited to
+         * @description Published ones, newest invitation first; 100 at most.
+         */
+        get: operations["ContractorTendersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/tenders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a tender my company is invited to */
+        get: operations["ContractorTendersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/tenders/{id}/bid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send my company’s bid
+         * @description Sealed: nobody reads its amount before the opening, me included. One live bid; withdraw it to send another.
+         */
+        post: operations["ContractorTendersController_bid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/tenders/{id}/bid/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw my company’s bid, before the deadline */
+        post: operations["ContractorTendersController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contractor/vendor": {
         parameters: {
             query?: never;
@@ -14355,6 +14429,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/tender-bids/bid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the company’s bid through its link
+         * @description Sealed until the opening; one live bid.
+         */
+        post: operations["BidLinkController_bid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tender-bids/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a tender from its bid link */
+        post: operations["BidLinkController_lookup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tender-bids/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw the company’s bid, before the deadline */
+        post: operations["BidLinkController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/visitor-passes/lookup": {
         parameters: {
             query?: never;
@@ -22186,6 +22314,221 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/tenders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the tenders
+         * @description Newest first.
+         */
+        get: operations["TendersController_list"];
+        put?: never;
+        /** Draft a tender */
+        post: operations["TendersController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a tender
+         * @description Its bids show who sent them and when; their amounts and terms only once it is opened.
+         */
+        get: operations["TendersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a draft’s terms */
+        patch: operations["TendersController_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/award": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Award the tender: the contract is signed with the bid’s vendor */
+        post: operations["TendersController_award"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Call the tender off */
+        post: operations["TendersController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/deadline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move the deadline later, before it passes */
+        post: operations["TendersController_extend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a document to the tender */
+        post: operations["TendersController_addDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a document of the tender */
+        delete: operations["TendersController_removeDocument"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite a vendor, or make a bid link */
+        post: operations["TendersController_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/invitations/{invitationId}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make a new bid link; the one before stops at once */
+        post: operations["TendersController_rotate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/invitations/{invitationId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke an invitation
+         * @description Its link opens nothing any more; its bid is withdrawn while bids are taken.
+         */
+        post: operations["TendersController_revoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/opening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open the bids, as one of two people */
+        post: operations["TendersController_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/tenders/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish it: bids are taken until the deadline */
+        post: operations["TendersController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/unit-imports": {
         parameters: {
             query?: never;
@@ -27050,6 +27393,14 @@ export interface components {
              */
             fileId: string;
         };
+        AddTenderDocumentDto: {
+            /**
+             * Format: uuid
+             * @description A `tender_document` file I uploaded.
+             */
+            fileId: string;
+            title: string;
+        };
         AddVendorDocumentDto: {
             /**
              * Format: date
@@ -28086,6 +28437,59 @@ export interface components {
             since: string | null;
             /** @description A technician who never set it is `unavailable`. */
             state: components["schemas"]["TechnicianAvailabilityState"];
+        };
+        AwardTenderDto: {
+            /**
+             * Format: uuid
+             * @description The board’s approved major contract: needed above the manager’s limit, of at least the bid’s amount; it signs this contract and no other.
+             */
+            approvalRequestId?: string;
+            /** Format: uuid */
+            bidId: string;
+            /** @description The contract’s code, unique in the compound. */
+            code: string;
+            /**
+             * Format: date
+             * @description Its last day; after `startsOn`.
+             */
+            endsOn: string;
+            /** Format: date */
+            startsOn: string;
+        };
+        BidLinkBidDto: {
+            /** @description EGP, more than zero; sealed until the opening. */
+            amount: string;
+            /** @description How many days the work takes. */
+            durationDays?: number;
+            /** @description The terms in words. */
+            note?: string;
+            token: string;
+        };
+        BidLinkPageView: {
+            bid: components["schemas"]["InviteeBidView"] | null;
+            /** Format: date-time */
+            bidsDueAt: string;
+            category: components["schemas"]["VendorCategory"];
+            /** @description The company the link is for. */
+            companyName: string;
+            compoundName: string;
+            documents: components["schemas"]["TenderDocumentView"][];
+            /** Format: uuid */
+            id: string;
+            /** @enum {string|null} */
+            outcome: "awarded" | "not_awarded" | "cancelled" | null;
+            /** @description TN-000123. */
+            reference: string;
+            scope: string | null;
+            /**
+             * @description `closed`: past the deadline, being opened or decided; never more.
+             * @enum {string}
+             */
+            status: "open" | "closed" | "awarded" | "cancelled";
+            title: string;
+        };
+        BidLinkTokenDto: {
+            token: string;
         };
         BillingAmountChangeView: {
             /** Format: date-time */
@@ -31409,6 +31813,11 @@ export interface components {
             /** @example 1200.00 */
             paid: string;
         };
+        /**
+         * @description The contract its award signs.
+         * @enum {string}
+         */
+        ContractKind: "amc" | "service" | "warranty_extension" | "cleaning" | "security" | "landscaping" | "pest_control" | "supply" | "other";
         ContractPaymentDto: {
             /** @description EGP. */
             amount: string;
@@ -31524,6 +31933,19 @@ export interface components {
             status: "live" | "renewed" | "voided";
             /** Format: uuid */
             unitId: string;
+        };
+        ContractorBidDto: {
+            /** @description EGP, more than zero; sealed until the opening. */
+            amount: string;
+            /** @description How many days the work takes. */
+            durationDays?: number;
+            /**
+             * Format: uuid
+             * @description A `tender_bid` file I uploaded: the offer.
+             */
+            fileId?: string;
+            /** @description The terms in words. */
+            note?: string;
         };
         ContractorOfferView: {
             categoryKey: string;
@@ -33426,6 +33848,27 @@ export interface components {
         CreateTenantDto: {
             manager: components["schemas"]["NewManagerDto"];
             name: string;
+        };
+        CreateTenderDto: {
+            /**
+             * Format: date-time
+             * @description With its offset: bids are taken until then (not at it), a year ahead at most; an hour ahead at least when it is published.
+             */
+            bidsDueAt: string;
+            /**
+             * Format: uuid
+             * @description The budget line its contract is paid from.
+             */
+            budgetLineId?: string;
+            category: components["schemas"]["VendorCategory"];
+            /** @description The contract its award signs. */
+            contractKind: components["schemas"]["ContractKind"];
+            /** @description The management’s own estimate, EGP; bidders never see it. */
+            estimatedValue?: string;
+            /** @description The scope of the work, in words; never a person. */
+            scope?: string;
+            /** @description What is asked for; never a person. */
+            title: string;
         };
         CreateTicketDto: {
             /** Format: uuid */
@@ -38591,9 +39034,55 @@ export interface components {
              */
             memberId: string;
         };
+        InviteDto: {
+            /** @description Not registered: its bid link is shown once. */
+            companyName?: string;
+            /**
+             * Format: email
+             * @description Its business contact, for the management’s reference.
+             */
+            contactEmail?: string;
+            /** Format: uuid */
+            vendorId?: string;
+        };
         InviteTokenDto: {
             /** @description The token from the invitation link. */
             token: string;
+        };
+        InviteeBidView: {
+            /** @description EGP; only once the tender is opened. */
+            amount: string | null;
+            /** Format: uuid */
+            id: string;
+            sealed: boolean;
+            /** Format: date-time */
+            submittedAt: string;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        InviteeTenderView: {
+            bid: components["schemas"]["InviteeBidView"] | null;
+            /** Format: date-time */
+            bidsDueAt: string;
+            category: components["schemas"]["VendorCategory"];
+            documents: components["schemas"]["TenderDocumentView"][];
+            /** Format: uuid */
+            id: string;
+            /** @enum {string|null} */
+            outcome: "awarded" | "not_awarded" | "cancelled" | null;
+            /** @description TN-000123. */
+            reference: string;
+            scope: string | null;
+            /**
+             * @description `closed`: past the deadline, being opened or decided; never more.
+             * @enum {string}
+             */
+            status: "open" | "closed" | "awarded" | "cancelled";
+            title: string;
+        };
+        InviteeTenderViewList: {
+            data: components["schemas"]["InviteeTenderView"][];
+            nextCursor: string | null;
         };
         InvoiceAllocationView: {
             amount: string;
@@ -50467,6 +50956,138 @@ export interface components {
             data: components["schemas"]["TenantView"][];
             nextCursor: string | null;
         };
+        TenderBidView: {
+            /** @description EGP. */
+            amount: string | null;
+            bidder: string | null;
+            durationDays: number | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            invitationId: string;
+            note: string | null;
+            offerUrl: string | null;
+            /** @description Its amount and terms are the database’s until the opening. */
+            sealed: boolean;
+            /** Format: date-time */
+            submittedAt: string;
+            /** Format: date-time */
+            withdrawnAt: string | null;
+        };
+        TenderDeadlineDto: {
+            /**
+             * Format: date-time
+             * @description Later than the one before, which has not passed.
+             */
+            bidsDueAt: string;
+        };
+        TenderDocumentView: {
+            /** @description A short-lived link to read the file; null when it is gone. */
+            fileUrl: string | null;
+            /** Format: uuid */
+            id: string;
+            title: string;
+        };
+        /** @enum {string} */
+        TenderInvitationKind: "vendor" | "link";
+        TenderInvitationView: {
+            contactEmail: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            invitedAt: string;
+            kind: components["schemas"]["TenderInvitationKind"];
+            /**
+             * Format: date-time
+             * @description A link invitation’s live link: until when it opens.
+             */
+            linkExpiresAt: string | null;
+            /** @description The registered vendor’s name, or the link invitee’s company. */
+            name: string | null;
+            /** Format: date-time */
+            revokedAt: string | null;
+            /** Format: uuid */
+            vendorId: string | null;
+        };
+        TenderLinkView: {
+            /** Format: date-time */
+            expiresAt: string;
+            invitation: components["schemas"]["TenderInvitationView"];
+            /** @description The bid link, its token in the fragment: shown once. */
+            url: string;
+        };
+        /** @enum {string} */
+        TenderStatus: "draft" | "open" | "opening" | "opened" | "awarded" | "cancelled";
+        TenderSummaryView: {
+            /** @description The live bids its opening unsealed. */
+            bidCount: number | null;
+            /** Format: date-time */
+            bidsDueAt: string;
+            category: components["schemas"]["VendorCategory"];
+            /** Format: date-time */
+            createdAt: string;
+            /** @description EGP. */
+            estimatedValue: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description TN-000123. */
+            reference: string;
+            status: components["schemas"]["TenderStatus"];
+            title: string;
+        };
+        TenderSummaryViewList: {
+            data: components["schemas"]["TenderSummaryView"][];
+            nextCursor: string | null;
+        };
+        TenderView: {
+            /** Format: date-time */
+            awardedAt: string | null;
+            /** Format: uuid */
+            awardedBidId: string | null;
+            /** @description The live bids its opening unsealed. */
+            bidCount: number | null;
+            bids: components["schemas"]["TenderBidView"][];
+            /** Format: date-time */
+            bidsDueAt: string;
+            /** Format: uuid */
+            budgetLineId: string | null;
+            /** @description From the closed list `tenderCancel`. */
+            cancelReason: string | null;
+            category: components["schemas"]["VendorCategory"];
+            contractCode: string | null;
+            /** Format: uuid */
+            contractId: string | null;
+            contractKind: components["schemas"]["ContractKind"];
+            /** Format: date-time */
+            createdAt: string;
+            documents: components["schemas"]["TenderDocumentView"][];
+            /** @description EGP. */
+            estimatedValue: string | null;
+            /** Format: uuid */
+            id: string;
+            invitations: components["schemas"]["TenderInvitationView"][];
+            /** Format: date-time */
+            openedAt: string | null;
+            /**
+             * Format: uuid
+             * @description Who confirmed it: never who began it.
+             */
+            openedById: string | null;
+            /** Format: date-time */
+            openingStartedAt: string | null;
+            /**
+             * Format: uuid
+             * @description Who began the opening.
+             */
+            openingStartedById: string | null;
+            /** Format: date-time */
+            publishedAt: string | null;
+            /** @description TN-000123. */
+            reference: string;
+            scope: string | null;
+            status: components["schemas"]["TenderStatus"];
+            title: string;
+        };
         /** @enum {string} */
         TicketAssignmentType: "manual" | "reassignment" | "declined" | "automatic" | "released" | "vendor";
         /** @enum {string} */
@@ -52154,6 +52775,17 @@ export interface components {
             active?: boolean;
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateTenderDto: {
+            /** Format: date-time */
+            bidsDueAt?: string;
+            /** Format: uuid */
+            budgetLineId?: string | null;
+            category?: components["schemas"]["VendorCategory"];
+            contractKind?: components["schemas"]["ContractKind"];
+            estimatedValue?: string | null;
+            scope?: string | null;
+            title?: string;
         };
         UpdateTopicDto: {
             /** @description False retires the topic: no new request may use it. */
@@ -56993,6 +57625,90 @@ export interface operations {
                 "application/json": components["schemas"]["ReasonCodeDto"];
             };
         };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ContractorTendersController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteeTenderViewList"];
+                };
+            };
+        };
+    };
+    ContractorTendersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteeTenderView"];
+                };
+            };
+        };
+    };
+    ContractorTendersController_bid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContractorBidDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteeTenderView"];
+                };
+            };
+        };
+    };
+    ContractorTendersController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             204: {
                 headers: {
@@ -74917,6 +75633,73 @@ export interface operations {
             };
         };
     };
+    BidLinkController_bid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BidLinkBidDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BidLinkPageView"];
+                };
+            };
+        };
+    };
+    BidLinkController_lookup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BidLinkTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BidLinkPageView"];
+                };
+            };
+        };
+    };
+    BidLinkController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BidLinkTokenDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     VisitorPageController_lookup: {
         parameters: {
             query?: never;
@@ -86407,6 +87190,335 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpaceUseView"];
+                };
+            };
+        };
+    };
+    TendersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["TenderStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderSummaryViewList"];
+                };
+            };
+        };
+    };
+    TendersController_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTenderDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTenderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_award: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AwardTenderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_extend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenderDeadlineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_addDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddTenderDocumentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_removeDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderLinkView"];
+                };
+            };
+        };
+    };
+    TendersController_rotate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderLinkView"];
+                };
+            };
+        };
+    };
+    TendersController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
+                };
+            };
+        };
+    };
+    TendersController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenderView"];
                 };
             };
         };

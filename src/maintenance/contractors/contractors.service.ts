@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, Vendor } from '@prisma/client';
+import type {
+  MaintenanceContract,
+  MaintenanceContractPayment,
+  Prisma,
+  Vendor,
+} from '@prisma/client';
 import { AccountRecord } from '../../core/accounts/account-record';
 import { AccountWriter } from '../../core/accounts/account-writer';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -82,6 +87,27 @@ export class ContractorsService {
         items: page.items.map((a) => AccountRecord.from(a)),
         nextCursor: page.nextCursor,
       };
+    });
+  }
+
+  /**
+   * The vendor's contracts, by end date, with their payment schedules: what
+   * a contractor bills against (ADR 0088). Codes, dates, amounts and whether
+   * each payment is paid; never the compound's notes or approvals.
+   */
+  myContracts(): Promise<
+    (MaintenanceContract & { payments: MaintenanceContractPayment[] })[]
+  > {
+    return this.tenantTx.withTenantTx(async (tx) => {
+      const vendorId = await this.access.vendorOf(tx);
+      return tx.maintenanceContract.findMany({
+        where: { vendorId, terminatedAt: null },
+        include: {
+          payments: { orderBy: [{ dueOn: 'asc' }, { id: 'asc' }] },
+        },
+        orderBy: [{ endsOn: 'desc' }, { id: 'asc' }],
+        take: 100,
+      });
     });
   }
 

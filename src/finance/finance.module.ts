@@ -134,6 +134,7 @@ import { CommitmentsService } from './payables/commitments.service';
 import { ContractMoneyService } from './payables/contract-money.service';
 import { GuaranteeSweep } from './payables/guarantee-sweep';
 import { PayablesController } from './payables/payables.controller';
+import { ContractorInvoicesController } from './payables/contractor-invoices.controller';
 import { PayablesInboxItems } from './payables/payables-inbox-items';
 import { PayablesReportsService } from './payables/payables-reports.service';
 import { VendorInvoicesService } from './payables/vendor-invoices.service';
@@ -185,6 +186,7 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     BudgetPlanningController,
     PayablesReportsController,
     PayablesController,
+    ContractorInvoicesController,
   ],
   providers: [
     FinanceCompensationCredits,

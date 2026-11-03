@@ -128,12 +128,14 @@ export class ExpensesService implements OnModuleInit {
           },
         ]);
       const amount = money(input.amount);
-      const { remaining } = await this.budgets.figuresOf(tx, line);
-      if (amount.gt(remaining))
+      // What is committed and approved to pay is kept (ADR 0089): an
+      // expense spends only what the line has available.
+      const { available } = await this.budgets.figuresOf(tx, line);
+      if (amount.gt(available))
         throw appError.conflict(
           ErrorCode.EXPENSE_OVER_BUDGET,
           'More than the line has left',
-          { params: { remaining: show(remaining) } },
+          { params: { remaining: show(available) } },
         );
       const limit = await this.matters.threshold(tx, 'major_contract');
       let authorizationId: string | null = null;
@@ -221,6 +223,13 @@ export class ExpensesService implements OnModuleInit {
       await this.access.lockSelf(tx);
       const seen = await tx.financeExpense.findUnique({ where: { id } });
       if (!seen) throw expenseNotFound();
+      // A payout's expense is the invoice paid (ADR 0089): never voided.
+      if (seen.vendorInvoiceId)
+        throw appError.conflict(
+          ErrorCode.EXPENSE_FROM_PAYOUT,
+          'A vendor’s payout wrote this expense',
+          { params: { invoiceId: seen.vendorInvoiceId } },
+        );
       const line = await tx.financeBudgetLine.findUniqueOrThrow({
         where: { id: seen.budgetLineId },
       });
@@ -314,7 +323,12 @@ export class ExpensesService implements OnModuleInit {
 
   // --------------------------------------------------------------------------
 
-  private async lockAuthorization(
+  /**
+   * An approved major contract's authorization, for update, with what it
+   * has left (ADR 0055); a vendor's invoice above the limit is approved
+   * under one too (ADR 0089).
+   */
+  async lockAuthorization(
     tx: TenantTxClient,
     id: string,
   ): Promise<AuthorizationRecord> {
@@ -339,7 +353,13 @@ export class ExpensesService implements OnModuleInit {
       where: { authorizationId: authorization.id, voidedAt: null },
       _sum: { amount: true },
     });
-    const spent = money(sum._sum.amount ?? 0);
+    // A vendor's invoice approved under it and not yet paid keeps its
+    // share (ADR 0089); paid, it is its expense.
+    const held = await tx.financeVendorInvoice.aggregate({
+      where: { authorizationId: authorization.id, status: 'approved' },
+      _sum: { total: true },
+    });
+    const spent = money(sum._sum.amount ?? 0).add(held._sum.total ?? 0);
     return {
       authorization,
       spent,

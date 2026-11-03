@@ -182,6 +182,7 @@ import {
 import { MaintenanceContractsService } from './contracts/contracts.service';
 import { ContractSweep } from './contracts/contract-sweep';
 import { PurchaseInboxItems } from './purchases/purchase-inbox-items';
+import { PayableSources } from './contracts/payable-sources';
 import { PurchasesController } from './purchases/purchases.controller';
 import { PurchasesService } from './purchases/purchases.service';
 import { VendorDocumentSweep } from './vendors/vendor-sweep';
@@ -440,6 +441,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     ComplianceSweep,
     ComplianceOverview,
     ContractHandover,
+    // Payables' sources (ADR 0089).
+    PayableSources,
     EconomicsService,
     MetersService,
     ReadingsService,

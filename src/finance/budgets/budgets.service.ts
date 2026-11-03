@@ -32,13 +32,32 @@ import { BudgetView } from './views/budgets.views';
 export const BUDGET_RESOURCE = 'finance_budget';
 const PAGE = keysetCursor('createdAt', 'desc');
 
-/** A line with what it allows and what was spent of it. */
+/**
+ * A line with what it allows and what was spent of it. ADR 0089: the
+ * allowance moves with the applied transfers in and out, and what is
+ * available also keeps what is committed and what is approved to pay.
+ */
 export interface LineFigures {
   line: FinanceBudgetLine;
   increases: Prisma.Decimal;
+  transfersIn: Prisma.Decimal;
+  transfersOut: Prisma.Decimal;
   allowance: Prisma.Decimal;
   spent: Prisma.Decimal;
   remaining: Prisma.Decimal;
+  committed: Prisma.Decimal;
+  payable: Prisma.Decimal;
+  available: Prisma.Decimal;
+}
+
+/** One line's sums, as the figures' query reads them. */
+interface LineSums {
+  increases: Prisma.Decimal | null;
+  transfers_in: Prisma.Decimal | null;
+  transfers_out: Prisma.Decimal | null;
+  spent: Prisma.Decimal | null;
+  committed: Prisma.Decimal | null;
+  payable: Prisma.Decimal | null;
 }
 
 export interface BudgetTotals {
@@ -47,6 +66,9 @@ export interface BudgetTotals {
   allowance: Prisma.Decimal;
   spent: Prisma.Decimal;
   remaining: Prisma.Decimal;
+  committed: Prisma.Decimal;
+  payable: Prisma.Decimal;
+  available: Prisma.Decimal;
 }
 
 export interface BudgetRecord {
@@ -392,14 +414,11 @@ export class BudgetsService implements OnModuleInit {
     tx: TenantTxClient,
     line: FinanceBudgetLine,
   ): Promise<LineFigures> {
-    const [row] = await tx.$queryRaw<
-      { increases: Prisma.Decimal | null; spent: Prisma.Decimal | null }[]
-    >`
-      SELECT (SELECT sum(a.amount) FROM finance_budget_adjustments a
-               WHERE a.line_id = ${line.id}::uuid) AS increases,
-             (SELECT sum(e.amount) FROM finance_expenses e
-               WHERE e.budget_line_id = ${line.id}::uuid AND e.voided_at IS NULL) AS spent`;
-    return figures(line, row.increases, row.spent);
+    const [row] = await tx.$queryRaw<LineSums[]>`
+      SELECT ${LINE_SUMS}
+        FROM finance_budget_lines l
+       WHERE l.id = ${line.id}::uuid`;
+    return figures(line, row);
   }
 
   /** A budget with every line's figures. */
@@ -407,29 +426,14 @@ export class BudgetsService implements OnModuleInit {
     const lines = await tx.financeBudgetLine.findMany({
       where: { budgetId: budget.id },
     });
-    const sums = await tx.$queryRaw<
-      {
-        line_id: string;
-        increases: Prisma.Decimal | null;
-        spent: Prisma.Decimal | null;
-      }[]
-    >`
-      SELECT l.id AS line_id,
-             (SELECT sum(a.amount) FROM finance_budget_adjustments a WHERE a.line_id = l.id) AS increases,
-             (SELECT sum(e.amount) FROM finance_expenses e
-               WHERE e.budget_line_id = l.id AND e.voided_at IS NULL) AS spent
+    const sums = await tx.$queryRaw<(LineSums & { line_id: string })[]>`
+      SELECT l.id AS line_id, ${LINE_SUMS}
         FROM finance_budget_lines l
        WHERE l.budget_id = ${budget.id}::uuid`;
     const by = new Map(sums.map((s) => [s.line_id, s]));
     const out = lines
       .sort((a, b) => order(a.category) - order(b.category))
-      .map((l) =>
-        figures(
-          l,
-          by.get(l.id)?.increases ?? null,
-          by.get(l.id)?.spent ?? null,
-        ),
-      );
+      .map((l) => figures(l, by.get(l.id) ?? null));
     const add = (pick: (f: LineFigures) => Prisma.Decimal) =>
       out.reduce((t, f) => t.add(pick(f)), ZERO);
     return {
@@ -441,6 +445,9 @@ export class BudgetsService implements OnModuleInit {
         allowance: add((f) => f.allowance),
         spent: add((f) => f.spent),
         remaining: add((f) => f.remaining),
+        committed: add((f) => f.committed),
+        payable: add((f) => f.payable),
+        available: add((f) => f.available),
       },
     };
   }
@@ -459,19 +466,47 @@ export class BudgetsService implements OnModuleInit {
   }
 }
 
-function figures(
-  line: FinanceBudgetLine,
-  increases: Prisma.Decimal.Value | null,
-  spent: Prisma.Decimal.Value | null,
-): LineFigures {
-  const inc = money(increases ?? 0);
-  const sp = money(spent ?? 0);
-  const allowance = money(line.amount).add(inc);
+/**
+ * A line's sums from one read, for `l` a finance_budget_lines row: the
+ * approved increases, the applied transfers in and out (ADR 0089), the
+ * live expenses, what open commitments still keep, and the approved
+ * vendors' invoices not yet paid.
+ */
+const LINE_SUMS = Prisma.sql`
+  (SELECT sum(a.amount) FROM finance_budget_adjustments a WHERE a.line_id = l.id) AS increases,
+  (SELECT sum(t.amount) FROM finance_budget_transfers t
+    WHERE t.to_line_id = l.id AND t.status = 'applied') AS transfers_in,
+  (SELECT sum(t.amount) FROM finance_budget_transfers t
+    WHERE t.from_line_id = l.id AND t.status = 'applied') AS transfers_out,
+  (SELECT sum(e.amount) FROM finance_expenses e
+    WHERE e.budget_line_id = l.id AND e.voided_at IS NULL) AS spent,
+  (SELECT sum(c.amount - COALESCE((SELECT sum(r.amount) FROM finance_commitment_releases r
+                                    WHERE r.commitment_id = c.id), 0))
+     FROM finance_commitments c
+    WHERE c.line_id = l.id AND c.closed_at IS NULL) AS committed,
+  (SELECT sum(i.total) FROM finance_vendor_invoices i
+    WHERE i.budget_line_id = l.id AND i.status = 'approved') AS payable`;
+
+function figures(line: FinanceBudgetLine, sums: LineSums | null): LineFigures {
+  const of = (v: Prisma.Decimal | null | undefined) => money(v ?? 0);
+  const inc = of(sums?.increases);
+  const tin = of(sums?.transfers_in);
+  const tout = of(sums?.transfers_out);
+  const sp = of(sums?.spent);
+  const committed = of(sums?.committed);
+  const payable = of(sums?.payable);
+  const allowance = money(line.amount).add(inc).add(tin).sub(tout);
+  const remaining = allowance.sub(sp);
   return {
     line,
     increases: inc,
+    transfersIn: tin,
+    transfersOut: tout,
     allowance,
     spent: sp,
-    remaining: allowance.sub(sp),
+    remaining,
+    committed,
+    payable,
+    available: remaining.sub(committed).sub(payable),
   };
 }

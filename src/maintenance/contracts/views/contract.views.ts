@@ -90,6 +90,13 @@ export class MaintenanceContractView {
   approvalRequestId: string | null;
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   budgetLineId: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '5.00',
+    description: 'Held back of each payout, a percentage (ADR 0089).',
+  })
+  retentionPct: string | null;
 
   static from(r: ContractRead): MaintenanceContractView {
     const c = r.contract;
@@ -119,6 +126,7 @@ export class MaintenanceContractView {
       renewalId: r.renewalId,
       approvalRequestId: c.approvalRequestId,
       budgetLineId: c.budgetLineId,
+      retentionPct: c.retentionPct?.toFixed(2) ?? null,
     };
   }
 }

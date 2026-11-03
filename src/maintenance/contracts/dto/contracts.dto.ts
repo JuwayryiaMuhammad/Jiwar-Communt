@@ -21,6 +21,10 @@ import { withParams } from '../../../core/common/validation/validation-errors';
 import { MONEY } from '../../costs/cost-rules';
 import { IsLocalDate, LOCAL_DATE } from '../../schedules/local-dates';
 import { STOCK_CODE } from '../../stock/stock-rules';
+
+/** A retention share: above 0 and at most 20, two decimals at most (ADR 0089). */
+const RETENTION =
+  /^(?:20(?:\.0{1,2})?|1\d(?:\.\d{1,2})?|[1-9](?:\.\d{1,2})?|0\.(?:0[1-9]|[1-9]\d?))$/;
 import {
   CONTRACT_ASSETS_MAX,
   CONTRACT_KINDS,
@@ -224,6 +228,17 @@ export class CreateContractDto {
 
   @ApiPropertyOptional({
     type: String,
+    pattern: RETENTION.source,
+    description:
+      'Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); released at the contract’s end with approval.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(RETENTION)
+  retentionPct?: string;
+
+  @ApiPropertyOptional({
+    type: String,
     format: 'uuid',
     description:
       'The board’s approved major contract it is signed under: needed above the manager’s limit, of at least the value, signing one contract. Set once.',
@@ -411,6 +426,19 @@ export class UpdateContractDto {
   @ValidateIf((_, v) => v !== null)
   @IsUUID()
   budgetLineId?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    pattern: RETENTION.source,
+    description:
+      'Held back of each payout, a percentage above 0 and at most 20 (ADR 0089); null for none.',
+  })
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsString()
+  @Matches(RETENTION)
+  retentionPct?: string | null;
 
   @ApiPropertyOptional({
     type: String,

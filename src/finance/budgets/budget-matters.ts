@@ -82,6 +82,8 @@ export class BudgetMatters implements OnModuleInit {
           allowance: show(f.allowance),
           spent: show(f.spent),
           remaining: show(f.remaining),
+          committed: show(f.committed),
+          available: show(f.available),
         };
       },
       decided: async (tx, ev) => {

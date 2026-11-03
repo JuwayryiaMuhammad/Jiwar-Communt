@@ -125,6 +125,18 @@ import { FinanceInboxItems } from './finance-inbox-items';
  * community through its index and nothing else; nothing imports it. What
  * the board's decisions do here is registered with core's BoardMatters.
  */
+import {
+  BudgetPlanningController,
+  PayablesReportsController,
+} from './payables/budget-planning.controller';
+import { BudgetPlanningService } from './payables/budget-planning.service';
+import { CommitmentsService } from './payables/commitments.service';
+import { ContractMoneyService } from './payables/contract-money.service';
+import { GuaranteeSweep } from './payables/guarantee-sweep';
+import { PayablesController } from './payables/payables.controller';
+import { PayablesInboxItems } from './payables/payables-inbox-items';
+import { PayablesReportsService } from './payables/payables-reports.service';
+import { VendorInvoicesService } from './payables/vendor-invoices.service';
 @Module({
   imports: [
     AccountsModule,
@@ -169,6 +181,10 @@ import { FinanceInboxItems } from './finance-inbox-items';
     ReceiptPageController,
     BudgetsController,
     BudgetReportController,
+    // Payables and commitments (ADR 0089).
+    BudgetPlanningController,
+    PayablesReportsController,
+    PayablesController,
   ],
   providers: [
     FinanceCompensationCredits,
@@ -196,6 +212,13 @@ import { FinanceInboxItems } from './finance-inbox-items';
     BoardAuthority,
     ExpensesService,
     BudgetReportService,
+    CommitmentsService,
+    BudgetPlanningService,
+    VendorInvoicesService,
+    ContractMoneyService,
+    PayablesReportsService,
+    PayablesInboxItems,
+    GuaranteeSweep,
     DisputeBoardAppeals,
     FinanceOverview,
     FinanceDashboardSection,

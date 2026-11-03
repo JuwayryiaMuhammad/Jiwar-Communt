@@ -118,7 +118,13 @@ export class DispatchEngine {
     await this.serialize(tx);
     await tx.$queryRaw`SELECT id FROM tickets WHERE id = ${ticketId}::uuid FOR UPDATE`;
     const ticket = await tx.ticket.findUnique({ where: { id: ticketId } });
-    if (!ticket || ticket.status !== 'new' || ticket.technicianId !== null)
+    // A ticket offered to a vendor (ADR 0088) waits for its contractors.
+    if (
+      !ticket ||
+      ticket.status !== 'new' ||
+      ticket.technicianId !== null ||
+      ticket.vendorId !== null
+    )
       return { outcome: 'not_in_queue' };
 
     const settings = await this.settings.inTx(tx);
@@ -218,6 +224,7 @@ export class DispatchEngine {
       where: {
         status: 'new',
         technicianId: null,
+        vendorId: null,
         id: { notIn: declined },
         category: {
           OR: [

@@ -3024,6 +3024,35 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'the amounts, kind and method are NOT NULL; reference is tested IS NULL first and its length runs only on a value',
   },
   finance_vendor_guarantees_shape: {},
+  // The contractor portal and tenders (ADR 0088).
+  accounts_contractor_vendor: {},
+  ticket_vendor_dispatches_shape: {
+    guarded: 'cycle is NOT NULL; note is tested IS NULL first',
+  },
+  ticket_vendor_dispatches_state_shape: {
+    guarded:
+      'status is NOT NULL; the decision and end columns are tested IS [NOT] NULL; each reason list runs only after its IS NULL test',
+  },
+  tenders_shape: {
+    guarded:
+      'number, title, category, contract_kind, bids_due_at and created_at are NOT NULL; scope and estimated_value are tested IS NULL first',
+  },
+  tenders_state_shape: {
+    guarded:
+      'status is NOT NULL; every pair is tested IS [NOT] NULL; the opening instant, the second opener, the bid count and the cancel reason run only after their IS NULL test',
+  },
+  tender_documents_shape: {},
+  tender_invitations_shape: {
+    guarded:
+      'kind is NOT NULL; company_name and contact_email are tested IS NULL first',
+  },
+  tender_bids_shape: {
+    guarded:
+      'sealed_amount is NOT NULL; amount, duration_days and note are tested IS NULL first',
+  },
+  tender_bid_links_token_hash_hex: {},
+  tender_bid_links_validity: {},
+  tender_bid_links_revoked_shape: {},
 };
 
 interface Check {

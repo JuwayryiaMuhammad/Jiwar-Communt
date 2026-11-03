@@ -193,6 +193,15 @@ import { ComplianceOverview } from './compliance/compliance-overview';
 import { ComplianceService } from './compliance/compliance.service';
 import { ComplianceSweep } from './compliance/compliance-sweep';
 import { ContractHandover } from './contracts/contract-handover';
+import { ContractorAccess } from './contractors/contractor-access';
+import { ContractorExportSections } from './contractors/contractor-export-sections';
+import {
+  ContractorPortalController,
+  VendorContractorsController,
+  VendorDispatchController,
+} from './contractors/contractors.controller';
+import { ContractorsService } from './contractors/contractors.service';
+import { VendorDispatchService } from './contractors/vendor-dispatch.service';
 import { MeterAlertsService } from './energy/alerts.service';
 import { ConsumptionService } from './energy/consumption.service';
 import { HouseholdConsumptionController } from './energy/household-consumption.controller';
@@ -321,6 +330,9 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     VendorsController,
     PurchasesController,
     ComplianceController,
+    VendorContractorsController,
+    VendorDispatchController,
+    ContractorPortalController,
     EconomicsController,
     MetersController,
     MeterAlertsController,
@@ -435,6 +447,10 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     ContractSweep,
     VendorsService,
     VendorDocumentSweep,
+    ContractorAccess,
+    ContractorExportSections,
+    ContractorsService,
+    VendorDispatchService,
     PurchasesService,
     PurchaseInboxItems,
     ComplianceService,

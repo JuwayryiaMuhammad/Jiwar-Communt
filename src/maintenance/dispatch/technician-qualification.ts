@@ -6,6 +6,7 @@ import { TechnicianRelease } from '../tickets/technician-release';
 import { IN_HAND } from '../tickets/ticket-rules';
 import { AvailabilityService } from './availability.service';
 import { DispatchEngine } from './dispatch-engine';
+import { TICKET_WORKER } from '../tickets/ticket-access';
 
 /**
  * Closes the 5.1 gap (ADR 0033): a technician whose role loses
@@ -56,7 +57,13 @@ export class TechnicianQualification implements OnModuleInit {
     roleId: string,
     removed: readonly string[],
   ): Promise<AfterCommit[]> {
-    if (!removed.includes('tickets.work')) return [];
+    // A vendor's contractor works its tickets by tickets.contract_work
+    // (ADR 0088): losing it releases them as well.
+    if (
+      !removed.includes('tickets.work') &&
+      !removed.includes('tickets.contract_work')
+    )
+      return [];
     const accounts = await tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM accounts WHERE role_id = ${roleId}::uuid
        ORDER BY id FOR NO KEY UPDATE`;
@@ -76,8 +83,9 @@ export class TechnicianQualification implements OnModuleInit {
 
   /**
    * The backstop's first half: whoever holds tickets in hand without being
-   * an active staff account that holds `tickets.work` (whatever the cause, a
-   * sync of the catalog included). No lock; `reconcileOne` takes it.
+   * an active staff account that holds `tickets.work`, or an active
+   * contractor that holds `tickets.contract_work` (ADR 0088) — whatever the
+   * cause, a sync of the catalog included. No lock; `reconcileOne` takes it.
    */
   async unqualifiedHolders(tx: TenantTxClient): Promise<string[]> {
     const holders = await tx.$queryRaw<{ id: string }[]>`
@@ -85,10 +93,15 @@ export class TechnicianQualification implements OnModuleInit {
         FROM tickets t
         JOIN accounts a ON a.id = t.technician_account_id
        WHERE t.status::text = ANY(${[...IN_HAND]}::text[])
-         AND NOT (a.status = 'active' AND a.type = 'staff'
-                  AND EXISTS (SELECT 1 FROM role_permissions rp
-                               WHERE rp.role_id = a.role_id
-                                 AND rp.permission = 'tickets.work'))
+         AND NOT (a.status = 'active'
+                  AND ((a.type = 'staff'
+                        AND EXISTS (SELECT 1 FROM role_permissions rp
+                                     WHERE rp.role_id = a.role_id
+                                       AND rp.permission = 'tickets.work'))
+                    OR (a.type = 'contractor'
+                        AND EXISTS (SELECT 1 FROM role_permissions rp
+                                     WHERE rp.role_id = a.role_id
+                                       AND rp.permission = 'tickets.contract_work'))))
        ORDER BY 1`;
     return holders.map((h) => h.id);
   }
@@ -102,12 +115,7 @@ export class TechnicianQualification implements OnModuleInit {
   async reconcileOne(tx: TenantTxClient, accountId: string): Promise<number> {
     await tx.$queryRaw`SELECT id FROM accounts WHERE id = ${accountId}::uuid FOR NO KEY UPDATE`;
     const qualified = await tx.account.count({
-      where: {
-        id: accountId,
-        status: 'active',
-        type: 'staff',
-        role: { permissions: { some: { permission: 'tickets.work' } } },
-      },
+      where: { id: accountId, ...TICKET_WORKER },
     });
     if (qualified) return 0;
     return (await this.revoke(tx, [accountId])).length;

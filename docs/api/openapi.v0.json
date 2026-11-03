@@ -305,7 +305,8 @@
           "staff",
           "manager",
           "family",
-          "proxy"
+          "proxy",
+          "contractor"
         ],
         "type": "string"
       },
@@ -15257,6 +15258,134 @@
         ],
         "type": "object"
       },
+      "ContractorOfferView": {
+        "properties": {
+          "categoryKey": {
+            "type": "string"
+          },
+          "commonArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "offeredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "place": {
+            "description": "Where the work is: in a unit (shown once taken) or a common area.",
+            "enum": [
+              "unit",
+              "common_area"
+            ],
+            "type": "string"
+          },
+          "priority": {
+            "enum": [
+              "normal",
+              "urgent",
+              "emergency"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorDispatchStatus"
+              }
+            ]
+          },
+          "takenByMe": {
+            "description": "I took it: it is in my technician list.",
+            "type": "boolean"
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticketNumber": {
+            "description": "MT-000123.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "ticketId",
+          "ticketNumber",
+          "categoryKey",
+          "priority",
+          "place",
+          "commonArea",
+          "note",
+          "offeredAt",
+          "takenByMe"
+        ],
+        "type": "object"
+      },
+      "ContractorOfferViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ContractorOfferView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ContractorVendorView": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/VendorCategory"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "reference": {
+            "description": "V-0001.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Suspended: no new work, no bid.",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "name",
+          "categories",
+          "status"
+        ],
+        "type": "object"
+      },
       "ControlRoomEventKind": {
         "enum": [
           "guard_sos_raised",
@@ -27986,7 +28115,9 @@
           "vendor_document",
           "compliance_evidence",
           "compound_logo",
-          "unit_entry_photo"
+          "unit_entry_photo",
+          "tender_document",
+          "tender_bid"
         ],
         "type": "string"
       },
@@ -44528,6 +44659,53 @@
         ],
         "type": "object"
       },
+      "NewContractorDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Required for a passport, ignored for a national ID.",
+            "format": "date",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          },
+          "fullName": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "idDocumentNumber": {
+            "description": "14-digit national ID, or a passport number.",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "idDocumentType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdDocumentType"
+              }
+            ]
+          },
+          "nationality": {
+            "description": "ISO 3166-1 alpha-2; required for a passport.",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Local Egyptian format, or international with `+`; stored as E.164.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idDocumentType",
+          "idDocumentNumber",
+          "fullName",
+          "phone",
+          "email"
+        ],
+        "type": "object"
+      },
       "NewDepositDto": {
         "properties": {
           "amount": {
@@ -45568,6 +45746,37 @@
           "tenant"
         ],
         "type": "string"
+      },
+      "OfferTakenView": {
+        "properties": {
+          "ticketId": {
+            "description": "Now under `/technician/tickets/{id}`.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketId"
+        ],
+        "type": "object"
+      },
+      "OfferToVendorDto": {
+        "properties": {
+          "note": {
+            "description": "What the vendor needs to know of the work before taking it; never a person.",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendorId"
+        ],
+        "type": "object"
       },
       "OfficeHoursResponse": {
         "properties": {
@@ -75098,7 +75307,8 @@
           "reassignment",
           "declined",
           "automatic",
-          "released"
+          "released",
+          "vendor"
         ],
         "type": "string"
       },
@@ -80926,6 +81136,116 @@
         "required": [
           "total",
           "active"
+        ],
+        "type": "object"
+      },
+      "VendorDispatchStatus": {
+        "enum": [
+          "offered",
+          "accepted",
+          "declined",
+          "withdrawn",
+          "returned"
+        ],
+        "type": "string"
+      },
+      "VendorDispatchView": {
+        "properties": {
+          "cycle": {
+            "type": "number"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedById": {
+            "description": "The contractor who took it or turned it down.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "declineReason": {
+            "description": "From the closed list `vendorDispatchDecline`.",
+            "nullable": true,
+            "type": "string"
+          },
+          "endedAt": {
+            "description": "Taken back, or given back once taken.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "offeredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "offeredById": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorDispatchStatus"
+              }
+            ]
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "withdrawReason": {
+            "description": "From the closed list `vendorDispatchWithdraw`.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ticketId",
+          "vendorId",
+          "cycle",
+          "status",
+          "note",
+          "offeredById",
+          "offeredAt",
+          "decidedById",
+          "decidedAt",
+          "declineReason",
+          "withdrawReason",
+          "endedAt"
+        ],
+        "type": "object"
+      },
+      "VendorDispatchViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VendorDispatchView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -90703,6 +91023,174 @@
         "summary": "Withdraw my renewal request",
         "tags": [
           "units"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/dispatches": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "ContractorPortalController_offers",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "`true`: only the offers still waiting for an answer.",
+            "in": "query",
+            "name": "open",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorOfferViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the tickets offered to my company",
+        "tags": [
+          "contractor"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/dispatches/{id}/accept": {
+      "post": {
+        "operationId": "ContractorPortalController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferTakenView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take the ticket: it is mine to work",
+        "tags": [
+          "contractor"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/dispatches/{id}/decline": {
+      "post": {
+        "operationId": "ContractorPortalController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn the ticket down",
+        "tags": [
+          "contractor"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/vendor": {
+      "get": {
+        "operationId": "ContractorPortalController_vendor",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorVendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My company",
+        "tags": [
+          "contractor"
         ],
         "x-stability": "draft"
       }
@@ -110497,6 +110985,131 @@
           }
         ],
         "summary": "Get a ticket's SLA events",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/vendor-dispatch": {
+      "post": {
+        "description": "A queued ticket with no technician; the vendor needs a contractor who can take it. The SLA clock runs on.",
+        "operationId": "VendorDispatchController_offer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferToVendorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDispatchView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Offer the ticket to a vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/vendor-dispatch/withdraw": {
+      "post": {
+        "operationId": "VendorDispatchController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take the offer back from the vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/tickets/{id}/vendor-dispatches": {
+      "get": {
+        "operationId": "VendorDispatchController_ofTicket",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDispatchViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the ticket’s offers to vendors",
         "tags": [
           "maintenance"
         ],
@@ -150689,6 +151302,109 @@
           }
         ],
         "summary": "Change a vendor’s details",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/vendors/{id}/contractors": {
+      "get": {
+        "operationId": "VendorContractorsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountListItemViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List a vendor’s contractor accounts",
+        "tags": [
+          "maintenance"
+        ],
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "An account of the `contractor` kind tied to this vendor, with the `contractor` role; it signs in as staff do. A suspended vendor takes none.",
+        "operationId": "VendorContractorsController_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewContractorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite a contractor of the vendor",
         "tags": [
           "maintenance"
         ],

@@ -1138,4 +1138,20 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   finance_vendor_payouts_disbursement_key: null,
   finance_vendor_payouts_expense_key: null,
   finance_vendor_guarantees_tenant_id_id_key: null,
+  // The contractor portal and tenders (ADR 0088). An offer, a bid and a
+  // link are each one live under their row's lock (a violation is a race);
+  // a vendor invited twice and a file named twice name their field.
+  ticket_vendor_dispatches_tenant_id_id_key: null,
+  ticket_vendor_dispatches_one_live: null,
+  tenders_tenant_id_id_key: null,
+  tenders_number_key: null,
+  tenders_contract_key: null,
+  tender_documents_file_key: ['fileId'],
+  tender_invitations_tenant_id_id_key: null,
+  tender_invitations_one_live_vendor: ['vendorId'],
+  tender_bids_tenant_id_id_key: null,
+  tender_bids_one_live: null,
+  tender_bids_file_key: ['fileId'],
+  tender_bid_links_token_hash_key: null,
+  tender_bid_links_one_live: null,
 };

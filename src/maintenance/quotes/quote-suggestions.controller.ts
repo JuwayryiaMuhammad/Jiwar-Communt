@@ -12,7 +12,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { ApiArea } from '../../core/common/http/decorators';
 import {
   bounded,
@@ -28,7 +31,8 @@ import { QuoteSuggestionView } from './views/quote.views';
 
 /** The technician's quote suggestions on their ticket (ADR 0065). */
 @ApiArea('maintenance')
-@RequirePermissions('tickets.work')
+// A vendor's contractor on a ticket it took works it here too (ADR 0088).
+@RequireAnyPermission('tickets.work', 'tickets.contract_work')
 @Controller('technician/tickets/:id/quote-suggestions')
 export class TechnicianQuoteSuggestionsController {
   constructor(private readonly suggestions: QuoteSuggestionsService) {}

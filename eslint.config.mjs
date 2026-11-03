@@ -98,7 +98,8 @@ export default tseslint.config(
   // Paymob webhook resolves the compound from its URL, the public receipt
   // page from the code's global pointer, and the boot check and the
   // re-encryption CLI walk every compound. Guard vendors (ADR 0068): a
-  // vendor's webhook resolves the compound from its URL.
+  // vendor's webhook resolves the compound from its URL. Tenders (ADR
+  // 0088): a bid link resolves the compound from its global pointer.
   {
     files: ['**/*.ts'],
     rules: {
@@ -128,6 +129,7 @@ export default tseslint.config(
       'src/core/sweep/sweep-runner.ts',
       'src/gate/visitors/visitor-page.service.ts',
       'src/partners/desk/desk.service.ts',
+      'src/maintenance/tenders/bid-link.service.ts',
       'src/gate/children/pickup-page.service.ts',
       'src/finance/gateway/platform-gateway.service.ts',
       'src/finance/gateway/gateway-keys.ts',

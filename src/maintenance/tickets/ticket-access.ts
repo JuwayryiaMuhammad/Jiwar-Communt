@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Ticket } from '@prisma/client';
+import type { Prisma, Ticket } from '@prisma/client';
 import { CommunityMaintenancePort } from '../../community';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { appError, ErrorCode } from '../../core/common/errors';
@@ -13,6 +13,29 @@ import { residentVisible } from './ticket-visibility';
  * technician (`tickets.work`) and dispatch (`tickets.dispatch`).
  */
 export type Audience = 'resident' | 'technician' | 'dispatch';
+
+/**
+ * Who may hold tickets in hand (ADR 0032, 0088): an active staff account
+ * holding `tickets.work`, or an active contractor holding
+ * `tickets.contract_work` (its vendor's tickets, which it took). Only
+ * staff are dispatch's to choose; a contractor takes a ticket offered to
+ * its vendor.
+ */
+export const TICKET_WORKER: Prisma.AccountWhereInput = {
+  status: 'active',
+  OR: [
+    {
+      type: 'staff',
+      role: { permissions: { some: { permission: 'tickets.work' } } },
+    },
+    {
+      type: 'contractor',
+      role: {
+        permissions: { some: { permission: 'tickets.contract_work' } },
+      },
+    },
+  ],
+};
 
 export const ticketNotFound = () =>
   appError.notFound(ErrorCode.TICKET_NOT_FOUND, 'Ticket not found');

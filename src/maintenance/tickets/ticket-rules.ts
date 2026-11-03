@@ -107,6 +107,23 @@ export function assertCan(
 }
 
 /**
+ * A ticket offered to a vendor (ADR 0088) waits for the vendor's
+ * contractors: dispatch takes the offer back before giving it to anyone
+ * else (TICKET_OFFERED_TO_VENDOR, 409). A trigger refuses it as well.
+ */
+export function assertNotOffered(ticket: {
+  vendorId: string | null;
+  technicianId: string | null;
+}): void {
+  if (ticket.vendorId !== null && ticket.technicianId === null)
+    throw appError.conflict(
+      ErrorCode.TICKET_OFFERED_TO_VENDOR,
+      'The ticket is offered to a vendor',
+      { params: { vendorId: ticket.vendorId } },
+    );
+}
+
+/**
  * Where a rejected or reopened ticket goes. The first time (no earlier
  * rejection or reopen) it goes back to the technician who did the work, if
  * they can still take it; otherwise, and every later time, back to the

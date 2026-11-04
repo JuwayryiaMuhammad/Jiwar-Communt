@@ -1447,6 +1447,12 @@ describe('API v0 — PII leak scan', () => {
       '/staff/finance/vendor-invoices/{id}': w.bVendorInvoiceId,
       '/staff/finance/contract-payables/{contractId}': w.bContractId,
       '/staff/finance/contract-disbursements/{id}': w.bDisbursementId,
+      // ADR 0088: B's vendor's contractors and tender, a ticket's offers to
+      // vendors: not found for everyone of A, the offers staff only.
+      '/staff/vendors/{id}/contractors': w.bVendorId,
+      '/maintenance/tickets/{id}/vendor-dispatches': ticket.id,
+      '/staff/tenders/{id}': w.bTenderId,
+      '/contractor/tenders/{id}': w.bTenderId,
       '/maintenance/meters/{id}': w.bMeterId,
       '/maintenance/meters/{id}/readings': w.bMeterId,
       '/technician/meters/{id}': w.bMeterId,
@@ -1963,6 +1969,14 @@ describe('API v0 — PII leak scan', () => {
       ender: {
         token: await w.tokenFor(a, ender.id, 'resident'),
         self: ender.id,
+        isManager: false,
+      },
+      // ADR 0088: a vendor's contractor reads its offers, its tenders, its
+      // invoices and the tickets it took: never a resident's data beyond a
+      // technician's on its own job.
+      contractor: {
+        token: a.tokens.contractor,
+        self: a.ids.contractor,
         isManager: false,
       },
       // ADR 0037: lives in the home, sees its workers, never a wage.
@@ -2902,7 +2916,34 @@ describe('API v0 — PII leak scan', () => {
       // compound and the day, never a person, a unit or an id (below, and
       // test/office-queue/letters-correspondence).
       '/public/letters/lookup',
+      // ADR 0088: a bid link's page shows the compound, the company it is
+      // for, the tender's terms, deadline and documents and its own bid,
+      // never another bidder, an amount before the opening, a person or an
+      // id but the tender's (the key set below; test/tenders/tenders).
+      '/public/tender-bids/lookup',
     ]);
+    const bidPage = await call(w, 'POST', '/public/tender-bids/lookup', {
+      body: { token: w.aBidToken },
+    }).expect(200);
+    expect(Object.keys(bidPage.body as object).sort()).toEqual([
+      'bid',
+      'bidsDueAt',
+      'category',
+      'companyName',
+      'compoundName',
+      'documents',
+      'id',
+      'outcome',
+      'reference',
+      'scope',
+      'status',
+      'title',
+    ]);
+    {
+      const text = JSON.stringify(bidPage.body);
+      for (const id of Object.values(a.ids)) expect(text).not.toContain(id);
+      expect(text).not.toContain(a.contractorVendorId);
+    }
     const ids = [...people.map((p) => p.id), ...Object.values(a.ids)].filter(
       Boolean,
     );

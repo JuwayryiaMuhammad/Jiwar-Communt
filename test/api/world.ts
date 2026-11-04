@@ -74,6 +74,9 @@ import {
 import { FacilitiesService } from '../../src/facilities/setup/facilities.service';
 import { ConsentsService } from '../../src/core/consents/consents.service';
 import { DeskLinks } from '../../src/partners/desk/desk-links';
+import { dbClock } from '../setup/compound-clock';
+import { ContractorsService } from '../../src/maintenance/contractors/contractors.service';
+import { TendersService } from '../../src/maintenance/tenders/tenders.service';
 import { PartnerComplaintsService } from '../../src/partners/feedback/complaints.service';
 import { RelayService } from '../../src/partners/requests/relay.service';
 import { shiftWindow } from '../setup/partners';
@@ -134,7 +137,9 @@ export type Persona =
   | 'guard'
   | 'technician'
   | 'collector'
-  | 'supervisor';
+  | 'supervisor'
+  // A vendor's contractor (ADR 0088): its own kind, tied to `contractorVendorId`.
+  | 'contractor';
 
 const TYPES: Record<Persona, AccountType> = {
   manager: 'manager',
@@ -146,6 +151,7 @@ const TYPES: Record<Persona, AccountType> = {
   technician: 'staff',
   collector: 'staff',
   supervisor: 'staff',
+  contractor: 'contractor',
 };
 
 /** One compound as the API suites see it. */
@@ -168,6 +174,8 @@ export interface Side extends Compound {
   gateId: string;
   gateName: string;
   shiftId: string;
+  /** The vendor `contractor` works for (ADR 0088). */
+  contractorVendorId: string;
 }
 
 export interface World
@@ -283,6 +291,13 @@ export interface World
   bContractId: string;
   /** ADR 0077: its vendor, a payment of its schedule, and a purchase request. */
   bVendorId: string;
+  /** ADR 0088: B's draft tender, a link invitation on it, an offer of B's ticket. */
+  bTenderId: string;
+  bTenderInvitationId: string;
+  bVendorDispatchId: string;
+  /** A's published tender (A's contractor's vendor invited) and a live bid link of it. */
+  aTenderId: string;
+  aBidToken: string;
   bContractPaymentId: string;
   bPurchaseRequestId: string;
   /** ADR 0087: its compliance item, the item's open due day and evidence on it. */
@@ -464,6 +479,23 @@ async function side(
     compound,
     'security_supervisor',
   );
+  // A vendor's contractor (ADR 0088), invited through the vendors' service
+  // as the manager invites one; its vendor is the side's own.
+  const contractorVendor = await c.asManager(compound, () =>
+    c.prisma.tenant.vendor.create({
+      data: {
+        id: newId(),
+        tenantId: compound.tenantId,
+        number: 9101,
+        name: `API ${label} contractor vendor`,
+      },
+    }),
+  );
+  const contractor = await c.asManager(compound, () =>
+    h.moduleRef
+      .get(ContractorsService)
+      .add(contractorVendor.id, c.person('contractor')),
+  );
   const ids: Record<Persona, string> = {
     manager: compound.managerId,
     owner: owner.id,
@@ -474,6 +506,7 @@ async function side(
     technician: technician.id,
     collector: collector.id,
     supervisor: supervisor.id,
+    contractor: contractor.id,
   };
   const tokens = {} as Record<Persona, string>;
   for (const persona of Object.keys(ids) as Persona[]) {
@@ -509,6 +542,7 @@ async function side(
     gateId: duty.gateId,
     gateName: duty.gateName,
     shiftId: duty.shiftId,
+    contractorVendorId: contractorVendor.id,
   };
 }
 
@@ -1063,6 +1097,61 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
         createdAt: new Date(),
       },
     }),
+  );
+  // ADR 0088: B's draft tender with a link invitation, an offer of B's
+  // ticket its contractor vendor turned down; A's published tender with a
+  // live bid link (the public page's rows and the pii-scan's key set).
+  const tenderInput = () => ({
+    title: 'World tender',
+    category: 'maintenance' as const,
+    contractKind: 'service' as const,
+    bidsDueAt: new Date(dbClock().getTime() + 48 * 3_600_000),
+  });
+  const bTender = (
+    await helpers.asManager(b, () =>
+      h.moduleRef.get(TendersService).create(tenderInput()),
+    )
+  ).tender;
+  const bTenderLink = await helpers.asManager(b, () =>
+    h.moduleRef
+      .get(TendersService)
+      .inviteByLink(bTender.id, { companyName: 'World bidder' }),
+  );
+  const bVendorDispatch = await helpers.asManager(b, () =>
+    helpers.prisma.tenant.ticketVendorDispatch.create({
+      data: {
+        id: newId(),
+        tenantId: b.tenantId,
+        ticketId: bTicket.id,
+        vendorId: b.contractorVendorId,
+        cycle: 1,
+        status: 'declined',
+        offeredById: b.managerId,
+        offeredAt: dbClock(),
+        decidedById: b.ids.contractor,
+        decidedAt: dbClock(),
+        declineReason: 'no_capacity',
+      },
+    }),
+  );
+  const aTender = (
+    await helpers.asManager(a, () =>
+      h.moduleRef.get(TendersService).create(tenderInput()),
+    )
+  ).tender;
+  // A's contractor's vendor is invited: its contractor reads and bids.
+  await helpers.asManager(a, () =>
+    h.moduleRef
+      .get(TendersService)
+      .inviteVendor(aTender.id, a.contractorVendorId),
+  );
+  await helpers.asManager(a, () =>
+    h.moduleRef.get(TendersService).publish(aTender.id),
+  );
+  const aBidLink = await helpers.asManager(a, () =>
+    h.moduleRef
+      .get(TendersService)
+      .inviteByLink(aTender.id, { companyName: 'World outside bidder' }),
   );
   const bPurchaseRequest = await helpers.asManager(b, () =>
     helpers.prisma.tenant.purchaseRequest.create({
@@ -1988,6 +2077,11 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
     bPartRequestId: bPartRequest.id,
     bContractId: bContract.id,
     bVendorId: bVendor.id,
+    bTenderId: bTender.id,
+    bTenderInvitationId: bTenderLink.invitation.id,
+    bVendorDispatchId: bVendorDispatch.id,
+    aTenderId: aTender.id,
+    aBidToken: aBidLink.url.split('#')[1],
     bContractPaymentId: bContractPayment.id,
     bPurchaseRequestId: bPurchaseRequest.id,
     bComplianceItemId: bComplianceItem.id,

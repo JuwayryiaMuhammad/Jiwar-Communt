@@ -163,6 +163,8 @@ describe('Deputies', () => {
       // ADR 0082: a compensation's decision is money.
       'experience.compensate',
       'tickets.work',
+      // ADR 0088: an opening takes two people, each on their own.
+      'tenders.open',
     ])
       expect(await fields({ permissions: [p] })).toEqual([
         {

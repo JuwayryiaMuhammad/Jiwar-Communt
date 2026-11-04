@@ -80,6 +80,8 @@ describe('TenantsService', () => {
     expect(roles.map((r) => [r.key, r.kind, r.isSystem, r.name])).toEqual([
       ['accountant', 'staff', true, null],
       ['collector', 'staff', true, null],
+      // ADR 0088: a vendor's contractor, its own kind.
+      ['contractor', 'contractor', true, null],
       ['family_member', 'family', true, null],
       ['guard', 'staff', true, null],
       ['maintenance_supervisor', 'staff', true, null],

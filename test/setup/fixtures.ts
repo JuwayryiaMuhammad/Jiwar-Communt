@@ -155,6 +155,7 @@ const DEFAULT_ROLE_KEY: Record<AccountType, string> = {
   family: 'family_member',
   staff: 'guard',
   proxy: 'unit_proxy',
+  contractor: 'contractor',
 };
 
 export function createAccountRow(

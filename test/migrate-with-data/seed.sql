@@ -30,7 +30,10 @@
 -- (ADR 0077) a vendor, a contract naming it with its terms and payments,
 -- and a purchase request; (ADR 0089) a terminated contract with a
 -- retention share, the variance setting, a payables counter and an
--- inbox overdue mark;
+-- inbox overdue mark; (ADR 0088) a vendor's contractor with its role, an
+-- offer of a ticket it turned down, an open tender with a vendor and a
+-- link invitation, a sealed bid, a bid link, the tender counter and an
+-- overdue opening in the inbox;
 -- a staff credit note, a vehicle fine paid at the office and a club plan
 -- with a membership paid at the office (ADR 0070 lets a credit note's author
 -- and a club payment's recorder be null, rewrites their CHECKs, links a fine
@@ -794,6 +797,52 @@ BEGIN
         ON CONFLICT (tenant_id, kind) DO NOTHING;
       INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
         (t, 'purchase_request', gen_random_uuid(), now());
+    END;
+    -- ADR 0088: a contractor tied to its vendor (its own kind and role), an
+    -- offer of the common area's ticket it turned down, an open tender with
+    -- a registered and a link invitation, a bid in its seal (the amount
+    -- plain only once opened), a bid link (global), the tender counter, and
+    -- a tender's opening overdue in the inbox (the CHECKs widened).
+    DECLARE
+      vc uuid := gen_random_uuid();
+      r_con uuid := gen_random_uuid();
+      con_acc uuid := gen_random_uuid();
+      tk uuid;
+      tnd uuid := gen_random_uuid();
+      tinv uuid := gen_random_uuid();
+    BEGIN
+      INSERT INTO vendors (id, tenant_id, number, name, categories, updated_at) VALUES
+        (vc, t, 3, 'Seed Contractors ' || left(gen_random_uuid()::text, 8), ARRAY['maintenance'], now());
+      INSERT INTO roles (id, tenant_id, key, kind, updated_at) VALUES
+        (r_con, t, 'contractor', 'contractor', now());
+      INSERT INTO accounts (id, tenant_id, type, role_id, full_name, phone, email,
+                            id_document_type, id_document_number, nationality, vendor_id, updated_at) VALUES
+        (con_acc, t, 'contractor', r_con, 'Seed Contractor', '+2010' || lpad(c::text, 2, '0') || '0000005',
+         'con-' || s || '@seed.test', 'national_id', '2900101' || lpad(c::text, 2, '0') || '00051', 'EG', vc, now());
+      SELECT id INTO tk FROM tickets WHERE tenant_id = t AND number = 2;
+      INSERT INTO ticket_vendor_dispatches (id, tenant_id, ticket_id, vendor_id, cycle, status,
+                                            offered_by_account_id, offered_at, decided_by_account_id,
+                                            decided_at, decline_reason) VALUES
+        (gen_random_uuid(), t, tk, vc, 1, 'declined', mgr, now() - interval '1 hour', con_acc, now(), 'no_capacity');
+      INSERT INTO procurement_counters (tenant_id, kind, last_number) VALUES (t, 'tender', 1)
+        ON CONFLICT (tenant_id, kind) DO NOTHING;
+      INSERT INTO tenders (id, tenant_id, number, title, category, contract_kind, bids_due_at, status,
+                           created_by_account_id, created_at, published_by_account_id, published_at) VALUES
+        (tnd, t, 1, 'Seed facade works', 'maintenance', 'service', now() + interval '7 days', 'open',
+         mgr, now(), mgr, now());
+      INSERT INTO tender_invitations (id, tenant_id, tender_id, kind, vendor_id, company_name,
+                                      invited_by_account_id, invited_at) VALUES
+        (tinv, t, tnd, 'link', NULL, 'Seed Outside Builders', mgr, now()),
+        (gen_random_uuid(), t, tnd, 'vendor', vc, NULL, mgr, now());
+      INSERT INTO tender_bids (id, tenant_id, tender_id, invitation_id, submitted_at, sealed_amount,
+                               duration_days) VALUES
+        (gen_random_uuid(), t, tnd, tinv, now(), 45000.00, 90);
+      INSERT INTO tender_bid_links (id, tenant_id, tender_id, invitation_id, token_hash,
+                                    created_by_account_id, created_at, expires_at) VALUES
+        (gen_random_uuid(), t, tnd, tinv, md5(gen_random_uuid()::text) || md5(gen_random_uuid()::text),
+         mgr, now(), now() + interval '90 days');
+      INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
+        (t, 'tender_opening', tnd, now());
     END;
   END LOOP;
 END $$;

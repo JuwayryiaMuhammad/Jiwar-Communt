@@ -1234,3 +1234,25 @@ export const M31_COVERAGE: readonly string[] = [
   'vendor_guarantee.returned',
   'vendor_guarantee.called',
 ];
+
+/** ADR 0088's entries, covered by test/m27/audit-coverage.e2e-spec.ts. */
+export const M27_COVERAGE: readonly string[] = [
+  'vendor_dispatch.offered',
+  'vendor_dispatch.accepted',
+  'vendor_dispatch.declined',
+  'vendor_dispatch.withdrawn',
+  'tender.created',
+  'tender.updated',
+  'tender.published',
+  'tender.cancelled',
+  'tender.opening_started',
+  'tender.opened',
+  'tender.awarded',
+  'tender.document_added',
+  'tender.document_removed',
+  'tender_invitation.created',
+  'tender_invitation.revoked',
+  'tender_invitation.link_opened',
+  'tender_bid.submitted',
+  'tender_bid.withdrawn',
+];

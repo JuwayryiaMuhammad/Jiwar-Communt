@@ -36,6 +36,7 @@ export const REPORTS_ROUTES: Row[] = [
   {
     method: 'GET',
     path: '/staff/reports/export',
+    noStore: true,
     auth: 'tenant',
     as: 'manager',
     denied: 'guard',
@@ -119,6 +120,7 @@ export const REPORTS_ROUTES: Row[] = [
   {
     method: 'GET',
     path: '/staff/report-runs/{id}/download',
+    noStore: true,
     auth: 'tenant',
     as: 'manager',
     denied: 'guard',
@@ -149,6 +151,7 @@ export const REPORTS_ROUTES: Row[] = [
   {
     method: 'GET',
     path: '/staff/compound-exports/{id}/download',
+    noStore: true,
     auth: 'tenant',
     as: 'manager',
     denied: 'supervisor',

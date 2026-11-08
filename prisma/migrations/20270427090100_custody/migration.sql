@@ -182,7 +182,13 @@ DECLARE
   n int;
   total numeric;
 BEGIN
-  handin := CASE TG_TABLE_NAME WHEN 'finance_custody_handins' THEN NEW."id" ELSE NEW."handin_id" END;
+  -- Branched, not a CASE: PL/pgSQL plans a CASE as one expression over NEW,
+  -- and a hand-in's row has no "handin_id".
+  IF TG_TABLE_NAME = 'finance_custody_handins' THEN
+    handin := NEW."id";
+  ELSE
+    handin := NEW."handin_id";
+  END IF;
   SELECT x."expected", x."payment_count" INTO h
     FROM "finance_custody_handins" x WHERE x."tenant_id" = NEW."tenant_id" AND x."id" = handin;
   SELECT count(*), COALESCE(SUM(i."amount"), 0) INTO n, total

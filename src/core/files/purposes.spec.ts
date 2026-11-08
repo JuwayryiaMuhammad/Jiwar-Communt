@@ -25,7 +25,7 @@ const latest = readFileSync(
   join(
     __dirname,
     migrations,
-    '20270612090500_field_team_b_checks/migration.sql',
+    '20270614090500_field_team_b_checks/migration.sql',
   ),
   'utf8',
 );

@@ -94,7 +94,7 @@ ALTER TABLE "reinforcement_suggestions"
             AND "reason_code" IS NULL AND "call_id" IS NOT NULL)
         OR ("status" = 'dismissed'
             AND "decided_at" IS NOT NULL AND "decided_by_account_id" IS NOT NULL
-            AND "reason_code" IN ('enough_on_duty', 'pressure_easing', 'nobody_to_call', 'other')
+            AND "reason_code" IS NOT NULL AND "reason_code" IN ('enough_on_duty', 'pressure_easing', 'nobody_to_call', 'other')
             AND "call_id" IS NULL)
         OR ("status" = 'lapsed'
             AND "decided_at" IS NOT NULL AND "decided_by_account_id" IS NULL
@@ -131,7 +131,7 @@ ALTER TABLE "reinforcement_calls"
             AND "closed_at" IS NOT NULL AND "cancelled_by_account_id" IS NULL AND "cancel_reason" IS NULL)
         OR ("status" = 'cancelled'
             AND "closed_at" IS NOT NULL AND "cancelled_by_account_id" IS NOT NULL
-            AND "cancel_reason" IN ('no_longer_needed', 'pressure_eased', 'raised_in_error', 'other')));
+            AND "cancel_reason" IS NOT NULL AND "cancel_reason" IN ('no_longer_needed', 'pressure_eased', 'raised_in_error', 'other')));
 
 -- A suggestion keeps its figures and is decided once.
 CREATE FUNCTION reinforcement_suggestion_decided_once() RETURNS trigger

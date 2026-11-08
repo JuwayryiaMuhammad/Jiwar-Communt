@@ -3,7 +3,7 @@
 -- a fresh database and an existing one both end with all of them: the staff
 -- inbox's types (a dangling account, an access review, a reinforcement
 -- suggestion, after ADR 0085's), and the files' content type with the
--- staff certificate's purpose (20270612090000) among the PDFs — a photo
+-- staff certificate's purpose (20270614090000) among the PDFs — a photo
 -- takes it already, as every purpose not named there. The size CHECK is
 -- ADR 0086's as it stands: the certificate's 10 MB is its default. The
 -- content type's last: its spec reads it to the end. No row changes.

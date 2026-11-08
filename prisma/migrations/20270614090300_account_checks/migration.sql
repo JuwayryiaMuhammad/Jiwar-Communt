@@ -95,7 +95,7 @@ ALTER TABLE "dangling_account_findings"
             AND "reason_code" IS NULL AND "muted_until" IS NULL AND "cleared_at" IS NULL)
         OR ("status" = 'kept'
             AND "decided_at" IS NOT NULL AND "decided_by_account_id" IS NOT NULL
-            AND "reason_code" IN ('on_leave', 'seasonal_work', 'rarely_needed', 'other')
+            AND "reason_code" IS NOT NULL AND "reason_code" IN ('on_leave', 'seasonal_work', 'rarely_needed', 'other')
             AND "muted_until" IS NOT NULL AND "muted_until" > "decided_at"
             AND "cleared_at" IS NULL)
         OR ("status" = 'deactivated'

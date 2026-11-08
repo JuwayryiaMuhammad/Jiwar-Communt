@@ -9,7 +9,7 @@ import {
 const sql = readFileSync(
   join(
     __dirname,
-    '../../../prisma/migrations/20270612090200_staff_certificates/migration.sql',
+    '../../../prisma/migrations/20270614090200_staff_certificates/migration.sql',
   ),
   'utf8',
 );

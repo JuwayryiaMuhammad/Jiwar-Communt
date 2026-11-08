@@ -11,9 +11,9 @@ const read = (name: string) =>
     /\s+/g,
     ' ',
   );
-const checks = read('20270612090300_account_checks');
-const reinforcement = read('20270612090400_reinforcement');
-const latest = read('20270612090500_field_team_b_checks');
+const checks = read('20270614090300_account_checks');
+const reinforcement = read('20270614090400_reinforcement');
+const latest = read('20270614090500_field_team_b_checks');
 const mirror = readFileSync(
   join(__dirname, '../../../packages/api/src/reasons.ts'),
   'utf8',

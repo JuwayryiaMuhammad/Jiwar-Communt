@@ -3674,6 +3674,86 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'لم يستلم أحد طلب مساعدة من فني. افتح الفريق الميداني.',
     },
   },
+  'staff_certificate.expiring': {
+    en: {
+      title: 'A certificate expires soon',
+      body: 'A staff certificate expires on {expiresOn}, in {daysLeft} days. Renew it in time.',
+    },
+    ar: {
+      title: 'شهادة تنتهي قريبًا',
+      body: 'تنتهي شهادة أحد العاملين في {expiresOn}، بعد {daysLeft} يومًا. جدّدها في الوقت.',
+    },
+  },
+  'staff_certificate.expires_today': {
+    en: {
+      title: 'A certificate expires today',
+      body: 'A staff certificate expires today, {expiresOn}. Record its renewal.',
+    },
+    ar: {
+      title: 'شهادة تنتهي اليوم',
+      body: 'تنتهي شهادة أحد العاملين اليوم {expiresOn}. سجّل تجديدها.',
+    },
+  },
+  'dangling_account.found': {
+    en: {
+      title: 'An account to check',
+      body: 'A staff account looks unused. Keep it or deactivate it.',
+    },
+    ar: {
+      title: 'حساب للمراجعة',
+      body: 'يبدو أن حساب أحد العاملين غير مستخدم. أبقِه أو أوقفه.',
+    },
+  },
+  'access_review.opened': {
+    en: {
+      title: 'Access review',
+      body: 'Review who has access: {lines} accounts to keep or revoke.',
+    },
+    ar: {
+      title: 'مراجعة الصلاحيات',
+      body: 'راجع من لديه صلاحيات: {lines} حسابًا للإبقاء أو السحب.',
+    },
+  },
+  'reinforcement.suggested': {
+    en: {
+      title: 'Reinforcement suggested',
+      body: '{open} open tickets for {available} technicians on duty. Call reinforcement?',
+    },
+    ar: {
+      title: 'تعزيز مقترح',
+      body: '{open} بلاغًا مفتوحًا مقابل {available} فنيًا متاحًا. هل تطلب تعزيزًا؟',
+    },
+  },
+  'reinforcement.called': {
+    en: {
+      title: 'Can you come in?',
+      body: 'The field team needs {needed} more technicians. Open the call to accept or decline.',
+    },
+    ar: {
+      title: 'هل يمكنك الحضور؟',
+      body: 'يحتاج الفريق الميداني {needed} فنيين إضافيين. افتح الطلب للقبول أو الاعتذار.',
+    },
+  },
+  'reinforcement.filled': {
+    en: {
+      title: 'Reinforcement filled',
+      body: 'Enough technicians accepted the call.',
+    },
+    ar: {
+      title: 'اكتمل التعزيز',
+      body: 'قبل الطلب عدد كافٍ من الفنيين.',
+    },
+  },
+  'reinforcement.cancelled': {
+    en: {
+      title: 'Call called off',
+      body: 'The field team no longer needs you to come in.',
+    },
+    ar: {
+      title: 'أُلغي الطلب',
+      body: 'لم يعد الفريق الميداني بحاجة إلى حضورك.',
+    },
+  },
   'finance.custody_variance': {
     en: {
       title: 'Custody variance',

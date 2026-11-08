@@ -282,6 +282,11 @@ describe('audit catalog', () => {
         'unit_entry',
         // ADR 0078.
         'technician_help_request',
+        // ADR 0090.
+        'staff_certificate',
+        'access_review',
+        'reinforcement_suggestion',
+        'reinforcement_call',
         // ADR 0089.
         'budget_transfer',
         'finance_commitment',

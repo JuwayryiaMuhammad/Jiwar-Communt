@@ -2031,6 +2031,42 @@ export const ErrorCode = {
   TECHNICIAN_HELP_LIVE: 'TECHNICIAN_HELP_LIVE',
   /** The call was taken, resolved or called off already, `params.status` (409). */
   TECHNICIAN_HELP_CLOSED: 'TECHNICIAN_HELP_CLOSED',
+  // ---- The field team, part b (ADR 0090) ----------------------------------
+  /**
+   * A location came with a technician's move, and they have not consented
+   * to it (409): nothing moves, nothing is kept.
+   */
+  LOCATION_CONSENT_REQUIRED: 'LOCATION_CONSENT_REQUIRED',
+  /** A staff certificate not found, or removed (404). */
+  STAFF_CERTIFICATE_NOT_FOUND: 'STAFF_CERTIFICATE_NOT_FOUND',
+  /** A dangling-account finding not found (404). */
+  DANGLING_ACCOUNT_NOT_FOUND: 'DANGLING_ACCOUNT_NOT_FOUND',
+  /** The finding was kept, deactivated or cleared already, `params.status` (409). */
+  DANGLING_ACCOUNT_DECIDED: 'DANGLING_ACCOUNT_DECIDED',
+  /** An access review not found (404). */
+  ACCESS_REVIEW_NOT_FOUND: 'ACCESS_REVIEW_NOT_FOUND',
+  /** A review is open already: one at a time (409). */
+  ACCESS_REVIEW_OPEN: 'ACCESS_REVIEW_OPEN',
+  /** The review is closed (409). */
+  ACCESS_REVIEW_CLOSED: 'ACCESS_REVIEW_CLOSED',
+  /** A line of the review not found (404). */
+  ACCESS_REVIEW_LINE_NOT_FOUND: 'ACCESS_REVIEW_LINE_NOT_FOUND',
+  /** The line was decided already, `params.decision` (409). */
+  ACCESS_REVIEW_LINE_DECIDED: 'ACCESS_REVIEW_LINE_DECIDED',
+  /** Nobody decides their own line (403). */
+  ACCESS_REVIEW_OWN_LINE: 'ACCESS_REVIEW_OWN_LINE',
+  /** The system manager's line is kept only (409). */
+  ACCESS_REVIEW_LINE_PROTECTED: 'ACCESS_REVIEW_LINE_PROTECTED',
+  /** A reinforcement call not found, or not one that reached the caller (404). */
+  REINFORCEMENT_CALL_NOT_FOUND: 'REINFORCEMENT_CALL_NOT_FOUND',
+  /** The call was filled, closed or called off, `params.status` (409). */
+  REINFORCEMENT_CALL_CLOSED: 'REINFORCEMENT_CALL_CLOSED',
+  /** The technician answered this call already, `params.answer` (409). */
+  REINFORCEMENT_ANSWERED: 'REINFORCEMENT_ANSWERED',
+  /** A reinforcement suggestion not found (404). */
+  REINFORCEMENT_SUGGESTION_NOT_FOUND: 'REINFORCEMENT_SUGGESTION_NOT_FOUND',
+  /** The suggestion was answered, dismissed or lapsed, `params.status` (409). */
+  REINFORCEMENT_SUGGESTION_DECIDED: 'REINFORCEMENT_SUGGESTION_DECIDED',
   // Treasury and custody (ADR 0085).
   CASH_ACCOUNT_NOT_FOUND: 'CASH_ACCOUNT_NOT_FOUND',
   /** The account is retired and takes no movement (409). */
@@ -2390,6 +2426,8 @@ export const FieldErrorCode = {
   RESPONSIBLE_NOT_ELIGIBLE: 'RESPONSIBLE_NOT_ELIGIBLE',
   /** ADR 0087: no such asset of the compound's own (not a unit's), or retired. */
   COMPLIANCE_ASSET_NOT_AVAILABLE: 'COMPLIANCE_ASSET_NOT_AVAILABLE',
+  /** ADR 0090: a staff certificate's holder is an active staff account. */
+  CERTIFICATE_HOLDER_NOT_ELIGIBLE: 'CERTIFICATE_HOLDER_NOT_ELIGIBLE',
 } as const;
 
 export type FieldErrorCode =

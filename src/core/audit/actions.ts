@@ -2842,6 +2842,72 @@ export const AUDIT_ACTIONS = {
     log: 'tenant',
     target: 'technician_help_request',
   },
+  // The field team, part b (ADR 0090). A technician's consent to their
+  // location at three moments of a ticket: granted by themselves; revoked
+  // by themselves or the system (metadata: by, removed — how many points
+  // went with it). Never a coordinate.
+  'technician_location.consent_granted': { log: 'tenant', target: 'account' },
+  'technician_location.consent_revoked': { log: 'tenant', target: 'account' },
+  // Their last known location read by the field team or dispatch
+  // (metadata: found, moment): who looked, never where they were.
+  'technician_location.read': { log: 'tenant', target: 'account' },
+  // A staff certificate. added: holderId, kind, expiresOn, file; changed:
+  // the fields changed (words as { changed: true }, the expiry from and
+  // to, file: replaced | added | removed); removed: kind. Never its number.
+  'staff_certificate.added': { log: 'tenant', target: 'staff_certificate' },
+  'staff_certificate.changed': { log: 'tenant', target: 'staff_certificate' },
+  'staff_certificate.removed': { log: 'tenant', target: 'staff_certificate' },
+  // An erased holder's certificates removed (metadata: removed). By the system.
+  'staff_certificate.erased': { log: 'tenant', target: 'account' },
+  // Dangling accounts (ADR 0090), each about the account. found: reason
+  // (idle | vendor_suspended | never_signed_in), findingId; kept:
+  // findingId, reasonCode, mutedUntil; deactivated: findingId; cleared (by
+  // the system): findingId, why (active_again | left).
+  'dangling_account.found': { log: 'tenant', target: 'account' },
+  'dangling_account.kept': { log: 'tenant', target: 'account' },
+  'dangling_account.deactivated': { log: 'tenant', target: 'account' },
+  'dangling_account.cleared': { log: 'tenant', target: 'account' },
+  // An access review. opened: lines, by (system | staff); line_decided:
+  // lineId, accountId, decision (keep | revoke | left); closed: kept,
+  // revoked, left.
+  'access_review.opened': { log: 'tenant', target: 'access_review' },
+  'access_review.line_decided': { log: 'tenant', target: 'access_review' },
+  'access_review.closed': { log: 'tenant', target: 'access_review' },
+  // Account checks' settings (the idle days, the review's cadence): changes.
+  'access_review.settings_changed': { log: 'tenant', target: 'tenant' },
+  // Peak reinforcement. suggested (by the system): open, available,
+  // threshold; dismissed: reasonCode; lapsed (by the system).
+  'reinforcement_suggestion.suggested': {
+    log: 'tenant',
+    target: 'reinforcement_suggestion',
+  },
+  'reinforcement_suggestion.dismissed': {
+    log: 'tenant',
+    target: 'reinforcement_suggestion',
+  },
+  'reinforcement_suggestion.lapsed': {
+    log: 'tenant',
+    target: 'reinforcement_suggestion',
+  },
+  // A call. sent: needed, recipients, startsAt, endsAt, zoneId?,
+  // suggestionId?; accepted: accountId, slotId; declined: accountId;
+  // filled: accepted; cancelled: reasonCode, slotsCancelled; closed (by
+  // the system, at its start): accepted.
+  'reinforcement_call.sent': { log: 'tenant', target: 'reinforcement_call' },
+  'reinforcement_call.accepted': {
+    log: 'tenant',
+    target: 'reinforcement_call',
+  },
+  'reinforcement_call.declined': {
+    log: 'tenant',
+    target: 'reinforcement_call',
+  },
+  'reinforcement_call.filled': { log: 'tenant', target: 'reinforcement_call' },
+  'reinforcement_call.cancelled': {
+    log: 'tenant',
+    target: 'reinforcement_call',
+  },
+  'reinforcement_call.closed': { log: 'tenant', target: 'reinforcement_call' },
   // Treasury and custody (ADR 0085). Codes, ids, days and amounts; never a
   // cheque's number or a statement line's text.
   // A bank or cash account: metadata kind and the opening balance; changes

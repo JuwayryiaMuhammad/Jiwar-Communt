@@ -3397,6 +3397,75 @@ export const NOTIFICATION_KINDS = {
     target: 'technician_help_request',
     params: { helpKind: {} },
   },
+  // ---- The field team, part b (ADR 0090) ----------------------------------
+  /** A staff certificate expires within 30 days: to its holder and the field team. */
+  'staff_certificate.expiring': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'staff_certificate',
+    params: { certificateKind: {}, expiresOn: {}, daysLeft: {} },
+  },
+  /** It expires today: the same people. Nothing is blocked. */
+  'staff_certificate.expires_today': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'staff_certificate',
+    params: { certificateKind: {}, expiresOn: {} },
+  },
+  /** A compound-side account looks dangling: to `accounts.manage`, to keep or deactivate. */
+  'dangling_account.found': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'dangling_account',
+    params: { reason: {} },
+  },
+  /** An access review opened: to `accounts.manage`, to decide each line. */
+  'access_review.opened': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'management',
+    critical: false,
+    target: 'access_review',
+    params: { lines: {} },
+  },
+  /** Service pressure rose: the field team may call reinforcement. */
+  'reinforcement.suggested': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'reinforcement_suggestion',
+    params: { open: {}, available: {} },
+  },
+  /** An off-duty technician is asked to come in for a window. */
+  'reinforcement.called': {
+    needsDecision: true,
+    priority: 'critical',
+    category: 'maintenance',
+    critical: true,
+    target: 'reinforcement_call',
+    params: { needed: {}, startsAt: {}, endsAt: {} },
+  },
+  /** As many accepted as were needed: to the field team. */
+  'reinforcement.filled': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'reinforcement_call',
+    params: { needed: {} },
+  },
+  /** The call was called off: to whoever it reached and did not decline. */
+  'reinforcement.cancelled': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'reinforcement_call',
+    params: {},
+  },
   // Treasury and custody (ADR 0085). Never an amount.
   /**
    * A hand-in counted other than what was expected: to who settles custody

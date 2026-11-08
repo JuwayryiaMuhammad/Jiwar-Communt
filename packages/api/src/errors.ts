@@ -735,6 +735,22 @@ const ERROR_TEXT: Record<string, string> = {
   CAPITAL_PLAN_EMPTY: 'The plan has no line.',
   COMPOUND_EXPORT_ACTIVE: 'An export of the compound is being prepared already.',
   COMPOUND_EXPORT_RATE_LIMITED: 'One export of the compound a day. Try again later.',
+  LOCATION_CONSENT_REQUIRED: 'Allow your location first, or send the step without it.',
+  STAFF_CERTIFICATE_NOT_FOUND: 'Certificate not found.',
+  DANGLING_ACCOUNT_NOT_FOUND: 'Finding not found.',
+  DANGLING_ACCOUNT_DECIDED: 'This finding was decided already.',
+  ACCESS_REVIEW_NOT_FOUND: 'Access review not found.',
+  ACCESS_REVIEW_OPEN: 'An access review is open already.',
+  ACCESS_REVIEW_CLOSED: 'This access review is closed.',
+  ACCESS_REVIEW_LINE_NOT_FOUND: 'Line not found.',
+  ACCESS_REVIEW_LINE_DECIDED: 'This line was decided already.',
+  ACCESS_REVIEW_OWN_LINE: 'Someone else decides your own line.',
+  ACCESS_REVIEW_LINE_PROTECTED: 'The manager’s account is kept.',
+  REINFORCEMENT_CALL_NOT_FOUND: 'Call not found.',
+  REINFORCEMENT_CALL_CLOSED: 'This call is filled, closed or called off.',
+  REINFORCEMENT_ANSWERED: 'You answered this call already.',
+  REINFORCEMENT_SUGGESTION_NOT_FOUND: 'Suggestion not found.',
+  REINFORCEMENT_SUGGESTION_DECIDED: 'This suggestion was decided already.',
   COMPOUND_EXPORT_NOT_FOUND: 'Export not found.',
 };
 
@@ -856,6 +872,7 @@ const FIELD_TEXT: Record<string, string> = {
   SPACE_USE_TOO_LONG: 'Too long.',
   // Compliance and safety (ADR 0087).
   RESPONSIBLE_NOT_ELIGIBLE: 'Pick an active staff member or the manager.',
+  CERTIFICATE_HOLDER_NOT_ELIGIBLE: 'Pick an active staff member.',
   COMPLIANCE_ASSET_NOT_AVAILABLE: 'Pick an asset of the compound’s own that is not retired.',
 };
 

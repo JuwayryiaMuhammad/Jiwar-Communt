@@ -375,6 +375,14 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['compliance.manage'],
   },
+  // A staff member's certificate (ADR 0090): a photo or a PDF of the
+  // paper, from the field team. The size CHECK's default; the content type
+  // CHECK lists it with the PDFs.
+  staff_certificate: {
+    types: [...IMAGE_TYPES, 'application/pdf'],
+    maxBytes: 10 * MB,
+    uploaders: ['field_team.manage'],
+  },
   // A checklist answer's photo (ADR 0064): what a technician saw doing a
   // planned job or an inspection. Staff only.
   checklist_photo: {

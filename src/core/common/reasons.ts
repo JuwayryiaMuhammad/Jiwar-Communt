@@ -1262,4 +1262,20 @@ export const REASON_CODES = {
     'counting_correction',
     'other',
   ],
+  // The field team, part b (ADR 0090): why a dangling account is kept
+  // (it is muted for 90 days); why the field team dismisses a reinforcement
+  // suggestion; why it calls a reinforcement call off.
+  danglingKeep: ['on_leave', 'seasonal_work', 'rarely_needed', 'other'],
+  reinforcementDismiss: [
+    'enough_on_duty',
+    'pressure_easing',
+    'nobody_to_call',
+    'other',
+  ],
+  reinforcementCancel: [
+    'no_longer_needed',
+    'pressure_eased',
+    'raised_in_error',
+    'other',
+  ],
 } as const;

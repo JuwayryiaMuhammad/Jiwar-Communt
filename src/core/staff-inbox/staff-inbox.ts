@@ -56,6 +56,12 @@ export const INBOX_TYPES = [
   // not yet settled.
   'cash_custody',
   'custody_variance',
+  // ADR 0090: an account that looks dangling and an access review, for
+  // `accounts.manage`; a reinforcement suggested by service pressure, for
+  // the field team.
+  'dangling_account',
+  'access_review',
+  'reinforcement_suggestion',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

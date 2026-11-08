@@ -60,6 +60,8 @@ const CRITICAL_KINDS = [
   'technician_help.escalated',
   'technician_help.requested',
   'technician_instruction.urgent',
+  // ADR 0090.
+  'reinforcement.called',
   'ticket.assigned',
   'ticket.emergency',
   // ADR 0038.

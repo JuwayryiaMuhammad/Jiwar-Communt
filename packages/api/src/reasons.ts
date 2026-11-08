@@ -328,6 +328,10 @@ export const REASON_CODES = {
   chequeBounce: ['insufficient_funds', 'signature_mismatch', 'stopped', 'stale', 'account_closed', 'other'],
   chequeReturn: ['replaced', 'paid_otherwise', 'payer_asked', 'other'],
   cashAdjust: ['bank_charge', 'interest', 'refund_paid', 'counting_correction', 'other'],
+  // The field team, part b (ADR 0090).
+  danglingKeep: ['on_leave', 'seasonal_work', 'rarely_needed', 'other'],
+  reinforcementDismiss: ['enough_on_duty', 'pressure_easing', 'nobody_to_call', 'other'],
+  reinforcementCancel: ['no_longer_needed', 'pressure_eased', 'raised_in_error', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

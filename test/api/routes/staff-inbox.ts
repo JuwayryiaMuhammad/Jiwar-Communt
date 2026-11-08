@@ -30,6 +30,10 @@ const INBOX_TYPES = [
   // ADR 0085.
   'cash_custody',
   'custody_variance',
+  // ADR 0090.
+  'dangling_account',
+  'access_review',
+  'reinforcement_suggestion',
 ];
 
 /**

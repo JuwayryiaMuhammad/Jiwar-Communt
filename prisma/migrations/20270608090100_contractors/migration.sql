@@ -77,6 +77,36 @@ ALTER TABLE "tickets" ADD CONSTRAINT "tickets_vendor_fkey"
 CREATE INDEX "tickets_vendor_idx"
   ON "tickets"("tenant_id", "vendor_id", "status") WHERE "vendor_id" IS NOT NULL;
 
+-- A contractor taking an offered ticket is an assignment of type `vendor`
+-- (20270608090000): to the contractor, from nobody, by the contractor. The
+-- shape CHECK is recreated whole with it; the other five are as
+-- 20261007090100 made them, the CHECK's only recreation.
+ALTER TABLE "ticket_assignments" DROP CONSTRAINT "ticket_assignments_type_shape";
+ALTER TABLE "ticket_assignments" ADD CONSTRAINT "ticket_assignments_type_shape"
+  CHECK (
+    ("assignment_type" = 'manual'
+      AND "from_account_id" IS NULL AND "to_account_id" IS NOT NULL
+      AND "assigned_by_account_id" IS NOT NULL)
+    OR ("assignment_type" = 'reassignment'
+      AND "from_account_id" IS NOT NULL AND "to_account_id" IS NOT NULL
+      AND "from_account_id" <> "to_account_id"
+      AND "assigned_by_account_id" IS NOT NULL AND "reason_code" IS NOT NULL)
+    OR ("assignment_type" = 'declined'
+      AND "from_account_id" IS NOT NULL AND "to_account_id" IS NULL
+      AND "assigned_by_account_id" IS NOT NULL
+      AND "assigned_by_account_id" = "from_account_id"
+      AND "reason_code" IS NOT NULL)
+    OR ("assignment_type" = 'released'
+      AND "from_account_id" IS NOT NULL AND "to_account_id" IS NULL
+      AND "assigned_by_account_id" IS NULL AND "reason_code" IS NOT NULL)
+    OR ("assignment_type" = 'automatic'
+      AND "to_account_id" IS NOT NULL AND "assigned_by_account_id" IS NULL)
+    OR ("assignment_type" = 'vendor'
+      AND "from_account_id" IS NULL AND "to_account_id" IS NOT NULL
+      AND "assigned_by_account_id" IS NOT NULL
+      AND "assigned_by_account_id" = "to_account_id")
+  );
+
 CREATE TABLE "ticket_vendor_dispatches" (
     "id" UUID NOT NULL,
     "tenant_id" UUID NOT NULL,

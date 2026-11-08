@@ -85,7 +85,7 @@ The manager audit of 2026-11-01 (finance slice 05: "تقارير مقارنة ب
 ## Consequences
 
 - New tables `report_schedules`, `report_runs`, `capital_plans`, `capital_plan_lines`, `compound_exports`; two file purposes and the workbook type; the files CHECKs recreated whole; the approval type and subject CHECKs and the settings backfill.
-- Migrations 20270504090000 (the purposes), 090100 (schedules, runs, the files CHECKs), 090200 (the capital plans and the approval type), 090300 (the compound's export).
+- Migrations 20270611090000 (the purposes), 090100 (schedules and runs), 090200 (the capital plans and the approval type), 090300 (the compound's export) and 090400 (every CHECK the phase widens, with every value before it, and the settings backfill), dated after ADR 0085's so the stack applies in order.
 - Permissions `reports.schedule`, `compound.export` (the manager's; the permission sync brings them).
 - The manager dashboard: Reports, Scheduled reports, Sent reports, Capital plans (and its submission through the raise dialog), Compound export.
 

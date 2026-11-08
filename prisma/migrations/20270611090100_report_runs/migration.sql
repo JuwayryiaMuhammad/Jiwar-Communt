@@ -19,10 +19,9 @@
 -- ever changes.
 --
 -- A run's file is a PDF, a workbook or CSV of at most 20 MB; the compound's
--- export (20270504090300) a zip of at most 512 MB. The files CHECKs that
--- say so are recreated in 20270609090100, dated after every purpose they
--- name: a CHECK on the purpose enum can name only values that exist when it
--- is made, and ADR 0087's and ADR 0088's purposes come later.
+-- export (20270611090300) a zip of at most 512 MB. The files CHECKs that
+-- say so are recreated in 20270611090400, the phase's last migration, with
+-- every purpose before them (ADR 0087's and ADR 0088's among them).
 -- ============================================================================
 
 CREATE TABLE "report_schedules" (

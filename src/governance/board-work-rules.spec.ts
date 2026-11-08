@@ -81,7 +81,7 @@ describe('handovers: their lists are their CHECKs’ (ADR 0075)', () => {
     // ADR 0089 recreated both CHECKs later with `budget_transfer`, and
     // ADR 0086 last with `capital_plan`, the override kept: the latest
     // recreation holds every type.
-    const types = migration('20270609090100_reports_checks');
+    const types = migration('20270611090400_reports_checks');
     expect(types).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
     expect(types).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
   });

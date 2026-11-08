@@ -39,7 +39,7 @@ const planning = read(
  * 0086's `capital_plan`, which is here: ADR 0089's CHECK comes between.
  */
 const latest = read(
-  'prisma/migrations/20270609090100_reports_checks/migration.sql',
+  'prisma/migrations/20270611090400_reports_checks/migration.sql',
 );
 const mirror = read('packages/api/src/reasons.ts');
 const quoted = (list: readonly string[]) =>

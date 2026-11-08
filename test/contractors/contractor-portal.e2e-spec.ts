@@ -1,8 +1,12 @@
 import { err } from '../api/request';
 import { dispatchHelpers } from '../setup/dispatch';
-import { uniqueEmail, uniquePhone, uniqueSuffix } from '../setup/fixtures';
+import { uniquePhone, uniqueSuffix } from '../setup/fixtures';
 import { nationalIdFor } from '../setup/fixtures';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import {
+  createHttpHarness,
+  uniqueEmail,
+  type HttpHarness,
+} from '../setup/http-app';
 
 type Who = { id: string; token: string };
 interface Offer {

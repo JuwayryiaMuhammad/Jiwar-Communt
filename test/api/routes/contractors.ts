@@ -189,6 +189,7 @@ export const CONTRACTOR_ROUTES: Row[] = [
   contractor({
     method: 'POST',
     path: '/contractor/invoices',
+    noStore: true,
     foreign: {
       params: () => ({}),
       body: (w) => ({
@@ -238,6 +239,7 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'POST',
     path: '/staff/tenders',
+    noStore: true,
     foreign: 'none',
     invalid: {
       body: {
@@ -266,6 +268,7 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'PATCH',
     path: '/staff/tenders/{id}',
+    noStore: true,
     foreign: {
       params: tenderOf,
       body: () => ({ title: 'Foreign tender' }),
@@ -285,12 +288,14 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'POST',
     path: '/staff/tenders/{id}/publish',
+    noStore: true,
     foreign: { params: tenderOf, code: notFound },
     invalid: 'none',
   }),
   manager({
     method: 'POST',
     path: '/staff/tenders/{id}/deadline',
+    noStore: true,
     foreign: {
       params: tenderOf,
       body: () => ({ bidsDueAt: '2099-01-01T08:00:00Z' }),
@@ -304,6 +309,7 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'POST',
     path: '/staff/tenders/{id}/cancel',
+    noStore: true,
     foreign: {
       params: tenderOf,
       body: () => ({ reasonCode: 'not_needed' }),
@@ -314,6 +320,7 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'POST',
     path: '/staff/tenders/{id}/documents',
+    noStore: true,
     foreign: {
       params: tenderOf,
       body: () => ({ fileId: UNKNOWN, title: 'Scope' }),
@@ -334,6 +341,7 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'DELETE',
     path: '/staff/tenders/{id}/documents/{documentId}',
+    noStore: true,
     foreign: {
       params: (w) => ({ id: w.bTenderId, documentId: w.bTenderId }),
       code: notFound,
@@ -370,6 +378,7 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'POST',
     path: '/staff/tenders/{id}/invitations/{invitationId}/revoke',
+    noStore: true,
     foreign: {
       params: (w) => ({
         id: w.bTenderId,
@@ -382,12 +391,14 @@ export const CONTRACTOR_ROUTES: Row[] = [
   manager({
     method: 'POST',
     path: '/staff/tenders/{id}/opening',
+    noStore: true,
     foreign: { params: tenderOf, code: notFound },
     invalid: 'none',
   }),
   manager({
     method: 'POST',
     path: '/staff/tenders/{id}/award',
+    noStore: true,
     foreign: {
       params: tenderOf,
       body: () => ({

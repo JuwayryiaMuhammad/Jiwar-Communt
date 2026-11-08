@@ -4,14 +4,13 @@ import { auditReaders } from '../setup/audit';
 import { M27_COVERAGE } from '../setup/audit-coverage-split';
 import { day, dbClock } from '../setup/compound-clock';
 import { dispatchHelpers } from '../setup/dispatch';
-import {
-  nationalIdFor,
-  uniqueEmail,
-  uniquePhone,
-  uniqueSuffix,
-} from '../setup/fixtures';
+import { nationalIdFor, uniquePhone, uniqueSuffix } from '../setup/fixtures';
 import { fileHelpers } from '../setup/files';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import {
+  createHttpHarness,
+  uniqueEmail,
+  type HttpHarness,
+} from '../setup/http-app';
 import { required } from '../setup/test-env';
 
 const MARKER = 'AUDIT-m27-secret';

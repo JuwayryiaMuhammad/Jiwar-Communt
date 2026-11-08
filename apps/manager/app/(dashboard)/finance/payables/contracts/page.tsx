@@ -18,6 +18,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { egp } from '@/components/club/logic';
+import { SectionHeader } from '@/components/community/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Disbursement } from '@/lib/queries';
@@ -111,7 +112,7 @@ function ContractMoney({ contractId }: { contractId: string }) {
       {p ? (
         <>
           <Card>
-            <CardHeader
+            <SectionHeader
               title="The contract’s money"
               description={`Retention ${p.retentionPct ? `${p.retentionPct}%` : 'none'}: ${egp(p.retention.held)} held, ${egp(p.retention.released)} released, ${egp(p.retention.open)} open. Advances: ${egp(p.advances.paid)} paid, ${egp(p.advances.setOff)} set off, ${egp(p.advances.open)} open. Invoices: ${egp(p.invoices.approved)} to pay, ${egp(p.invoices.paid)} paid.`}
             />

@@ -19,6 +19,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { egp } from '@/components/club/logic';
+import { SectionHeader } from '@/components/community/bits';
 import { CATEGORY_TEXT } from '@/components/governance/matters';
 import { RaiseApproval } from '@/components/governance/raise';
 import { api } from '@/lib/api';
@@ -166,7 +167,7 @@ export default function BudgetPlanningPage() {
       </Card>
       {can('finance.reports') ? (
         <Card>
-          <CardHeader
+          <SectionHeader
             title="The year by period"
             description={
               periods.data?.varianceReasonPct
@@ -213,7 +214,7 @@ export default function BudgetPlanningPage() {
         </Card>
       ) : null}
       <Card flush>
-        <CardHeader title="What is committed" description="Contracts’ unpaid payments in the year and approved purchases, until invoiced." />
+        <SectionHeader title="What is committed" description="Contracts’ unpaid payments in the year and approved purchases, until invoiced." />
         <QueryState query={commitments}>
           <DataTable<Commitment>
             rows={commitments.rows}

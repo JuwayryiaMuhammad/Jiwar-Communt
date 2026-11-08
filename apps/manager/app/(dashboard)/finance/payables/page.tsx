@@ -5,7 +5,6 @@ import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiw
 import {
   Button,
   Card,
-  CardHeader,
   DataTable,
   Dialog,
   Field,
@@ -20,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { egp } from '@/components/club/logic';
+import { SectionHeader } from '@/components/community/bits';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
@@ -239,7 +239,7 @@ export default function PayablesPage() {
         </QueryState>
       </Card>
       <Card>
-        <CardHeader
+        <SectionHeader
           title="Next month’s payments"
           description={
             schedule.data

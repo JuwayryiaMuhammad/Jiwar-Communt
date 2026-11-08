@@ -2,11 +2,12 @@
 
 import { formatDate, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardHeader, DataTable, Field, Input, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { Button, Card, DataTable, Field, Input, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { egp } from '@/components/club/logic';
+import { SectionHeader } from '@/components/community/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type VendorInvoice } from '@/lib/queries';
@@ -129,7 +130,7 @@ export default function VendorInvoicePage() {
         {i ? (
           <>
             <Card>
-              <CardHeader
+              <SectionHeader
                 title={`${egp(i.total)} (tax ${egp(i.tax)})`}
                 description={`Dated ${formatDate(i.issuedOn)}, due ${formatDate(i.dueOn)}; recorded ${formatDateTime(i.recordedAt)}.`}
               />
@@ -151,7 +152,7 @@ export default function VendorInvoicePage() {
             </Card>
             {i.payout ? (
               <Card>
-                <CardHeader
+                <SectionHeader
                   title={`Paid as ${i.payout.number} on ${formatDate(i.payout.paidOn)}`}
                   description={`${egp(i.payout.gross)} less ${egp(i.payout.retentionHeld)} held back and ${egp(i.payout.advanceSetOff)} set off: ${egp(i.payout.net)} paid by ${humanize(i.payout.method)}.`}
                 />

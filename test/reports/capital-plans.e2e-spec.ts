@@ -1,8 +1,10 @@
+import { Client } from 'pg';
 import { err } from '../api/request';
 import { assetHelpers } from '../setup/assets';
 import { budgetHelpers } from '../setup/budgets';
 import { today } from '../setup/compound-clock';
-import { superuserSql, type Who } from '../setup/governance';
+import { type Who } from '../setup/governance';
+import { required } from '../setup/test-env';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 
 interface PlanBody {
@@ -180,13 +182,24 @@ describe('Reports — the capital plan to the board', () => {
         ).expect(409),
       ).code,
     ).toBe('CAPITAL_PLAN_NOT_DRAFT');
+    // As the table's owner with its triggers on (superuserSql sets them
+    // aside): the lock is the triggers'.
+    const owner = async (sql: string, params: unknown[]) => {
+      const db = new Client({
+        connectionString: required('TEST_SUPERUSER_DATABASE_URL'),
+      });
+      await db.connect();
+      try {
+        await db.query(sql, params);
+      } finally {
+        await db.end();
+      }
+    };
     await expect(
-      superuserSql(`UPDATE capital_plans SET status = 'draft' WHERE id = $1`, [
-        p.id,
-      ]),
+      owner(`UPDATE capital_plans SET status = 'draft' WHERE id = $1`, [p.id]),
     ).rejects.toThrow(/locked/);
     await expect(
-      superuserSql(`DELETE FROM capital_plan_lines WHERE plan_id = $1`, [p.id]),
+      owner(`DELETE FROM capital_plan_lines WHERE plan_id = $1`, [p.id]),
     ).rejects.toThrow(/draft/);
     // Its one approval: a second raise finds it approved.
     expect(err(await raise(p.id).expect(409)).code).toBe(

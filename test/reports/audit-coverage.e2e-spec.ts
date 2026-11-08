@@ -5,7 +5,10 @@ import {
   COMPOUND_EXPORT_BUILD_SWEEP,
   CompoundExportsService,
 } from '../../src/core/reports/compound-exports.service';
-import { ReportSchedulesService } from '../../src/core/reports/report-schedules.service';
+import {
+  REPORT_SCHEDULES_SWEEP,
+  ReportSchedulesService,
+} from '../../src/core/reports/report-schedules.service';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { sessionOf } from '../api/world';
 import { auditReaders } from '../setup/audit';
@@ -112,8 +115,11 @@ describe('Audit coverage — the reports platform', () => {
           },
         }),
       );
-      const svc = h.moduleRef.get(ReportSchedulesService);
-      await b.inTx(s.c, (tx) => svc.runIn(tx, s.c.tenantId));
+      // As the sweep runs: no reader in the context, so a scheduled run
+      // counts no sensitive ticket (ADR 0086).
+      await h.moduleRef
+        .get(SweepRunner)
+        .run(REPORT_SCHEDULES_SWEEP, new Date());
       const run = await b.inTx(s.c, (tx) =>
         tx.reportRun.findFirstOrThrow({ where: { scheduleId: schedule.id } }),
       );
@@ -127,7 +133,7 @@ describe('Audit coverage — the reports platform', () => {
       expect((await single('report_run.downloaded', run.id)).metadata).toEqual({
         reportKey: 'service_by_building',
       });
-      await svc.expireDue(daysLater(91));
+      await h.moduleRef.get(ReportSchedulesService).expireDue(daysLater(91));
       expect((await single('report_run.expired', run.id)).metadata).toEqual({});
     });
   });

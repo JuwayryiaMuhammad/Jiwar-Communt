@@ -95,3 +95,6 @@ The manager audit of 2026-11-01 (finance slice 05: "تقارير مقارنة ب
 - Report recipients beyond the permission's holders (the board, by email with a link).
 - A capital plan's lines tied to the budget's lines once approved (M3-1).
 - The compound export's audit-log table (ADR 0014 Open) and a GL-format export (M3-5).
+
+## Update (Phase M3-4, ADR 0091)
+- A sixth report, `cash_flow` (`finance.cashflow`, now among `REPORT_READERS`): the money into and out of the compound's bank and cash accounts on the period's days, by month, movement kind or account, openings and transfers between the accounts left out.

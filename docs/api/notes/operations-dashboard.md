@@ -29,7 +29,7 @@ The inbox's parts need `inbox.read`, and show only the types the reader decides 
 
 ## The cards: `GET /staff/dashboard`
 
-`{ asOf, date, timeZone, figures: { units, maintenance, energy, security, gate, finance }, inbox: { total, overdue } | null, liquidityDays: null }`.
+`{ asOf, date, timeZone, figures: { units, maintenance, energy, security, gate, finance }, inbox: { total, overdue } | null, liquidityDays: number | null }`.
 
 - `maintenance`: `slaEnabled`, `open` (new or in a technician's hands), `unassigned`, `onHold`, `awaitingConfirmation`, `emergencyOpen`, `emergencyUnassigned`, `atRisk`, `overdue` (as the list's `overdue`), `overdueEmergency`, `openedToday`, `completedToday`, `closedToday`, `plannedDueToday`, `inspectionsDueToday`, `pressure: { threshold, available, underPressure, since }`. While the SLA is off, `overdue` and `atRisk` are 0.
 - `energy`: `outagesActive`, `outagesLaterToday`, `meterAlertsOpen`.
@@ -37,7 +37,7 @@ The inbox's parts need `inbox.read`, and show only the types the reader decides 
 - `gate`: `entriesToday`, `exitsToday`, `visitorsToday`.
 - `finance`: `currency`, `collectedToday`, `collectedMonth` (net of reversals), `dueMonth`, `collectionRate` (0–1, null when nothing is due), `overdueInvoices`, `overdueAmount`. Amounts are decimal strings.
 - `units`: `units`, `occupied`, `vacant`, `closed`.
-- `liquidityDays` is always null until cash flow is built: show a dash.
+- `liquidityDays` (ADR 0091): the days of spending the cash covers — the live bank and cash accounts' balances over the average daily spending of the 90 days before today, whole days. Null without `finance.cashflow`, with no account or with nothing spent in the window: show a dash. See [cash-flow.md](cash-flow.md).
 
 ## Needs you now: `GET /staff/dashboard/needs-you`
 
@@ -46,6 +46,7 @@ The inbox's parts need `inbox.read`, and show only the types the reader decides 
 - The alerts come critical first:
   - critical: `emergency_overdue`, `emergency_unassigned`, `lockdown_live`, `incident_critical_open`;
   - warning: `tickets_overdue`, `service_pressure`, `outage_active`, `meter_alert_open`.
+  - and, to `finance.cashflow` holders (ADR 0091): `cash_below_minimum` (critical) and `cash_forecast_below_minimum` (warning), section `finance`.
   - Each is computed from the sections the caller reads; none is stored.
 - `items` are the inbox's items, overdue first, then the oldest; 10 at most. Open each on its own page, as the inbox does.
 

@@ -105,3 +105,6 @@ The caller → the contract, then its payment or the purchase request (update, m
 - Purchase orders, goods receipts and the three-way match (owner's decision 6: lite first).
 - Withholding tax on vendor payments and the VAT return (the tax codes are in place, zero by default).
 - Paying from a bank or cash account: at the rebase onto M3-2.
+
+## Update (Phase M3-4, ADR 0091)
+- The cash flow forecast reads what payables schedules, each amount once: approved invoices by their due day and unpaid schedule payments no approved invoice names, each less the retention its payout will hold; purchases' open commitments; advances and releases asked for or approved; the retention a contract holds, at its end. Guarantees move no money and are not in it. The "Paying from a bank or cash account" Open item was done at the rebase onto M3-2 (ADR 0085, deviation 9).

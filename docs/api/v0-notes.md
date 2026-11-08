@@ -462,3 +462,12 @@ The full notes are in [`notes/reports-platform.md`](notes/reports-platform.md).
 - **Capital plans.** `/maintenance/capital-plans[/{id}[/lines[/{lineId}]]]` (`assets.manage`); approval type `capital_plan` (`capitalPlanId`).
 - **Energy.** The consumption groups gain `areaSqm`, `costPerSqm`, `costPerSqmMissing`.
 - **The compound's export.** `POST|GET /staff/compound-exports`, `GET …/{id}/download` (`compound.export`, step-up, once a day).
+
+### Cash flow and liquidity (ADR 0091)
+
+The full notes are in [`notes/cash-flow.md`](notes/cash-flow.md).
+
+- **The forecast** (`finance.cashflow`, no-store). `GET /staff/finance/cash-flow?by=week|month&periods=` and its `/export` CSV: the accounts' balances, what payables schedules out, the residents' dues at the 90-day collection rate in, each period's closing against the minimum.
+- **The minimum cash.** `GET|PATCH /staff/finance/cash-flow/settings` (`finance.treasury` sets it); the notice `finance.cash_low` (`belowFrom` only).
+- **The dashboard.** `liquidityDays` filled (null when it cannot be computed); alerts `cash_below_minimum`, `cash_forecast_below_minimum`.
+- **The report** `cash_flow` (by month, kind or account).

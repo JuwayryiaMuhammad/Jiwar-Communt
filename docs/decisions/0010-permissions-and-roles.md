@@ -48,3 +48,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase M3-3, ADR 0086)
 - New permissions: `reports.schedule` (manager: send a report on a cadence to the holders of its own permission) and `compound.export` (manager: the compound's operational export behind a step-up; never delegated to a deputy, ADR 0073).
+
+## Update (Phase M3-4, ADR 0091)
+- New permission `finance.cashflow` (staff, manager: the manager and the accountant by default): the cash flow forecast and its CSV, the realised cash flow report, the dashboard's liquidity days and cash alerts, the minimum-cash notice. Reading only; the minimum is set with `finance.treasury`. A `finance.*` permission, never a deputy's (ADR 0073).

@@ -70,3 +70,6 @@ The manager audit (2026-11-01) found no vendor entity: a vendor was free text on
 
 - M2-7 points contractor accounts and tenders at `vendors`; M3-1 links vendor invoices, commitments and payouts to the vendors, contracts, payment schedules and purchase requests here.
 - The register's papers feed M2-6's compliance calendar later.
+
+## Update (Phase M3-4, ADR 0091)
+- Maintenance's payable sources (ADR 0089's bridge) gain two reads without a lock, for the cash flow forecast: the unpaid payments of the contracts not terminated up to a day, and a contract's retention share, end day and termination. The schedule is unchanged.

@@ -89,3 +89,6 @@ So this phase builds **registers, not a ledger**: every balance is the sum of ap
 ## Deferred
 
 - A statement line matched to a payout, cash refunds out of a box, a bank feed, MT940, bank-specific CSV layouts, a reconciliation report with the statement's own running balance.
+
+## Update (Phase M3-4, ADR 0091)
+- The cash flow forecast reads the accounts' balances as its opening position (the live accounts, the sum of their movements). Open custody and the cheques that paid and have not cleared are its first period's money in transit. The realised cash flow report (`cash_flow`) reads the movements, openings and transfers aside.

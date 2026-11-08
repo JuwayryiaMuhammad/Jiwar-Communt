@@ -429,11 +429,12 @@ describe('file purposes', () => {
     ]);
   });
 
-  it('a sheet to import is uploaded by whoever keeps the register, the meters or the units (ADR 0064, 0066, 0072)', () => {
+  it('a sheet to import is uploaded by whoever keeps the register, the meters, the units or the treasury (ADR 0064, 0066, 0072, 0085)', () => {
     expect(FILE_PURPOSES.data_import.uploaders).toEqual([
       'assets.manage',
       'energy.manage',
       'units.manage',
+      'finance.treasury',
     ]);
   });
 

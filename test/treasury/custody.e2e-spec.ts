@@ -51,18 +51,20 @@ describe('Treasury — custody', () => {
           .expect(200)
       ).body as AccountBody
     ).balance;
-  /** Hands in everything the accountant holds now, as the manager. */
-  const settleAccountant = async () => {
-    const now = await custody(s.accountant.id);
+  /** Hands in everything `custodianId` holds now, as the manager. */
+  const settle = async (custodianId: string) => {
+    const now = await custody(custodianId);
     if (now.openCount)
       await t
-        .handIn(s.manager.token, s.accountant.id, {
+        .handIn(s.manager.token, custodianId, {
           cashAccountId: s.cashBox.id,
           expected: now.expected,
           counted: now.expected,
         })
         .expect(201);
   };
+  /** Hands in everything the accountant holds now, as the manager. */
+  const settleAccountant = () => settle(s.accountant.id);
 
   /** Cash a collector took on a visit to a new unit owing 1000. */
   async function collected(amount: string): Promise<string> {
@@ -111,7 +113,7 @@ describe('Treasury — custody', () => {
     ).body as { data: { custodian: { id: string }; expected: string }[] };
     expect(list.data).toContainEqual(
       expect.objectContaining({
-        custodian: expect.objectContaining({ id: s.accountant.id }),
+        custodian: expect.objectContaining({ id: s.accountant.id }) as unknown,
         expected: '300.00',
       }),
     );
@@ -341,6 +343,8 @@ describe('Treasury — custody', () => {
   });
 
   it('an investigation has an owner and a due day; its owner decides it, which settles the hand-in', async () => {
+    // The collector's cash of the first test is still theirs: handed in first.
+    await settle(s.collector.id);
     await collected('300');
     const h2 = (
       await t

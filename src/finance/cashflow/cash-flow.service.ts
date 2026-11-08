@@ -396,10 +396,11 @@ export class CashFlowService {
         SELECT s.start, COALESCE(SUM(COALESCE(o.amount, ${plan.amount})), 0) AS amount
           FROM unnest(${due.map((d) => d.start)}::date[]) AS s(start)
           CROSS JOIN units u
-          LEFT JOIN billing_plan_overrides o ON o.plan_id = ${plan.id}::uuid AND o.unit_id = u.id
+          LEFT JOIN billing_plan_overrides o
+            ON o.tenant_id = u.tenant_id AND o.plan_id = ${plan.id}::uuid AND o.unit_id = u.id
          WHERE NOT COALESCE(o.excluded, false)
            AND NOT EXISTS (SELECT 1 FROM invoices i
-                            WHERE i.plan_id = ${plan.id}::uuid AND i.unit_id = u.id
+                            WHERE i.tenant_id = u.tenant_id AND i.plan_id = ${plan.id}::uuid AND i.unit_id = u.id
                               AND i.period_starts_on = s.start)
          GROUP BY s.start`;
       for (const s of sums) {

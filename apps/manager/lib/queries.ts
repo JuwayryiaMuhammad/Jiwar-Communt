@@ -628,7 +628,7 @@ export const keys = {
   // The reports platform (ADR 0086).
   reportsAll: ['reports'] as const,
   reportCatalog: () => ['reports', 'catalog'] as const,
-  report: (q: object) => ['reports', 'view', q] as const,
+  staffReport: (q: object) => ['reports', 'view', q] as const,
   reportSchedules: () => ['reports', 'schedules'] as const,
   reportRuns: () => ['reports', 'runs'] as const,
   capitalPlansAll: ['capital-plans'] as const,

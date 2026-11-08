@@ -31,12 +31,12 @@ export default function ReportsPage() {
   const [compare, setCompare] = useState<ReportResult['compare']>('none');
   const [fileError, setFileError] = useState<unknown>(null);
   useEffect(() => {
-    if (!key && reports.length) setKey(reports[0].key);
+    if (!key && reports[0]) setKey(reports[0].key);
   }, [key, reports]);
   useEffect(() => setGroupBy(def?.groupBy[0] ?? ''), [def]);
   const q = key ? { report: key, from, to, groupBy: groupBy || undefined, compare } : null;
   const result = useQuery({
-    queryKey: keys.report(q ?? {}),
+    queryKey: keys.staffReport(q ?? {}),
     queryFn: () => fetchers.report(q!),
     enabled: allowed && q !== null && groupBy !== '',
   });
@@ -52,7 +52,7 @@ export default function ReportsPage() {
     q &&
     download('/api/v1/staff/reports/export', { ...q, format }, `${q.report}-${from}-${to}.${format}`).catch(setFileError);
   const rows: Row[] = (r?.rows ?? []).map((x, n) => ({ ...x, n }));
-  const figure = (i: number) => r && i >= r.dimensions && r.columns[i].kind !== 'text';
+  const figure = (i: number) => r && i >= r.dimensions && r.columns[i]?.kind !== 'text';
   return (
     <>
       <PageHeader
@@ -128,8 +128,8 @@ export default function ReportsPage() {
                         const shown = c.key === 'note' && v ? (NOTE_TEXT[v] ?? v) : (v ?? '—');
                         if (!figure(i) || r.compare === 'none') return x.n === -1 ? <strong>{shown}</strong> : shown;
                         const parts = [
-                          r.previousPeriod ? `before ${x.previous?.[i] ?? '—'} (${change(v, x.previous?.[i] ?? null) ?? '—'})` : null,
-                          r.lastYearPeriod ? `a year ago ${x.lastYear?.[i] ?? '—'} (${change(v, x.lastYear?.[i] ?? null) ?? '—'})` : null,
+                          r.previousPeriod ? `before ${x.previous?.[i] ?? '—'} (${change(v ?? null, x.previous?.[i] ?? null) ?? '—'})` : null,
+                          r.lastYearPeriod ? `a year ago ${x.lastYear?.[i] ?? '—'} (${change(v ?? null, x.lastYear?.[i] ?? null) ?? '—'})` : null,
                         ].filter(Boolean);
                         return (
                           <div className="stack stack--sm">

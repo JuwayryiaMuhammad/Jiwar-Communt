@@ -5,7 +5,7 @@ import {
   type TenantTxClient,
 } from '../../src/core/database/tenant-tx.service';
 import { COMPOUND_EXPORT_BUILD_SWEEP } from '../../src/core/reports/compound-exports.service';
-import { ReportSchedulesService } from '../../src/core/reports/report-schedules.service';
+import { REPORT_SCHEDULES_SWEEP } from '../../src/core/reports/report-schedules.service';
 import { SweepRunner } from '../../src/core/sweep/sweep-runner';
 import { day, daysLater } from '../setup/compound-clock';
 import { call } from './request';
@@ -41,9 +41,10 @@ export function reportsCalls(
           },
         }),
       );
-      await inA((tx) =>
-        world().h.moduleRef.get(ReportSchedulesService).runIn(tx, a.tenantId),
-      );
+      // Written as the sweep writes it: no reader in the context.
+      await world()
+        .h.moduleRef.get(SweepRunner)
+        .run(REPORT_SCHEDULES_SWEEP, new Date());
       const run = await inA((tx) =>
         tx.reportRun.findFirstOrThrow({ where: { scheduleId: schedule.id } }),
       );

@@ -78,7 +78,9 @@ describe('handovers: their lists are their CHECKs’ (ADR 0075)', () => {
   const sql = migration('20270216090300_governance_handovers');
 
   it('the approval types and the settings, with the override (dated after ADR 0082’s widening)', () => {
-    const types = migration('20270518090610_handover_approval_type');
+    // ADR 0089 recreated both CHECKs later with `budget_transfer`, the
+    // override kept: the latest recreation holds every type.
+    const types = migration('20270601090000_budget_planning');
     expect(types).toContain(`"type" IN (${quoted(APPROVAL_TYPES)})`);
     expect(types).toContain(`"type" IN (${quoted(SETTING_TYPES)})`);
   });

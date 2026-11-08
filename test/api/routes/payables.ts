@@ -4,10 +4,12 @@ import {
 } from '../../../src/finance/payables/payable-rules';
 import type { Row } from '../registry';
 
+/** Every payables response is `no-store` (docs/api/notes/payables.md). */
 const manager = (row: Omit<Row, 'auth' | 'as' | 'denied'>): Row => ({
   auth: 'tenant',
   as: 'manager',
   denied: 'technician',
+  noStore: true,
   ...row,
 });
 const UNKNOWN = '00000000-0000-4000-8000-000000000089';

@@ -5,6 +5,7 @@ import { budgetHelpers, type BudgetBody } from '../setup/budgets';
 import { clock, day } from '../setup/compound-clock';
 import { uniqueSuffix } from '../setup/fixtures';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { deferred } from '../setup/permits';
 import { addDays } from '../../src/core/common/slots/day-slots';
 
 interface Line {
@@ -139,15 +140,18 @@ describe('Payables and commitments (ADR 0089)', () => {
       (await http('get', `/staff/finance/commitments?${q}`, acc()).expect(200))
         .body as { data: Commitment[] }
     ).data;
-  const record = async (body: object, by = acc()) =>
-    http('post', '/staff/finance/vendor-invoices', by, {
-      vendorNumber: `INV-${uniqueSuffix()}`,
-      issuedOn: today(),
-      dueOn: day(10),
-      invoiceFileId: await f.invoice(by === m() ? s.manager : s.accountant),
-      lines: [{ description: 'Monthly service', amount: '5000.00' }],
-      ...body,
-    });
+  const record = (body: object, by = acc()) =>
+    deferred(
+      (async () =>
+        http('post', '/staff/finance/vendor-invoices', by, {
+          vendorNumber: `INV-${uniqueSuffix()}`,
+          issuedOn: today(),
+          dueOn: day(10),
+          invoiceFileId: await f.invoice(by === m() ? s.manager : s.accountant),
+          lines: [{ description: 'Monthly service', amount: '5000.00' }],
+          ...body,
+        }))(),
+    );
   const approve = (id: string, body: object = {}) =>
     http('post', `/staff/finance/vendor-invoices/${id}/approve`, m(), body);
   const pay = (id: string, body: object = {}) =>
@@ -236,13 +240,13 @@ describe('Payables and commitments (ADR 0089)', () => {
       ).expect(200);
       const held = await lineOf(cleaning().id);
       expect(Number(held.committed) - Number(line.committed)).toBe(4000);
-      const res = await f
-        .expense(
+      const res = await deferred(
+        f.expense(
           s.accountant,
           cleaning().id,
           String(Number(held.available) + 1),
-        )
-        .expect(409);
+        ),
+      ).expect(409);
       expect(err(res)).toMatchObject({
         code: 'EXPENSE_OVER_BUDGET',
         params: { remaining: held.available },

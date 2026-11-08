@@ -2,6 +2,7 @@ import { budgetHelpers, type BudgetBody } from '../setup/budgets';
 import { clock, day } from '../setup/compound-clock';
 import { uniqueSuffix } from '../setup/fixtures';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { deferred } from '../setup/permits';
 
 /**
  * ADR 0089's races: two approvals of one invoice, one invoice paid twice,
@@ -72,20 +73,23 @@ describe('Payables and commitments — concurrency (ADR 0089)', () => {
       ).body as { id: string }
     ).id;
   };
-  const record = async (contractId: string, vendorNumber?: string) =>
-    f.http('post', '/staff/finance/vendor-invoices', acc(), {
-      contractId,
-      vendorNumber: vendorNumber ?? `R-${uniqueSuffix()}`,
-      issuedOn: clock().today,
-      dueOn: day(5),
-      invoiceFileId: await f.invoice(s.accountant),
-      lines: [{ description: 'Work', amount: '1000.00' }],
-    });
+  const record = (contractId: string, vendorNumber?: string) =>
+    deferred(
+      (async () =>
+        f.http('post', '/staff/finance/vendor-invoices', acc(), {
+          contractId,
+          vendorNumber: vendorNumber ?? `R-${uniqueSuffix()}`,
+          issuedOn: clock().today,
+          dueOn: day(5),
+          invoiceFileId: await f.invoice(s.accountant),
+          lines: [{ description: 'Work', amount: '1000.00' }],
+        }))(),
+    );
 
   it('two approvals of one invoice at once: one approves it, the other is told', async () => {
     for (let i = 0; i < 3; i++) {
       const inv = (
-        (await (await record(await contract())).expect(201)).body as {
+        (await record(await contract()).expect(201)).body as {
           id: string;
         }
       ).id;
@@ -113,7 +117,7 @@ describe('Payables and commitments — concurrency (ADR 0089)', () => {
   it('one invoice paid twice at once: one payout and one expense', async () => {
     for (let i = 0; i < 3; i++) {
       const inv = (
-        (await (await record(await contract())).expect(201)).body as {
+        (await record(await contract()).expect(201)).body as {
           id: string;
         }
       ).id;

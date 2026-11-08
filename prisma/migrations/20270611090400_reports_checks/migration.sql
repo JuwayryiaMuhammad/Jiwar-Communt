@@ -1,11 +1,10 @@
 -- ============================================================================
--- The CHECKs ADR 0086 widened, restored after the later-dated migrations
--- that recreate them (ADR 0089's 20270601090000 the approval types', ADR
--- 0088's 20270608090100 the files' content type): each with every value, so
--- a fresh database and an existing one both end with all of them. The
--- files' two CHECKs are ADR 0086's own, here rather than in 20270504090100:
--- they name purposes added after that date (a run's file and the export
--- with their types and limits, beside every other purpose). The content
+-- The CHECKs ADR 0086 widened, stated last with every value before them
+-- (main's, ADR 0089's approval types, ADR 0088's file purposes), so a fresh
+-- database and an existing one both end with all of them. The files' two
+-- CHECKs are ADR 0086's own, here rather than in 20270611090100: they name
+-- the purposes 20270611090000 adds (a run's file and the export with their
+-- types and limits, beside every other purpose). The content
 -- type's last: its spec reads it to the end. The compound's logo (ADR
 -- 0075) takes a PNG or a JPEG only, as its purpose does. Its only rows:
 -- the capital plan's setting, one per compound.

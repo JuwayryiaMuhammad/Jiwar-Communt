@@ -9,7 +9,7 @@ const migrations = '../../../prisma/migrations';
  * ADR 0087 and 0088 with every purpose, the size CHECK first.
  */
 const both = readFileSync(
-  join(__dirname, migrations, '20270609090100_reports_checks/migration.sql'),
+  join(__dirname, migrations, '20270611090400_reports_checks/migration.sql'),
   'utf8',
 );
 /** The size CHECK's statements, then the content type CHECK's: each alone. */

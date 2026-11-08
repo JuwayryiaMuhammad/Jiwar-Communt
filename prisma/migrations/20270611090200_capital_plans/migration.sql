@@ -21,11 +21,10 @@
 -- never in the audit trail or a notification.
 -- ============================================================================
 
--- The new approval type, with a subject: the year's plan, beside every type on
--- main. Later-dated migrations recreate these CHECKs: 20270609090100
--- restores the whole set, and gives every compound the type's setting there
--- (ADR 0089's 20270601090000 recreates the settings' CHECK without it, so no
--- row of the type may exist before then).
+-- The new approval type, with a subject: the year's plan, beside every type
+-- before it (main's, and ADR 0089's `budget_transfer`). 20270611090400
+-- states the whole set once more and gives every compound the type's
+-- setting there.
 ALTER TABLE "governance_approval_requests" DROP CONSTRAINT "governance_approval_requests_type";
 ALTER TABLE "governance_approval_requests" ADD CONSTRAINT "governance_approval_requests_type"
   CHECK ("type" IN ('annual_budget', 'budget_increase', 'major_contract', 'exceptional_fee',

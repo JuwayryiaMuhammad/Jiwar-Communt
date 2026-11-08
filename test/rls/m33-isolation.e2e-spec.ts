@@ -220,7 +220,7 @@ describe('RLS isolation — the reports platform (ADR 0086)', () => {
   it('covers every table the phase’s migrations create', () => {
     const dir = join(__dirname, '../../prisma/migrations');
     const created = readdirSync(dir)
-      .filter((m) => m >= '20270504090000' && m < '20270505')
+      .filter((m) => m >= '20270611090000' && m < '20270612')
       .flatMap((m) =>
         [
           ...readFileSync(join(dir, m, 'migration.sql'), 'utf8').matchAll(

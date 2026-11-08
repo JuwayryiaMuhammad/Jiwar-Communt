@@ -50,7 +50,7 @@ import {
 @ApiArea('reports')
 @RequireAnyPermission(...REPORT_READERS)
 @Controller('staff/reports')
-export class ReportsController {
+export class ReportsPlatformController {
   constructor(private readonly reports: ReportsService) {}
 
   @Get()

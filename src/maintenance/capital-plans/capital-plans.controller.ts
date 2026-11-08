@@ -124,7 +124,7 @@ export class CapitalPlanView {
       total: r.total,
       submittedAt: r.plan.submittedAt,
       approvedAt: r.plan.approvedAt,
-      lines: r.lines.map(CapitalPlanLineView.from),
+      lines: r.lines.map((x) => CapitalPlanLineView.from(x)),
     };
   }
 }
@@ -144,7 +144,7 @@ export class CapitalPlansController {
   @ApiOperation({ summary: 'The compound’s capital plans, latest year first' })
   @ApiOkResponse({ type: ListOf(CapitalPlanView) })
   async list(): Promise<ListResponse<CapitalPlanView>> {
-    return bounded(await this.plans.list(), CapitalPlanView.from);
+    return bounded(await this.plans.list(), (r) => CapitalPlanView.from(r));
   }
 
   @Post()

@@ -141,7 +141,7 @@ export class ReportView {
         sum: !!c.sum,
       })),
       dimensions: r.dimensions,
-      rows: r.rows.map(ReportRowView.from),
+      rows: r.rows.map((x) => ReportRowView.from(x)),
       totals: ReportRowView.from(r.totals),
     };
   }

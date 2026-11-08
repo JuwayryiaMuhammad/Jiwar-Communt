@@ -57,7 +57,9 @@ export class ReportsPlatformController {
   @ApiOperation({ summary: 'The reports I may read, and their groupings' })
   @ApiOkResponse({ type: ListOf(ReportCatalogView) })
   async catalog(): Promise<ListResponse<ReportCatalogView>> {
-    return bounded(await this.reports.catalog(), ReportCatalogView.from);
+    return bounded(await this.reports.catalog(), (r) =>
+      ReportCatalogView.from(r),
+    );
   }
 
   @Get('view')
@@ -106,7 +108,9 @@ export class ReportSchedulesController {
   @ApiOperation({ summary: 'The compound’s report schedules' })
   @ApiOkResponse({ type: ListOf(ReportScheduleView) })
   async list(): Promise<ListResponse<ReportScheduleView>> {
-    return bounded(await this.schedules.list(), ReportScheduleView.from);
+    return bounded(await this.schedules.list(), (r) =>
+      ReportScheduleView.from(r),
+    );
   }
 
   @Post()
@@ -147,7 +151,7 @@ export class ReportRunsController {
   async list(
     @Query() q: ReportRunsQueryDto,
   ): Promise<ListResponse<ReportRunView>> {
-    return toList(await this.schedules.runs(q), ReportRunView.from);
+    return toList(await this.schedules.runs(q), (r) => ReportRunView.from(r));
   }
 
   /** No-store: a presigned URL of the file. */
@@ -183,7 +187,9 @@ export class CompoundExportsController {
   @ApiOperation({ summary: 'The compound’s latest exports' })
   @ApiOkResponse({ type: ListOf(CompoundExportView) })
   async list(): Promise<ListResponse<CompoundExportView>> {
-    return bounded(await this.exports.latest(), CompoundExportView.from);
+    return bounded(await this.exports.latest(), (r) =>
+      CompoundExportView.from(r),
+    );
   }
 
   /** No-store: a presigned URL of the archive. */

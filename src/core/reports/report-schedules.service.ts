@@ -107,7 +107,7 @@ export class ReportSchedulesService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.sweep.register(REPORT_SCHEDULES_SWEEP, (now) => this.run(now), {
+    this.sweep.register(REPORT_SCHEDULES_SWEEP, () => this.run(), {
       intervalMs: REPORT_SCHEDULES_EVERY_MS,
     });
     this.sweep.register(REPORT_RUNS_EXPIRE_SWEEP, (now) => this.expireDue(now));
@@ -263,7 +263,7 @@ export class ReportSchedulesService implements OnModuleInit {
   // --------------------------------------------------------------------------
 
   /** Every compound's due runs, each in a transaction of its own. */
-  run(now: Date): Promise<number> {
+  run(): Promise<number> {
     return this.sweep.forEachTenantItem(
       (tx, tenantId) => this.due(tx, tenantId),
       (tx, tenantId, one) => this.write(tx, tenantId, one),

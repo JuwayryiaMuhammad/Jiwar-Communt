@@ -84,6 +84,9 @@ export const FILES_ROUTES: Row[] = [
               'compliance_evidence',
               'compound_logo',
               'unit_entry_photo',
+              // ADR 0088.
+              'tender_document',
+              'tender_bid',
             ],
           },
         },

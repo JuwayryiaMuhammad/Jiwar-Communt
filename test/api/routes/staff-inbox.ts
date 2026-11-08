@@ -25,6 +25,8 @@ const INBOX_TYPES = [
   // ADR 0089.
   'vendor_invoice',
   'contract_disbursement',
+  // ADR 0088.
+  'tender_opening',
 ];
 
 /**

@@ -2912,6 +2912,9 @@ export const AUDIT_ACTIONS = {
   'compound_export.downloaded': { log: 'tenant', target: 'compound_export' },
   'compound_export.failed': { log: 'tenant', target: 'compound_export' },
   'compound_export.expired': { log: 'tenant', target: 'compound_export' },
+  // Cash flow (ADR 0091): the minimum cash the forecast is held against.
+  // changes: minimumCash (an amount, or null: no notice).
+  'cash_flow.settings_changed': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -241,6 +241,13 @@ export const PERMISSIONS = {
   // `finance.payments`). The cheque register is `finance.payments`.
   'finance.treasury': { kinds: ['staff', 'manager'] },
   'finance.custody': { kinds: ['manager'] },
+  // Cash flow and liquidity (ADR 0091). `finance.cashflow` reads the cash
+  // flow forecast (the accounts' balances, what payables schedules out and
+  // what the residents' dues bring in at the compound's collection rate),
+  // the days of spending the cash covers, the realised cash flow report and
+  // the minimum-cash notice. Reading only: the minimum is set by who keeps
+  // the treasury (`finance.treasury`).
+  'finance.cashflow': { kinds: ['staff', 'manager'] },
   // Permits (ADR 0049). Residents and family ask for a unit's permits: the
   // unit's primary for works, moves and material exits, anyone who may
   // invite visitors for an event (the service decides per unit);

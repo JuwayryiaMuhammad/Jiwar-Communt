@@ -414,6 +414,8 @@ const TEXT: Record<string, (p: P) => string> = {
   // The reports platform (ADR 0086).
   'report_run.ready': (p) => `A scheduled report for ${p.periodFrom} to ${p.periodTo} is ready to download`,
   'compound_export.ready': () => 'The compound’s export is ready to download',
+  // Cash flow (ADR 0091).
+  'finance.cash_low': (p) => `The compound’s cash falls below its minimum from ${p.belowFrom}`,
 };
 
 export function notificationText(n: NotificationLike): string {
@@ -475,6 +477,8 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   // The reports platform (ADR 0086): the run's file, the compound's export.
   if (n.targetType === 'report_run') return '/reports/runs';
   if (n.targetType === 'compound_export') return can('compound.export') ? '/compound-export' : null;
+  // Cash flow (ADR 0091).
+  if (n.targetType === 'cash_flow') return can('finance.cashflow') ? '/finance/cash-flow' : null;
   if (n.targetType === 'maintenance_plan' && n.targetId) return can('assets.read') ? `/maintenance-plans/${n.targetId}` : null;
   if (n.targetType === 'inspection' && n.targetId) return can('inspections.manage') ? `/inspections/${n.targetId}` : null;
   if (n.targetType === 'asset_replacement_recommendation') return can('assets.manage') ? '/replacement-recommendations' : null;

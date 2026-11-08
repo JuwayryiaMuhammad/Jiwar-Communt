@@ -98,6 +98,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       // ADR 0085.
       'finance.treasury',
       'finance.custody',
+      // ADR 0091.
+      'finance.cashflow',
       'patrols.manage',
       'incidents.manage',
       'blocklist.manage',
@@ -303,6 +305,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'tenders.open',
       // ADR 0085: the bank and cash accounts, never a custody variance.
       'finance.treasury',
+      // ADR 0091: the cash flow forecast and liquidity.
+      'finance.cashflow',
     ],
   },
   {

@@ -3714,6 +3714,16 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'ارتد شيك دُفع لوحدتك، فأُلغيت دفعته. راجع كشف الحساب في التطبيق.',
     },
   },
+  'finance.cash_low': {
+    en: {
+      title: 'Cash below the minimum',
+      body: 'The compound’s cash falls below its minimum from {belowFrom}. Open the cash flow forecast.',
+    },
+    ar: {
+      title: 'النقدية دون الحد الأدنى',
+      body: 'تنخفض نقدية الكمبوند عن حدها الأدنى بدءًا من {belowFrom}. افتح توقعات التدفق النقدي.',
+    },
+  },
   'report_run.ready': {
     en: {
       title: 'Report ready',

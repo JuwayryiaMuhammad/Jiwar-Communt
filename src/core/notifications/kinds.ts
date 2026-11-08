@@ -3459,6 +3459,20 @@ export const NOTIFICATION_KINDS = {
     target: 'compound_export',
     params: { expiresAt: {} },
   },
+  // Cash flow and liquidity (ADR 0091).
+  /**
+   * The cash on hand, or the forecast's closing balance of a coming period,
+   * falls below the compound's minimum: to the `finance.cashflow` holders,
+   * once a dip and at most once a day. The first day of the first period
+   * below it only; never an amount.
+   */
+  'finance.cash_low': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'cash_flow',
+    params: { belowFrom: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

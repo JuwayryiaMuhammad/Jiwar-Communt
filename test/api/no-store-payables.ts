@@ -39,6 +39,23 @@ export function payableCalls(
   const id = (res: Response) => (res.body as { id: string }).id;
   const year = () => today().slice(0, 4);
 
+  /** A bank account a payout leaves (ADR 0085: every payout names one). */
+  let bank: Promise<string> | null = null;
+  const aBank = () =>
+    (bank ??= (async () =>
+      id(
+        done(
+          await manager('POST', '/staff/finance/cash-accounts', {
+            kind: 'bank',
+            name: `No-store bank ${uniqueSuffix()}`,
+            bankName: 'No-store Bank',
+            numberLast4: '0089',
+            openingBalance: '100000.00',
+            openedOn: today(),
+          }),
+        ),
+      ))());
+
   /** A vendor's contract on the budget's maintenance line, for the year. */
   let contract: Promise<string> | null = null;
   const aContract = () =>
@@ -260,7 +277,12 @@ export function payableCalls(
       accountant(
         'POST',
         `/staff/finance/vendor-invoices/${await anApprovedInvoice()}/pay`,
-        { paidOn: today(), method: 'bank_transfer', reference: 'NS-TRF' },
+        {
+          paidOn: today(),
+          method: 'bank_transfer',
+          reference: 'NS-TRF',
+          cashAccountId: await aBank(),
+        },
       ),
     'GET /staff/finance/payment-schedule': async () => {
       await aContract();
@@ -326,7 +348,7 @@ export function payableCalls(
       return accountant(
         'POST',
         `/staff/finance/contract-disbursements/${advance}/pay`,
-        { paidOn: today(), method: 'cheque' },
+        { paidOn: today(), method: 'cheque', cashAccountId: await aBank() },
       );
     },
   };

@@ -7,7 +7,7 @@ import {
   CompoundExportsController,
   ReportRunsController,
   ReportSchedulesController,
-  ReportsController,
+  ReportsPlatformController,
 } from './reports.controller';
 import { StaffReports } from './report-registry';
 import { ReportSchedulesService } from './report-schedules.service';
@@ -21,7 +21,7 @@ import { ReportsService } from './reports.service';
 @Module({
   imports: [AuthModule, FilesModule, ObjectStorageModule],
   controllers: [
-    ReportsController,
+    ReportsPlatformController,
     ReportSchedulesController,
     ReportRunsController,
     CompoundExportsController,

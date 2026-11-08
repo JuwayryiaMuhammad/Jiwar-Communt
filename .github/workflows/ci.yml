@@ -90,7 +90,13 @@ jobs:
       - name: Lint (no --fix)
         run: pnpm lint:check
       # The build compiles src/ only; this also checks test/ and prisma/.
+      # One tsc over the whole program needs about 4 GB, past the job's heap
+      # (by M2-7, about 4008 of 4130 MB). Splitting it buys nothing: test/
+      # imports most of src/, so a test-side run checks src/ again. This step
+      # alone gets 6 GB; every other step keeps the 4 GB above.
       - name: Type-check
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: pnpm exec tsc --noEmit -p tsconfig.json
       - name: Build
         run: pnpm build

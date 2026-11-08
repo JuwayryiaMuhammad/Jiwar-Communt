@@ -1,13 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { REASON_CODES } from '../../../core/common/reasons';
+import { StaffRefView } from '../../payments/views/payment.views';
 
-/** A staff account as the treasury's views name it; an erased one has no name. */
-export class StaffRefView {
-  @ApiProperty({ type: String, format: 'uuid' })
-  id: string;
-  @ApiProperty({ type: String, nullable: true })
-  fullName: string | null;
-}
+/** A staff account as the treasury's views name it: the payments' one. */
+export { StaffRefView };
 
 export const CASH_ACCOUNT_KINDS = ['bank', 'cash'] as const;
 export const MOVEMENT_KINDS = [

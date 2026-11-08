@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { newId } from '../../src/core/common/uuid';
 import type { TenantTxClient } from '../../src/core/database/tenant-tx.service';
-import { dbClock } from '../setup/compound-clock';
+import { daysLater, dbClock } from '../setup/compound-clock';
 import { createDbHarness, type DbHarness } from '../setup/db-module';
 import { createAccountRow, createTenant } from '../setup/fixtures';
 import { marketFileRow } from '../setup/market-rows';
@@ -23,7 +23,7 @@ interface Table {
 }
 
 let numbers = 7000;
-const later = () => new Date(dbClock().getTime() + 30 * 86_400_000);
+const later = () => daysLater(30);
 
 /**
  * The tables of ADR 0088: isolated like every other tenant table, linked

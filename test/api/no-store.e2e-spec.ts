@@ -3438,7 +3438,7 @@ describe('API v0 — no-store', () => {
     ...m211Calls(() => w),
     ...fieldTeamCalls(() => w),
     ...payableCalls(() => w, aSittingBoard),
-    ...contractorCalls(() => w),
+    ...contractorCalls(() => w, aSittingBoard),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

@@ -85,7 +85,7 @@ describe('Reports — the curated reports', () => {
     ).toBe('REPORT_NOT_YOURS');
     expect(
       err(await get('/staff/reports/view?report=nothing').expect(400))
-        .fields[0],
+        .fields?.[0],
     ).toMatchObject({ field: 'report', code: 'INVALID_VALUE' });
     await get('/staff/reports', s.owner.token).expect(403);
   });
@@ -192,7 +192,7 @@ describe('Reports — the curated reports', () => {
         await get(
           `/staff/reports/view?report=maintenance_spend&from=${day(-400)}&to=${today()}`,
         ).expect(400),
-      ).fields[0],
+      ).fields?.[0],
     ).toMatchObject({ field: 'from', code: 'PERIOD_TOO_LONG' });
   });
 
@@ -398,7 +398,7 @@ describe('Reports — the curated reports', () => {
         await get(
           `/staff/reports/export?report=maintenance_spend&${q}&format=doc`,
         ).expect(400),
-      ).fields[0],
+      ).fields?.[0],
     ).toMatchObject({ field: 'format', code: 'INVALID_VALUE' });
   });
 });

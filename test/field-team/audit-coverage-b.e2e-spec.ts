@@ -262,10 +262,7 @@ describe('Audit coverage — the field team, part b', () => {
     // eslint-disable-next-line test-clock/day-multiple -- a real duration in ms: the sweep's own now and the rules it checks count 24-hour days
     await sweep(ACCESS_REVIEW_SWEEP, ahead(31 * DAY));
     const review = await d.inTenant(c, (tx) =>
-      tx.accessReview.findFirstOrThrow({
-        where: { status: 'open' },
-        include: {},
-      }),
+      tx.accessReview.findFirstOrThrow({ where: { status: 'open' } }),
     );
     expect(
       await single('access_review.opened', review.id, c.tenantId),

@@ -7247,6 +7247,12 @@ model FinanceSettings {
   varianceReasonPct    Int?     @map("variance_reason_pct") @db.SmallInt
   /// Custody counts office cash payments recorded from here (ADR 0085).
   custodyFrom          DateTime @default(now()) @map("custody_from") @db.Timestamptz(3)
+  /// The least cash the compound wants to hold (ADR 0091); null: no floor, no notice.
+  cashMinimum          Decimal?  @map("cash_minimum") @db.Decimal(14, 2)
+  /// When the current dip below the floor began (the cash flow sweep's); null: none.
+  cashLowSince         DateTime? @map("cash_low_since") @db.Timestamptz(3)
+  /// When the `finance.cashflow` holders were last told of a dip.
+  cashLowToldAt        DateTime? @map("cash_low_told_at") @db.Timestamptz(3)
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 

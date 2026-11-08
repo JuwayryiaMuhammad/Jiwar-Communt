@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { liquidityText } from '@/components/finance/cash-flow';
 import { INBOX_TYPE, inboxLabel, waited } from '@/components/inbox/inbox-types';
 import { ALERT, BAND, alertText, percent } from '@/components/operations/dashboard';
 import { usePermissions } from '@/lib/permissions';
@@ -127,8 +128,16 @@ export default function OverviewPage() {
                 hint={`${money.overdueInvoices} invoice${money.overdueInvoices === 1 ? '' : 's'}`}
                 href="/finance"
               />
-              <Stat label="Liquidity" icon={<Wallet aria-hidden />} value="—" hint="Days of cover come with cash flow" />
             </>
+          ) : null}
+          {can('finance.cashflow') ? (
+            <Stat
+              label="Liquidity"
+              icon={<Wallet aria-hidden />}
+              value={liquidityText(summary.data?.liquidityDays)}
+              hint="Days of spending the cash covers"
+              href="/finance/cash-flow"
+            />
           ) : null}
           {f?.security ? (
             <Stat

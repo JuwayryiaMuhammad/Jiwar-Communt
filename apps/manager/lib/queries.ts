@@ -1008,6 +1008,9 @@ export const keys = {
   briefs: (kind: BriefKind | '') => ['briefs', 'list', kind] as const,
   brief: (id: string) => ['briefs', 'detail', id] as const,
   servicePressure: ['service-pressure'] as const,
+  // Cash flow (ADR 0091).
+  cashFlowAll: ['cash-flow'] as const,
+  cashFlow: (q: object) => ['cash-flow', 'forecast', q] as const,
   traffic: (from: string, to: string, gateId: string) => ['gate', 'traffic', from, to, gateId] as const,
 };
 
@@ -1858,6 +1861,9 @@ export const fetchers = {
   needsYou: () => unwrap(api.GET('/api/v1/staff/dashboard/needs-you')),
   buildingsStatus: () => unwrap(api.GET('/api/v1/staff/dashboard/buildings')),
   dashboardSettings: () => unwrap(api.GET('/api/v1/staff/dashboard/settings')),
+  // Cash flow (ADR 0091).
+  cashFlow: (q: { by: 'week' | 'month'; periods: number }) =>
+    unwrap(api.GET('/api/v1/staff/finance/cash-flow', { params: { query: q } })),
   briefs: (kind: BriefKind | '', cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/briefs', { params: { query: { kind: kind || undefined, cursor, limit } } })),
   brief: (id: string) => unwrap(api.GET('/api/v1/staff/briefs/{id}', { params: { path: { id } } })),

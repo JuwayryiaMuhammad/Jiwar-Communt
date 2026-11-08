@@ -12,6 +12,9 @@ export const ALERT: Record<string, { label: (count: number) => string; href: str
   service_pressure: { label: (n) => `Service pressure: ${n} open tickets for the technicians available`, href: '/maintenance' },
   outage_active: { label: (n) => `${n} utility outage${n === 1 ? '' : 's'} in force`, href: '/outages' },
   meter_alert_open: { label: (n) => `${n} meter spike${n === 1 ? '' : 's'} not yet acknowledged`, href: '/meters' },
+  // Cash flow (ADR 0091): the count is the forecast's periods closing below the minimum.
+  cash_below_minimum: { label: () => 'The cash on hand is below the compound’s minimum', href: '/finance/cash-flow' },
+  cash_forecast_below_minimum: { label: (n) => `The cash falls below the minimum in ${n} coming period${n === 1 ? '' : 's'}`, href: '/finance/cash-flow' },
 };
 
 export function alertText(code: string, count: number): string {

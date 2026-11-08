@@ -207,9 +207,14 @@ describe('Roles', () => {
       ).rejects.toMatchObject({ code: 'PERMISSION_NOT_ASSIGNABLE' });
   });
 
-  it('a sheet to import is uploaded with assets.manage, energy.manage or units.manage, and with none is refused (ADR 0064, 0066, 0072)', async () => {
+  it('a sheet to import is uploaded with assets.manage, energy.manage, units.manage or finance.treasury, and with none is refused (ADR 0064, 0066, 0072, 0085)', async () => {
     const c = await compound();
-    const keepers = ['assets.manage', 'energy.manage', 'units.manage'];
+    const keepers = [
+      'assets.manage',
+      'energy.manage',
+      'units.manage',
+      'finance.treasury',
+    ];
     expect(c.managerRole.permissions).toEqual(expect.arrayContaining(keepers));
     const others = c.managerRole.permissions.filter(
       (p) => !keepers.includes(p),
@@ -225,6 +230,7 @@ describe('Roles', () => {
       [['assets.manage'], 201],
       [['energy.manage'], 201],
       [['units.manage'], 201],
+      [['finance.treasury'], 201],
     ] as const) {
       await as(c.tenant.id, c.manager.id, () =>
         roles.replacePermissions(c.managerRole.id, [...others, ...held]),

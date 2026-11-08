@@ -233,9 +233,9 @@ export class DashboardSummaryView {
     type: Number,
     nullable: true,
     description:
-      'Days of spending the cash covers: always null until cash flow is built.',
+      'Days of spending the cash covers (ADR 0091): the live bank and cash accounts’ balances over the average daily spending of the 90 days before today (live expenses by their day), whole days, 0 at no cash. Null without `finance.cashflow`, with no account, or with nothing spent in the window.',
   })
-  liquidityDays: null;
+  liquidityDays: number | null;
 
   static from(s: DashboardSummary): DashboardSummaryView {
     return Object.assign(new DashboardSummaryView(), {
@@ -244,7 +244,7 @@ export class DashboardSummaryView {
       timeZone: s.timeZone,
       figures: DashboardFiguresView.from(s.figures),
       inbox: s.inbox ? { ...s.inbox } : null,
-      liquidityDays: null,
+      liquidityDays: s.liquidityDays,
     });
   }
 }
@@ -255,7 +255,7 @@ export class DashboardAlertView {
   @ApiProperty({
     type: String,
     description:
-      'emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open (warning).',
+      'emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open, cash_below_minimum (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open, cash_forecast_below_minimum (warning). The cash alerts (ADR 0091) are `finance.cashflow`’s; their count is the forecast’s periods closing below the minimum.',
   })
   code: string;
   @ApiProperty({ enum: ['critical', 'warning'] })

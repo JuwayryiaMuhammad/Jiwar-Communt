@@ -9113,6 +9113,463 @@
         ],
         "type": "object"
       },
+      "CashFlowAccountView": {
+        "properties": {
+          "balance": {
+            "description": "The sum of its movements (ADR 0085).",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "bank",
+              "cash"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "balance"
+        ],
+        "type": "object"
+      },
+      "CashFlowCollectionView": {
+        "properties": {
+          "basis": {
+            "enum": [
+              "window",
+              "no_history"
+            ],
+            "type": "string"
+          },
+          "collected": {
+            "description": "What of it is paid so far.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "due": {
+            "description": "What the invoices due in the window asked after credit notes.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "from": {
+            "description": "The window’s first day: 90 days before today.",
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "rate": {
+            "description": "Of what the invoices due in the window asked after credit notes, the share paid so far, 0–1. Null with nothing due in the window: the forecast then expects no resident money.",
+            "example": 0.874,
+            "nullable": true,
+            "type": "number"
+          },
+          "to": {
+            "description": "The window’s last day: yesterday.",
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "rate",
+          "basis",
+          "from",
+          "to",
+          "due",
+          "collected"
+        ],
+        "type": "object"
+      },
+      "CashFlowInflowsView": {
+        "properties": {
+          "dues": {
+            "description": "invoiced + projected, at their face.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "expected": {
+            "description": "dues at the collection rate.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "inTransit": {
+            "description": "Collected and not in an account yet — custody not handed in, cheques that paid and have not cleared: the first period only.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "invoiced": {
+            "description": "Issued invoices still owed, due in the period (instalments are invoices); none under an open dispute.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "projected": {
+            "description": "What the billing plans will issue, due in the period (ADR 0069).",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "total": {
+            "description": "expected + inTransit.",
+            "example": "12500.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiced",
+          "projected",
+          "dues",
+          "expected",
+          "inTransit",
+          "total"
+        ],
+        "type": "object"
+      },
+      "CashFlowOpeningView": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/CashFlowAccountView"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "The live accounts’ balances: the cash on hand.",
+            "example": "12500.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total",
+          "accounts"
+        ],
+        "type": "object"
+      },
+      "CashFlowOutflowsView": {
+        "properties": {
+          "contractPayments": {
+            "description": "Contracts’ unpaid schedule payments no approved invoice names, less retention.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "disbursements": {
+            "description": "Advances and retention releases asked for or approved, not yet paid: the first period.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "purchases": {
+            "description": "What open commitments of approved purchases still keep.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "retentions": {
+            "description": "The retention a contract holds, due at its end (at once when it ended).",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "total": {
+            "example": "12500.00",
+            "type": "string"
+          },
+          "vendorInvoices": {
+            "description": "Approved vendors’ invoices, less the retention their payout holds back.",
+            "example": "12500.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendorInvoices",
+          "contractPayments",
+          "purchases",
+          "disbursements",
+          "retentions",
+          "total"
+        ],
+        "type": "object"
+      },
+      "CashFlowOverduePayablesView": {
+        "properties": {
+          "amount": {
+            "example": "12500.00",
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "CashFlowOverdueView": {
+        "properties": {
+          "payables": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashFlowOverduePayablesView"
+              }
+            ],
+            "description": "Approved invoices and schedule payments past their day, still unpaid: counted in the first period."
+          },
+          "receivables": {
+            "description": "Residents’ dues past their day: not counted.",
+            "example": "12500.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "payables",
+          "receivables"
+        ],
+        "type": "object"
+      },
+      "CashFlowPeriodView": {
+        "properties": {
+          "belowMinimum": {
+            "type": "boolean"
+          },
+          "closing": {
+            "description": "The opening plus every net up to this period.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "inflows": {
+            "$ref": "#/components/schemas/CashFlowInflowsView"
+          },
+          "net": {
+            "description": "inflows − outflows.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "outflows": {
+            "$ref": "#/components/schemas/CashFlowOutflowsView"
+          },
+          "to": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "inflows",
+          "outflows",
+          "net",
+          "closing",
+          "belowMinimum"
+        ],
+        "type": "object"
+      },
+      "CashFlowSettingsDto": {
+        "properties": {
+          "minimumCash": {
+            "description": "The least cash the compound wants to hold, in EGP: the forecast flags a period closing below it and its holders are told once a dip. Null: no floor, no notice.",
+            "nullable": true,
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "minimumCash"
+        ],
+        "type": "object"
+      },
+      "CashFlowSettingsView": {
+        "properties": {
+          "lowSince": {
+            "description": "When the current dip below the minimum began; null: none.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "minimumCash": {
+            "example": "50000.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "toldAt": {
+            "description": "When the holders were last told of a dip.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "minimumCash",
+          "lowSince",
+          "toldAt"
+        ],
+        "type": "object"
+      },
+      "CashFlowSpendingView": {
+        "properties": {
+          "daily": {
+            "description": "total / 90.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "total": {
+            "description": "Live expenses with their day in the window (ADR 0055).",
+            "example": "12500.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "total",
+          "daily"
+        ],
+        "type": "object"
+      },
+      "CashFlowTotalsView": {
+        "properties": {
+          "closing": {
+            "description": "The last period’s closing.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "inflows": {
+            "example": "12500.00",
+            "type": "string"
+          },
+          "net": {
+            "example": "12500.00",
+            "type": "string"
+          },
+          "outflows": {
+            "example": "12500.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inflows",
+          "outflows",
+          "net",
+          "closing"
+        ],
+        "type": "object"
+      },
+      "CashFlowView": {
+        "properties": {
+          "asOf": {
+            "description": "The compound’s today: the first period starts on it.",
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "belowMinimumNow": {
+            "description": "The cash on hand is below the minimum now.",
+            "type": "boolean"
+          },
+          "by": {
+            "enum": [
+              "week",
+              "month"
+            ],
+            "type": "string"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/CashFlowCollectionView"
+          },
+          "currency": {
+            "example": "EGP",
+            "type": "string"
+          },
+          "disputed": {
+            "description": "Residents’ dues under an open dispute due in the horizon: not counted.",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "firstBelowMinimum": {
+            "description": "The first day of the first period closing below the minimum.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "liquidityDays": {
+            "description": "Days of spending the cash covers: opening.total over spending.daily, whole days; 0 at no cash; null with no account or nothing spent in the window.",
+            "nullable": true,
+            "type": "number"
+          },
+          "minimumCash": {
+            "example": "50000.00",
+            "nullable": true,
+            "type": "string"
+          },
+          "opening": {
+            "$ref": "#/components/schemas/CashFlowOpeningView"
+          },
+          "overdue": {
+            "$ref": "#/components/schemas/CashFlowOverdueView"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/CashFlowPeriodView"
+            },
+            "type": "array"
+          },
+          "periodsBelowMinimum": {
+            "type": "number"
+          },
+          "spending": {
+            "$ref": "#/components/schemas/CashFlowSpendingView"
+          },
+          "timeZone": {
+            "example": "Africa/Cairo",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CashFlowTotalsView"
+          }
+        },
+        "required": [
+          "asOf",
+          "timeZone",
+          "currency",
+          "by",
+          "opening",
+          "collection",
+          "spending",
+          "liquidityDays",
+          "minimumCash",
+          "belowMinimumNow",
+          "firstBelowMinimum",
+          "periodsBelowMinimum",
+          "overdue",
+          "disputed",
+          "periods",
+          "totals"
+        ],
+        "type": "object"
+      },
       "CashMovementKind": {
         "enum": [
           "opening",
@@ -23190,7 +23647,7 @@
       "DashboardAlertView": {
         "properties": {
           "code": {
-            "description": "emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open (warning).",
+            "description": "emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open, cash_below_minimum (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open, cash_forecast_below_minimum (warning). The cash alerts (ADR 0091) are `finance.cashflow`’s; their count is the forecast’s periods closing below the minimum.",
             "type": "string"
           },
           "count": {
@@ -23347,7 +23804,7 @@
             "type": "object"
           },
           "liquidityDays": {
-            "description": "Days of spending the cash covers: always null until cash flow is built.",
+            "description": "Days of spending the cash covers (ADR 0091): the live bank and cash accounts’ balances over the average daily spending of the 90 days before today (live expenses by their day), whole days, 0 at no cash. Null without `finance.cashflow`, with no account, or with nothing spent in the window.",
             "nullable": true,
             "type": "number"
           },
@@ -59334,7 +59791,8 @@
           "stock_consumption",
           "service_by_building",
           "energy_cost",
-          "collections_by_building"
+          "collections_by_building",
+          "cash_flow"
         ],
         "type": "string"
       },
@@ -137244,6 +137702,184 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-flow": {
+      "get": {
+        "description": "From today, by the compound’s weeks (Saturday to Friday; 13 by default) or months (6): the opening position (the bank and cash accounts’ balances), what payables schedules out (approved invoices by due day, unpaid contract payments, purchases’ open commitments, advances and releases asked for or approved, retentions at the contract’s end), and what the residents’ dues bring in at the collection rate of the 90 days before today, with each period’s closing balance against the compound’s minimum. Overdue payables fall in the first period; overdue and disputed dues are shown, not counted.",
+        "operationId": "CashFlowController_forecast",
+        "parameters": [
+          {
+            "description": "The compound’s weeks, Saturday to Friday, or its calendar months; the first starts today.",
+            "in": "query",
+            "name": "by",
+            "required": false,
+            "schema": {
+              "default": "week",
+              "enum": [
+                "week",
+                "month"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "How many periods, this one first: 13 weeks or 6 months by default; at most 26 weeks or 12 months (INVALID_NUMBER).",
+            "in": "query",
+            "name": "periods",
+            "required": false,
+            "schema": {
+              "maximum": 26,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Forecast the cash flow",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-flow/export": {
+      "get": {
+        "operationId": "CashFlowController_export",
+        "parameters": [
+          {
+            "description": "The compound’s weeks, Saturday to Friday, or its calendar months; the first starts today.",
+            "in": "query",
+            "name": "by",
+            "required": false,
+            "schema": {
+              "default": "week",
+              "enum": [
+                "week",
+                "month"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "How many periods, this one first: 13 weeks or 6 months by default; at most 26 weeks or 12 months (INVALID_NUMBER).",
+            "in": "query",
+            "name": "periods",
+            "required": false,
+            "schema": {
+              "maximum": 26,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the cash flow forecast as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/cash-flow/settings": {
+      "get": {
+        "operationId": "CashFlowController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the compound’s minimum cash",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Null turns the floor and its notice off. The `finance.cashflow` holders are told once a dip below it (`finance.cash_low`), at most once a day.",
+        "operationId": "CashFlowController_setSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashFlowSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlowSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the compound’s minimum cash",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

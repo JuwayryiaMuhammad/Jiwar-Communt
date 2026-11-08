@@ -130,6 +130,10 @@ import {
 } from './treasury/treasury.controller';
 import { TreasuryInboxItems } from './treasury/treasury-inbox-items';
 import { FinanceReports } from './reports/finance-reports';
+import { CashFlowController } from './cashflow/cash-flow.controller';
+import { CashFlowSections } from './cashflow/cash-flow-sections';
+import { CashFlowService } from './cashflow/cash-flow.service';
+import { CashFlowSweep } from './cashflow/cash-flow.sweep';
 
 /**
  * Finance (ADR 0046, 0048, 0055): invoices per unit, recurring billing,
@@ -205,6 +209,8 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     PayablesReportsController,
     PayablesController,
     ContractorInvoicesController,
+    // Cash flow and liquidity (ADR 0091).
+    CashFlowController,
   ],
   providers: [
     FinanceCompensationCredits,
@@ -246,6 +252,9 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     PayablesReportsService,
     PayablesInboxItems,
     GuaranteeSweep,
+    CashFlowService,
+    CashFlowSections,
+    CashFlowSweep,
     DisputeBoardAppeals,
     FinanceOverview,
     FinanceDashboardSection,

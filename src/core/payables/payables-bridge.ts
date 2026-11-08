@@ -92,6 +92,26 @@ export interface PayablePayment {
   paid: boolean;
 }
 
+/**
+ * A contract's unpaid payment as the cash flow forecast reads it (ADR
+ * 0091): what the schedule still says the vendor is paid, and when.
+ */
+export interface ScheduledPayment {
+  id: string;
+  contractId: string;
+  dueOn: string;
+  amount: string;
+}
+
+/** What the cash flow forecast needs of a contract: its retention and end. */
+export interface ContractTerms {
+  id: string;
+  /** What is held back of each payout, a percentage, or null. */
+  retentionPct: string | null;
+  endsOn: string;
+  terminated: boolean;
+}
+
 /** A purchase request as an invoice reads it. */
 export interface PayablePurchase {
   id: string;
@@ -111,6 +131,14 @@ export interface PayableSources {
   contract(tx: TenantTxClient, id: string): Promise<PayableContract | null>;
   payment(tx: TenantTxClient, id: string): Promise<PayablePayment | null>;
   purchase(tx: TenantTxClient, id: string): Promise<PayablePurchase | null>;
+  /**
+   * The unpaid payments of the contracts not terminated, due on or before
+   * `through` (earlier ones too: overdue), by day. A read, no lock (ADR
+   * 0091's forecast).
+   */
+  unpaid(tx: TenantTxClient, through: string): Promise<ScheduledPayment[]>;
+  /** The terms of these contracts (the unknown left out); no lock. */
+  terms(tx: TenantTxClient, ids: readonly string[]): Promise<ContractTerms[]>;
   /** A payment paid through the app: marked paid once, with the payout's number. */
   settlePayment(
     tx: TenantTxClient,

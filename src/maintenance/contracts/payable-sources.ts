@@ -68,6 +68,41 @@ export class PayableSources implements OnModuleInit {
           approvalRequestId: r.approvalRequestId,
         };
       },
+      // The cash flow forecast's reads (ADR 0091): no lock, nothing written.
+      unpaid: async (tx, through) => {
+        const rows = await tx.maintenanceContractPayment.findMany({
+          where: {
+            paidAt: null,
+            dueOn: { lte: dateColumn(through) },
+            contract: { terminatedAt: null },
+          },
+          orderBy: [{ dueOn: 'asc' }, { id: 'asc' }],
+        });
+        return rows.map((p) => ({
+          id: p.id,
+          contractId: p.contractId,
+          dueOn: ofDateColumn(p.dueOn),
+          amount: p.amount.toFixed(2),
+        }));
+      },
+      terms: async (tx, ids) => {
+        if (!ids.length) return [];
+        const rows = await tx.maintenanceContract.findMany({
+          where: { id: { in: [...ids] } },
+          select: {
+            id: true,
+            retentionPct: true,
+            endsOn: true,
+            terminatedAt: true,
+          },
+        });
+        return rows.map((c) => ({
+          id: c.id,
+          retentionPct: c.retentionPct?.toFixed(2) ?? null,
+          endsOn: ofDateColumn(c.endsOn),
+          terminated: c.terminatedAt !== null,
+        }));
+      },
       // The payout's payer pays it, with the payout's number.
       settlePayment: async (tx, id, paid) => {
         await tx.maintenanceContractPayment.update({

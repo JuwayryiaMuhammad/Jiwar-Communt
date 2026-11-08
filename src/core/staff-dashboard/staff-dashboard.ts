@@ -186,6 +186,21 @@ export interface DashboardAlert {
 
 export type BuildingBand = 'ok' | 'attention' | 'critical';
 
+/**
+ * The compound's liquidity (ADR 0091), finance's, registered as a section
+ * is: the days of spending the cash covers, and the alert when the cash, or
+ * the cash flow forecast, falls below the compound's minimum. To the
+ * holders of its permissions only; null to the others.
+ */
+export interface LiquiditySource {
+  /** The caller holds any of these, or the liquidity is null. */
+  permissions: readonly Permission[];
+  /** Days of spending the cash covers; null when it cannot be computed. */
+  days(tx: TenantTxClient, day: DashboardDay): Promise<number | null>;
+  /** `cash_below_minimum` (critical) or `cash_forecast_below_minimum` (warning), or null. */
+  alert(tx: TenantTxClient, day: DashboardDay): Promise<DashboardAlert | null>;
+}
+
 export const emptyFigures = (): DashboardFigures => ({
   units: null,
   maintenance: null,
@@ -294,6 +309,7 @@ export class StaffDashboard {
     DashboardSource<DashboardSection>
   >();
   private directory: BuildingDirectory | null = null;
+  private liquiditySource: LiquiditySource | null = null;
 
   register<K extends DashboardSection>(source: DashboardSource<K>): void {
     if (this.sources.has(source.section))
@@ -305,6 +321,17 @@ export class StaffDashboard {
   registerBuildings(reader: BuildingDirectory): void {
     if (this.directory) throw new Error('Buildings are registered twice');
     this.directory = reader;
+  }
+
+  /** The liquidity days and the minimum-cash alert (finance's, ADR 0091): one reader. */
+  registerLiquidity(source: LiquiditySource): void {
+    if (this.liquiditySource) throw new Error('Liquidity is registered twice');
+    this.liquiditySource = source;
+  }
+
+  liquidity(): LiquiditySource {
+    if (!this.liquiditySource) throw new Error('No liquidity registered');
+    return this.liquiditySource;
   }
 
   buildings(tx: TenantTxClient): Promise<DirectoryBuilding[]> {
@@ -325,6 +352,7 @@ export class StaffDashboard {
     return [
       ...DASHBOARD_SECTIONS.filter((s) => !this.sources.has(s)),
       ...(this.directory ? [] : ['buildings']),
+      ...(this.liquiditySource ? [] : ['liquidity']),
     ];
   }
 }

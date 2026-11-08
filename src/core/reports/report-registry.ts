@@ -24,6 +24,7 @@ export const REPORT_KEYS = [
   'service_by_building',
   'energy_cost',
   'collections_by_building',
+  'cash_flow',
 ] as const;
 export type ReportKey = (typeof REPORT_KEYS)[number];
 
@@ -38,6 +39,7 @@ export const REPORT_READERS = [
   'tickets.dispatch',
   'energy.read',
   'finance.reports',
+  'finance.cashflow',
 ] as const satisfies readonly Permission[];
 
 /** The longest period one report covers, as the domains' reports (ADR 0065). */

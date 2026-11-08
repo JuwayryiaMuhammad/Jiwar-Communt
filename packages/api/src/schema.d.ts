@@ -17344,6 +17344,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Forecast the cash flow
+         * @description From today, by the compound’s weeks (Saturday to Friday; 13 by default) or months (6): the opening position (the bank and cash accounts’ balances), what payables schedules out (approved invoices by due day, unpaid contract payments, purchases’ open commitments, advances and releases asked for or approved, retentions at the contract’s end), and what the residents’ dues bring in at the collection rate of the 90 days before today, with each period’s closing balance against the compound’s minimum. Overdue payables fall in the first period; overdue and disputed dues are shown, not counted.
+         */
+        get: operations["CashFlowController_forecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-flow/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export the cash flow forecast as CSV */
+        get: operations["CashFlowController_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/cash-flow/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the compound’s minimum cash */
+        get: operations["CashFlowController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set the compound’s minimum cash
+         * @description Null turns the floor and its notice off. The `finance.cashflow` holders are told once a dip below it (`finance.cash_low`), at most once a day.
+         */
+        patch: operations["CashFlowController_setSettings"];
+        trace?: never;
+    };
     "/api/v1/staff/finance/cash-movements": {
         parameters: {
             query?: never;
@@ -30782,6 +30840,232 @@ export interface components {
             reference: string | null;
             unitCode: string;
         };
+        CashFlowAccountView: {
+            /**
+             * @description The sum of its movements (ADR 0085).
+             * @example 12500.00
+             */
+            balance: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "bank" | "cash";
+            name: string;
+        };
+        CashFlowCollectionView: {
+            /** @enum {string} */
+            basis: "window" | "no_history";
+            /**
+             * @description What of it is paid so far.
+             * @example 12500.00
+             */
+            collected: string;
+            /**
+             * @description What the invoices due in the window asked after credit notes.
+             * @example 12500.00
+             */
+            due: string;
+            /**
+             * Format: date
+             * @description The window’s first day: 90 days before today.
+             */
+            from: string;
+            /**
+             * @description Of what the invoices due in the window asked after credit notes, the share paid so far, 0–1. Null with nothing due in the window: the forecast then expects no resident money.
+             * @example 0.874
+             */
+            rate: number | null;
+            /**
+             * Format: date
+             * @description The window’s last day: yesterday.
+             */
+            to: string;
+        };
+        CashFlowInflowsView: {
+            /**
+             * @description invoiced + projected, at their face.
+             * @example 12500.00
+             */
+            dues: string;
+            /**
+             * @description dues at the collection rate.
+             * @example 12500.00
+             */
+            expected: string;
+            /**
+             * @description Collected and not in an account yet — custody not handed in, cheques that paid and have not cleared: the first period only.
+             * @example 12500.00
+             */
+            inTransit: string;
+            /**
+             * @description Issued invoices still owed, due in the period (instalments are invoices); none under an open dispute.
+             * @example 12500.00
+             */
+            invoiced: string;
+            /**
+             * @description What the billing plans will issue, due in the period (ADR 0069).
+             * @example 12500.00
+             */
+            projected: string;
+            /**
+             * @description expected + inTransit.
+             * @example 12500.00
+             */
+            total: string;
+        };
+        CashFlowOpeningView: {
+            accounts: components["schemas"]["CashFlowAccountView"][];
+            /**
+             * @description The live accounts’ balances: the cash on hand.
+             * @example 12500.00
+             */
+            total: string;
+        };
+        CashFlowOutflowsView: {
+            /**
+             * @description Contracts’ unpaid schedule payments no approved invoice names, less retention.
+             * @example 12500.00
+             */
+            contractPayments: string;
+            /**
+             * @description Advances and retention releases asked for or approved, not yet paid: the first period.
+             * @example 12500.00
+             */
+            disbursements: string;
+            /**
+             * @description What open commitments of approved purchases still keep.
+             * @example 12500.00
+             */
+            purchases: string;
+            /**
+             * @description The retention a contract holds, due at its end (at once when it ended).
+             * @example 12500.00
+             */
+            retentions: string;
+            /** @example 12500.00 */
+            total: string;
+            /**
+             * @description Approved vendors’ invoices, less the retention their payout holds back.
+             * @example 12500.00
+             */
+            vendorInvoices: string;
+        };
+        CashFlowOverduePayablesView: {
+            /** @example 12500.00 */
+            amount: string;
+            count: number;
+        };
+        CashFlowOverdueView: {
+            /** @description Approved invoices and schedule payments past their day, still unpaid: counted in the first period. */
+            payables: components["schemas"]["CashFlowOverduePayablesView"];
+            /**
+             * @description Residents’ dues past their day: not counted.
+             * @example 12500.00
+             */
+            receivables: string;
+        };
+        CashFlowPeriodView: {
+            belowMinimum: boolean;
+            /**
+             * @description The opening plus every net up to this period.
+             * @example 12500.00
+             */
+            closing: string;
+            /** Format: date */
+            from: string;
+            inflows: components["schemas"]["CashFlowInflowsView"];
+            /**
+             * @description inflows − outflows.
+             * @example 12500.00
+             */
+            net: string;
+            outflows: components["schemas"]["CashFlowOutflowsView"];
+            /** Format: date */
+            to: string;
+        };
+        CashFlowSettingsDto: {
+            /** @description The least cash the compound wants to hold, in EGP: the forecast flags a period closing below it and its holders are told once a dip. Null: no floor, no notice. */
+            minimumCash: string | null;
+        };
+        CashFlowSettingsView: {
+            /**
+             * Format: date-time
+             * @description When the current dip below the minimum began; null: none.
+             */
+            lowSince: string | null;
+            /** @example 50000.00 */
+            minimumCash: string | null;
+            /**
+             * Format: date-time
+             * @description When the holders were last told of a dip.
+             */
+            toldAt: string | null;
+        };
+        CashFlowSpendingView: {
+            /**
+             * @description total / 90.
+             * @example 12500.00
+             */
+            daily: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /**
+             * @description Live expenses with their day in the window (ADR 0055).
+             * @example 12500.00
+             */
+            total: string;
+        };
+        CashFlowTotalsView: {
+            /**
+             * @description The last period’s closing.
+             * @example 12500.00
+             */
+            closing: string;
+            /** @example 12500.00 */
+            inflows: string;
+            /** @example 12500.00 */
+            net: string;
+            /** @example 12500.00 */
+            outflows: string;
+        };
+        CashFlowView: {
+            /**
+             * Format: date
+             * @description The compound’s today: the first period starts on it.
+             */
+            asOf: string;
+            /** @description The cash on hand is below the minimum now. */
+            belowMinimumNow: boolean;
+            /** @enum {string} */
+            by: "week" | "month";
+            collection: components["schemas"]["CashFlowCollectionView"];
+            /** @example EGP */
+            currency: string;
+            /**
+             * @description Residents’ dues under an open dispute due in the horizon: not counted.
+             * @example 12500.00
+             */
+            disputed: string;
+            /**
+             * Format: date
+             * @description The first day of the first period closing below the minimum.
+             */
+            firstBelowMinimum: string | null;
+            /** @description Days of spending the cash covers: opening.total over spending.daily, whole days; 0 at no cash; null with no account or nothing spent in the window. */
+            liquidityDays: number | null;
+            /** @example 50000.00 */
+            minimumCash: string | null;
+            opening: components["schemas"]["CashFlowOpeningView"];
+            overdue: components["schemas"]["CashFlowOverdueView"];
+            periods: components["schemas"]["CashFlowPeriodView"][];
+            periodsBelowMinimum: number;
+            spending: components["schemas"]["CashFlowSpendingView"];
+            /** @example Africa/Cairo */
+            timeZone: string;
+            totals: components["schemas"]["CashFlowTotalsView"];
+        };
         /** @enum {string} */
         CashMovementKind: "opening" | "handin" | "recovery" | "transfer" | "cheque" | "statement_payment" | "adjustment" | "reversal" | "payout";
         CashMovementView: {
@@ -35581,7 +35865,7 @@ export interface components {
             reason: string;
         };
         DashboardAlertView: {
-            /** @description emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open (warning). */
+            /** @description emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open, cash_below_minimum (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open, cash_forecast_below_minimum (warning). The cash alerts (ADR 0091) are `finance.cashflow`’s; their count is the forecast’s periods closing below the minimum. */
             code: string;
             count: number;
             section: components["schemas"]["DashboardSection"];
@@ -35620,7 +35904,7 @@ export interface components {
             figures: components["schemas"]["DashboardFiguresView"];
             /** @description What waits for the caller’s decision; null without `inbox.read`. */
             inbox: components["schemas"]["InboxBadgeView"] | null;
-            /** @description Days of spending the cash covers: always null until cash flow is built. */
+            /** @description Days of spending the cash covers (ADR 0091): the live bank and cash accounts’ balances over the average daily spending of the 90 days before today (live expenses by their day), whole days, 0 at no cash. Null without `finance.cashflow`, with no account, or with nothing spent in the window. */
             liquidityDays: number | null;
             /** @example Africa/Cairo */
             timeZone: string;
@@ -46898,7 +47182,7 @@ export interface components {
             unitCode?: string;
         };
         /** @enum {string} */
-        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building";
+        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building" | "cash_flow";
         ReportListingDto: {
             /** @description For the staff alone; the seller never reads it. */
             note?: string;
@@ -81484,6 +81768,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatementImportView"];
+                };
+            };
+        };
+    };
+    CashFlowController_forecast: {
+        parameters: {
+            query?: {
+                /** @description The compound’s weeks, Saturday to Friday, or its calendar months; the first starts today. */
+                by?: "week" | "month";
+                /** @description How many periods, this one first: 13 weeks or 6 months by default; at most 26 weeks or 12 months (INVALID_NUMBER). */
+                periods?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowView"];
+                };
+            };
+        };
+    };
+    CashFlowController_export: {
+        parameters: {
+            query?: {
+                /** @description The compound’s weeks, Saturday to Friday, or its calendar months; the first starts today. */
+                by?: "week" | "month";
+                /** @description How many periods, this one first: 13 weeks or 6 months by default; at most 26 weeks or 12 months (INVALID_NUMBER). */
+                periods?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    CashFlowController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowSettingsView"];
+                };
+            };
+        };
+    };
+    CashFlowController_setSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashFlowSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashFlowSettingsView"];
                 };
             };
         };

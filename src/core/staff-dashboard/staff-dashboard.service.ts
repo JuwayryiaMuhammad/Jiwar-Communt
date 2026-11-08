@@ -42,8 +42,12 @@ export interface DashboardSummary {
   figures: DashboardFigures;
   /** The inbox's badge, for an `inbox.read` holder; null otherwise. */
   inbox: { total: number; overdue: number } | null;
-  /** Days of spending the cash covers: not built until M3 (ADR 0079). */
-  liquidityDays: null;
+  /**
+   * Days of spending the cash covers (ADR 0091): to a holder of the
+   * liquidity's permission, null to anyone else and when it cannot be
+   * computed (no account, or nothing spent in the window).
+   */
+  liquidityDays: number | null;
 }
 
 export interface NeedsYou {
@@ -105,17 +109,24 @@ export class StaffDashboardService implements OnApplicationBootstrap {
 
   async summary(): Promise<DashboardSummary> {
     const held = await this.permissions.current();
-    const { day, figures } = await this.tenantTx.withTenantTx(async (tx) => {
-      const day = await this.today(tx);
-      return {
-        day,
-        figures: await this.figures(
+    const liquidity = this.dashboard.liquidity();
+    const { day, figures, liquidityDays } = await this.tenantTx.withTenantTx(
+      async (tx) => {
+        const day = await this.today(tx);
+        const figures = await this.figures(
           tx,
           day,
           visible(this.dashboard.all(), held),
-        ),
-      };
-    });
+        );
+        return {
+          day,
+          figures,
+          liquidityDays: holdsAny(liquidity.permissions, held)
+            ? await liquidity.days(tx, day)
+            : null,
+        };
+      },
+    );
     const inbox = held.has('inbox.read') ? await this.inbox.count() : null;
     return {
       asOf: day.now,
@@ -123,7 +134,7 @@ export class StaffDashboardService implements OnApplicationBootstrap {
       timeZone: day.timeZone,
       figures,
       inbox: inbox ? { total: inbox.total, overdue: inbox.overdue } : null,
-      liquidityDays: null,
+      liquidityDays,
     };
   }
 
@@ -134,18 +145,25 @@ export class StaffDashboardService implements OnApplicationBootstrap {
    */
   async needsYou(): Promise<NeedsYou> {
     const held = await this.permissions.current();
-    const { day, figures } = await this.tenantTx.withTenantTx(async (tx) => {
-      const day = await this.today(tx);
-      return {
-        day,
-        figures: await this.figures(
+    const liquidity = this.dashboard.liquidity();
+    const { day, figures, cash } = await this.tenantTx.withTenantTx(
+      async (tx) => {
+        const day = await this.today(tx);
+        const figures = await this.figures(
           tx,
           day,
           visible(this.dashboard.all(), held),
-        ),
-      };
-    });
-    const alerts = alertsOf(figures).sort(
+        );
+        return {
+          day,
+          figures,
+          cash: holdsAny(liquidity.permissions, held)
+            ? await liquidity.alert(tx, day)
+            : null,
+        };
+      },
+    );
+    const alerts = [...alertsOf(figures), ...(cash ? [cash] : [])].sort(
       (a, b) => rank(a.severity) - rank(b.severity),
     );
     if (!held.has('inbox.read'))
@@ -310,6 +328,11 @@ export class StaffDashboardService implements OnApplicationBootstrap {
     };
   }
 }
+
+const holdsAny = (
+  permissions: readonly string[],
+  held: ReadonlySet<string>,
+): boolean => permissions.some((p) => held.has(p));
 
 /** The sources whose permission the caller holds. */
 function visible(

@@ -13923,6 +13923,136 @@
           }
         },
         {
+          "name": "Forecast the cash flow",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-flow"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s weeks, Saturday to Friday, or its calendar months; the first starts today.",
+                  "disabled": true,
+                  "key": "by",
+                  "value": ""
+                },
+                {
+                  "description": "How many periods, this one first: 13 weeks or 6 months by default; at most 26 weeks or 12 months (INVALID_NUMBER).",
+                  "disabled": true,
+                  "key": "periods",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-flow"
+            }
+          }
+        },
+        {
+          "name": "Export the cash flow forecast as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-flow",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "The compound’s weeks, Saturday to Friday, or its calendar months; the first starts today.",
+                  "disabled": true,
+                  "key": "by",
+                  "value": ""
+                },
+                {
+                  "description": "How many periods, this one first: 13 weeks or 6 months by default; at most 26 weeks or 12 months (INVALID_NUMBER).",
+                  "disabled": true,
+                  "key": "periods",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-flow/export"
+            }
+          }
+        },
+        {
+          "name": "Read the compound’s minimum cash",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-flow",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-flow/settings"
+            }
+          }
+        },
+        {
+          "name": "Set the compound’s minimum cash",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"minimumCash\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `minimumCash` | string | yes | The least cash the compound wants to hold, in EGP: the forecast flags a period closing below it and its holders are told once a dip. Null: no floor, no notice. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "cash-flow",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/cash-flow/settings"
+            }
+          }
+        },
+        {
           "name": "List movements, newest first",
           "request": {
             "description": "**Responses:** 200",
@@ -56880,7 +57010,7 @@
               },
               "raw": "{\n  \"reportKey\": \"maintenance_spend\",\n  \"cadence\": \"daily\",\n  \"format\": \"pdf\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` \\| `cash_flow` | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

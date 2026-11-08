@@ -38,6 +38,7 @@ import {
   TECHNICIAN_HELP_ROUTES,
   TECHNICIAN_INSTRUCTION_ROUTES,
 } from './field-team';
+import { FIELD_TEAM_B_ROUTES } from './field-team-b';
 import { CONTRACTOR_ROUTES } from './contractors';
 import { TREASURY_ROUTES } from './treasury';
 import { REPORTS_ROUTES } from './reports';
@@ -470,6 +471,7 @@ export const ROUTES: Row[] = [
   ...DUTY_ROSTER_ROUTES,
   ...TECHNICIAN_INSTRUCTION_ROUTES,
   ...TECHNICIAN_HELP_ROUTES,
+  ...FIELD_TEAM_B_ROUTES,
   // ADR 0089.
   ...PAYABLES_ROUTES,
   // ADR 0088: last, so the bid link's lookup is the public list's last.

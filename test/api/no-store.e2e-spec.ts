@@ -59,6 +59,7 @@ import { officeQueueCalls } from './no-store-office-queue';
 import { boardWorkCalls } from './no-store-board-work';
 import { m211Calls } from './no-store-m211';
 import { fieldTeamCalls } from './no-store-field-team';
+import { fieldTeamBCalls } from './no-store-field-team-b';
 import { payableCalls } from './no-store-payables';
 import { contractorCalls } from './no-store-contractors';
 import { reportsCalls } from './no-store-reports';
@@ -3439,6 +3440,7 @@ describe('API v0 — no-store', () => {
     ...boardWorkCalls(() => w, aSittingBoard),
     ...m211Calls(() => w),
     ...fieldTeamCalls(() => w),
+    ...fieldTeamBCalls(() => w),
     ...payableCalls(() => w, aSittingBoard),
     ...contractorCalls(() => w, aSittingBoard),
     ...reportsCalls(() => w),

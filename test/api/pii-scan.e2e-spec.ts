@@ -1,3 +1,4 @@
+import { newId } from '../../src/core/common/uuid';
 import { DelegationsService } from '../../src/community/households/delegations.service';
 import { HouseholdsService } from '../../src/community/households/households.service';
 import { RegistrationService } from '../../src/community/residents/registration.service';
@@ -59,6 +60,8 @@ function shows(text: string, secret: string): boolean {
 import { at, day } from '../setup/facilities';
 import { BlocklistService } from '../../src/gate/blocklist/blocklist.service';
 import { FieldExceptionsService } from '../../src/gate/exceptions/field-exceptions.service';
+/** A technician's latitude nobody else uses (ADR 0090). */
+const LOCATION_SENTINEL = '29.987123';
 /** A name's first word: what first-name views show. */
 const first = (fullName?: string) => fullName?.split(' ')[0] ?? '';
 
@@ -663,6 +666,32 @@ describe('API v0 — PII leak scan', () => {
       }),
     );
     const ticketPhotoKey = `t/${a.tenantId}/${ticketPhoto}`;
+    // ADR 0090: A's technician consented, and a point of theirs on this
+    // ticket carries the sentinel latitude.
+    await asManagerA(async () => {
+      const consentId = newId();
+      await c.prisma.tenant.technicianLocationConsent.create({
+        data: {
+          id: consentId,
+          tenantId: a.tenantId,
+          accountId: a.ids.technician,
+          grantedAt: new Date(),
+        },
+      });
+      await c.prisma.tenant.technicianLocation.create({
+        data: {
+          id: newId(),
+          tenantId: a.tenantId,
+          accountId: a.ids.technician,
+          consentId,
+          ticketId: ticket.id,
+          moment: 'en_route',
+          latitude: Number(LOCATION_SENTINEL),
+          longitude: 31.000321,
+          capturedAt: new Date(),
+        },
+      });
+    });
     // Another technician took it and declined: dispatch's business, never
     // the next technician's (ADR 0032).
     const declined = await gateHelpers(h).guard(a, 'technician');
@@ -1873,6 +1902,16 @@ describe('API v0 — PII leak scan', () => {
       // A call for help nowhere (not found).
       '/staff/field-team/help-requests/{id}':
         '0192a5f0-1c2b-7d3e-8f40-0000000078a2',
+      // ADR 0090: A's technician's last known location (the sentinel point
+      // below); a certificate, a finding, a review and a call nowhere.
+      '/staff/field-team/technicians/{id}/location': a.ids.technician,
+      '/staff/field-team/certificates/{id}':
+        '0192a5f0-1c2b-7d3e-8f40-0000000090a1',
+      '/staff/access/dangling-accounts/{id}':
+        '0192a5f0-1c2b-7d3e-8f40-0000000090a2',
+      '/staff/access/reviews/{id}': '0192a5f0-1c2b-7d3e-8f40-0000000090a3',
+      '/staff/field-team/reinforcement-calls/{id}':
+        '0192a5f0-1c2b-7d3e-8f40-0000000090a4',
       // ADR 0085.
       '/staff/finance/cash-accounts/{id}': w.bCashAccountId,
       '/staff/finance/custody/{accountId}': w.bCustodianId,
@@ -2071,6 +2110,14 @@ describe('API v0 — PII leak scan', () => {
           (found('PII-BLOCKLISTED person') || found(blockedFaceKey))
         )
           leaks.push(`${name} ${r.path}: a blocklisted person`);
+        // ADR 0090: a technician's location, only in the field team's read
+        // of them and in their own consent's; never in a list.
+        const locationReader =
+          (name === 'manager' &&
+            r.path === '/staff/field-team/technicians/{id}/location') ||
+          (name === 'technician' && r.path === '/technician/location-consent');
+        if (!locationReader && found(LOCATION_SENTINEL))
+          leaks.push(`${name} ${r.path}: a technician's location`);
         if (found('PII-NOTE-blocklist') && name !== 'manager')
           leaks.push(`${name} ${r.path}: the blocklist's note`);
         const others = people.filter((p) => p.id !== persona.self);

@@ -1211,6 +1211,34 @@ export const FIELD_TEAM_COVERAGE: readonly string[] = [
   'technician_help.note_cleared',
 ];
 
+/** The field team, part b (ADR 0090): test/field-team/audit-coverage-b.e2e-spec.ts. */
+export const FIELD_TEAM_B_COVERAGE: readonly string[] = [
+  'technician_location.consent_granted',
+  'technician_location.consent_revoked',
+  'technician_location.read',
+  'staff_certificate.added',
+  'staff_certificate.changed',
+  'staff_certificate.removed',
+  'staff_certificate.erased',
+  'dangling_account.found',
+  'dangling_account.kept',
+  'dangling_account.deactivated',
+  'dangling_account.cleared',
+  'access_review.opened',
+  'access_review.line_decided',
+  'access_review.closed',
+  'access_review.settings_changed',
+  'reinforcement_suggestion.suggested',
+  'reinforcement_suggestion.dismissed',
+  'reinforcement_suggestion.lapsed',
+  'reinforcement_call.sent',
+  'reinforcement_call.accepted',
+  'reinforcement_call.declined',
+  'reinforcement_call.filled',
+  'reinforcement_call.cancelled',
+  'reinforcement_call.closed',
+];
+
 /** ADR 0089's entries, covered by test/m31/audit-coverage.e2e-spec.ts. */
 export const M31_COVERAGE: readonly string[] = [
   'budget_transfer.applied',

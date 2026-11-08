@@ -2994,6 +2994,55 @@ const REVIEWED: Record<string, { guarded?: string }> = {
       'cash_minimum is tested IS NULL first; the comparison runs only on a value',
   },
   finance_settings_cash_low_shape: {},
+  // The field team, part b (ADR 0090).
+  technician_location_consents_revoked_shape: {
+    guarded:
+      'revoked_by and revoked_at are tested IS NULL first; each is compared only on a value',
+  },
+  technician_locations_moment: {},
+  technician_locations_coordinates: {},
+  technician_locations_accuracy: {
+    guarded: 'accuracy_m IS NULL is tested first',
+  },
+  staff_certificates_kind: {},
+  staff_certificates_words: {
+    guarded: 'issuer and reference are tested IS NULL first',
+  },
+  staff_certificates_issued_before_expiry: {
+    guarded: 'issued_on IS NULL is tested first; expires_on is NOT NULL',
+  },
+  staff_certificates_removed_shape: {},
+  account_check_settings_ranges: {},
+  dangling_account_findings_reason: {},
+  dangling_account_findings_status_shape: {
+    guarded:
+      'reason_code, muted_until and decided_at are tested IS NOT NULL in the same branch before they are compared',
+  },
+  access_reviews_status_shape: {},
+  access_reviews_counts: {},
+  access_review_lines_account_type: {},
+  access_review_lines_decision_shape: {
+    guarded:
+      'decided_by_account_id IS NOT NULL is tested in the same branch before it is compared; decision IS NULL is tested first',
+  },
+  access_review_lines_protected_kept: {
+    guarded: 'decision IS NULL is tested first',
+  },
+  reinforcement_suggestions_figures: {},
+  reinforcement_suggestions_status_shape: {
+    guarded:
+      'reason_code IS NOT NULL is tested in the same branch before it is compared',
+  },
+  reinforcement_calls_needed: {},
+  reinforcement_calls_window: {},
+  reinforcement_calls_status_shape: {
+    guarded:
+      'cancel_reason IS NOT NULL is tested in the same branch before it is compared',
+  },
+  reinforcement_call_recipients_answer_shape: {
+    guarded:
+      'answer IS NULL is tested in the first branch; each other compares it with a value',
+  },
   // Payables and commitments (ADR 0089).
   finance_settings_variance_reason_pct: {
     guarded:

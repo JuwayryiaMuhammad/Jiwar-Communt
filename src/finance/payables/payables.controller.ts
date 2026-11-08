@@ -30,7 +30,7 @@ import {
   GuaranteeDto,
   InvoicePayoutDto,
   PayoutDto,
-  PeriodQueryDto,
+  PaymentScheduleQueryDto,
   RecordVendorInvoiceDto,
   VendorInvoicesQueryDto,
 } from './dto/payables.dto';
@@ -177,7 +177,7 @@ export class PayablesController {
       'Approved invoices by their due day and what commitments keep by theirs; by default next month (next month’s commitments). At most 366 days.',
   })
   @ApiOkResponse({ type: PaymentScheduleView })
-  schedule(@Query() q: PeriodQueryDto): Promise<PaymentScheduleView> {
+  schedule(@Query() q: PaymentScheduleQueryDto): Promise<PaymentScheduleView> {
     return this.reports.schedule(q);
   }
 

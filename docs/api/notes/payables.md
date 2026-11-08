@@ -43,3 +43,11 @@ For the manager's dashboard. All routes are staff routes, every response `no-sto
 ## The inbox and notifications
 
 Inbox types `vendor_invoice` and `contract_disbursement` (`finance.payables_approve`, 72 h, amount against the major contract threshold). Notifications (category `finance`): `vendor_invoice.received` (invoiceRef, needs a decision), `vendor_invoice.decided` (invoiceRef, decision), `contract_disbursement.requested` (disbursementRef, disbursementKind, needs a decision), `vendor_guarantee.expiring` (guaranteeKind, expiresOn). Links: `/finance/payables/{id}`, `/finance/payables/contracts`.
+
+## Schema names
+
+Three of this module's contract classes shared a name with older ones, and Swagger keys a schema by its class name: the vendor invoice's line replaced the residents' invoice line (`InvoiceLineDto`) in `openapi.v0.json`, the generated client and Postman. They are renamed, the residents' `InvoiceLineDto` is back as it was, and no request or response changes shape:
+
+- `InvoiceLineDto` → `VendorInvoiceLineDto` (the lines of `POST /staff/finance/vendor-invoices`);
+- `PeriodQueryDto` → `PaymentScheduleQueryDto` (`GET /staff/finance/payment-schedule`);
+- `EntriesQueryDto` → `FinanceEntriesQueryDto` (`GET /staff/finance/reports/entries/export`).

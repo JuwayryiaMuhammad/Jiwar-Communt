@@ -184,7 +184,7 @@ export class CommitmentsQueryDto extends PageQueryDto {
     description: 'Open only (true) or closed only (false).',
   })
   @IsOptional()
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     value === 'true' ? true : value === 'false' ? false : value,
   )
   @IsBoolean()
@@ -195,7 +195,7 @@ export class CommitmentsQueryDto extends PageQueryDto {
 // Vendors' invoices
 // ----------------------------------------------------------------------------
 
-export class InvoiceLineDto {
+export class VendorInvoiceLineDto {
   @ApiProperty({ type: String, minLength: 1, maxLength: L.lineDescription })
   @IsString()
   @Length(1, L.lineDescription, withParams({ min: 1, max: L.lineDescription }))
@@ -305,13 +305,13 @@ export class RecordVendorInvoiceDto {
   @IsUUID()
   invoiceFileId: string;
 
-  @ApiProperty({ type: [InvoiceLineDto], minItems: 1, maxItems: L.lines })
+  @ApiProperty({ type: [VendorInvoiceLineDto], minItems: 1, maxItems: L.lines })
   @IsArray()
   @ArrayMinSize(1, withParams({ min: 1, max: L.lines }))
   @ArrayMaxSize(L.lines, withParams({ min: 1, max: L.lines }))
   @ValidateNested({ each: true })
-  @Type(() => InvoiceLineDto)
-  lines: InvoiceLineDto[];
+  @Type(() => VendorInvoiceLineDto)
+  lines: VendorInvoiceLineDto[];
 
   @ApiPropertyOptional({ type: String, minLength: 1, maxLength: L.note })
   @IsOptional()
@@ -406,7 +406,7 @@ export class VendorInvoicesQueryDto extends PageQueryDto {
   purchaseRequestId?: string;
 }
 
-export class PeriodQueryDto {
+export class PaymentScheduleQueryDto {
   @ApiPropertyOptional({ type: String, pattern: LOCAL_DATE.source })
   @IsOptional()
   @IsString()
@@ -424,7 +424,7 @@ export class PeriodQueryDto {
   to?: string;
 }
 
-export class EntriesQueryDto {
+export class FinanceEntriesQueryDto {
   @ApiProperty({
     type: String,
     pattern: LOCAL_DATE.source,

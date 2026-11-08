@@ -700,7 +700,7 @@ export class BudgetPlanningService implements OnModuleInit {
     const rows = r.lines.flatMap((l) =>
       l.periods.map((p) => [
         l.category,
-        p.period,
+        String(p.period),
         p.from,
         p.to,
         p.planned,

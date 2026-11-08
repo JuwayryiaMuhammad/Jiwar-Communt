@@ -15103,7 +15103,7 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"descriptionEn\": \"\",\n      \"descriptionAr\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
+              "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"description\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
             },
             "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  | The line it is paid from; by default its contract’s or purchase’s. |\n| `contractId` | string (uuid) |  | One of its contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of the contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes | When it is to be paid, not before its date. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice`. |\n| `issuedOn` | string | yes | The invoice’s date, not ahead. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseRequestId` | string (uuid) |  | A purchase request it fulfilled. |\n| `vendorId` | string (uuid) |  | The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs). |\n| `vendorNumber` | string | yes | The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). |\n\n**Responses:** 201",
             "header": [

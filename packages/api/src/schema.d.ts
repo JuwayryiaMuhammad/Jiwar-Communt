@@ -44313,7 +44313,7 @@ export interface components {
             invoiceFileId: string;
             /** @description The invoice’s date, not ahead. */
             issuedOn: string;
-            lines: components["schemas"]["InvoiceLineDto"][];
+            lines: components["schemas"]["VendorInvoiceLineDto"][];
             note?: string;
             /**
              * Format: uuid
@@ -49975,7 +49975,10 @@ export interface components {
             /** Format: uuid */
             unitId: string;
         };
-        /** @enum {string} */
+        /**
+         * @description zero by default.
+         * @enum {string}
+         */
         TaxCode: "zero" | "exempt" | "vat_14";
         TechnicianAttendanceView: {
             /** @description Of them, not on duty an hour after they were due. */
@@ -52182,6 +52185,13 @@ export interface components {
             averages: components["schemas"]["VendorScoresView"];
             /** @description In the last year. */
             count: number;
+        };
+        VendorInvoiceLineDto: {
+            /** @description EGP, before tax. */
+            amount: string;
+            description: string;
+            /** @description zero by default. */
+            taxCode?: components["schemas"]["TaxCode"];
         };
         VendorInvoiceLineView: {
             /** @example 1200.00 */

@@ -55099,7 +55099,7 @@
           },
           "lines": {
             "items": {
-              "$ref": "#/components/schemas/InvoiceLineDto"
+              "$ref": "#/components/schemas/VendorInvoiceLineDto"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -74147,6 +74147,7 @@
         "type": "object"
       },
       "TaxCode": {
+        "description": "zero by default.",
         "enum": [
           "zero",
           "exempt",
@@ -81078,6 +81079,33 @@
         "required": [
           "count",
           "averages"
+        ],
+        "type": "object"
+      },
+      "VendorInvoiceLineDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP, before tax.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "taxCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxCode"
+              }
+            ],
+            "description": "zero by default."
+          }
+        },
+        "required": [
+          "description",
+          "amount"
         ],
         "type": "object"
       },

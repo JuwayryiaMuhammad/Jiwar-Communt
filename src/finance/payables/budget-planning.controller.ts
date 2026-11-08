@@ -33,7 +33,7 @@ import {
   BudgetPhasingDto,
   BudgetTransferDto,
   CommitmentsQueryDto,
-  EntriesQueryDto,
+  FinanceEntriesQueryDto,
   PeriodsQueryDto,
   TransfersQueryDto,
   VarianceReasonDto,
@@ -241,7 +241,7 @@ export class PayablesReportsController {
   })
   @ApiProduces('text/csv')
   @ApiOkResponse({ schema: { type: 'string' } })
-  async entries(@Query() q: EntriesQueryDto): Promise<StreamableFile> {
+  async entries(@Query() q: FinanceEntriesQueryDto): Promise<StreamableFile> {
     const { name, body } = await this.reports.entriesCsv(q);
     return csvFile(name, body);
   }

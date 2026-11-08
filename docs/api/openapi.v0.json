@@ -149114,7 +149114,7 @@
     },
     "/api/v1/staff/reports": {
       "get": {
-        "operationId": "ReportsController_catalog",
+        "operationId": "ReportsPlatformController_catalog",
         "parameters": [],
         "responses": {
           "200": {
@@ -149142,7 +149142,7 @@
     },
     "/api/v1/staff/reports/export": {
       "get": {
-        "operationId": "ReportsController_export",
+        "operationId": "ReportsPlatformController_export",
         "parameters": [
           {
             "in": "query",
@@ -149241,7 +149241,7 @@
     },
     "/api/v1/staff/reports/view": {
       "get": {
-        "operationId": "ReportsController_read",
+        "operationId": "ReportsPlatformController_read",
         "parameters": [
           {
             "in": "query",

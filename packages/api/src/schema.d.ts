@@ -21364,7 +21364,7 @@ export interface paths {
             cookie?: never;
         };
         /** The reports I may read, and their groupings */
-        get: operations["ReportsController_catalog"];
+        get: operations["ReportsPlatformController_catalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -21381,7 +21381,7 @@ export interface paths {
             cookie?: never;
         };
         /** A report as a PDF, a workbook or CSV (audited) */
-        get: operations["ReportsController_export"];
+        get: operations["ReportsPlatformController_export"];
         put?: never;
         post?: never;
         delete?: never;
@@ -21398,7 +21398,7 @@ export interface paths {
             cookie?: never;
         };
         /** A report over a period, grouped, compared with the period before and/or a year earlier */
-        get: operations["ReportsController_read"];
+        get: operations["ReportsPlatformController_read"];
         put?: never;
         post?: never;
         delete?: never;
@@ -87373,7 +87373,7 @@ export interface operations {
             };
         };
     };
-    ReportsController_catalog: {
+    ReportsPlatformController_catalog: {
         parameters: {
             query?: never;
             header?: never;
@@ -87392,7 +87392,7 @@ export interface operations {
             };
         };
     };
-    ReportsController_export: {
+    ReportsPlatformController_export: {
         parameters: {
             query: {
                 report: components["schemas"]["ReportKey"];
@@ -87424,7 +87424,7 @@ export interface operations {
             };
         };
     };
-    ReportsController_read: {
+    ReportsPlatformController_read: {
         parameters: {
             query: {
                 report: components["schemas"]["ReportKey"];

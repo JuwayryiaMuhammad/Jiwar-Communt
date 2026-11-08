@@ -12,6 +12,85 @@ function created(res: Response): Response {
   return res;
 }
 
+/** A's active budget of the year under way, made once per world. */
+export interface ActiveBudget {
+  budgetId: string;
+  /** Its maintenance line (the first). */
+  lineId: string;
+  /** Its cleaning line: somewhere for a transfer to go (ADR 0089). */
+  otherLineId: string;
+}
+const activeBudgets = new WeakMap<World, Promise<ActiveBudget>>();
+
+/**
+ * A's budget of the year under way, raised and approved by A's board, with
+ * a maintenance and a cleaning line. One a world: the budget routes' calls
+ * and the payables' calls share it, a fiscal year having one budget.
+ */
+export function activeBudget(
+  world: () => World,
+  sitting: () => Promise<void>,
+): Promise<ActiveBudget> {
+  const w = world();
+  const made = activeBudgets.get(w);
+  if (made) return made;
+  const as =
+    (persona: 'manager' | 'landlord' | 'owner') =>
+    (method: 'GET' | 'POST' | 'PUT', path: string, payload?: object) =>
+      call(w, method, path, { token: w.a.tokens[persona], body: payload });
+  const manager = as('manager');
+  const id = (res: Response) => (res.body as { id: string }).id;
+  const promise = (async () => {
+    await sitting();
+    const budgetId = id(
+      await manager('POST', '/staff/finance/budgets', {
+        fiscalYear: Number(today().slice(0, 4)),
+      }).expect(201),
+    );
+    await manager('PUT', `/staff/finance/budgets/${budgetId}/lines`, {
+      lines: [
+        { category: 'maintenance', amount: '300000.00' },
+        { category: 'cleaning', amount: '100000.00' },
+      ],
+    }).expect(200);
+    const requestId = id(
+      await manager('POST', '/staff/governance/approvals', {
+        type: 'annual_budget',
+        budgetId,
+        context: 'No-store budget',
+        impact: 'The year',
+      }).expect(201),
+    );
+    const motionId = id(
+      await as('landlord')('POST', `/board/approvals/${requestId}/motions`, {
+        outcome: 'approve',
+        rationale: 'Sound.',
+      }).expect(201),
+    );
+    await as('landlord')('POST', `/board/motions/${motionId}/votes`, {
+      choice: 'for',
+    }).expect(201);
+    // Closed already when the landlord's vote decided it.
+    await as('owner')('POST', `/board/motions/${motionId}/votes`, {
+      choice: 'for',
+    });
+    const view = (
+      await manager('GET', `/staff/finance/budgets/${budgetId}`).expect(200)
+    ).body as { status: string; lines: { id: string; category: string }[] };
+    if (view.status !== 'active')
+      throw new Error(`no-store: the budget is ${view.status}`);
+    const line = (category: string) =>
+      view.lines.find((l) => l.category === category)!.id;
+    return {
+      budgetId,
+      lineId: line('maintenance'),
+      otherLineId: line('cleaning'),
+    };
+  })();
+  activeBudgets.set(w, promise);
+  return promise;
+}
+
 /**
  * A real call for each of the board's matters' routes (ADR 0055), as A's
  * manager, or A's landlord sitting on A's board. `sitting` makes sure a
@@ -173,47 +252,7 @@ export function budgetCalls(
   const id = (res: Response) => (res.body as { id: string }).id;
   /** The fiscal year under way (A's starts in January). */
   const thisYear = () => Number(today().slice(0, 4));
-
-  let active: Promise<{ budgetId: string; lineId: string }> | null = null;
-  const anActive = () =>
-    (active ??= (async () => {
-      await sitting();
-      const budgetId = id(
-        await manager('POST', '/staff/finance/budgets', {
-          fiscalYear: thisYear(),
-        }).expect(201),
-      );
-      await manager('PUT', `/staff/finance/budgets/${budgetId}/lines`, {
-        lines: [{ category: 'maintenance', amount: '100000.00' }],
-      }).expect(200);
-      const requestId = id(
-        await manager('POST', '/staff/governance/approvals', {
-          type: 'annual_budget',
-          budgetId,
-          context: 'No-store budget',
-          impact: 'The year',
-        }).expect(201),
-      );
-      const motionId = id(
-        await as('landlord')('POST', `/board/approvals/${requestId}/motions`, {
-          outcome: 'approve',
-          rationale: 'Sound.',
-        }).expect(201),
-      );
-      await as('landlord')('POST', `/board/motions/${motionId}/votes`, {
-        choice: 'for',
-      }).expect(201);
-      // Closed already when the landlord's vote decided it.
-      await as('owner')('POST', `/board/motions/${motionId}/votes`, {
-        choice: 'for',
-      });
-      const view = (
-        await manager('GET', `/staff/finance/budgets/${budgetId}`).expect(200)
-      ).body as { status: string; lines: { id: string }[] };
-      if (view.status !== 'active')
-        throw new Error(`no-store: the budget is ${view.status}`);
-      return { budgetId, lineId: view.lines[0].id };
-    })());
+  const anActive = () => activeBudget(world, sitting);
   let next: Promise<string> | null = null;
   const aDraft = () =>
     (next ??= (async () =>

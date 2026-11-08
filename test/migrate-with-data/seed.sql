@@ -855,5 +855,68 @@ BEGIN
       INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
         (t, 'tender_opening', tnd, now());
     END;
+    -- ADR 0090: the guard's location consent and a point on the seed's
+    -- first ticket; a certificate with its paper; the account checks'
+    -- settings, a kept finding and a closed review with its line; a
+    -- dismissed suggestion and a call with an accepted slot; and the
+    -- three inbox types overdue (the CHECKs widened).
+    DECLARE
+      lc uuid := gen_random_uuid();
+      tk uuid;
+      cf uuid := gen_random_uuid();
+      rv uuid := gen_random_uuid();
+      rc uuid := gen_random_uuid();
+      sl uuid := gen_random_uuid();
+      fd uuid := gen_random_uuid();
+    BEGIN
+      SELECT id INTO tk FROM tickets WHERE tenant_id = t ORDER BY number LIMIT 1;
+      INSERT INTO technician_location_consents (id, tenant_id, account_id, granted_at) VALUES
+        (lc, t, guard, now() - interval '1 day');
+      INSERT INTO technician_locations (id, tenant_id, account_id, consent_id, ticket_id, moment,
+                                        latitude, longitude, accuracy_m, captured_at) VALUES
+        (gen_random_uuid(), t, guard, lc, tk, 'en_route', 30.044400, 31.235700, 15, now() - interval '2 hours');
+      INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status,
+                         upload_expires_at, finalized_at, attached_at) VALUES
+        (cf, t, NULL, 'staff_certificate', 'application/pdf', 2048, 'ready', now(), now(), now());
+      INSERT INTO staff_certificates (id, tenant_id, account_id, kind, title, issuer, reference, issued_on,
+                                      expires_on, file_id, warned_for, added_by_account_id, added_at,
+                                      updated_at) VALUES
+        (gen_random_uuid(), t, guard, 'first_aid', 'First aid', 'Red Crescent', 'FA-' || s,
+         current_date - 300, current_date + 20, cf, current_date + 20, mgr, now(), now());
+      INSERT INTO account_check_settings (tenant_id, idle_days, review_every_days, updated_by_account_id) VALUES
+        (t, 45, 120, mgr);
+      INSERT INTO dangling_account_findings (id, tenant_id, account_id, reason, last_active_at, found_at,
+                                             status, decided_at, decided_by_account_id, reason_code,
+                                             muted_until) VALUES
+        (fd, t, guard, 'idle', now() - interval '70 days', now() - interval '1 day', 'kept', now(), mgr,
+         'on_leave', now() + interval '90 days');
+      INSERT INTO access_reviews (id, tenant_id, number, status, opened_at, opened_by_account_id, lines,
+                                  kept, closed_at) VALUES
+        (rv, t, 1, 'closed', now() - interval '2 days', NULL, 1, 1, now() - interval '1 day');
+      INSERT INTO access_review_lines (id, tenant_id, review_id, account_id, account_type, role_id, role_key,
+                                       permissions, last_active_at, decision, decided_at,
+                                       decided_by_account_id) VALUES
+        (gen_random_uuid(), t, rv, guard, 'staff', r_staff, 'guard', ARRAY['gate.operate'],
+         now() - interval '3 days', 'keep', now() - interval '1 day', mgr);
+      INSERT INTO reinforcement_suggestions (id, tenant_id, raised_at, open_tickets, available, threshold,
+                                             created_at, status, decided_at, decided_by_account_id,
+                                             reason_code) VALUES
+        (gen_random_uuid(), t, now() - interval '3 hours', 9, 1, 4, now() - interval '3 hours', 'dismissed',
+         now() - interval '2 hours', mgr, 'enough_on_duty');
+      INSERT INTO guard_roster_slots (id, tenant_id, guard_account_id, crew, starts_at, ends_at,
+                                      created_by_account_id, created_at, updated_at) VALUES
+        (sl, t, guard, 'maintenance', date_trunc('hour', now()) + interval '30 days 2 hours',
+         date_trunc('hour', now()) + interval '30 days 5 hours', mgr, now(), now());
+      INSERT INTO reinforcement_calls (id, tenant_id, sent_by_account_id, needed, starts_at, ends_at,
+                                       status, recipients, accepted, sent_at, closed_at) VALUES
+        (rc, t, mgr, 1, date_trunc('hour', now()) + interval '30 days 2 hours',
+         date_trunc('hour', now()) + interval '30 days 5 hours', 'filled', 1, 1, now(), now());
+      INSERT INTO reinforcement_call_recipients (tenant_id, call_id, account_id, answer, answered_at, slot_id)
+        VALUES (t, rc, guard, 'accepted', now(), sl);
+      INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
+        (t, 'dangling_account', fd, now()),
+        (t, 'access_review', rv, now()),
+        (t, 'reinforcement_suggestion', gen_random_uuid(), now());
+    END;
   END LOOP;
 END $$;

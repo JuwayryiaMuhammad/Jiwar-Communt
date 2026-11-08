@@ -100,8 +100,9 @@ export function contractorCalls(
     await closeBids(t);
     return t;
   };
+  /** A document added to the tender: the tender's view comes back, so its one document's id. */
   const aDocument = async (tenderId: string) =>
-    id(
+    (
       done(
         await m('POST', `/staff/tenders/${tenderId}/documents`, {
           fileId: await fileHelpers(w().h).ready(
@@ -111,8 +112,8 @@ export function contractorCalls(
           ),
           title: 'Scope',
         }),
-      ),
-    );
+      ).body as { documents: { id: string }[] }
+    ).documents[0].id;
   /** A contract of the contractor's own vendor, on the active budget. */
   let ownContract: Promise<string> | null = null;
   const aVendorContract = () =>

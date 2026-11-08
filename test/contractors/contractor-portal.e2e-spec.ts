@@ -362,7 +362,11 @@ describe('The contractor portal: accounts and dispatch to a vendor (ADR 0088)', 
             },
           ),
         ),
-      ).toMatchObject({ statusCode: 400, code: 'INVALID_REASON_CODE' });
+      ).toMatchObject({
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        fields: [{ field: 'reasonCode', code: 'INVALID_REASON_CODE' }],
+      });
       await http('post', `/contractor/dispatches/${o1.id}/decline`, bob.token, {
         reasonCode: 'no_capacity',
       }).expect(204);

@@ -102,7 +102,8 @@ function Settle({ handin, investigation, onClose }: { handin?: Handin; investiga
   const [code, setCode] = useState('');
   const [recovered, setRecovered] = useState('');
   const body = { reasonCode: code, ...(code === 'recovered' ? { recoveredAmount: recovered.trim() } : {}) };
-  const settle = useAction(
+  // A hand-in's view or an investigation's: the toast reads neither.
+  const settle = useAction<void, unknown>(
     () =>
       investigation
         ? unwrap(api.POST('/api/v1/staff/finance/custody-investigations/{id}/decide', { params: { path: { id: investigation.id } }, body }))

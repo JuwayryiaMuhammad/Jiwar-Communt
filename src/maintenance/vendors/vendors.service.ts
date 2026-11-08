@@ -20,6 +20,7 @@ import { FilesService } from '../../core/files/files.service';
 import type { PresignedRead } from '../../core/files/object-storage';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
 import { VendorDirectory } from '../../core/vendors/vendor-directory';
+import { DanglingAccountsService } from '../../core/account-checks/dangling-accounts.service';
 import { dbNow } from '../db-clock';
 import { CompoundCalendar } from '../schedules/compound-calendar';
 import {
@@ -138,10 +139,23 @@ export class VendorsService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly idempotency: IdempotencyService,
     private readonly directory: VendorDirectory,
+    private readonly dangling: DanglingAccountsService,
   ) {}
 
   onModuleInit(): void {
     this.idempotency.renderer(VENDOR_RESOURCE, (id) => this.get(id));
+    // A contractor whose vendor is suspended is a dangling account (ADR
+    // 0090): core's account checks ask the register.
+    this.dangling.registerRule('vendor_suspended', async (tx) =>
+      (
+        await tx.$queryRaw<{ id: string }[]>`
+          SELECT a.id FROM accounts a
+            JOIN vendors v ON v.id = a.vendor_id
+           WHERE a.type = 'contractor' AND a.status = 'active'
+             AND v.status = 'suspended'
+           ORDER BY a.id`
+      ).map((r) => r.id),
+    );
     // An expense names a vendor through core (finance imports no domain).
     // A free text naming a vendor links to it, so a suspended one is
     // refused by its name too.

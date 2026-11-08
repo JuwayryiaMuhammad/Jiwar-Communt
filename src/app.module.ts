@@ -46,6 +46,7 @@ import { UnitDuesModule } from './core/unit-dues/unit-dues.module';
 import { PayablesBridgeModule } from './core/payables/payables-bridge.module';
 import { WorksCompletionsModule } from './core/works/works-completions.module';
 import { StaffDutyModule } from './core/staff-duty/staff-duty.module';
+import { AccountChecksModule } from './core/account-checks/account-checks.module';
 import { FormalNoticesModule } from './core/formal-notices/formal-notices.module';
 import { PdfModule } from './core/pdf/pdf.module';
 import { ConsentsModule } from './core/consents/consents.module';
@@ -148,6 +149,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     WorksCompletionsModule,
     VendorDirectoryModule,
     StaffDutyModule,
+    AccountChecksModule,
     PayablesBridgeModule,
     FormalNoticesModule,
     PdfModule,

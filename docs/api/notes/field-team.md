@@ -60,3 +60,68 @@ The guards' instructions with `audience: technicians`.
 | 409 `TECHNICIAN_HELP_LIVE` | The technician has a live call already. |
 | 409 `TECHNICIAN_HELP_CLOSED {status}` | Taking one not open, resolving one not taken, or calling off one closed. |
 | 404 `TICKET_NOT_FOUND` | `ticketId` is not the caller's ticket. |
+
+# Part b (ADR 0090)
+
+## A technician's last known location
+
+Only with the technician's consent, and only at three steps of one of their own tickets. Never continuous.
+
+| Who | Route |
+|---|---|
+| Technician | `GET /technician/location-consent`: `{consent: {grantedAt} \| null, points[]}`, their own points of the 30 days |
+| Technician | `POST /technician/location-consent`: consent; again answers the same |
+| Technician | `DELETE /technician/location-consent`: revoke; every point taken goes with it |
+| Field team, dispatch | `GET /staff/field-team/technicians/{id}/location`: `{technicianId, consent, last}`, audited |
+
+- **The steps** take an optional body `{location: {latitude, longitude, accuracyMeters?}}`: `POST /technician/tickets/{id}/en-route` (`en_route`), `…/start` (`started`), `…/visits/{visitId}/arrive` (`arrived`; one point though it starts the work). Send a location only once the technician consented; without it the step answers 409 `LOCATION_CONSENT_REQUIRED` and nothing moves. Without a location the steps answer as before.
+- **A point:** `moment`, `ticketId`, `ticketNumber`, `latitude`, `longitude` (six decimals kept), `accuracyMeters`, `capturedAt`. Kept 30 days.
+- **Never** in a resident's view, a list or a notification. A technician who leaves has their consent revoked by the system, and their points go.
+
+| Error | When |
+|---|---|
+| 409 `LOCATION_CONSENT_REQUIRED` | A step sent a location without a live consent. |
+| 404 `TECHNICIAN_NOT_FOUND` | The id is not a staff account of the compound. |
+| 400 `location.latitude INVALID_NUMBER` | Out of −90…90 (longitude −180…180, accuracy 0…10 000 m). |
+
+## Staff certificates
+
+| Who | Route |
+|---|---|
+| Field team | `GET /staff/field-team/certificates?accountId&state&removed`: soonest expiry first, no paper's link |
+| Field team | `POST /staff/field-team/certificates {accountId, kind, title, issuer?, reference?, issuedOn?, expiresOn, fileId?}` |
+| Field team | `GET …/{id}` (with `fileUrl`), `PATCH …/{id}` (a new `expiresOn` renews; `fileId: null` removes the paper), `DELETE …/{id}` |
+| Staff member | `GET /staff/my-certificates`: their own, with their papers |
+
+- **The paper:** upload with purpose `staff_certificate` (JPEG, PNG, WebP or PDF, 10 MB, `field_team.manage`), then name its `fileId`.
+- **`state`** on the compound's today: `valid`, `expiring` (within 30 days), `expired` (from the day after `expiresOn`); `daysLeft`. It blocks nothing.
+- **Pushes** to the holder and the field team: `staff_certificate.expiring` (`certificateKind`, `expiresOn`, `daysLeft`) 30 days ahead, `staff_certificate.expires_today` on the day.
+- **The compliance calendar** lists them as `source: staff_certificate`, with `holderId` and `holderName`.
+
+| Error | When |
+|---|---|
+| 400 `accountId CERTIFICATE_HOLDER_NOT_ELIGIBLE` | Not an active staff account. |
+| 400 `expiresOn ENDS_BEFORE_START` | Not after `issuedOn`. |
+| 400 `fileId FILE_NOT_AVAILABLE` | Not one of the caller's finalized `staff_certificate` files. |
+| 404 `STAFF_CERTIFICATE_NOT_FOUND` | Not found, or removed. |
+
+## Peak reinforcement
+
+| Who | Route |
+|---|---|
+| Field team | `GET /staff/field-team/reinforcement-suggestions?status`, `POST …/{id}/dismiss {reasonCode}` (`reinforcementDismiss`) |
+| Field team | `POST /staff/field-team/reinforcement-calls {needed, startsAt, endsAt, zoneId?, suggestionId?}` |
+| Field team | `GET …/reinforcement-calls?status`, `GET …/{id}` (with `recipients`), `POST …/{id}/cancel {reasonCode}` (`reinforcementCancel`) |
+| Technician | `GET /maintenance/reinforcement-calls` (with `myAnswer`), `POST …/{id}/accept`, `POST …/{id}/decline` |
+
+- **A suggestion** comes with service pressure's rise; the field team decides. It is the inbox item `reinforcement_suggestion`.
+- **A call:** 1–10 `needed`; `startsAt` 15 minutes to 12 hours ahead; `endsAt` 1–12 hours after it. It reaches every technician off duty at the send (critical push `reinforcement.called`).
+- **Accepting** writes a roster slot of the window (`/maintenance/my-roster` shows it); going on duty fills it. `status`: `open`, `filled` (as many accepted), `closed` (its start came), `cancelled`.
+
+| Error | When |
+|---|---|
+| 404 `REINFORCEMENT_CALL_NOT_FOUND` | Not found, or it did not reach the technician. |
+| 409 `REINFORCEMENT_CALL_CLOSED {status}` | Filled, closed at its start, or called off. |
+| 409 `REINFORCEMENT_ANSWERED {answer}` | The technician answered it already. |
+| 409 `ROSTER_OVERLAP` | The window overlaps the technician's roster. |
+| 409 `REINFORCEMENT_SUGGESTION_DECIDED {status}` | Answered, dismissed or lapsed already. |

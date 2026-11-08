@@ -8508,6 +8508,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/maintenance/reinforcement-calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the reinforcement calls that reached me
+         * @description Newest first, with my answer.
+         */
+        get: operations["TechnicianReinforcementController_mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/reinforcement-calls/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a reinforcement call
+         * @description Once, while open and before its start: a roster slot for its window is written (409 ROSTER_OVERLAP when it clashes with mine). Going on duty fills it.
+         */
+        post: operations["TechnicianReinforcementController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/maintenance/reinforcement-calls/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decline a reinforcement call
+         * @description Once, while open.
+         */
+        post: operations["TechnicianReinforcementController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/maintenance/replacement-recommendations": {
         parameters: {
             query?: never;
@@ -15047,6 +15107,165 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/access/dangling-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the dangling-account findings
+         * @description Newest first, 500 at most.
+         */
+        get: operations["AccountChecksController_findings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/access/dangling-accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a dangling-account finding */
+        get: operations["AccountChecksController_finding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/access/dangling-accounts/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deactivate a dangling account
+         * @description Once: the account is deactivated in the same transaction, as a status change is (its sessions end, the domains react).
+         */
+        post: operations["AccountChecksController_deactivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/access/dangling-accounts/{id}/keep": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Keep a dangling account
+         * @description Once, with a code from `danglingKeep`: not found again for 90 days. Never my own (409 CANNOT_CHANGE_OWN_STATUS).
+         */
+        post: operations["AccountChecksController_keep"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/access/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the access reviews
+         * @description Newest first, 100 at most.
+         */
+        get: operations["AccountChecksController_list"];
+        put?: never;
+        /**
+         * Open an access review now
+         * @description A frozen snapshot of every active staff, manager and contractor account: its role, the role’s permissions, its last sign-in. One open at a time (409 ACCESS_REVIEW_OPEN).
+         */
+        post: operations["AccountChecksController_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/access/reviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an access review, with its lines */
+        get: operations["AccountChecksController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/access/reviews/{id}/lines/{lineId}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Keep or revoke a line of an access review
+         * @description Once, never my own line (403 ACCESS_REVIEW_OWN_LINE). `revoke` deactivates the account in the same transaction; the system manager’s line is kept only (409 ACCESS_REVIEW_LINE_PROTECTED). The review closes with its last line.
+         */
+        post: operations["AccountChecksController_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/access/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the account checks’ settings
+         * @description The idle days (60 by default) and the reviews’ cadence (90).
+         */
+        get: operations["AccountChecksController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change the account checks’ settings */
+        patch: operations["AccountChecksController_updateSettings"];
+        trace?: never;
+    };
     "/api/v1/staff/billing-plans": {
         parameters: {
             query?: never;
@@ -16785,6 +17004,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/field-team/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the staff certificates
+         * @description The live ones (or the removed, `removed=true`), soonest expiry first, 500 at most; without their papers’ links.
+         */
+        get: operations["StaffCertificatesController_list"];
+        put?: never;
+        /**
+         * Add a staff certificate
+         * @description For an active staff member, with the day it expires and its paper when filed. Warn only: its holder and the field team are told 30 days ahead and on the day; an expired one blocks no assignment and no work.
+         */
+        post: operations["StaffCertificatesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/certificates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a staff certificate, with its paper */
+        get: operations["StaffCertificatesController_get"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove a staff certificate
+         * @description Once (filed by mistake, or no longer held): its paper goes, the record stays.
+         */
+        delete: operations["StaffCertificatesController_remove"];
+        options?: never;
+        head?: never;
+        /**
+         * Change or renew a staff certificate
+         * @description Its words, its days, its paper (replaced, or removed with null). A new expiry is a renewal: its notices start again.
+         */
+        patch: operations["StaffCertificatesController_update"];
+        trace?: never;
+    };
     "/api/v1/staff/field-team/help-requests": {
         parameters: {
             query?: never;
@@ -16926,6 +17194,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/field-team/reinforcement-calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the reinforcement calls
+         * @description Newest first.
+         */
+        get: operations["StaffReinforcementController_calls"];
+        put?: never;
+        /**
+         * Call reinforcement
+         * @description Asks every technician off duty now to come in for a window (critical): 1 to 10 needed, from 15 minutes to 12 hours ahead, for 1 to 12 hours, in a zone or the whole compound. Accepting writes a roster slot.
+         */
+        post: operations["StaffReinforcementController_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/reinforcement-calls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a reinforcement call
+         * @description With whom it reached and their answers.
+         */
+        get: operations["StaffReinforcementController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/reinforcement-calls/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a reinforcement call
+         * @description Once, while open, with a code from `reinforcementCancel`: the accepted slots nobody filled are cancelled, and whoever it reached and did not decline is told.
+         */
+        post: operations["StaffReinforcementController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/reinforcement-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the reinforcement suggestions
+         * @description Made when service pressure’s rise is told; newest first. Nothing reaches a technician by itself.
+         */
+        get: operations["StaffReinforcementController_suggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/reinforcement-suggestions/{id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss a reinforcement suggestion
+         * @description Once, with a code from `reinforcementDismiss`.
+         */
+        post: operations["StaffReinforcementController_dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/field-team/roster/slots": {
         parameters: {
             query?: never;
@@ -17023,6 +17395,26 @@ export interface paths {
          * @description Active accounts holding `tickets.work`.
          */
         get: operations["StaffDutyRosterController_technicians"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/field-team/technicians/{id}/location": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a technician's last known location
+         * @description Their latest point of the 30 days, taken on the way, at the door or starting the work, with their consent. Each read is audited: who looked, never where.
+         */
+        get: operations["StaffTechnicianLocationController_last"];
         put?: never;
         post?: never;
         delete?: never;
@@ -20241,6 +20633,26 @@ export interface paths {
         put?: never;
         /** Tick a step of the management’s side */
         post: operations["StaffMovesController_tick"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/my-certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my certificates
+         * @description My live ones, soonest expiry first, with their papers.
+         */
+        get: operations["MyCertificatesController_mine"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -24972,6 +25384,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/technician/location-consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get my location consent
+         * @description Whether I consent, and my own points of the 30 days: where I was on the way, at the door and starting the work.
+         */
+        get: operations["TechnicianLocationController_mine"];
+        put?: never;
+        /**
+         * Consent to my location at three steps
+         * @description On the way, at the door and starting the work, a point goes with the step when the app sends one; never in between. Kept 30 days; never shown to the residents. Consenting again answers the same.
+         */
+        post: operations["TechnicianLocationController_grant"];
+        /**
+         * Revoke my location consent
+         * @description No point is taken any more, and every point taken goes with it. With none to revoke, nothing changes.
+         */
+        delete: operations["TechnicianLocationController_revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/technician/meters/{id}": {
         parameters: {
             query?: never;
@@ -28048,6 +28488,87 @@ export interface components {
             card: components["schemas"]["WorkerCardView"] | null;
             /** Format: uuid */
             engagementId: string;
+        };
+        /**
+         * @description `revoke` deactivates the account in the same transaction; the manager’s line is kept only.
+         * @enum {string}
+         */
+        AccessReviewDecision: "keep" | "revoke";
+        AccessReviewDetailView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kept: number;
+            /** @description Lines whose account left first. */
+            left: number;
+            lines: number;
+            /** @example AR-000001 */
+            number: string;
+            /** Format: date-time */
+            openedAt: string;
+            /** @description Null: the sweep opened it. */
+            openedBy: components["schemas"]["AccountRefView"] | null;
+            reviewLines: components["schemas"]["AccessReviewLineView"][];
+            revoked: number;
+            status: components["schemas"]["AccessReviewStatus"];
+            undecided: number;
+        };
+        /** @enum {string} */
+        AccessReviewLineDecision: "keep" | "revoke" | "left";
+        AccessReviewLineView: {
+            account: components["schemas"]["AccountRefView"];
+            accountType: components["schemas"]["CheckedAccountType"];
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["AccountRefView"] | null;
+            decision: components["schemas"]["AccessReviewLineDecision"] | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastActiveAt: string | null;
+            /** @description The role’s, then. */
+            permissions: string[];
+            /** @description The system manager’s line: kept only. */
+            protected: boolean;
+            role: components["schemas"]["AccessReviewRoleView"];
+        };
+        AccessReviewRoleView: {
+            /** Format: uuid */
+            id: string;
+            /** @description A system role. */
+            key: string | null;
+            /** @description A custom role. */
+            name: string | null;
+        };
+        /** @enum {string} */
+        AccessReviewStatus: "open" | "closed";
+        AccessReviewView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: uuid */
+            id: string;
+            kept: number;
+            /** @description Lines whose account left first. */
+            left: number;
+            lines: number;
+            /** @example AR-000001 */
+            number: string;
+            /** Format: date-time */
+            openedAt: string;
+            /** @description Null: the sweep opened it. */
+            openedBy: components["schemas"]["AccountRefView"] | null;
+            revoked: number;
+            status: components["schemas"]["AccessReviewStatus"];
+            undecided: number;
+        };
+        AccessReviewViewList: {
+            data: components["schemas"]["AccessReviewView"][];
+            nextCursor: string | null;
+        };
+        AccountCheckSettingsView: {
+            idleDays: number;
+            reviewEveryDays: number;
         };
         AccountDetailView: {
             /** Format: date */
@@ -31284,6 +31805,8 @@ export interface components {
              */
             kind: "units" | "residents";
         };
+        /** @enum {string} */
+        CheckedAccountType: "staff" | "manager" | "contractor";
         ChecklistAnswerDto: {
             note?: string;
             /** @description The caller’s finalized `checklist_photo` files, added to the answer’s (three at most). */
@@ -32691,17 +33214,23 @@ export interface components {
         ComplianceCalendarEntryView: {
             /** Format: date */
             day: string;
+            /**
+             * Format: uuid
+             * @description A staff certificate’s holder.
+             */
+            holderId: string | null;
+            holderName: string | null;
             /** Format: uuid */
             id: string;
             /** Format: uuid */
             itemId: string | null;
-            /** @description ComplianceKind, or the paper’s VendorDocumentKind. */
+            /** @description ComplianceKind, the paper’s VendorDocumentKind, or the certificate’s StaffCertificateKind. */
             kind: string;
             /**
-             * @description `compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077).
+             * @description `compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077); `staff_certificate`: a staff member’s certificate expiring (ADR 0090).
              * @enum {string}
              */
-            source: "compliance" | "vendor_document";
+            source: "compliance" | "vendor_document" | "staff_certificate";
             state: components["schemas"]["ComplianceCalendarState"];
             title: string | null;
             /** Format: uuid */
@@ -35156,6 +35685,30 @@ export interface components {
             nameAr: string;
             nameEn: string;
         };
+        CreateStaffCertificateDto: {
+            /**
+             * Format: uuid
+             * @description Its holder: an active staff member (CERTIFICATE_HOLDER_NOT_ELIGIBLE otherwise).
+             */
+            accountId: string;
+            /**
+             * Format: date
+             * @description Its last day in force; after `issuedOn`. Its holder and the field team are told 30 days ahead and on the day; it blocks nothing.
+             */
+            expiresOn: string;
+            /**
+             * Format: uuid
+             * @description The paper: one of my own finalized `staff_certificate` files (FILE_NOT_AVAILABLE otherwise).
+             */
+            fileId?: string;
+            /** Format: date */
+            issuedOn?: string;
+            issuer?: string;
+            kind: components["schemas"]["StaffCertificateKind"];
+            /** @description Its number, as the issuer gave it. */
+            reference?: string;
+            title: string;
+        };
         CreateStandingInstructionDto: {
             /**
              * @description - `always_allow`: the guard lets them in and logs the entry.
@@ -35864,6 +36417,42 @@ export interface components {
             /** @description REASON_CODES.damageClaimWithdraw. */
             reason: string;
         };
+        /** @enum {string} */
+        DanglingFindingStatus: "open" | "kept" | "deactivated" | "cleared";
+        DanglingFindingView: {
+            account: components["schemas"]["AccountRefView"];
+            accountType: components["schemas"]["CheckedAccountType"];
+            /** Format: date-time */
+            clearedAt: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: date-time */
+            foundAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastActiveAt: string | null;
+            /**
+             * Format: date-time
+             * @description Kept: not found again before then.
+             */
+            mutedUntil: string | null;
+            /** @description `idle`: no sign-in for the compound’s idle days; `never_signed_in`: none within 14 days of its creation; `vendor_suspended`: a contractor whose vendor is suspended. */
+            reason: components["schemas"]["DanglingReason"];
+            /** @description Why it was kept (`danglingKeep`). */
+            reasonCode: string | null;
+            status: components["schemas"]["DanglingFindingStatus"];
+        };
+        DanglingFindingViewList: {
+            data: components["schemas"]["DanglingFindingView"][];
+            nextCursor: string | null;
+        };
+        /**
+         * @description `idle`: no sign-in for the compound’s idle days; `never_signed_in`: none within 14 days of its creation; `vendor_suspended`: a contractor whose vendor is suspended.
+         * @enum {string}
+         */
+        DanglingReason: "idle" | "vendor_suspended" | "never_signed_in";
         DashboardAlertView: {
             /** @description emergency_overdue, emergency_unassigned, lockdown_live, incident_critical_open, cash_below_minimum (critical); tickets_overdue, service_pressure, outage_active, meter_alert_open, cash_forecast_below_minimum (warning). The cash alerts (ADR 0091) are `finance.cashflow`’s; their count is the forecast’s periods closing below the minimum. */
             code: string;
@@ -35969,6 +36558,10 @@ export interface components {
             from: string;
             /** @example 12:00 */
             to: string;
+        };
+        DecideAccessReviewLineDto: {
+            /** @description `revoke` deactivates the account in the same transaction; the manager’s line is kept only. */
+            decision: components["schemas"]["AccessReviewDecision"];
         };
         DecideAgendaDto: {
             /** @description The board’s words to the proposer. Write no one’s name. */
@@ -37964,6 +38557,35 @@ export interface components {
             events: components["schemas"]["AssetEventView"][];
             readings: components["schemas"]["MetricReadingsView"][];
         };
+        FieldLocationConsentView: {
+            /** Format: date-time */
+            grantedAt: string;
+        };
+        FieldLocationDto: {
+            accuracyMeters?: number;
+            /** @example 30.0444 */
+            latitude: number;
+            /** @example 31.2357 */
+            longitude: number;
+        };
+        /**
+         * @description On the way (`en_route`), at the door (`arrived`, a visit), or starting the work (`started`).
+         * @enum {string}
+         */
+        FieldLocationMoment: "en_route" | "arrived" | "started";
+        FieldLocationPointView: {
+            accuracyMeters: number | null;
+            /** Format: date-time */
+            capturedAt: string;
+            latitude: number;
+            longitude: number;
+            /** @description On the way (`en_route`), at the door (`arrived`, a visit), or starting the work (`started`). */
+            moment: components["schemas"]["FieldLocationMoment"];
+            /** Format: uuid */
+            ticketId: string;
+            /** @example T-000123 */
+            ticketNumber: string | null;
+        };
         FileLinkView: {
             /** Format: date-time */
             expiresAt: string;
@@ -37984,7 +38606,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "report_file" | "compound_export" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo" | "tender_document" | "tender_bid";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "report_file" | "compound_export" | "staff_certificate" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo" | "tender_document" | "tender_bid";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -40055,7 +40677,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening" | "cash_custody" | "custody_variance";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening" | "cash_custody" | "custody_variance" | "dangling_account" | "access_review" | "reinforcement_suggestion";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -41053,6 +41675,10 @@ export interface components {
              * @description A unit the caller books for.
              */
             unitId: string;
+        };
+        KeepDanglingAccountDto: {
+            /** @description From `danglingKeep`; the account is muted for 90 days. */
+            reasonCode: string;
         };
         KeptCountsView: {
             /** @description They stay, pointing at a deleted user. */
@@ -42695,6 +43321,12 @@ export interface components {
         MyDutySlotViewList: {
             data: components["schemas"]["MyDutySlotView"][];
             nextCursor: string | null;
+        };
+        MyFieldLocationView: {
+            /** @description Null: not consented, and no point is taken. */
+            consent: components["schemas"]["FieldLocationConsentView"] | null;
+            /** @description Newest first, 100 at most; kept 30 days. */
+            points: components["schemas"]["FieldLocationPointView"][];
         };
         MyGateServicesSection: {
             data: components["schemas"]["StaffGateServiceView"][];
@@ -46922,6 +47554,94 @@ export interface components {
             document: components["schemas"]["RegistrationDocumentView"];
             upload: components["schemas"]["UploadTargetView"];
         };
+        /** @enum {string} */
+        ReinforcementAnswer: "accepted" | "declined";
+        /**
+         * @description `open` until as many accept (`filled`), its start (`closed`) or it is called off (`cancelled`).
+         * @enum {string}
+         */
+        ReinforcementCallStatus: "open" | "filled" | "closed" | "cancelled";
+        ReinforcementCallView: {
+            accepted: number;
+            cancelReason: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /** Format: date-time */
+            endsAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @description A technician’s read: their own answer, or null. */
+            myAnswer: components["schemas"]["ReinforcementAnswer"] | null;
+            needed: number;
+            /** @description Technicians it reached. */
+            recipientCount: number;
+            /** @description The field team’s single read: whom it reached and their answers. Null in lists and for a technician. */
+            recipients: components["schemas"]["ReinforcementRecipientView"][] | null;
+            /** Format: date-time */
+            sentAt: string;
+            sentBy: components["schemas"]["AccountRefView"];
+            /** Format: date-time */
+            startsAt: string;
+            /** @description `open` until as many accept (`filled`), its start (`closed`) or it is called off (`cancelled`). */
+            status: components["schemas"]["ReinforcementCallStatus"];
+            /** Format: uuid */
+            suggestionId: string | null;
+            /** @description Null: the whole compound. */
+            zone: components["schemas"]["ReinforcementZoneView"] | null;
+        };
+        ReinforcementCallViewList: {
+            data: components["schemas"]["ReinforcementCallView"][];
+            nextCursor: string | null;
+        };
+        ReinforcementReasonDto: {
+            /** @description From `reinforcementDismiss` (a suggestion) or `reinforcementCancel` (a call). */
+            reasonCode: string;
+        };
+        ReinforcementRecipientView: {
+            answer: components["schemas"]["ReinforcementAnswer"] | null;
+            /** Format: date-time */
+            answeredAt: string | null;
+            /**
+             * Format: uuid
+             * @description The roster slot an acceptance wrote.
+             */
+            slotId: string | null;
+            technician: components["schemas"]["AccountRefView"];
+        };
+        /** @enum {string} */
+        ReinforcementSuggestionStatus: "open" | "answered" | "dismissed" | "lapsed";
+        ReinforcementSuggestionView: {
+            /** @description Available technicians then. */
+            available: number;
+            /** Format: uuid */
+            callId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["AccountRefView"] | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Open tickets when told. */
+            openTickets: number;
+            /** Format: date-time */
+            raisedAt: string;
+            reasonCode: string | null;
+            /** @description `open` until a call answers it, it is dismissed, or the pressure eases (`lapsed`). */
+            status: components["schemas"]["ReinforcementSuggestionStatus"];
+            /** @description Open tickets per technician. */
+            threshold: number;
+        };
+        ReinforcementSuggestionViewList: {
+            data: components["schemas"]["ReinforcementSuggestionView"][];
+            nextCursor: string | null;
+        };
+        ReinforcementZoneView: {
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+        };
         ReinviteVisitorDto: {
             /** @description Recurring passes only, as on a new pass. */
             schedule?: components["schemas"]["VisitorScheduleDto"];
@@ -49048,6 +49768,30 @@ export interface components {
             /** @description The management’s own words to the unit. The only text of the matter the unit ever reads: never the complaint’s. */
             body: string;
         };
+        SendReinforcementCallDto: {
+            /**
+             * Format: date-time
+             * @description 1 to 12 hours after the start.
+             */
+            endsAt: string;
+            /** @description How many technicians are needed: the call is filled then. */
+            needed: number;
+            /**
+             * Format: date-time
+             * @description From 15 minutes to 12 hours ahead; the call closes then.
+             */
+            startsAt: string;
+            /**
+             * Format: uuid
+             * @description The open suggestion it answers (409 REINFORCEMENT_SUGGESTION_DECIDED once decided).
+             */
+            suggestionId?: string;
+            /**
+             * Format: uuid
+             * @description A zone in service; absent for the whole compound.
+             */
+            zoneId?: string;
+        };
         SendSuggestionDto: {
             /** @description EGP; the suggestion’s amount when left out. */
             amount?: string;
@@ -50002,6 +50746,43 @@ export interface components {
         StaffCancelVisitorParkingDto: {
             /** @description From the closed list `visitorParkingStaffCancel`. */
             reasonCode: string;
+        };
+        /** @enum {string} */
+        StaffCertificateKind: "electrical" | "plumbing" | "gas" | "hvac" | "working_at_height" | "first_aid" | "fire_safety" | "driving" | "security_licence" | "other";
+        /** @enum {string} */
+        StaffCertificateState: "valid" | "expiring" | "expired";
+        StaffCertificateView: {
+            /** Format: date-time */
+            addedAt: string;
+            /** @description Days from today to its expiry; negative once expired. */
+            daysLeft: number;
+            /**
+             * Format: date
+             * @description Its last day in force.
+             */
+            expiresOn: string;
+            /** @description A short-lived link to the paper, on a single certificate only; null in lists and when none is filed. */
+            fileUrl: string | null;
+            /** @description Whether a paper is filed. */
+            hasFile: boolean;
+            /** @description Its holder. */
+            holder: components["schemas"]["AccountRefView"];
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            issuedOn: string | null;
+            issuer: string | null;
+            kind: components["schemas"]["StaffCertificateKind"];
+            reference: string | null;
+            /** Format: date-time */
+            removedAt: string | null;
+            /** @description On the compound’s today: `expiring` within 30 days, `expired` from the day after its expiry. It blocks nothing. */
+            state: components["schemas"]["StaffCertificateState"];
+            title: string;
+        };
+        StaffCertificateViewList: {
+            data: components["schemas"]["StaffCertificateView"][];
+            nextCursor: string | null;
         };
         StaffClaimView: {
             claimant: components["schemas"]["AccountRefView"];
@@ -52534,6 +53315,14 @@ export interface components {
         };
         /** @enum {string} */
         TechnicianIncidentType: "injury" | "near_miss" | "hazard";
+        TechnicianLastLocationView: {
+            /** @description Whether they consent now. */
+            consent: boolean;
+            /** @description Their latest point of the 30 days; null when none (no consent, or no step since). */
+            last: components["schemas"]["FieldLocationPointView"] | null;
+            /** Format: uuid */
+            technicianId: string;
+        };
         TechnicianMessageView: {
             body: string | null;
             /** Format: date-time */
@@ -53028,6 +53817,10 @@ export interface components {
         };
         /** @enum {string} */
         TicketStatus: "new" | "assigned" | "en_route" | "in_progress" | "on_hold" | "completed" | "closed" | "cancelled";
+        TicketStepDto: {
+            /** @description Where I am now, only when I consented (409 LOCATION_CONSENT_REQUIRED otherwise: nothing moves). Never continuous: kept 30 days, and never shown to the residents. */
+            location?: components["schemas"]["FieldLocationDto"];
+        };
         /** @enum {string} */
         TicketUnitLocation: "kitchen" | "bathroom" | "living_room" | "bedroom" | "balcony" | "other";
         TicketUnitView: {
@@ -53676,6 +54469,12 @@ export interface components {
         UpcomingWorkViewList: {
             data: components["schemas"]["UpcomingWorkView"][];
             nextCursor: string | null;
+        };
+        UpdateAccountCheckSettingsDto: {
+            /** @description Days without a sign-in that make an account of the compound’s side dangling. */
+            idleDays?: number;
+            /** @description Every how many days an access review opens. */
+            reviewEveryDays?: number;
         };
         UpdateAccountStatusDto: {
             /** @enum {string} */
@@ -54568,6 +55367,24 @@ export interface components {
             active?: boolean;
             nameAr?: string;
             nameEn?: string;
+        };
+        UpdateStaffCertificateDto: {
+            /**
+             * Format: date
+             * @description A renewal: a new expiry, whose notices start again.
+             */
+            expiresOn?: string;
+            /**
+             * Format: uuid
+             * @description A new paper (the old one goes), or null to remove the one filed.
+             */
+            fileId?: string | null;
+            /** Format: date */
+            issuedOn?: string | null;
+            issuer?: string | null;
+            kind?: components["schemas"]["StaffCertificateKind"];
+            reference?: string | null;
+            title?: string;
         };
         UpdateStockItemDto: {
             /** @description `false` retires it: no receipt, no request. */
@@ -68356,6 +69173,67 @@ export interface operations {
             };
         };
     };
+    TechnicianReinforcementController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementCallViewList"];
+                };
+            };
+        };
+    };
+    TechnicianReinforcementController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementCallView"];
+                };
+            };
+        };
+    };
+    TechnicianReinforcementController_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementCallView"];
+                };
+            };
+        };
+    };
     ReplacementsController_list: {
         parameters: {
             query?: {
@@ -78333,6 +79211,222 @@ export interface operations {
             };
         };
     };
+    AccountChecksController_findings: {
+        parameters: {
+            query?: {
+                /** @description Default: all. */
+                status?: components["schemas"]["DanglingFindingStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DanglingFindingViewList"];
+                };
+            };
+        };
+    };
+    AccountChecksController_finding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DanglingFindingView"];
+                };
+            };
+        };
+    };
+    AccountChecksController_deactivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DanglingFindingView"];
+                };
+            };
+        };
+    };
+    AccountChecksController_keep: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KeepDanglingAccountDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DanglingFindingView"];
+                };
+            };
+        };
+    };
+    AccountChecksController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessReviewViewList"];
+                };
+            };
+        };
+    };
+    AccountChecksController_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessReviewDetailView"];
+                };
+            };
+        };
+    };
+    AccountChecksController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessReviewDetailView"];
+                };
+            };
+        };
+    };
+    AccountChecksController_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideAccessReviewLineDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessReviewDetailView"];
+                };
+            };
+        };
+    };
+    AccountChecksController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountCheckSettingsView"];
+                };
+            };
+        };
+    };
+    AccountChecksController_updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAccountCheckSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountCheckSettingsView"];
+                };
+            };
+        };
+    };
     BillingPlansController_list: {
         parameters: {
             query?: never;
@@ -80937,6 +82031,119 @@ export interface operations {
             };
         };
     };
+    StaffCertificatesController_list: {
+        parameters: {
+            query?: {
+                accountId?: string;
+                /** @description On the compound’s today. */
+                state?: components["schemas"]["StaffCertificateState"];
+                /** @description `true`: the removed ones instead of the live. */
+                removed?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffCertificateViewList"];
+                };
+            };
+        };
+    };
+    StaffCertificatesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStaffCertificateDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffCertificateView"];
+                };
+            };
+        };
+    };
+    StaffCertificatesController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffCertificateView"];
+                };
+            };
+        };
+    };
+    StaffCertificatesController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StaffCertificatesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStaffCertificateDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffCertificateView"];
+                };
+            };
+        };
+    };
     StaffHelpController_list: {
         parameters: {
             query?: {
@@ -81119,6 +82326,144 @@ export interface operations {
             };
         };
     };
+    StaffReinforcementController_calls: {
+        parameters: {
+            query?: {
+                /** @description Default: all. */
+                status?: components["schemas"]["ReinforcementCallStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementCallViewList"];
+                };
+            };
+        };
+    };
+    StaffReinforcementController_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendReinforcementCallDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementCallView"];
+                };
+            };
+        };
+    };
+    StaffReinforcementController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementCallView"];
+                };
+            };
+        };
+    };
+    StaffReinforcementController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReinforcementReasonDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementCallView"];
+                };
+            };
+        };
+    };
+    StaffReinforcementController_suggestions: {
+        parameters: {
+            query?: {
+                /** @description Default: all. */
+                status?: components["schemas"]["ReinforcementSuggestionStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementSuggestionViewList"];
+                };
+            };
+        };
+    };
+    StaffReinforcementController_dismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReinforcementReasonDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReinforcementSuggestionView"];
+                };
+            };
+        };
+    };
     StaffDutyRosterController_slots: {
         parameters: {
             query?: {
@@ -81282,6 +82627,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RosterGuardViewList"];
+                };
+            };
+        };
+    };
+    StaffTechnicianLocationController_last: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicianLastLocationView"];
                 };
             };
         };
@@ -85945,6 +87311,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MoveDetailView"];
+                };
+            };
+        };
+    };
+    MyCertificatesController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffCertificateViewList"];
                 };
             };
         };
@@ -93000,6 +94385,63 @@ export interface operations {
             };
         };
     };
+    TechnicianLocationController_mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyFieldLocationView"];
+                };
+            };
+        };
+    };
+    TechnicianLocationController_grant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyFieldLocationView"];
+                };
+            };
+        };
+    };
+    TechnicianLocationController_revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyFieldLocationView"];
+                };
+            };
+        };
+    };
     TechnicianMetersController_get: {
         parameters: {
             query?: never;
@@ -93335,7 +94777,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketStepDto"];
+            };
+        };
         responses: {
             204: {
                 headers: {
@@ -93785,7 +95231,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketStepDto"];
+            };
+        };
         responses: {
             204: {
                 headers: {
@@ -93851,7 +95301,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketStepDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {

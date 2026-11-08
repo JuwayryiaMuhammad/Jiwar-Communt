@@ -61,3 +61,6 @@
 - **A manager may file a deletion, and its undo, for the account** (`residents.assist`, a reason code, marked assisted).
 - **A second freeze reason, `login_not_me`** ("not me" on an unusual-login alert): the account is frozen with every session and code ended, like a reassigned phone, but **the phone stays**. `released_phone_hash` is only for `phone_reassigned`, and reactivation needs no new phone.
 - Erasure also removes the account's delivery preferences, known devices and email action tokens, revokes its consents (as the system) and ends its exports. When a family member's erasure ends their membership, the unit's primary is told, with the unit's code only.
+
+## Update (M2-12b, ADR 0090)
+- Erasure revokes a technician's location consent (by the system), which removes every point of theirs, and deletes their staff certificates with their papers. A deactivation revokes the consent the same way; the certificates stay, told no more. A deactivation or an erasure clears the account's open dangling-account finding and marks its undecided access-review lines `left`.

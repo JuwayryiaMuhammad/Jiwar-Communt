@@ -51,3 +51,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase M3-4, ADR 0091)
 - New permission `finance.cashflow` (staff, manager: the manager and the accountant by default): the cash flow forecast and its CSV, the realised cash flow report, the dashboard's liquidity days and cash alerts, the minimum-cash notice. Reading only; the minimum is set with `finance.treasury`. A `finance.*` permission, never a deputy's (ADR 0073).
+
+## Update (M2-12b, ADR 0090)
+- No new permission. `accounts.manage` reviews access (the owner's decision): access reviews and dangling accounts, a revocation deactivating the account as `PATCH /accounts/{id}/status` does. `field_team.manage` keeps the staff's certificates and calls reinforcement; a technician's last known location reads with it or `tickets.dispatch`.

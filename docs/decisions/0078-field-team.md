@@ -66,3 +66,8 @@ A technician's export gains `field-team/slots.json` (their duty slots: zone, tim
 
 - The manager and the maintenance supervisor see who of the field team is on duty against the roster, who came late, who is absent and the overtime, as for the guards.
 - Part b (M2-12b): the last known location at en-route, arrive and start, with consent; staff certificates with expiry; access reviews and dangling-account alerts; peak reinforcement.
+
+## Update (M2-12b, ADR 0090)
+- **Part b is built** (ADR 0090): a technician's last known location, taken only with their consent at the three steps (on the way, at the door, starting the work), kept 30 days and read one technician at a time; staff certificates with their expiry, warned of and shown in the compliance calendar, blocking nothing; dangling accounts and access reviews of the compound's side (`accounts.manage`); and peak reinforcement, suggested by service pressure and called by the field team, each acceptance a single roster slot.
+- **The roster** gains a writer of single slots through `StaffDuty` (a reinforcement's acceptance): under the technician's roster lock, as any single slot, filled at once when they are on duty within the half hour.
+- **The field team's export** gains `field-team/location.json` and `field-team/certificates.json`.

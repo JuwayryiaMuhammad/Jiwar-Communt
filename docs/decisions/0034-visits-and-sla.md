@@ -241,3 +241,6 @@ Every visit read and the arrival are no-store. There is no new permission, so `a
 - **The dispatch list filters `open=true`:** every status but `closed` and `cancelled` (`new`, `assigned`, `en_route`, `in_progress`, `on_hold`, `completed`). A `completed` ticket still waits for its reporter, so it counts. The list took one `status` at a time, so a screen of "what is still ours" had to hide finished tickets from the pages it had loaded, and its pages were not full.
 - Decided in SQL with the keyset, on both paths (with and without `overdue` / `escalated`), so a page is full and its cursor true. It does not depend on the SLA: it works while the SLA is off. It combines with `status` (both must hold, so `open=true&status=closed` is empty); `open=false` is no filter.
 - `escalated=true` is unchanged and still returns a finished ticket escalated in its current cycle; a view of escalations that need attention sends `open=true` with it. `overdue=true` was always among open tickets only.
+
+## Update (M2-12b, ADR 0090)
+- **The arrival** takes an optional `location`, kept only with the technician's consent, as one point (`arrived`) in the arrival's transaction. It never reaches the residents: not their view of the visit, not `ticket.visit_arrived`. "No location tracking" stands: a point is a step's, never a track, and is gone after 30 days.

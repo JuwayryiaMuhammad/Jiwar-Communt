@@ -122,3 +122,7 @@ Workload, availability (state, since, reason, who), specialties and the attempts
 - **The history CHECK** gains a branch: a row needs a reason unless the technician changed their own, or a person (a non-NULL actor) made them `available`. A NULL actor satisfies neither exception, so the system's rows always carry a code.
 - Availability changes are still not in the audit trail: the append-only history is their record.
 - **`GET /maintenance/specialties` also reads with `maintenance.manage`.** It needed `tickets.dispatch`, so a role that may create and rename specialties but does not dispatch could not list them. Either permission is enough; a technician, a guard and the residents still hold neither.
+
+## Update (M2-12b, ADR 0090)
+- **Who is off duty** — an active `tickets.work` holder not `available` — is who a reinforcement call reaches; nothing about availability changes.
+- **The technician's steps** `en-route` and `start` take an optional `location`, kept only with the technician's consent (409 `LOCATION_CONSENT_REQUIRED` otherwise, nothing moving).

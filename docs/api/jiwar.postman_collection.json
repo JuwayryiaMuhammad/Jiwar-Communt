@@ -2181,6 +2181,319 @@
               ]
             }
           }
+        },
+        {
+          "name": "List the dangling-account findings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "dangling-accounts"
+              ],
+              "query": [
+                {
+                  "description": "Default: all.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/dangling-accounts"
+            }
+          }
+        },
+        {
+          "name": "Get a dangling-account finding",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "dangling-accounts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/dangling-accounts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deactivate a dangling account",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "dangling-accounts",
+                ":id",
+                "deactivate"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/dangling-accounts/:id/deactivate",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Keep a dangling account",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From `danglingKeep`; the account is muted for 90 days. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "dangling-accounts",
+                ":id",
+                "keep"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/dangling-accounts/:id/keep",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the access reviews",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "reviews"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/reviews"
+            }
+          }
+        },
+        {
+          "name": "Open an access review now",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "reviews"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/reviews"
+            }
+          }
+        },
+        {
+          "name": "Get an access review, with its lines",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "reviews",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/reviews/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Keep or revoke a line of an access review",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"decision\": \"keep\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `decision` | `keep` \\| `revoke` | yes | `revoke` deactivates the account in the same transaction; the manager’s line is kept only. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "reviews",
+                ":id",
+                "lines",
+                ":lineId",
+                "decide"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/reviews/:id/lines/:lineId/decide",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "key": "lineId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get the account checks’ settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/settings"
+            }
+          }
+        },
+        {
+          "name": "Change the account checks’ settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"idleDays\": 14,\n  \"reviewEveryDays\": 30\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `idleDays` | number |  | Days without a sign-in that make an account of the compound’s side dangling. |\n| `reviewEveryDays` | number |  | Every how many days an access review opens. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "access",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/access/settings"
+            }
+          }
         }
       ],
       "name": "accounts"
@@ -11190,6 +11503,84 @@
           }
         },
         {
+          "name": "List the reinforcement calls that reached me",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "reinforcement-calls"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/reinforcement-calls"
+            }
+          }
+        },
+        {
+          "name": "Accept a reinforcement call",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "reinforcement-calls",
+                ":id",
+                "accept"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/reinforcement-calls/:id/accept",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Decline a reinforcement call",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "maintenance",
+                "reinforcement-calls",
+                ":id",
+                "decline"
+              ],
+              "raw": "{{baseUrl}}/api/v1/maintenance/reinforcement-calls/:id/decline",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Read the technicians’ attendance and overtime",
           "request": {
             "description": "**Responses:** 200",
@@ -11227,6 +11618,185 @@
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/field-team/attendance"
+            }
+          }
+        },
+        {
+          "name": "List the staff certificates",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "certificates"
+              ],
+              "query": [
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "accountId",
+                  "value": ""
+                },
+                {
+                  "description": "On the compound’s today.",
+                  "disabled": true,
+                  "key": "state",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: the removed ones instead of the live.",
+                  "disabled": true,
+                  "key": "removed",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/certificates"
+            }
+          }
+        },
+        {
+          "name": "Add a staff certificate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"accountId\": \"\",\n  \"kind\": \"electrical\",\n  \"title\": \"\",\n  \"expiresOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `accountId` | string (uuid) | yes | Its holder: an active staff member (CERTIFICATE_HOLDER_NOT_ELIGIBLE otherwise). |\n| `expiresOn` | string (date) | yes | Its last day in force; after `issuedOn`. Its holder and the field team are told 30 days ahead and on the day; it blocks nothing. |\n| `fileId` | string (uuid) |  | The paper: one of my own finalized `staff_certificate` files (FILE_NOT_AVAILABLE otherwise). |\n| `issuedOn` | string (date) |  |  |\n| `issuer` | string |  |  |\n| `kind` | `electrical` \\| `plumbing` \\| `gas` \\| `hvac` \\| `working_at_height` \\| `first_aid` \\| `fire_safety` \\| `driving` \\| `security_licence` \\| `other` | yes |  |\n| `reference` | string |  | Its number, as the issuer gave it. |\n| `title` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "certificates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/certificates"
+            }
+          }
+        },
+        {
+          "name": "Get a staff certificate, with its paper",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "certificates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/certificates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change or renew a staff certificate",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"expiresOn\": \"2026-01-01\",\n  \"fileId\": \"\",\n  \"issuedOn\": \"2026-01-01\",\n  \"issuer\": \"\",\n  \"kind\": \"electrical\",\n  \"reference\": \"\",\n  \"title\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `expiresOn` | string (date) |  | A renewal: a new expiry, whose notices start again. |\n| `fileId` | string (uuid) |  | A new paper (the old one goes), or null to remove the one filed. |\n| `issuedOn` | string (date) |  |  |\n| `issuer` | string |  |  |\n| `kind` | `electrical` \\| `plumbing` \\| `gas` \\| `hvac` \\| `working_at_height` \\| `first_aid` \\| `fire_safety` \\| `driving` \\| `security_licence` \\| `other` |  |  |\n| `reference` | string |  |  |\n| `title` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "certificates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/certificates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a staff certificate",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "certificates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/certificates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -11494,6 +12064,219 @@
                 "archive"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/field-team/instructions/:id/archive",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the reinforcement calls",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "reinforcement-calls"
+              ],
+              "query": [
+                {
+                  "description": "Default: all.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/reinforcement-calls"
+            }
+          }
+        },
+        {
+          "name": "Call reinforcement",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"needed\": 1,\n  \"startsAt\": \"2026-01-01T09:00:00.000Z\",\n  \"endsAt\": \"2026-01-01T09:00:00.000Z\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `endsAt` | string (date-time) | yes | 1 to 12 hours after the start. |\n| `needed` | number | yes | How many technicians are needed: the call is filled then. |\n| `startsAt` | string (date-time) | yes | From 15 minutes to 12 hours ahead; the call closes then. |\n| `suggestionId` | string (uuid) |  | The open suggestion it answers (409 REINFORCEMENT_SUGGESTION_DECIDED once decided). |\n| `zoneId` | string (uuid) |  | A zone in service; absent for the whole compound. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "reinforcement-calls"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/reinforcement-calls"
+            }
+          }
+        },
+        {
+          "name": "Get a reinforcement call",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "reinforcement-calls",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/reinforcement-calls/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a reinforcement call",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From `reinforcementDismiss` (a suggestion) or `reinforcementCancel` (a call). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "reinforcement-calls",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/reinforcement-calls/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List the reinforcement suggestions",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "reinforcement-suggestions"
+              ],
+              "query": [
+                {
+                  "description": "Default: all.",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/reinforcement-suggestions"
+            }
+          }
+        },
+        {
+          "name": "Dismiss a reinforcement suggestion",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | From `reinforcementDismiss` (a suggestion) or `reinforcementCancel` (a call). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "reinforcement-suggestions",
+                ":id",
+                "dismiss"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/reinforcement-suggestions/:id/dismiss",
               "variable": [
                 {
                   "description": "",
@@ -11777,6 +12560,36 @@
           }
         },
         {
+          "name": "Get a technician's last known location",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "field-team",
+                "technicians",
+                ":id",
+                "location"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/field-team/technicians/:id/location",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List the zones a technician may cover",
           "request": {
             "description": "**Responses:** 200",
@@ -11794,6 +12607,26 @@
                 "zones"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/field-team/zones"
+            }
+          }
+        },
+        {
+          "name": "List my certificates",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "my-certificates"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/my-certificates"
             }
           }
         }
@@ -11814,7 +12647,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` \\| `text/csv` \\| `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` \\| `contract` \\| `asset_document` \\| `checklist_photo` \\| `data_import` \\| `works_inspection_photo` \\| `gate_face_probe` \\| `gate_id_scan` \\| `market_listing_photo` \\| `gallery_photo` \\| `permit_drawing` \\| `fitout_photo` \\| `damage_appeal_photo` \\| `site_map` \\| `floor_plan` \\| `report_file` \\| `compound_export` \\| `vendor_document` \\| `compliance_evidence` \\| `compound_logo` \\| `unit_entry_photo` \\| `tender_document` \\| `tender_bid` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` \\| `text/csv` \\| `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` \\| `contract` \\| `asset_document` \\| `checklist_photo` \\| `data_import` \\| `works_inspection_photo` \\| `gate_face_probe` \\| `gate_id_scan` \\| `market_listing_photo` \\| `gallery_photo` \\| `permit_drawing` \\| `fitout_photo` \\| `damage_appeal_photo` \\| `site_map` \\| `floor_plan` \\| `report_file` \\| `compound_export` \\| `staff_certificate` \\| `vendor_document` \\| `compliance_evidence` \\| `compound_logo` \\| `unit_entry_photo` \\| `tender_document` \\| `tender_bid` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -59693,6 +60526,66 @@
           }
         },
         {
+          "name": "Get my location consent",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "location-consent"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/location-consent"
+            }
+          }
+        },
+        {
+          "name": "Consent to my location at three steps",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "location-consent"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/location-consent"
+            }
+          }
+        },
+        {
+          "name": "Revoke my location consent",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "technician",
+                "location-consent"
+              ],
+              "raw": "{{baseUrl}}/api/v1/technician/location-consent"
+            }
+          }
+        },
+        {
           "name": "List the tickets assigned to me",
           "request": {
             "description": "**Responses:** 200",
@@ -59857,8 +60750,23 @@
         {
           "name": "Mark I'm on the way",
           "request": {
-            "description": "**Responses:** 204",
-            "header": [],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"location\": {\n    \"latitude\": 30.0444,\n    \"longitude\": 31.2357\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `location` | object |  | Where I am now, only when I consented (409 LOCATION_CONSENT_REQUIRED otherwise: nothing moves). Never continuous: kept 30 days, and never shown to the residents. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "method": "POST",
             "url": {
               "host": [
@@ -60095,8 +61003,23 @@
         {
           "name": "Start the work",
           "request": {
-            "description": "**Responses:** 204",
-            "header": [],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"location\": {\n    \"latitude\": 30.0444,\n    \"longitude\": 31.2357\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `location` | object |  | Where I am now, only when I consented (409 LOCATION_CONSENT_REQUIRED otherwise: nothing moves). Never continuous: kept 30 days, and never shown to the residents. |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "method": "POST",
             "url": {
               "host": [
@@ -60197,8 +61120,23 @@
         {
           "name": "Mark arrival at the door",
           "request": {
-            "description": "**Responses:** 200",
-            "header": [],
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"location\": {\n    \"latitude\": 30.0444,\n    \"longitude\": 31.2357\n  }\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `location` | object |  | Where I am now, only when I consented (409 LOCATION_CONSENT_REQUIRED otherwise: nothing moves). Never continuous: kept 30 days, and never shown to the residents. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "method": "POST",
             "url": {
               "host": [

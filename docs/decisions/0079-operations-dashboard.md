@@ -89,3 +89,6 @@ The manager audit of 2026-11-01 (operations rows MO-2: "موجز تشغيلي ي
 - `liquidityDays` is filled: the live bank and cash accounts' balances over the average daily spending of the 90 days before today (live expenses by their day), whole days, 0 at no cash. It is a number to a `finance.cashflow` holder and stays **null** without the permission, with no account or with nothing spent in the window (never infinite). Finance registers it with `StaffDashboard.registerLiquidity`, as a section; a missing reader stops the start.
 - "Needs you now" gains `cash_below_minimum` (critical: the cash on hand is below the compound's minimum) and `cash_forecast_below_minimum` (warning: a week of the 13-week forecast closes below it), section `finance`, to `finance.cashflow` holders.
 - The Open item "Liquidity days (with cash flow, M3)" is done. The brief does not store them (liquidity is not a section): ADR 0091 Open.
+
+## Update (M2-12b, ADR 0090)
+- **A rise of service pressure, when told, suggests reinforcement** to the field team, in the same transaction under the pressure row's lock: one open suggestion per compound, an inbox item for `field_team.manage`; it lapses when the pressure eases or is turned off. The notice to the dispatch and the managers, and its debounce, are unchanged.

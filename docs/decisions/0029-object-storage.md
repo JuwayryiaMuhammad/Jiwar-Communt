@@ -75,3 +75,6 @@ A ticket's photos (ADR 0032) are claimed the same way and move to the ticket (`t
 ## Update (Phase R1, ADR 0036)
 - A fifth purpose, **`data_export`**: a zip of at most 512 MiB that the server writes itself. It is streamed into a multipart upload (`ObjectStorage.putStream`) and attached to its export request, and nobody uploads one.
 - It is read through a presigned GET with a download name, in no-store responses, and deleted after 7 days by the export sweep and the files sweep.
+
+## Update (M2-12b, ADR 0090)
+- A purpose `staff_certificate`: a photo or a PDF of 10 MB, uploaded by `field_team.manage`, attached to a staff certificate; replaced (`replaced`), withdrawn with the certificate (`withdrawn`) or deleted with the holder's erasure (`erasure`). Read only in a single certificate's no-store view and the holder's own list.

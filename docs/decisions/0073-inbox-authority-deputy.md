@@ -111,3 +111,6 @@ The manager audit (2026-11-01) found that what waits for a staff decision is spr
 
 ## Update (Phase M2-4, ADR 0079)
 - The operations dashboard reads the inbox's count for its badge and the inbox's own list for "needs you now" (its overdue items, then its oldest). The daily brief keeps every type's count (`countAll`), read back to each reader by the types they decide.
+
+## Update (M2-12b, ADR 0090)
+- Three more types: `dangling_account` (`accounts.manage`, 7 days), `access_review` (`accounts.manage`, 14 days: the review's overdue notice is the inbox's own) and `reinforcement_suggestion` (`field_team.manage`, 1 hour). None in bulk. Both CHECKs are recreated with every type in 20270614090500.

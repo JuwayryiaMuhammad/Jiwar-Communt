@@ -431,6 +431,15 @@ The full notes for the apps are in [`notes/field-team.md`](notes/field-team.md).
 - **Instructions.** `POST/GET /staff/field-team/instructions`, `…/{id}`, `…/{id}/archive`; the technician's `GET /maintenance/instructions`, `…/{id}`, `…/{id}/acknowledge`. The audience enum gains `technicians`, the reach enum `on_duty`.
 - **Calls for help.** `POST /maintenance/help-requests`, `GET …/mine`, `…/{id}/resolve|cancel`; the field team's `GET /staff/field-team/help-requests[/{id}]`, `…/{id}/take|resolve`. Pushes `technician_help.requested|taken|assigned|escalated` with `helpKind` only.
 
+### The field team, part b (ADR 0090)
+
+The full notes are in [`notes/field-team.md`](notes/field-team.md) (location, certificates, reinforcement) and [`notes/account-checks.md`](notes/account-checks.md).
+
+- **Location.** `GET|POST|DELETE /technician/location-consent`; `location {latitude, longitude, accuracyMeters?}` on `POST /technician/tickets/{id}/en-route`, `…/start` and `…/visits/{visitId}/arrive` (409 `LOCATION_CONSENT_REQUIRED` without consent); `GET /staff/field-team/technicians/{id}/location` (`field_team.manage` or `tickets.dispatch`, audited). Kept 30 days.
+- **Certificates.** `/staff/field-team/certificates[/{id}]` (`field_team.manage`), `GET /staff/my-certificates`; file purpose `staff_certificate`; pushes `staff_certificate.expiring|expires_today`; `source: staff_certificate` and `holderId|holderName` in the compliance calendar.
+- **Account checks.** `/staff/access/settings`, `/staff/access/dangling-accounts[/{id}[/keep|/deactivate]]`, `/staff/access/reviews[/{id}[/lines/{lineId}/decide]]` (`accounts.manage`); inbox types `dangling_account`, `access_review`.
+- **Reinforcement.** `/staff/field-team/reinforcement-suggestions[/{id}/dismiss]`, `/staff/field-team/reinforcement-calls[/{id}[/cancel]]`; the technician's `GET /maintenance/reinforcement-calls`, `…/{id}/accept|decline`; inbox type `reinforcement_suggestion`; pushes `reinforcement.suggested|called|filled|cancelled` (`called` critical).
+
 ### Payables and commitments (ADR 0089)
 
 The full notes are in [`notes/payables.md`](notes/payables.md).

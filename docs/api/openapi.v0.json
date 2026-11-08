@@ -130,6 +130,302 @@
         ],
         "type": "object"
       },
+      "AccessReviewDecision": {
+        "description": "`revoke` deactivates the account in the same transaction; the manager’s line is kept only.",
+        "enum": [
+          "keep",
+          "revoke"
+        ],
+        "type": "string"
+      },
+      "AccessReviewDetailView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kept": {
+            "type": "number"
+          },
+          "left": {
+            "description": "Lines whose account left first.",
+            "type": "number"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "number": {
+            "example": "AR-000001",
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "openedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null: the sweep opened it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "reviewLines": {
+            "items": {
+              "$ref": "#/components/schemas/AccessReviewLineView"
+            },
+            "type": "array"
+          },
+          "revoked": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessReviewStatus"
+              }
+            ]
+          },
+          "undecided": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "openedAt",
+          "openedBy",
+          "lines",
+          "kept",
+          "revoked",
+          "left",
+          "undecided",
+          "closedAt",
+          "reviewLines"
+        ],
+        "type": "object"
+      },
+      "AccessReviewLineDecision": {
+        "enum": [
+          "keep",
+          "revoke",
+          "left"
+        ],
+        "type": "string"
+      },
+      "AccessReviewLineView": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "accountType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckedAccountType"
+              }
+            ]
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessReviewLineDecision"
+              }
+            ],
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActiveAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "permissions": {
+            "description": "The role’s, then.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "protected": {
+            "description": "The system manager’s line: kept only.",
+            "type": "boolean"
+          },
+          "role": {
+            "$ref": "#/components/schemas/AccessReviewRoleView"
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "accountType",
+          "role",
+          "permissions",
+          "lastActiveAt",
+          "protected",
+          "decision",
+          "decidedAt",
+          "decidedBy"
+        ],
+        "type": "object"
+      },
+      "AccessReviewRoleView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "description": "A system role.",
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "description": "A custom role.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "name"
+        ],
+        "type": "object"
+      },
+      "AccessReviewStatus": {
+        "enum": [
+          "open",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "AccessReviewView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kept": {
+            "type": "number"
+          },
+          "left": {
+            "description": "Lines whose account left first.",
+            "type": "number"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "number": {
+            "example": "AR-000001",
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "openedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Null: the sweep opened it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "revoked": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessReviewStatus"
+              }
+            ]
+          },
+          "undecided": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "openedAt",
+          "openedBy",
+          "lines",
+          "kept",
+          "revoked",
+          "left",
+          "undecided",
+          "closedAt"
+        ],
+        "type": "object"
+      },
+      "AccessReviewViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AccessReviewView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AccountCheckSettingsView": {
+        "properties": {
+          "idleDays": {
+            "type": "number"
+          },
+          "reviewEveryDays": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "idleDays",
+          "reviewEveryDays"
+        ],
+        "type": "object"
+      },
       "AccountDetailView": {
         "properties": {
           "birthDate": {
@@ -10272,6 +10568,14 @@
         ],
         "type": "object"
       },
+      "CheckedAccountType": {
+        "enum": [
+          "staff",
+          "manager",
+          "contractor"
+        ],
+        "type": "string"
+      },
       "ChecklistAnswerDto": {
         "properties": {
           "note": {
@@ -14784,6 +15088,16 @@
             "format": "date",
             "type": "string"
           },
+          "holderId": {
+            "description": "A staff certificate’s holder.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "holderName": {
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -14794,14 +15108,15 @@
             "type": "string"
           },
           "kind": {
-            "description": "ComplianceKind, or the paper’s VendorDocumentKind.",
+            "description": "ComplianceKind, the paper’s VendorDocumentKind, or the certificate’s StaffCertificateKind.",
             "type": "string"
           },
           "source": {
-            "description": "`compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077).",
+            "description": "`compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077); `staff_certificate`: a staff member’s certificate expiring (ADR 0090).",
             "enum": [
               "compliance",
-              "vendor_document"
+              "vendor_document",
+              "staff_certificate"
             ],
             "type": "string"
           },
@@ -14835,7 +15150,9 @@
           "itemId",
           "title",
           "vendorId",
-          "vendorName"
+          "vendorName",
+          "holderId",
+          "holderName"
         ],
         "type": "object"
       },
@@ -21532,6 +21849,61 @@
         ],
         "type": "object"
       },
+      "CreateStaffCertificateDto": {
+        "properties": {
+          "accountId": {
+            "description": "Its holder: an active staff member (CERTIFICATE_HOLDER_NOT_ELIGIBLE otherwise).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "expiresOn": {
+            "description": "Its last day in force; after `issuedOn`. Its holder and the field team are told 30 days ahead and on the day; it blocks nothing.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "The paper: one of my own finalized `staff_certificate` files (FILE_NOT_AVAILABLE otherwise).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "issuer": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffCertificateKind"
+              }
+            ]
+          },
+          "reference": {
+            "description": "Its number, as the issuer gave it.",
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "kind",
+          "title",
+          "expiresOn"
+        ],
+        "type": "object"
+      },
       "CreateStandingInstructionDto": {
         "properties": {
           "action": {
@@ -23644,6 +24016,130 @@
         ],
         "type": "object"
       },
+      "DanglingFindingStatus": {
+        "enum": [
+          "open",
+          "kept",
+          "deactivated",
+          "cleared"
+        ],
+        "type": "string"
+      },
+      "DanglingFindingView": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "accountType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckedAccountType"
+              }
+            ]
+          },
+          "clearedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "foundAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActiveAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "mutedUntil": {
+            "description": "Kept: not found again before then.",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DanglingReason"
+              }
+            ],
+            "description": "`idle`: no sign-in for the compound’s idle days; `never_signed_in`: none within 14 days of its creation; `vendor_suspended`: a contractor whose vendor is suspended."
+          },
+          "reasonCode": {
+            "description": "Why it was kept (`danglingKeep`).",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DanglingFindingStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "accountType",
+          "reason",
+          "lastActiveAt",
+          "foundAt",
+          "status",
+          "decidedAt",
+          "decidedBy",
+          "reasonCode",
+          "mutedUntil",
+          "clearedAt"
+        ],
+        "type": "object"
+      },
+      "DanglingFindingViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DanglingFindingView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "DanglingReason": {
+        "description": "`idle`: no sign-in for the compound’s idle days; `never_signed_in`: none within 14 days of its creation; `vendor_suspended`: a contractor whose vendor is suspended.",
+        "enum": [
+          "idle",
+          "vendor_suspended",
+          "never_signed_in"
+        ],
+        "type": "string"
+      },
       "DashboardAlertView": {
         "properties": {
           "code": {
@@ -24002,6 +24498,22 @@
         "required": [
           "from",
           "to"
+        ],
+        "type": "object"
+      },
+      "DecideAccessReviewLineDto": {
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessReviewDecision"
+              }
+            ],
+            "description": "`revoke` deactivates the account in the same transaction; the manager’s line is kept only."
+          }
+        },
+        "required": [
+          "decision"
         ],
         "type": "object"
       },
@@ -30407,6 +30919,98 @@
         ],
         "type": "object"
       },
+      "FieldLocationConsentView": {
+        "properties": {
+          "grantedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "grantedAt"
+        ],
+        "type": "object"
+      },
+      "FieldLocationDto": {
+        "properties": {
+          "accuracyMeters": {
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "latitude": {
+            "example": 30.0444,
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number"
+          },
+          "longitude": {
+            "example": 31.2357,
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "type": "object"
+      },
+      "FieldLocationMoment": {
+        "description": "On the way (`en_route`), at the door (`arrived`, a visit), or starting the work (`started`).",
+        "enum": [
+          "en_route",
+          "arrived",
+          "started"
+        ],
+        "type": "string"
+      },
+      "FieldLocationPointView": {
+        "properties": {
+          "accuracyMeters": {
+            "nullable": true,
+            "type": "number"
+          },
+          "capturedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "moment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FieldLocationMoment"
+              }
+            ],
+            "description": "On the way (`en_route`), at the door (`arrived`, a visit), or starting the work (`started`)."
+          },
+          "ticketId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticketNumber": {
+            "example": "T-000123",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "moment",
+          "ticketId",
+          "ticketNumber",
+          "latitude",
+          "longitude",
+          "accuracyMeters",
+          "capturedAt"
+        ],
+        "type": "object"
+      },
       "FileLinkView": {
         "properties": {
           "expiresAt": {
@@ -30523,6 +31127,7 @@
           "floor_plan",
           "report_file",
           "compound_export",
+          "staff_certificate",
           "vendor_document",
           "compliance_evidence",
           "compound_logo",
@@ -37603,7 +38208,10 @@
           "contract_disbursement",
           "tender_opening",
           "cash_custody",
-          "custody_variance"
+          "custody_variance",
+          "dangling_account",
+          "access_review",
+          "reinforcement_suggestion"
         ],
         "type": "string"
       },
@@ -40602,6 +41210,18 @@
         "required": [
           "unitId",
           "startsAt"
+        ],
+        "type": "object"
+      },
+      "KeepDanglingAccountDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From `danglingKeep`; the account is muted for 90 days.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -45945,6 +46565,32 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "MyFieldLocationView": {
+        "properties": {
+          "consent": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FieldLocationConsentView"
+              }
+            ],
+            "description": "Null: not consented, and no point is taken.",
+            "nullable": true,
+            "type": "object"
+          },
+          "points": {
+            "description": "Newest first, 100 at most; kept 30 days.",
+            "items": {
+              "$ref": "#/components/schemas/FieldLocationPointView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "consent",
+          "points"
         ],
         "type": "object"
       },
@@ -58945,6 +59591,308 @@
         ],
         "type": "object"
       },
+      "ReinforcementAnswer": {
+        "enum": [
+          "accepted",
+          "declined"
+        ],
+        "type": "string"
+      },
+      "ReinforcementCallStatus": {
+        "description": "`open` until as many accept (`filled`), its start (`closed`) or it is called off (`cancelled`).",
+        "enum": [
+          "open",
+          "filled",
+          "closed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "ReinforcementCallView": {
+        "properties": {
+          "accepted": {
+            "type": "number"
+          },
+          "cancelReason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "myAnswer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReinforcementAnswer"
+              }
+            ],
+            "description": "A technician’s read: their own answer, or null.",
+            "nullable": true
+          },
+          "needed": {
+            "type": "number"
+          },
+          "recipientCount": {
+            "description": "Technicians it reached.",
+            "type": "number"
+          },
+          "recipients": {
+            "description": "The field team’s single read: whom it reached and their answers. Null in lists and for a technician.",
+            "items": {
+              "$ref": "#/components/schemas/ReinforcementRecipientView"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sentBy": {
+            "$ref": "#/components/schemas/AccountRefView"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReinforcementCallStatus"
+              }
+            ],
+            "description": "`open` until as many accept (`filled`), its start (`closed`) or it is called off (`cancelled`)."
+          },
+          "suggestionId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReinforcementZoneView"
+              }
+            ],
+            "description": "Null: the whole compound.",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "needed",
+          "accepted",
+          "startsAt",
+          "endsAt",
+          "zone",
+          "sentBy",
+          "sentAt",
+          "recipientCount",
+          "closedAt",
+          "cancelReason",
+          "suggestionId",
+          "recipients",
+          "myAnswer"
+        ],
+        "type": "object"
+      },
+      "ReinforcementCallViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReinforcementCallView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReinforcementReasonDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "From `reinforcementDismiss` (a suggestion) or `reinforcementCancel` (a call).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "ReinforcementRecipientView": {
+        "properties": {
+          "answer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReinforcementAnswer"
+              }
+            ],
+            "nullable": true
+          },
+          "answeredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "slotId": {
+            "description": "The roster slot an acceptance wrote.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "technician": {
+            "$ref": "#/components/schemas/AccountRefView"
+          }
+        },
+        "required": [
+          "technician",
+          "answer",
+          "answeredAt",
+          "slotId"
+        ],
+        "type": "object"
+      },
+      "ReinforcementSuggestionStatus": {
+        "enum": [
+          "open",
+          "answered",
+          "dismissed",
+          "lapsed"
+        ],
+        "type": "string"
+      },
+      "ReinforcementSuggestionView": {
+        "properties": {
+          "available": {
+            "description": "Available technicians then.",
+            "type": "number"
+          },
+          "callId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "openTickets": {
+            "description": "Open tickets when told.",
+            "type": "number"
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reasonCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReinforcementSuggestionStatus"
+              }
+            ],
+            "description": "`open` until a call answers it, it is dismissed, or the pressure eases (`lapsed`)."
+          },
+          "threshold": {
+            "description": "Open tickets per technician.",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "raisedAt",
+          "openTickets",
+          "available",
+          "threshold",
+          "createdAt",
+          "decidedAt",
+          "decidedBy",
+          "reasonCode",
+          "callId"
+        ],
+        "type": "object"
+      },
+      "ReinforcementSuggestionViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReinforcementSuggestionView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ReinforcementZoneView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
       "ReinviteVisitorDto": {
         "properties": {
           "schedule": {
@@ -65923,6 +66871,42 @@
         ],
         "type": "object"
       },
+      "SendReinforcementCallDto": {
+        "properties": {
+          "endsAt": {
+            "description": "1 to 12 hours after the start.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "needed": {
+            "description": "How many technicians are needed: the call is filled then.",
+            "maximum": 10,
+            "minimum": 1,
+            "type": "number"
+          },
+          "startsAt": {
+            "description": "From 15 minutes to 12 hours ahead; the call closes then.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "suggestionId": {
+            "description": "The open suggestion it answers (409 REINFORCEMENT_SUGGESTION_DECIDED once decided).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "A zone in service; absent for the whole compound.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "needed",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
       "SendSuggestionDto": {
         "properties": {
           "amount": {
@@ -69073,6 +70057,139 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "StaffCertificateKind": {
+        "enum": [
+          "electrical",
+          "plumbing",
+          "gas",
+          "hvac",
+          "working_at_height",
+          "first_aid",
+          "fire_safety",
+          "driving",
+          "security_licence",
+          "other"
+        ],
+        "type": "string"
+      },
+      "StaffCertificateState": {
+        "enum": [
+          "valid",
+          "expiring",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "StaffCertificateView": {
+        "properties": {
+          "addedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "daysLeft": {
+            "description": "Days from today to its expiry; negative once expired.",
+            "type": "number"
+          },
+          "expiresOn": {
+            "description": "Its last day in force.",
+            "format": "date",
+            "type": "string"
+          },
+          "fileUrl": {
+            "description": "A short-lived link to the paper, on a single certificate only; null in lists and when none is filed.",
+            "nullable": true,
+            "type": "string"
+          },
+          "hasFile": {
+            "description": "Whether a paper is filed.",
+            "type": "boolean"
+          },
+          "holder": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountRefView"
+              }
+            ],
+            "description": "Its holder."
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "issuer": {
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffCertificateKind"
+              }
+            ]
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "removedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffCertificateState"
+              }
+            ],
+            "description": "On the compound’s today: `expiring` within 30 days, `expired` from the day after its expiry. It blocks nothing."
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "holder",
+          "kind",
+          "title",
+          "issuer",
+          "reference",
+          "issuedOn",
+          "expiresOn",
+          "state",
+          "daysLeft",
+          "hasFile",
+          "fileUrl",
+          "addedAt",
+          "removedAt"
+        ],
+        "type": "object"
+      },
+      "StaffCertificateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/StaffCertificateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -77943,6 +79060,34 @@
         ],
         "type": "string"
       },
+      "TechnicianLastLocationView": {
+        "properties": {
+          "consent": {
+            "description": "Whether they consent now.",
+            "type": "boolean"
+          },
+          "last": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FieldLocationPointView"
+              }
+            ],
+            "description": "Their latest point of the 30 days; null when none (no consent, or no step since).",
+            "nullable": true,
+            "type": "object"
+          },
+          "technicianId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "technicianId",
+          "consent",
+          "last"
+        ],
+        "type": "object"
+      },
       "TechnicianMessageView": {
         "properties": {
           "body": {
@@ -79621,6 +80766,19 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "TicketStepDto": {
+        "properties": {
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FieldLocationDto"
+              }
+            ],
+            "description": "Where I am now, only when I consented (409 LOCATION_CONSENT_REQUIRED otherwise: nothing moves). Never continuous: kept 30 days, and never shown to the residents."
+          }
+        },
+        "type": "object"
       },
       "TicketUnitLocation": {
         "enum": [
@@ -81802,6 +82960,23 @@
         ],
         "type": "object"
       },
+      "UpdateAccountCheckSettingsDto": {
+        "properties": {
+          "idleDays": {
+            "description": "Days without a sign-in that make an account of the compound’s side dangling.",
+            "maximum": 365,
+            "minimum": 14,
+            "type": "number"
+          },
+          "reviewEveryDays": {
+            "description": "Every how many days an access review opens.",
+            "maximum": 365,
+            "minimum": 30,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
       "UpdateAccountStatusDto": {
         "properties": {
           "status": {
@@ -83276,7 +84451,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 26,
+            "maxItems": 29,
             "minItems": 1,
             "type": "array"
           }
@@ -84322,6 +85497,53 @@
           },
           "nameEn": {
             "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateStaffCertificateDto": {
+        "properties": {
+          "expiresOn": {
+            "description": "A renewal: a new expiry, whose notices start again.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "A new paper (the old one goes), or null to remove the one filed.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "issuedOn": {
+            "format": "date",
+            "nullable": true,
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "issuer": {
+            "maxLength": 120,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffCertificateKind"
+              }
+            ]
+          },
+          "reference": {
+            "maxLength": 60,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
             "minLength": 1,
             "type": "string"
           }
@@ -112256,6 +113478,114 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/maintenance/reinforcement-calls": {
+      "get": {
+        "description": "Newest first, with my answer.",
+        "operationId": "TechnicianReinforcementController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementCallViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the reinforcement calls that reached me",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/reinforcement-calls/{id}/accept": {
+      "post": {
+        "description": "Once, while open and before its start: a roster slot for its window is written (409 ROSTER_OVERLAP when it clashes with mine). Going on duty fills it.",
+        "operationId": "TechnicianReinforcementController_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept a reinforcement call",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/maintenance/reinforcement-calls/{id}/decline": {
+      "post": {
+        "description": "Once, while open.",
+        "operationId": "TechnicianReinforcementController_decline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decline a reinforcement call",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/maintenance/replacement-recommendations": {
       "get": {
         "operationId": "ReplacementsController_list",
@@ -131119,6 +132449,392 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/access/dangling-accounts": {
+      "get": {
+        "description": "Newest first, 500 at most.",
+        "operationId": "AccountChecksController_findings",
+        "parameters": [
+          {
+            "description": "Default: all.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DanglingFindingStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DanglingFindingViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the dangling-account findings",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/access/dangling-accounts/{id}": {
+      "get": {
+        "operationId": "AccountChecksController_finding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DanglingFindingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a dangling-account finding",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/access/dangling-accounts/{id}/deactivate": {
+      "post": {
+        "description": "Once: the account is deactivated in the same transaction, as a status change is (its sessions end, the domains react).",
+        "operationId": "AccountChecksController_deactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DanglingFindingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Deactivate a dangling account",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/access/dangling-accounts/{id}/keep": {
+      "post": {
+        "description": "Once, with a code from `danglingKeep`: not found again for 90 days. Never my own (409 CANNOT_CHANGE_OWN_STATUS).",
+        "operationId": "AccountChecksController_keep",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeepDanglingAccountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DanglingFindingView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Keep a dangling account",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/access/reviews": {
+      "get": {
+        "description": "Newest first, 100 at most.",
+        "operationId": "AccountChecksController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessReviewViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the access reviews",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "A frozen snapshot of every active staff, manager and contractor account: its role, the role’s permissions, its last sign-in. One open at a time (409 ACCESS_REVIEW_OPEN).",
+        "operationId": "AccountChecksController_open",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessReviewDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open an access review now",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/access/reviews/{id}": {
+      "get": {
+        "operationId": "AccountChecksController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessReviewDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an access review, with its lines",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/access/reviews/{id}/lines/{lineId}/decide": {
+      "post": {
+        "description": "Once, never my own line (403 ACCESS_REVIEW_OWN_LINE). `revoke` deactivates the account in the same transaction; the system manager’s line is kept only (409 ACCESS_REVIEW_LINE_PROTECTED). The review closes with its last line.",
+        "operationId": "AccountChecksController_decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lineId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAccessReviewLineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessReviewDetailView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Keep or revoke a line of an access review",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/access/settings": {
+      "get": {
+        "description": "The idle days (60 by default) and the reviews’ cadence (90).",
+        "operationId": "AccountChecksController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountCheckSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the account checks’ settings",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "operationId": "AccountChecksController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccountCheckSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountCheckSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the account checks’ settings",
+        "tags": [
+          "accounts"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/billing-plans": {
       "get": {
         "operationId": "BillingPlansController_list",
@@ -136086,6 +137802,220 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/field-team/certificates": {
+      "get": {
+        "description": "The live ones (or the removed, `removed=true`), soonest expiry first, 500 at most; without their papers’ links.",
+        "operationId": "StaffCertificatesController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "accountId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "On the compound’s today.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StaffCertificateState"
+            }
+          },
+          {
+            "description": "`true`: the removed ones instead of the live.",
+            "in": "query",
+            "name": "removed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffCertificateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the staff certificates",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "For an active staff member, with the day it expires and its paper when filed. Warn only: its holder and the field team are told 30 days ahead and on the day; an expired one blocks no assignment and no work.",
+        "operationId": "StaffCertificatesController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffCertificateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffCertificateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a staff certificate",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/certificates/{id}": {
+      "delete": {
+        "description": "Once (filed by mistake, or no longer held): its paper goes, the record stays.",
+        "operationId": "StaffCertificatesController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a staff certificate",
+        "tags": [
+          "field-team"
+        ],
+        "x-stability": "draft"
+      },
+      "get": {
+        "operationId": "StaffCertificatesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffCertificateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a staff certificate, with its paper",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Its words, its days, its paper (replaced, or removed with null). A new expiry is a renewal: its notices start again.",
+        "operationId": "StaffCertificatesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffCertificateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffCertificateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change or renew a staff certificate",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/field-team/help-requests": {
       "get": {
         "description": "Newest first.",
@@ -136438,6 +138368,261 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/field-team/reinforcement-calls": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "StaffReinforcementController_calls",
+        "parameters": [
+          {
+            "description": "Default: all.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReinforcementCallStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementCallViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the reinforcement calls",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Asks every technician off duty now to come in for a window (critical): 1 to 10 needed, from 15 minutes to 12 hours ahead, for 1 to 12 hours, in a zone or the whole compound. Accepting writes a roster slot.",
+        "operationId": "StaffReinforcementController_send",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendReinforcementCallDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call reinforcement",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/reinforcement-calls/{id}": {
+      "get": {
+        "description": "With whom it reached and their answers.",
+        "operationId": "StaffReinforcementController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a reinforcement call",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/reinforcement-calls/{id}/cancel": {
+      "post": {
+        "description": "Once, while open, with a code from `reinforcementCancel`: the accepted slots nobody filled are cancelled, and whoever it reached and did not decline is told.",
+        "operationId": "StaffReinforcementController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinforcementReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementCallView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a reinforcement call",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/reinforcement-suggestions": {
+      "get": {
+        "description": "Made when service pressure’s rise is told; newest first. Nothing reaches a technician by itself.",
+        "operationId": "StaffReinforcementController_suggestions",
+        "parameters": [
+          {
+            "description": "Default: all.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReinforcementSuggestionStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementSuggestionViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the reinforcement suggestions",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/reinforcement-suggestions/{id}/dismiss": {
+      "post": {
+        "description": "Once, with a code from `reinforcementDismiss`.",
+        "operationId": "StaffReinforcementController_dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReinforcementReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReinforcementSuggestionView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dismiss a reinforcement suggestion",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/field-team/roster/slots": {
       "get": {
         "description": "The compound’s days `from` … `to`, inclusive (default today and the 13 after), 31 at most (PERIOD_TOO_LONG).",
@@ -136778,6 +138963,45 @@
           }
         ],
         "summary": "List the technicians the roster may schedule",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/field-team/technicians/{id}/location": {
+      "get": {
+        "description": "Their latest point of the 30 days, taken on the way, at the door or starting the work, with their consent. Each read is audited: who looked, never where.",
+        "operationId": "StaffTechnicianLocationController_last",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianLastLocationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a technician's last known location",
         "tags": [
           "field-team"
         ],
@@ -146238,6 +148462,36 @@
         "tags": [
           "units"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/my-certificates": {
+      "get": {
+        "description": "My live ones, soonest expiry first, with their papers.",
+        "operationId": "MyCertificatesController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffCertificateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my certificates",
+        "tags": [
+          "field-team"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },
@@ -160499,6 +162753,92 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/technician/location-consent": {
+      "delete": {
+        "description": "No point is taken any more, and every point taken goes with it. With none to revoke, nothing changes.",
+        "operationId": "TechnicianLocationController_revoke",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyFieldLocationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke my location consent",
+        "tags": [
+          "technician"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "get": {
+        "description": "Whether I consent, and my own points of the 30 days: where I was on the way, at the door and starting the work.",
+        "operationId": "TechnicianLocationController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyFieldLocationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my location consent",
+        "tags": [
+          "technician"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "On the way, at the door and starting the work, a point goes with the step when the app sends one; never in between. Kept 30 days; never shown to the residents. Consenting again answers the same.",
+        "operationId": "TechnicianLocationController_grant",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyFieldLocationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consent to my location at three steps",
+        "tags": [
+          "technician"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/technician/meters/{id}": {
       "get": {
         "operationId": "TechnicianMetersController_get",
@@ -161149,6 +163489,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketStepDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": ""
@@ -161997,6 +164347,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketStepDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": ""
@@ -162118,6 +164478,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketStepDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {

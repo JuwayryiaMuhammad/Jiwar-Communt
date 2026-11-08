@@ -69,3 +69,6 @@ The manager audit (2026-11-01) found no compliance calendar: readiness programs 
 - **The races are tested** (×5 rounds): two completions of one due day, a completion against a retirement (`test/compliance/compliance-concurrency`); a close against a new action (`test/security/corrective-actions-concurrency`); two lockdown starts, the manager's and a guard's, and two from the office (`test/security/office-lockdown`).
 - **The manager dashboard** gains Compliance (items, an item's archive and completion, retire), the compliance calendar, the safety KPIs, an incident's corrective actions (the close disabled while one is open), My corrective actions, Lock down on the lockdown page, and drills in readiness.
 - **The API notes** are in [`docs/api/notes/compliance-safety.md`](../api/notes/compliance-safety.md).
+
+## Update (M2-12b, ADR 0090)
+- **The calendar reads the staff's certificates** where they are, as the vendors' papers: a live certificate of an active holder, `source: staff_certificate`, with `holderId` and `holderName` (null on the other sources), due soon within its 30 days, expired from the day after. The report and the board's section are unchanged.

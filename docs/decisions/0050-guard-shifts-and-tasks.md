@@ -297,3 +297,6 @@ A new delivery category, `guard_duty`. Params are codes at most: never a name, a
 - **The roster is made 28 days ahead.** A template edited means ended and made again; slots already swapped stay.
 - **A gate service accepted by a guard in a zone** counts at no gate in the daily report.
 - **No payroll**, and no export of attendance as CSV yet.
+
+## Update (M2-12b, ADR 0090)
+- **A single slot of a technician's** may be written by a reinforcement call's acceptance, made by the call's sender, with the same lock and overlap rule (`ROSTER_OVERLAP`); a call called off cancels the accepted ones nobody filled with `schedule_change`, by whoever called it off. The slots' reason CHECK is unchanged.

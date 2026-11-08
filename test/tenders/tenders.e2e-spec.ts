@@ -3,14 +3,14 @@ import { err } from '../api/request';
 import { budgetHelpers, type BudgetBody } from '../setup/budgets';
 import { day } from '../setup/compound-clock';
 import { dbClock } from '../setup/compound-clock';
-import {
-  nationalIdFor,
-  uniqueEmail,
-  uniquePhone,
-  uniqueSuffix,
-} from '../setup/fixtures';
+import { nationalIdFor, uniquePhone, uniqueSuffix } from '../setup/fixtures';
 import { fileHelpers } from '../setup/files';
-import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import {
+  createHttpHarness,
+  uniqueEmail,
+  type HttpHarness,
+} from '../setup/http-app';
+import { deferred } from '../setup/permits';
 import { required } from '../setup/test-env';
 
 type Who = { id: string; token: string };
@@ -613,20 +613,23 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
           budgetLineId: budget.lines[0].id,
         }).expect(201)
       ).body as { id: string };
-      const send = async (body: object = {}) =>
-        http('post', '/contractor/invoices', ann.token, {
-          vendorNumber: `F-${uniqueSuffix()}`,
-          issuedOn: day(0),
-          dueOn: day(15),
-          contractId: contract.id,
-          invoiceFileId: await files.ready(
-            ann.token,
-            'expense_invoice',
-            'application/pdf',
-          ),
-          lines: [{ description: 'Quarterly service', amount: '3000.00' }],
-          ...body,
-        });
+      const send = (body: object = {}) =>
+        deferred(
+          (async () =>
+            http('post', '/contractor/invoices', ann.token, {
+              vendorNumber: `F-${uniqueSuffix()}`,
+              issuedOn: day(0),
+              dueOn: day(15),
+              contractId: contract.id,
+              invoiceFileId: await files.ready(
+                ann.token,
+                'expense_invoice',
+                'application/pdf',
+              ),
+              lines: [{ description: 'Quarterly service', amount: '3000.00' }],
+              ...body,
+            }))(),
+        );
       const sent = (await send().expect(201)).body as {
         id: string;
         status: string;

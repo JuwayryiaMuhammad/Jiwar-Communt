@@ -67,6 +67,7 @@ describe('Reports — the curated reports', () => {
       'service_by_building',
       'energy_cost',
       'collections_by_building',
+      'cash_flow',
     ]);
     expect(all.data[0].groupBy[0]).toBe('building');
     const mine = (await get('/staff/reports', s.supervisor.token).expect(200))

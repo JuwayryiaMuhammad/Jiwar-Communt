@@ -1303,3 +1303,6 @@ export const M33_COVERAGE: readonly string[] = [
   'compound_export.failed',
   'compound_export.expired',
 ];
+
+/** Cash flow and liquidity (ADR 0091), covered by test/cashflow/audit-coverage.e2e-spec.ts. */
+export const M34_COVERAGE: readonly string[] = ['cash_flow.settings_changed'];

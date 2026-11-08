@@ -2988,6 +2988,12 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   technician_help_requests_escalated_before_taken: {
     guarded: 'escalated_at and taken_at IS NULL are tested first',
   },
+  // Cash flow (ADR 0091).
+  finance_settings_cash_minimum: {
+    guarded:
+      'cash_minimum is tested IS NULL first; the comparison runs only on a value',
+  },
+  finance_settings_cash_low_shape: {},
   // Payables and commitments (ADR 0089).
   finance_settings_variance_reason_pct: {
     guarded:

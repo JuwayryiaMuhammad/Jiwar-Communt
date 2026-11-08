@@ -41,6 +41,7 @@ import {
 import { CONTRACTOR_ROUTES } from './contractors';
 import { TREASURY_ROUTES } from './treasury';
 import { REPORTS_ROUTES } from './reports';
+import { CASH_FLOW_ROUTES } from './cash-flow';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
 import { FIELD_SAFETY_ROUTES } from './field-safety';
@@ -476,4 +477,6 @@ export const ROUTES: Row[] = [
   ...TREASURY_ROUTES,
   // ADR 0086.
   ...REPORTS_ROUTES,
+  // ADR 0091.
+  ...CASH_FLOW_ROUTES,
 ];

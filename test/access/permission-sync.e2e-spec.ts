@@ -726,6 +726,7 @@ describe('Permission sync', () => {
       'dashboard.read',
       'finance.billing',
       'finance.budget',
+      'finance.cashflow',
       'finance.invoice',
       'finance.payables',
       'finance.payments',
@@ -800,6 +801,7 @@ describe('Permission sync', () => {
       'dashboard.read',
       'finance.billing',
       'finance.budget',
+      'finance.cashflow',
       'finance.invoice',
       'finance.payables',
       'finance.payments',
@@ -819,6 +821,7 @@ describe('Permission sync', () => {
       'dashboard.read',
       'finance.billing',
       'finance.budget',
+      'finance.cashflow',
       'finance.invoice',
       'finance.payables',
       'finance.payments',
@@ -3204,6 +3207,59 @@ describe('Permission sync', () => {
         expect(
           (await role(t, key)).permissions.filter((p) => m32.includes(p)),
         ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M3-4 (ADR 0091)', () => {
+    const m34 = ['finance.cashflow'];
+    /** The catalog before M3-4: no cash flow permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m34.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m34.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: finance.cashflow to the manager and the accountant; no other role gains it', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M3-4 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual(m34);
+      expect(report.rolesCreated).toEqual([]);
+      for (const key of ['manager', 'accountant'])
+        expect((await role(t, key)).permissions).toContain('finance.cashflow');
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'collector',
+        'unit_proxy',
+      ])
+        expect((await role(t, key)).permissions).not.toContain(
+          'finance.cashflow',
+        );
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

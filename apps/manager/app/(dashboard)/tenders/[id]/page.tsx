@@ -2,7 +2,7 @@
 
 import { humanize, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, Field, Input, PageHeader, useToast } from '@jiwar/ui';
+import { Button, Card, CardHeader, DataTable, Field, Input, PageHeader, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -73,7 +73,8 @@ export default function TenderPage() {
             }
           />
           <ErrorAlert error={publish.error ?? open.error ?? invite.error} />
-          <Card title="Invited">
+          <Card>
+            <CardHeader title="Invited" />
             <DataTable<Tender['invitations'][number]>
               rows={q.data.invitations}
               rowKey={(i) => i.id}
@@ -96,7 +97,8 @@ export default function TenderPage() {
             ) : null}
             {shownLink ? <p className="hint">Send this link now; it is not shown again: {shownLink}</p> : null}
           </Card>
-          <Card title="Bids" flush>
+          <Card flush>
+            <CardHeader title="Bids" />
             <DataTable<Bid>
               rows={q.data.bids}
               rowKey={(b) => b.id}

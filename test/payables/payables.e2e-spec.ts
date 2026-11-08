@@ -689,7 +689,9 @@ describe('Payables and commitments (ADR 0089)', () => {
           openedOn: today(),
         }).expect(201)
       ).body as { id: string };
-      const inv = (await record({}).expect(201)).body as Invoice;
+      const inv = (
+        await record({ contractId: (await contract()).id }).expect(201)
+      ).body as Invoice;
       await approve(inv.id).expect(200);
       expect(
         err(await pay(inv.id, { cashAccountId: undefined }).expect(400)).fields,

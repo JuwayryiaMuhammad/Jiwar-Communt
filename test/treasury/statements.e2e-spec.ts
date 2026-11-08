@@ -1,6 +1,7 @@
 import { err } from '../api/request';
 import { day } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
+import { deferred } from '../setup/permits';
 import {
   treasuryHelpers,
   type AccountBody,
@@ -58,14 +59,17 @@ describe('Treasury — bank statements', () => {
   const ref = () => `TRF-${Date.now() % 1e6}-${++n}`;
   const csv = (lines: string[]) =>
     ['date,amount,reference,description', ...lines].join('\r\n');
-  const check = async (text: string, accountId = s.bank.id) =>
-    t.http(
-      'post',
-      `/staff/finance/cash-accounts/${accountId}/statement-imports`,
-      s.accountant.token,
-      {
-        fileId: await t.csv(s.accountant.token, text),
-      },
+  const check = (text: string, accountId = s.bank.id) =>
+    deferred(
+      (async () =>
+        t.http(
+          'post',
+          `/staff/finance/cash-accounts/${accountId}/statement-imports`,
+          s.accountant.token,
+          {
+            fileId: await t.csv(s.accountant.token, text),
+          },
+        ))(),
     );
   const apply = (id: string) =>
     t.http(

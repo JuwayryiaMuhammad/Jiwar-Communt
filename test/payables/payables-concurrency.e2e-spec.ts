@@ -170,9 +170,7 @@ describe('Payables and commitments — concurrency (ADR 0089)', () => {
       });
       const invoices: string[] = [];
       for (const c of [await contract(), await contract()]) {
-        const inv = (
-          (await (await record(c)).expect(201)).body as { id: string }
-        ).id;
+        const inv = ((await record(c).expect(201)).body as { id: string }).id;
         await f
           .http(
             'post',

@@ -78,9 +78,13 @@ export function treasuryHelpers(h: HttpHarness) {
     ).body as AccountBody;
   }
 
-  /** An invoice of `owes` on a new unit of building A: its id. */
+  /**
+   * An invoice of `owes` on a new unit of building A, with an owner who
+   * holds its money (whom a bounced cheque tells): its id.
+   */
   async function owingUnit(s: FinanceSetUp, owes = '1000'): Promise<string> {
     const home = await f.unit(s.c, 'A');
+    await f.owner(s.c, home.id);
     await f.issue(s.accountant, home.id, {
       lines: [
         { descriptionEn: 'Dues', descriptionAr: 'مستحقات', amount: owes },

@@ -10,10 +10,10 @@
 --   account and day; one per payout. Checked at commit against its payout.
 -- - A payout may be larger than the treasury's own movements: the amount
 --   range lets a payout go to a vendor invoice's limit.
--- - Dated after ADR 0089's and ADR 0088's migrations, which recreate the
---   counters' and the inbox's CHECKs: both are recreated here with every
---   value (the custody hand-in's counter, the inbox's custody types), so a
---   fresh database and an existing one both end with all of them.
+-- - The phase's last migration, dated after ADR 0089's and ADR 0088's: the
+--   counters' and the inbox's CHECKs are stated here once more with every
+--   value (custody already recreated them so), so a fresh database and an
+--   existing one both end with all of them.
 -- No row changes.
 -- ============================================================================
 
@@ -114,8 +114,8 @@ CREATE CONSTRAINT TRIGGER finance_vendor_payouts_moved
   FOR EACH ROW EXECUTE FUNCTION finance_vendor_payouts_moved();
 
 -- ----------------------------------------------------------------------------
--- The CHECKs later-dated migrations recreated after ADR 0085's, with every
--- value.
+-- The counters' and the inbox's CHECKs with every value, as custody left
+-- them.
 -- ----------------------------------------------------------------------------
 ALTER TABLE "finance_counters" DROP CONSTRAINT "finance_counters_kind";
 ALTER TABLE "finance_counters" ADD CONSTRAINT "finance_counters_kind"

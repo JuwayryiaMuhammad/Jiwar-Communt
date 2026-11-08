@@ -12,11 +12,12 @@
 -- Custody counts from here: older cash payments were handed in on paper.
 ALTER TABLE "finance_settings" ADD COLUMN "custody_from" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
--- (20270609090000 restores this after ADR 0089's later-dated recreation.)
+-- With every kind before it (ADR 0089's vendor invoices, disbursements and
+-- payouts), as rows of all of them may already exist.
 ALTER TABLE "finance_counters" DROP CONSTRAINT "finance_counters_kind";
 ALTER TABLE "finance_counters" ADD CONSTRAINT "finance_counters_kind"
   CHECK ("kind" IN ('invoice', 'credit_note', 'receipt', 'instalment_plan', 'refund', 'expense',
-                    'clearance', 'deposit', 'handin'));
+                    'clearance', 'deposit', 'vendor_invoice', 'disbursement', 'payout', 'handin'));
 
 -- A custodian's open cash payments, oldest first: what custody reads.
 CREATE INDEX "finance_payments_custody_idx"
@@ -280,8 +281,8 @@ ALTER TABLE "finance_cash_movements" ADD CONSTRAINT "finance_cash_movements_hand
   ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 -- The staff inbox gains open custody (`finance.payments`) and unsettled
--- variances (`finance.custody`), beside every type on main. Later-dated
--- migrations recreate these CHECKs: 20270609090000 restores the whole set.
+-- variances (`finance.custody`), beside every type before them: main's,
+-- ADR 0089's vendor invoices and disbursements, ADR 0088's tender opening.
 ALTER TABLE "staff_inbox_due_hours" DROP CONSTRAINT "staff_inbox_due_hours_type";
 ALTER TABLE "staff_inbox_due_hours" ADD CONSTRAINT "staff_inbox_due_hours_type"
   CHECK ("type" IN ('registration', 'identity_change', 'worker_engagement', 'vehicle',
@@ -289,7 +290,7 @@ ALTER TABLE "staff_inbox_due_hours" ADD CONSTRAINT "staff_inbox_due_hours_type"
     'invoice_dispute', 'decision_appeal', 'management_request', 'purchase_request', 'space_use_request',
     'plan_suggestion', 'follow_up_case', 'recovery_case', 'compensation',
     'ownership_transfer', 'closed_unit_round', 'unit_entry_report',
-    'cash_custody', 'custody_variance'));
+    'vendor_invoice', 'contract_disbursement', 'tender_opening', 'cash_custody', 'custody_variance'));
 ALTER TABLE "staff_inbox_overdue" DROP CONSTRAINT "staff_inbox_overdue_type";
 ALTER TABLE "staff_inbox_overdue" ADD CONSTRAINT "staff_inbox_overdue_type"
   CHECK ("type" IN ('registration', 'identity_change', 'worker_engagement', 'vehicle',
@@ -297,7 +298,7 @@ ALTER TABLE "staff_inbox_overdue" ADD CONSTRAINT "staff_inbox_overdue_type"
     'invoice_dispute', 'decision_appeal', 'management_request', 'purchase_request', 'space_use_request',
     'plan_suggestion', 'follow_up_case', 'recovery_case', 'compensation',
     'ownership_transfer', 'closed_unit_round', 'unit_entry_report',
-    'cash_custody', 'custody_variance'));
+    'vendor_invoice', 'contract_disbursement', 'tender_opening', 'cash_custody', 'custody_variance'));
 
 REVOKE ALL ON "finance_custody_handins", "finance_custody_handin_items",
   "finance_custody_investigations" FROM jiwar_app;

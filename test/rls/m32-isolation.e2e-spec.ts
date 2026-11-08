@@ -233,7 +233,7 @@ describe('RLS isolation — treasury and custody (ADR 0085)', () => {
   it('covers every table the phase’s migrations create', () => {
     const dir = join(__dirname, '../../prisma/migrations');
     const created = readdirSync(dir)
-      .filter((m) => m >= '20270427090000' && m < '20270428')
+      .filter((m) => m >= '20270610090000' && m < '20270611')
       .flatMap((m) =>
         [
           ...readFileSync(join(dir, m, 'migration.sql'), 'utf8').matchAll(

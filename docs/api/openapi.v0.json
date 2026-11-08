@@ -15571,7 +15571,7 @@
           },
           "lines": {
             "items": {
-              "$ref": "#/components/schemas/InvoiceLineDto"
+              "$ref": "#/components/schemas/VendorInvoiceLineDto"
             },
             "maxItems": 50,
             "minItems": 1,

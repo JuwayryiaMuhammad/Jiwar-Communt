@@ -32021,7 +32021,7 @@ export interface components {
              */
             invoiceFileId: string;
             issuedOn: string;
-            lines: components["schemas"]["InvoiceLineDto"][];
+            lines: components["schemas"]["VendorInvoiceLineDto"][];
             note?: string;
             /**
              * Format: uuid

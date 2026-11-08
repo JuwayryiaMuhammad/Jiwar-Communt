@@ -138,7 +138,7 @@ describe('Reports — the capital plan to the board', () => {
     ).body as PlanBody;
     expect(gone.total).toBe('5000.00');
     expect(
-      err(await create({ year: year() + 9 }).expect(400)).fields[0],
+      err(await create({ year: year() + 9 }).expect(400)).fields?.[0],
     ).toMatchObject({ field: 'year', code: 'INVALID_NUMBER' });
   });
 

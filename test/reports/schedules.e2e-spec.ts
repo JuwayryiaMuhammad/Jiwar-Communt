@@ -92,7 +92,7 @@ describe('Reports — schedules and their runs', () => {
             groupBy: 'unit',
           })
           .expect(400),
-      ).fields[0],
+      ).fields?.[0],
     ).toMatchObject({ field: 'groupBy', code: 'INVALID_VALUE' });
     await o
       .http('post', '/staff/report-schedules', s.supervisor.token, {

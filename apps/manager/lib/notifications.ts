@@ -169,6 +169,15 @@ const TEXT: Record<string, (p: P) => string> = {
   'technician_help.taken': () => 'A call for help was taken',
   'technician_help.assigned': () => 'A technician was sent to help a colleague',
   'technician_help.escalated': (p) => `Nobody took a technician's call for help (${String(p.helpKind ?? '').replace(/_/g, ' ')})`,
+  // The field team, part b (ADR 0090).
+  'staff_certificate.expiring': (p) => `${cap(aWords(p.certificateKind))} certificate expires on ${String(p.expiresOn)}, in ${String(p.daysLeft)} days`,
+  'staff_certificate.expires_today': (p) => `${cap(aWords(p.certificateKind))} certificate expires today`,
+  'dangling_account.found': (p) => `A staff account looks dangling (${words(p.reason)})`,
+  'access_review.opened': (p) => `An access review is open: ${String(p.lines)} accounts to keep or revoke`,
+  'reinforcement.suggested': (p) => `${String(p.open)} open tickets for ${String(p.available)} available technicians: call reinforcement?`,
+  'reinforcement.called': (p) => `The field team asks ${String(p.needed)} technicians to come in`,
+  'reinforcement.filled': () => 'A reinforcement call is filled',
+  'reinforcement.cancelled': () => 'A reinforcement call was called off',
   'guard_shift.absent_unmanned': () => 'A guard did not start their shift and nobody is on duty there',
   'guard_task.assigned': (p) => `A ${words(p.taskKind)} task for you`,
   'guard_task.unit_inspected': (p) => `Security inspected your closed unit (${words(p.outcome)})`,
@@ -515,6 +524,12 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.kind === 'technician_shift.absent' || n.kind.startsWith('technician_instruction.'))
     return can('field_team.manage') ? '/field-team' : null;
   if (n.targetType === 'technician_help_request') return can('field_team.manage') ? '/field-team' : null;
+  // ADR 0090: a certificate, a reinforcement; a dangling account, a review.
+  if (n.targetType === 'staff_certificate') return can('field_team.manage') ? '/field-team?tab=certificates' : null;
+  if (n.targetType === 'reinforcement_suggestion' || n.targetType === 'reinforcement_call')
+    return can('field_team.manage') ? '/field-team?tab=reinforcement' : null;
+  if (n.targetType === 'dangling_account' || n.targetType === 'access_review')
+    return can('accounts.manage') ? '/access-checks' : null;
   if (n.targetType === 'guard_roster_slot') return can('guard_roster.manage') ? '/security/roster' : null;
   if (n.targetType === 'guard_shift_swap') return can('guard_roster.manage') ? '/security/swaps' : null;
   if (n.targetType === 'guard_task') return can('guard_tasks.manage') ? '/security/tasks' : null;

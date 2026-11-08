@@ -18,9 +18,10 @@ import {
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import { CertificatesTab, LocationTab, ReinforcementTab } from './part-b';
 
 interface Ref {
   id: string;
@@ -70,7 +71,7 @@ interface Help {
   createdAt: string;
 }
 
-const TABS = ['help', 'roster', 'attendance', 'instructions'] as const;
+const TABS = ['help', 'roster', 'attendance', 'instructions', 'reinforcement', 'certificates', 'location'] as const;
 type Tab = (typeof TABS)[number];
 const name = (r: Ref | null) => (r ? (r.fullName ?? 'Erased') : '—');
 const list = <T,>(res: unknown) => (res as { data: T[] }).data;
@@ -84,6 +85,11 @@ export default function FieldTeamPage() {
   const { ready, can } = usePermissions();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>('help');
+  // A notice or the inbox opens a tab by its name (ADR 0090).
+  useEffect(() => {
+    const asked = new URLSearchParams(window.location.search).get('tab');
+    if (asked && (TABS as readonly string[]).includes(asked)) setTab(asked as Tab);
+  }, []);
   const allowed = can('field_team.manage');
   const help = useQuery({
     queryKey: ['field-team', 'help'],
@@ -164,7 +170,7 @@ export default function FieldTeamPage() {
     <>
       <PageHeader
         title="Field team"
-        description="Technicians' calls for help, their roster and attendance, and the instructions they acknowledge."
+        description="Technicians' calls for help, their roster and attendance, the instructions they acknowledge, reinforcement at peaks, the staff's certificates and a technician's last known location."
       />
       <div className="row" style={{ gap: 8, marginBottom: 12 }}>
         {TABS.map((t) => (
@@ -332,6 +338,10 @@ export default function FieldTeamPage() {
           </QueryState>
         </Card>
       ) : null}
+
+      {tab === 'reinforcement' ? <ReinforcementTab /> : null}
+      {tab === 'certificates' ? <CertificatesTab technicians={technicians.data ?? []} /> : null}
+      {tab === 'location' ? <LocationTab technicians={technicians.data ?? []} /> : null}
 
       {tab === 'instructions' ? (
         <>

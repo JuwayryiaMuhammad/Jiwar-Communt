@@ -28,6 +28,10 @@ export const INBOX_TYPE: Record<string, { label: string; href: (id: string) => s
   ownership_transfer: { label: 'Ownership transfer', href: () => '/ownership-transfers' },
   closed_unit_round: { label: 'Closed unit round', href: () => '/security/closed-units' },
   unit_entry_report: { label: 'Emergency entry report', href: () => '/security/unit-entries' },
+  // ADR 0090.
+  dangling_account: { label: 'Dangling account', href: () => '/access-checks' },
+  access_review: { label: 'Access review', href: () => '/access-checks' },
+  reinforcement_suggestion: { label: 'Reinforcement suggested', href: () => '/field-team?tab=reinforcement' },
 };
 
 export const inboxLabel = (type: string) => INBOX_TYPE[type]?.label ?? type;

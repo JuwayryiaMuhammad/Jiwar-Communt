@@ -478,3 +478,17 @@ test('a vendor’s invoice, an advance and a guarantee (ADR 0089) read as refere
   const expiring = { kind: 'vendor_guarantee.expiring', params: { guaranteeKind: 'performance', expiresOn: '2027-03-01' }, targetType: 'vendor_guarantee', targetId: 'g1' };
   assert.equal(notificationText(expiring), 'A vendor’s guarantee expires on 2027-03-01');
 });
+
+test('a certificate, a reinforcement, a dangling account and an access review read from codes and open their pages (ADR 0090)', () => {
+  const expiring = n('staff_certificate.expiring', { certificateKind: 'working_at_height', expiresOn: '2027-03-01', daysLeft: 30 }, 'staff_certificate', 'c1');
+  assert.equal(notificationText(expiring), 'A working at height certificate expires on 2027-03-01, in 30 days');
+  assert.equal(notificationHref(expiring, (p) => p === 'field_team.manage'), '/field-team?tab=certificates');
+  assert.equal(notificationHref(expiring, () => false), null);
+  const called = n('reinforcement.called', { needed: 2, startsAt: 'x', endsAt: 'y' }, 'reinforcement_call', 'r1');
+  assert.equal(notificationText(called), 'The field team asks 2 technicians to come in');
+  assert.equal(notificationHref(called, (p) => p === 'field_team.manage'), '/field-team?tab=reinforcement');
+  const dangling = n('dangling_account.found', { reason: 'never_signed_in' }, 'dangling_account', 'd1');
+  assert.equal(notificationText(dangling), 'A staff account looks dangling (never signed in)');
+  assert.equal(notificationHref(dangling, (p) => p === 'accounts.manage'), '/access-checks');
+  assert.equal(notificationHref(n('access_review.opened', { lines: 4 }, 'access_review', 'a1'), () => false), null);
+});

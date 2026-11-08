@@ -482,6 +482,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/gate/log-search', label: 'Gate log search', icon: <Search aria-hidden />, show: can('gate_log.search') },
         { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
         { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },
+        // Dangling accounts and access reviews (ADR 0090).
+        { href: '/access-checks', label: 'Access checks', icon: <UserCog aria-hidden />, show: can('accounts.manage') },
       ],
     },
     {

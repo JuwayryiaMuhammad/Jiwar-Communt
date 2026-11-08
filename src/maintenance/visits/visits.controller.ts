@@ -29,6 +29,7 @@ import {
 } from '../../core/common/http/list';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { ReasonCodeDto } from '../tickets/dto/tickets.dto';
+import { TicketStepDto } from '../field-location/dto/field-location.dto';
 import {
   VisitReceiverDto,
   VisitRescheduleDto,
@@ -330,8 +331,11 @@ export class TechnicianVisitsController {
   async arrive(
     @Param('id', parseId()) id: string,
     @Param('visitId', parseId('visitId')) visitId: string,
+    @Body() dto: TicketStepDto,
   ): Promise<TechnicianVisitView> {
-    return TechnicianVisitView.from(await this.visits.arrive(id, visitId));
+    return TechnicianVisitView.from(
+      await this.visits.arrive(id, visitId, dto.location),
+    );
   }
 
   @Post(':id/visits/:visitId/done')

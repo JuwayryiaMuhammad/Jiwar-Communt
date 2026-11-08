@@ -46,6 +46,7 @@ import {
   TechnicianMessageView,
 } from './views/message.views';
 import { WorkService } from './work.service';
+import { TicketStepDto } from '../field-location/dto/field-location.dto';
 
 /**
  * The technician's own tickets (ADR 0032): only those assigned to them now.
@@ -97,16 +98,23 @@ export class TechnicianTicketsController {
   @ApiOperation({ summary: "Mark I'm on the way" })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
-  enRoute(@Param('id', parseId()) id: string): Promise<void> {
-    return this.work.enRoute(id);
+  enRoute(
+    @Param('id', parseId()) id: string,
+    @Body() dto: TicketStepDto,
+  ): Promise<void> {
+    return this.work.enRoute(id, dto.location);
   }
 
+  /** With where I am, when I consented (ADR 0090). */
   @Post(':id/start')
   @ApiOperation({ summary: 'Start the work' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
-  start(@Param('id', parseId()) id: string): Promise<void> {
-    return this.work.start(id);
+  start(
+    @Param('id', parseId()) id: string,
+    @Body() dto: TicketStepDto,
+  ): Promise<void> {
+    return this.work.start(id, dto.location);
   }
 
   @Post(':id/hold')

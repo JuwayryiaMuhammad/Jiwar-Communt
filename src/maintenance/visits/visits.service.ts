@@ -1,4 +1,8 @@
 import {
+  FieldLocationService,
+  type FieldLocation,
+} from '../field-location/field-location.service';
+import {
   RESIDENT_VISIBLE,
   residentReporter,
   residentVisible,
@@ -108,6 +112,7 @@ export class VisitsService {
     private readonly sla: SlaRecorder,
     private readonly maintenanceSettings: MaintenanceSettingsService,
     private readonly tenantSettings: TenantSettingsService,
+    private readonly locations: FieldLocationService,
   ) {}
 
   // --- proposals -----------------------------------------------------------
@@ -265,7 +270,11 @@ export class VisitsService {
    * Returns the visit as the technician sees it, consent read after the
    * lock: what they may do is what was true when they arrived.
    */
-  arrive(ticketId: string, visitId: string): Promise<VisitRead> {
+  arrive(
+    ticketId: string,
+    visitId: string,
+    location?: FieldLocation,
+  ): Promise<VisitRead> {
     const me = this.ctx.accountId;
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.access.forWrite(tx, ticketId, 'technician');
@@ -289,6 +298,10 @@ export class VisitsService {
       });
       if (can(ticket.status, 'start'))
         await this.work.moveInTx(tx, ticket, 'in_progress');
+      // At the door, with the technician's consent (ADR 0090): one point,
+      // never in the residents' view or their notice.
+      if (location)
+        await this.locations.capture(tx, ticket.id, 'arrived', location);
       await this.tell(
         tx,
         ticket,

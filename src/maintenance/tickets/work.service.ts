@@ -11,6 +11,10 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { DispatchEngine } from '../dispatch/dispatch-engine';
+import {
+  FieldLocationService,
+  type FieldLocation,
+} from '../field-location/field-location.service';
 import { TicketAccess } from './ticket-access';
 import { TicketLog } from './ticket-log';
 import { TicketNotices } from './ticket-notices';
@@ -48,6 +52,7 @@ export class WorkService {
     private readonly notices: TicketNotices,
     private readonly engine: DispatchEngine,
     private readonly audit: AuditService,
+    private readonly locations: FieldLocationService,
   ) {}
 
   private readonly completing: CompletionHook[] = [];
@@ -65,12 +70,16 @@ export class WorkService {
    * On the way (ADR 0038): the reporter is told, and it counts as the
    * SLA's response. Optional: `start` works from `assigned` as before.
    */
-  enRoute(id: string): Promise<void> {
-    return this.move(id, 'enRoute', 'en_route');
+  enRoute(id: string, location?: FieldLocation): Promise<void> {
+    return this.move(id, 'enRoute', 'en_route', null, location);
   }
 
-  start(id: string): Promise<void> {
-    return this.move(id, 'start', 'in_progress');
+  /**
+   * The work starts. Either step may carry where the technician is, with
+   * their consent (ADR 0090): a point is kept in the step's transaction.
+   */
+  start(id: string, location?: FieldLocation): Promise<void> {
+    return this.move(id, 'start', 'in_progress', null, location);
   }
 
   /** The hold reason is what the SLA pauses on (Phase 5.3). */
@@ -213,10 +222,18 @@ export class WorkService {
     action: TicketAction,
     to: TicketStatus,
     holdReason: TicketHoldReason | null = null,
+    location?: FieldLocation,
   ): Promise<void> {
     return this.tenantTx.withTenantTx(async (tx) => {
       const ticket = await this.lock(tx, id, action);
       await this.moveInTx(tx, ticket, to, holdReason);
+      if (location)
+        await this.locations.capture(
+          tx,
+          ticket.id,
+          to === 'en_route' ? 'en_route' : 'started',
+          location,
+        );
     });
   }
 

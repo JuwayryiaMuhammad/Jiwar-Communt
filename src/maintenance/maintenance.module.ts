@@ -2,6 +2,12 @@ import {
   StaffHelpController,
   TechnicianHelpController,
 } from './help/help-requests.controller';
+import {
+  StaffTechnicianLocationController,
+  TechnicianLocationController,
+} from './field-location/field-location.controller';
+import { FieldLocationService } from './field-location/field-location.service';
+import { FieldLocationExportSections } from './field-location/field-location-export-sections';
 import { HelpRequestsService } from './help/help-requests.service';
 import { HelpExportSections } from './help/help-export-sections';
 import { Module } from '@nestjs/common';
@@ -371,6 +377,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     TechnicianStatsController,
     TechnicianHelpController,
     StaffHelpController,
+    TechnicianLocationController,
+    StaffTechnicianLocationController,
   ],
   providers: [
     TicketCorrespondence,
@@ -385,6 +393,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     AvailabilityService,
     HelpRequestsService,
     HelpExportSections,
+    FieldLocationService,
+    FieldLocationExportSections,
     DispatchSettingsService,
     DispatchLimiter,
     DispatchEngine,

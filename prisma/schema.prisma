@@ -3656,6 +3656,8 @@ enum FilePurpose {
   report_file
   /// The compound's export (ADR 0086), the server's.
   compound_export
+  /// A staff member's certificate (ADR 0090): a photo or a PDF, 10 MB, `field_team.manage`.
+  staff_certificate
   @@map("file_purpose")
   vendor_document
   /// A compliance item's evidence (ADR 0087): a photo or a PDF, 10 MB.
@@ -13511,6 +13513,222 @@ model TechnicianHelpRequest {
   @@unique([tenantId, id])
   @@index([tenantId, status, createdAt, id], map: "technician_help_requests_status_idx")
   @@map("technician_help_requests")
+}
+
+// ============================================================================
+// The field team, part b (ADR 0090)
+// ============================================================================
+
+/// A technician's consent to their location at three moments of a ticket.
+/// Revoked once, by themselves or the system; never deleted.
+model TechnicianLocationConsent {
+  id        String    @id @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  accountId String    @map("account_id") @db.Uuid
+  grantedAt DateTime  @map("granted_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  /// `self` or `system`.
+  revokedBy String?   @map("revoked_by")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, accountId, grantedAt(sort: Desc)], map: "technician_location_consents_account_idx")
+  @@map("technician_location_consents")
+}
+
+/// Where a technician was on the way, at the door or starting the work,
+/// under a live consent. Kept 30 days; never changed.
+model TechnicianLocation {
+  id         String   @id @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  accountId  String   @map("account_id") @db.Uuid
+  consentId  String   @map("consent_id") @db.Uuid
+  ticketId   String   @map("ticket_id") @db.Uuid
+  /// `en_route`, `arrived` or `started`.
+  moment     String
+  latitude   Decimal  @db.Decimal(9, 6)
+  longitude  Decimal  @db.Decimal(9, 6)
+  accuracyM  Int?     @map("accuracy_m")
+  capturedAt DateTime @map("captured_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, accountId, capturedAt(sort: Desc), id(sort: Desc)], map: "technician_locations_account_idx")
+  @@index([tenantId, capturedAt], map: "technician_locations_captured_idx")
+  @@map("technician_locations")
+}
+
+/// A staff member's certificate, with its expiry: warned of, never blocking.
+model StaffCertificate {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  accountId   String    @map("account_id") @db.Uuid
+  /// STAFF_CERTIFICATE_KINDS.
+  kind        String
+  title       String
+  issuer      String?
+  reference   String?
+  issuedOn    DateTime? @map("issued_on") @db.Date
+  expiresOn   DateTime  @map("expires_on") @db.Date
+  fileId      String?   @map("file_id") @db.Uuid
+  /// The expiry the 30 days' warning was sent for.
+  warnedFor   DateTime? @map("warned_for") @db.Date
+  /// The expiry the day's notice was sent for.
+  dayToldFor  DateTime? @map("day_told_for") @db.Date
+  addedById   String    @map("added_by_account_id") @db.Uuid
+  addedAt     DateTime  @map("added_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @map("updated_at") @db.Timestamptz(3)
+  removedAt   DateTime? @map("removed_at") @db.Timestamptz(3)
+  removedById String?   @map("removed_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, fileId], map: "staff_certificates_file_key")
+  @@index([tenantId, accountId, expiresOn], map: "staff_certificates_holder_idx")
+  @@map("staff_certificates")
+}
+
+/// The compound's account checks: the idle days, the review's cadence.
+model AccountCheckSettings {
+  tenantId          String   @id @map("tenant_id") @db.Uuid
+  idleDays          Int      @default(60) @map("idle_days") @db.SmallInt
+  reviewEveryDays   Int      @default(90) @map("review_every_days") @db.SmallInt
+  updatedById       String?  @map("updated_by_account_id") @db.Uuid
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@map("account_check_settings")
+}
+
+/// An active account of the compound's side that looks dangling.
+model DanglingAccountFinding {
+  id           String    @id @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  accountId    String    @map("account_id") @db.Uuid
+  /// `idle`, `vendor_suspended` or `never_signed_in`.
+  reason       String
+  lastActiveAt DateTime? @map("last_active_at") @db.Timestamptz(3)
+  foundAt      DateTime  @map("found_at") @db.Timestamptz(3)
+  /// `open`, `kept`, `deactivated` or `cleared`.
+  status       String    @default("open")
+  decidedAt    DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedById  String?   @map("decided_by_account_id") @db.Uuid
+  /// REASON_CODES.danglingKeep, for a kept one.
+  reasonCode   String?   @map("reason_code")
+  mutedUntil   DateTime? @map("muted_until") @db.Timestamptz(3)
+  clearedAt    DateTime? @map("cleared_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, foundAt, id], map: "dangling_account_findings_status_idx")
+  @@index([tenantId, accountId, foundAt(sort: Desc)], map: "dangling_account_findings_account_idx")
+  @@map("dangling_account_findings")
+}
+
+/// A review of who has access: a frozen snapshot, each line decided once.
+model AccessReview {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  number      Int
+  /// `open` or `closed`.
+  status      String    @default("open")
+  openedAt    DateTime  @map("opened_at") @db.Timestamptz(3)
+  /// Null when the sweep opened it.
+  openedById  String?   @map("opened_by_account_id") @db.Uuid
+  lines       Int
+  kept        Int       @default(0)
+  revoked     Int       @default(0)
+  leftCount   Int       @default(0) @map("left_count")
+  closedAt    DateTime? @map("closed_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "access_reviews_number_key")
+  @@index([tenantId, openedAt(sort: Desc), id(sort: Desc)], map: "access_reviews_opened_idx")
+  @@map("access_reviews")
+}
+
+model AccessReviewLine {
+  id           String      @id @db.Uuid
+  tenantId     String      @map("tenant_id") @db.Uuid
+  reviewId     String      @map("review_id") @db.Uuid
+  accountId    String      @map("account_id") @db.Uuid
+  accountType  AccountType @map("account_type")
+  roleId       String      @map("role_id") @db.Uuid
+  roleKey      String?     @map("role_key")
+  roleName     String?     @map("role_name")
+  permissions  String[]
+  lastActiveAt DateTime?   @map("last_active_at") @db.Timestamptz(3)
+  /// The system manager's line: kept only.
+  protected    Boolean     @default(false)
+  /// `keep`, `revoke` or `left`; null while undecided.
+  decision     String?
+  decidedAt    DateTime?   @map("decided_at") @db.Timestamptz(3)
+  decidedById  String?     @map("decided_by_account_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, reviewId, accountId], map: "access_review_lines_account_key")
+  @@map("access_review_lines")
+}
+
+/// Service pressure's rise, offered to the field team to call reinforcement.
+model ReinforcementSuggestion {
+  id          String    @id @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  raisedAt    DateTime  @map("raised_at") @db.Timestamptz(3)
+  openTickets Int       @map("open_tickets")
+  available   Int
+  threshold   Int
+  createdAt   DateTime  @map("created_at") @db.Timestamptz(3)
+  /// `open`, `answered`, `dismissed` or `lapsed`.
+  status      String    @default("open")
+  decidedAt   DateTime? @map("decided_at") @db.Timestamptz(3)
+  decidedById String?   @map("decided_by_account_id") @db.Uuid
+  /// REASON_CODES.reinforcementDismiss, for a dismissed one.
+  reasonCode  String?   @map("reason_code")
+  callId      String?   @map("call_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, callId], map: "reinforcement_suggestions_call_key")
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "reinforcement_suggestions_created_idx")
+  @@map("reinforcement_suggestions")
+}
+
+/// The field team's call to the technicians off duty to come in.
+model ReinforcementCall {
+  id            String    @id @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  sentById      String    @map("sent_by_account_id") @db.Uuid
+  suggestionId  String?   @map("suggestion_id") @db.Uuid
+  needed        Int       @db.SmallInt
+  startsAt      DateTime  @map("starts_at") @db.Timestamptz(3)
+  endsAt        DateTime  @map("ends_at") @db.Timestamptz(3)
+  /// A zone, or null for the whole compound.
+  placeId       String?   @map("place_id") @db.Uuid
+  /// `open`, `filled`, `closed` or `cancelled`.
+  status        String    @default("open")
+  recipients    Int
+  accepted      Int       @default(0) @db.SmallInt
+  sentAt        DateTime  @map("sent_at") @db.Timestamptz(3)
+  closedAt      DateTime? @map("closed_at") @db.Timestamptz(3)
+  cancelledById String?   @map("cancelled_by_account_id") @db.Uuid
+  /// REASON_CODES.reinforcementCancel.
+  cancelReason  String?   @map("cancel_reason")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, sentAt(sort: Desc), id(sort: Desc)], map: "reinforcement_calls_sent_idx")
+  @@map("reinforcement_calls")
+}
+
+/// Whom a call reached, and each one's answer.
+model ReinforcementCallRecipient {
+  tenantId   String    @map("tenant_id") @db.Uuid
+  callId     String    @map("call_id") @db.Uuid
+  accountId  String    @map("account_id") @db.Uuid
+  /// `accepted` or `declined`; null while unanswered.
+  answer     String?
+  answeredAt DateTime? @map("answered_at") @db.Timestamptz(3)
+  /// The roster slot an acceptance wrote.
+  slotId     String?   @map("slot_id") @db.Uuid
+
+  @@id([tenantId, callId, accountId])
+  @@unique([tenantId, slotId], map: "reinforcement_call_recipients_slot_key")
+  @@index([tenantId, accountId], map: "reinforcement_call_recipients_account_idx")
+  @@map("reinforcement_call_recipients")
 }
 
 // ============================================================================

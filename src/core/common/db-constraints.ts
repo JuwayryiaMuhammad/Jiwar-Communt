@@ -1114,6 +1114,27 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   // first under their help lock (TECHNICIAN_HELP_LIVE).
   technician_help_requests_tenant_id_id_key: null,
   technician_help_requests_one_live_key: null,
+  // The field team, part b (ADR 0090): every "one live" or "one open" key
+  // is checked first under its lock (the technician's account, the
+  // compound's review lock, the pressure row, the call's row), so a
+  // violation is a race and names nothing.
+  technician_location_consents_tenant_id_id_key: null,
+  technician_location_consents_one_live_key: null,
+  technician_locations_tenant_id_id_key: null,
+  staff_certificates_tenant_id_id_key: null,
+  staff_certificates_file_key: null,
+  dangling_account_findings_tenant_id_id_key: null,
+  dangling_account_findings_one_open_key: null,
+  access_reviews_tenant_id_id_key: null,
+  access_reviews_number_key: null,
+  access_reviews_one_open_key: null,
+  access_review_lines_tenant_id_id_key: null,
+  access_review_lines_account_key: null,
+  reinforcement_suggestions_tenant_id_id_key: null,
+  reinforcement_suggestions_one_open_key: null,
+  reinforcement_suggestions_call_key: null,
+  reinforcement_calls_tenant_id_id_key: null,
+  reinforcement_call_recipients_slot_key: null,
   // Payables and commitments (ADR 0089): every key is checked first under
   // its lock (the line's, the invoice's advisory lock on the vendor's
   // number, the source's row), so a violation is a race and names nothing.

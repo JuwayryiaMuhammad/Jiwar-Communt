@@ -5,19 +5,33 @@ import { matchesSignature } from './signatures';
 
 const migrations = '../../../prisma/migrations';
 /**
- * Both CHECKs as they stand now: ADR 0086's, recreated after the later-dated
- * ADR 0087 and 0088 with every purpose, the size CHECK first.
+ * The size CHECK as it stands now: ADR 0086's, recreated after the
+ * later-dated ADR 0087 and 0088 with every purpose.
  */
 const both = readFileSync(
   join(__dirname, migrations, '20270611090400_reports_checks/migration.sql'),
   'utf8',
 );
-/** The size CHECK's statements, then the content type CHECK's: each alone. */
+/** The size CHECK's statements alone. */
 const sizeCheck = both.slice(
   both.indexOf('"files_size_for_purpose"'),
   both.indexOf('"files_content_type_for_purpose"'),
 );
-const typeCheck = both.slice(both.indexOf('"files_content_type_for_purpose"'));
+/**
+ * The content type CHECK as it stands now: ADR 0090's, with the staff
+ * certificate among the PDFs, to the end of its migration.
+ */
+const latest = readFileSync(
+  join(
+    __dirname,
+    migrations,
+    '20270612090500_field_team_b_checks/migration.sql',
+  ),
+  'utf8',
+);
+const typeCheck = latest.slice(
+  latest.indexOf('"files_content_type_for_purpose"'),
+);
 
 describe('file purposes', () => {
   it('match the CHECKs in the database', () => {
@@ -249,7 +263,7 @@ describe('file purposes', () => {
       `("content_type" IN ('video/mp4', 'video/quicktime') AND "purpose" IN ('patrol_note_video', 'incident_video'))`,
     );
     expect(typeCheck).toContain(
-      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing', 'compliance_evidence', 'tender_document', 'tender_bid', 'report_file'))`,
+      `("content_type" = 'application/pdf' AND "purpose" IN ('document', 'request_attachment', 'community_attachment', 'complaint_evidence', 'vehicle_licence', 'approval_attachment', 'board_appeal_attachment', 'expense_invoice', 'decision_appeal_attachment', 'registration_document', 'kinship_proof', 'unit_document', 'compound_document', 'contract', 'asset_document', 'vendor_document', 'permit_drawing', 'compliance_evidence', 'tender_document', 'tender_bid', 'report_file', 'staff_certificate'))`,
     );
     expect(typeCheck).toContain(
       `("content_type" = 'application/zip' AND "purpose" IN ('data_export', 'compound_export'))`,
@@ -279,6 +293,18 @@ describe('file purposes', () => {
     expect(FILE_PURPOSES.compliance_evidence.maxBytes).toBe(
       FILE_PURPOSES.document.maxBytes,
     );
+    // Staff certificates (ADR 0090): a paper like any other, filed by the
+    // field team.
+    expect(FILE_PURPOSES.staff_certificate.types).toEqual(
+      FILE_PURPOSES.document.types,
+    );
+    expect(sizeCheck).not.toContain(`WHEN 'staff_certificate'`);
+    expect(FILE_PURPOSES.staff_certificate.maxBytes).toBe(
+      FILE_PURPOSES.document.maxBytes,
+    );
+    expect(FILE_PURPOSES.staff_certificate.uploaders).toEqual([
+      'field_team.manage',
+    ]);
     // Tenders (ADR 0088): a tender's document and a bid's offer are
     // documents like any other.
     for (const purpose of ['tender_document', 'tender_bid'] as const) {

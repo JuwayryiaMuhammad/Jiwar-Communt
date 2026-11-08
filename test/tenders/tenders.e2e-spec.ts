@@ -219,7 +219,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
             title: 'Other',
           }),
         ),
-      ).toMatchObject({ status: 409, code: 'TENDER_STATE' });
+      ).toMatchObject({ statusCode: 409, code: 'TENDER_STATE' });
       const later = new Date(dbClock().getTime() + 72 * HOUR).toISOString();
       await http('post', `/staff/tenders/${t.id}/deadline`, m(), {
         bidsDueAt: later,
@@ -230,7 +230,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
             bidsDueAt: new Date(dbClock().getTime() + 50 * HOUR).toISOString(),
           }),
         ),
-      ).toMatchObject({ status: 400 });
+      ).toMatchObject({ statusCode: 400 });
     });
 
     it('a document is the tender keeper’s file; an invitee reads it', async () => {
@@ -252,7 +252,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
       // Not invited: nothing, as for an unknown id.
       expect(
         err(await http('get', `/contractor/tenders/${t.id}`, bea.token)),
-      ).toMatchObject({ status: 404, code: 'TENDER_NOT_FOUND' });
+      ).toMatchObject({ statusCode: 404, code: 'TENDER_NOT_FOUND' });
     });
   });
 
@@ -286,7 +286,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
       expect(JSON.stringify(audit)).not.toContain('75000');
       // One live bid; withdrawn, another may be sent.
       expect(err(await bid(t.id, ann, '74000.00'))).toMatchObject({
-        status: 409,
+        statusCode: 409,
         code: 'TENDER_BID_EXISTS',
       });
       await http(
@@ -301,10 +301,10 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
       const t = await published();
       expect(
         err(await http('post', `/staff/tenders/${t.id}/opening`, acc())),
-      ).toMatchObject({ status: 409, code: 'TENDER_NOT_DUE' });
+      ).toMatchObject({ statusCode: 409, code: 'TENDER_NOT_DUE' });
       await closeBids(t.id);
       expect(err(await bid(t.id, ann, '70000.00'))).toMatchObject({
-        status: 409,
+        statusCode: 409,
         code: 'TENDER_CLOSED',
       });
     });
@@ -327,7 +327,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
       await pub('bid', { token: l.token, amount: '69000.00' }).expect(200);
       expect(
         err(await pub('bid', { token: l.token, amount: '68000.00' })),
-      ).toMatchObject({ status: 409, code: 'TENDER_BID_EXISTS' });
+      ).toMatchObject({ statusCode: 409, code: 'TENDER_BID_EXISTS' });
       await http(
         'post',
         `/staff/tenders/${t.id}/invitations/${l.invitationId}/revoke`,
@@ -339,7 +339,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
         { token: 'short' },
       ])
         expect(err(await pub('lookup', body))).toMatchObject({
-          status: 404,
+          statusCode: 404,
           code: 'TENDER_LINK_NOT_FOUND',
         });
       // Its bid went with it while bids were taken.
@@ -360,7 +360,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
       ).expect(201);
       const fresh = (r.body as { url: string }).url.split('#')[1];
       expect(err(await pub('lookup', { token: l.token }))).toMatchObject({
-        status: 404,
+        statusCode: 404,
       });
       await pub('lookup', { token: fresh }).expect(200);
     });
@@ -383,7 +383,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
       expect(first.bids.every((b) => b.sealed)).toBe(true);
       expect(
         err(await http('post', `/staff/tenders/${t.id}/opening`, acc())),
-      ).toMatchObject({ status: 409, code: 'TENDER_OPENING_SAME_PERSON' });
+      ).toMatchObject({ statusCode: 409, code: 'TENDER_OPENING_SAME_PERSON' });
       const opened = (
         await http('post', `/staff/tenders/${t.id}/opening`, m()).expect(200)
       ).body as Tender;
@@ -430,7 +430,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
           ...body,
         });
       expect(err(await award())).toMatchObject({
-        status: 409,
+        statusCode: 409,
         code: 'CONTRACT_NEEDS_APPROVAL',
       });
       const r = await f.raise(s.manager, {
@@ -467,7 +467,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
         approvalRequestId: r.id,
       });
       expect(err(again)).toMatchObject({
-        status: 409,
+        statusCode: 409,
         code: 'CONTRACT_APPROVAL_INVALID',
         params: { reason: 'signs_another' },
       });
@@ -536,7 +536,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
         for (const r of results)
           if (r.status !== 200)
             expect(err(r)).toMatchObject({
-              status: 409,
+              statusCode: 409,
               code: 'TENDER_CLOSED',
             });
         await http('post', `/staff/tenders/${t.id}/opening`, m()).expect(200);
@@ -594,7 +594,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
         );
         expect(live).toHaveLength(0);
         expect(err(await pub('lookup', { token: l.token }))).toMatchObject({
-          status: 404,
+          statusCode: 404,
         });
       }
     });
@@ -654,7 +654,7 @@ describe('Tenders and the contractor’s invoices (ADR 0088)', () => {
         }).expect(201)
       ).body as { id: string };
       expect(err(await send({ contractId: other.id }))).toMatchObject({
-        status: 404,
+        statusCode: 404,
         code: 'MAINTENANCE_CONTRACT_NOT_FOUND',
       });
       // The office approves it as any vendor's invoice.

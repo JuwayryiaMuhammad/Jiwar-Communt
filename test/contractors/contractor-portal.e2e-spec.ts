@@ -198,7 +198,10 @@ describe('The contractor portal: accounts and dispatch to a vendor (ADR 0088)', 
           email: uniqueEmail('late'),
         },
       );
-      expect(err(res)).toMatchObject({ status: 409, code: 'VENDOR_SUSPENDED' });
+      expect(err(res)).toMatchObject({
+        statusCode: 409,
+        code: 'VENDOR_SUSPENDED',
+      });
     });
   });
 
@@ -233,7 +236,7 @@ describe('The contractor portal: accounts and dispatch to a vendor (ADR 0088)', 
             eve.token,
           ),
         ),
-      ).toMatchObject({ status: 404, code: 'VENDOR_DISPATCH_NOT_FOUND' });
+      ).toMatchObject({ statusCode: 404, code: 'VENDOR_DISPATCH_NOT_FOUND' });
       // Dispatch takes the offer back before giving it to anyone else.
       expect(
         err(
@@ -246,9 +249,9 @@ describe('The contractor portal: accounts and dispatch to a vendor (ADR 0088)', 
             },
           ),
         ),
-      ).toMatchObject({ status: 409, code: 'TICKET_OFFERED_TO_VENDOR' });
+      ).toMatchObject({ statusCode: 409, code: 'TICKET_OFFERED_TO_VENDOR' });
       expect(err(await offer(ticketId, otherVendorId))).toMatchObject({
-        status: 409,
+        statusCode: 409,
         code: 'TICKET_OFFERED_TO_VENDOR',
       });
     });
@@ -257,7 +260,7 @@ describe('The contractor portal: accounts and dispatch to a vendor (ADR 0088)', 
       const ticketId = await d.openTicket(s);
       const empty = await vendor();
       expect(err(await offer(ticketId, empty))).toMatchObject({
-        status: 400,
+        statusCode: 400,
         fields: [{ field: 'vendorId', code: 'INVALID_VALUE' }],
       });
     });
@@ -282,7 +285,7 @@ describe('The contractor portal: accounts and dispatch to a vendor (ADR 0088)', 
           ),
         ),
       ).toMatchObject({
-        status: 409,
+        statusCode: 409,
         code: 'VENDOR_DISPATCH_STATE',
         params: { status: 'accepted' },
       });
@@ -359,7 +362,7 @@ describe('The contractor portal: accounts and dispatch to a vendor (ADR 0088)', 
             },
           ),
         ),
-      ).toMatchObject({ status: 400, code: 'INVALID_REASON_CODE' });
+      ).toMatchObject({ statusCode: 400, code: 'INVALID_REASON_CODE' });
       await http('post', `/contractor/dispatches/${o1.id}/decline`, bob.token, {
         reasonCode: 'no_capacity',
       }).expect(204);

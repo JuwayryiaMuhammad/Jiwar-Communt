@@ -97,9 +97,11 @@ ALTER TABLE "finance_budget_transfers"
   ADD CONSTRAINT "finance_budget_transfers_requested_by_fkey"
   FOREIGN KEY ("tenant_id", "requested_by_account_id") REFERENCES "accounts"("tenant_id", "id")
   ON DELETE RESTRICT ON UPDATE RESTRICT,
+  -- Deferred: the transfer is named (in governance's raise) before its
+  -- request row is written, in the same transaction (as a budget, ADR 0055).
   ADD CONSTRAINT "finance_budget_transfers_approval_fkey"
   FOREIGN KEY ("tenant_id", "approval_request_id") REFERENCES "governance_approval_requests"("tenant_id", "id")
-  ON DELETE RESTRICT ON UPDATE RESTRICT;
+  ON DELETE RESTRICT ON UPDATE RESTRICT DEFERRABLE INITIALLY DEFERRED;
 ALTER TABLE "finance_budget_transfers" ADD CONSTRAINT "finance_budget_transfers_shape"
   CHECK ("from_line_id" <> "to_line_id"
      AND "amount" > 0 AND "amount" <= 999999999.99

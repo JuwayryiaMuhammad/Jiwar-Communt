@@ -38,6 +38,7 @@ import {
   type LocalDate,
 } from '../schedules/local-dates';
 import { TicketAccess } from '../tickets/ticket-access';
+import { CERTIFICATE_NOTICE_DAYS } from '../certificates/certificate-rules';
 import { VENDOR_DOCUMENT_NOTICE_DAYS } from '../vendors/vendor-rules';
 import { VendorsService } from '../vendors/vendors.service';
 import {
@@ -135,17 +136,23 @@ export interface ComplianceItemDetail extends ComplianceItemRead {
 }
 
 export interface CalendarEntry {
-  source: 'compliance' | 'vendor_document';
-  /** The due day's id, or the vendor paper's. */
+  source: 'compliance' | 'vendor_document' | 'staff_certificate';
+  /** The due day's id, the vendor paper's or the staff certificate's. */
   id: string;
   day: LocalDate;
-  /** COMPLIANCE_KINDS, or the paper's VENDOR_DOCUMENT_KINDS. */
+  /**
+   * COMPLIANCE_KINDS, the paper's VENDOR_DOCUMENT_KINDS or the
+   * certificate's STAFF_CERTIFICATE_KINDS.
+   */
   kind: string;
   state: 'valid' | 'due_soon' | 'overdue' | 'done' | 'expired';
   itemId: string | null;
   title: string | null;
   vendorId: string | null;
   vendorName: string | null;
+  /** A staff certificate's holder (ADR 0090); null otherwise. */
+  holderId: string | null;
+  holderName: string | null;
 }
 
 export interface StatusCounts {
@@ -329,7 +336,7 @@ export class ComplianceService implements OnModuleInit {
       const leads = await this.compoundLeads(tx);
       const rows = await tx.$queryRaw<
         {
-          source: 'compliance' | 'vendor_document';
+          source: 'compliance' | 'vendor_document' | 'staff_certificate';
           id: string;
           day: Date;
           kind: string;
@@ -339,12 +346,15 @@ export class ComplianceService implements OnModuleInit {
           lead_days: number[] | null;
           vendor_id: string | null;
           vendor_name: string | null;
+          holder_id: string | null;
+          holder_name: string | null;
         }[]
       >`
         SELECT * FROM (
           SELECT 'compliance' AS source, o.id, o.due_on AS day, i.kind, o.status,
                  i.id AS item_id, i.title, i.lead_days,
-                 i.vendor_id, v.name AS vendor_name
+                 i.vendor_id, v.name AS vendor_name,
+                 NULL::uuid AS holder_id, NULL::text AS holder_name
             FROM compliance_occurrences o
             JOIN compliance_items i ON i.id = o.item_id
             LEFT JOIN vendors v ON v.id = i.vendor_id
@@ -353,11 +363,23 @@ export class ComplianceService implements OnModuleInit {
           UNION ALL
           SELECT 'vendor_document' AS source, d.id, d.expires_on AS day, d.kind,
                  'open' AS status, NULL::uuid AS item_id, NULL::text AS title,
-                 NULL::smallint[] AS lead_days, d.vendor_id, v.name AS vendor_name
+                 NULL::smallint[] AS lead_days, d.vendor_id, v.name AS vendor_name,
+                 NULL::uuid AS holder_id, NULL::text AS holder_name
             FROM vendor_documents d
             JOIN vendors v ON v.id = d.vendor_id
            WHERE d.removed_at IS NULL AND d.expires_on IS NOT NULL
              AND d.expires_on >= ${from}::date AND d.expires_on <= ${to}::date
+          UNION ALL
+          -- A staff certificate (ADR 0090), live, of an active holder: read
+          -- where it is, as a vendor's paper.
+          SELECT 'staff_certificate' AS source, c.id, c.expires_on AS day, c.kind,
+                 'open' AS status, NULL::uuid AS item_id, c.title,
+                 NULL::smallint[] AS lead_days, NULL::uuid AS vendor_id,
+                 NULL::text AS vendor_name, a.id AS holder_id, a.full_name AS holder_name
+            FROM staff_certificates c
+            JOIN accounts a ON a.id = c.account_id AND a.status = 'active'
+           WHERE c.removed_at IS NULL
+             AND c.expires_on >= ${from}::date AND c.expires_on <= ${to}::date
         ) e
         ORDER BY day, id
         LIMIT ${CALENDAR_ROWS + 1}`;
@@ -369,6 +391,13 @@ export class ComplianceService implements OnModuleInit {
             day < today
               ? 'expired'
               : daysBetween(today, day) <= VENDOR_DOCUMENT_NOTICE_DAYS
+                ? 'due_soon'
+                : 'valid';
+        else if (r.source === 'staff_certificate')
+          state =
+            day < today
+              ? 'expired'
+              : daysBetween(today, day) <= CERTIFICATE_NOTICE_DAYS
                 ? 'due_soon'
                 : 'valid';
         else if (r.status === 'done') state = 'done';
@@ -383,6 +412,8 @@ export class ComplianceService implements OnModuleInit {
           title: r.title,
           vendorId: r.vendor_id,
           vendorName: r.vendor_name,
+          holderId: r.holder_id,
+          holderName: r.holder_name,
         };
       });
       return { from, to, entries, truncated: rows.length > CALENDAR_ROWS };

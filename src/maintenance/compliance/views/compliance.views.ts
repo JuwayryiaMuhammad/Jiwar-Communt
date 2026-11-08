@@ -198,9 +198,9 @@ export class ComplianceItemDetailView extends ComplianceItemView {
 
 export class ComplianceCalendarEntryView {
   @ApiProperty({
-    enum: ['compliance', 'vendor_document'],
+    enum: ['compliance', 'vendor_document', 'staff_certificate'],
     description:
-      '`compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077).',
+      '`compliance`: an item’s due day; `vendor_document`: a vendor’s paper expiring (ADR 0077); `staff_certificate`: a staff member’s certificate expiring (ADR 0090).',
   })
   source: string;
   @ApiProperty({ type: String, format: 'uuid' })
@@ -209,7 +209,8 @@ export class ComplianceCalendarEntryView {
   day: string;
   @ApiProperty({
     type: String,
-    description: 'ComplianceKind, or the paper’s VendorDocumentKind.',
+    description:
+      'ComplianceKind, the paper’s VendorDocumentKind, or the certificate’s StaffCertificateKind.',
   })
   kind: string;
   @ApiProperty({
@@ -225,6 +226,15 @@ export class ComplianceCalendarEntryView {
   vendorId: string | null;
   @ApiProperty({ type: String, nullable: true })
   vendorName: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'A staff certificate’s holder.',
+  })
+  holderId: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  holderName: string | null;
 
   static from(e: CalendarEntry): ComplianceCalendarEntryView {
     return { ...e };

@@ -8,6 +8,12 @@ import {
 } from './field-location/field-location.controller';
 import { FieldLocationService } from './field-location/field-location.service';
 import { FieldLocationExportSections } from './field-location/field-location-export-sections';
+import {
+  MyCertificatesController,
+  StaffCertificatesController,
+} from './certificates/certificates.controller';
+import { CertificatesService } from './certificates/certificates.service';
+import { CertificateExportSections } from './certificates/certificate-export-sections';
 import { HelpRequestsService } from './help/help-requests.service';
 import { HelpExportSections } from './help/help-export-sections';
 import { Module } from '@nestjs/common';
@@ -379,6 +385,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     StaffHelpController,
     TechnicianLocationController,
     StaffTechnicianLocationController,
+    StaffCertificatesController,
+    MyCertificatesController,
   ],
   providers: [
     TicketCorrespondence,
@@ -395,6 +403,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     HelpExportSections,
     FieldLocationService,
     FieldLocationExportSections,
+    CertificatesService,
+    CertificateExportSections,
     DispatchSettingsService,
     DispatchLimiter,
     DispatchEngine,

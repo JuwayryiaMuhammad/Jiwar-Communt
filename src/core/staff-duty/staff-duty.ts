@@ -24,6 +24,31 @@ export type DutyReader = (
   accountId: string,
 ) => Promise<boolean>;
 
+/** A slot a reinforcement call's acceptance writes (ADR 0090). */
+export interface ReinforcementSlot {
+  technicianId: string;
+  startsAt: Date;
+  endsAt: Date;
+  /** A zone, or null for the whole compound. */
+  placeId: string | null;
+  /** Who sent the call: the slot's maker. */
+  createdById: string;
+  callId: string;
+}
+
+/**
+ * The roster's writer of a reinforcement's slots (ADR 0090), registered by
+ * the gate: a single slot of the technician's, under their roster lock (the
+ * account FOR SHARE, then the lock), refused when it overlaps
+ * (ROSTER_OVERLAP) or they may not work (GUARD_NOT_ELIGIBLE); and the
+ * cancel of one nobody filled yet.
+ */
+export interface ReinforcementSlots {
+  write(tx: TenantTxClient, slot: ReinforcementSlot): Promise<string>;
+  /** False when it was filled or cancelled already. */
+  cancel(tx: TenantTxClient, slotId: string, by: string): Promise<boolean>;
+}
+
 /**
  * A technician's duty (ADR 0078), between maintenance and the roster: a
  * technician is on duty while available (ADR 0033), and the roster, in the
@@ -35,7 +60,24 @@ export type DutyReader = (
 @Injectable()
 export class StaffDuty implements OnApplicationBootstrap {
   private reader: DutyReader | null = null;
+  private slots: ReinforcementSlots | null = null;
   private readonly handlers: DutyHandler[] = [];
+
+  /** The gate's writer of a reinforcement's slots (ADR 0090). */
+  registerSlots(slots: ReinforcementSlots): void {
+    if (this.slots) throw new Error('Reinforcement slots registered twice');
+    this.slots = slots;
+  }
+
+  writeSlot(tx: TenantTxClient, slot: ReinforcementSlot): Promise<string> {
+    if (!this.slots) throw new Error('No reinforcement slots');
+    return this.slots.write(tx, slot);
+  }
+
+  cancelSlot(tx: TenantTxClient, slotId: string, by: string): Promise<boolean> {
+    if (!this.slots) throw new Error('No reinforcement slots');
+    return this.slots.cancel(tx, slotId, by);
+  }
 
   register(reader: DutyReader): void {
     if (this.reader) throw new Error('Duty reader registered twice');
@@ -57,5 +99,6 @@ export class StaffDuty implements OnApplicationBootstrap {
 
   onApplicationBootstrap(): void {
     if (!this.reader) throw new Error('Duty reader missing');
+    if (!this.slots) throw new Error('Reinforcement slots missing');
   }
 }

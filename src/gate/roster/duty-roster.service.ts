@@ -14,6 +14,10 @@ import {
   type TenantTxClient,
 } from '../../core/database/tenant-tx.service';
 import { IdempotencyService } from '../../core/idempotency/idempotency.service';
+import {
+  StaffDuty,
+  type ReinforcementSlot,
+} from '../../core/staff-duty/staff-duty';
 import { dbNow } from '../db-clock';
 import { PlaceView } from '../places/views/place.views';
 import { DutyNamesReader, type DutyNames } from './duty-names';
@@ -66,9 +70,27 @@ export class DutyRosterService implements OnModuleInit {
     private readonly core: RosterCore,
     private readonly roster: RosterService,
     private readonly namesReader: DutyNamesReader,
+    private readonly duty: StaffDuty,
   ) {}
 
   onModuleInit(): void {
+    // A reinforcement call's acceptance (ADR 0090) writes its slot here.
+    this.duty.registerSlots({
+      write: (tx, slot) => this.reinforcementSlot(tx, slot),
+      cancel: async (tx, slotId, by) => {
+        const slot = await this.core.lockSlot(tx, slotId);
+        if (!slot || slot.status !== 'scheduled' || slot.dutyStartedAt)
+          return false;
+        await this.core.cancelSlot(
+          tx,
+          slot,
+          'schedule_change',
+          by,
+          await dbNow(tx),
+        );
+        return true;
+      },
+    });
     this.idempotency.renderer(DUTY_TEMPLATE_RESOURCE, (id) =>
       this.tenantTx.withTenantTx((tx) => this.templateView(tx, id)),
     );
@@ -301,6 +323,60 @@ export class DutyRosterService implements OnModuleInit {
       });
       return this.slotView(tx, slot);
     });
+  }
+
+  /**
+   * A reinforcement's slot (ADR 0090): the technician's, under their roster
+   * lock, a single slot made by who sent the call; filled at once when they
+   * are on duty and it starts within the half hour, as any single slot.
+   */
+  private async reinforcementSlot(
+    tx: TenantTxClient,
+    input: ReinforcementSlot,
+  ): Promise<string> {
+    await this.core.requireGuard(
+      tx,
+      input.technicianId,
+      'technicianId',
+      'maintenance',
+    );
+    const post = await this.core.requireCrewPost(
+      tx,
+      input.placeId ? { zoneId: input.placeId } : {},
+      'maintenance',
+    );
+    const tz = await this.core.timeZone(tx);
+    await this.core.assertFree(tx, input.technicianId, input, tz);
+    const now = await dbNow(tx);
+    const id = newId();
+    await this.core.fillFromDuty(
+      tx,
+      await tx.guardRosterSlot.create({
+        data: {
+          id,
+          tenantId: this.ctx.txTenantId,
+          crew: 'maintenance',
+          guardAccountId: input.technicianId,
+          ...post,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+          createdById: input.createdById,
+          createdAt: now,
+        },
+      }),
+      now,
+    );
+    await this.audit.record(tx, {
+      action: 'guard_roster.slot_created',
+      targetId: id,
+      metadata: {
+        crew: 'maintenance',
+        guardId: input.technicianId,
+        ...(post.placeId ? { placeId: post.placeId } : {}),
+        reinforcementCallId: input.callId,
+      },
+    });
+    return id;
   }
 
   /**

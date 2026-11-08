@@ -12,6 +12,7 @@ import { Notifier } from '../../core/notifications/notifier';
 import { SweepRunner } from '../../core/sweep/sweep-runner';
 import { dbNow } from '../db-clock';
 import { IN_HAND } from '../tickets/ticket-rules';
+import { ReinforcementService } from '../reinforcement/reinforcement.service';
 
 export const SERVICE_PRESSURE_SWEEP = 'maintenance.service_pressure';
 /** Every 5 minutes. */
@@ -76,6 +77,7 @@ export class ServicePressure implements OnModuleInit {
     private readonly recipients: StaffRecipients,
     private readonly notifier: Notifier,
     private readonly audit: AuditService,
+    private readonly reinforcement: ReinforcementService,
   ) {}
 
   onModuleInit(): void {
@@ -129,6 +131,8 @@ export class ServicePressure implements OnModuleInit {
           updatedAt: now,
         },
       });
+      // Turned off: the suggestion of a rise in course lapses (ADR 0090).
+      if (openPerTechnician === null) await this.reinforcement.lapse(tx, now);
       const changes = diffChanges(
         { openPerTechnician: before.open_per_technician },
         { openPerTechnician },
@@ -166,11 +170,14 @@ export class ServicePressure implements OnModuleInit {
     if (!row || row.open_per_technician === null) return 0;
     const { open, available } = await this.counts(tx);
     if (!pressed(open, available, row.open_per_technician)) {
-      if (row.raised_at)
+      if (row.raised_at) {
         await tx.maintenanceServicePressure.update({
           where: { tenantId },
           data: { raisedAt: null, easedAt: now, updatedAt: now },
         });
+        // Eased: the field team's suggestion lapses (ADR 0090).
+        await this.reinforcement.lapse(tx, now);
+      }
       return 0;
     }
     const raisedAt = row.raised_at ?? now;
@@ -198,6 +205,14 @@ export class ServicePressure implements OnModuleInit {
       params: { open, available, threshold: row.open_per_technician },
       targetId: tenantId,
     });
+    // The field team may call reinforcement (ADR 0090): suggested, never
+    // sent by itself; one open at a time, under this row's lock.
+    await this.reinforcement.suggest(
+      tx,
+      tenantId,
+      { raisedAt, open, available, threshold: row.open_per_technician },
+      now,
+    );
     return 1;
   }
 

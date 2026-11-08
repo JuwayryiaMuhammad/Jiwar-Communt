@@ -14,6 +14,11 @@ import {
 } from './certificates/certificates.controller';
 import { CertificatesService } from './certificates/certificates.service';
 import { CertificateExportSections } from './certificates/certificate-export-sections';
+import {
+  StaffReinforcementController,
+  TechnicianReinforcementController,
+} from './reinforcement/reinforcement.controller';
+import { ReinforcementService } from './reinforcement/reinforcement.service';
 import { HelpRequestsService } from './help/help-requests.service';
 import { HelpExportSections } from './help/help-export-sections';
 import { Module } from '@nestjs/common';
@@ -387,6 +392,8 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     StaffTechnicianLocationController,
     StaffCertificatesController,
     MyCertificatesController,
+    StaffReinforcementController,
+    TechnicianReinforcementController,
   ],
   providers: [
     TicketCorrespondence,
@@ -405,6 +412,7 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     FieldLocationExportSections,
     CertificatesService,
     CertificateExportSections,
+    ReinforcementService,
     DispatchSettingsService,
     DispatchLimiter,
     DispatchEngine,

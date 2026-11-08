@@ -37,7 +37,7 @@ import { TenantTx } from '../../core/database/tenant-tx.service';
 import { formatNumber } from '../counters';
 import { fromDate } from '../db-clock';
 import { show } from '../money';
-import { InvoiceLineDto } from './dto/payables.dto';
+import { VendorInvoiceLineDto } from './dto/payables.dto';
 import { INVOICE_STATUSES, PAYABLE_LIMITS as L } from './payable-rules';
 import { VendorInvoicesService } from './vendor-invoices.service';
 
@@ -99,13 +99,13 @@ export class ContractorInvoiceDto {
   @IsUUID()
   invoiceFileId: string;
 
-  @ApiProperty({ type: [InvoiceLineDto], minItems: 1, maxItems: L.lines })
+  @ApiProperty({ type: [VendorInvoiceLineDto], minItems: 1, maxItems: L.lines })
   @IsArray()
   @ArrayMinSize(1, withParams({ min: 1, max: L.lines }))
   @ArrayMaxSize(L.lines, withParams({ min: 1, max: L.lines }))
   @ValidateNested({ each: true })
-  @Type(() => InvoiceLineDto)
-  lines: InvoiceLineDto[];
+  @Type(() => VendorInvoiceLineDto)
+  lines: VendorInvoiceLineDto[];
 
   @ApiPropertyOptional({ type: String, minLength: 1, maxLength: L.note })
   @IsOptional()

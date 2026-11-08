@@ -177,7 +177,10 @@ export function payableCalls(
     'POST /staff/finance/budget-transfers': () => transfer(),
     'GET /staff/finance/budget-transfers': async () => {
       await theTransfer();
-      return manager('GET', '/staff/finance/budget-transfers');
+      return manager(
+        'GET',
+        `/staff/finance/budget-transfers?budgetId=${(await budget()).budgetId}`,
+      );
     },
     'GET /staff/finance/budget-transfers/{id}': async () =>
       manager('GET', `/staff/finance/budget-transfers/${await theTransfer()}`),
@@ -278,8 +281,9 @@ export function payableCalls(
         ),
     'POST /staff/finance/contract-payables/{contractId}/guarantees': () =>
       guarantee(),
+    // Returned or called by finance.payables_approve: the manager.
     'POST /staff/finance/vendor-guarantees/{id}/close': async () =>
-      accountant(
+      manager(
         'POST',
         `/staff/finance/vendor-guarantees/${id(done(await guarantee()))}/close`,
         { outcome: 'returned' },

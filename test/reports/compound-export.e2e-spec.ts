@@ -94,7 +94,10 @@ describe('Reports — the compound’s export', () => {
       ['README.json', ...EXPORT_TABLES.map((t) => `${t.file}.csv`)].sort(),
     );
     const head = (file: string) =>
-      zip.text(file).replace(/^﻿/, '').split('\r\n')[0];
+      zip
+        .text(file)
+        .replace(/^\uFEFF/, '')
+        .split('\r\n')[0];
     expect(head('units.csv')).toBe(
       'id,code,building_id,floor,unit_type,area_sqm',
     );

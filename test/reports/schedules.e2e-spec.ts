@@ -1,7 +1,7 @@
 import { newId } from '../../src/core/common/uuid';
 import { ReportSchedulesService } from '../../src/core/reports/report-schedules.service';
 import { err } from '../api/request';
-import { dbClock, daysLater, day } from '../setup/compound-clock';
+import { dbClock, daysLater, day, ofDbDate } from '../setup/compound-clock';
 import { createHttpHarness, type HttpHarness } from '../setup/http-app';
 import { operationsHelpers, type OperationsSetUp } from '../setup/operations';
 
@@ -121,7 +121,7 @@ describe('Reports — schedules and their runs', () => {
       status: 'ready',
       format: 'csv',
     });
-    expect(run.periodFrom.toISOString().slice(0, 10)).toBe(day(-1));
+    expect(ofDbDate(run.periodFrom)).toBe(day(-1));
     // Again: the period has its run; nothing more is written or told.
     await sweep();
     expect(await runsOf(sch.id)).toHaveLength(1);

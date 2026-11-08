@@ -800,6 +800,10 @@ BEGIN
         (gen_random_uuid(), t, 'SEED-' || left(gen_random_uuid()::text, 8), 'landscaping', ven2, 'Seed Gardens',
          current_date - 300, current_date - 1, 6000.00, 5.00, now(), mgr, 'not_needed', now());
       UPDATE finance_settings SET variance_reason_pct = 15 WHERE tenant_id = t;
+      -- ADR 0091: a compound's minimum cash, in a dip told an hour ago.
+      UPDATE finance_settings SET cash_minimum = 25000.00, cash_low_since = now() - interval '2 hours',
+                                  cash_low_told_at = now() - interval '1 hour'
+       WHERE tenant_id = t;
       INSERT INTO finance_counters (tenant_id, kind, last_number) VALUES (t, 'vendor_invoice', 1)
         ON CONFLICT (tenant_id, kind) DO NOTHING;
       INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES

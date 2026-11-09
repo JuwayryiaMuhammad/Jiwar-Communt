@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Prisma } from '@prisma/client';
 import { REASON_CODES } from '../../core/common/reasons';
+import { INBOX_TYPES } from '../../core/staff-inbox/staff-inbox';
+import { COUNTER_ORDER } from '../counters';
 import { parseLines } from './gl-entries.service';
 import {
   GL_SOURCES,
@@ -81,6 +83,16 @@ describe('the general ledger’s rules (ADR 0092)', () => {
         { accountId: 'y', credit: '0' },
       ]),
     ).toThrow(/Invalid request/);
+  });
+
+  it('the last CHECKs name every inbox type and every counter, in their order', () => {
+    const last = migration('20270615090400_gl_checks').replace(/\s+/g, ' ');
+    expect(last.split(`"type" IN (${quoted(INBOX_TYPES)}))`)).toHaveLength(3);
+    const counters =
+      /"finance_counters_kind" CHECK \("kind" IN \(([^)]*)\)\)/.exec(last)![1];
+    expect(counters.split(', ').sort()).toEqual(
+      COUNTER_ORDER.map((k) => `'${k}'`).sort(),
+    );
   });
 
   it('the CHECKs repeat the sources and the reason codes', () => {

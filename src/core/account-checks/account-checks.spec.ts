@@ -51,8 +51,13 @@ describe('the field team’s part b catalogs and their CHECKs (ADR 0090)', () =>
       expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });
 
-  it('the inbox CHECKs name every type the inbox knows, in its order', () => {
-    const list = `"type" IN (${quoted(INBOX_TYPES)}))`;
+  it('the inbox CHECKs name every type the inbox knew then, in its order', () => {
+    // Up to ADR 0090's last; a later phase states them again (ADR 0092).
+    const known = INBOX_TYPES.slice(
+      0,
+      INBOX_TYPES.indexOf('reinforcement_suggestion') + 1,
+    );
+    const list = `"type" IN (${quoted(known)}))`;
     expect(latest.split(list)).toHaveLength(3);
   });
 });

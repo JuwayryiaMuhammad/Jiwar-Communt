@@ -37,9 +37,18 @@ Once taken, the ticket's own routes are the technician's: `/technician/tickets/{
 | `POST /staff/tenders/{id}/award`                                         | `tenders.manage`                   | `{bidId, code, startsOn, endsOn, approvalRequestId?}`: the contract is signed; above the limit `409 CONTRACT_NEEDS_APPROVAL` / `CONTRACT_APPROVAL_INVALID {reason}`. |
 | `GET /contractor/tenders` · `GET /contractor/tenders/{id}`               | `tenders.bid`                      | The tenders its company is invited to; not invited: `404 TENDER_NOT_FOUND`.                                                                                          |
 | `POST /contractor/tenders/{id}/bid` · `/bid/withdraw`                    | `tenders.bid`                      | `{amount, durationDays?, note?, fileId?}` (a `tender_bid` upload); one live (`409 TENDER_BID_EXISTS {bidId}`); late: `409 TENDER_CLOSED`.                            |
-| `POST /public/tender-bids/lookup` · `/bid` · `/withdraw`                 | the link                           | `{token, …}` in the body; anything that opens nothing: `404 TENDER_LINK_NOT_FOUND`; 30 calls a minute per IP, 20 per link (`429`).                                   |
+| `POST /public/tender-bids/lookup` · `/bid` · `/withdraw` (and the documents, below) | the link                           | `{token, …}` in the body; anything that opens nothing: `404 TENDER_LINK_NOT_FOUND`; 30 calls a minute per IP, 20 per link (`429`).                                   |
 
 An invitee's view: `status` is `open`, `closed` (past the deadline), `awarded` or `cancelled`; `bid.amount` only once opened; `outcome` `awarded | not_awarded | cancelled`.
+
+### A bid link's documents
+
+| Route | Who | What |
+| --- | --- | --- |
+| `POST /public/tender-bids/uploads` | the link | `{token, title, contentType, size}`: a `tender_bid` file (an image or a PDF, 10 MB), owned by no account; answers `{document, upload}`: PUT the bytes to `upload.url` with its headers, then finalize. While bids are taken and the link has no live bid (`409 TENDER_BID_EXISTS`); 20 at most, drafts and uploads in flight included (`409 TENDER_BID_DOCUMENT_LIMIT`). |
+| `POST /public/tender-bids/documents/{fileId}/finalize` · `/remove` | the link | `{token}`: the bytes checked (`422 FILE_CONTENT_MISMATCH` deletes them), or a draft deleted; not one of the link's drafts: `404 TENDER_BID_DOCUMENT_NOT_FOUND`. |
+
+`POST /public/tender-bids/bid` takes `fileIds`: the finalized drafts the bid carries (`400 fileIds FILE_NOT_AVAILABLE` otherwise); the drafts it does not name are deleted. The page's `bidDocuments` lists the drafts and the live bid's (`sent`) by `id` (the file's), `title`, `contentType` and `ready`, never with a link; `maxBidDocuments` is 20. A withdrawal, or a revocation while bids are taken, deletes the bid's documents. Staff read them only once the tender is opened: a bid's `documents` (`{id, title, fileUrl}`) are empty while it is sealed. Every route here sends the public page's headers (`no-store`). The link's limits count every call (30 a minute per IP, 20 per link).
 
 ## A contractor's invoices
 

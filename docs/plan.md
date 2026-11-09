@@ -41,7 +41,7 @@ What landed, the owner's standing decisions, and what is left. It replaces the l
 
 Closed in the maintenance phase of 2026-11-09:
 - tenders: award, deadline, documents, inviting a vendor, renewing or revoking a bid link (0088);
-- the public bid page for a bid link (0088);
+- the public bid page for a bid link (0088), and a bid's documents through it (the owner's decision of 2026-11-09);
 - a staff certificate's paper (0090);
 - the journal paged past its first 50 entries (0092).
 
@@ -118,7 +118,6 @@ From the ADRs' "Open" sections; the ADR has the detail.
 - 0084 — Holidays for inspections and readiness; a fee on use requests; map positions.
 - 0085 — A statement line matched to a payout; cash refunds out of a box; a reconciliation report with the running balance.
 - 0086 — A custom report builder; recipients beyond permission holders; capital-plan lines tied to budget lines.
-- 0088 — Documents through a bid link.
 - 0090 — The location consent's text and version; certificates per ticket category.
 - 0091 — Forecast against actual; a run rate for unscheduled spending; scenarios.
 - 0092 — Budgets against the ledger's expense accounts; cash refunds out of a cash box.

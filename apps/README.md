@@ -107,7 +107,7 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 - Topic names are entered in English and Arabic (the residents' app shows the Arabic one); the Arabic field is the only right-to-left input.
 - English only for now. Error texts are keyed by API error code in `packages/api/src/errors.ts`, ready for an Arabic dictionary.
 
-- Tenders (ADR 0088): a tender's page adds and removes its documents (`tender_document`), invites a registered vendor or makes a bid link (shown once), renews a link (the old one stops) or revokes an invitation, moves the deadline later, and awards an opened bid (the board's approved major contract picked above the manager's limit, for `governance.approvals` holders). The vendor page's contractors and the dispatch page's "offer to a vendor" are API-only. The bid link's page is the public app's `/b#<token>` (`apps/public`); a bid through it carries no file.
+- Tenders (ADR 0088): a tender's page adds and removes its documents (`tender_document`), invites a registered vendor or makes a bid link (shown once), renews a link (the old one stops) or revokes an invitation, moves the deadline later, and awards an opened bid (the board's approved major contract picked above the manager's limit, for `governance.approvals` holders). The vendor page's contractors and the dispatch page's "offer to a vendor" are API-only. The bid link's page is the public app's `/b#<token>` (`apps/public`), where the company attaches its bid's documents; the tender's page shows each opened bid's documents (none before the opening: they are sealed with the bid).
 
 ## Checks
 

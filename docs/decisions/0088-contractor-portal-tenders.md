@@ -55,7 +55,7 @@ The manager audit (slice 01, 2026-11-01) found no way to give a ticket to an out
 1. **A contractor works the ticket it took as its technician**, through the technician's routes; the vendor's other contractors see the offer, not each other's tickets. The vendor's own SLA (`responseHours` on its contract) is not a second clock: the ticket's own SLA runs (as the plan says, "same SLA clock").
 2. **The offer shows no unit, resident or ticket words** before it is taken; the dispatcher's note says what the vendor needs. An offer has no expiry: an unanswered one is the SLA's breach to flag.
 3. **A rejected or reopened ticket a contractor did goes back to the queue** (the first-rejection return to its technician, ADR 0032, is staff's), and its vendor lets go; dispatch may offer it again.
-4. **A link bid carries the amount, the duration and a note, no document**: an upload without an account through the link is left for later (a registered vendor's contractor attaches its offer).
+4. ~~**A link bid carries the amount, the duration and a note, no document**: an upload without an account through the link is left for later (a registered vendor's contractor attaches its offer).~~ *Closed on 2026-11-09: a link bid carries its documents (the update "a bid link's documents" below).*
 5. **The award needs the board's approval raised beforehand** through governance (`major_contract`, the bid's amount), then named at the award; the award does not raise it itself. That one approval signs the contract.
 6. **A link bidder is registered at the award** by its company name (found whatever its case, or created), as a contract naming a vendor by name is (ADR 0077); its papers come after.
 7. **Who bid and when are visible to staff before the opening** (the envelopes received); their amounts, terms and offers are not.
@@ -71,9 +71,21 @@ The manager audit (slice 01, 2026-11-01) found no way to give a ticket to an out
 ## Open
 
 - The contractor's mobile screens (mobile apps are outside this repository).
-- Documents through a bid link; purchase orders from an award (ADR 0089 Open).
+- Purchase orders from an award (ADR 0089 Open).
 
 ## Update 2026-11-09 (the maintenance phase)
 
-- The bid link's page is built: `apps/public`'s `/b#<token>`, over the three `public/tender-bids` routes; it shows the tender and its documents and sends or withdraws the sealed bid, with no file (deviation 4 stands).
+- The bid link's page is built: `apps/public`'s `/b#<token>`, over the three `public/tender-bids` routes; it shows the tender and its documents and sends or withdraws the sealed bid (its documents: the next update).
 - The manager's tender page drives every route of this ADR: documents, invitations and bid links (made, renewed, revoked), the deadline, the opening and the award.
+
+## Update 2026-11-09: a bid link's documents (the owner's decision)
+
+The owner decided that a company invited by a bid link attaches documents to its bid. Deviation 4 is closed.
+
+- **The upload is the link's.** `POST /public/tender-bids/uploads` (`{token, title, contentType, size}`) starts a record upload owned by no account, as a registrant's documents (ADR 0062): the link's token alone authorizes it, and the link's own limits count it (30 calls a minute per IP, 20 per link, shared with the lookup and the bid). The bytes go straight to storage with the URL the API signed; `…/documents/{fileId}/finalize` checks them (size, type, first bytes), and a mismatch deletes them. `…/documents/{fileId}/remove` deletes a draft. Every miss of a link is still the one 404; a file that is not one of the link's drafts is `404 TENDER_BID_DOCUMENT_NOT_FOUND`.
+- **The purpose is `tender_bid`**, which already existed (a registered vendor's contractor uploads its one offer under it): an image or a PDF, **10 MB**, as the vendors' papers and the tender's own documents. Its uploaders stay `tenders.bid`; through a link, the record upload is the only way in. No files CHECK changed, since both already list it: the migration `20270616090000_tender_bid_documents` adds only the documents' table (keyed by the file, RLS forced, a document joins its bid once and otherwise never changes, it goes only with its file).
+- **20 documents a bid at most**, as many as the tender's own; drafts and uploads not yet finalized count (`409 TENDER_BID_DOCUMENT_LIMIT`, `params.limit`). A document is named (1 to 120 characters).
+- **A draft until the bid.** A document waits on the link's invitation until the bid is sent: `fileIds` on the bid names the finalized drafts it carries (`400 fileIds FILE_NOT_AVAILABLE` otherwise), and the drafts it does not name are deleted then. Uploads are taken while the tender takes bids and the link has no live bid (`409 TENDER_BID_EXISTS`): a sent bid's documents never change, as the bid never does. **Withdrawing the bid withdraws its files** (deleted, reason `withdrawn`); a revocation while bids are taken does the same, and deletes the link's drafts.
+- **Sealed as the amount.** Before the opening nobody on the compound's side reads a link bid's document, and no link to one exists: the staff's view of a bid lists none (`documents: []` while `sealed`); the file has no owner, so `GET /files/{id}` is a 404 for everyone; the company's own page lists its documents by title, type and state, without a link. After the opening each unsealed bid's documents come with it, with short-lived links. `test/tenders/bid-link-documents.e2e-spec.ts` proves both.
+- **Privacy and audit.** The vendor is a company, not a person, so its bid's files are the compound's records of the tender, kept as the bid is (a withdrawn bid's excepted). An upload is audited as `file.created` (purpose, type, size) and `tender_bid.document_added`, a draft's removal as `tender_bid.document_removed`, the bid's documents as `documentCount` on `tender_bid.submitted`, and a withdrawal's or a revocation's as `documentsWithdrawn`: ids and counts only, never a title.
+- **The pages.** The public `/b` page adds and removes documents before the bid is sent and says which arrived; the manager's tender page shows each opened bid's documents.

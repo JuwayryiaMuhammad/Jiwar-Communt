@@ -15,7 +15,7 @@ The pages the API's links open, served at `PUBLIC_APP_URL` (port 3003). Next.js 
 | `/c#<code>`, or `/c` and the code typed | a clearance certificate (ADR 0062), which prints this address and the code | Whether a clearance stands: compound, number, unit code, dates | `public/clearances/lookup` |
 | `/x#<token>` | whoever holds a unit proxy's link (an owner appoints the proxy from the app, ADR 0063) | Accepts looking after a closed or vacant unit with the emailed code; the proxy then signs in from the app | `proxy-invites/accept/start`, `proxy-invites/accept/complete` |
 | `/w#<code>`, or `/w` and the code typed | a works completion certificate (ADR 0063), which prints this address and the code | Whether the certificate is genuine: compound, number, unit code, inspection day | `public/works-certificates/lookup` |
-| `/b#<token>` | the management (a tender's invitation to a company that is not registered, ADR 0088), given to the company once | The tender: compound, number, trade, deadline, scope, its documents (presigned, short-lived), the status and, once decided, the outcome; a sealed bid (amount, days, terms) after a confirming press, one live at a time; its withdrawal before the deadline | `public/tender-bids/lookup`, `public/tender-bids/bid`, `public/tender-bids/withdraw` |
+| `/b#<token>` | the management (a tender's invitation to a company that is not registered, ADR 0088), given to the company once | The tender: compound, number, trade, deadline, scope, its documents (presigned, short-lived), the status and, once decided, the outcome; the bid's own documents, each named, uploaded (PUT to storage, then finalize) and removed while a draft, listed without a link; a sealed bid (amount, days, terms, the documents that arrived) after a confirming press, one live at a time; its withdrawal before the deadline, which takes its documents | `public/tender-bids/lookup`, `public/tender-bids/bid`, `public/tender-bids/withdraw`, `public/tender-bids/uploads`, `public/tender-bids/documents/{fileId}/finalize\|remove` |
 | `/` | | App name and "download the app" placeholders | none |
 | anything else, or a link without a well-formed token | | The invalid-or-expired page, without a request | none |
 
@@ -43,7 +43,7 @@ Set the API's `PUBLIC_APP_URL=http://localhost:3003` so its links land here. Wit
 
 ## Known limits
 
-- **A bid through its link carries no file.** The API takes the amount, the days and the terms in words only (ADR 0088, deviation 4: an upload without an account is left for later); the page says so. The tender's own documents are read from it.
+- **`/b` needs `UPLOAD_ORIGIN`** to attach a bid's documents, as `/rs` does (the browser PUTs to the URL the API signed). Without it the tender, the bid and its withdrawal still work. A document is never read back from the page: nobody reads one before the opening.
 - **Registration has no ID document upload.** The form takes the ID type and number as text. Proof of the registrant's place in the unit (a contract, an ownership document) is attached afterwards on `/rs`, from the emailed link (ADR 0062).
 - **`/rs` needs `UPLOAD_ORIGIN`** to upload: the browser PUTs to the URL the API signed, so storage must be reachable from the browser and its origin allowed on that page. Without it, the state and resubmit still work.
 - **The export download fails on staging** while storage is HTTP MinIO: the browser blocks an HTTP download from an HTTPS page, and the page cannot detect it, so it says the file service may be unavailable. It works once storage is HTTPS (`deploy/README.md`).

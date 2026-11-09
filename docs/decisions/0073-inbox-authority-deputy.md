@@ -114,3 +114,6 @@ The manager audit (2026-11-01) found that what waits for a staff decision is spr
 
 ## Update (M2-12b, ADR 0090)
 - Three more types: `dangling_account` (`accounts.manage`, 7 days), `access_review` (`accounts.manage`, 14 days: the review's overdue notice is the inbox's own) and `reinforcement_suggestion` (`field_team.manage`, 1 hour). None in bulk. Both CHECKs are recreated with every type in 20270614090500.
+
+## Update (Phase M3-5, ADR 0092)
+- One more type: `gl_manual_entry` (`finance.ledger_write`, 72 hours): a manual journal entry waiting for its second person; never in bulk (its maker never approves it). Both CHECKs are recreated with every type in 20270615090400.

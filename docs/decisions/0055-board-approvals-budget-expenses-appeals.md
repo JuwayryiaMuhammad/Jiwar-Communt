@@ -280,3 +280,6 @@ Category `governance`, none critical. The params are codes only.
 
 ## Update (Phase M3-3, ADR 0086)
 - A new approval type, `capital_plan`, names a year's capital plan as its subject (`capitalPlanId`): its cost is the plan's total, submitted at the raise, locked once approved, a draft again when rejected or withdrawn. 30 days by default.
+
+## Update (Phase M3-5, ADR 0092)
+- A manual expense posts its line's category against "expenses paid outside the treasury" (no account is recorded for it), its void the reverse; a payout's expense posts nothing of its own (the vendor's invoice posted it at its approval, ADR 0089).

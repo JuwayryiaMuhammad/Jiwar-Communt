@@ -33763,6 +33763,1153 @@
         },
         "type": "object"
       },
+      "GlAccountBalanceView": {
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/GlAccountView"
+          },
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asOf",
+          "account"
+        ],
+        "type": "object"
+      },
+      "GlAccountView": {
+        "properties": {
+          "balance": {
+            "description": "Its own and its sub-accounts’, on its normal side (debit for assets and expenses).",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "cashAccountId": {
+            "description": "A bank or cash account of the treasury (ADR 0085).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "code": {
+            "example": "1110.01",
+            "type": "string"
+          },
+          "control": {
+            "description": "Its register keeps it: no manual line, no sub-account (GL_ACCOUNT_CONTROLLED).",
+            "type": "boolean"
+          },
+          "credit": {
+            "description": "Its own credits up to the day.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "description": "Its own debits up to the day.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "parentId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "postable": {
+            "description": "A heading takes no line.",
+            "type": "boolean"
+          },
+          "system": {
+            "description": "Seeded with the chart, used by the automatic postings: never removed.",
+            "type": "boolean"
+          },
+          "systemKey": {
+            "description": "The automatic postings’ name for it.",
+            "example": "receivables",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "asset",
+              "liability",
+              "equity",
+              "revenue",
+              "expense"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameEn",
+          "nameAr",
+          "type",
+          "parentId",
+          "system",
+          "systemKey",
+          "cashAccountId",
+          "control",
+          "postable",
+          "debit",
+          "credit",
+          "balance"
+        ],
+        "type": "object"
+      },
+      "GlBalanceSheetView": {
+        "properties": {
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/GlStatementRowView"
+            },
+            "type": "array"
+          },
+          "balanced": {
+            "description": "Assets equal liabilities and equity.",
+            "type": "boolean"
+          },
+          "equity": {
+            "items": {
+              "$ref": "#/components/schemas/GlStatementRowView"
+            },
+            "type": "array"
+          },
+          "liabilities": {
+            "items": {
+              "$ref": "#/components/schemas/GlStatementRowView"
+            },
+            "type": "array"
+          },
+          "surplus": {
+            "description": "Revenue less expenses up to the day, not closed into equity.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "totalAssets": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "totalEquity": {
+            "description": "Equity with the surplus.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "totalLiabilities": {
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asOf",
+          "assets",
+          "liabilities",
+          "equity",
+          "surplus",
+          "totalAssets",
+          "totalLiabilities",
+          "totalEquity",
+          "balanced"
+        ],
+        "type": "object"
+      },
+      "GlCashReconciliationView": {
+        "properties": {
+          "cashAccountId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "difference": {
+            "description": "ledger − register: zero when they agree.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "key": {
+            "description": "receivables | unit_credit | deposits_held | payables | retentions | vendor_advances | cash_account",
+            "example": "receivables",
+            "type": "string"
+          },
+          "ledger": {
+            "description": "The ledger’s balance of it, on its normal side.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "register": {
+            "description": "What the register it posts from holds.",
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "register",
+          "ledger",
+          "difference",
+          "cashAccountId",
+          "name"
+        ],
+        "type": "object"
+      },
+      "GlChartView": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/GlAccountView"
+            },
+            "type": "array"
+          },
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asOf",
+          "accounts"
+        ],
+        "type": "object"
+      },
+      "GlCloseMonthDto": {
+        "properties": {
+          "month": {
+            "description": "A month that has ended: it and every open month before it, from the ledger’s first, are closed.",
+            "example": "2026-10",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month"
+        ],
+        "type": "object"
+      },
+      "GlCreateAccountDto": {
+        "properties": {
+          "code": {
+            "description": "Its parent’s code, a dot, and one to three digits; once in the chart.",
+            "example": "5130.01",
+            "pattern": "^[0-9]{4}(\\.[0-9]{1,3}){0,3}$",
+            "type": "string"
+          },
+          "nameAr": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "parentId": {
+            "description": "The account it sits under: any but a control account (its register keeps it). It takes its type.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parentId",
+          "code",
+          "nameEn",
+          "nameAr"
+        ],
+        "type": "object"
+      },
+      "GlEntryLineView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "credit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "lineNo": {
+            "type": "number"
+          },
+          "memo": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "lineNo",
+          "accountId",
+          "code",
+          "nameEn",
+          "nameAr",
+          "debit",
+          "credit",
+          "unitId",
+          "unitCode",
+          "vendorId",
+          "vendorName",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "GlEntryView": {
+        "properties": {
+          "eventOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/GlEntryLineView"
+            },
+            "type": "array"
+          },
+          "memo": {
+            "description": "A manual entry’s words.",
+            "nullable": true,
+            "type": "string"
+          },
+          "postedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          },
+          "seq": {
+            "description": "Its place in the journal: rises, with gaps.",
+            "example": "1042",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "invoice",
+              "credit_note",
+              "payment",
+              "payment_reversal",
+              "allocation",
+              "allocation_release",
+              "refund",
+              "refund_reversal",
+              "deposit",
+              "deposit_event",
+              "expense",
+              "expense_void",
+              "vendor_invoice",
+              "vendor_invoice_cancel",
+              "vendor_payout",
+              "cash_movement",
+              "custody_handin",
+              "club_payment",
+              "vehicle_fine_payment",
+              "violation_payment",
+              "manual"
+            ],
+            "type": "string"
+          },
+          "sourceId": {
+            "description": "The row it posted from: an invoice, a payment, a movement, a manual entry…",
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "postedOn",
+          "eventOn",
+          "source",
+          "sourceId",
+          "reference",
+          "memo",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "GlEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GlEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GlIncomeStatementView": {
+        "properties": {
+          "expenses": {
+            "items": {
+              "$ref": "#/components/schemas/GlStatementRowView"
+            },
+            "type": "array"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "revenue": {
+            "items": {
+              "$ref": "#/components/schemas/GlStatementRowView"
+            },
+            "type": "array"
+          },
+          "surplus": {
+            "description": "Revenue less expenses: negative is a deficit.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          },
+          "totalExpenses": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "totalRevenue": {
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "revenue",
+          "expenses",
+          "totalRevenue",
+          "totalExpenses",
+          "surplus"
+        ],
+        "type": "object"
+      },
+      "GlLedgerLineView": {
+        "properties": {
+          "balance": {
+            "description": "The account’s own balance after the line, on its normal side.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "credit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "entryId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "eventOn": {
+            "description": "The event’s own day: earlier when its month was closed.",
+            "format": "date",
+            "type": "string"
+          },
+          "lineNo": {
+            "type": "number"
+          },
+          "memo": {
+            "nullable": true,
+            "type": "string"
+          },
+          "postedOn": {
+            "description": "The entry’s day.",
+            "format": "date",
+            "type": "string"
+          },
+          "reference": {
+            "example": "INV-000123",
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "invoice",
+              "credit_note",
+              "payment",
+              "payment_reversal",
+              "allocation",
+              "allocation_release",
+              "refund",
+              "refund_reversal",
+              "deposit",
+              "deposit_event",
+              "expense",
+              "expense_void",
+              "vendor_invoice",
+              "vendor_invoice_cancel",
+              "vendor_payout",
+              "cash_movement",
+              "custody_handin",
+              "club_payment",
+              "vehicle_fine_payment",
+              "violation_payment",
+              "manual"
+            ],
+            "type": "string"
+          },
+          "sourceId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "entryId",
+          "lineNo",
+          "postedOn",
+          "eventOn",
+          "source",
+          "sourceId",
+          "reference",
+          "debit",
+          "credit",
+          "balance",
+          "unitId",
+          "unitCode",
+          "vendorId",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "GlLedgerLineViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GlLedgerLineView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GlManualEntryDto": {
+        "properties": {
+          "lines": {
+            "description": "Its debits equal its credits (GL_ENTRY_UNBALANCED).",
+            "items": {
+              "$ref": "#/components/schemas/GlManualLineDto"
+            },
+            "maxItems": 50,
+            "minItems": 2,
+            "type": "array"
+          },
+          "memo": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "postedOn": {
+            "description": "A day of an open month, no later than this month’s end (GL_PERIOD_CLOSED, INVALID_VALUE).",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "postedOn",
+          "memo",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "GlManualEntryView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "credit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "entryId": {
+            "description": "The entry its approval posted.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/GlManualLineView"
+            },
+            "type": "array"
+          },
+          "memo": {
+            "type": "string"
+          },
+          "number": {
+            "example": "JE-000012",
+            "type": "string"
+          },
+          "postedOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "A `glEntryReject` code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reversesEntryId": {
+            "description": "The posted entry it reverses.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "withdrawn"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "postedOn",
+          "memo",
+          "status",
+          "reversesEntryId",
+          "createdBy",
+          "createdAt",
+          "decidedBy",
+          "decidedAt",
+          "rejectReason",
+          "entryId",
+          "debit",
+          "credit",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "GlManualEntryViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GlManualEntryView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GlManualLineDto": {
+        "properties": {
+          "accountId": {
+            "description": "A postable account no register keeps.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "credit": {
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "debit": {
+            "description": "A debit, or a credit: exactly one of the two.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "memo": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId"
+        ],
+        "type": "object"
+      },
+      "GlManualLineView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "credit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "lineNo": {
+            "type": "number"
+          },
+          "memo": {
+            "nullable": true,
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "unitCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "lineNo",
+          "accountId",
+          "code",
+          "nameEn",
+          "nameAr",
+          "debit",
+          "credit",
+          "unitId",
+          "unitCode",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "GlPeriodView": {
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "ended": {
+            "description": "The month has ended: it may be closed.",
+            "type": "boolean"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "reopenReason": {
+            "description": "A `glPeriodReopen` code.",
+            "nullable": true,
+            "type": "string"
+          },
+          "reopenedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "reopenedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "status",
+          "ended",
+          "closedAt",
+          "closedBy",
+          "reopenedAt",
+          "reopenedBy",
+          "reopenReason"
+        ],
+        "type": "object"
+      },
+      "GlPeriodViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GlPeriodView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GlReconciliationCheckView": {
+        "properties": {
+          "difference": {
+            "description": "ledger − register: zero when they agree.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "key": {
+            "description": "receivables | unit_credit | deposits_held | payables | retentions | vendor_advances | cash_account",
+            "example": "receivables",
+            "type": "string"
+          },
+          "ledger": {
+            "description": "The ledger’s balance of it, on its normal side.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "register": {
+            "description": "What the register it posts from holds.",
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "register",
+          "ledger",
+          "difference"
+        ],
+        "type": "object"
+      },
+      "GlReconciliationView": {
+        "properties": {
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          },
+          "balanced": {
+            "description": "Every debit has its credit.",
+            "type": "boolean"
+          },
+          "cashAccounts": {
+            "items": {
+              "$ref": "#/components/schemas/GlCashReconciliationView"
+            },
+            "type": "array"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/GlReconciliationCheckView"
+            },
+            "type": "array"
+          },
+          "credit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asOf",
+          "balanced",
+          "debit",
+          "credit",
+          "checks",
+          "cashAccounts"
+        ],
+        "type": "object"
+      },
+      "GlRejectEntryDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A `glEntryReject` code.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "GlRenameAccountDto": {
+        "properties": {
+          "nameAr": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameEn": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GlReopenMonthDto": {
+        "properties": {
+          "month": {
+            "example": "2026-10",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A `glPeriodReopen` code.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "GlReverseEntryDto": {
+        "properties": {
+          "memo": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "postedOn": {
+            "description": "A day of an open month, no later than this month’s end.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "postedOn",
+          "memo"
+        ],
+        "type": "object"
+      },
+      "GlStatementRowView": {
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "amount": {
+            "description": "On the account’s normal side.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "credit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "nameAr": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "asset",
+              "liability",
+              "equity",
+              "revenue",
+              "expense"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId",
+          "code",
+          "nameEn",
+          "nameAr",
+          "type",
+          "debit",
+          "credit",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "GlTrialBalanceView": {
+        "properties": {
+          "asOf": {
+            "format": "date",
+            "type": "string"
+          },
+          "balanced": {
+            "type": "boolean"
+          },
+          "credit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "debit": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "rows": {
+            "description": "Each account with lines: its balance as a debit or a credit.",
+            "items": {
+              "$ref": "#/components/schemas/GlStatementRowView"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "asOf",
+          "rows",
+          "debit",
+          "credit",
+          "balanced"
+        ],
+        "type": "object"
+      },
       "GovernanceCandidacyView": {
         "properties": {
           "id": {
@@ -38211,7 +39358,8 @@
           "custody_variance",
           "dangling_account",
           "access_review",
-          "reinforcement_suggestion"
+          "reinforcement_suggestion",
+          "gl_manual_entry"
         ],
         "type": "string"
       },
@@ -60740,7 +61888,11 @@
           "service_by_building",
           "energy_cost",
           "collections_by_building",
-          "cash_flow"
+          "cash_flow",
+          "gl_trial_balance",
+          "gl_income_statement",
+          "gl_balance_sheet",
+          "gl_general_ledger"
         ],
         "type": "string"
       },
@@ -84451,7 +85603,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 29,
+            "maxItems": 30,
             "minItems": 1,
             "type": "array"
           }
@@ -141901,6 +143053,1126 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/accounts": {
+      "get": {
+        "description": "Every account, by code, with its own debits and credits up to `asOf` and its balance with its sub-accounts’ on its normal side. A compound starts with the standard chart; each bank and cash account of the treasury has its own.",
+        "operationId": "GlController_chart",
+        "parameters": [
+          {
+            "description": "The balances at the end of this local day; today by default.",
+            "in": "query",
+            "name": "asOf",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlChartView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The chart of accounts with their balances",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Under any account but a control one (GL_ACCOUNT_CONTROLLED), of its type; its code its parent’s with a dot and up to three digits, once in the chart (DUPLICATE_RESOURCE).",
+        "operationId": "GlController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlCreateAccountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlAccountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a sub-account",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/accounts/{id}": {
+      "delete": {
+        "description": "A system account never (GL_ACCOUNT_SYSTEM); one with lines or sub-accounts never (GL_ACCOUNT_IN_USE).",
+        "operationId": "GlController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a sub-account nothing posted to",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "get": {
+        "operationId": "GlController_account",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The balances at the end of this local day; today by default.",
+            "in": "query",
+            "name": "asOf",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlAccountBalanceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An account and its balance on a day",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Its names only: a code, a type and a place never change.",
+        "operationId": "GlController_rename",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlRenameAccountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlAccountView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename an account",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/accounts/{id}/ledger": {
+      "get": {
+        "description": "Its own lines of a period (at most 366 days), oldest first, each with the account’s balance after it on its normal side.",
+        "operationId": "GlController_accountLedger",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlLedgerLineViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An account’s ledger",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/accounts/{id}/ledger/export": {
+      "get": {
+        "operationId": "GlController_accountLedgerCsv",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export an account’s ledger as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/balance-sheet": {
+      "get": {
+        "description": "Assets, liabilities and equity up to `asOf`, with the surplus no entry closed into equity.",
+        "operationId": "GlController_balanceSheet",
+        "parameters": [
+          {
+            "description": "The balances at the end of this local day; today by default.",
+            "in": "query",
+            "name": "asOf",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlBalanceSheetView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The balance sheet on a day",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/entries": {
+      "get": {
+        "description": "Every entry on the period’s days (at most 366), in the journal’s order, with its lines; by source.",
+        "operationId": "GlController_journal",
+        "parameters": [
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "enum": [
+                "invoice",
+                "credit_note",
+                "payment",
+                "payment_reversal",
+                "allocation",
+                "allocation_release",
+                "refund",
+                "refund_reversal",
+                "deposit",
+                "deposit_event",
+                "expense",
+                "expense_void",
+                "vendor_invoice",
+                "vendor_invoice_cancel",
+                "vendor_payout",
+                "cash_movement",
+                "custody_handin",
+                "club_payment",
+                "vehicle_fine_payment",
+                "violation_payment",
+                "manual"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The journal of a period",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/entries/{id}": {
+      "get": {
+        "operationId": "GlController_entry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An entry and its lines",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/entries/{id}/reverse": {
+      "post": {
+        "description": "Writes a manual entry of its lines the other way round, for a second person’s approval. An automatic entry is corrected at its source (GL_ENTRY_NOT_REVERSIBLE); an entry is reversed once (GL_ENTRY_REVERSED).",
+        "operationId": "GlController_reverse",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlReverseEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlManualEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reverse a manual entry",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/income-statement": {
+      "get": {
+        "description": "Revenue and expense accounts with lines on the period’s days (at most 366), and the surplus.",
+        "operationId": "GlController_incomeStatement",
+        "parameters": [
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlIncomeStatementView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The income statement of a period",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/journal/export": {
+      "get": {
+        "description": "One row a line, for an outside accounting system: the entry, its days, its source and reference, the account by code and name, the debit or credit, the unit and the vendor it names, and a manual entry’s words.",
+        "operationId": "GlController_journalCsv",
+        "parameters": [
+          {
+            "description": "First local day, included.",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last local day, included: at most 366 days after `from`.",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Export the journal of a period as CSV",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/manual-entries": {
+      "get": {
+        "operationId": "GlController_manualEntries",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "withdrawn"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlManualEntryViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Manual journal entries, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Pending until another `finance.ledger_write` holder approves it. Balanced (GL_ENTRY_UNBALANCED), on postable accounts no register keeps (GL_ACCOUNT_CONTROLLED, GL_ACCOUNT_NOT_POSTABLE), dated in an open month (GL_PERIOD_CLOSED).",
+        "operationId": "GlController_submit",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlManualEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlManualEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write a manual journal entry",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/manual-entries/{id}": {
+      "get": {
+        "operationId": "GlController_manualEntry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlManualEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A manual journal entry",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/manual-entries/{id}/approve": {
+      "post": {
+        "description": "By someone other than its maker (GL_SELF_APPROVAL), while its month is open (GL_PERIOD_CLOSED).",
+        "operationId": "GlController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlManualEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve and post a manual entry",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/manual-entries/{id}/reject": {
+      "post": {
+        "description": "With a `glEntryReject` reason; never its maker.",
+        "operationId": "GlController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlRejectEntryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlManualEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn a manual entry down",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/manual-entries/{id}/withdraw": {
+      "post": {
+        "operationId": "GlController_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlManualEntryView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw one’s own pending entry",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/periods": {
+      "get": {
+        "description": "From the first entry’s month to this one: open or closed.",
+        "operationId": "GlController_periods",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlPeriodViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The ledger’s months, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/periods/close": {
+      "post": {
+        "description": "A month that has ended (GL_PERIOD_NOT_ENDED), and every open month before it from the ledger’s first. No entry is then dated in them; an event of a closed month posts on the first day of the next open one.",
+        "operationId": "GlController_close",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlCloseMonthDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlPeriodViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close the months through one",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/periods/reopen": {
+      "post": {
+        "description": "The manager’s alone, with a `glPeriodReopen` reason; audited.",
+        "operationId": "GlController_reopen",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlReopenMonthDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlPeriodViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reopen a closed month",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/reconciliation": {
+      "get": {
+        "description": "Each bank and cash account against its movements (ADR 0085); receivables against what the units owe and unit credit against their free money (ADR 0046, 0048); deposits held (ADR 0062); payables, retentions and vendor advances (ADR 0089). A difference of zero is agreement.",
+        "operationId": "GlController_reconciliation",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlReconciliationView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The ledger against its registers",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/trial-balance": {
+      "get": {
+        "description": "Every account with lines up to `asOf`, its balance as a debit or a credit; the two totals agree.",
+        "operationId": "GlController_trialBalance",
+        "parameters": [
+          {
+            "description": "The balances at the end of this local day; today by default.",
+            "in": "query",
+            "name": "asOf",
+            "required": false,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlTrialBalanceView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The trial balance on a day",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

@@ -16332,6 +16332,879 @@
           }
         },
         {
+          "name": "The chart of accounts with their balances",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "description": "The balances at the end of this local day; today by default.",
+                  "disabled": true,
+                  "key": "asOf",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/accounts"
+            }
+          }
+        },
+        {
+          "name": "Add a sub-account",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"parentId\": \"\",\n  \"code\": \"5130.01\",\n  \"nameEn\": \"\",\n  \"nameAr\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `code` | string | yes | Its parent’s code, a dot, and one to three digits; once in the chart. |\n| `nameAr` | string | yes |  |\n| `nameEn` | string | yes |  |\n| `parentId` | string (uuid) | yes | The account it sits under: any but a control account (its register keeps it). It takes its type. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "accounts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/accounts"
+            }
+          }
+        },
+        {
+          "name": "An account and its balance on a day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "accounts",
+                ":id"
+              ],
+              "query": [
+                {
+                  "description": "The balances at the end of this local day; today by default.",
+                  "disabled": true,
+                  "key": "asOf",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/accounts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rename an account",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"nameAr\": \"\",\n  \"nameEn\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `nameAr` | string |  |  |\n| `nameEn` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "accounts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/accounts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a sub-account nothing posted to",
+          "request": {
+            "description": "**Responses:** 204",
+            "header": [],
+            "method": "DELETE",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "accounts",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/accounts/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "An account’s ledger",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "accounts",
+                ":id",
+                "ledger"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/accounts/:id/ledger?from=&to=",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export an account’s ledger as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "accounts",
+                ":id",
+                "ledger",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/accounts/:id/ledger/export?from=&to=",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The balance sheet on a day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "balance-sheet"
+              ],
+              "query": [
+                {
+                  "description": "The balances at the end of this local day; today by default.",
+                  "disabled": true,
+                  "key": "asOf",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/balance-sheet"
+            }
+          }
+        },
+        {
+          "name": "The journal of a period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "entries"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                },
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "source",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/entries?from=&to="
+            }
+          }
+        },
+        {
+          "name": "An entry and its lines",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "entries",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/entries/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reverse a manual entry",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"postedOn\": \"\",\n  \"memo\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `memo` | string | yes |  |\n| `postedOn` | string | yes | A day of an open month, no later than this month’s end. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "entries",
+                ":id",
+                "reverse"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/entries/:id/reverse",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The income statement of a period",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "income-statement"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/income-statement?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Export the journal of a period as CSV",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "journal",
+                "export"
+              ],
+              "query": [
+                {
+                  "description": "(required) First local day, included.",
+                  "key": "from",
+                  "value": ""
+                },
+                {
+                  "description": "(required) Last local day, included: at most 366 days after `from`.",
+                  "key": "to",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/journal/export?from=&to="
+            }
+          }
+        },
+        {
+          "name": "Manual journal entries, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "manual-entries"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/manual-entries"
+            }
+          }
+        },
+        {
+          "name": "Write a manual journal entry",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"postedOn\": \"\",\n  \"memo\": \"\",\n  \"lines\": [\n    {\n      \"accountId\": \"\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `lines` | object[] | yes | Its debits equal its credits (GL_ENTRY_UNBALANCED). |\n| `memo` | string | yes |  |\n| `postedOn` | string | yes | A day of an open month, no later than this month’s end (GL_PERIOD_CLOSED, INVALID_VALUE). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "manual-entries"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/manual-entries"
+            }
+          }
+        },
+        {
+          "name": "A manual journal entry",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "manual-entries",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/manual-entries/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve and post a manual entry",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "manual-entries",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/manual-entries/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn a manual entry down",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A `glEntryReject` code. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "manual-entries",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/manual-entries/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Withdraw one’s own pending entry",
+          "request": {
+            "description": "**Responses:** 201",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "manual-entries",
+                ":id",
+                "withdraw"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/manual-entries/:id/withdraw",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The ledger’s months, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "periods"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/periods"
+            }
+          }
+        },
+        {
+          "name": "Close the months through one",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"month\": \"2026-10\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `month` | string | yes | A month that has ended: it and every open month before it, from the ledger’s first, are closed. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "periods",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/periods/close"
+            }
+          }
+        },
+        {
+          "name": "Reopen a closed month",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"month\": \"2026-10\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `month` | string | yes |  |\n| `reasonCode` | string | yes | A `glPeriodReopen` code. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "periods",
+                "reopen"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/periods/reopen"
+            }
+          }
+        },
+        {
+          "name": "The ledger against its registers",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "reconciliation"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/reconciliation"
+            }
+          }
+        },
+        {
+          "name": "The trial balance on a day",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "trial-balance"
+              ],
+              "query": [
+                {
+                  "description": "The balances at the end of this local day; today by default.",
+                  "disabled": true,
+                  "key": "asOf",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/trial-balance"
+            }
+          }
+        },
+        {
           "name": "List the late-payment notices with their delivery and read proofs",
           "request": {
             "description": "**Responses:** 200",
@@ -57843,7 +58716,7 @@
               },
               "raw": "{\n  \"reportKey\": \"maintenance_spend\",\n  \"cadence\": \"daily\",\n  \"format\": \"pdf\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` \\| `cash_flow` | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` \\| `cash_flow` \\| `gl_trial_balance` \\| `gl_income_statement` \\| `gl_balance_sheet` \\| `gl_general_ledger` | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

@@ -92,3 +92,6 @@ So this phase builds **registers, not a ledger**: every balance is the sum of ap
 
 ## Update (Phase M3-4, ADR 0091)
 - The cash flow forecast reads the accounts' balances as its opening position (the live accounts, the sum of their movements). Open custody and the cheques that paid and have not cleared are its first period's money in transit. The realised cash flow report (`cash_flow`) reads the movements, openings and transfers aside.
+
+## Update (Phase M3-5, ADR 0092)
+- "M3-5 (the ledger, if built) posts from these movements" is done: each bank and cash account has its own account in the general ledger (opened with it), and every movement posts on it against where the money came from — an opening against opening balances, a hand-in against office cash, a cleared cheque against cheques received, a statement's bank transfer against transfers to match, an adjustment by its reason, a transfer leg through the transfers account, a reversal undoing its movement's entry; a hand-in's variance goes to cash over and short; a payout's movement is its payout's entry. The ledger's reconciliation holds each account to the sum of its movements.

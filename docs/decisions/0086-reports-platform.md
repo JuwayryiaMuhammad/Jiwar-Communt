@@ -98,3 +98,6 @@ The manager audit of 2026-11-01 (finance slice 05: "تقارير مقارنة ب
 
 ## Update (Phase M3-4, ADR 0091)
 - A sixth report, `cash_flow` (`finance.cashflow`, now among `REPORT_READERS`): the money into and out of the compound's bank and cash accounts on the period's days, by month, movement kind or account, openings and transfers between the accounts left out.
+
+## Update (Phase M3-5, ADR 0092)
+- Four reports of the general ledger (`finance.ledger`, now among `REPORT_READERS`): `gl_trial_balance`, `gl_income_statement`, `gl_balance_sheet` and `gl_general_ledger`. The GL-format export is the journal's CSV (`GET /staff/finance/gl/journal/export`).

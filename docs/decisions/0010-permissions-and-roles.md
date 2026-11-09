@@ -54,3 +54,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (M2-12b, ADR 0090)
 - No new permission. `accounts.manage` reviews access (the owner's decision): access reviews and dangling accounts, a revocation deactivating the account as `PATCH /accounts/{id}/status` does. `field_team.manage` keeps the staff's certificates and calls reinforcement; a technician's last known location reads with it or `tickets.dispatch`.
+
+## Update (Phase M3-5, ADR 0092)
+- New permissions: `finance.ledger` (staff, manager: the manager and the accountant by default) reads the general ledger — the chart, an account's ledger, the trial balance, the income statement, the balance sheet, the journal and its export, the reconciliation; `finance.ledger_write` (the same) keeps the chart, writes manual journal entries and approves another's (never its own) and closes months; `finance.ledger_reopen` (manager only; the manager) reopens a closed month. All `finance.*`, never a deputy's (ADR 0073).

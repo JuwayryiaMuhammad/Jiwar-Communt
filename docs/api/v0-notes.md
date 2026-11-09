@@ -480,3 +480,12 @@ The full notes are in [`notes/cash-flow.md`](notes/cash-flow.md).
 - **The minimum cash.** `GET|PATCH /staff/finance/cash-flow/settings` (`finance.treasury` sets it); the notice `finance.cash_low` (`belowFrom` only).
 - **The dashboard.** `liquidityDays` filled (null when it cannot be computed); alerts `cash_below_minimum`, `cash_forecast_below_minimum`.
 - **The report** `cash_flow` (by month, kind or account).
+
+### The general ledger (ADR 0092)
+
+The full notes are in [`notes/general-ledger.md`](notes/general-ledger.md).
+
+- **The chart** (`finance.ledger`, no-store). `GET /staff/finance/gl/accounts[/{id}]?asOf`; `POST`, `PATCH`, `DELETE` sub-accounts and names (`finance.ledger_write`).
+- **The reads.** `GET …/gl/accounts/{id}/ledger[/export]`, `…/trial-balance`, `…/income-statement`, `…/balance-sheet`, `…/entries[/{id}]`, `…/journal/export`, `…/reconciliation`; reports `gl_trial_balance`, `gl_income_statement`, `gl_balance_sheet`, `gl_general_ledger`.
+- **Manual entries.** `/staff/finance/gl/manual-entries[/{id}[/approve|reject|withdraw]]`, `POST …/gl/entries/{id}/reverse`; inbox type `gl_manual_entry`; notices `gl_manual_entry.submitted|decided`.
+- **Months.** `GET …/gl/periods`, `POST …/periods/close {month}`, `POST …/periods/reopen {month, reasonCode}` (`finance.ledger_reopen`).

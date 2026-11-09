@@ -197,3 +197,6 @@ Other consequences:
   - PDFs and late fees;
   - a push on plan cancellation (the remainder's `invoice.issued` tells them);
   - double-entry accounts.
+
+## Update (Phase M3-5, ADR 0092)
+- **The computed journal stays** as it is (`GET /staff/finance/ledger`, the units' side, not double-entry). The double-entry ledger lives beside it (ADR 0092): refunds and their reversals, releases, reversals (the payment and what it still paid) post their balanced entries; per unit, receivables less unit credit is this journal's debits less credits. "Double-entry accounts" (Not built) are ADR 0092's.

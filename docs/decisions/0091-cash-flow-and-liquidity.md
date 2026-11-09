@@ -144,3 +144,6 @@ Each scheduled amount is counted once, on its own day:
 - Liquidity days in the daily brief (ADR 0079 stores the sections' figures; liquidity is not a section).
 - A statement line matched to a payout, and online payments' settlements into the bank account (ADR 0085 Deferred), so that less money is "in transit".
 - Scenarios (a delayed collection, a large repair) over the forecast.
+
+## Update (Phase M3-5, ADR 0092)
+- No change to the forecast. The general ledger's money in transit (office cash, cheques, transfers to match, online payments) is the ledger's own view of what the forecast counts in its first period.

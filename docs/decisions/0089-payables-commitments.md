@@ -108,3 +108,6 @@ The caller → the contract, then its payment or the purchase request (update, m
 
 ## Update (Phase M3-4, ADR 0091)
 - The cash flow forecast reads what payables schedules, each amount once: approved invoices by their due day and unpaid schedule payments no approved invoice names, each less the retention its payout will hold; purchases' open commitments; advances and releases asked for or approved; the retention a contract holds, at its end. Guarantees move no money and are not in it. The "Paying from a bank or cash account" Open item was done at the rebase onto M3-2 (ADR 0085, deviation 9).
+
+## Update (Phase M3-5, ADR 0092)
+- "M3-5 posts from the entries" is done, by the rows themselves (triggers): an invoice approved posts its line's category against payables (the vendor named), one called off after it the reverse; a payout pays payables (or an advance, or the retention held) out of its account, holding back retention and setting off advances. The entries export stays as it is. Guarantees post nothing.

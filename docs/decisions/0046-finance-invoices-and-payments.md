@@ -123,3 +123,6 @@ Category `finance`, none critical, **no params** (never an amount, a number, a u
 - ADR 0044 and 0045: the accountant role widens (above).
 - R6b posts its ledger from `finance_payments` (and their reversals), `finance_allocations`, `invoices` and `credit_notes`; refunds of online payments and of credit come with it.
 - Paymob's `intention_order_id` on creation and the intention lookup's response shape are taken from Paymob's documentation and the reused project's captured fixtures; a sandbox run should confirm them before going live.
+
+## Update (Phase M3-5, ADR 0092)
+- The double-entry ledger posts from these rows, each in its own transaction (a trigger on the table): an invoice debits receivables and credits its kind's revenue; a credit note the reverse; a payment debits where its money is by its method (office cash, a cheque, a bank transfer, the gateway) and credits the unit's credit; an allocation moves that credit onto its invoice. Every line of receivables and unit credit names its unit.

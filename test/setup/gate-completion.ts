@@ -176,26 +176,46 @@ export function gateCompletionHelpers(h: HttpHarness) {
       tx.gateFieldException.findUniqueOrThrow({ where: { id } }),
     );
 
-  /** Its answer deadline moved `minutes` into the past: time travel. */
+  /**
+   * Its answer deadline moved `minutes` into the past: time travel. By the
+   * database's own clock, read in the UPDATE to the millisecond as the
+   * server's dbNow reads it; never dbClock(), the runner's clock plus a
+   * skew measured once, which may run a few ms ahead of the database's: a
+   * deadline of "now" (minutes = 0) would then still be ahead when the
+   * answer reads the clock, and the answer would win.
+   */
   const pastDeadline = (id: string, minutes = 1) =>
     superuserSql(
-      `UPDATE gate_field_exceptions
-          SET raised_at = $2::timestamptz - interval '10 minutes',
-              answer_by = $2
+      `WITH t AS (
+         SELECT date_trunc('milliseconds', clock_timestamp())
+                - make_interval(mins => $2::int) AS at
+       )
+       UPDATE gate_field_exceptions
+          SET raised_at = t.at - interval '10 minutes',
+              answer_by = t.at
+         FROM t
         WHERE id = $1`,
-      [id, new Date(dbClock().getTime() - minutes * 60_000)],
+      [id, minutes],
     );
 
-  /** Its entry window moved `minutes` into the past (an approved one). */
+  /**
+   * Its entry window moved `minutes` into the past (an approved one), by
+   * the database's clock as pastDeadline.
+   */
   const pastEntryWindow = (id: string, minutes = 1) =>
     superuserSql(
-      `UPDATE gate_field_exceptions
-          SET raised_at = $2::timestamptz - interval '40 minutes',
-              answer_by = $2::timestamptz - interval '30 minutes',
-              decided_at = $2::timestamptz - interval '20 minutes',
-              entry_until = $2
+      `WITH t AS (
+         SELECT date_trunc('milliseconds', clock_timestamp())
+                - make_interval(mins => $2::int) AS at
+       )
+       UPDATE gate_field_exceptions
+          SET raised_at = t.at - interval '40 minutes',
+              answer_by = t.at - interval '30 minutes',
+              decided_at = t.at - interval '20 minutes',
+              entry_until = t.at
+         FROM t
         WHERE id = $1`,
-      [id, new Date(dbClock().getTime() - minutes * 60_000)],
+      [id, minutes],
     );
 
   /**

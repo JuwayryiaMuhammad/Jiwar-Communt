@@ -1918,6 +1918,13 @@ describe('API v0 — PII leak scan', () => {
       '/staff/finance/custody-handins/{id}': w.bHandinId,
       '/staff/finance/statement-imports/{id}': w.bStatementImportId,
       '/staff/finance/statement-lines/{id}/candidates': w.bStatementLineId,
+      // ADR 0092: B's account, entry and manual entry, not found for
+      // everyone of A.
+      '/staff/finance/gl/accounts/{id}': w.bGlAccountId,
+      '/staff/finance/gl/accounts/{id}/ledger': w.bGlAccountId,
+      '/staff/finance/gl/accounts/{id}/ledger/export': w.bGlAccountId,
+      '/staff/finance/gl/entries/{id}': w.bGlEntryId,
+      '/staff/finance/gl/manual-entries/{id}': w.bGlManualEntryId,
       // ADR 0086: B's run, export and plan, not found for everyone of A.
       '/staff/report-runs/{id}/download': w.bReportRunId,
       '/staff/compound-exports/{id}/download': w.bCompoundExportId,

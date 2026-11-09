@@ -1334,3 +1334,16 @@ export const M33_COVERAGE: readonly string[] = [
 
 /** Cash flow and liquidity (ADR 0091), covered by test/cashflow/audit-coverage.e2e-spec.ts. */
 export const M34_COVERAGE: readonly string[] = ['cash_flow.settings_changed'];
+
+/** The general ledger (ADR 0092), covered by test/gl/audit-coverage.e2e-spec.ts. */
+export const M35_COVERAGE: readonly string[] = [
+  'gl_account.created',
+  'gl_account.updated',
+  'gl_account.deleted',
+  'gl_manual_entry.submitted',
+  'gl_manual_entry.approved',
+  'gl_manual_entry.rejected',
+  'gl_manual_entry.withdrawn',
+  'gl_period.closed',
+  'gl_period.reopened',
+];

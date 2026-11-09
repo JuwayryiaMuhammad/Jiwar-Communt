@@ -64,6 +64,7 @@ import { payableCalls } from './no-store-payables';
 import { contractorCalls } from './no-store-contractors';
 import { reportsCalls } from './no-store-reports';
 import { cashFlowCalls } from './no-store-cash-flow';
+import { glCalls } from './no-store-gl';
 import { proxyCalls } from './no-store-proxies';
 import { inspectionCalls } from './no-store-inspections';
 import { decisionAppealCalls } from './no-store-decision-appeals';
@@ -3445,6 +3446,7 @@ describe('API v0 — no-store', () => {
     ...contractorCalls(() => w, aSittingBoard),
     ...reportsCalls(() => w),
     ...cashFlowCalls(() => w),
+    ...glCalls(() => w),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

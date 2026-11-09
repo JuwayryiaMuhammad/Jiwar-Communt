@@ -3191,7 +3191,8 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gl_periods_month_first: {},
   gl_periods_status_known: {},
   gl_periods_reopen_shape: {
-    guarded: 'reopen_reason IS NULL is tested first; the list runs only on a value',
+    guarded:
+      'reopen_reason IS NULL is tested first; the list runs only on a value',
   },
   gl_entries_source_known: {},
   gl_entries_days: {},

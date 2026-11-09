@@ -728,6 +728,8 @@ describe('Permission sync', () => {
       'finance.budget',
       'finance.cashflow',
       'finance.invoice',
+      'finance.ledger',
+      'finance.ledger_write',
       'finance.payables',
       'finance.payments',
       'finance.reports',
@@ -803,6 +805,8 @@ describe('Permission sync', () => {
       'finance.budget',
       'finance.cashflow',
       'finance.invoice',
+      'finance.ledger',
+      'finance.ledger_write',
       'finance.payables',
       'finance.payments',
       'finance.reports',
@@ -823,6 +827,8 @@ describe('Permission sync', () => {
       'finance.budget',
       'finance.cashflow',
       'finance.invoice',
+      'finance.ledger',
+      'finance.ledger_write',
       'finance.payables',
       'finance.payments',
       'finance.reports',
@@ -3207,6 +3213,68 @@ describe('Permission sync', () => {
         expect(
           (await role(t, key)).permissions.filter((p) => m32.includes(p)),
         ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M3-5 (ADR 0092)', () => {
+    const m35 = [
+      'finance.ledger',
+      'finance.ledger_write',
+      'finance.ledger_reopen',
+    ];
+    /** The catalog before M3-5: no ledger permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m35.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m35.includes(p)),
+      })),
+    };
+
+    it("reaches an existing compound: the three to the manager, reading and writing to the accountant; a reopen is the manager's alone", async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M3-5 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m35].sort());
+      expect(report.rolesCreated).toEqual([]);
+      expect((await role(t, 'manager')).permissions).toEqual(
+        expect.arrayContaining(m35),
+      );
+      const accountant = (await role(t, 'accountant')).permissions;
+      expect(accountant).toEqual(
+        expect.arrayContaining(['finance.ledger', 'finance.ledger_write']),
+      );
+      expect(accountant).not.toContain('finance.ledger_reopen');
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'technician',
+        'maintenance_supervisor',
+        'collector',
+        'unit_proxy',
+      ])
+        for (const p of m35)
+          expect((await role(t, key)).permissions).not.toContain(p);
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

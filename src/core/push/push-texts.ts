@@ -3824,6 +3824,26 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تصدير بيانات المجمع جاهز. افتح لوحة الإدارة لتنزيله.',
     },
   },
+  'gl_manual_entry.submitted': {
+    en: {
+      title: 'A journal entry waits',
+      body: 'Journal entry {entryRef} waits for a second person to approve it.',
+    },
+    ar: {
+      title: 'قيد يومية بانتظار الاعتماد',
+      body: 'قيد اليومية {entryRef} بانتظار اعتماد شخص آخر.',
+    },
+  },
+  'gl_manual_entry.decided': {
+    en: {
+      title: 'A journal entry was decided',
+      body: 'Journal entry {entryRef} was decided.',
+    },
+    ar: {
+      title: 'تم البت في قيد يومية',
+      body: 'تم البت في قيد اليومية {entryRef}.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

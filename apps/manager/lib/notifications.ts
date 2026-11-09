@@ -385,6 +385,10 @@ const TEXT: Record<string, (p: P) => string> = {
   'contract_disbursement.requested': (p) =>
     `${p.disbursementKind === 'advance' ? 'An advance' : 'A retention release'} ${p.disbursementRef} waits for approval`,
   'vendor_guarantee.expiring': (p) => `A vendor’s guarantee expires on ${p.expiresOn}`,
+  // The general ledger (ADR 0092).
+  'gl_manual_entry.submitted': (p) => `Journal entry ${p.entryRef} waits for your approval`,
+  'gl_manual_entry.decided': (p) =>
+    `Journal entry ${p.entryRef} was ${p.decision === 'approved' ? 'approved and posted' : 'turned down'}`,
   'meter.anomaly': (p) => `Meter ${p.meterRef} used far more than usual up to ${p.readOn}`,
   'part_request.created': (p) => `${ticket(p)} asks the store for ${p.itemRef}`,
   'maintenance.plan_overdue': (p) => `Planned work on asset ${p.assetRef}, due ${p.dueOn}, is overdue`,
@@ -462,6 +466,8 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
     return can('finance.payables') || can('finance.payables_approve') ? `/finance/payables/${n.targetId}` : null;
   if (n.targetType === 'contract_disbursement' || n.targetType === 'vendor_guarantee')
     return can('finance.payables') || can('finance.payables_approve') ? '/finance/payables/contracts' : null;
+  // The general ledger (ADR 0092).
+  if (n.targetType === 'gl_manual_entry') return can('finance.ledger_write') ? '/finance/gl/entries' : null;
   // Energy (ADR 0066).
   if (n.targetType === 'meter' && n.targetId) return can('energy.read') ? `/meters/${n.targetId}` : null;
   // Readiness (ADR 0067): the program, for who keeps readiness.

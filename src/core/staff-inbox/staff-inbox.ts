@@ -62,6 +62,8 @@ export const INBOX_TYPES = [
   'dangling_account',
   'access_review',
   'reinforcement_suggestion',
+  // ADR 0092: a manual journal entry waiting for its second person.
+  'gl_manual_entry',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

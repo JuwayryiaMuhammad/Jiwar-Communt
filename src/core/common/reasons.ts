@@ -1278,4 +1278,14 @@ export const REASON_CODES = {
     'raised_in_error',
     'other',
   ],
+  // The general ledger (ADR 0092): why a manual journal entry is turned
+  // down; why the manager reopens a closed month.
+  glEntryReject: [
+    'wrong_accounts',
+    'wrong_amounts',
+    'wrong_date',
+    'not_needed',
+    'other',
+  ],
+  glPeriodReopen: ['late_document', 'correction', 'audit_finding', 'other'],
 } as const;

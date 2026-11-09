@@ -100,6 +100,10 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.custody',
       // ADR 0091.
       'finance.cashflow',
+      // ADR 0092.
+      'finance.ledger',
+      'finance.ledger_write',
+      'finance.ledger_reopen',
       'patrols.manage',
       'incidents.manage',
       'blocklist.manage',
@@ -307,6 +311,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'finance.treasury',
       // ADR 0091: the cash flow forecast and liquidity.
       'finance.cashflow',
+      // ADR 0092: the general ledger and its manual entries; never a reopen.
+      'finance.ledger',
+      'finance.ledger_write',
     ],
   },
   {

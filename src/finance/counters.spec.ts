@@ -41,8 +41,11 @@ describe('finance counters (ADR 0046, 0048, 0055)', () => {
       'payout',
       // A custody hand-in takes no other counter (ADR 0085).
       'handin',
+      // A manual journal entry takes no other counter (ADR 0092).
+      'journal_entry',
     ]);
     expect(formatNumber('expense', 12)).toBe('EX-000012');
     expect(formatNumber('handin', 3)).toBe('HI-000003');
+    expect(formatNumber('journal_entry', 7)).toBe('JE-000007');
   });
 });

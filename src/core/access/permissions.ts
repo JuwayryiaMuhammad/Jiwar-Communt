@@ -248,6 +248,17 @@ export const PERMISSIONS = {
   // the minimum-cash notice. Reading only: the minimum is set by who keeps
   // the treasury (`finance.treasury`).
   'finance.cashflow': { kinds: ['staff', 'manager'] },
+  // The general ledger (ADR 0092): double entry, beside ADR 0048's computed
+  // journal. `finance.ledger` reads the chart of accounts with their
+  // balances, an account's ledger, the trial balance, the income statement,
+  // the balance sheet, the journal and its export, and the reconciliation.
+  // `finance.ledger_write` keeps the chart (sub-accounts, names), writes
+  // manual journal entries and approves another's (never its own), and
+  // closes months. `finance.ledger_reopen` reopens a closed month: the
+  // manager's alone. All `finance.*`: never a deputy's (ADR 0073).
+  'finance.ledger': { kinds: ['staff', 'manager'] },
+  'finance.ledger_write': { kinds: ['staff', 'manager'] },
+  'finance.ledger_reopen': { kinds: ['manager'] },
   // Permits (ADR 0049). Residents and family ask for a unit's permits: the
   // unit's primary for works, moves and material exits, anyone who may
   // invite visitors for an event (the service decides per unit);

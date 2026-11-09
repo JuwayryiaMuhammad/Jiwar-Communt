@@ -332,6 +332,8 @@ export const REASON_CODES = {
   danglingKeep: ['on_leave', 'seasonal_work', 'rarely_needed', 'other'],
   reinforcementDismiss: ['enough_on_duty', 'pressure_easing', 'nobody_to_call', 'other'],
   reinforcementCancel: ['no_longer_needed', 'pressure_eased', 'raised_in_error', 'other'],
+  glEntryReject: ['wrong_accounts', 'wrong_amounts', 'wrong_date', 'not_needed', 'other'],
+  glPeriodReopen: ['late_document', 'correction', 'audit_finding', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

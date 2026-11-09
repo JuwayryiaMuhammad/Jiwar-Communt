@@ -313,6 +313,9 @@ describe('audit catalog', () => {
         'report_run',
         'capital_plan',
         'compound_export',
+        // ADR 0092.
+        'gl_account',
+        'gl_manual_entry',
       ]).toContain(def.target);
     }
   });

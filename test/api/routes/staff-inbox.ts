@@ -34,6 +34,8 @@ const INBOX_TYPES = [
   'dangling_account',
   'access_review',
   'reinforcement_suggestion',
+  // ADR 0092.
+  'gl_manual_entry',
 ];
 
 /**

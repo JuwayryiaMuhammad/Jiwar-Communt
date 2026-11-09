@@ -752,6 +752,22 @@ const ERROR_TEXT: Record<string, string> = {
   REINFORCEMENT_SUGGESTION_NOT_FOUND: 'Suggestion not found.',
   REINFORCEMENT_SUGGESTION_DECIDED: 'This suggestion was decided already.',
   COMPOUND_EXPORT_NOT_FOUND: 'Export not found.',
+  // The general ledger (ADR 0092).
+  GL_ACCOUNT_NOT_FOUND: 'Account not found.',
+  GL_ACCOUNT_SYSTEM: 'The automatic postings use this account: it is never removed.',
+  GL_ACCOUNT_IN_USE: 'An account with lines or sub-accounts is never removed.',
+  GL_ACCOUNT_CONTROLLED: 'Its register keeps this account: correct it there, not by hand.',
+  GL_ACCOUNT_NOT_POSTABLE: 'A heading takes no line: pick one of its accounts.',
+  GL_ENTRY_NOT_FOUND: 'Entry not found.',
+  GL_ENTRY_UNBALANCED: 'The debits and the credits must be equal.',
+  GL_ENTRY_NOT_REVERSIBLE: 'Only a manual entry is reversed; correct an automatic one at its source.',
+  GL_ENTRY_REVERSED: 'This entry is reversed already, or its reversal waits.',
+  GL_PERIOD_CLOSED: 'That month is closed: date it in an open month.',
+  GL_PERIOD_NOT_ENDED: 'A month is closed once it has ended.',
+  GL_PERIOD_NOT_CLOSED: 'That month is open.',
+  GL_MANUAL_ENTRY_NOT_FOUND: 'Journal entry not found.',
+  GL_MANUAL_ENTRY_STATE: 'This journal entry was decided already.',
+  GL_SELF_APPROVAL: 'You wrote this entry: someone else approves it.',
 };
 
 const FIELD_TEXT: Record<string, string> = {

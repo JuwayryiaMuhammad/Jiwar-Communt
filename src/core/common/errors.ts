@@ -2136,6 +2136,34 @@ export const ErrorCode = {
   /** One export of the compound a day (429, params.retryAfter). */
   COMPOUND_EXPORT_RATE_LIMITED: 'COMPOUND_EXPORT_RATE_LIMITED',
   COMPOUND_EXPORT_NOT_FOUND: 'COMPOUND_EXPORT_NOT_FOUND',
+  // The general ledger (ADR 0092).
+  GL_ACCOUNT_NOT_FOUND: 'GL_ACCOUNT_NOT_FOUND',
+  /** A system account the automatic postings use is never removed (409). */
+  GL_ACCOUNT_SYSTEM: 'GL_ACCOUNT_SYSTEM',
+  /** It has lines or sub-accounts: never removed (409, params.lines, params.children). */
+  GL_ACCOUNT_IN_USE: 'GL_ACCOUNT_IN_USE',
+  /** A control account takes no manual line and no sub-account: its register keeps it (409, params.accountId). */
+  GL_ACCOUNT_CONTROLLED: 'GL_ACCOUNT_CONTROLLED',
+  /** A heading takes no line (409, params.accountId). */
+  GL_ACCOUNT_NOT_POSTABLE: 'GL_ACCOUNT_NOT_POSTABLE',
+  GL_ENTRY_NOT_FOUND: 'GL_ENTRY_NOT_FOUND',
+  /** Its debits and credits differ (400, params.debit, params.credit). */
+  GL_ENTRY_UNBALANCED: 'GL_ENTRY_UNBALANCED',
+  /** Only a manual entry is reversed, and never a reversal (409, params.reason: automatic | reversal). */
+  GL_ENTRY_NOT_REVERSIBLE: 'GL_ENTRY_NOT_REVERSIBLE',
+  /** Reversed already, or its reversal waits (409, params.manualEntryId). */
+  GL_ENTRY_REVERSED: 'GL_ENTRY_REVERSED',
+  /** No entry is dated in a closed month (409, params.month). */
+  GL_PERIOD_CLOSED: 'GL_PERIOD_CLOSED',
+  /** A month is closed once it has ended (409, params.month). */
+  GL_PERIOD_NOT_ENDED: 'GL_PERIOD_NOT_ENDED',
+  /** The month is open (409, params.month). */
+  GL_PERIOD_NOT_CLOSED: 'GL_PERIOD_NOT_CLOSED',
+  GL_MANUAL_ENTRY_NOT_FOUND: 'GL_MANUAL_ENTRY_NOT_FOUND',
+  /** Not pending (409, params.status). */
+  GL_MANUAL_ENTRY_STATE: 'GL_MANUAL_ENTRY_STATE',
+  /** Its maker never approves it (409). */
+  GL_SELF_APPROVAL: 'GL_SELF_APPROVAL',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

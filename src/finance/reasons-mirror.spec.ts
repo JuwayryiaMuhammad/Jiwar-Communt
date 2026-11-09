@@ -26,6 +26,9 @@ describe('money and the unit’s and the treasury’s reason codes in the dashbo
     'chequeBounce',
     'chequeReturn',
     'cashAdjust',
+    // ADR 0092.
+    'glEntryReject',
+    'glPeriodReopen',
   ] as const)('%s is the backend’s list', (list) => {
     expect(mirror).toContain(`${list}: [${quoted(REASON_CODES[list])}]`);
   });

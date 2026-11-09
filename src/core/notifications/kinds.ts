@@ -3542,6 +3542,24 @@ export const NOTIFICATION_KINDS = {
     target: 'cash_flow',
     params: { belowFrom: {} },
   },
+  // The general ledger (ADR 0092). Never an amount.
+  /** A manual journal entry waits for a second person (`finance.ledger_write`, never its maker). */
+  'gl_manual_entry.submitted': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'gl_manual_entry',
+    params: { entryRef: {} },
+  },
+  /** Its maker: the entry was approved (posted) or turned down. */
+  'gl_manual_entry.decided': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'gl_manual_entry',
+    params: { entryRef: {}, decision: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

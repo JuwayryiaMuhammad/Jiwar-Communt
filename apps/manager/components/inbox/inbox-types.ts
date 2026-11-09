@@ -32,6 +32,8 @@ export const INBOX_TYPE: Record<string, { label: string; href: (id: string) => s
   dangling_account: { label: 'Dangling account', href: () => '/access-checks' },
   access_review: { label: 'Access review', href: () => '/access-checks' },
   reinforcement_suggestion: { label: 'Reinforcement suggested', href: () => '/field-team?tab=reinforcement' },
+  // ADR 0092.
+  gl_manual_entry: { label: 'Journal entry', href: () => '/finance/gl/entries' },
 };
 
 export const inboxLabel = (type: string) => INBOX_TYPE[type]?.label ?? type;

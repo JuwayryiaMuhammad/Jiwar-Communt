@@ -45,12 +45,28 @@ describe('Audit coverage — the field team, part b', () => {
   const sweep = (name: string, at: Date = new Date()) =>
     h.moduleRef.get(SweepRunner).run(name, at);
 
+  // The compounds the sweeps read: the test's own, never the whole database.
+  let swept: string[] = [];
   beforeAll(async () => {
     h = await createHttpHarness();
     d = dispatchHelpers(h);
     read = auditReaders(h);
     s = await d.setUp(3);
+    // The sweep reads this compound only: the shared test database holds every
+    // earlier suite's compounds, whose accounts look dangling days ahead.
+    jest
+      .spyOn(
+        h.moduleRef.get<SweepRunner, { tenantIds(): Promise<string[]> }>(
+          SweepRunner,
+        ),
+        'tenantIds',
+      )
+      .mockImplementation(() => Promise.resolve(swept));
   }, 120_000);
+
+  beforeEach(() => {
+    swept = [s.c.tenantId];
+  });
 
   afterAll(() => h.close());
 
@@ -236,6 +252,7 @@ describe('Audit coverage — the field team, part b', () => {
 
   it('access_review.opened, .line_decided, .closed and .settings_changed — counts, the line, the decision', async () => {
     const c = await d.x.compound();
+    swept = [c.tenantId];
     const manager = await d.who(c, c.managerId, 'manager');
     const second = await d.who(
       c,

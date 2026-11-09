@@ -66,6 +66,16 @@ describe('Dangling accounts', () => {
     h = await createHttpHarness();
     d = dispatchHelpers(h);
     s = await d.setUp(1);
+    // The sweep reads this compound only: the shared test database holds every
+    // earlier suite's compounds, whose accounts look dangling days ahead.
+    jest
+      .spyOn(
+        h.moduleRef.get<SweepRunner, { tenantIds(): Promise<string[]> }>(
+          SweepRunner,
+        ),
+        'tenantIds',
+      )
+      .mockResolvedValue([s.c.tenantId]);
     audit = auditReaders(h);
   }, 120_000);
 

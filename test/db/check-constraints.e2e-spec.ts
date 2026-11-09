@@ -3180,6 +3180,38 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   capital_plan_lines_computed_asset: {},
   compound_exports_status_known: {},
   compound_exports_ready_shape: {},
+  // The general ledger (ADR 0092).
+  gl_accounts_type_known: {},
+  gl_accounts_code_shape: {},
+  gl_accounts_names_length: {},
+  gl_accounts_system_shape: {
+    guarded:
+      'cash_account_id IS NULL is tested first, then system_key IS NOT NULL in the same branch before it is compared',
+  },
+  gl_periods_month_first: {},
+  gl_periods_status_known: {},
+  gl_periods_reopen_shape: {
+    guarded: 'reopen_reason IS NULL is tested first; the list runs only on a value',
+  },
+  gl_entries_source_known: {},
+  gl_entries_days: {},
+  gl_entries_reference_length: {
+    guarded: 'reference IS NULL is tested first',
+  },
+  gl_lines_one_side: {},
+  gl_lines_memo_length: {
+    guarded: 'memo IS NULL is tested first',
+  },
+  gl_manual_entries_memo_length: {},
+  gl_manual_entries_status_known: {},
+  gl_manual_entries_state_shape: {
+    guarded:
+      'decided_by_account_id is NOT NULL whenever the status is approved or withdrawn (decided_at IS NULL exactly when pending, and with it), so its comparisons run on a value; reject_reason IS NULL is tested first',
+  },
+  gl_manual_entry_lines_one_side: {},
+  gl_manual_entry_lines_memo_length: {
+    guarded: 'memo IS NULL is tested first',
+  },
 };
 
 interface Check {

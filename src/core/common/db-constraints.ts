@@ -1219,4 +1219,20 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   capital_plan_lines_asset_once: ['assetId'],
   compound_exports_tenant_id_id_key: null,
   compound_exports_one_active: null,
+  // The general ledger (ADR 0092). A sub-account's code is the
+  // accountant's; every other key is the seed's or the database's (an event
+  // posts once, a line's place, a manual entry's number and its posted
+  // entry), or decided first under the entry's lock (one live reversal).
+  gl_accounts_tenant_id_id_key: null,
+  gl_accounts_code_key: ['code'],
+  gl_accounts_system_key: null,
+  gl_accounts_cash_account_key: null,
+  gl_entries_tenant_id_id_key: null,
+  gl_entries_source_key: null,
+  gl_lines_tenant_id_id_key: null,
+  gl_lines_entry_line_key: null,
+  gl_manual_entries_tenant_id_id_key: null,
+  gl_manual_entries_number_key: null,
+  gl_manual_entries_entry_key: null,
+  gl_manual_entries_one_reversal: null,
 };

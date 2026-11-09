@@ -14475,3 +14475,144 @@ model CompoundExport {
   @@index([tenantId, status], map: "compound_exports_status_idx")
   @@map("compound_exports")
 }
+
+// ============================================================================
+// The general ledger (ADR 0092): double entry, beside ADR 0048's computed
+// journal. No Prisma relations: the foreign keys live in the migrations, as
+// the treasury's do. Entries post by triggers on the money tables.
+// ============================================================================
+
+/// An account of the compound's chart. A system account (its key) is the
+/// seed's, used by the automatic postings: never removed. Only the names
+/// change (trigger).
+model GlAccount {
+  id                 String   @id @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  code               String
+  nameEn             String   @map("name_en")
+  nameAr             String   @map("name_ar")
+  /// asset | liability | equity | revenue | expense (CHECK).
+  type               String
+  parentId           String?  @map("parent_id") @db.Uuid
+  systemKey          String?  @map("system_key")
+  /// A bank or cash account of the treasury's own (ADR 0085).
+  cashAccountId      String?  @map("cash_account_id") @db.Uuid
+  /// Its register keeps it: no manual line, no sub-account.
+  control            Boolean  @default(false)
+  /// A heading takes no line.
+  postable           Boolean  @default(true)
+  createdByAccountId String?  @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code], map: "gl_accounts_code_key")
+  @@index([tenantId, parentId], map: "gl_accounts_parent_idx")
+  @@map("gl_accounts")
+}
+
+/// A month closed, or reopened by the manager. No row: open.
+model GlPeriod {
+  tenantId            String    @map("tenant_id") @db.Uuid
+  /// Its first day.
+  month               DateTime  @db.Date
+  /// closed | open (CHECK).
+  status              String
+  closedAt            DateTime  @map("closed_at") @db.Timestamptz(3)
+  closedByAccountId   String    @map("closed_by_account_id") @db.Uuid
+  reopenedAt          DateTime? @map("reopened_at") @db.Timestamptz(3)
+  reopenedByAccountId String?   @map("reopened_by_account_id") @db.Uuid
+  /// REASON_CODES.glPeriodReopen.
+  reopenReason        String?   @map("reopen_reason")
+
+  @@id([tenantId, month])
+  @@map("gl_periods")
+}
+
+/// One event's entry (its source and id, once) or an approved manual one.
+/// Append-only; balanced at commit.
+model GlEntry {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  seq       BigInt   @default(autoincrement())
+  /// Its day: the event's, or the first open day after a closed month.
+  postedOn  DateTime @map("posted_on") @db.Date
+  /// The event's own day.
+  eventOn   DateTime @map("event_on") @db.Date
+  source    String
+  sourceId  String   @map("source_id") @db.Uuid
+  /// The source's number (INV-…, RC-…), or null.
+  reference String?
+  /// The transaction that wrote it: its lines join in that one only.
+  txid      BigInt   @default(dbgenerated("txid_current()"))
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, source, sourceId], map: "gl_entries_source_key")
+  @@index([tenantId, postedOn, seq], map: "gl_entries_posted_idx")
+  @@map("gl_entries")
+}
+
+/// A debit or a credit of one account. Append-only.
+model GlLine {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  entryId   String   @map("entry_id") @db.Uuid
+  lineNo    Int      @map("line_no") @db.SmallInt
+  accountId String   @map("account_id") @db.Uuid
+  debit     Decimal  @default(0) @db.Decimal(14, 2)
+  credit    Decimal  @default(0) @db.Decimal(14, 2)
+  unitId    String?  @map("unit_id") @db.Uuid
+  vendorId  String?  @map("vendor_id") @db.Uuid
+  memo      String?
+  /// The entry's, written by the database.
+  postedOn  DateTime @map("posted_on") @db.Date
+  entrySeq  BigInt   @map("entry_seq")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, entryId, lineNo], map: "gl_lines_entry_line_key")
+  @@index([tenantId, accountId, postedOn, entrySeq, lineNo], map: "gl_lines_account_idx")
+  @@map("gl_lines")
+}
+
+/// A manual journal entry: posted only once a second person approves it.
+model GlManualEntry {
+  id                 String    @id @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  number             Int
+  postedOn           DateTime  @map("posted_on") @db.Date
+  memo               String
+  /// pending | approved | rejected | withdrawn (CHECK).
+  status             String    @default("pending")
+  /// The manual entry's posted entry it reverses.
+  reversesEntryId    String?   @map("reverses_entry_id") @db.Uuid
+  createdByAccountId String    @map("created_by_account_id") @db.Uuid
+  createdAt          DateTime  @map("created_at") @db.Timestamptz(3)
+  decidedByAccountId String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt          DateTime? @map("decided_at") @db.Timestamptz(3)
+  /// REASON_CODES.glEntryReject.
+  rejectReason       String?   @map("reject_reason")
+  /// The entry its approval posted.
+  entryId            String?   @map("entry_id") @db.Uuid
+  txid               BigInt    @default(dbgenerated("txid_current()"))
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "gl_manual_entries_number_key")
+  @@index([tenantId, status, createdAt, id], map: "gl_manual_entries_status_idx")
+  @@map("gl_manual_entries")
+}
+
+/// A manual entry's line, written with it.
+model GlManualEntryLine {
+  tenantId      String  @map("tenant_id") @db.Uuid
+  manualEntryId String  @map("manual_entry_id") @db.Uuid
+  lineNo        Int     @map("line_no") @db.SmallInt
+  accountId     String  @map("account_id") @db.Uuid
+  debit         Decimal @default(0) @db.Decimal(14, 2)
+  credit        Decimal @default(0) @db.Decimal(14, 2)
+  unitId        String? @map("unit_id") @db.Uuid
+  memo          String?
+
+  @@id([tenantId, manualEntryId, lineNo])
+  @@map("gl_manual_entry_lines")
+}

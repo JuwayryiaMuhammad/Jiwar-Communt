@@ -918,5 +918,45 @@ BEGIN
         (t, 'access_review', rv, now()),
         (t, 'reinforcement_suggestion', gen_random_uuid(), now());
     END;
+    -- ADR 0092: the chart (with a sub-account of the accountant's), a month
+    -- closed long ago, a pending manual entry and an approved one with its
+    -- posted entry, the journal entry's counter and the inbox type overdue
+    -- (the CHECKs widened).
+    DECLARE
+      sus uuid;
+      ob uuid;
+      sub uuid := gen_random_uuid();
+      je1 uuid := gen_random_uuid();
+      je2 uuid := gen_random_uuid();
+      en uuid := gen_random_uuid();
+    BEGIN
+      PERFORM gl_seed_chart(t);
+      SELECT id INTO sus FROM gl_accounts WHERE tenant_id = t AND system_key = 'suspense';
+      SELECT id INTO ob FROM gl_accounts WHERE tenant_id = t AND system_key = 'opening_balances';
+      INSERT INTO gl_accounts (id, tenant_id, code, name_en, name_ar, type, parent_id, created_by_account_id)
+        VALUES (sub, t, '1900.' || (1 + (random() * 900)::int), 'Seed unknown receipts', 'مقبوضات مجهولة', 'asset',
+                sus, mgr);
+      INSERT INTO gl_periods (tenant_id, month, status, closed_at, closed_by_account_id) VALUES
+        (t, DATE '2020-01-01', 'closed', now(), mgr);
+      INSERT INTO finance_counters (tenant_id, kind, last_number) VALUES (t, 'journal_entry', 2)
+        ON CONFLICT (tenant_id, kind) DO NOTHING;
+      INSERT INTO gl_manual_entries (id, tenant_id, number, posted_on, memo, created_by_account_id, created_at)
+        VALUES (je1, t, 900001 + (random() * 90000)::int, current_date, 'Seed reclassification', mgr, now());
+      INSERT INTO gl_manual_entry_lines (tenant_id, manual_entry_id, line_no, account_id, debit, credit) VALUES
+        (t, je1, 1, sub, 75.00, 0), (t, je1, 2, ob, 0, 75.00);
+      INSERT INTO gl_entries (id, tenant_id, posted_on, event_on, source, source_id, reference) VALUES
+        (en, t, current_date, current_date, 'manual', je2, 'JE-SEED');
+      INSERT INTO gl_lines (tenant_id, entry_id, line_no, account_id, debit, credit, posted_on, entry_seq) VALUES
+        (t, en, 1, sus, 30.00, 0, current_date, 0), (t, en, 2, ob, 0, 30.00, current_date, 0);
+      INSERT INTO gl_manual_entries (id, tenant_id, number, posted_on, memo, created_by_account_id, created_at)
+        VALUES (je2, t, 990001 + (random() * 9000)::int, current_date, 'Seed opening of suspense', guard, now());
+      INSERT INTO gl_manual_entry_lines (tenant_id, manual_entry_id, line_no, account_id, debit, credit) VALUES
+        (t, je2, 1, sus, 30.00, 0), (t, je2, 2, ob, 0, 30.00);
+      UPDATE gl_manual_entries SET status = 'approved', decided_by_account_id = mgr, decided_at = now(),
+                                   entry_id = en
+       WHERE tenant_id = t AND id = je2;
+      INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
+        (t, 'gl_manual_entry', je1, now());
+    END;
   END LOOP;
 END $$;

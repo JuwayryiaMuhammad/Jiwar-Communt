@@ -24,7 +24,7 @@ Backend for Jiwar, a multi-tenant platform for managing residential compounds. *
 - **Phase 3** exposes all of it over HTTP as **API v0, a draft** (below).
 - **Phase 4** adds CI (ADR 0026), the in-app notifications inbox (ADR 0027), idempotent writes, and the **gate** domain (ADR 0028): guards and shifts, visitor passes, verify and the append-only gate log, approvals with standing instructions, and workers at the gate with their attendance.
 
-Phases 1a to 2.2 were services tested at the service level; Phase 3 puts thin controllers in front of them. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md).
+Phases 1a to 2.2 were services tested at the service level; Phase 3 puts thin controllers in front of them. Architecture decisions live in [`docs/decisions/`](docs/decisions/README.md); what landed and what is left, in [`docs/plan.md`](docs/plan.md).
 
 ## API v0 is a draft
 

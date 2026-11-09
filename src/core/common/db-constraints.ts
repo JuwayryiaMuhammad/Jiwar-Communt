@@ -1175,6 +1175,9 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   tender_bids_file_key: ['fileId'],
   tender_bid_links_token_hash_key: null,
   tender_bid_links_one_live: null,
+  // A bid link's document is keyed by its file, made with it: a collision
+  // is an id's (ADR 0088).
+  tender_bid_documents_tenant_id_file_id_key: null,
   // Treasury and custody (ADR 0085). Two live accounts never share a
   // name; every other key is decided first under the account's, the
   // custodian's, the cheque's or the line's lock, so a violation is a race

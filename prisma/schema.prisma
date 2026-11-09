@@ -14124,6 +14124,25 @@ model TenderBid {
   @@map("tender_bids")
 }
 
+/// A document a bid link's company attaches to its bid (ADR 0088): a
+/// `tender_bid` record upload, keyed by its file. Waits on the invitation
+/// until the bid is sent (`bidId` set once), then is the bid's; read by
+/// staff only once the tender is opened. Goes with its file (cascade).
+model TenderBidDocument {
+  fileId       String    @id @map("file_id") @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  tenderId     String    @map("tender_id") @db.Uuid
+  invitationId String    @map("invitation_id") @db.Uuid
+  bidId        String?   @map("bid_id") @db.Uuid
+  title        String
+  createdAt    DateTime  @map("created_at") @db.Timestamptz(3)
+  attachedAt   DateTime? @map("attached_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, fileId])
+  @@index([tenantId, invitationId, createdAt, fileId], map: "tender_bid_documents_invitation_idx")
+  @@map("tender_bid_documents")
+}
+
 /// A bid link (ADR 0088): global like the desk links (ADR 0060), so the
 /// page resolves its compound from it; SHA-256 of the token with a label.
 /// One live an invitation; revoked once; expires by the deadline.

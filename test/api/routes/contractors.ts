@@ -473,13 +473,14 @@ export const CONTRACTOR_ROUTES: Row[] = [
     noStore: true,
     invalid: {
       body: { token: 'x', title: '', contentType: 'application/pdf', size: 0 },
+      // In the DTO's order: the title, then the size.
       fields: [
-        { field: 'size', code: 'INVALID_NUMBER', params: { min: 1 } },
         {
           field: 'title',
           code: 'INVALID_LENGTH',
           params: { min: 1, max: 120 },
         },
+        { field: 'size', code: 'INVALID_NUMBER', params: { min: 1 } },
       ],
     },
   },

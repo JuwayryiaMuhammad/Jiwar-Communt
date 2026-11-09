@@ -70,5 +70,10 @@ The manager audit (slice 01, 2026-11-01) found no way to give a ticket to an out
 
 ## Open
 
-- The public bid page (apps/public) and the contractor's mobile screens.
+- The contractor's mobile screens (mobile apps are outside this repository).
 - Documents through a bid link; purchase orders from an award (ADR 0089 Open).
+
+## Update 2026-11-09 (the maintenance phase)
+
+- The bid link's page is built: `apps/public`'s `/b#<token>`, over the three `public/tender-bids` routes; it shows the tender and its documents and sends or withdraws the sealed bid, with no file (deviation 4 stands).
+- The manager's tender page drives every route of this ADR: documents, invitations and bid links (made, renewed, revoked), the deadline, the opening and the award.

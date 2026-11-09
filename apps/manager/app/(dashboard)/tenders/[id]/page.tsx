@@ -506,12 +506,28 @@ export default function TenderPage() {
                 { key: 'n', header: 'Terms', cell: (b) => (b.sealed ? '—' : (b.note ?? '—')) },
                 {
                   key: 'o',
-                  header: 'Offer',
+                  header: 'Offer and documents',
+                  // Sealed as the amount: none before the opening (ADR 0088).
                   cell: (b) =>
-                    b.offerUrl ? (
-                      <a className="table__link" href={b.offerUrl} target="_blank" rel="noopener noreferrer">
-                        Read
-                      </a>
+                    b.offerUrl || b.documents.length ? (
+                      <span className="stack stack--sm">
+                        {b.offerUrl ? (
+                          <a className="table__link" href={b.offerUrl} target="_blank" rel="noopener noreferrer">
+                            The offer
+                          </a>
+                        ) : null}
+                        {b.documents.map((d) =>
+                          d.fileUrl ? (
+                            <a key={d.id} className="table__link" href={d.fileUrl} target="_blank" rel="noopener noreferrer">
+                              {d.title}
+                            </a>
+                          ) : (
+                            <span key={d.id}>{d.title}</span>
+                          ),
+                        )}
+                      </span>
+                    ) : b.sealed ? (
+                      'Sealed'
                     ) : (
                       '—'
                     ),

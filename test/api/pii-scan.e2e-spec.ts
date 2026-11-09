@@ -2990,7 +2990,9 @@ describe('API v0 — PII leak scan', () => {
       // ADR 0088: a bid link's page shows the compound, the company it is
       // for, the tender's terms, deadline and documents and its own bid,
       // never another bidder, an amount before the opening, a person or an
-      // id but the tender's (the key set below; test/tenders/tenders).
+      // id but the tender's (the key set below; test/tenders/tenders); its
+      // own documents by title and file id, never a link to one
+      // (test/tenders/bid-link-documents).
       '/public/tender-bids/lookup',
     ]);
     const bidPage = await call(w, 'POST', '/public/tender-bids/lookup', {
@@ -2998,12 +3000,14 @@ describe('API v0 — PII leak scan', () => {
     }).expect(200);
     expect(Object.keys(bidPage.body as object).sort()).toEqual([
       'bid',
+      'bidDocuments',
       'bidsDueAt',
       'category',
       'companyName',
       'compoundName',
       'documents',
       'id',
+      'maxBidDocuments',
       'outcome',
       'reference',
       'scope',

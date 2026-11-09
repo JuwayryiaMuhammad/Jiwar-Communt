@@ -255,6 +255,45 @@ describe('Audit coverage — the contractor portal and tenders (ADR 0088)', () =
     expect(
       await single('tender_invitation.link_opened', linked.invitation.id),
     ).toMatchObject({ actorType: 'system' });
+    // A document through the link, then removed: ids and counts only.
+    const uploaded = (
+      await h
+        .http()
+        .post('/api/v1/public/tender-bids/uploads')
+        .send({
+          token,
+          title: `${MARKER} offer`,
+          contentType: 'application/pdf',
+          size: 1000,
+        })
+        .expect(201)
+    ).body as { document: { id: string } };
+    const added = await single(
+      'tender_bid.document_added',
+      linked.invitation.id,
+    );
+    expect(added).toMatchObject({
+      actorType: 'system',
+      metadata: {
+        tenderId: id,
+        fileId: uploaded.document.id,
+        draftCount: 1,
+      },
+    });
+    expect(JSON.stringify(added)).not.toContain(MARKER);
+    await h
+      .http()
+      .post(
+        `/api/v1/public/tender-bids/documents/${uploaded.document.id}/remove`,
+      )
+      .send({ token })
+      .expect(204);
+    expect(
+      await single('tender_bid.document_removed', linked.invitation.id),
+    ).toMatchObject({
+      actorType: 'system',
+      metadata: { tenderId: id, fileId: uploaded.document.id },
+    });
     await http(
       'post',
       `/staff/tenders/${id}/invitations/${linked.invitation.id}/revoke`,

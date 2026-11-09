@@ -1,7 +1,7 @@
 import type { Response } from 'supertest';
 import { boardMatterHelpers } from '../setup/board-matters';
 import { day, daysLater, today } from '../setup/compound-clock';
-import { fileHelpers } from '../setup/files';
+import { fileHelpers, SAMPLE } from '../setup/files';
 import { uniqueSuffix } from '../setup/fixtures';
 import { superuserSql } from '../setup/governance';
 import { activeBudget } from './no-store-board-matters';
@@ -53,6 +53,33 @@ export function contractorCalls(
         .then((who) => who.token)),
   );
   const id = (res: Response) => (res.body as { id: string }).id;
+  const pdf = SAMPLE['application/pdf'];
+  /** A document's upload through A's bid link (no live bid there first). */
+  const linkUpload = () =>
+    call(w(), 'POST', '/public/tender-bids/uploads', {
+      body: {
+        token: w().aBidToken,
+        title: 'No-store offer',
+        contentType: 'application/pdf',
+        size: pdf.length,
+      },
+    });
+  /** One uploaded, its bytes PUT: its file's id. */
+  const linkDraft = async () => {
+    await call(w(), 'POST', '/public/tender-bids/withdraw', {
+      body: { token: w().aBidToken },
+    });
+    const body = done(await linkUpload()).body as {
+      document: { id: string };
+      upload: { url: string; headers: Record<string, string> };
+    };
+    await fetch(body.upload.url, {
+      method: 'PUT',
+      body: new Uint8Array(pdf),
+      headers: body.upload.headers,
+    });
+    return body.document.id;
+  };
 
   const draftBody = async () => ({
     title: `No-store tender ${uniqueSuffix()}`,
@@ -259,6 +286,34 @@ export function contractorCalls(
       return call(w(), 'POST', '/public/tender-bids/withdraw', {
         body: { token: w().aBidToken },
       });
+    },
+    'POST /public/tender-bids/uploads': async () => {
+      await call(w(), 'POST', '/public/tender-bids/withdraw', {
+        body: { token: w().aBidToken },
+      });
+      return linkUpload();
+    },
+    'POST /public/tender-bids/documents/{fileId}/finalize': async () => {
+      const fileId = await linkDraft();
+      return call(
+        w(),
+        'POST',
+        `/public/tender-bids/documents/${fileId}/finalize`,
+        {
+          body: { token: w().aBidToken },
+        },
+      );
+    },
+    'POST /public/tender-bids/documents/{fileId}/remove': async () => {
+      const fileId = await linkDraft();
+      return call(
+        w(),
+        'POST',
+        `/public/tender-bids/documents/${fileId}/remove`,
+        {
+          body: { token: w().aBidToken },
+        },
+      );
     },
   };
 }

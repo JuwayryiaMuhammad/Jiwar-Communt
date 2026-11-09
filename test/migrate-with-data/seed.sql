@@ -813,9 +813,12 @@ BEGIN
     -- offer of the common area's ticket it turned down, an open tender with
     -- a registered and a link invitation, a bid in its seal (the amount
     -- plain only once opened), a bid link (global), the tender counter, and
-    -- a tender's opening overdue in the inbox (the CHECKs widened).
+    -- a tender's opening overdue in the inbox (the CHECKs widened); the
+    -- link bid's document, a `tender_bid` file it carries (20270616090000).
     DECLARE
       vc uuid := gen_random_uuid();
+      tbid uuid := gen_random_uuid();
+      tbf uuid := gen_random_uuid();
       r_con uuid := gen_random_uuid();
       con_acc uuid := gen_random_uuid();
       tk uuid;
@@ -847,7 +850,13 @@ BEGIN
         (gen_random_uuid(), t, tnd, 'vendor', vc, NULL, mgr, now());
       INSERT INTO tender_bids (id, tenant_id, tender_id, invitation_id, submitted_at, sealed_amount,
                                duration_days) VALUES
-        (gen_random_uuid(), t, tnd, tinv, now(), 45000.00, 90);
+        (tbid, t, tnd, tinv, now(), 45000.00, 90);
+      INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status,
+                         upload_expires_at, finalized_at, attached_at) VALUES
+        (tbf, t, NULL, 'tender_bid', 'application/pdf', 4096, 'ready', now(), now(), now());
+      INSERT INTO tender_bid_documents (file_id, tenant_id, tender_id, invitation_id, bid_id, title,
+                                        created_at, attached_at) VALUES
+        (tbf, t, tnd, tinv, tbid, 'Seed priced offer', now() - interval '1 minute', now());
       INSERT INTO tender_bid_links (id, tenant_id, tender_id, invitation_id, token_hash,
                                     created_by_account_id, created_at, expires_at) VALUES
         (gen_random_uuid(), t, tnd, tinv, md5(gen_random_uuid()::text) || md5(gen_random_uuid()::text),

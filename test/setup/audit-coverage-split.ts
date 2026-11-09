@@ -1283,6 +1283,8 @@ export const M27_COVERAGE: readonly string[] = [
   'tender_invitation.link_opened',
   'tender_bid.submitted',
   'tender_bid.withdrawn',
+  'tender_bid.document_added',
+  'tender_bid.document_removed',
 ];
 
 /**

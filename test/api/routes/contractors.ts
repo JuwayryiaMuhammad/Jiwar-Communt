@@ -462,4 +462,42 @@ export const CONTRACTOR_ROUTES: Row[] = [
       fields: [{ field: 'token', code: 'INVALID_TYPE' }],
     },
   },
+  // A bid's documents through its link (ADR 0088): a record upload, then
+  // finalized or removed by the file's id, the token in the body.
+  {
+    method: 'POST',
+    path: '/public/tender-bids/uploads',
+    auth: 'public',
+    denied: 'none',
+    foreign: 'none',
+    noStore: true,
+    invalid: {
+      body: { token: 'x', title: '', contentType: 'application/pdf', size: 0 },
+      fields: [
+        { field: 'size', code: 'INVALID_NUMBER', params: { min: 1 } },
+        {
+          field: 'title',
+          code: 'INVALID_LENGTH',
+          params: { min: 1, max: 120 },
+        },
+      ],
+    },
+  },
+  ...(['finalize', 'remove'] as const).map((verb): Row => ({
+    method: 'POST',
+    path: `/public/tender-bids/documents/{fileId}/${verb}`,
+    auth: 'public',
+    denied: 'none',
+    // A's link, B's id: not one of the link's documents.
+    foreign: {
+      params: (w) => ({ fileId: w.bTenderId }),
+      body: (w) => ({ token: w.aBidToken }),
+      code: 'TENDER_BID_DOCUMENT_NOT_FOUND',
+    },
+    noStore: true,
+    invalid: {
+      body: { token: 5 },
+      fields: [{ field: 'token', code: 'INVALID_TYPE' }],
+    },
+  })),
 ];

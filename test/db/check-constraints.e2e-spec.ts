@@ -3113,6 +3113,9 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   tender_bid_links_token_hash_hex: {},
   tender_bid_links_validity: {},
   tender_bid_links_revoked_shape: {},
+  // A bid link's documents (ADR 0088, 20270616090000).
+  tender_bid_documents_title_length: {},
+  tender_bid_documents_attached_shape: {},
   // Treasury and custody (ADR 0085).
   finance_cash_accounts_kind_known: {},
   finance_cash_accounts_name_length: {},

@@ -5,6 +5,7 @@ import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { Button, Card, CardBody, CardHeader, DataTable, Field, Input, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 
 interface Ref {
@@ -213,6 +214,8 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
     queryFn: async () => list<Certificate>(await unwrap(api.GET('/api/v1/staff/field-team/certificates', {}))),
   });
   const [form, setForm] = useState({ accountId: '', kind: 'electrical', title: '', issuer: '', expiresOn: '' });
+  // The paper, uploaded first (purpose `staff_certificate`), filed with it.
+  const [paper, setPaper] = useState<string | null>(null);
   const add = useAction(
     () =>
       unwrap(
@@ -223,6 +226,7 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
             title: form.title,
             ...(form.issuer ? { issuer: form.issuer } : {}),
             expiresOn: form.expiresOn,
+            ...(paper ? { fileId: paper } : {}),
           },
         }),
       ),
@@ -231,12 +235,24 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
       onDone: () => {
         toast.show('Added.');
         setForm({ ...form, title: '', issuer: '', expiresOn: '' });
+        setPaper(null);
       },
     },
   );
   const remove = useAction(
     (id: string) => unwrap(api.DELETE('/api/v1/staff/field-team/certificates/{id}', { params: { path: { id } } })),
     { invalidate: [['field-team']], onDone: () => toast.show('Removed.') },
+  );
+  // A filed certificate's paper: replaced (a new upload) or removed (null).
+  const file = useAction(
+    ({ id, fileId }: { id: string; fileId: string | null }) =>
+      unwrap(api.PATCH('/api/v1/staff/field-team/certificates/{id}', { params: { path: { id } }, body: { fileId } })),
+    { invalidate: [['field-team']], onDone: (_, v) => toast.show(v.fileId ? 'Paper filed.' : 'Paper removed.') },
+  );
+  // The list carries no links; the certificate's own read does, short-lived.
+  const read = useAction(
+    (id: string) => unwrap(api.GET('/api/v1/staff/field-team/certificates/{id}', { params: { path: { id } } })),
+    { onDone: (r) => r.fileUrl && window.open(r.fileUrl, '_blank', 'noopener') },
   );
   return (
     <>
@@ -285,11 +301,23 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
               Add
             </Button>
           </div>
+          <div className="row" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+            {paper ? (
+              <>
+                <span>The paper is attached.</span>
+                <Button size="sm" onClick={() => setPaper(null)}>
+                  Detach
+                </Button>
+              </>
+            ) : (
+              <FileUpload purpose="staff_certificate" label="Attach the paper (optional)" onUploaded={setPaper} />
+            )}
+          </div>
           <ErrorAlert error={add.error} />
         </CardBody>
       </Card>
       <Card flush>
-        <ErrorAlert error={remove.error} />
+        <ErrorAlert error={remove.error ?? file.error ?? read.error} />
         <QueryState query={certificates}>
           <DataTable<Certificate>
             rows={certificates.data ?? []}
@@ -305,7 +333,34 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
                 header: 'State',
                 cell: (r) => (r.state === 'expiring' ? `Expiring (${r.daysLeft} d)` : humanize(r.state)),
               },
-              { key: 'f', header: 'Paper', cell: (r) => (r.hasFile ? 'Filed' : '—') },
+              {
+                key: 'f',
+                header: 'Paper',
+                cell: (r) => (
+                  <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                    {r.hasFile ? (
+                      <>
+                        <Button size="sm" loading={read.isPending && read.variables === r.id} onClick={() => read.mutate(r.id)}>
+                          Read
+                        </Button>
+                        <Button
+                          size="sm"
+                          loading={file.isPending && file.variables?.id === r.id && file.variables.fileId === null}
+                          onClick={() => file.mutate({ id: r.id, fileId: null })}
+                        >
+                          Remove the paper
+                        </Button>
+                      </>
+                    ) : null}
+                    <FileUpload
+                      purpose="staff_certificate"
+                      label={r.hasFile ? 'Replace' : 'File the paper'}
+                      disabled={file.isPending}
+                      onUploaded={(fileId) => file.mutateAsync({ id: r.id, fileId }).then(() => undefined)}
+                    />
+                  </span>
+                ),
+              },
               {
                 key: 'x',
                 header: <span className="visually-hidden">Actions</span>,

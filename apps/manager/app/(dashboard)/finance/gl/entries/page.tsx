@@ -1,7 +1,7 @@
 'use client';
 
 import { fieldError, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
-import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import {
   Badge,
   Button,
@@ -192,7 +192,7 @@ export default function JournalEntriesPage() {
   const [from, setFrom] = useState(`${today().slice(0, 7)}-01`);
   const [to, setTo] = useState(today());
   const manual = useQuery({ queryKey: keys.glManualEntries(status), queryFn: () => fetchers.glManualEntries(status), enabled: allowed });
-  const journal = useQuery({ queryKey: keys.glJournal(from, to, ''), queryFn: () => fetchers.glJournal(from, to), enabled: allowed });
+  const journal = useCursorList(keys.glJournal(from, to), (c) => fetchers.glJournal(from, to, c), { enabled: allowed });
   const decide = useAction(
     ({ id, action }: { id: string; action: 'approve' | 'withdraw' }) =>
       action === 'approve'
@@ -302,7 +302,7 @@ export default function JournalEntriesPage() {
           </div>
           <QueryState query={journal} rows={6}>
             <DataTable<Entry>
-              rows={journal.data?.data}
+              rows={journal.rows}
               rowKey={(e) => e.id}
               empty="No entry in this period"
               columns={[
@@ -335,6 +335,7 @@ export default function JournalEntriesPage() {
                 },
               ]}
             />
+            <LoadMore query={journal} />
           </QueryState>
         </Card>
       </div>

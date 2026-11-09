@@ -128,8 +128,21 @@ describe('personal data guard', () => {
     '2026-09-29T10:00:00.000Z',
     'units.read',
     '1234567890',
+    // SHA-256 digests (an inspection's attestation): one with a run of
+    // exactly 14 digits, one with 01[0125] and eight.
+    '9b6c0ebf9e84135dd5781c07748678132509d51eda954150de05d6f03d2fb140',
+    `${'e'.repeat(26)}c01012345678d${'e'.repeat(25)}`,
   ])('%s is fine', (value) => {
     expect(looksPersonal(value)).toBeNull();
+  });
+
+  it('only a whole digest is exempt: the same digits in other text are not', () => {
+    expect(
+      looksPersonal(
+        '9b6c0ebf9e84135dd5781c07748678132509d51eda954150de05d6f03d2fb14',
+      ),
+    ).toBe('national id');
+    expect(looksPersonal('id 07748678132509 of')).toBe('national id');
   });
 
   it('a sensitive metadata key always throws, at any depth', () => {

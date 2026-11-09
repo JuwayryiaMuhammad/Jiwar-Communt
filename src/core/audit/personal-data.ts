@@ -69,6 +69,13 @@ export function holdsText(value: unknown): boolean {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * A SHA-256 in hex (an inspection's attestation, ADR 0064): about one in a
+ * hundred holds a run of exactly 14 decimal digits, or 01[0125] and eight,
+ * which read as a national id or a phone; the digest was then redacted
+ * from the trail (refused, in tests) by chance.
+ */
+const SHA256_HEX = /^[0-9a-f]{64}$/i;
 /** Heuristics for values that look like personal data. */
 const PERSONAL_VALUE_PATTERNS: [string, RegExp][] = [
   ['email', /[^\s@]+@[^\s@]+\.[^\s@]+/],
@@ -78,7 +85,8 @@ const PERSONAL_VALUE_PATTERNS: [string, RegExp][] = [
 ];
 
 export function looksPersonal(value: string): string | null {
-  if (UUID.test(value)) return null; // ids are fine, and often digit-heavy
+  // Ids and digests are fine, and often digit-heavy.
+  if (UUID.test(value) || SHA256_HEX.test(value)) return null;
   for (const [kind, pattern] of PERSONAL_VALUE_PATTERNS) {
     if (pattern.test(value)) return kind;
   }

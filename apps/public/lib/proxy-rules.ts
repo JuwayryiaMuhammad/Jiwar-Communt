@@ -24,6 +24,10 @@ const ROUTES: ReadonlySet<string> = new Set([
   'proxy-invites/accept/start',
   'proxy-invites/accept/complete',
   'public/works-certificates/lookup',
+  // A tender's bid link (ADR 0088).
+  'public/tender-bids/lookup',
+  'public/tender-bids/bid',
+  'public/tender-bids/withdraw',
 ]);
 
 /** A registrant's document, finalized or removed (ADR 0062). */

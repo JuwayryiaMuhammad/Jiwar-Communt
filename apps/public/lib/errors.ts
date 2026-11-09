@@ -33,6 +33,11 @@ const ERRORS = [
   'FILE_UPLOAD_EXPIRED',
   // A works certificate's check (ADR 0063).
   'WORKS_CERTIFICATE_NOT_FOUND',
+  // A tender's bid link (ADR 0088).
+  'TENDER_LINK_NOT_FOUND',
+  'TENDER_CLOSED',
+  'TENDER_BID_EXISTS',
+  'TENDER_BID_NOT_FOUND',
 ] as const;
 
 const FIELDS = [

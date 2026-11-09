@@ -13,7 +13,8 @@ export type LinkKind =
   | 'clearance'
   | 'proxyInvite'
   | 'works'
-  | 'desk';
+  | 'desk'
+  | 'bid';
 
 const SHAPES: Record<LinkKind, RegExp> = {
   // 32 random bytes, base64url. The QR's `JWR1.` prefix is not part of it.
@@ -35,6 +36,8 @@ const SHAPES: Record<LinkKind, RegExp> = {
   works: /^[A-Za-z0-9_-]{22}$/,
   // A partner's desk link (ADR 0060): 32 random bytes, base64url.
   desk: /^[A-Za-z0-9_-]{43}$/,
+  // A tender's bid link (ADR 0088): 32 random bytes, base64url.
+  bid: /^[A-Za-z0-9_-]{43}$/,
 };
 
 /** The token in `location.hash`, or null when there is none of this kind. */

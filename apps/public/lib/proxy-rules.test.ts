@@ -13,6 +13,9 @@ test('only the public routes are proxied; never the Paymob webhook', () => {
   assert.equal(backendPath(['proxy-invites', 'accept', 'start']), '/api/v1/proxy-invites/accept/start');
   assert.equal(backendPath(['proxy-invites', 'accept', 'complete']), '/api/v1/proxy-invites/accept/complete');
   assert.equal(backendPath(['public', 'works-certificates', 'lookup']), '/api/v1/public/works-certificates/lookup');
+  for (const verb of ['lookup', 'bid', 'withdraw'])
+    assert.equal(backendPath(['public', 'tender-bids', verb]), `/api/v1/public/tender-bids/${verb}`);
+  assert.equal(backendPath(['public', 'tender-bids', 'open']), null);
   assert.equal(
     backendPath(['public', 'registrations', 'documents', '0192a5f0-1c2b-7d3e-8f40-0000000062a1', 'finalize']),
     '/api/v1/public/registrations/documents/0192a5f0-1c2b-7d3e-8f40-0000000062a1/finalize',

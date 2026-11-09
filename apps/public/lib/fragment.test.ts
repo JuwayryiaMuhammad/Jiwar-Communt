@@ -76,3 +76,9 @@ test('a proxy invite token is base64url, as an invite token', () => {
   assert.equal(parseFragment(`#${token}`, 'proxyInvite'), token);
   assert.equal(parseFragment('#short', 'proxyInvite'), null);
 });
+
+test('a bid link token is 43 base64url characters (ADR 0088)', () => {
+  assert.equal(parseFragment(`#${VISITOR}`, 'bid'), VISITOR);
+  assert.equal(parseFragment(`#${VISITOR}=`, 'bid'), null);
+  assert.equal(parseFragment(`#${ACTION}`, 'bid'), null);
+});

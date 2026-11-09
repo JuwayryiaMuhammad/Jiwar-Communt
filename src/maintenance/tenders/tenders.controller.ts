@@ -38,6 +38,7 @@ import {
   AwardTenderDto,
   BidLinkBidDto,
   BidLinkTokenDto,
+  BidLinkUploadDto,
   ContractorBidDto,
   CreateTenderDto,
   InviteDto,
@@ -48,7 +49,9 @@ import {
 import { TenderBidsService } from './tender-bids.service';
 import { TendersService } from './tenders.service';
 import {
+  BidLinkDocumentView,
   BidLinkPageView,
+  BidLinkUploadView,
   InvitationCreatedView,
   InviteeTenderView,
   TenderLinkView,
@@ -366,10 +369,63 @@ export class BidLinkController {
   }
 
   @Post('withdraw')
-  @ApiOperation({ summary: 'Withdraw the company’s bid, before the deadline' })
+  @ApiOperation({
+    summary: 'Withdraw the company’s bid, before the deadline',
+    description: 'Its documents are deleted with it.',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   withdraw(@Body() dto: BidLinkTokenDto, @Ip() ip: string): Promise<void> {
     return this.links.withdraw(dto.token, ip);
+  }
+
+  /**
+   * A document for the next bid (ADR 0088): a `tender_bid` file, image or
+   * PDF, 10 MB; 20 at most, uploads in flight included. While bids are
+   * taken and the link has no live bid. Nobody reads it before the opening.
+   */
+  @Post('uploads')
+  @ApiOperation({
+    summary: 'Start uploading a document for the company’s bid',
+    description:
+      'PUT the bytes to `upload`, then finalize. A draft until the bid names it in `fileIds`.',
+  })
+  @ApiCreatedResponse({ type: BidLinkUploadView })
+  async upload(
+    @Body() dto: BidLinkUploadDto,
+    @Ip() ip: string,
+  ): Promise<BidLinkUploadView> {
+    const { token, ...input } = dto;
+    return BidLinkUploadView.from(
+      await this.links.startUpload(token, ip, input),
+    );
+  }
+
+  /** The bytes are checked; a mismatch deletes them (FILE_CONTENT_MISMATCH). */
+  @Post('documents/:fileId/finalize')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Finalize an uploaded bid document' })
+  @ApiOkResponse({ type: BidLinkDocumentView })
+  async finalize(
+    @Param('fileId', parseId('fileId')) fileId: string,
+    @Body() dto: BidLinkTokenDto,
+    @Ip() ip: string,
+  ): Promise<BidLinkDocumentView> {
+    return BidLinkDocumentView.from(
+      await this.links.finalize(dto.token, ip, fileId),
+    );
+  }
+
+  /** A draft only: a sent bid's documents go with its withdrawal. */
+  @Post('documents/:fileId/remove')
+  @ApiOperation({ summary: 'Remove a draft bid document' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async remove(
+    @Param('fileId', parseId('fileId')) fileId: string,
+    @Body() dto: BidLinkTokenDto,
+    @Ip() ip: string,
+  ): Promise<void> {
+    await this.links.removeDocument(dto.token, ip, fileId);
   }
 }

@@ -4424,6 +4424,15 @@
             "minimum": 1,
             "type": "number"
           },
+          "fileIds": {
+            "description": "The link’s documents the bid carries: finalized drafts (FILE_NOT_AVAILABLE otherwise). The drafts it does not name are deleted.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
           "note": {
             "description": "The terms in words.",
             "maxLength": 2000,
@@ -4442,6 +4451,43 @@
         ],
         "type": "object"
       },
+      "BidLinkDocumentView": {
+        "properties": {
+          "contentType": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "description": "Its file: name it in `fileIds`.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "ready": {
+            "description": "Finalized: the upload arrived and was checked.",
+            "type": "boolean"
+          },
+          "sent": {
+            "description": "The live bid carries it; a draft otherwise.",
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "contentType",
+          "ready",
+          "sent"
+        ],
+        "type": "object"
+      },
       "BidLinkPageView": {
         "properties": {
           "bid": {
@@ -4452,6 +4498,13 @@
             ],
             "nullable": true,
             "type": "object"
+          },
+          "bidDocuments": {
+            "description": "The link’s documents: its drafts and its live bid’s, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/BidLinkDocumentView"
+            },
+            "type": "array"
           },
           "bidsDueAt": {
             "format": "date-time",
@@ -4480,6 +4533,10 @@
           "id": {
             "format": "uuid",
             "type": "string"
+          },
+          "maxBidDocuments": {
+            "description": "Documents a bid carries at most, drafts and uploads included.",
+            "type": "number"
           },
           "outcome": {
             "enum": [
@@ -4524,7 +4581,9 @@
           "bid",
           "outcome",
           "compoundName",
-          "companyName"
+          "companyName",
+          "bidDocuments",
+          "maxBidDocuments"
         ],
         "type": "object"
       },
@@ -4538,6 +4597,59 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "BidLinkUploadDto": {
+        "properties": {
+          "contentType": {
+            "description": "Signed into the upload (FILE_TYPE_NOT_ALLOWED otherwise).",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "type": "string"
+          },
+          "size": {
+            "description": "Bytes, signed into the upload; 10 MB at most (FILE_TOO_LARGE).",
+            "maximum": 10485760,
+            "minimum": 1,
+            "type": "number"
+          },
+          "title": {
+            "description": "What it is: the offer, a drawing, a paper.",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "token": {
+            "maxLength": 43,
+            "minLength": 43,
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "title",
+          "contentType",
+          "size"
+        ],
+        "type": "object"
+      },
+      "BidLinkUploadView": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/BidLinkDocumentView"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/UploadTargetView"
+          }
+        },
+        "required": [
+          "document",
+          "upload"
         ],
         "type": "object"
       },
@@ -81032,6 +81144,29 @@
         ],
         "type": "object"
       },
+      "TenderBidDocumentView": {
+        "properties": {
+          "fileUrl": {
+            "description": "A short-lived link to read the file; null when it is gone.",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "description": "Its file.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "fileUrl"
+        ],
+        "type": "object"
+      },
       "TenderBidView": {
         "properties": {
           "amount": {
@@ -81042,6 +81177,13 @@
           "bidder": {
             "nullable": true,
             "type": "string"
+          },
+          "documents": {
+            "description": "A link bid’s documents: empty while sealed, as its amount (ADR 0088).",
+            "items": {
+              "$ref": "#/components/schemas/TenderBidDocumentView"
+            },
+            "type": "array"
           },
           "durationDays": {
             "nullable": true,
@@ -81087,7 +81229,8 @@
           "amount",
           "durationDays",
           "note",
-          "offerUrl"
+          "offerUrl",
+          "documents"
         ],
         "type": "object"
       },
@@ -132457,6 +132600,85 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/public/tender-bids/documents/{fileId}/finalize": {
+      "post": {
+        "operationId": "BidLinkController_finalize",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BidLinkTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidLinkDocumentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Finalize an uploaded bid document",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/public/tender-bids/documents/{fileId}/remove": {
+      "post": {
+        "operationId": "BidLinkController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BidLinkTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Remove a draft bid document",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/public/tender-bids/lookup": {
       "post": {
         "operationId": "BidLinkController_lookup",
@@ -132491,8 +132713,44 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/public/tender-bids/uploads": {
+      "post": {
+        "description": "PUT the bytes to `upload`, then finalize. A draft until the bid names it in `fileIds`.",
+        "operationId": "BidLinkController_upload",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BidLinkUploadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidLinkUploadView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Start uploading a document for the company’s bid",
+        "tags": [
+          "public"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/public/tender-bids/withdraw": {
       "post": {
+        "description": "Its documents are deleted with it.",
         "operationId": "BidLinkController_withdraw",
         "parameters": [],
         "requestBody": {

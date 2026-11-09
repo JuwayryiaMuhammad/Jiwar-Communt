@@ -40,6 +40,11 @@ import {
   VendorsService,
 } from '../vendors/vendors.service';
 import type { VendorCategory } from '../vendors/vendor-rules';
+import {
+  openedBidDocuments,
+  withdrawDocuments,
+  type BidDocumentRead,
+} from './bid-documents';
 import { bidLink, bidTokenHash, newBidToken } from './bid-link-tokens';
 import { TenderView } from './views/tender.views';
 import {
@@ -89,6 +94,8 @@ export interface BidRead {
   invitation: TenderInvitation;
   vendorName: string | null;
   fileUrl: PresignedRead | null;
+  /** A link bid's documents (ADR 0088): none before the opening. */
+  documents: BidDocumentRead[];
 }
 
 export interface TenderRecord {
@@ -624,17 +631,42 @@ export class TendersService implements OnModuleInit {
           data: { revokedAt: now, revokedById: this.ctx.accountId },
         });
         let withdrawn = 0;
-        if (tender.status === 'open')
+        let bidIds: string[] = [];
+        if (tender.status === 'open') {
+          bidIds = (
+            await tx.tenderBid.findMany({
+              where: { invitationId, withdrawnAt: null },
+              select: { id: true },
+            })
+          ).map((b) => b.id);
           withdrawn = await tx.$executeRaw`
             UPDATE tender_bids SET withdrawn_at = ${now}
              WHERE invitation_id = ${invitationId}::uuid AND withdrawn_at IS NULL`;
+        }
+        // A withdrawn bid's documents go with it; a dead link's drafts too.
+        // Once the deadline passed, the bid and its documents stand.
+        const purge = await withdrawDocuments(tx, this.files, {
+          invitationId,
+          bidIds,
+          drafts: true,
+        });
         await this.audit.record(tx, {
           action: 'tender_invitation.revoked',
           targetId: invitationId,
-          metadata: { tenderId: id, kind: invitation.kind, withdrawn },
+          metadata: {
+            tenderId: id,
+            kind: invitation.kind,
+            withdrawn,
+            documentsWithdrawn: purge.length,
+          },
         });
+        return purge;
       })
-      .then(() => this.get(id));
+      .then(async (purge) => {
+        for (const fileId of purge)
+          await this.files.purge(fileId).catch(() => false);
+        return this.get(id);
+      });
   }
 
   // --------------------------------------------------------------------------
@@ -845,6 +877,14 @@ export class TendersService implements OnModuleInit {
     );
     const byId = new Map(invitations.map((i) => [i.id, i]));
     const opened = t.openedAt !== null;
+    // Sealed as the amount: only the bids the opening unsealed are read.
+    const bidDocuments = opened
+      ? await openedBidDocuments(
+          tx,
+          this.files,
+          bids.filter((b) => b.unsealedAt !== null).map((b) => b.id),
+        )
+      : new Map<string, BidDocumentRead[]>();
     const bidReads: BidRead[] = [];
     for (const b of bids) {
       const invitation = byId.get(b.invitationId)!;
@@ -854,6 +894,7 @@ export class TendersService implements OnModuleInit {
         vendorName: names.get(b.vendorId ?? invitation.vendorId ?? '') ?? null,
         // Its offer is read only once the tender is opened.
         fileUrl: opened ? await this.files.readUrl(tx, b.fileId) : null,
+        documents: bidDocuments.get(b.id) ?? [],
       });
     }
     const documents = [];

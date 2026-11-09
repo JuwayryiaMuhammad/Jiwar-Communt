@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDate,
   IsEmail,
   IsIn,
@@ -16,6 +18,7 @@ import {
 import { PageQueryDto } from '../../../core/common/http/list';
 import { ToInstant } from '../../../core/common/validation/instant';
 import { withParams } from '../../../core/common/validation/validation-errors';
+import { IMAGE_TYPES } from '../../../core/files/purposes';
 import { CONTRACT_KINDS } from '../../contracts/contract-rules';
 import { MONEY } from '../../costs/cost-rules';
 import { IsLocalDate, LOCAL_DATE } from '../../schedules/local-dates';
@@ -313,4 +316,54 @@ export class BidLinkBidDto extends BidDto {
   @ApiProperty({ type: String, minLength: 43, maxLength: 43 })
   @IsString()
   token: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    maxItems: L.bidDocuments,
+    description:
+      'The link’s documents the bid carries: finalized drafts (FILE_NOT_AVAILABLE otherwise). The drafts it does not name are deleted.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(L.bidDocuments, withParams({ max: L.bidDocuments }))
+  @IsUUID('all', { each: true })
+  fileIds?: string[];
+}
+
+/** A document's upload through the bid link: a `tender_bid` file. */
+export class BidLinkUploadDto extends BidLinkTokenDto {
+  @ApiProperty({
+    type: String,
+    minLength: L.bidDocumentTitle.min,
+    maxLength: L.bidDocumentTitle.max,
+    description: 'What it is: the offer, a drawing, a paper.',
+  })
+  @IsString()
+  @Length(
+    L.bidDocumentTitle.min,
+    L.bidDocumentTitle.max,
+    withParams(L.bidDocumentTitle),
+  )
+  title: string;
+
+  @ApiProperty({
+    type: String,
+    enum: [...IMAGE_TYPES, 'application/pdf'],
+    description: 'Signed into the upload (FILE_TYPE_NOT_ALLOWED otherwise).',
+  })
+  @IsString()
+  @Length(1, 100, withParams({ min: 1, max: 100 }))
+  contentType: string;
+
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    maximum: 10 * 1024 * 1024,
+    description:
+      'Bytes, signed into the upload; 10 MB at most (FILE_TOO_LARGE).',
+  })
+  @IsInt(withParams({ min: 1 }))
+  @Min(1, withParams({ min: 1 }))
+  size: number;
 }

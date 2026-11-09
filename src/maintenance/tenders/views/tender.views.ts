@@ -1,11 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IMAGE_TYPES } from '../../../core/files/purposes';
+import type { PresignedUpload } from '../../../core/files/object-storage';
+import { UploadTargetView } from '../../../core/files/views/file.views';
 import type { Tender } from '@prisma/client';
 import { CONTRACT_KINDS } from '../../contracts/contract-rules';
 import { VENDOR_CATEGORIES } from '../../vendors/vendor-rules';
+import type { BidDocumentRow } from '../bid-documents';
 import type { BidLinkPage } from '../bid-link.service';
 import type { InviteeTender } from '../tender-bids.service';
 import {
   INVITATION_KINDS,
+  TENDER_LIMITS,
   TENDER_STATUSES,
   tenderReference,
 } from '../tender-rules';
@@ -56,6 +61,20 @@ export class TenderSummaryView {
 
 export class TenderDocumentView {
   @ApiProperty({ type: String, format: 'uuid' })
+  id: string;
+  @ApiProperty({ type: String })
+  title: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'A short-lived link to read the file; null when it is gone.',
+  })
+  fileUrl: string | null;
+}
+
+/** A link bid's document as staff read it: only once the tender is opened. */
+export class TenderBidDocumentView {
+  @ApiProperty({ type: String, format: 'uuid', description: 'Its file.' })
   id: string;
   @ApiProperty({ type: String })
   title: string;
@@ -123,6 +142,12 @@ export class TenderBidView {
   note: string | null;
   @ApiProperty({ type: String, nullable: true })
   offerUrl: string | null;
+  @ApiProperty({
+    type: [TenderBidDocumentView],
+    description:
+      'A link bid’s documents: empty while sealed, as its amount (ADR 0088).',
+  })
+  documents: TenderBidDocumentView[];
 }
 
 /** A tender with its documents, invitations and bids (ADR 0088). */
@@ -225,6 +250,13 @@ export class TenderView extends TenderSummaryView {
           durationDays: sealed ? null : b.bid.durationDays,
           note: sealed ? null : b.bid.note,
           offerUrl: sealed ? null : (b.fileUrl?.url ?? null),
+          documents: sealed
+            ? []
+            : b.documents.map((d) => ({
+                id: d.fileId,
+                title: d.title,
+                fileUrl: d.read?.url ?? null,
+              })),
         };
       }),
     };
@@ -353,18 +385,87 @@ export class InviteeTenderView {
   }
 }
 
+/**
+ * A bid link's document as its company sees it: what it is and whether it
+ * arrived, never a link to it (nobody reads it before the opening).
+ */
+export class BidLinkDocumentView {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'Its file: name it in `fileIds`.',
+  })
+  id: string;
+  @ApiProperty({ type: String })
+  title: string;
+  @ApiProperty({ enum: [...IMAGE_TYPES, 'application/pdf'] })
+  contentType: string;
+  @ApiProperty({
+    type: Boolean,
+    description: 'Finalized: the upload arrived and was checked.',
+  })
+  ready: boolean;
+  @ApiProperty({
+    type: Boolean,
+    description: 'The live bid carries it; a draft otherwise.',
+  })
+  sent: boolean;
+
+  static from(d: BidDocumentRow): BidLinkDocumentView {
+    return {
+      id: d.fileId,
+      title: d.title,
+      contentType: d.contentType,
+      ready: d.ready,
+      sent: d.bidId !== null,
+    };
+  }
+}
+
+/** A document's upload through the link: PUT the bytes to `upload`, then finalize it. */
+export class BidLinkUploadView {
+  @ApiProperty({ type: BidLinkDocumentView })
+  document: BidLinkDocumentView;
+  @ApiProperty({ type: UploadTargetView })
+  upload: UploadTargetView;
+
+  static from(u: {
+    document: BidDocumentRow;
+    upload: PresignedUpload;
+  }): BidLinkUploadView {
+    return {
+      document: BidLinkDocumentView.from(u.document),
+      upload: UploadTargetView.from(u.upload),
+    };
+  }
+}
+
 /** The bid link's page: the compound's name and the tender. */
 export class BidLinkPageView extends InviteeTenderView {
   @ApiProperty({ type: String })
   compoundName: string;
   @ApiProperty({ type: String, description: 'The company the link is for.' })
   companyName: string;
+  @ApiProperty({
+    type: [BidLinkDocumentView],
+    description:
+      'The link’s documents: its drafts and its live bid’s, oldest first.',
+  })
+  bidDocuments: BidLinkDocumentView[];
+  @ApiProperty({
+    type: Number,
+    description:
+      'Documents a bid carries at most, drafts and uploads included.',
+  })
+  maxBidDocuments: number;
 
   static fromPage(p: BidLinkPage, now: Date): BidLinkPageView {
     return {
       ...InviteeTenderView.from(p, now),
       compoundName: p.compoundName,
       companyName: p.invitation.companyName ?? '',
+      bidDocuments: p.bidDocuments.map((d) => BidLinkDocumentView.from(d)),
+      maxBidDocuments: TENDER_LIMITS.bidDocuments,
     };
   }
 }

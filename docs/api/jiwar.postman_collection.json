@@ -57784,7 +57784,7 @@
               },
               "raw": "{\n  \"amount\": \"\",\n  \"token\": \"\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP, more than zero; sealed until the opening. |\n| `durationDays` | number |  | How many days the work takes. |\n| `note` | string |  | The terms in words. |\n| `token` | string | yes |  |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | EGP, more than zero; sealed until the opening. |\n| `durationDays` | number |  | How many days the work takes. |\n| `fileIds` | string (uuid)[] |  | The link’s documents the bid carries: finalized drafts (FILE_NOT_AVAILABLE otherwise). The drafts it does not name are deleted. |\n| `note` | string |  | The terms in words. |\n| `token` | string | yes |  |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -57805,6 +57805,102 @@
                 "bid"
               ],
               "raw": "{{baseUrl}}/api/v1/public/tender-bids/bid"
+            }
+          }
+        },
+        {
+          "name": "Finalize an uploaded bid document",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tender-bids",
+                "documents",
+                ":fileId",
+                "finalize"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/tender-bids/documents/:fileId/finalize",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "fileId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove a draft bid document",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `token` | string | yes |  |\n\n**Responses:** 204",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tender-bids",
+                "documents",
+                ":fileId",
+                "remove"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/tender-bids/documents/:fileId/remove",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "fileId",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -57844,6 +57940,45 @@
                 "lookup"
               ],
               "raw": "{{baseUrl}}/api/v1/public/tender-bids/lookup"
+            }
+          }
+        },
+        {
+          "name": "Start uploading a document for the company’s bid",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"token\": \"\",\n  \"title\": \"\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` | yes | Signed into the upload (FILE_TYPE_NOT_ALLOWED otherwise). |\n| `size` | number | yes | Bytes, signed into the upload; 10 MB at most (FILE_TOO_LARGE). |\n| `title` | string | yes | What it is: the offer, a drawing, a paper. |\n| `token` | string | yes |  |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "tender-bids",
+                "uploads"
+              ],
+              "raw": "{{baseUrl}}/api/v1/public/tender-bids/uploads"
             }
           }
         },

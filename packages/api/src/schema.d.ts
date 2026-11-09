@@ -14636,6 +14636,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/tender-bids/documents/{fileId}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finalize an uploaded bid document */
+        post: operations["BidLinkController_finalize"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tender-bids/documents/{fileId}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a draft bid document */
+        post: operations["BidLinkController_remove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/tender-bids/lookup": {
         parameters: {
             query?: never;
@@ -14653,6 +14687,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/tender-bids/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start uploading a document for the company’s bid
+         * @description PUT the bytes to `upload`, then finalize. A draft until the bid names it in `fileIds`.
+         */
+        post: operations["BidLinkController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/tender-bids/withdraw": {
         parameters: {
             query?: never;
@@ -14662,7 +14716,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Withdraw the company’s bid, before the deadline */
+        /**
+         * Withdraw the company’s bid, before the deadline
+         * @description Its documents are deleted with it.
+         */
         post: operations["BidLinkController_withdraw"];
         delete?: never;
         options?: never;
@@ -30233,12 +30290,30 @@ export interface components {
             amount: string;
             /** @description How many days the work takes. */
             durationDays?: number;
+            /** @description The link’s documents the bid carries: finalized drafts (FILE_NOT_AVAILABLE otherwise). The drafts it does not name are deleted. */
+            fileIds?: string[];
             /** @description The terms in words. */
             note?: string;
             token: string;
         };
+        BidLinkDocumentView: {
+            /** @enum {string} */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+            /**
+             * Format: uuid
+             * @description Its file: name it in `fileIds`.
+             */
+            id: string;
+            /** @description Finalized: the upload arrived and was checked. */
+            ready: boolean;
+            /** @description The live bid carries it; a draft otherwise. */
+            sent: boolean;
+            title: string;
+        };
         BidLinkPageView: {
             bid: components["schemas"]["InviteeBidView"] | null;
+            /** @description The link’s documents: its drafts and its live bid’s, oldest first. */
+            bidDocuments: components["schemas"]["BidLinkDocumentView"][];
             /** Format: date-time */
             bidsDueAt: string;
             category: components["schemas"]["VendorCategory"];
@@ -30248,6 +30323,8 @@ export interface components {
             documents: components["schemas"]["TenderDocumentView"][];
             /** Format: uuid */
             id: string;
+            /** @description Documents a bid carries at most, drafts and uploads included. */
+            maxBidDocuments: number;
             /** @enum {string|null} */
             outcome: "awarded" | "not_awarded" | "cancelled" | null;
             /** @description TN-000123. */
@@ -30262,6 +30339,22 @@ export interface components {
         };
         BidLinkTokenDto: {
             token: string;
+        };
+        BidLinkUploadDto: {
+            /**
+             * @description Signed into the upload (FILE_TYPE_NOT_ALLOWED otherwise).
+             * @enum {string}
+             */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+            /** @description Bytes, signed into the upload; 10 MB at most (FILE_TOO_LARGE). */
+            size: number;
+            /** @description What it is: the offer, a drawing, a paper. */
+            title: string;
+            token: string;
+        };
+        BidLinkUploadView: {
+            document: components["schemas"]["BidLinkDocumentView"];
+            upload: components["schemas"]["UploadTargetView"];
         };
         BillingAmountChangeView: {
             /** Format: date-time */
@@ -54346,10 +54439,22 @@ export interface components {
             data: components["schemas"]["TenantView"][];
             nextCursor: string | null;
         };
+        TenderBidDocumentView: {
+            /** @description A short-lived link to read the file; null when it is gone. */
+            fileUrl: string | null;
+            /**
+             * Format: uuid
+             * @description Its file.
+             */
+            id: string;
+            title: string;
+        };
         TenderBidView: {
             /** @description EGP. */
             amount: string | null;
             bidder: string | null;
+            /** @description A link bid’s documents: empty while sealed, as its amount (ADR 0088). */
+            documents: components["schemas"]["TenderBidDocumentView"][];
             durationDays: number | null;
             /** Format: uuid */
             id: string;
@@ -79341,6 +79446,54 @@ export interface operations {
             };
         };
     };
+    BidLinkController_finalize: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BidLinkTokenDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BidLinkDocumentView"];
+                };
+            };
+        };
+    };
+    BidLinkController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BidLinkTokenDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     BidLinkController_lookup: {
         parameters: {
             query?: never;
@@ -79360,6 +79513,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BidLinkPageView"];
+                };
+            };
+        };
+    };
+    BidLinkController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BidLinkUploadDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BidLinkUploadView"];
                 };
             };
         };

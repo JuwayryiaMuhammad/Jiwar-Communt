@@ -13,6 +13,7 @@ import type { PresignedRead } from '../../core/files/object-storage';
 import { ContractorAccess } from '../contractors/contractor-access';
 import { dbNow } from '../db-clock';
 import { VendorsService } from '../vendors/vendors.service';
+import { attachToBid, withdrawDocuments } from './bid-documents';
 import { tenderNotFound, tenderState } from './tenders.service';
 
 export interface BidInput {
@@ -22,6 +23,11 @@ export interface BidInput {
   note?: string;
   /** A `tender_bid` file the caller uploaded (a contractor only). */
   fileId?: string;
+  /**
+   * The link's documents the bid carries (a bid link only): drafts of its
+   * invitation, finalized; the drafts it does not name are deleted.
+   */
+  fileIds?: string[];
 }
 
 /**
@@ -124,14 +130,20 @@ export class TenderBidsService {
     });
   }
 
-  withdraw(tenderId: string): Promise<void> {
-    return this.tenantTx.withTenantTx(async (tx) => {
+  async withdraw(tenderId: string): Promise<void> {
+    const purge = await this.tenantTx.withTenantTx(async (tx) => {
       const { vendorId } = await this.contractor.lockSelf(tx);
       const tender = await this.shareTender(tx, tenderId);
       const invitation = await this.invitationOf(tx, tenderId, vendorId, true);
       if (!invitation || tender.status === 'draft') throw tenderNotFound();
-      await this.withdrawIn(tx, tender, invitation, 'contractor');
+      return this.withdrawIn(tx, tender, invitation, 'contractor');
     });
+    await this.purge(purge);
+  }
+
+  /** Committed: the files' objects go (the sweep finishes a purge that fails). */
+  async purge(fileIds: readonly string[]): Promise<void> {
+    for (const id of fileIds) await this.files.purge(id).catch(() => false);
   }
 
   // --------------------------------------------------------------------------
@@ -153,7 +165,7 @@ export class TenderBidsService {
     invitation: TenderInvitation,
     input: BidInput,
     from: { by: string | null; vendorId: string | null },
-  ): Promise<string> {
+  ): Promise<{ id: string; purge: string[] }> {
     await takingBids(tx, tender);
     if (!(Number(input.amount) > 0))
       throw appError.badRequest(ErrorCode.VALIDATION_FAILED, 'Invalid bid', {
@@ -195,6 +207,16 @@ export class TenderBidsService {
               ${input.amount}::numeric, ${input.durationDays ?? null}::int,
               ${input.note?.trim() || null}, ${fileId}::uuid,
               ${from.vendorId}::uuid)`;
+    // A link's bid takes the documents it names (ADR 0088); a contractor's
+    // carries its one offer file.
+    const documents = from.by
+      ? { attached: 0, purge: [] as string[] }
+      : await attachToBid(tx, this.files, {
+          invitationId: invitation.id,
+          bidId: id,
+          fileIds: input.fileIds ?? [],
+          at: now,
+        });
     await this.audit.record(tx, {
       action: 'tender_bid.submitted',
       targetId: id,
@@ -203,10 +225,11 @@ export class TenderBidsService {
         tenderId: tender.id,
         invitationId: invitation.id,
         via: from.by ? 'contractor' : 'link',
-        withDocument: fileId !== null,
+        withDocument: fileId !== null || documents.attached > 0,
+        ...(from.by ? {} : { documentCount: documents.attached }),
       },
     });
-    return id;
+    return { id, purge: documents.purge };
   }
 
   async withdrawIn(
@@ -214,7 +237,7 @@ export class TenderBidsService {
     tender: Tender,
     invitation: TenderInvitation,
     via: 'contractor' | 'link',
-  ): Promise<void> {
+  ): Promise<string[]> {
     await takingBids(tx, tender);
     const live = await tx.tenderBid.findFirst({
       where: { invitationId: invitation.id, withdrawnAt: null },
@@ -224,11 +247,23 @@ export class TenderBidsService {
       where: { id: live.id },
       data: { withdrawnAt: await dbNow(tx) },
     });
+    // Its documents go with it, and the link's drafts (ADR 0088).
+    const purge = await withdrawDocuments(tx, this.files, {
+      invitationId: invitation.id,
+      bidIds: [live.id],
+      drafts: true,
+    });
     await this.audit.record(tx, {
       action: 'tender_bid.withdrawn',
       targetId: live.id,
-      metadata: { tenderId: tender.id, invitationId: invitation.id, via },
+      metadata: {
+        tenderId: tender.id,
+        invitationId: invitation.id,
+        via,
+        documentsWithdrawn: purge.length,
+      },
     });
+    return purge;
   }
 
   /**
@@ -296,7 +331,10 @@ export class TenderBidsService {
 }
 
 /** Open, before its deadline by the database's clock (read after the lock). */
-async function takingBids(tx: TenantTxClient, tender: Tender): Promise<void> {
+export async function takingBids(
+  tx: TenantTxClient,
+  tender: Tender,
+): Promise<void> {
   if (tender.status !== 'open') {
     if (['opening', 'opened', 'awarded'].includes(tender.status))
       throw appError.conflict(

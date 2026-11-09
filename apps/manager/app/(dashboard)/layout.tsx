@@ -717,6 +717,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
         { href: '/finance/refunds', label: 'Refunds', icon: <Undo2 aria-hidden />, show: can('finance.refund') },
         { href: '/finance/ledger', label: 'Ledger', icon: <BookOpen aria-hidden />, show: can('finance.reports') },
+        // The general ledger, double entry (ADR 0092).
+        { href: '/finance/gl', label: 'Chart of accounts', icon: <BookOpen aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/gl/statements', label: 'Financial statements', icon: <ChartColumn aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/gl/entries', label: 'Journal entries', icon: <BookOpen aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/gl/periods', label: 'Closing months', icon: <CalendarClock aria-hidden />, show: can('finance.ledger') },
         { href: '/finance/reports', label: 'Reports', icon: <ChartColumn aria-hidden />, show: can('finance.reports') },
         // Where the fees went, published to every payer (ADR 0069).
         { href: '/finance/spending-reports', label: 'Where the fees went', icon: <PiggyBank aria-hidden />, show: can('finance.reports') || can('finance.budget') },

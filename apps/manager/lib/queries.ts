@@ -1011,6 +1011,18 @@ export const keys = {
   // Cash flow (ADR 0091).
   cashFlowAll: ['cash-flow'] as const,
   cashFlow: (q: object) => ['cash-flow', 'forecast', q] as const,
+  // The general ledger (ADR 0092).
+  glAll: ['gl'] as const,
+  glChart: (asOf: string) => ['gl', 'chart', asOf] as const,
+  glAccount: (id: string) => ['gl', 'account', id] as const,
+  glLedger: (id: string, from: string, to: string, cursor: string) => ['gl', 'ledger', id, from, to, cursor] as const,
+  glTrialBalance: (asOf: string) => ['gl', 'trial-balance', asOf] as const,
+  glIncomeStatement: (from: string, to: string) => ['gl', 'income-statement', from, to] as const,
+  glBalanceSheet: (asOf: string) => ['gl', 'balance-sheet', asOf] as const,
+  glReconciliation: ['gl', 'reconciliation'] as const,
+  glJournal: (from: string, to: string, cursor: string) => ['gl', 'journal', from, to, cursor] as const,
+  glManualEntries: (status: string) => ['gl', 'manual-entries', status] as const,
+  glPeriods: ['gl', 'periods'] as const,
   traffic: (from: string, to: string, gateId: string) => ['gate', 'traffic', from, to, gateId] as const,
 };
 
@@ -1864,6 +1876,27 @@ export const fetchers = {
   // Cash flow (ADR 0091).
   cashFlow: (q: { by: 'week' | 'month'; periods: number }) =>
     unwrap(api.GET('/api/v1/staff/finance/cash-flow', { params: { query: q } })),
+  // The general ledger (ADR 0092).
+  glChart: (asOf?: string) => unwrap(api.GET('/api/v1/staff/finance/gl/accounts', { params: { query: { asOf: asOf || undefined } } })),
+  glAccount: (id: string) => unwrap(api.GET('/api/v1/staff/finance/gl/accounts/{id}', { params: { path: { id }, query: {} } })),
+  glLedger: (id: string, from: string, to: string, cursor?: string) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/gl/accounts/{id}/ledger', {
+        params: { path: { id }, query: { from, to, cursor: cursor || undefined, limit: 50 } },
+      }),
+    ),
+  glTrialBalance: (asOf?: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/gl/trial-balance', { params: { query: { asOf: asOf || undefined } } })),
+  glIncomeStatement: (from: string, to: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/gl/income-statement', { params: { query: { from, to } } })),
+  glBalanceSheet: (asOf?: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/gl/balance-sheet', { params: { query: { asOf: asOf || undefined } } })),
+  glReconciliation: () => unwrap(api.GET('/api/v1/staff/finance/gl/reconciliation')),
+  glJournal: (from: string, to: string, cursor?: string) =>
+    unwrap(api.GET('/api/v1/staff/finance/gl/entries', { params: { query: { from, to, cursor: cursor || undefined, limit: 50 } } })),
+  glManualEntries: (status: '' | 'pending' | 'approved' | 'rejected' | 'withdrawn') =>
+    unwrap(api.GET('/api/v1/staff/finance/gl/manual-entries', { params: { query: { status: status || undefined, limit: 100 } } })),
+  glPeriods: () => unwrap(api.GET('/api/v1/staff/finance/gl/periods')),
   briefs: (kind: BriefKind | '', cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/briefs', { params: { query: { kind: kind || undefined, cursor, limit } } })),
   brief: (id: string) => unwrap(api.GET('/api/v1/staff/briefs/{id}', { params: { path: { id } } })),

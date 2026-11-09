@@ -18404,6 +18404,404 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/gl/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The chart of accounts with their balances
+         * @description Every account, by code, with its own debits and credits up to `asOf` and its balance with its sub-accounts’ on its normal side. A compound starts with the standard chart; each bank and cash account of the treasury has its own.
+         */
+        get: operations["GlController_chart"];
+        put?: never;
+        /**
+         * Add a sub-account
+         * @description Under any account but a control one (GL_ACCOUNT_CONTROLLED), of its type; its code its parent’s with a dot and up to three digits, once in the chart (DUPLICATE_RESOURCE).
+         */
+        post: operations["GlController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An account and its balance on a day */
+        get: operations["GlController_account"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove a sub-account nothing posted to
+         * @description A system account never (GL_ACCOUNT_SYSTEM); one with lines or sub-accounts never (GL_ACCOUNT_IN_USE).
+         */
+        delete: operations["GlController_remove"];
+        options?: never;
+        head?: never;
+        /**
+         * Rename an account
+         * @description Its names only: a code, a type and a place never change.
+         */
+        patch: operations["GlController_rename"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/accounts/{id}/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * An account’s ledger
+         * @description Its own lines of a period (at most 366 days), oldest first, each with the account’s balance after it on its normal side.
+         */
+        get: operations["GlController_accountLedger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/accounts/{id}/ledger/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export an account’s ledger as CSV */
+        get: operations["GlController_accountLedgerCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/balance-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The balance sheet on a day
+         * @description Assets, liabilities and equity up to `asOf`, with the surplus no entry closed into equity.
+         */
+        get: operations["GlController_balanceSheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The journal of a period
+         * @description Every entry on the period’s days (at most 366), in the journal’s order, with its lines; by source.
+         */
+        get: operations["GlController_journal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/entries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An entry and its lines */
+        get: operations["GlController_entry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/entries/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reverse a manual entry
+         * @description Writes a manual entry of its lines the other way round, for a second person’s approval. An automatic entry is corrected at its source (GL_ENTRY_NOT_REVERSIBLE); an entry is reversed once (GL_ENTRY_REVERSED).
+         */
+        post: operations["GlController_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/income-statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The income statement of a period
+         * @description Revenue and expense accounts with lines on the period’s days (at most 366), and the surplus.
+         */
+        get: operations["GlController_incomeStatement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/journal/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export the journal of a period as CSV
+         * @description One row a line, for an outside accounting system: the entry, its days, its source and reference, the account by code and name, the debit or credit, the unit and the vendor it names, and a manual entry’s words.
+         */
+        get: operations["GlController_journalCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/manual-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Manual journal entries, newest first */
+        get: operations["GlController_manualEntries"];
+        put?: never;
+        /**
+         * Write a manual journal entry
+         * @description Pending until another `finance.ledger_write` holder approves it. Balanced (GL_ENTRY_UNBALANCED), on postable accounts no register keeps (GL_ACCOUNT_CONTROLLED, GL_ACCOUNT_NOT_POSTABLE), dated in an open month (GL_PERIOD_CLOSED).
+         */
+        post: operations["GlController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/manual-entries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A manual journal entry */
+        get: operations["GlController_manualEntry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/manual-entries/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve and post a manual entry
+         * @description By someone other than its maker (GL_SELF_APPROVAL), while its month is open (GL_PERIOD_CLOSED).
+         */
+        post: operations["GlController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/manual-entries/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn a manual entry down
+         * @description With a `glEntryReject` reason; never its maker.
+         */
+        post: operations["GlController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/manual-entries/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw one’s own pending entry */
+        post: operations["GlController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The ledger’s months, newest first
+         * @description From the first entry’s month to this one: open or closed.
+         */
+        get: operations["GlController_periods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/periods/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close the months through one
+         * @description A month that has ended (GL_PERIOD_NOT_ENDED), and every open month before it from the ledger’s first. No entry is then dated in them; an event of a closed month posts on the first day of the next open one.
+         */
+        post: operations["GlController_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/periods/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reopen a closed month
+         * @description The manager’s alone, with a `glPeriodReopen` reason; audited.
+         */
+        post: operations["GlController_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The ledger against its registers
+         * @description Each bank and cash account against its movements (ADR 0085); receivables against what the units owe and unit credit against their free money (ADR 0046, 0048); deposits held (ADR 0062); payables, retentions and vendor advances (ADR 0089). A difference of zero is agreement.
+         */
+        get: operations["GlController_reconciliation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/trial-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The trial balance on a day
+         * @description Every account with lines up to `asOf`, its balance as a debit or a credit; the two totals agree.
+         */
+        get: operations["GlController_trialBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/late-notices": {
         parameters: {
             query?: never;
@@ -39400,6 +39798,408 @@ export interface components {
             /** @description `[lat, lng]` vertices in order. */
             polygon?: number[][];
         };
+        GlAccountBalanceView: {
+            account: components["schemas"]["GlAccountView"];
+            /** Format: date */
+            asOf: string;
+        };
+        GlAccountView: {
+            /**
+             * @description Its own and its sub-accounts’, on its normal side (debit for assets and expenses).
+             * @example 1250.00
+             */
+            balance: string;
+            /**
+             * Format: uuid
+             * @description A bank or cash account of the treasury (ADR 0085).
+             */
+            cashAccountId: string | null;
+            /** @example 1110.01 */
+            code: string;
+            /** @description Its register keeps it: no manual line, no sub-account (GL_ACCOUNT_CONTROLLED). */
+            control: boolean;
+            /**
+             * @description Its own credits up to the day.
+             * @example 1250.00
+             */
+            credit: string;
+            /**
+             * @description Its own debits up to the day.
+             * @example 1250.00
+             */
+            debit: string;
+            /** Format: uuid */
+            id: string;
+            nameAr: string;
+            nameEn: string;
+            /** Format: uuid */
+            parentId: string | null;
+            /** @description A heading takes no line. */
+            postable: boolean;
+            /** @description Seeded with the chart, used by the automatic postings: never removed. */
+            system: boolean;
+            /**
+             * @description The automatic postings’ name for it.
+             * @example receivables
+             */
+            systemKey: string | null;
+            /** @enum {string} */
+            type: "asset" | "liability" | "equity" | "revenue" | "expense";
+        };
+        GlBalanceSheetView: {
+            /** Format: date */
+            asOf: string;
+            assets: components["schemas"]["GlStatementRowView"][];
+            /** @description Assets equal liabilities and equity. */
+            balanced: boolean;
+            equity: components["schemas"]["GlStatementRowView"][];
+            liabilities: components["schemas"]["GlStatementRowView"][];
+            /**
+             * @description Revenue less expenses up to the day, not closed into equity.
+             * @example 1250.00
+             */
+            surplus: string;
+            /** @example 1250.00 */
+            totalAssets: string;
+            /**
+             * @description Equity with the surplus.
+             * @example 1250.00
+             */
+            totalEquity: string;
+            /** @example 1250.00 */
+            totalLiabilities: string;
+        };
+        GlCashReconciliationView: {
+            /** Format: uuid */
+            cashAccountId: string;
+            /**
+             * @description ledger − register: zero when they agree.
+             * @example 1250.00
+             */
+            difference: string;
+            /**
+             * @description receivables | unit_credit | deposits_held | payables | retentions | vendor_advances | cash_account
+             * @example receivables
+             */
+            key: string;
+            /**
+             * @description The ledger’s balance of it, on its normal side.
+             * @example 1250.00
+             */
+            ledger: string;
+            name: string;
+            /**
+             * @description What the register it posts from holds.
+             * @example 1250.00
+             */
+            register: string;
+        };
+        GlChartView: {
+            accounts: components["schemas"]["GlAccountView"][];
+            /** Format: date */
+            asOf: string;
+        };
+        GlCloseMonthDto: {
+            /**
+             * @description A month that has ended: it and every open month before it, from the ledger’s first, are closed.
+             * @example 2026-10
+             */
+            month: string;
+        };
+        GlCreateAccountDto: {
+            /**
+             * @description Its parent’s code, a dot, and one to three digits; once in the chart.
+             * @example 5130.01
+             */
+            code: string;
+            nameAr: string;
+            nameEn: string;
+            /**
+             * Format: uuid
+             * @description The account it sits under: any but a control account (its register keeps it). It takes its type.
+             */
+            parentId: string;
+        };
+        GlEntryLineView: {
+            /** Format: uuid */
+            accountId: string;
+            code: string;
+            /** @example 1250.00 */
+            credit: string;
+            /** @example 1250.00 */
+            debit: string;
+            lineNo: number;
+            memo: string | null;
+            nameAr: string;
+            nameEn: string;
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: uuid */
+            vendorId: string | null;
+            vendorName: string | null;
+        };
+        GlEntryView: {
+            /** Format: date */
+            eventOn: string;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["GlEntryLineView"][];
+            /** @description A manual entry’s words. */
+            memo: string | null;
+            /** Format: date */
+            postedOn: string;
+            reference: string | null;
+            /**
+             * @description Its place in the journal: rises, with gaps.
+             * @example 1042
+             */
+            seq: string;
+            /** @enum {string} */
+            source: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual";
+            /**
+             * Format: uuid
+             * @description The row it posted from: an invoice, a payment, a movement, a manual entry…
+             */
+            sourceId: string;
+        };
+        GlEntryViewList: {
+            data: components["schemas"]["GlEntryView"][];
+            nextCursor: string | null;
+        };
+        GlIncomeStatementView: {
+            expenses: components["schemas"]["GlStatementRowView"][];
+            /** Format: date */
+            from: string;
+            revenue: components["schemas"]["GlStatementRowView"][];
+            /**
+             * @description Revenue less expenses: negative is a deficit.
+             * @example 1250.00
+             */
+            surplus: string;
+            /** Format: date */
+            to: string;
+            /** @example 1250.00 */
+            totalExpenses: string;
+            /** @example 1250.00 */
+            totalRevenue: string;
+        };
+        GlLedgerLineView: {
+            /**
+             * @description The account’s own balance after the line, on its normal side.
+             * @example 1250.00
+             */
+            balance: string;
+            /** @example 1250.00 */
+            credit: string;
+            /** @example 1250.00 */
+            debit: string;
+            /** Format: uuid */
+            entryId: string;
+            /**
+             * Format: date
+             * @description The event’s own day: earlier when its month was closed.
+             */
+            eventOn: string;
+            lineNo: number;
+            memo: string | null;
+            /**
+             * Format: date
+             * @description The entry’s day.
+             */
+            postedOn: string;
+            /** @example INV-000123 */
+            reference: string | null;
+            /** @enum {string} */
+            source: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual";
+            /** Format: uuid */
+            sourceId: string;
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+            /** Format: uuid */
+            vendorId: string | null;
+        };
+        GlLedgerLineViewList: {
+            data: components["schemas"]["GlLedgerLineView"][];
+            nextCursor: string | null;
+        };
+        GlManualEntryDto: {
+            /** @description Its debits equal its credits (GL_ENTRY_UNBALANCED). */
+            lines: components["schemas"]["GlManualLineDto"][];
+            memo: string;
+            /** @description A day of an open month, no later than this month’s end (GL_PERIOD_CLOSED, INVALID_VALUE). */
+            postedOn: string;
+        };
+        GlManualEntryView: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: components["schemas"]["StaffRefView"];
+            /** @example 1250.00 */
+            credit: string;
+            /** @example 1250.00 */
+            debit: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decidedBy: components["schemas"]["StaffRefView"] | null;
+            /**
+             * Format: uuid
+             * @description The entry its approval posted.
+             */
+            entryId: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["GlManualLineView"][];
+            memo: string;
+            /** @example JE-000012 */
+            number: string;
+            /** Format: date */
+            postedOn: string;
+            /** @description A `glEntryReject` code. */
+            rejectReason: string | null;
+            /**
+             * Format: uuid
+             * @description The posted entry it reverses.
+             */
+            reversesEntryId: string | null;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected" | "withdrawn";
+        };
+        GlManualEntryViewList: {
+            data: components["schemas"]["GlManualEntryView"][];
+            nextCursor: string | null;
+        };
+        GlManualLineDto: {
+            /**
+             * Format: uuid
+             * @description A postable account no register keeps.
+             */
+            accountId: string;
+            credit?: string;
+            /** @description A debit, or a credit: exactly one of the two. */
+            debit?: string;
+            memo?: string;
+            /** Format: uuid */
+            unitId?: string;
+        };
+        GlManualLineView: {
+            /** Format: uuid */
+            accountId: string;
+            code: string;
+            /** @example 1250.00 */
+            credit: string;
+            /** @example 1250.00 */
+            debit: string;
+            lineNo: number;
+            memo: string | null;
+            nameAr: string;
+            nameEn: string;
+            unitCode: string | null;
+            /** Format: uuid */
+            unitId: string | null;
+        };
+        GlPeriodView: {
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["StaffRefView"] | null;
+            /** @description The month has ended: it may be closed. */
+            ended: boolean;
+            /** @example 2026-10 */
+            month: string;
+            /** @description A `glPeriodReopen` code. */
+            reopenReason: string | null;
+            /** Format: date-time */
+            reopenedAt: string | null;
+            reopenedBy: components["schemas"]["StaffRefView"] | null;
+            /** @enum {string} */
+            status: "open" | "closed";
+        };
+        GlPeriodViewList: {
+            data: components["schemas"]["GlPeriodView"][];
+            nextCursor: string | null;
+        };
+        GlReconciliationCheckView: {
+            /**
+             * @description ledger − register: zero when they agree.
+             * @example 1250.00
+             */
+            difference: string;
+            /**
+             * @description receivables | unit_credit | deposits_held | payables | retentions | vendor_advances | cash_account
+             * @example receivables
+             */
+            key: string;
+            /**
+             * @description The ledger’s balance of it, on its normal side.
+             * @example 1250.00
+             */
+            ledger: string;
+            /**
+             * @description What the register it posts from holds.
+             * @example 1250.00
+             */
+            register: string;
+        };
+        GlReconciliationView: {
+            /** Format: date */
+            asOf: string;
+            /** @description Every debit has its credit. */
+            balanced: boolean;
+            cashAccounts: components["schemas"]["GlCashReconciliationView"][];
+            checks: components["schemas"]["GlReconciliationCheckView"][];
+            /** @example 1250.00 */
+            credit: string;
+            /** @example 1250.00 */
+            debit: string;
+        };
+        GlRejectEntryDto: {
+            /** @description A `glEntryReject` code. */
+            reasonCode: string;
+        };
+        GlRenameAccountDto: {
+            nameAr?: string;
+            nameEn?: string;
+        };
+        GlReopenMonthDto: {
+            /** @example 2026-10 */
+            month: string;
+            /** @description A `glPeriodReopen` code. */
+            reasonCode: string;
+        };
+        GlReverseEntryDto: {
+            memo: string;
+            /** @description A day of an open month, no later than this month’s end. */
+            postedOn: string;
+        };
+        GlStatementRowView: {
+            /** Format: uuid */
+            accountId: string;
+            /**
+             * @description On the account’s normal side.
+             * @example 1250.00
+             */
+            amount: string;
+            code: string;
+            /** @example 1250.00 */
+            credit: string;
+            /** @example 1250.00 */
+            debit: string;
+            nameAr: string;
+            nameEn: string;
+            /** @enum {string} */
+            type: "asset" | "liability" | "equity" | "revenue" | "expense";
+        };
+        GlTrialBalanceView: {
+            /** Format: date */
+            asOf: string;
+            balanced: boolean;
+            /** @example 1250.00 */
+            credit: string;
+            /** @example 1250.00 */
+            debit: string;
+            /** @description Each account with lines: its balance as a debit or a credit. */
+            rows: components["schemas"]["GlStatementRowView"][];
+        };
         GovernanceCandidacyView: {
             /** Format: uuid */
             id: string;
@@ -40677,7 +41477,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening" | "cash_custody" | "custody_variance" | "dangling_account" | "access_review" | "reinforcement_suggestion";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening" | "cash_custody" | "custody_variance" | "dangling_account" | "access_review" | "reinforcement_suggestion" | "gl_manual_entry";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -47902,7 +48702,7 @@ export interface components {
             unitCode?: string;
         };
         /** @enum {string} */
-        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building" | "cash_flow";
+        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building" | "cash_flow" | "gl_trial_balance" | "gl_income_statement" | "gl_balance_sheet" | "gl_general_ledger";
         ReportListingDto: {
             /** @description For the staff alone; the seller never reads it. */
             note?: string;
@@ -84102,6 +84902,559 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GatewayEventViewList"];
+                };
+            };
+        };
+    };
+    GlController_chart: {
+        parameters: {
+            query?: {
+                /** @description The balances at the end of this local day; today by default. */
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlChartView"];
+                };
+            };
+        };
+    };
+    GlController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlCreateAccountDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlAccountView"];
+                };
+            };
+        };
+    };
+    GlController_account: {
+        parameters: {
+            query?: {
+                /** @description The balances at the end of this local day; today by default. */
+                asOf?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlAccountBalanceView"];
+                };
+            };
+        };
+    };
+    GlController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GlController_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlRenameAccountDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlAccountView"];
+                };
+            };
+        };
+    };
+    GlController_accountLedger: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlLedgerLineViewList"];
+                };
+            };
+        };
+    };
+    GlController_accountLedgerCsv: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    GlController_balanceSheet: {
+        parameters: {
+            query?: {
+                /** @description The balances at the end of this local day; today by default. */
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlBalanceSheetView"];
+                };
+            };
+        };
+    };
+    GlController_journal: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                source?: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlEntryViewList"];
+                };
+            };
+        };
+    };
+    GlController_entry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlEntryView"];
+                };
+            };
+        };
+    };
+    GlController_reverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlReverseEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlManualEntryView"];
+                };
+            };
+        };
+    };
+    GlController_incomeStatement: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlIncomeStatementView"];
+                };
+            };
+        };
+    };
+    GlController_journalCsv: {
+        parameters: {
+            query: {
+                /** @description First local day, included. */
+                from: string;
+                /** @description Last local day, included: at most 366 days after `from`. */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    GlController_manualEntries: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: "pending" | "approved" | "rejected" | "withdrawn";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlManualEntryViewList"];
+                };
+            };
+        };
+    };
+    GlController_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlManualEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlManualEntryView"];
+                };
+            };
+        };
+    };
+    GlController_manualEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlManualEntryView"];
+                };
+            };
+        };
+    };
+    GlController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlManualEntryView"];
+                };
+            };
+        };
+    };
+    GlController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlRejectEntryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlManualEntryView"];
+                };
+            };
+        };
+    };
+    GlController_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlManualEntryView"];
+                };
+            };
+        };
+    };
+    GlController_periods: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlPeriodViewList"];
+                };
+            };
+        };
+    };
+    GlController_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlCloseMonthDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlPeriodViewList"];
+                };
+            };
+        };
+    };
+    GlController_reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlReopenMonthDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlPeriodViewList"];
+                };
+            };
+        };
+    };
+    GlController_reconciliation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlReconciliationView"];
+                };
+            };
+        };
+    };
+    GlController_trialBalance: {
+        parameters: {
+            query?: {
+                /** @description The balances at the end of this local day; today by default. */
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlTrialBalanceView"];
                 };
             };
         };

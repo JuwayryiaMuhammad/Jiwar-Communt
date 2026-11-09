@@ -1725,6 +1725,10 @@ export const ErrorCode = {
   TENDER_BID_NOT_FOUND: 'TENDER_BID_NOT_FOUND',
   /** The invitation has a live bid: withdraw it first (409, params.bidId). */
   TENDER_BID_EXISTS: 'TENDER_BID_EXISTS',
+  /** A bid through its link carries 20 documents at most, drafts included (409, params.limit). */
+  TENDER_BID_DOCUMENT_LIMIT: 'TENDER_BID_DOCUMENT_LIMIT',
+  /** Not one of the link's documents, or no longer a draft (404). */
+  TENDER_BID_DOCUMENT_NOT_FOUND: 'TENDER_BID_DOCUMENT_NOT_FOUND',
   /**
    * The bid link opens nothing: malformed, unknown, revoked, expired, its
    * tender no longer taking bids, or a suspended compound's (one answer).

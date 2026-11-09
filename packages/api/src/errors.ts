@@ -360,6 +360,8 @@ const ERROR_TEXT: Record<string, string> = {
   TENDER_ALREADY_INVITED: 'This vendor is invited already.',
   TENDER_BID_NOT_FOUND: 'This bid does not exist.',
   TENDER_BID_EXISTS: 'A bid is in already: withdraw it first.',
+  TENDER_BID_DOCUMENT_LIMIT: 'A bid carries 20 documents at most.',
+  TENDER_BID_DOCUMENT_NOT_FOUND: 'This document does not exist.',
   TENDER_LINK_NOT_FOUND: 'This link opens nothing.',
   METER_NOT_FOUND: 'This meter was not found.',
   METER_RETIRED: 'This meter is retired.',

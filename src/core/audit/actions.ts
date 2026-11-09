@@ -2432,6 +2432,16 @@ export const AUDIT_ACTIONS = {
   },
   'tender_bid.submitted': { log: 'tenant', target: 'tender_bid' },
   'tender_bid.withdrawn': { log: 'tenant', target: 'tender_bid' },
+  // A bid link's document (ADR 0088): its file's id, the counts; never its
+  // title (the company's words).
+  'tender_bid.document_added': {
+    log: 'tenant',
+    target: 'tender_invitation',
+  },
+  'tender_bid.document_removed': {
+    log: 'tenant',
+    target: 'tender_invitation',
+  },
   // Energy and utilities (ADR 0066): codes, kinds, ids, days and values;
   // nothing here names a person.
   'meter.created': { log: 'tenant', target: 'meter' },

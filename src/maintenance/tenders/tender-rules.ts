@@ -36,6 +36,12 @@ export const TENDER_LIMITS = {
   durationDays: { min: 1, max: 3650 },
   /** A tender's live documents. */
   documents: 20,
+  /**
+   * A bid link's documents, drafts and the live bid's together: as many as
+   * the tender's own (each a `tender_bid` file, 10 MB, as the vendors' papers).
+   */
+  bidDocuments: 20,
+  bidDocumentTitle: { min: 1, max: 120 },
   /** A tender's live invitations. */
   invitations: 100,
   /** The deadline is at most a year ahead. */

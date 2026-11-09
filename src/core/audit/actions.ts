@@ -2982,15 +2982,21 @@ export const AUDIT_ACTIONS = {
   // changes: minimumCash (an amount, or null: no notice).
   'cash_flow.settings_changed': { log: 'tenant', target: 'tenant' },
   // The general ledger (ADR 0092). Ids, codes, numbers, days and amounts;
-  // an account's names and an entry's words as { changed } only.
-  // A sub-account added (its parent, code, type), renamed, or removed unused.
+  // a manual entry's words as { changed } only. An account's names are the
+  // compound's own.
+  // A sub-account added (its parent, code, type, names), renamed, or
+  // removed unused (its code and parent).
   'gl_account.created': { log: 'tenant', target: 'gl_account' },
   'gl_account.updated': { log: 'tenant', target: 'gl_account' },
   'gl_account.deleted': { log: 'tenant', target: 'gl_account' },
   // A manual journal entry: submitted (its number, day, lines' count and
   // total, the entry it reverses), approved (the posted entry), turned down
   // (reason code) or withdrawn by its maker.
-  'gl_manual_entry.submitted': { log: 'tenant', target: 'gl_manual_entry' },
+  'gl_manual_entry.submitted': {
+    log: 'tenant',
+    target: 'gl_manual_entry',
+    sensitive: ['memo'],
+  },
   'gl_manual_entry.approved': { log: 'tenant', target: 'gl_manual_entry' },
   'gl_manual_entry.rejected': { log: 'tenant', target: 'gl_manual_entry' },
   'gl_manual_entry.withdrawn': { log: 'tenant', target: 'gl_manual_entry' },

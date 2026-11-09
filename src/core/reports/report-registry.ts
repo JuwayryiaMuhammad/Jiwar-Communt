@@ -25,6 +25,11 @@ export const REPORT_KEYS = [
   'energy_cost',
   'collections_by_building',
   'cash_flow',
+  // The general ledger (ADR 0092).
+  'gl_trial_balance',
+  'gl_income_statement',
+  'gl_balance_sheet',
+  'gl_general_ledger',
 ] as const;
 export type ReportKey = (typeof REPORT_KEYS)[number];
 
@@ -40,6 +45,7 @@ export const REPORT_READERS = [
   'energy.read',
   'finance.reports',
   'finance.cashflow',
+  'finance.ledger',
 ] as const satisfies readonly Permission[];
 
 /** The longest period one report covers, as the domains' reports (ADR 0065). */

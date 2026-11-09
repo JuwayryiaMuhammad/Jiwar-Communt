@@ -134,6 +134,10 @@ import { CashFlowController } from './cashflow/cash-flow.controller';
 import { CashFlowSections } from './cashflow/cash-flow-sections';
 import { CashFlowService } from './cashflow/cash-flow.service';
 import { CashFlowSweep } from './cashflow/cash-flow.sweep';
+import { GlController } from './gl/gl.controller';
+import { GlEntriesService } from './gl/gl-entries.service';
+import { GlLedgerService } from './gl/gl-ledger.service';
+import { GlSections } from './gl/gl-sections';
 
 /**
  * Finance (ADR 0046, 0048, 0055): invoices per unit, recurring billing,
@@ -211,6 +215,8 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     ContractorInvoicesController,
     // Cash flow and liquidity (ADR 0091).
     CashFlowController,
+    // The general ledger (ADR 0092).
+    GlController,
   ],
   providers: [
     FinanceCompensationCredits,
@@ -255,6 +261,9 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     CashFlowService,
     CashFlowSections,
     CashFlowSweep,
+    GlLedgerService,
+    GlEntriesService,
+    GlSections,
     DisputeBoardAppeals,
     FinanceOverview,
     FinanceDashboardSection,

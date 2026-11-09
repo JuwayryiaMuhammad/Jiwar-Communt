@@ -75,6 +75,18 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
     what: 'An image or a PDF, up to 10 MB.',
   },
   data_import: { types: ['text/csv'], maxBytes: 1024 * 1024, what: 'A CSV file (UTF-8), up to 1 MB.' },
+  // A tender's documents (ADR 0088): the scope, drawings, the bill of quantities.
+  tender_document: {
+    types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    maxBytes: 10 * 1024 * 1024,
+    what: 'An image or a PDF, up to 10 MB.',
+  },
+  // A staff member's certificate, its paper (ADR 0090).
+  staff_certificate: {
+    types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    maxBytes: 10 * 1024 * 1024,
+    what: 'An image or a PDF, up to 10 MB.',
+  },
   // The site map and a building floor's plan (ADR 0084).
   site_map: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 10 MB.' },
   floor_plan: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'A JPEG, PNG or WebP image, up to 10 MB.' },

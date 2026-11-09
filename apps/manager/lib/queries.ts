@@ -930,6 +930,8 @@ export const keys = {
   boardPublications: ['governance', 'publications'] as const,
   // Board matters (ADR 0055): under governance, so its writes refresh them.
   approvals: (status: string) => ['governance', 'approvals', status] as const,
+  // A tender's award above the manager's limit (ADR 0088): the approved major contracts.
+  majorContractApprovals: ['governance', 'approvals', 'approved', 'major_contract'] as const,
   approval: (id: string) => ['governance', 'approval', id] as const,
   governanceSettings: ['governance', 'settings'] as const,
   staffBoardAppeals: (status: string) => ['governance', 'board-appeals', status] as const,
@@ -1020,7 +1022,8 @@ export const keys = {
   glIncomeStatement: (from: string, to: string) => ['gl', 'income-statement', from, to] as const,
   glBalanceSheet: (asOf: string) => ['gl', 'balance-sheet', asOf] as const,
   glReconciliation: ['gl', 'reconciliation'] as const,
-  glJournal: (from: string, to: string, cursor: string) => ['gl', 'journal', from, to, cursor] as const,
+  // Paged by its cursor (useCursorList): one infinite query per period.
+  glJournal: (from: string, to: string) => ['gl', 'journal', from, to] as const,
   glManualEntries: (status: string) => ['gl', 'manual-entries', status] as const,
   glPeriods: ['gl', 'periods'] as const,
   traffic: (from: string, to: string, gateId: string) => ['gate', 'traffic', from, to, gateId] as const,
@@ -1733,6 +1736,8 @@ export const fetchers = {
       }),
     ),
   approval: (id: string) => unwrap(api.GET('/api/v1/staff/governance/approvals/{id}', { params: { path: { id } } })),
+  majorContractApprovals: () =>
+    unwrap(api.GET('/api/v1/staff/governance/approvals', { params: { query: { status: 'approved', type: 'major_contract', limit: 100 } } })),
   governanceSettings: () => unwrap(api.GET('/api/v1/staff/governance/settings')),
   staffBoardAppeals: (status: BoardAppealStatus | '', cursor?: string, limit = 50) =>
     unwrap(

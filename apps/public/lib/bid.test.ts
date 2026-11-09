@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { bidActions, bidBody, documentHref, liveBid } from './bid.ts';
+import { bidActions, bidBody, documentHref, documentRefusal, liveBid, sendableDocuments } from './bid.ts';
 
 const sent = { id: 'b', submittedAt: '2026-11-09T10:00:00.000Z', withdrawnAt: null, sealed: true, amount: null };
 
@@ -35,4 +35,15 @@ test('a document opens only from an http(s) URL', () => {
   assert.equal(documentHref('https://r2.example/t/x?X-Amz-Signature=1'), 'https://r2.example/t/x?X-Amz-Signature=1');
   assert.equal(documentHref('http://127.0.0.1:9005/b/x'), 'http://127.0.0.1:9005/b/x');
   for (const url of [null, '', 'javascript:alert(1)', 'data:text/html,x', 'not a url']) assert.equal(documentHref(url), null);
+});
+
+test('the bid carries the drafts that arrived; a file is checked before its upload starts', () => {
+  const doc = (id: string, ready: boolean, sent: boolean) => ({ id, title: id, contentType: 'application/pdf', ready, sent });
+  assert.deepEqual(sendableDocuments({ bidDocuments: [doc('a', true, false), doc('b', false, false), doc('c', true, true)] }), ['a']);
+  assert.deepEqual(bidBody({ amount: '100', durationDays: '', note: '' }, ['a', 'd']), { amount: '100', fileIds: ['a', 'd'] });
+  assert.deepEqual(bidBody({ amount: '100', durationDays: '', note: '' }, []), { amount: '100' });
+  assert.equal(documentRefusal({ type: 'application/pdf', size: 1000 }), null);
+  assert.equal(documentRefusal({ type: 'image/webp', size: 10 * 1024 * 1024 }), null);
+  assert.equal(documentRefusal({ type: 'text/csv', size: 10 }), 'FILE_TYPE_NOT_ALLOWED');
+  assert.equal(documentRefusal({ type: 'application/pdf', size: 10 * 1024 * 1024 + 1 }), 'FILE_TOO_LARGE');
 });

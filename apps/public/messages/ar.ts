@@ -328,7 +328,6 @@ export const ar = {
   'bid.duration.hint': 'من يوم إلى {max} يومًا.',
   'bid.note': 'الشروط (اختياري)',
   'bid.note.hint': 'حتى {max} حرف.',
-  'bid.noDocuments': 'لا يقبل هذا الرابط إرفاق ملفات بالعرض. اكتب شروطكم في الخانة أعلاه.',
   'bid.send': 'متابعة',
   'bid.confirm.body': 'سترسلون عرضًا مختومًا بقيمة {amount} جنيه. لا يمكن تعديله بعد الإرسال، ويمكن سحبه قبل الموعد.',
   'bid.confirm': 'تأكيد الإرسال',
@@ -348,6 +347,19 @@ export const ar = {
   'error.TENDER_CLOSED': 'انتهى موعد تقديم العروض.',
   'error.TENDER_BID_EXISTS': 'لديكم عرض قائم. اسحبوه أولًا لإرسال غيره.',
   'error.TENDER_BID_NOT_FOUND': 'لا يوجد عرض قائم لسحبه. حدّث الصفحة.',
+  'bid.docs.title': 'مستندات العرض',
+  'bid.docs.hint': 'صور أو ملفات PDF، حتى 10 ميجابايت لكل ملف و{max} ملفًا للعرض. تُختم مع العرض: لا يقرؤها أحد قبل فتح المظاريف.',
+  'bid.docs.none': 'لم ترفقوا مستندات بعد.',
+  'bid.docs.name': 'اسم المستند',
+  'bid.docs.name.hint': 'مثل: العرض المالي، الرسومات، السجل التجاري. اكتبوه ثم اختاروا الملف.',
+  'bid.docs.add': 'إرفاق ملف',
+  'bid.docs.remove': 'حذف',
+  'bid.docs.notArrived': 'لم يصل الملف؛ احذفوه وأرفقوه مرة أخرى',
+  'bid.docs.full': 'أرفقتم أقصى عدد من المستندات. احذفوا واحدًا لإرفاق غيره.',
+  'bid.confirm.documents': 'يُرسل معه {count} مستند. ما لم يصل من الملفات يُحذف.',
+  'bid.mine.documents': 'المستندات المرفقة بعرضكم (مختومة معه):',
+  'error.TENDER_BID_DOCUMENT_LIMIT': 'أرفقتم أقصى عدد من المستندات. احذفوا واحدًا أولًا.',
+  'error.TENDER_BID_DOCUMENT_NOT_FOUND': 'لم يعد هذا المستند موجودًا. حدّثوا الصفحة.',
 };
 
 export type MessageKey = keyof typeof ar;

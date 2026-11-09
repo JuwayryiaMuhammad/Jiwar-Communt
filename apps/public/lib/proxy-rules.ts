@@ -28,6 +28,7 @@ const ROUTES: ReadonlySet<string> = new Set([
   'public/tender-bids/lookup',
   'public/tender-bids/bid',
   'public/tender-bids/withdraw',
+  'public/tender-bids/uploads',
 ]);
 
 /** A registrant's document, finalized or removed (ADR 0062). */
@@ -41,13 +42,17 @@ const REGISTRATION_DOCUMENT =
 const DESK_ACTION =
   /^public\/partner-desk\/requests\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(accept|decline|propose|done|cancel)$/;
 
+/** A bid link's document, finalized or removed (ADR 0088): by its file's id. */
+const BID_DOCUMENT =
+  /^public\/tender-bids\/documents\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(finalize|remove)$/;
+
 /** The largest body is the registration form; this is far above it. */
 export const MAX_BODY_BYTES = 16 * 1024;
 
 /** The backend path for the segments after /api, or null when not allowed. */
 export function backendPath(segments: readonly string[]): string | null {
   const joined = segments.join('/');
-  return ROUTES.has(joined) || DESK_ACTION.test(joined) || REGISTRATION_DOCUMENT.test(joined)
+  return ROUTES.has(joined) || DESK_ACTION.test(joined) || REGISTRATION_DOCUMENT.test(joined) || BID_DOCUMENT.test(joined)
     ? `/api/v1/${joined}`
     : null;
 }

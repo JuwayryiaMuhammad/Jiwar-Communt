@@ -14,6 +14,12 @@ test('the status page also reaches storage, when it is set', () => {
   assert.equal(connectSrc('/rs', undefined, false), "connect-src 'self'");
 });
 
+test('a bid link’s page uploads its documents to storage too (ADR 0088)', () => {
+  assert.equal(connectSrc('/b', 'https://files.example.com', false), "connect-src 'self' https://files.example.com");
+  assert.equal(connectSrc('/b', undefined, false), "connect-src 'self'");
+  assert.equal(connectSrc('/p', 'https://files.example.com', false), "connect-src 'self'");
+});
+
 test('anything but a bare origin is ignored', () => {
   for (const bad of [
     'files.example.com',

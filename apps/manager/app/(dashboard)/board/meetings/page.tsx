@@ -1,14 +1,36 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, CardHeader, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  CardHeader,
+  DataTable,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Segmented,
+  Select,
+  StatusBadge,
+  useCommonT,
+  useToast,
+} from '@jiwar/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { codeText } from '@/components/governance/logic';
 import { api } from '@/lib/api';
-import { boardWorkFetchers, boardWorkKeys, MEETING_KIND_TEXT, type Meeting, type MeetingStatus } from '@/lib/board-work';
+import { boardWorkFetchers, boardWorkKeys, type Meeting, type MeetingStatus } from '@/lib/board-work';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/gov-board-meetings';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-board-meetings';
+import codesEn from '@/messages/en/gov-codes';
+
+const VIEWS = ['scheduled', 'held', 'cancelled'] as const satisfies readonly MeetingStatus[];
 
 /**
  * The board's meetings (ADR 0075): a sitting member's or the manager's
@@ -16,12 +38,16 @@ import { usePermissions } from '@/lib/permissions';
  * or called off. Its agenda and action items are on the meeting's page.
  */
 export default function BoardMeetingsPage() {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const router = useRouter();
   const { ready, can } = usePermissions();
   const allowed = can('governance.board') || can('governance.manage');
   const [status, setStatus] = useState<MeetingStatus | ''>('scheduled');
-  const list = useCursorList(boardWorkKeys.meetings(status), (c) => boardWorkFetchers.meetings(status, c), { enabled: allowed });
+  const list = useCursorList(boardWorkKeys.meetings(status), (cursor) => boardWorkFetchers.meetings(status, cursor), { enabled: allowed });
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState<'regular' | 'extraordinary'>('regular');
   const [when, setWhen] = useState('');
@@ -41,7 +67,7 @@ export default function BoardMeetingsPage() {
     {
       invalidate: [boardWorkKeys.meetings(status)],
       onDone: (m) => {
-        toast.show('Scheduled. The other sitting members are told.');
+        toast.show(t('scheduled'));
         router.push(`/board/meetings/${m.id}`);
       },
     },
@@ -49,53 +75,45 @@ export default function BoardMeetingsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Board meetings" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Board meetings"
-        description="Meetings of the board that sits: their agenda, who was there, the minutes and the action items. The owners read the minutes, never the meeting."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <Card>
-        <CardHeader title="Schedule a meeting" />
+        <CardHeader title={t('scheduleTitle')} />
         <div className="stack">
-          <Field label="Title" error={fieldError(schedule.error, 'title')}>
+          <Field label={t('field.title')} error={fieldError(schedule.error, 'title')}>
             {(p) => <Input {...p} value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} />}
           </Field>
-          <Field label="Kind">
+          <Field label={t('kind')}>
             {(p) => (
               <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as 'regular' | 'extraordinary')}>
-                <option value="regular">Regular</option>
-                <option value="extraordinary">Extraordinary</option>
+                <option value="regular">{g('meetingKind.regular')}</option>
+                <option value="extraordinary">{g('meetingKind.extraordinary')}</option>
               </Select>
             )}
           </Field>
-          <Field label="When" hint="Up to 30 days back, to record one after the fact" error={fieldError(schedule.error, 'scheduledAt')}>
+          <Field label={t('when')} hint={t('whenHint')} error={fieldError(schedule.error, 'scheduledAt')}>
             {(p) => <Input {...p} type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />}
           </Field>
-          <Field label="Where (optional)" error={fieldError(schedule.error, 'location')}>
+          <Field label={t('where')} error={fieldError(schedule.error, 'location')}>
             {(p) => <Input {...p} value={location} maxLength={200} onChange={(e) => setLocation(e.target.value)} />}
           </Field>
         </div>
         <ErrorAlert error={schedule.error} />
         <Button variant="primary" loading={schedule.isPending} disabled={!title.trim() || !when} onClick={() => schedule.mutate(undefined)}>
-          Schedule
+          {t('schedule')}
         </Button>
       </Card>
       <div className="toolbar">
         <Segmented<MeetingStatus | ''>
-          label="Status"
+          label={c('status')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'scheduled', label: 'Scheduled' },
-            { value: 'held', label: 'Held' },
-            { value: 'cancelled', label: 'Called off' },
-            { value: '', label: 'All' },
-          ]}
+          options={[...VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) })), { value: '' as const, label: t('view.all') }]}
         />
       </div>
       <Card flush>
@@ -103,17 +121,28 @@ export default function BoardMeetingsPage() {
           <DataTable<Meeting>
             rows={list.rows}
             rowKey={(m) => m.id}
-            empty="No meetings here"
+            empty={t('empty')}
             columns={[
-              { key: 'r', header: 'Meeting', cell: (m) => <Link href={`/board/meetings/${m.id}`}>{m.reference} · {m.title}</Link> },
-              { key: 'k', header: 'Kind', cell: (m) => MEETING_KIND_TEXT[m.kind] ?? m.kind },
-              { key: 'w', header: 'When', cell: (m) => formatDateTime(m.scheduledAt) },
+              {
+                key: 'r',
+                header: t('col.meeting'),
+                cell: (m) => (
+                  <Link href={`/board/meetings/${m.id}`}>
+                    {m.reference} · {m.title}
+                  </Link>
+                ),
+              },
+              { key: 'k', header: t('kind'), cell: (m) => codeText(g, 'meetingKind', m.kind) },
+              { key: 'w', header: t('when'), cell: (m) => fmt.dateTime(m.scheduledAt) },
               {
                 key: 'q',
-                header: 'Attendance',
-                cell: (m) => (m.present === null ? '—' : `${m.present} of ${m.seated}${m.quorate ? '' : ' · no quorum'}`),
+                header: t('col.attendance'),
+                cell: (m) =>
+                  m.present === null
+                    ? '—'
+                    : t(m.quorate ? 'attendance' : 'attendanceNoQuorum', { present: m.present, seated: m.seated }),
               },
-              { key: 's', header: 'Status', cell: (m) => <StatusBadge status={m.status} /> },
+              { key: 's', header: c('status'), cell: (m) => <StatusBadge status={m.status} /> },
             ]}
           />
           <LoadMore query={list} />

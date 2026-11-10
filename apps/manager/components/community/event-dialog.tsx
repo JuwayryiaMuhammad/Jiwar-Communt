@@ -2,10 +2,13 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Checkbox, Dialog, Field, Input, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Checkbox, Dialog, Field, Input, useCommonT, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type CommunityEventDetail } from '@/lib/queries';
+import ar from '@/messages/ar/community';
+import en from '@/messages/en/community';
 import { AttachmentPicker, AudiencePicker, DateTimeField, EVERYONE, TextFields, type AudienceValue, type TwoTexts } from './bits';
 import { audienceBody, childAges, languagesReady, textOrNull, toIso, toLocalInput } from './logic';
 
@@ -21,6 +24,8 @@ export function EventDialog({
   onClose: () => void;
   onSaved: (id: string) => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [text, setText] = useState<TwoTexts>({
     titleEn: event?.titleEn ?? '',
@@ -75,7 +80,7 @@ export function EventDialog({
     {
       invalidate: [keys.communityEventsAll],
       onDone: (id) => {
-        toast.show(event ? 'The event is saved.' : 'The event is out: residents can answer.');
+        toast.show(event ? t('event.saved') : t('event.out'));
         onSaved(id);
       },
     },
@@ -93,52 +98,51 @@ export function EventDialog({
       open={open}
       onClose={onClose}
       wide
-      title={event ? 'Edit event' : 'New event'}
-      description={
-        event
-          ? 'Whoever said they are going is not notified of a change: cancel the event if it can no longer be what they answered.'
-          : 'It is out as soon as it is saved. Residents say whether they are going, and with how many guests.'
-      }
+      title={event ? t('event.editTitle') : t('event.newTitle')}
+      description={event ? t('event.editDescription') : t('event.newDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <TextFields value={text} onChange={setText} error={save.error} bodyLabel="Description" bodyKey="description" />
-        <Field label="Where" error={fieldError(save.error, 'place')}>
+        <TextFields value={text} onChange={setText} error={save.error} bodyLabel={t('text.description')} bodyKey="description" />
+        <Field label={t('where')} error={fieldError(save.error, 'place')}>
           {(p) => <Input {...p} maxLength={200} value={place} onChange={(e) => setPlace(e.target.value)} />}
         </Field>
         <div className="form__row">
-          <DateTimeField label="Starts" value={startsAt} onChange={setStartsAt} error={fieldError(save.error, 'startsAt')} />
-          <DateTimeField label="Ends" value={endsAt} onChange={setEndsAt} error={fieldError(save.error, 'endsAt')} />
+          <DateTimeField label={t('starts')} value={startsAt} onChange={setStartsAt} error={fieldError(save.error, 'startsAt')} />
+          <DateTimeField label={t('ends')} value={endsAt} onChange={setEndsAt} error={fieldError(save.error, 'endsAt')} />
         </div>
         <Field
-          label="Seats"
-          hint="Everyone counts, guests included. Empty: no limit. Never below the seats already taken."
+          label={t('event.seats')}
+          hint={t('event.seatsHint')}
           error={fieldError(save.error, 'capacity')}
         >
           {(p) => <Input {...p} type="number" min={1} step={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} />}
         </Field>
-        {event ? null : <AudiencePicker value={audience} onChange={setAudience} hint="Fixed once the event is saved." />}
+        {event ? null : <AudiencePicker value={audience} onChange={setAudience} hint={t('event.audienceHint')} />}
         {event ? null : (
           <>
             <Checkbox
-              label="For children: households register their children of these ages, each a seat (fixed once saved)"
+              label={t('event.forChildren')}
               checked={forChildren}
               onChange={(e) => setForChildren(e.target.checked)}
             />
             {forChildren ? (
               <div className="form__row">
-                <Field label="Youngest, years" error={fieldError(save.error, 'childAgeMin') ?? (ages ? undefined : 'Ages from 0 to 17, youngest first.')}>
+                <Field
+                  label={t('event.youngest')}
+                  error={fieldError(save.error, 'childAgeMin') ?? (ages ? undefined : t('event.agesInvalid'))}
+                >
                   {(p) => <Input {...p} type="number" min={0} max={17} step={1} value={ageMin} onChange={(e) => setAgeMin(e.target.value)} />}
                 </Field>
-                <Field label="Oldest, years" error={fieldError(save.error, 'childAgeMax')}>
+                <Field label={t('event.oldest')} error={fieldError(save.error, 'childAgeMax')}>
                   {(p) => <Input {...p} type="number" min={0} max={17} step={1} value={ageMax} onChange={(e) => setAgeMax(e.target.value)} />}
                 </Field>
               </div>

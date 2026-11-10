@@ -49,24 +49,18 @@ export const boardWorkFetchers = {
   rules: () => unwrap(api.GET('/api/v1/staff/governance/rules')),
 };
 
-export const MEETING_KIND_TEXT: Record<string, string> = {
-  regular: 'Regular',
-  extraordinary: 'Extraordinary',
-};
+// A meeting's kind and an agenda item's kind are named by the gov-codes
+// catalog (`meetingKind.<code>`, `agendaKind.<code>`).
 
-export const AGENDA_KIND_TEXT: Record<string, string> = {
-  approval_request: 'Request',
-  board_appeal: 'Appeal',
-  agenda_proposal: 'Owners’ proposal',
-  other: 'Item',
-};
-
-/** A share as typed: up to three whole digits and four decimals, above 0, at most 100. */
-export function shareProblem(value: string): string | null {
+/**
+ * A share as typed: up to three whole digits and four decimals, above 0, at
+ * most 100. The problem is the gov-codes key that words it.
+ */
+export function shareProblem(value: string): 'share.format' | 'share.range' | null {
   const v = value.trim();
   if (v === '') return null;
-  if (!/^\d{1,3}(\.\d{1,4})?$/.test(v)) return 'Up to four decimals, e.g. 2.5';
+  if (!/^\d{1,3}(\.\d{1,4})?$/.test(v)) return 'share.format';
   const n = Number(v);
-  if (n <= 0 || n > 100) return 'Above 0 and at most 100';
+  if (n <= 0 || n > 100) return 'share.range';
   return null;
 }

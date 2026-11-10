@@ -1,0 +1,20 @@
+/** Name and phone changes residents ask for (ADR 0062): app/(dashboard)/identity-changes. */
+export default {
+  title: 'Name and phone changes',
+  description: 'Residents ask; you check the new value against their documents, then approve or reject. Nothing changes until you do.',
+  approved: 'Changed. The resident is told.',
+  rejected: 'Rejected. The resident is told why.',
+  none: 'No change waits',
+  noneHint: 'A resident asks from the app, after confirming it is them.',
+  'col.account': 'Account',
+  'col.what': 'What',
+  'col.now': 'Now',
+  'col.asked': 'Asked for',
+  'col.when': 'Asked',
+  family: 'Family member',
+  resident: 'Resident',
+  name: 'Name',
+  phone: 'Phone',
+  rejectTitle: 'Reject the change',
+  rejectDescription: 'The resident sees the reason; the value they asked for is erased.',
+} as const;

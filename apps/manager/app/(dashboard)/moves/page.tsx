@@ -1,12 +1,15 @@
 'use client';
 
-import { ErrorText, formatDate, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ErrorText, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, DataTable, Dialog, PageHeader, ReasonCodeDialog, Segmented, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/res-moves';
+import en from '@/messages/en/res-moves';
 
 type Move = Schema<'BoardMoveView'>;
 type Step = Schema<'ChecklistStepView'>;
@@ -14,24 +17,14 @@ const VIEWS = ['planned', 'done', 'cancelled'] as const;
 type View = (typeof VIEWS)[number];
 const KEY = ['moves'] as const;
 
-const STEP_LABELS: Record<string, string> = {
-  guide_read: 'Read the moving guide',
-  keys_received: 'Keys handed over',
-  keys_returned: 'Keys returned',
-  meters_read: 'Meters read',
-  unit_inspected: 'Unit inspected',
-  move_permit: 'Move permit approved',
-  utilities_requested: 'Utilities asked for',
-  clearance_issued: 'Clearance issued',
-  deposits_settled: 'Deposits settled',
-};
-
 /**
  * Moving in and out (ADR 0063): the moves planned, nearest first. Each has
  * its checklist; the management ticks its own steps, confirms a move-in,
  * and a move-out is done at the occupancy's handover (its page).
  */
 export default function MovesPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
   const [view, setView] = useState<View>('planned');
   const [open, setOpen] = useState<Move | null>(null);
   const list = useQuery({
@@ -41,53 +34,50 @@ export default function MovesPage() {
   });
   return (
     <>
-      <PageHeader
-        title="Moves"
-        description="Who moves in and out, when, and what is left on each checklist."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <Segmented<View>
-        label="Show"
+        label={t('show')}
         value={view}
         onChange={setView}
-        options={VIEWS.map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }))}
+        options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
       />
       <Card flush>
         <QueryState query={list}>
           <DataTable<Move>
             rows={list.data}
             rowKey={(m) => m.id}
-            empty="No move here"
-            emptyHint="A move-in is planned when someone starts living in a unit; a move-out when the primary gives notice."
+            empty={t('none')}
+            emptyHint={t('noneHint')}
             columns={[
-              { key: 'ref', header: 'Move', cell: (m) => <span className="t-mono">{m.reference}</span> },
+              { key: 'ref', header: t('col.move'), cell: (m) => <span className="t-mono ltr">{m.reference}</span> },
               {
                 key: 'unit',
-                header: 'Unit',
+                header: t('col.unit'),
                 cell: (m) => (
                   <Link className="table__link" href={`/units/${m.unitId}`}>
-                    {m.unitCode}
+                    <span className="ltr">{m.unitCode}</span>
                   </Link>
                 ),
               },
               {
                 key: 'dir',
-                header: 'Way',
-                cell: (m) => <Badge tone="beige">{m.direction === 'in' ? 'Moving in' : 'Moving out'}</Badge>,
+                header: t('col.way'),
+                cell: (m) => <Badge tone="beige">{m.direction === 'in' ? t('movingIn') : t('movingOut')}</Badge>,
               },
-              { key: 'day', header: 'Planned', cell: (m) => formatDate(m.plannedOn) },
+              { key: 'day', header: t('col.planned'), cell: (m) => f.day(m.plannedOn) },
               {
                 // ADR 0083: what the unit owes the compound now.
                 key: 'owed',
-                header: 'Owed',
+                header: t('col.owed'),
                 cell: (m) =>
-                  Number(m.owed) > 0 ? <Badge tone="terracotta">{m.owed} EGP</Badge> : <span className="t-secondary">Nothing</span>,
+                  Number(m.owed) > 0 ? <Badge tone="terracotta">{f.money(m.owed)}</Badge> : <span className="t-secondary">{t('nothing')}</span>,
               },
               {
                 key: 'act',
                 header: '',
                 cell: (m) => (
                   <Button size="sm" onClick={() => setOpen(m)}>
-                    Checklist
+                    {t('checklist')}
                   </Button>
                 ),
               },
@@ -100,7 +90,12 @@ export default function MovesPage() {
   );
 }
 
+const STEPS = ['guide_read', 'keys_received', 'keys_returned', 'meters_read', 'unit_inspected', 'move_permit', 'utilities_requested', 'clearance_issued', 'deposits_settled'] as const;
+const isStep = (key: string): key is (typeof STEPS)[number] => (STEPS as readonly string[]).includes(key);
+
 function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
+  const t = useT(en, ar);
+  const f = useFormat();
   const toast = useToast();
   const [cancelling, setCancelling] = useState(false);
   const detail = useQuery({
@@ -110,14 +105,14 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
   const tick = useAction(
     (step: string) =>
       unwrap(api.POST('/api/v1/staff/moves/{id}/steps', { params: { path: { id: move.id } }, body: { step } })),
-    { invalidate: [KEY], onDone: () => toast.show('Ticked.') },
+    { invalidate: [KEY], onDone: () => toast.show(t('ticked')) },
   );
   const done = useAction(
     () => unwrap(api.POST('/api/v1/staff/moves/{id}/done', { params: { path: { id: move.id } } })),
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Moved in.');
+        toast.show(t('movedIn'));
         onClose();
       },
     },
@@ -130,29 +125,32 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Cancelled.');
+        toast.show(t('cancelled'));
         onClose();
       },
     },
   );
   const planned = move.status === 'planned';
+  const day = f.day(move.plannedOn);
   return (
     <>
       <Dialog
         open
         wide
         onClose={onClose}
-        title={`${move.direction === 'in' ? 'Moving in' : 'Moving out'}: ${move.unitCode}`}
-        description={`${move.reference}, planned ${formatDate(move.plannedOn)}.${
-          move.direction === 'out' ? ' Done at the handover, on the occupancy.' : ''
-        }`}
+        title={t('dialogTitle', { direction: move.direction, unit: move.unitCode })}
+        description={
+          move.direction === 'out'
+            ? t('dialogDescriptionOut', { reference: move.reference, day })
+            : t('dialogDescription', { reference: move.reference, day })
+        }
         footer={
           planned ? (
             <>
-              <Button onClick={() => setCancelling(true)}>Cancel the move</Button>
+              <Button onClick={() => setCancelling(true)}>{t('cancelMove')}</Button>
               {move.direction === 'in' ? (
                 <Button variant="primary" loading={done.isPending} onClick={() => done.mutate(undefined)}>
-                  Confirm the move-in
+                  {t('confirmIn')}
                 </Button>
               ) : null}
             </>
@@ -161,9 +159,7 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
       >
         <ErrorAlert error={tick.error ?? done.error} />
         {detail.data && Number(detail.data.owed) > 0 ? (
-          <p className="t-secondary">
-            The unit owes {detail.data.owed} EGP. A clearance is refused until it is paid; the handover still goes ahead.
-          </p>
+          <p className="t-secondary">{t('owes', { amount: f.money(detail.data.owed) })}</p>
         ) : null}
         <QueryState query={detail}>
           <DataTable<Step>
@@ -171,11 +167,12 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
             rowKey={(s) => s.key}
             empty=""
             columns={[
-              { key: 'step', header: 'Step', cell: (s) => STEP_LABELS[s.key] ?? s.key },
+              { key: 'step', header: t('col.step'), cell: (s) => (isStep(s.key) ? t(`step.${s.key}`) : s.key) },
               {
                 key: 'who',
-                header: 'Whose',
-                cell: (s) => (s.side === 'derived' ? 'Read from its record' : s.side === 'resident' ? 'The resident' : 'You'),
+                header: t('col.whose'),
+                cell: (s) =>
+                  s.side === 'derived' ? t('side.derived') : s.side === 'resident' ? t('side.resident') : t('side.management'),
               },
               {
                 key: 'state',
@@ -183,14 +180,14 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
                 cell: (s) =>
                   s.done ? (
                     <span>
-                      <Badge tone="green">Done</Badge> {s.reference ?? (s.at ? formatDateTime(s.at) : '')}
+                      <Badge tone="green">{t('done')}</Badge> {s.reference ?? (s.at ? f.dateTime(s.at) : '')}
                     </span>
                   ) : s.side === 'management' && planned ? (
                     <Button size="sm" loading={tick.isPending} onClick={() => tick.mutate(s.key)}>
-                      Tick
+                      {t('tick')}
                     </Button>
                   ) : (
-                    <span className="t-secondary">Not yet</span>
+                    <span className="t-secondary">{t('notYet')}</span>
                   ),
               },
             ]}
@@ -200,10 +197,10 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
       <ReasonCodeDialog
         open={cancelling}
         onClose={() => setCancelling(false)}
-        title="Cancel the move"
-        description="The resident sees the reason."
+        title={t('cancelMove')}
+        description={t('cancelDescription')}
         codes={REASON_CODES.moveCancel}
-        confirmLabel="Cancel the move"
+        confirmLabel={t('cancelMove')}
         danger
         pending={cancel.isPending}
         error={cancel.error ? <ErrorText error={cancel.error} /> : undefined}

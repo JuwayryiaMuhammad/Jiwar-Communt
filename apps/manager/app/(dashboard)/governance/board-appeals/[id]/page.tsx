@@ -1,33 +1,42 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, ForbiddenState, PageHeader, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, ForbiddenState, PageHeader, StatusBadge, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Back } from '@/components/community/bits';
-import { APPEAL_KIND_TEXT, APPEAL_STATUS_TEXT, EFFECT_TEXT } from '@/components/governance/matters';
+import { codeText } from '@/components/governance/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/gov-board-appeals';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-board-appeals';
+import codesEn from '@/messages/en/gov-codes';
 
 /** One appeal to the board, the management's side (ADR 0055): the outcome, its reasons, the follow-up. */
 export default function StaffBoardAppealPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('governance.manage');
   const q = useQuery({ queryKey: keys.staffBoardAppeal(id), queryFn: () => fetchers.staffBoardAppeal(id), enabled: allowed });
   const followed = useAction(
     () => unwrap(api.POST('/api/v1/staff/governance/board-appeals/{id}/followed-up', { params: { path: { id } } })),
-    { invalidate: [keys.governanceAll], onDone: () => toast.show('Marked followed up.') },
+    { invalidate: [keys.governanceAll], onDone: () => toast.show(t('followedToast')) },
   );
-  const back = <Back href="/governance/board-appeals" label="Appeals to the board" />;
+  const back = <Back href="/governance/board-appeals" label={t('title')} />;
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={back} title="Appeal" />
+        <PageHeader back={back} title={t('appealTitle')} />
         <ForbiddenState />
       </>
     );
@@ -37,11 +46,17 @@ export default function StaffBoardAppealPage() {
     <>
       <PageHeader
         back={back}
-        title={a ? `${a.reference} · ${APPEAL_KIND_TEXT[a.kind]}${a.unitCode ? ` · unit ${a.unitCode}` : ''}` : 'Appeal'}
+        title={
+          a
+            ? a.unitCode
+              ? t('headingUnit', { reference: a.reference, kind: codeText(g, 'appealKind', a.kind), unit: a.unitCode })
+              : `${a.reference} · ${codeText(g, 'appealKind', a.kind)}`
+            : t('appealTitle')
+        }
         actions={
           toFollow ? (
             <Button variant="primary" loading={followed.isPending} onClick={() => followed.mutate(undefined)}>
-              Mark followed up
+              {t('markFollowed')}
             </Button>
           ) : null
         }
@@ -50,64 +65,64 @@ export default function StaffBoardAppealPage() {
         {a ? (
           <Card>
             <dl className="dl">
-              <dt>Status</dt>
+              <dt>{c('status')}</dt>
               <dd>
-                <StatusBadge status={a.status} /> {APPEAL_STATUS_TEXT[a.status]}
-                {a.overdue ? ' · past its deadline' : ''}
+                <StatusBadge status={a.status} /> {codeText(g, 'appealStatus', a.status)}
+                {a.overdue ? ` · ${t('pastDeadline')}` : ''}
               </dd>
-              <dt>Lodged</dt>
-              <dd>{formatDateTime(a.lodgedAt)}</dd>
-              <dt>Board’s deadline</dt>
-              <dd>{formatDateTime(a.deadlineAt)}</dd>
+              <dt>{t('lodged')}</dt>
+              <dd>{f.dateTime(a.lodgedAt)}</dd>
+              <dt>{t('deadline')}</dt>
+              <dd>{f.dateTime(a.deadlineAt)}</dd>
               {a.withdrawnAt ? (
                 <>
-                  <dt>Withdrawn</dt>
-                  <dd>{formatDateTime(a.withdrawnAt)}</dd>
+                  <dt>{t('withdrawn')}</dt>
+                  <dd>{f.dateTime(a.withdrawnAt)}</dd>
                 </>
               ) : null}
               {a.decision ? (
                 <>
-                  <dt>Decided</dt>
+                  <dt>{t('decided')}</dt>
                   <dd>
-                    {formatDateTime(a.decision.decidedAt)} · {APPEAL_STATUS_TEXT[a.decision.outcome]}
+                    {f.dateTime(a.decision.decidedAt)} · {codeText(g, 'appealStatus', a.decision.outcome)}
                   </dd>
-                  <dt>The board’s reasons</dt>
+                  <dt>{t('reasons')}</dt>
                   <dd style={{ whiteSpace: 'pre-wrap' }}>{a.decision.rationale}</dd>
                 </>
               ) : null}
               {a.effect ? (
                 <>
-                  <dt>Effect</dt>
+                  <dt>{t('effect')}</dt>
                   <dd>
-                    {EFFECT_TEXT[a.effect]}
-                    {a.followedUpAt ? ` · followed up ${formatDateTime(a.followedUpAt)}` : ''}
+                    {codeText(g, 'effect', a.effect)}
+                    {a.followedUpAt ? ` · ${t('followedUp', { when: f.dateTime(a.followedUpAt) })}` : ''}
                   </dd>
                 </>
               ) : null}
               {a.kind === 'management_appeal' && can('appeals.decide') ? (
                 <>
-                  <dt>The management’s decision</dt>
+                  <dt>{t('managementDecision')}</dt>
                   <dd>
-                    <Link href={`/appeals/${a.subjectId}`}>Open the appeal it decided</Link>
-                    {toFollow ? ' to act on what the board overturned, then mark this followed up.' : ''}
+                    <Link href={`/appeals/${a.subjectId}`}>{t('openAppeal')}</Link>
+                    {toFollow ? ` ${t('openAppealFollow')}` : ''}
                   </dd>
                 </>
               ) : null}
               {a.kind === 'management_complaint' ? (
                 <>
-                  <dt>The complaint</dt>
+                  <dt>{t('complaint')}</dt>
                   <dd>
-                    Whose it is and its grounds are the board’s alone.
-                    {toFollow ? ' The board found it founded: act on it, then mark this followed up.' : ''}
+                    {t('complaintOwn')}
+                    {toFollow ? ` ${t('complaintFollow')}` : ''}
                   </dd>
                 </>
               ) : null}
               {a.kind === 'invoice_dispute' && can('finance.invoice') ? (
                 <>
-                  <dt>The dispute</dt>
+                  <dt>{t('dispute')}</dt>
                   <dd>
-                    <Link href={`/finance/disputes?open=${a.subjectId}`}>Open it in Disputes</Link>
-                    {toFollow ? ' to credit the invoice, then mark this followed up.' : ''}
+                    <Link href={`/finance/disputes?open=${a.subjectId}`}>{t('openDispute')}</Link>
+                    {toFollow ? ` ${t('openDisputeFollow')}` : ''}
                   </dd>
                 </>
               ) : null}

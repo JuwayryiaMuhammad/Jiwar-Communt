@@ -2,11 +2,14 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Checkbox, Dialog, Field, Input, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Checkbox, Dialog, Field, Input, useCommonT, useToast } from '@jiwar/ui';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type Poll } from '@/lib/queries';
+import ar from '@/messages/ar/community';
+import en from '@/messages/en/community';
 import { AudiencePicker, DateTimeField, EVERYONE, type AudienceValue } from './bits';
 import { audienceBody, optionsReady, textOrNull, toIso, toLocalInput } from './logic';
 
@@ -37,6 +40,8 @@ export function PollDialog({
   onClose: () => void;
   onSaved: (id: string) => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [questionEn, setQuestionEn] = useState(poll?.questionEn ?? '');
   const [questionAr, setQuestionAr] = useState(poll?.questionAr ?? '');
@@ -85,7 +90,7 @@ export function PollDialog({
     {
       invalidate: [keys.pollsAll],
       onDone: (id) => {
-        toast.show(poll ? 'The poll is saved.' : opensAt ? 'The poll is scheduled.' : 'The poll is open.');
+        toast.show(poll ? t('poll.saved') : opensAt ? t('poll.scheduled') : t('poll.open'));
         onSaved(id);
       },
     },
@@ -97,18 +102,14 @@ export function PollDialog({
       open={open}
       onClose={onClose}
       wide
-      title={closingOnly ? 'Change the closing time' : poll ? 'Edit poll' : 'New poll'}
-      description={
-        closingOnly
-          ? 'The poll is open: its question and options no longer change, so that no vote already cast changes meaning.'
-          : 'Consultative: one vote per unit, secret. Nobody, the management included, can see what a unit chose.'
-      }
+      title={closingOnly ? t('poll.closingTitle') : poll ? t('poll.editTitle') : t('poll.newTitle')}
+      description={closingOnly ? t('poll.closingDescription') : t('poll.description')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
@@ -116,26 +117,26 @@ export function PollDialog({
       <div className="form">
         {closingOnly ? null : (
           <>
-            <Field label="Question (English)" error={fieldError(save.error, 'questionEn')}>
-              {(p) => <Input {...p} maxLength={500} value={questionEn} onChange={(e) => setQuestionEn(e.target.value)} />}
+            <Field label={t('poll.questionEn')} error={fieldError(save.error, 'questionEn')}>
+              {(p) => <Input {...p} dir="ltr" lang="en" maxLength={500} value={questionEn} onChange={(e) => setQuestionEn(e.target.value)} />}
             </Field>
             <Field
-              label="Question (Arabic)"
-              hint="Write one language or both. Each option is then written in the same languages."
+              label={t('poll.questionAr')}
+              hint={t('poll.questionHint')}
               error={fieldError(save.error, 'questionAr')}
             >
               {(p) => <Input {...p} dir="rtl" lang="ar" maxLength={500} value={questionAr} onChange={(e) => setQuestionAr(e.target.value)} />}
             </Field>
             <fieldset className="stack stack--sm" style={{ border: 0, padding: 0, margin: 0 }}>
-              <legend>Options, in the order shown (2 to 10)</legend>
+              <legend>{t('poll.options')}</legend>
               {options.map((o, i) => (
                 <div key={i} className="form__row" style={{ alignItems: 'end' }}>
-                  <Field label={`Option ${i + 1} (English)`} error={fieldError(save.error, `options.${i}.labelEn`)}>
+                  <Field label={t('poll.optionEn', { n: i + 1 })} error={fieldError(save.error, `options.${i}.labelEn`)}>
                     {(p) => (
-                      <Input {...p} maxLength={200} disabled={!hasEn} value={o.labelEn} onChange={(e) => setOption(i, { labelEn: e.target.value })} />
+                      <Input {...p} dir="ltr" lang="en" maxLength={200} disabled={!hasEn} value={o.labelEn} onChange={(e) => setOption(i, { labelEn: e.target.value })} />
                     )}
                   </Field>
-                  <Field label={`Option ${i + 1} (Arabic)`} error={fieldError(save.error, `options.${i}.labelAr`)}>
+                  <Field label={t('poll.optionAr', { n: i + 1 })} error={fieldError(save.error, `options.${i}.labelAr`)}>
                     {(p) => (
                       <Input
                         {...p}
@@ -156,7 +157,7 @@ export function PollDialog({
                       icon={<X aria-hidden />}
                       onClick={() => setOptions(options.filter((_, j) => j !== i))}
                     >
-                      Remove
+                      {c('remove')}
                     </Button>
                   ) : null}
                 </div>
@@ -164,27 +165,27 @@ export function PollDialog({
               {options.length < 10 ? (
                 <div>
                   <Button type="button" size="sm" icon={<Plus aria-hidden />} onClick={() => setOptions([...options, { labelEn: '', labelAr: '' }])}>
-                    Add an option
+                    {t('poll.addOption')}
                   </Button>
                 </div>
               ) : null}
             </fieldset>
-            <Checkbox label="Several options may be chosen" checked={multiple} onChange={(e) => setMultiple(e.target.checked)} />
+            <Checkbox label={t('poll.multiple')} checked={multiple} onChange={(e) => setMultiple(e.target.checked)} />
           </>
         )}
         <div className="form__row">
           {closingOnly ? null : (
             <DateTimeField
-              label="Opens"
-              hint="Empty: now. Residents see it from then on."
+              label={t('poll.opens')}
+              hint={t('poll.opensHint')}
               value={opensAt}
               onChange={setOpensAt}
               error={fieldError(save.error, 'opensAt')}
             />
           )}
           <DateTimeField
-            label="Closes"
-            hint="It closes by itself then, and the results are shown to everyone."
+            label={t('poll.closes')}
+            hint={t('poll.closesHint')}
             value={closesAt}
             onChange={setClosesAt}
             error={fieldError(save.error, 'closesAt')}
@@ -194,7 +195,7 @@ export function PollDialog({
           <AudiencePicker
             value={audience}
             onChange={setAudience}
-            hint="Owners only: a unit’s owner casts its vote. Otherwise its primary resident does, or a household member they gave the vote to."
+            hint={t('poll.audienceHint')}
           />
         )}
         <ErrorAlert error={save.error} />

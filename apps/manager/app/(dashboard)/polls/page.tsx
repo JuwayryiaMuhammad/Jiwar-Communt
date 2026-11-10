@@ -1,8 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Select, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Select, StatusBadge, useLabel } from '@jiwar/ui';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,11 +12,19 @@ import { audienceText } from '@/components/community/logic';
 import { PollDialog } from '@/components/community/poll-dialog';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Poll, type PollFilters } from '@/lib/queries';
+import communityAr from '@/messages/ar/community';
+import ar from '@/messages/ar/community-polls';
+import communityEn from '@/messages/en/community';
+import en from '@/messages/en/community-polls';
 
 const STATUSES: Poll['status'][] = ['scheduled', 'open', 'closed', 'cancelled'];
 
 /** The compound's consultative polls (ADR 0040), the newest first. */
 export default function PollsPage() {
+  const t = useT(en, ar);
+  const tc = useT(communityEn, communityAr);
+  const fmt = useFormat();
+  const label = useLabel();
   const router = useRouter();
   const { can, ready } = usePermissions();
   const [status, setStatus] = useState<Poll['status'] | ''>('');
@@ -29,18 +37,15 @@ export default function PollsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Polls"
-        description="Consultative polls: one vote per unit, by secret ballot. They ask residents what they think; they decide nothing by themselves."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Field label="Status">
+        <Field label={t('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as Poll['status'] | '')}>
-              <option value="">Any status</option>
+              <option value="">{t('anyStatus')}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
@@ -48,7 +53,7 @@ export default function PollsPage() {
         </Field>
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-          New poll
+          {t('newPoll')}
         </Button>
       </div>
       <Card flush>
@@ -56,11 +61,11 @@ export default function PollsPage() {
           <DataTable<Poll>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty="No poll here"
+            empty={t('empty')}
             columns={[
               {
                 key: 'question',
-                header: 'Question',
+                header: t('col.question'),
                 cell: (p) => (
                   <span className="stack stack--sm">
                     <Link className="table__link" href={`/polls/${p.id}`}>
@@ -68,25 +73,25 @@ export default function PollsPage() {
                     </Link>
                     {p.multiple ? (
                       <span>
-                        <Badge plain>Several choices</Badge>
+                        <Badge plain>{t('several')}</Badge>
                       </span>
                     ) : null}
                   </span>
                 ),
               },
-              { key: 'status', header: 'Status', cell: (p) => <StatusBadge status={p.status} /> },
+              { key: 'status', header: t('col.status'), cell: (p) => <StatusBadge status={p.status} /> },
               {
                 key: 'turnout',
-                header: 'Units voted',
+                header: t('col.turnout'),
                 cell: (p) =>
                   p.turnout === null ? (
-                    <span className="t-secondary">{p.resultsHidden === 'few_votes' ? 'Fewer than 5' : 'None'}</span>
+                    <span className="t-secondary">{p.resultsHidden === 'few_votes' ? t('fewerThanFive') : t('none')}</span>
                   ) : (
-                    p.turnout
+                    fmt.number(p.turnout)
                   ),
               },
-              { key: 'closes', header: 'Closes', cell: (p) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(p.closesAt)}</span> },
-              { key: 'audience', header: 'Audience', cell: (p) => audienceText(p.audience) },
+              { key: 'closes', header: t('col.closes'), cell: (p) => <span style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(p.closesAt)}</span> },
+              { key: 'audience', header: t('col.audience'), cell: (p) => audienceText(p.audience, tc, fmt) },
             ]}
           />
           <LoadMore query={list} />

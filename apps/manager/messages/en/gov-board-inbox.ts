@@ -1,0 +1,45 @@
+/** The board's own pages (ADR 0055): app/(dashboard)/board/approvals, board/appeals and board/overview. */
+export default {
+  // Shared.
+  nothing: 'Nothing here',
+  'view.pending': 'To decide',
+  'view.approved': 'Approved, to implement',
+  'view.implemented': 'Implemented',
+  'view.rejected': 'Rejected',
+  'view.withdrawn': 'Withdrawn',
+  'view.upheld': 'Upheld',
+  'view.overturned': 'Overturned',
+  'col.cost': 'Cost',
+  'col.deadline': 'Deadline',
+  deadlineOverdue: '{when} · overdue',
+  pastDeadline: 'past its deadline',
+  deadline: 'Board’s deadline',
+  // The board's inbox.
+  inboxTitle: 'The board’s inbox',
+  inboxDescription: 'Requests the management raised for the board to decide, each with its context, costs and alternatives.',
+  'col.request': 'Request',
+  request: 'Request',
+  about: 'What it is about',
+  // Appeals.
+  appealsTitle: 'Appeals to the board',
+  appealsDescription:
+    'A unit’s owner or primary asks the board to review a staff decision. Members who live in or own the unit, or appealed, are recused.',
+  'col.appeal': 'Appeal',
+  'col.of': 'Of',
+  'col.lodged': 'Lodged',
+  appeal: 'Appeal',
+  appealTitle: '{reference} · {kind} · unit {unit}',
+  lodged: 'Lodged',
+  grounds: 'Grounds',
+  groundsErased: 'Removed: the appellant’s account was erased.',
+  attachments: 'Attachments',
+  decided: 'Decided',
+  rationale: 'Rationale',
+  effect: 'Effect',
+  followedUp: 'followed up {when}',
+  appealed: 'The decision appealed',
+  // The overview.
+  overviewTitle: 'Overview',
+  overviewDescription: 'The compound at a glance, for the board.',
+  range: '{from} – {to}',
+} as const;

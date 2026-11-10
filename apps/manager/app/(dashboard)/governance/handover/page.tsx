@@ -1,13 +1,16 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Alert, Button, Card, CardHeader, ConfirmDialog, Field, ForbiddenState, PageHeader, Textarea, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { boardWorkFetchers, boardWorkKeys } from '@/lib/board-work';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/gov-handover';
+import en from '@/messages/en/gov-handover';
 
 /**
  * A manager's handover (ADR 0075): notes in their own words, delivered
@@ -16,6 +19,8 @@ import { usePermissions } from '@/lib/permissions';
  * approved going without.
  */
 export default function MyHandoverPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('governance.manage');
@@ -29,42 +34,37 @@ export default function MyHandoverPage() {
   }, [draft?.id, draft?.notes]);
   const save = useAction(
     () => unwrap(api.PUT('/api/v1/staff/governance/handover', { body: { notes: notes.trim() || null } })),
-    { invalidate: [boardWorkKeys.myHandover], onDone: () => toast.show('Saved as a draft.') },
+    { invalidate: [boardWorkKeys.myHandover], onDone: () => toast.show(t('draftSaved')) },
   );
   const deliver = useAction(() => unwrap(api.POST('/api/v1/staff/governance/handover/deliver')), {
     invalidate: [boardWorkKeys.myHandover, boardWorkKeys.handovers],
-    onDone: () => (setConfirming(false), toast.show('Delivered. The board and the other managers are told.')),
+    onDone: () => (setConfirming(false), toast.show(t('delivered'))),
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="My handover" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="My handover"
-        description="Before you leave: what whoever comes next should know. Delivered once, with what waits for the office then."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <QueryState query={q}>
-        {h?.status === 'delivered' ? (
-          <Alert tone="info">Your last handover was delivered {h.deliveredAt ? formatDateTime(h.deliveredAt) : ''}. A new note starts a new draft.</Alert>
-        ) : null}
+        {h?.status === 'delivered' ? <Alert tone="info">{t('lastDelivered', { when: f.dateTime(h.deliveredAt) })}</Alert> : null}
         <Card>
-          <CardHeader title={draft ? 'Your draft' : 'A new handover'} />
+          <CardHeader title={draft ? t('yourDraft') : t('newHandover')} />
           <div className="stack">
-            <Field label="Notes" hint="Write no resident’s name" error={fieldError(save.error, 'notes')}>
+            <Field label={t('notes')} hint={t('notesHint')} error={fieldError(save.error, 'notes')}>
               {(p) => <Textarea {...p} rows={10} maxLength={4000} value={notes} onChange={(e) => setNotes(e.target.value)} />}
             </Field>
             <ErrorAlert error={save.error ?? deliver.error} />
             <span className="toolbar">
               <Button loading={save.isPending} onClick={() => save.mutate(undefined)}>
-                Save the draft
+                {t('saveDraft')}
               </Button>
               <Button variant="primary" disabled={!draft} onClick={() => setConfirming(true)}>
-                Deliver
+                {t('deliver')}
               </Button>
             </span>
           </div>
@@ -73,9 +73,9 @@ export default function MyHandoverPage() {
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
-        title="Deliver your handover?"
-        description="It is kept as it is from then on, with a snapshot of what waits for the office now."
-        confirmLabel="Deliver"
+        title={t('deliverTitle')}
+        description={t('deliverDescription')}
+        confirmLabel={t('deliver')}
         pending={deliver.isPending}
         onConfirm={() => deliver.mutate(undefined)}
       />

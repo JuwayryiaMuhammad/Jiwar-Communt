@@ -1,0 +1,38 @@
+/** The signed-in account's own page and its sessions list: app/(dashboard)/account, lib/user-agent. */
+export default {
+  title: 'My account',
+  description: 'Your own sign-in, language and notification settings.',
+  yourAccount: 'Your account',
+  role: 'Role',
+  'locale.en': 'English',
+  'locale.ar': 'Arabic (العربية)',
+  'language.title': 'Language',
+  'language.label': 'Language of what is sent to you',
+  'language.hint': 'Emails and notices from the compound. The dashboard’s own language is switched from the menu.',
+  'language.saved': 'Language saved.',
+  'language.save': 'Save language',
+  'notify.title': 'Notification settings',
+  'notify.intro':
+    'What is also sent to you by email. Everything stays in your notifications list whatever is set here, and emergencies and security notices always reach you.',
+  'notify.saved': 'Notification settings saved.',
+  'notify.discard': 'Discard',
+  'notify.save': 'Save settings',
+  'sessions.title': 'Where you are signed in',
+  'sessions.signOutAll': 'Sign out everywhere',
+  'sessions.empty': 'No session',
+  'sessions.device': 'Device',
+  'sessions.current': 'This session',
+  'sessions.signedIn': 'Signed in',
+  'sessions.lastUsed': 'Last used',
+  'sessions.signOut': 'Sign out',
+  'sessions.signedOut': 'That session is signed out.',
+  'sessions.endTitle': 'Sign this session out?',
+  'sessions.endDescription': '{device}, signed in {when}. It has to sign in again with a code.',
+  'sessions.endAllTitle': 'Sign out everywhere?',
+  'sessions.endAllDescription':
+    'Every session of your account ends, this one included, on every device. Use it when a session here is not yours. You sign in again with a code.',
+  // A session's device (lib/user-agent).
+  'device.on': '{browser} on {system}',
+  'device.app': 'The mobile app',
+  'device.unknown': 'Unknown device',
+} as const;

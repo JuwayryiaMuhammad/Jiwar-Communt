@@ -1,14 +1,8 @@
 'use client';
 
-import {
-  ErrorText,
-  formatDate,
-  formatDateTime,
-  REASON_CODES,
-  unwrap,
-  type Schema,
-} from '@jiwar/api';
+import { ErrorText, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -21,6 +15,8 @@ import {
   PageHeader,
   ReasonCodeDialog,
   Select,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -32,6 +28,8 @@ import { api } from '@/lib/api';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/units-papers';
+import en from '@/messages/en/units-papers';
 
 type Contract = Schema<'ContractView'>;
 type Doc = Schema<'UnitDocumentView'>;
@@ -42,6 +40,16 @@ const contractsKey = (u: string) => ['units', u, 'contracts'] as const;
 const documentsKey = (u: string) => ['units', u, 'documents'] as const;
 const depositsKey = (u: string) => ['units', u, 'deposits'] as const;
 
+const DOC_KINDS = ['handover_report', 'warranty', 'manual', 'utility', 'insurance', 'inspection_report', 'other'] as const;
+const DEPOSIT_KINDS = ['finishing_works', 'move', 'maintenance_fund', 'other'] as const;
+const docKind = (m: Record<string, string>) =>
+  Object.fromEntries(DOC_KINDS.map((k) => [k, m[`docKind.${k}`]!]));
+const depositKind = (m: Record<string, string>) =>
+  Object.fromEntries(DEPOSIT_KINDS.map((k) => [k, m[`depositKind.${k}`]!]));
+/** A document's and a deposit's kind in this page's words (the shared `manual` means "by hand"). */
+const DOC_KIND_LABELS = { en: docKind(en), ar: docKind(ar) };
+const DEPOSIT_KIND_LABELS = { en: depositKind(en), ar: depositKind(ar) };
+
 /**
  * A unit's papers (ADR 0062): its contracts (leases, ownership), the
  * documents the management keeps in its vault (residents' own uploads are
@@ -49,6 +57,7 @@ const depositsKey = (u: string) => ['units', u, 'deposits'] as const;
  * a clearance certificate when the unit owes nothing.
  */
 export default function UnitPapersPage() {
+  const t = useT(en, ar);
   const { id: unitId } = useParams<{ id: string }>();
   const { can } = usePermissions();
   const unit = useQuery({
@@ -58,13 +67,13 @@ export default function UnitPapersPage() {
   const occupants: Occupant[] = unit.data?.occupants ?? [];
   const nameOf = (occupancyId: string) =>
     occupants.find((o) => o.occupancyId === occupancyId)?.account.fullName ??
-    'A former occupant';
+    t('formerOccupant');
 
   return (
     <>
       <PageHeader
-        title={`Papers of ${unit.data?.code ?? 'the unit'}`}
-        description="Contracts, the documents the management keeps, deposits held and clearance certificates."
+        title={unit.data ? t('title', { code: unit.data.code }) : t('titleUnnamed')}
+        description={t('description')}
       />
       {can('contracts.manage') ? (
         <Contracts unitId={unitId} occupants={occupants} nameOf={nameOf} />
@@ -86,6 +95,10 @@ export default function UnitPapersPage() {
  * appointed it are told.
  */
 function Proxies({ unitId }: { unitId: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [revoking, setRevoking] = useState<Schema<'ProxyView'> | null>(null);
   const key = ['unit-proxies', unitId] as const;
@@ -109,39 +122,39 @@ function Proxies({ unitId }: { unitId: string }) {
     {
       invalidate: [key],
       onDone: () => {
-        toast.show('Proxy ended. The proxy and the owner who appointed it are told.');
+        toast.show(t('proxyEnded'));
         setRevoking(null);
       },
     },
   );
   return (
     <Card flush>
-      <CardHeader title="Proxies" />
+      <CardHeader title={t('proxies')} />
       <QueryState query={list}>
         <DataTable<Schema<'ProxyView'>>
           rows={list.data}
           rowKey={(p) => p.id}
-          empty="No proxy"
-          emptyHint="An owner appoints one from the app, for a closed or vacant unit."
+          empty={t('proxiesEmpty')}
+          emptyHint={t('proxiesEmptyHint')}
           columns={[
-            { key: 'name', header: 'Who', cell: (p) => p.name ?? '—' },
+            { key: 'name', header: t('col.who'), cell: (p) => p.name ?? '—' },
             {
               key: 'status',
-              header: 'Status',
+              header: c('status'),
               cell: (p) =>
                 p.status === 'ended' && p.revokeCode
-                  ? `ended by the management (${p.revokeCode.replace(/_/g, ' ')})`
-                  : p.status,
+                  ? t('endedByManagement', { reason: label(p.revokeCode) })
+                  : label(p.status),
             },
             {
               key: 'scopes',
-              header: 'May',
-              cell: (p) => p.scopes.map((s) => s.replace('_', ' ')).join(', '),
+              header: t('col.may'),
+              cell: (p) => fmt.list(p.scopes.map((s) => label(s))),
             },
             {
               key: 'until',
-              header: 'Until',
-              cell: (p) => formatDate(p.expiresAt),
+              header: t('col.until'),
+              cell: (p) => fmt.date(p.expiresAt),
             },
             {
               key: 'act',
@@ -149,7 +162,7 @@ function Proxies({ unitId }: { unitId: string }) {
               cell: (p) =>
                 p.status === 'ended' ? null : (
                   <Button size="sm" onClick={() => setRevoking(p)}>
-                    End
+                    {t('end')}
                   </Button>
                 ),
             },
@@ -159,10 +172,10 @@ function Proxies({ unitId }: { unitId: string }) {
       <ReasonCodeDialog
         open={revoking !== null}
         onClose={() => setRevoking(null)}
-        title="End the proxy"
-        description="The proxy and the owner who appointed it are told, with the reason."
+        title={t('endProxyTitle')}
+        description={t('endProxyDescription')}
         codes={REASON_CODES.proxyRevokeByManagement}
-        confirmLabel="End the proxy"
+        confirmLabel={t('endProxyConfirm')}
         danger
         pending={revoke.isPending}
         error={revoke.error ? <ErrorText error={revoke.error} /> : undefined}
@@ -183,6 +196,10 @@ function Contracts({
   occupants: Occupant[];
   nameOf: (id: string) => string;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [recording, setRecording] = useState<{ renews?: Contract } | null>(
     null,
@@ -219,7 +236,7 @@ function Contracts({
     {
       invalidate: [contractsKey(unitId)],
       onDone: () => {
-        toast.show('Voided. It stays on record.');
+        toast.show(t('voided'));
         setVoiding(null);
       },
     },
@@ -227,76 +244,76 @@ function Contracts({
   return (
     <Card flush>
       <CardHeader
-        title="Contracts"
+        title={t('contracts')}
         actions={
-          <Button onClick={() => setRecording({})}>Record a contract</Button>
+          <Button onClick={() => setRecording({})}>{t('recordContract')}</Button>
         }
       />
       <ErrorAlert error={open.error} />
       <QueryState query={list}>
         <DataTable<Contract>
           rows={list.data}
-          rowKey={(c) => c.id}
-          empty="No contract on record"
-          emptyHint="Record the lease or the ownership contract the management holds a copy of."
+          rowKey={(k) => k.id}
+          empty={t('contractsEmpty')}
+          emptyHint={t('contractsEmptyHint')}
           columns={[
             {
               key: 'ref',
-              header: 'Contract',
-              cell: (c) => <span className="t-mono">{c.reference}</span>,
+              header: t('col.contract'),
+              cell: (k) => <span className="t-mono">{k.reference}</span>,
             },
             {
               key: 'kind',
-              header: 'Kind',
-              cell: (c) => (c.kind === 'lease' ? 'Lease' : 'Ownership'),
+              header: c('kind'),
+              cell: (k) => (k.kind === 'lease' ? t('kind.lease') : t('kind.ownership')),
             },
             {
               key: 'who',
-              header: 'Binds',
-              cell: (c) => c.partyOccupancyIds.map(nameOf).join(', '),
+              header: t('col.binds'),
+              cell: (k) => fmt.list(k.partyOccupancyIds.map(nameOf)),
             },
             {
               key: 'dates',
-              header: 'Dates',
-              cell: (c) =>
-                c.endsOn
-                  ? `${formatDate(c.startsOn)} → ${formatDate(c.endsOn)} (decide by ${formatDate(c.noticeBy!)})`
-                  : `From ${formatDate(c.startsOn)}`,
+              header: t('col.dates'),
+              cell: (k) =>
+                k.endsOn
+                  ? t('datesLease', { start: fmt.day(k.startsOn), end: fmt.day(k.endsOn), notice: fmt.day(k.noticeBy) })
+                  : t('datesFrom', { start: fmt.day(k.startsOn) }),
             },
             {
               key: 'status',
-              header: 'Status',
-              cell: (c) => (
-                <Badge tone={c.status === 'live' ? 'green' : 'beige'}>
-                  {c.status}
+              header: c('status'),
+              cell: (k) => (
+                <Badge tone={k.status === 'live' ? 'green' : 'beige'}>
+                  {label(k.status)}
                 </Badge>
               ),
             },
             {
               key: 'act',
               header: '',
-              cell: (c) => (
+              cell: (k) => (
                 <span style={{ display: 'flex', gap: 8 }}>
-                  {c.hasFile ? (
-                    <Button size="sm" onClick={() => open.mutate(c)}>
-                      Open
+                  {k.hasFile ? (
+                    <Button size="sm" onClick={() => open.mutate(k)}>
+                      {c('open')}
                     </Button>
                   ) : null}
-                  {c.kind === 'lease' && c.status === 'live' ? (
+                  {k.kind === 'lease' && k.status === 'live' ? (
                     <Button
                       size="sm"
-                      onClick={() => setRecording({ renews: c })}
+                      onClick={() => setRecording({ renews: k })}
                     >
-                      Renew
+                      {t('renew')}
                     </Button>
                   ) : null}
-                  {c.status !== 'voided' ? (
+                  {k.status !== 'voided' ? (
                     <Button
                       size="sm"
                       variant="text"
-                      onClick={() => setVoiding(c)}
+                      onClick={() => setVoiding(k)}
                     >
-                      Void
+                      {t('void')}
                     </Button>
                   ) : null}
                 </span>
@@ -316,10 +333,10 @@ function Contracts({
       <ReasonCodeDialog
         open={voiding !== null}
         onClose={() => setVoiding(null)}
-        title="Void the contract"
-        description="It stops counting and stays on record; record the right one again."
+        title={t('voidTitle')}
+        description={t('voidDescription')}
         codes={REASON_CODES.contractVoid}
-        confirmLabel="Void"
+        confirmLabel={t('void')}
         danger
         pending={voidIt.isPending}
         error={voidIt.error ? <ErrorText error={voidIt.error} /> : undefined}
@@ -342,6 +359,8 @@ function RecordContract({
   renews?: Contract;
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [v, setV] = useState({
     kind: renews ? 'lease' : 'lease',
@@ -384,7 +403,7 @@ function RecordContract({
     {
       invalidate: [contractsKey(unitId), ['contract-renewals']],
       onDone: () => {
-        toast.show('Recorded. The parties see it in the app.');
+        toast.show(t('contractRecorded'));
         onClose();
       },
     },
@@ -393,8 +412,8 @@ function RecordContract({
     <Dialog
       open
       onClose={onClose}
-      title={renews ? `Renew ${renews.reference}` : 'Record a contract'}
-      description="A copy the management holds: no signature happens here, no money moves."
+      title={renews ? t('renewTitle', { reference: renews.reference }) : t('recordContract')}
+      description={t('recordDescription')}
       onSubmit={(e) => {
         e.preventDefault();
         record.mutate(undefined);
@@ -406,25 +425,25 @@ function RecordContract({
           loading={record.isPending}
           disabled={!v.fileId || !v.party}
         >
-          Record
+          {t('record')}
         </Button>
       }
     >
       <ErrorAlert error={record.error} />
       {renews ? null : (
-        <Field label="Kind">
+        <Field label={c('kind')}>
           {(p) => (
             <Select {...p} value={v.kind} onChange={set('kind')}>
-              <option value="lease">Lease</option>
-              <option value="ownership">Ownership</option>
+              <option value="lease">{t('kind.lease')}</option>
+              <option value="ownership">{t('kind.ownership')}</option>
             </Select>
           )}
         </Field>
       )}
-      <Field label={v.kind === 'lease' ? 'The tenant' : 'The owner'}>
+      <Field label={v.kind === 'lease' ? t('theTenant') : t('theOwner')}>
         {(p) => (
           <Select {...p} value={v.party} onChange={set('party')} required>
-            <option value="">Choose…</option>
+            <option value="">{t('choose')}</option>
             {eligible.map((o) => (
               <option key={o.occupancyId} value={o.occupancyId}>
                 {o.account.fullName}
@@ -433,7 +452,7 @@ function RecordContract({
           </Select>
         )}
       </Field>
-      <Field label="Signed on">
+      <Field label={t('signedOn')}>
         {(p) => (
           <Input
             {...p}
@@ -444,7 +463,7 @@ function RecordContract({
           />
         )}
       </Field>
-      <Field label="Starts on">
+      <Field label={t('startsOn')}>
         {(p) => (
           <Input
             {...p}
@@ -457,7 +476,7 @@ function RecordContract({
       </Field>
       {v.kind === 'lease' ? (
         <>
-          <Field label="Ends on">
+          <Field label={t('endsOn')}>
             {(p) => (
               <Input
                 {...p}
@@ -468,7 +487,7 @@ function RecordContract({
               />
             )}
           </Field>
-          <Field label="Notice (days before the end)">
+          <Field label={t('noticeDays')}>
             {(p) => (
               <Input
                 {...p}
@@ -485,8 +504,8 @@ function RecordContract({
       ) : null}
       {renews ? (
         <Field
-          label="The renewal request it answers"
-          hint="Optional: its id from Renewal requests."
+          label={t('renewalRequest')}
+          hint={t('renewalRequestHint')}
         >
           {(p) => (
             <Input
@@ -499,7 +518,7 @@ function RecordContract({
       ) : null}
       <FileUpload
         purpose="contract"
-        label={v.fileId ? 'Scan attached — replace' : 'Attach the scan'}
+        label={v.fileId ? t('scanAttached') : t('attachScan')}
         onUploaded={(fileId) => setV({ ...v, fileId })}
       />
     </Dialog>
@@ -507,6 +526,10 @@ function RecordContract({
 }
 
 function Documents({ unitId }: { unitId: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const kindText = useLabel(DOC_KIND_LABELS);
   const toast = useToast();
   const [adding, setAdding] = useState(false);
   const list = useQuery({
@@ -536,15 +559,15 @@ function Documents({ unitId }: { unitId: string }) {
       ),
     {
       invalidate: [documentsKey(unitId)],
-      onDone: () => toast.show('Deleted.'),
+      onDone: () => toast.show(t('deleted')),
     },
   );
   return (
     <Card flush>
       <CardHeader
-        title="Documents the management keeps"
+        title={t('documents')}
         actions={
-          <Button onClick={() => setAdding(true)}>Add a document</Button>
+          <Button onClick={() => setAdding(true)}>{t('addDocument')}</Button>
         }
       />
       <ErrorAlert error={open.error ?? remove.error} />
@@ -552,31 +575,29 @@ function Documents({ unitId }: { unitId: string }) {
         <DataTable<Doc>
           rows={list.data}
           rowKey={(d) => d.id}
-          empty="None yet"
-          emptyHint="A handover report, the developer's warranties, manuals. Residents' own uploads stay theirs and are not shown here."
+          empty={t('documentsEmpty')}
+          emptyHint={t('documentsEmptyHint')}
           columns={[
-            { key: 'title', header: 'Document', cell: (d) => d.title },
+            { key: 'title', header: t('col.document'), cell: (d) => d.title },
             {
               key: 'kind',
-              header: 'Kind',
-              cell: (d) => (
-                <Badge tone="beige">{d.kind.replace('_', ' ')}</Badge>
-              ),
+              header: c('kind'),
+              cell: (d) => <Badge tone="beige">{kindText(d.kind)}</Badge>,
             },
             {
               key: 'who',
-              header: 'Seen by',
+              header: t('col.seenBy'),
               cell: (d) =>
                 d.visibility === 'owners'
-                  ? 'The owners'
+                  ? t('seenBy.owners')
                   : d.visibility === 'occupants'
-                    ? 'Everyone living there'
-                    : 'Its occupant',
+                    ? t('seenBy.occupants')
+                    : t('seenBy.private'),
             },
             {
               key: 'ends',
-              header: 'Warranty ends',
-              cell: (d) => (d.expiresOn ? formatDate(d.expiresOn) : '—'),
+              header: t('col.warrantyEnds'),
+              cell: (d) => (d.expiresOn ? fmt.day(d.expiresOn) : '—'),
             },
             {
               key: 'act',
@@ -584,7 +605,7 @@ function Documents({ unitId }: { unitId: string }) {
               cell: (d) => (
                 <span style={{ display: 'flex', gap: 8 }}>
                   <Button size="sm" onClick={() => open.mutate(d)}>
-                    Open
+                    {c('open')}
                   </Button>
                   {d.holder === 'unit' ? (
                     <Button
@@ -592,7 +613,7 @@ function Documents({ unitId }: { unitId: string }) {
                       variant="text"
                       onClick={() => remove.mutate(d)}
                     >
-                      Delete
+                      {c('delete')}
                     </Button>
                   ) : null}
                 </span>
@@ -615,6 +636,9 @@ function AddDocument({
   unitId: string;
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const kindText = useLabel(DOC_KIND_LABELS);
   const toast = useToast();
   const [v, setV] = useState({
     title: '',
@@ -642,7 +666,7 @@ function AddDocument({
     {
       invalidate: [documentsKey(unitId)],
       onDone: () => {
-        toast.show('Added. Its readers see it in the app.');
+        toast.show(t('documentAdded'));
         onClose();
       },
     },
@@ -651,7 +675,7 @@ function AddDocument({
     <Dialog
       open
       onClose={onClose}
-      title="Add a document"
+      title={t('addDocument')}
       onSubmit={(e) => {
         e.preventDefault();
         add.mutate(undefined);
@@ -663,12 +687,12 @@ function AddDocument({
           loading={add.isPending}
           disabled={!v.fileId}
         >
-          Add
+          {c('add')}
         </Button>
       }
     >
       <ErrorAlert error={add.error} />
-      <Field label="Title">
+      <Field label={t('docTitle')}>
         {(p) => (
           <Input
             {...p}
@@ -679,38 +703,27 @@ function AddDocument({
           />
         )}
       </Field>
-      <Field label="Kind">
+      <Field label={c('kind')}>
         {(p) => (
           <Select {...p} value={v.kind} onChange={set('kind')}>
-            {[
-              'handover_report',
-              'warranty',
-              'manual',
-              'utility',
-              'insurance',
-              'inspection_report',
-              'other',
-            ].map((k) => (
+            {DOC_KINDS.map((k) => (
               <option key={k} value={k}>
-                {k.replace('_', ' ')}
+                {kindText(k)}
               </option>
             ))}
           </Select>
         )}
       </Field>
-      <Field label="Seen by">
+      <Field label={t('col.seenBy')}>
         {(p) => (
           <Select {...p} value={v.visibility} onChange={set('visibility')}>
-            <option value="occupants">Everyone living there</option>
-            <option value="owners">The owners</option>
+            <option value="occupants">{t('seenBy.occupants')}</option>
+            <option value="owners">{t('seenBy.owners')}</option>
           </Select>
         )}
       </Field>
       {v.kind === 'warranty' ? (
-        <Field
-          label="Warranty ends"
-          hint="Its readers are told 30 days before."
-        >
+        <Field label={t('col.warrantyEnds')} hint={t('warrantyHint')}>
           {(p) => (
             <Input
               {...p}
@@ -724,7 +737,7 @@ function AddDocument({
       ) : null}
       <FileUpload
         purpose="unit_document"
-        label={v.fileId ? 'File attached — replace' : 'Attach the file'}
+        label={v.fileId ? t('fileAttached') : t('attachFile')}
         onUploaded={(fileId) => setV({ ...v, fileId })}
       />
     </Dialog>
@@ -740,6 +753,10 @@ function Deposits({
   occupants: Occupant[];
   nameOf: (id: string) => string;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const kindText = useLabel(DEPOSIT_KIND_LABELS);
   const { can } = usePermissions();
   const [recording, setRecording] = useState(false);
   const [settling, setSettling] = useState<Deposit | null>(null);
@@ -755,40 +772,40 @@ function Deposits({
   return (
     <Card flush>
       <CardHeader
-        title="Deposits held"
+        title={t('deposits')}
         actions={
-          <Button onClick={() => setRecording(true)}>Record a deposit</Button>
+          <Button onClick={() => setRecording(true)}>{t('recordDeposit')}</Button>
         }
       />
       <QueryState query={list}>
         <DataTable<Deposit>
           rows={list.data}
           rowKey={(d) => d.id}
-          empty="No deposit held"
-          emptyHint="Money the management holds: a finishing-works or a move deposit, the maintenance fund."
+          empty={t('depositsEmpty')}
+          emptyHint={t('depositsEmptyHint')}
           columns={[
             {
               key: 'n',
-              header: 'Deposit',
-              cell: (d) => <span className="t-mono">{d.number}</span>,
+              header: t('col.deposit'),
+              cell: (d) => <span className="t-mono ltr">{d.number}</span>,
             },
-            { key: 'who', header: 'For', cell: (d) => nameOf(d.occupancyId) },
+            { key: 'who', header: t('col.for'), cell: (d) => nameOf(d.occupancyId) },
             {
               key: 'kind',
-              header: 'Kind',
-              cell: (d) => d.kind.replace('_', ' '),
+              header: c('kind'),
+              cell: (d) => kindText(d.kind),
             },
             {
               key: 'held',
-              header: 'Held',
-              cell: (d) => `${d.held} of ${d.amount} EGP`,
+              header: t('col.held'),
+              cell: (d) => t('heldOf', { held: fmt.number(d.held), amount: fmt.money(d.amount) }),
             },
             {
               key: 'ask',
               header: '',
               cell: (d) =>
                 d.refundRequested ? (
-                  <Badge tone="terracotta">Refund asked</Badge>
+                  <Badge tone="terracotta">{t('refundAsked')}</Badge>
                 ) : null,
             },
             {
@@ -797,7 +814,7 @@ function Deposits({
               cell: (d) =>
                 can('finance.refund') && Number(d.held) > 0 ? (
                   <Button size="sm" onClick={() => setSettling(d)}>
-                    Settle
+                    {t('settle')}
                   </Button>
                 ) : null,
             },
@@ -831,6 +848,8 @@ function RecordDeposit({
   occupants: Occupant[];
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [v, setV] = useState({
     occupancyId: '',
@@ -859,7 +878,7 @@ function RecordDeposit({
     {
       invalidate: [depositsKey(unitId)],
       onDone: () => {
-        toast.show('Recorded.');
+        toast.show(t('depositRecorded'));
         onClose();
       },
     },
@@ -868,19 +887,19 @@ function RecordDeposit({
     <Dialog
       open
       onClose={onClose}
-      title="Record a deposit received"
+      title={t('recordDepositTitle')}
       onSubmit={(e) => {
         e.preventDefault();
         record.mutate(undefined);
       }}
       footer={
         <Button variant="primary" type="submit" loading={record.isPending}>
-          Record
+          {t('record')}
         </Button>
       }
     >
       <ErrorAlert error={record.error} />
-      <Field label="For">
+      <Field label={t('col.for')}>
         {(p) => (
           <Select
             {...p}
@@ -888,7 +907,7 @@ function RecordDeposit({
             onChange={set('occupancyId')}
             required
           >
-            <option value="">Choose…</option>
+            <option value="">{t('choose')}</option>
             {occupants.map((o) => (
               <option key={o.occupancyId} value={o.occupancyId}>
                 {o.account.fullName}
@@ -897,17 +916,17 @@ function RecordDeposit({
           </Select>
         )}
       </Field>
-      <Field label="Kind">
+      <Field label={c('kind')}>
         {(p) => (
           <Select {...p} value={v.kind} onChange={set('kind')}>
-            <option value="finishing_works">Finishing works</option>
-            <option value="move">Move</option>
-            <option value="maintenance_fund">Maintenance fund</option>
-            <option value="other">Other</option>
+            <option value="finishing_works">{t('depositKind.finishing_works')}</option>
+            <option value="move">{t('depositKind.move')}</option>
+            <option value="maintenance_fund">{t('depositKind.maintenance_fund')}</option>
+            <option value="other">{t('depositKind.other')}</option>
           </Select>
         )}
       </Field>
-      <Field label="Amount (EGP)">
+      <Field label={t('amountEgp')}>
         {(p) => (
           <Input
             {...p}
@@ -918,7 +937,7 @@ function RecordDeposit({
           />
         )}
       </Field>
-      <Field label="Received on">
+      <Field label={t('receivedOn')}>
         {(p) => (
           <Input
             {...p}
@@ -929,16 +948,16 @@ function RecordDeposit({
           />
         )}
       </Field>
-      <Field label="How">
+      <Field label={t('how')}>
         {(p) => (
           <Select {...p} value={v.method} onChange={set('method')}>
-            <option value="bank_transfer">Bank transfer</option>
-            <option value="cash">Cash</option>
-            <option value="cheque">Cheque</option>
+            <option value="bank_transfer">{t('method.bank_transfer')}</option>
+            <option value="cash">{t('method.cash')}</option>
+            <option value="cheque">{t('method.cheque')}</option>
           </Select>
         )}
       </Field>
-      <Field label="Reference" hint="Optional.">
+      <Field label={t('reference')} hint={t('optionalHint')}>
         {(p) => (
           <Input
             {...p}
@@ -961,6 +980,8 @@ function SettleDeposit({
   deposit: Deposit;
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const toast = useToast();
   const [stepping, setStepping] = useState(false);
   const [v, setV] = useState({
@@ -994,9 +1015,7 @@ function SettleDeposit({
     {
       invalidate: [depositsKey(unitId)],
       onDone: () => {
-        toast.show(
-          'Settled. Unpaid dues taken from it are paid on the unit’s invoices.',
-        );
+        toast.show(t('settled'));
         onClose();
       },
     },
@@ -1004,8 +1023,8 @@ function SettleDeposit({
   if (stepping)
     return (
       <StepUpDialog
-        title="Confirm it is you"
-        description="Settling a deposit moves money: we sent a code to your email."
+        title={t('confirmItsYou')}
+        description={t('settleStepUp')}
         onClose={() => setStepping(false)}
         onVerified={() => {
           setStepping(false);
@@ -1017,20 +1036,20 @@ function SettleDeposit({
     <Dialog
       open
       onClose={onClose}
-      title={`Settle ${deposit.number}`}
-      description={`${deposit.held} EGP held. Never more than that in all.`}
+      title={t('settleTitle', { number: deposit.number })}
+      description={t('settleDescription', { held: fmt.money(deposit.held) })}
       onSubmit={(e) => {
         e.preventDefault();
         setStepping(true);
       }}
       footer={
         <Button variant="primary" type="submit" loading={settle.isPending}>
-          Settle
+          {t('settle')}
         </Button>
       }
     >
       <ErrorAlert error={settle.error} />
-      <Field label="Refund (EGP)">
+      <Field label={t('refundEgp')}>
         {(p) => (
           <Input
             {...p}
@@ -1040,18 +1059,15 @@ function SettleDeposit({
           />
         )}
       </Field>
-      <Field label="Refund by">
+      <Field label={t('refundBy')}>
         {(p) => (
           <Select {...p} value={v.channel} onChange={set('channel')}>
-            <option value="bank_transfer">Bank transfer</option>
-            <option value="cash">Cash</option>
+            <option value="bank_transfer">{t('method.bank_transfer')}</option>
+            <option value="cash">{t('method.cash')}</option>
           </Select>
         )}
       </Field>
-      <Field
-        label="Kept for unpaid dues (EGP)"
-        hint="Paid on the unit’s open invoices."
-      >
+      <Field label={t('keptDues')} hint={t('keptDuesHint')}>
         {(p) => (
           <Input
             {...p}
@@ -1061,7 +1077,7 @@ function SettleDeposit({
           />
         )}
       </Field>
-      <Field label="Kept for damage (EGP)">
+      <Field label={t('keptDamage')}>
         {(p) => (
           <Input
             {...p}
@@ -1076,6 +1092,8 @@ function SettleDeposit({
 }
 
 function Clearance({ unitId }: { unitId: string }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const toast = useToast();
   const issue = useAction(
     () =>
@@ -1086,9 +1104,7 @@ function Clearance({ unitId }: { unitId: string }) {
       ),
     {
       onDone: async (c) => {
-        toast.show(
-          `${c.number} issued, valid until ${formatDate(c.validUntil)}.`,
-        );
+        toast.show(t('clearanceIssued', { number: c.number, date: fmt.date(c.validUntil) }));
         await download(
           `/api/v1/staff/clearances/${c.id}/certificate`,
           {},
@@ -1099,18 +1115,15 @@ function Clearance({ unitId }: { unitId: string }) {
   );
   return (
     <Card>
-      <CardHeader title="Clearance certificate" />
-      <p className="t-secondary">
-        Issued only when the unit owes nothing, open disputes included; anyone
-        checks it with the code printed on it.
-      </p>
+      <CardHeader title={t('clearance')} />
+      <p className="t-secondary">{t('clearanceHint')}</p>
       <ErrorAlert error={issue.error} />
       <Button onClick={() => issue.mutate(undefined)} loading={issue.isPending}>
-        Issue and download
+        {t('issueDownload')}
       </Button>
       {issue.data ? (
         <p className="t-secondary">
-          Last issued {formatDateTime(issue.data.asOf)}.
+          {t('lastIssued', { when: fmt.dateTime(issue.data.asOf) })}
         </p>
       ) : null}
     </Card>

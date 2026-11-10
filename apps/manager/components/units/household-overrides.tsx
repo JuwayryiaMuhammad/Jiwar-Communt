@@ -1,24 +1,22 @@
 'use client';
 
-import { humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Field, ReasonDialog, Select, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Field, ReasonDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
+import ar from '@/messages/ar/units-household';
+import en from '@/messages/en/units-household';
 import { revocable } from './revocable';
 
 type Member = Schema<'HouseholdMemberItemView'>;
 type Permission = Schema<'RevokeByManagementDto'>['permission'];
-const PERMISSION_TEXT: Record<string, string> = {
-  visitors_invite: 'Invite visitors',
-  bookings: 'Bookings',
-  tickets: 'Maintenance tickets',
-  finance: 'Payments',
-  unit_security: 'Unit security',
-  polls_vote: 'Voting in polls',
-  all: 'Everything they were given',
-};
+const permissions = (m: Record<string, string>) =>
+  Object.fromEntries(Object.entries(m).flatMap(([key, text]) => (key.startsWith('perm.') ? [[key.slice('perm.'.length), text]] : [])));
+/** The words for a permission a primary gives, keyed by its code. */
+const PERMISSION_LABELS = { en: permissions(en), ar: permissions(ar) };
 
 /**
  * Management's decisions on a household (ADR 0021, `household.override`):
@@ -27,10 +25,13 @@ const PERMISSION_TEXT: Record<string, string> = {
  * themselves; the member is told, with the text written here.
  */
 export function MemberOverrides({ unitId, member }: { unitId: string; member: Member }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const permissionText = useLabel(PERMISSION_LABELS);
   const toast = useToast();
   const [open, setOpen] = useState<'remove' | 'revoke' | null>(null);
   const [permission, setPermission] = useState<Permission | ''>('');
-  const name = member.fullName ?? 'this member';
+  const name = member.fullName ?? t('thisMember');
   const refresh = [keys.unit(unitId)];
   const close = () => {
     setOpen(null);
@@ -44,7 +45,7 @@ export function MemberOverrides({ unitId, member }: { unitId: string; member: Me
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show(`${name} is removed from the household.`);
+        toast.show(t('removed', { name }));
         close();
       },
     },
@@ -60,7 +61,7 @@ export function MemberOverrides({ unitId, member }: { unitId: string; member: Me
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show(`Taken back from ${name}.`);
+        toast.show(t('revoked', { name }));
         close();
       },
     },
@@ -74,24 +75,19 @@ export function MemberOverrides({ unitId, member }: { unitId: string; member: Me
 
   return (
     <span className="row" style={{ justifyContent: 'flex-end' }}>
-      <Button
-        size="sm"
-        disabled={nothing}
-        title={nothing ? `${name} holds no permission in this household.` : undefined}
-        onClick={() => setOpen('revoke')}
-      >
-        Revoke access
+      <Button size="sm" disabled={nothing} title={nothing ? t('holdsNothing', { name }) : undefined} onClick={() => setOpen('revoke')}>
+        {t('revokeAccess')}
       </Button>
       <Button size="sm" onClick={() => setOpen('remove')}>
-        Remove
+        {c('remove')}
       </Button>
       <ReasonDialog
         open={open === 'remove'}
         onClose={close}
-        title={`Remove ${name} from the household?`}
-        description="They lose their place in this unit's household and everything it gave them. They are told, with your message. The primary resident can invite them again."
+        title={t('removeTitle', { name })}
+        description={t('removeDescription')}
         codes={REASON_CODES.memberRemovalByManagement}
-        confirmLabel="Remove member"
+        confirmLabel={t('removeConfirm')}
         danger
         pending={remove.isPending}
         error={<ErrorAlert error={remove.error} />}
@@ -100,28 +96,24 @@ export function MemberOverrides({ unitId, member }: { unitId: string; member: Me
       <ReasonDialog
         open={open === 'revoke'}
         onClose={close}
-        title={`Take back access from ${name}?`}
-        description={
-          known
-            ? 'They keep their place in the household and lose what you pick, from what they hold now. They are told, with your message.'
-            : 'They keep their place in the household and lose what you pick. They are told, with your message. Your role does not show what they hold, so a permission they do not hold is simply refused.'
-        }
+        title={t('revokeTitle', { name })}
+        description={known ? t('revokeKnown') : t('revokeUnknown')}
         codes={REASON_CODES.permissionRevoke}
-        confirmLabel="Revoke"
+        confirmLabel={t('revokeConfirm')}
         pending={revoke.isPending}
         error={<ErrorAlert error={revoke.error} />}
         onConfirm={(reason) => permission !== '' && revoke.mutate(reason)}
       >
-        <Field label="What to take back" error={permission === '' && revoke.isError ? 'Pick one.' : undefined}>
+        <Field label={t('whatToTakeBack')} error={permission === '' && revoke.isError ? c('reason.pickOne') : undefined}>
           {(p) => (
             <Select {...p} value={permission} onChange={(e) => setPermission(e.target.value as Permission | '')}>
-              <option value="">Select…</option>
+              <option value="">{c('select')}</option>
               {options.map((g) => (
                 <option key={g} value={g}>
-                  {PERMISSION_TEXT[g] ?? humanize(g)}
+                  {permissionText(g)}
                 </option>
               ))}
-              <option value="all">{PERMISSION_TEXT.all}</option>
+              <option value="all">{t('perm.all')}</option>
             </Select>
           )}
         </Field>

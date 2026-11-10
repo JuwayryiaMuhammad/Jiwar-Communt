@@ -1,14 +1,17 @@
 'use client';
 
-import { ApiError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { ApiError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Badge, Button, Card, CardBody, CardHeader, ReasonCodeDialog, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Badge, Button, Card, CardBody, CardHeader, ReasonCodeDialog, StatusBadge, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { api } from '@/lib/api';
 import { keys, type Consent } from '@/lib/queries';
 import { preferencesChanges, PreferencesFields, toForm, type PrefsForm } from '@/components/notification-preferences';
-import { BLOCKER_TEXT, CONSENT_TEXT } from './labels';
+import ar from '@/messages/ar/shell-accounts';
+import en from '@/messages/en/shell-accounts';
+import { blockerText, consentBody, consentTitle } from './labels';
 
 /** What an action waits on: it runs once the manager says how the person asked. */
 type Pending = { title: string; description: ReactNode; confirm: string; danger?: boolean; run: (reasonCode: string) => Promise<unknown>; done: string } | null;
@@ -31,6 +34,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
  * account. An export is never shown here: it goes to the person's email.
  */
 export function AssistPanel({ accountId, name }: { accountId: string; name: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const path = { path: { id: accountId } };
   const part = (p: string) => keys.accountPart(accountId, p);
@@ -84,10 +91,10 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
   const prefsDirty = changes !== null;
   const savePrefs = () =>
     ask({
-      title: `Change ${name}'s notification settings?`,
-      description: 'They are told their settings were changed for them. Security notices always reach them, whatever is set here.',
-      confirm: 'Save settings',
-      done: 'Notification settings saved.',
+      title: t('prefs.title', { name }),
+      description: t('prefs.description'),
+      confirm: t('prefs.confirm'),
+      done: t('prefs.done'),
       run: async (reasonCode) => {
         const next = await unwrap(
           api.PATCH('/api/v1/accounts/{id}/notification-preferences', {
@@ -100,16 +107,16 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
       },
     });
 
-  const consentAction = (c: Consent) =>
+  const consentAction = (k: Consent) =>
     ask({
-      title: c.granted ? `Withdraw this consent for ${name}?` : `Record ${name}'s consent?`,
-      description: CONSENT_TEXT[c.code]?.body ?? humanize(c.code),
-      confirm: c.granted ? 'Withdraw consent' : 'Record consent',
-      done: c.granted ? 'Consent withdrawn.' : 'Consent recorded.',
+      title: k.granted ? t('consent.withdrawTitle', { name }) : t('consent.recordTitle', { name }),
+      description: consentBody(t, k.code) ?? label(k.code),
+      confirm: k.granted ? t('consent.withdrawConfirm') : t('consent.recordConfirm'),
+      done: k.granted ? t('consent.withdrawn') : t('consent.recorded'),
       run: (reasonCode) =>
-        c.granted
-          ? unwrap(api.POST('/api/v1/accounts/{id}/consents/revoke', { params: path, body: { code: c.code, reasonCode } }))
-          : unwrap(api.POST('/api/v1/accounts/{id}/consents/grant', { params: path, body: { code: c.code, version: c.version, reasonCode } })),
+        k.granted
+          ? unwrap(api.POST('/api/v1/accounts/{id}/consents/revoke', { params: path, body: { code: k.code, reasonCode } }))
+          : unwrap(api.POST('/api/v1/accounts/{id}/consents/grant', { params: path, body: { code: k.code, version: k.version, reasonCode } })),
     });
 
   const d = deletion.data;
@@ -118,25 +125,22 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
 
   return (
     <Card flush>
-      <CardHeader title={`Act for ${name}`} />
+      <CardHeader title={t('assist.title', { name })} />
       <CardBody>
-        <p className="t-secondary">
-          For someone who does not use the app and asked management to do this for them. Each action records how they asked and tells them
-          what was done.
-        </p>
+        <p className="t-secondary">{t('assist.intro')}</p>
       </CardBody>
 
-      <Section title="Notification settings">
+      <Section title={t('assist.prefs')}>
         <QueryState query={prefs} rows={3}>
           {form && saved ? (
             <div className="form">
               <PreferencesFields saved={saved} form={form} onChange={setForm} />
               <span className="row">
                 <Button disabled={!prefsDirty} onClick={() => setForm(toForm(saved))}>
-                  Discard
+                  {t('prefs.discard')}
                 </Button>
                 <Button variant="primary" disabled={!prefsDirty} onClick={savePrefs}>
-                  Save settings…
+                  {t('prefs.save')}
                 </Button>
               </span>
             </div>
@@ -144,30 +148,28 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
         </QueryState>
       </Section>
 
-      <Section title="Consents">
+      <Section title={t('assist.consents')}>
         <QueryState query={consents} rows={1}>
-          {(consents.data?.data ?? []).map((c) => (
-            <span key={c.code} className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
+          {(consents.data?.data ?? []).map((k) => (
+            <span key={k.code} className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
               <span className="list__text">
                 <span className="list__title" style={{ display: 'block', whiteSpace: 'normal' }}>
-                  {CONSENT_TEXT[c.code]?.title ?? humanize(c.code)}
+                  {consentTitle(t, label, k.code)}
                 </span>
                 <span className="list__meta">
-                  {c.granted ? `Given ${formatDateTime(c.grantedAt)}` : 'Not given'} · {CONSENT_TEXT[c.code]?.body ?? ''}
+                  {k.granted ? t('consent.given', { when: f.dateTime(k.grantedAt) }) : t('consent.notGiven')} · {consentBody(t, k.code) ?? ''}
                 </span>
               </span>
-              <Button size="sm" onClick={() => consentAction(c)}>
-                {c.granted ? 'Withdraw…' : 'Record consent…'}
+              <Button size="sm" onClick={() => consentAction(k)}>
+                {k.granted ? t('consent.withdraw') : t('consent.record')}
               </Button>
             </span>
           ))}
         </QueryState>
       </Section>
 
-      <Section title="Copy of their data">
-        <p className="t-secondary">
-          The archive is sent to the person's own email, behind a code sent there too. Management never sees or downloads it.
-        </p>
+      <Section title={t('assist.data')}>
+        <p className="t-secondary">{t('data.intro')}</p>
         <QueryState query={exports} rows={1}>
           {exports.data?.data.length ? (
             <ul className="list">
@@ -175,20 +177,20 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
                 <li key={e.id} className="list__item" style={{ paddingInline: 0 }}>
                   <span className="list__text">
                     <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                      <Badge tone={e.status === 'ready' ? 'green' : e.status === 'failed' ? 'error' : 'beige'}>{humanize(e.status)}</Badge>
-                      <span>Asked {formatDateTime(e.requestedAt)}</span>
-                      {e.assisted ? <Badge plain>By management</Badge> : <Badge plain>By the person</Badge>}
+                      <Badge tone={e.status === 'ready' ? 'green' : e.status === 'failed' ? 'error' : 'beige'}>{label(e.status)}</Badge>
+                      <span>{t('asked', { when: f.dateTime(e.requestedAt) })}</span>
+                      {e.assisted ? <Badge plain>{t('byManagement')}</Badge> : <Badge plain>{t('byPerson')}</Badge>}
                     </span>
                     <span className="list__meta">
-                      {e.readyAt ? `Ready ${formatDateTime(e.readyAt)}` : 'Not ready yet'}
-                      {e.expiresAt ? ` · available until ${formatDateTime(e.expiresAt)}` : ''}
+                      {e.readyAt ? t('data.ready', { when: f.dateTime(e.readyAt) }) : t('data.notReady')}
+                      {e.expiresAt ? ` · ${t('data.availableUntil', { when: f.dateTime(e.expiresAt) })}` : ''}
                     </span>
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="t-secondary">No export was ever asked for.</p>
+            <p className="t-secondary">{t('data.none')}</p>
           )}
         </QueryState>
         <span>
@@ -196,49 +198,49 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
             size="sm"
             onClick={() =>
               ask({
-                title: `Send ${name} a copy of their data?`,
-                description: 'It is prepared in the background and emailed to them. You will see its status here, never the file.',
-                confirm: 'Request export',
-                done: 'Export requested. It goes to their email when ready.',
+                title: t('data.title', { name }),
+                description: t('data.description'),
+                confirm: t('data.confirm'),
+                done: t('data.done'),
                 run: (reasonCode) => unwrap(api.POST('/api/v1/accounts/{id}/data-exports', { params: path, body: { reasonCode } })),
               })
             }
           >
-            Request an export…
+            {t('data.request')}
           </Button>
         </span>
       </Section>
 
-      <Section title="Account deletion">
+      <Section title={t('assist.deletion')}>
         <QueryState query={deletion} rows={1}>
           {d ? (
             <div className="stack stack--sm">
               <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                 <StatusBadge status={d.status} />
-                <span>Asked {formatDateTime(d.requestedAt)}</span>
-                {d.assisted ? <Badge plain>By management</Badge> : <Badge plain>By the person</Badge>}
+                <span>{t('asked', { when: f.dateTime(d.requestedAt) })}</span>
+                {d.assisted ? <Badge plain>{t('byManagement')}</Badge> : <Badge plain>{t('byPerson')}</Badge>}
               </span>
               <span className="t-secondary">
                 {d.status === 'pending'
-                  ? `Cooling-off until ${formatDateTime(d.effectiveAt)}: it can be cancelled until then, and the account works normally.`
+                  ? t('deletion.pending', { when: f.dateTime(d.effectiveAt) })
                   : d.status === 'queued'
-                    ? 'The cooling-off is over, but something blocks the erasure. It waits in Deletion requests.'
+                    ? t('deletion.queued')
                     : d.status === 'completed'
-                      ? 'The account was erased.'
+                      ? t('deletion.completed')
                       : d.status === 'cancelled'
-                        ? 'The last request was cancelled.'
-                        : 'The last request was closed by management without erasing.'}
+                        ? t('deletion.cancelled')
+                        : t('deletion.closed')}
               </span>
               {d.blockers.length ? (
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                <ul style={{ margin: 0, paddingInlineStart: 18 }}>
                   {d.blockers.map((b) => (
-                    <li key={b}>{BLOCKER_TEXT[b] ?? humanize(b)}</li>
+                    <li key={b}>{blockerText(t, label, b)}</li>
                   ))}
                 </ul>
               ) : null}
             </div>
           ) : (
-            <p className="t-secondary">No deletion was ever asked for.</p>
+            <p className="t-secondary">{t('deletion.none')}</p>
           )}
         </QueryState>
         <span>
@@ -247,16 +249,16 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
               size="sm"
               onClick={() =>
                 ask({
-                  title: `Cancel ${name}'s deletion request?`,
-                  description: 'For a request filed by mistake, or when they changed their mind. They are told it was cancelled.',
-                  confirm: 'Cancel the request',
-                  done: 'Deletion request cancelled.',
+                  title: t('deletion.cancelTitle', { name }),
+                  description: t('deletion.cancelDescription'),
+                  confirm: t('deletion.cancelConfirm'),
+                  done: t('deletion.cancelDone'),
                   run: (reasonCode) =>
                     unwrap(api.POST('/api/v1/accounts/{id}/deletion-request/cancel', { params: path, body: { reasonCode } })),
                 })
               }
             >
-              Cancel the request…
+              {t('deletion.cancel')}
             </Button>
           ) : (
             <Button
@@ -264,17 +266,16 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
               variant="danger"
               onClick={() =>
                 ask({
-                  title: `Ask to delete ${name}'s account?`,
-                  description:
-                    'A 14-day cooling-off starts, during which they or you can cancel. After it the account is erased for good: their personal data is blanked and they can no longer sign in.',
-                  confirm: 'Request deletion',
+                  title: t('deletion.requestTitle', { name }),
+                  description: t('deletion.requestDescription'),
+                  confirm: t('deletion.requestConfirm'),
                   danger: true,
-                  done: 'Deletion requested. The cooling-off has started.',
+                  done: t('deletion.requestDone'),
                   run: (reasonCode) => unwrap(api.POST('/api/v1/accounts/{id}/deletion-request', { params: path, body: { reasonCode } })),
                 })
               }
             >
-              Request deletion…
+              {t('deletion.request')}
             </Button>
           )}
         </span>
@@ -289,8 +290,8 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
         title={pending?.title ?? ''}
         description={pending?.description}
         codes={REASON_CODES.assist}
-        codeLabel="How did they ask?"
-        confirmLabel={pending?.confirm ?? 'Confirm'}
+        codeLabel={t('assist.howAsked')}
+        confirmLabel={pending?.confirm ?? c('confirm')}
         danger={pending?.danger}
         pending={act.isPending}
         error={
@@ -298,9 +299,9 @@ export function AssistPanel({ accountId, name }: { accountId: string; name: stri
             <ErrorAlert error={act.error} />
             {Array.isArray(blocked) ? (
               <Alert tone="warn">
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                <ul style={{ margin: 0, paddingInlineStart: 18 }}>
                   {(blocked as string[]).map((b) => (
-                    <li key={b}>{BLOCKER_TEXT[b] ?? humanize(b)}</li>
+                    <li key={b}>{blockerText(t, label, b)}</li>
                   ))}
                 </ul>
               </Alert>

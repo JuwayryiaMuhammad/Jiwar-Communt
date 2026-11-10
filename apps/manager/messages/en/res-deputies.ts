@@ -1,0 +1,27 @@
+/** A deputy who decides in someone's place (ADR 0073): app/(dashboard)/deputies. */
+export default {
+  title: 'Deputy',
+  description:
+    'Someone who decides in your place for up to 30 days. They hold what you give them and you do not, until it ends; what they do is recorded as on your behalf.',
+  named: 'Named. Your deputy is told.',
+  ended: 'Ended. The other side is told.',
+  none: 'No deputy',
+  'col.side': 'You are',
+  'col.permissions': 'Permissions',
+  'col.until': 'Until',
+  away: 'Away',
+  theDeputy: 'The deputy',
+  inForce: 'In force',
+  endNow: 'End now',
+  'reason.ended': 'Ended early',
+  'reason.expired': 'Its time ran out',
+  'reason.account_left': 'One of you is no longer active',
+  'reason.other': 'Ended',
+  nameTitle: 'Name a deputy',
+  deputy: 'Deputy',
+  chooseAccount: 'Choose an account',
+  until: 'Until',
+  untilHint: 'At most 30 days from now.',
+  decides: 'What they decide in your place',
+  nameButton: 'Name the deputy',
+} as const;

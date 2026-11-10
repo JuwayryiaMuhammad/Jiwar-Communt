@@ -2,12 +2,15 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardHeader, Checkbox, ForbiddenState, PageHeader, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Card, CardHeader, Checkbox, ForbiddenState, PageHeader, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { boardWorkFetchers, boardWorkKeys } from '@/lib/board-work';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/gov-rules';
+import en from '@/messages/en/gov-rules';
 
 type Patch = {
   candidacyNoDues?: boolean;
@@ -22,60 +25,62 @@ type Patch = {
  * the logo on the board's documents.
  */
 export default function GovernanceRulesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('governance.manage');
   const q = useQuery({ queryKey: boardWorkKeys.rules, queryFn: boardWorkFetchers.rules, enabled: allowed });
   const save = useAction((body: Patch) => unwrap(api.PATCH('/api/v1/staff/governance/rules', { body })), {
     invalidate: [boardWorkKeys.rules],
-    onDone: () => toast.show('Saved.'),
+    onDone: () => toast.show(c('saved')),
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Board rules" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   const r = q.data;
   return (
     <>
-      <PageHeader title="Board rules" description="Checked by the system; the rest of a candidate’s eligibility is yours, by disqualification with a code." />
+      <PageHeader title={t('title')} description={t('description')} />
       <QueryState query={q}>
         {r ? (
           <>
             <Card>
-              <CardHeader title="Candidacies" />
+              <CardHeader title={t('candidacies')} />
               <div className="stack">
                 <Checkbox
-                  label="Refuse an owner whose units owe past their due date"
+                  label={t('noDues')}
                   checked={r.candidacyNoDues}
                   onChange={(e) => save.mutate({ candidacyNoDues: e.target.checked })}
                 />
                 <Checkbox
-                  label="Refuse an owner who also holds an active staff or manager account"
+                  label={t('notStaff')}
                   checked={r.candidacyNotStaff}
                   onChange={(e) => save.mutate({ candidacyNotStaff: e.target.checked })}
                 />
               </div>
             </Card>
             <Card>
-              <CardHeader title="The board’s documents" />
+              <CardHeader title={t('documents')} />
               <div className="stack">
                 <Checkbox
-                  label="Send the board last month’s report on a month’s first days"
+                  label={t('monthly')}
                   checked={r.boardReportMonthly}
                   onChange={(e) => save.mutate({ boardReportMonthly: e.target.checked })}
                 />
-                <p className="t-secondary">{r.reportLogoFileId ? 'A logo heads the board’s documents.' : 'No logo yet.'}</p>
+                <p className="t-secondary">{r.reportLogoFileId ? t('hasLogo') : t('noLogo')}</p>
                 <FileUpload
                   purpose="compound_logo"
-                  label={r.reportLogoFileId ? 'Replace the logo' : 'Add a logo'}
+                  label={r.reportLogoFileId ? t('replaceLogo') : t('addLogo')}
                   onUploaded={(fileId) => save.mutate({ reportLogoFileId: fileId })}
                 />
                 {r.reportLogoFileId ? (
                   <Button variant="text" onClick={() => save.mutate({ reportLogoFileId: null })}>
-                    Take the logo off
+                    {t('removeLogo')}
                   </Button>
                 ) : null}
               </div>

@@ -1,12 +1,17 @@
 'use client';
 
-import { formatDateTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Button, Card, CardHeader, DataTable, ForbiddenState, PageHeader, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, CardHeader, DataTable, ForbiddenState, PageHeader, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
+import { codeText } from '@/components/governance/logic';
 import { boardWorkFetchers, boardWorkKeys, type ManagerHandover } from '@/lib/board-work';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/gov-board-reports';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-board-reports';
+import codesEn from '@/messages/en/gov-codes';
 
 type Pack = {
   approvals?: { pending?: { reference: string; type: string }[]; awaitingImplementation?: { reference: string; type: string }[] };
@@ -23,6 +28,10 @@ type Pack = {
  * delivered when they left. References and days; never a name in the pack.
  */
 export default function BoardHandoverPage() {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('governance.board') || can('governance.manage');
@@ -31,44 +40,47 @@ export default function BoardHandoverPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Handovers" />
+        <PageHeader title={t('handoverTitle')} />
         <ForbiddenState />
       </>
     );
   const c = (pack.data?.contents ?? {}) as Pack;
   const lines = [
-    ...(c.approvals?.pending ?? []).map((r) => `${r.reference} · ${r.type} · awaiting the board`),
-    ...(c.approvals?.awaitingImplementation ?? []).map((r) => `${r.reference} · ${r.type} · approved, to implement`),
-    ...(c.appeals?.pending ?? []).map((a) => `${a.reference} · ${a.kind} · appeal awaiting the board`),
-    ...(c.openActions ?? []).map((a) => `${a.meetingReference} · ${a.title} · due ${a.dueOn}`),
-    ...(c.sections?.contracts?.ending ?? []).map((x) => `${x.code} · ${x.kind} · contract ends ${x.endsOn}`),
+    ...(c.approvals?.pending ?? []).map((r) => t('pack.pending', { reference: r.reference, type: codeText(g, 'approvalType', r.type) })),
+    ...(c.approvals?.awaitingImplementation ?? []).map((r) =>
+      t('pack.toImplement', { reference: r.reference, type: codeText(g, 'approvalType', r.type) }),
+    ),
+    ...(c.appeals?.pending ?? []).map((a) => t('pack.appeal', { reference: a.reference, kind: codeText(g, 'appealKind', a.kind) })),
+    ...(c.openActions ?? []).map((a) => t('pack.action', { meeting: a.meetingReference, title: a.title, day: f.day(a.dueOn) })),
+    ...(c.sections?.contracts?.ending ?? []).map((x) => t('pack.contract', { code: x.code, kind: label(x.kind), day: f.day(x.endsOn) })),
   ];
   return (
     <>
       <PageHeader
-        title="Handovers"
-        description="What the board before left open when this board started to sit, and the managers’ handovers."
+        title={t('handoverTitle')}
+        description={t('handoverDescription')}
         actions={
           pack.data ? (
             <Button
-              onClick={() =>
-                download('/api/v1/board/handover-pack/pdf', {}, 'handover-pack.pdf').catch(() => toast.show('The PDF could not be downloaded.'))
-              }
+              onClick={() => download('/api/v1/board/handover-pack/pdf', {}, 'handover-pack.pdf').catch(() => toast.show(t('pdfFailed')))}
             >
-              Pack as PDF
+              {t('packPdf')}
             </Button>
           ) : undefined
         }
       />
       <Card>
-        <CardHeader title="The board’s handover pack" />
+        <CardHeader title={t('packTitle')} />
         {pack.isError ? (
-          <p className="t-secondary">No pack for this board: it started to sit before packs were written, or none sits.</p>
+          <p className="t-secondary">{t('noPack')}</p>
         ) : pack.data ? (
           <>
             <p className="t-secondary">
-              Written {formatDateTime(pack.data.generatedAt)} · objections unanswered: {c.objectionsUnanswered ?? 0} · open
-              proposals: {c.agendaProposalsOpen ?? 0}
+              {t('packWritten', {
+                when: f.dateTime(pack.data.generatedAt),
+                objections: c.objectionsUnanswered ?? 0,
+                proposals: c.agendaProposalsOpen ?? 0,
+              })}
             </p>
             {lines.length ? (
               <ul>
@@ -77,21 +89,21 @@ export default function BoardHandoverPage() {
                 ))}
               </ul>
             ) : (
-              <p>Nothing was left open.</p>
+              <p>{t('nothingOpen')}</p>
             )}
           </>
         ) : null}
       </Card>
       <Card flush>
-        <CardHeader title="Managers’ handovers" />
+        <CardHeader title={t('managersTitle')} />
         <QueryState query={handovers}>
           <DataTable<ManagerHandover>
             rows={handovers.rows}
             rowKey={(h) => h.id}
-            empty="None delivered"
+            empty={t('noneDelivered')}
             columns={[
-              { key: 'n', header: 'Manager', cell: (h) => h.fullName ?? '—' },
-              { key: 'd', header: 'Delivered', cell: (h) => (h.deliveredAt ? formatDateTime(h.deliveredAt) : '—') },
+              { key: 'n', header: t('col.manager'), cell: (h) => h.fullName ?? '—' },
+              { key: 'd', header: t('col.delivered'), cell: (h) => (h.deliveredAt ? f.dateTime(h.deliveredAt) : '—') },
               {
                 key: 'p',
                 header: '',

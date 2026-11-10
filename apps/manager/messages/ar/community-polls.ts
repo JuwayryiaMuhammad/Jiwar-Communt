@@ -1,0 +1,45 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/community-polls.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'الاستطلاعات',
+  description: 'استطلاعات استشارية: صوت واحد لكل وحدة، باقتراع سري. تسأل السكان عن رأيهم، ولا تقرر شيئًا بنفسها.',
+  status: 'الحالة',
+  anyStatus: 'أي حالة',
+  newPoll: 'استطلاع جديد',
+  empty: 'لا توجد استطلاعات هنا',
+  'col.question': 'السؤال',
+  'col.status': 'الحالة',
+  'col.turnout': 'الوحدات المصوِّتة',
+  'col.closes': 'يُغلق',
+  'col.audience': 'الجمهور',
+  several: 'اختيارات متعددة',
+  fewerThanFive: 'أقل من 5',
+  none: 'لا أحد',
+  poll: 'الاستطلاع',
+  edit: 'عدّل',
+  changeClosing: 'غيّر موعد الإغلاق',
+  cancelPoll: 'ألغِ الاستطلاع',
+  closeNow: 'أغلقه الآن',
+  opens: 'يُفتح',
+  closes: 'يُغلق',
+  whoVotes: 'من يصوّت',
+  unitsVoted: 'الوحدات المصوِّتة',
+  turnoutShare:
+    '{share} من {units, plural, =0 {لا وحدات} one {وحدة واحدة} two {وحدتين} few {# وحدات} many {# وحدة} other {# وحدة}} موجَّه إليها الاستطلاع الآن',
+  putTo: 'موجَّه الآن إلى {units, plural, =0 {لا وحدات} one {وحدة واحدة} two {وحدتين} few {# وحدات} many {# وحدة} other {# وحدة}}',
+  closedToast: 'أُغلق الاستطلاع، وتظهر نتائجه للجميع.',
+  cancelledToast: 'أُلغي الاستطلاع، ولم يُحسب شيء.',
+  closeTitle: 'إغلاق هذا الاستطلاع الآن؟',
+  closeDescription: 'لن تُقبل أصوات أخرى. النتائج نهائية وتظهر لكل من وُجِّه إليهم، أيًّا كانت نسبة المشاركة. تُتلف أوراق التصويت: تُحفظ الأعداد فقط.',
+  closePoll: 'أغلق الاستطلاع',
+  cancelTitle: 'إلغاء هذا الاستطلاع؟',
+  cancelDescription: 'ينتهي بلا نتيجة. تُتلف أوراق التصويت ولا يُحسب شيء. يبقى في القائمة ملغى.',
+  results: 'النتائج',
+  resultsSoFar: 'النتائج حتى الآن',
+  resultsHint: 'أعداد لكل خيار. لا يُحفظ اختيار الوحدة معها، فلا توجد قائمة بمن اختار ماذا، لأي أحد.',
+  votesOf: '{votes} من {total} صوت',
+  multipleHint: 'يمكن للوحدة اختيار أكثر من خيار، لذا قد يزيد مجموع الأعداد على عدد الوحدات المصوِّتة.',
+};
+
+export default ar;

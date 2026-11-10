@@ -1,13 +1,19 @@
 'use client';
 
-import { formatDateTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge, useCommonT } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { APPEAL_KIND_TEXT, EFFECT_TEXT } from '@/components/governance/matters';
+import { codeText } from '@/components/governance/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BoardAppealStatus, type StaffBoardAppeal } from '@/lib/queries';
+import ar from '@/messages/ar/gov-board-appeals';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-board-appeals';
+import codesEn from '@/messages/en/gov-codes';
+
+const VIEWS = ['pending', 'upheld', 'overturned', 'withdrawn'] as const satisfies readonly BoardAppealStatus[];
 
 /**
  * Appeals to the board (ADR 0055), as the management, a party to them,
@@ -15,34 +21,30 @@ import { fetchers, keys, type BoardAppealStatus, type StaffBoardAppeal } from '@
  * or the deliberation.
  */
 export default function StaffBoardAppealsPage() {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('governance.manage');
   const [status, setStatus] = useState<BoardAppealStatus>('pending');
-  const list = useCursorList(keys.staffBoardAppeals(status), (c) => fetchers.staffBoardAppeals(status, c), { enabled: allowed });
+  const list = useCursorList(keys.staffBoardAppeals(status), (cursor) => fetchers.staffBoardAppeals(status, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Appeals to the board" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Appeals to the board"
-        description="A unit took a staff decision to the board. A pending appeal holds a fine’s or a violation’s payment; an overturn the system cannot apply waits for you to follow it up."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<BoardAppealStatus>
-          label="Status"
+          label={c('status')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'pending', label: 'With the board' },
-            { value: 'upheld', label: 'Upheld' },
-            { value: 'overturned', label: 'Overturned' },
-            { value: 'withdrawn', label: 'Withdrawn' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
       </div>
       <Card flush>
@@ -50,19 +52,29 @@ export default function StaffBoardAppealsPage() {
           <DataTable<StaffBoardAppeal>
             rows={list.rows}
             rowKey={(a) => a.id}
-            empty="Nothing here"
+            empty={t('nothing')}
             columns={[
-              { key: 'r', header: 'Appeal', cell: (a) => <Link href={`/governance/board-appeals/${a.id}`}>{a.reference}</Link> },
-              { key: 'k', header: 'Of', cell: (a) => APPEAL_KIND_TEXT[a.kind] },
+              { key: 'r', header: t('col.appeal'), cell: (a) => <Link href={`/governance/board-appeals/${a.id}`}>{a.reference}</Link> },
+              { key: 'k', header: t('col.of'), cell: (a) => codeText(g, 'appealKind', a.kind) },
               // A complaint about the management never names its unit to the staff (ADR 0059).
-              { key: 'u', header: 'Unit', cell: (a) => (a.unitCode ? <span className="t-mono">{a.unitCode}</span> : '—') },
-              { key: 'd', header: 'Deadline', cell: (a) => `${formatDateTime(a.deadlineAt)}${a.overdue ? ' · overdue' : ''}` },
-              { key: 's', header: 'Status', cell: (a) => <StatusBadge status={a.status} /> },
+              { key: 'u', header: t('col.unit'), cell: (a) => (a.unitCode ? <span className="t-mono ltr">{a.unitCode}</span> : '—') },
+              {
+                key: 'd',
+                header: t('col.deadline'),
+                cell: (a) => (a.overdue ? t('deadlineOverdue', { when: f.dateTime(a.deadlineAt) }) : f.dateTime(a.deadlineAt)),
+              },
+              { key: 's', header: c('status'), cell: (a) => <StatusBadge status={a.status} /> },
               {
                 key: 'e',
-                header: 'Effect',
+                header: t('col.effect'),
                 cell: (a) =>
-                  a.effect === 'follow_up' && !a.followedUpAt ? <strong>{EFFECT_TEXT.follow_up}</strong> : a.effect ? EFFECT_TEXT[a.effect] : '—',
+                  a.effect === 'follow_up' && !a.followedUpAt ? (
+                    <strong>{codeText(g, 'effect', 'follow_up')}</strong>
+                  ) : a.effect ? (
+                    codeText(g, 'effect', a.effect)
+                  ) : (
+                    '—'
+                  ),
               },
             ]}
           />

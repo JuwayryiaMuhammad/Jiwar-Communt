@@ -2,18 +2,25 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, useToast } from '@jiwar/ui';
+import { useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { NameFields, namesReady, NO_NAMES, type Names } from '@/components/maintenance-setup/names';
 import { api } from '@/lib/api';
 import { fetchers, keys, type SuggestionTopic } from '@/lib/queries';
+import ar from '@/messages/ar/community-setup';
+import en from '@/messages/en/community-setup';
 
 function TopicDialog({ topic, onClose }: { topic: SuggestionTopic | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const { locale } = useLocale();
   const toast = useToast();
   const [names, setNames] = useState<Names>(topic ? { key: topic.key, nameEn: topic.nameEn, nameAr: topic.nameAr } : NO_NAMES);
   const [active, setActive] = useState(topic?.active ?? true);
+  const nameOf = (x: { nameEn: string; nameAr: string }) => (locale === 'ar' ? x.nameAr : x.nameEn);
   const save = useAction(
     () =>
       topic
@@ -31,7 +38,7 @@ function TopicDialog({ topic, onClose }: { topic: SuggestionTopic | null; onClos
     {
       invalidate: [keys.suggestionTopics],
       onDone: (saved) => {
-        toast.show(`${saved.nameEn} is saved.`);
+        toast.show(t('topicSaved', { name: nameOf(saved) }));
         onClose();
       },
     },
@@ -42,27 +49,21 @@ function TopicDialog({ topic, onClose }: { topic: SuggestionTopic | null; onClos
     <Dialog
       open
       onClose={onClose}
-      title={topic ? `Edit ${topic.nameEn}` : 'New topic'}
-      description="What a resident picks when they write a suggestion."
+      title={topic ? t('editTopic', { name: nameOf(topic) }) : t('newTopic')}
+      description={t('topicDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
         <NameFields value={names} onChange={setNames} error={save.error} withKey={!topic} example="parking" />
-        {topic ? (
-          <Checkbox
-            label="Offered to residents (unticked: retired, kept on the suggestions that used it)"
-            checked={active}
-            onChange={(e) => setActive(e.target.checked)}
-          />
-        ) : null}
+        {topic ? <Checkbox label={t('topicActive')} checked={active} onChange={(e) => setActive(e.target.checked)} /> : null}
         <ErrorAlert error={save.error} />
       </div>
     </Dialog>
@@ -73,6 +74,8 @@ type Open = { topic: SuggestionTopic | null } | null;
 
 /** The compound's suggestion topics (ADR 0040): a closed list of its own. */
 export function SuggestionTopics() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const topics = useQuery({ queryKey: keys.suggestionTopics, queryFn: fetchers.suggestionTopics });
   const [open, setOpen] = useState<Open>(null);
 
@@ -81,38 +84,40 @@ export function SuggestionTopics() {
       <div className="toolbar">
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen({ topic: null })}>
-          New topic
+          {t('newTopic')}
         </Button>
       </div>
       <Card flush>
         <QueryState query={topics}>
           <DataTable<SuggestionTopic>
             rows={topics.data?.data}
-            rowKey={(t) => t.id}
-            empty="No topic yet"
-            emptyHint="Residents cannot send a suggestion until there is one."
+            rowKey={(x) => x.id}
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
               {
                 key: 'name',
-                header: 'Topic',
-                cell: (t) => (
+                header: t('col.topic'),
+                cell: (x) => (
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                    <span className="table__primary">{t.nameEn}</span>
-                    <span className="t-secondary" dir="rtl" lang="ar">
-                      {t.nameAr}
+                    <span className="table__primary" dir="ltr" lang="en">
+                      {x.nameEn}
                     </span>
-                    {!t.active ? <Badge tone="beige">Retired</Badge> : null}
+                    <span className="t-secondary" dir="rtl" lang="ar">
+                      {x.nameAr}
+                    </span>
+                    {!x.active ? <Badge tone="beige">{t('retired')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'key', header: 'Code', cell: (t) => <span className="t-mono">{t.key}</span> },
+              { key: 'key', header: t('col.code'), cell: (x) => <span className="t-mono">{x.key}</span> },
               {
                 key: 'actions',
                 header: '',
                 className: 'table__actions',
-                cell: (t) => (
-                  <Button size="sm" onClick={() => setOpen({ topic: t })}>
-                    Edit
+                cell: (x) => (
+                  <Button size="sm" onClick={() => setOpen({ topic: x })}>
+                    {c('edit')}
                   </Button>
                 ),
               },

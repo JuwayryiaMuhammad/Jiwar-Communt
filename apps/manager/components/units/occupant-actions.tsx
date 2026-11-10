@@ -2,10 +2,13 @@
 
 import { unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Checkbox, ConfirmDialog, Dialog, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Checkbox, ConfirmDialog, Dialog, useCommonT, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
+import ar from '@/messages/ar/units-household';
+import en from '@/messages/en/units-household';
 
 type Occupant = Schema<'UnitOccupantView'>;
 
@@ -14,10 +17,12 @@ type Occupant = Schema<'UnitOccupantView'>;
  * (ADR 0012, 0020): a tenant who bought it, and an owner moving in or out.
  */
 export function OccupantActions({ unitId, occupant }: { unitId: string; occupant: Occupant }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [open, setOpen] = useState<'convert' | 'residence' | null>(null);
   const [resides, setResides] = useState(occupant.resides);
-  const name = occupant.account.fullName ?? 'This resident';
+  const name = occupant.account.fullName ?? t('thisResident');
   const at = { path: { id: occupant.occupancyId } };
   const refresh = [keys.unit(unitId), keys.unitsReview, keys.residents];
   const close = () => {
@@ -31,7 +36,7 @@ export function OccupantActions({ unitId, occupant }: { unitId: string; occupant
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show(`${name} now owns the unit.`);
+        toast.show(t('nowOwnsToast', { name }));
         close();
       },
     },
@@ -41,7 +46,7 @@ export function OccupantActions({ unitId, occupant }: { unitId: string; occupant
     {
       invalidate: refresh,
       onDone: (o) => {
-        toast.show(o.resides ? `${name} lives in the unit.` : `${name} is now a landlord: an owner who lives elsewhere.`);
+        toast.show(o.resides ? t('livesInToast', { name }) : t('landlordToast', { name }));
         close();
       },
     },
@@ -52,43 +57,39 @@ export function OccupantActions({ unitId, occupant }: { unitId: string; occupant
     <>
       {occupant.occupancyType === 'tenant' ? (
         <Button size="sm" onClick={() => setOpen('convert')}>
-          Now owns it
+          {t('nowOwns')}
         </Button>
       ) : (
         <Button size="sm" onClick={() => setOpen('residence')}>
-          {occupant.resides ? 'Moved out' : 'Moved in'}
+          {occupant.resides ? t('movedOut') : t('movedIn')}
         </Button>
       )}
       <Dialog
         open={open === 'convert'}
         onClose={close}
-        title={`${name} bought the unit?`}
-        description="Their tenant occupancy ends and an owner occupancy starts in its place, keeping the primary role if they had it. They are told, and the owner's decisions open to them."
+        title={t('convertTitle', { name })}
+        description={t('convertDescription')}
         onSubmit={() => convert.mutate()}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={convert.isPending}>
-              Make owner
+              {t('makeOwner')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Checkbox label="They live in the unit" checked={resides} onChange={(e) => setResides(e.target.checked)} />
+          <Checkbox label={t('livesThere')} checked={resides} onChange={(e) => setResides(e.target.checked)} />
           <ErrorAlert error={convert.error} />
         </div>
       </Dialog>
       <ConfirmDialog
         open={open === 'residence'}
         onClose={close}
-        title={occupant.resides ? `${name} moved out of the unit?` : `${name} moved into the unit?`}
-        description={
-          occupant.resides
-            ? 'They stay the owner, as a landlord: they no longer see the household that lives there. A primary resident must live in the unit, so name another primary first.'
-            : 'They become an owner who lives in the unit, and can be named its primary resident.'
-        }
-        confirmLabel={occupant.resides ? 'Record move out' : 'Record move in'}
+        title={occupant.resides ? t('moveOutTitle', { name }) : t('moveInTitle', { name })}
+        description={occupant.resides ? t('moveOutDescription') : t('moveInDescription')}
+        confirmLabel={occupant.resides ? t('recordMoveOut') : t('recordMoveIn')}
         pending={residence.isPending}
         error={<ErrorAlert error={residence.error} />}
         onConfirm={() => residence.mutate()}

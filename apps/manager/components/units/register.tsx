@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDate, humanize, unwrap } from '@jiwar/api';
+import { FieldErrorText, unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Alert,
   Button,
@@ -14,6 +15,8 @@ import {
   Input,
   Segmented,
   Select,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -22,11 +25,16 @@ import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Building, type UnitDetail, type UnitHistory, type UnitImport } from '@/lib/queries';
+import ar from '@/messages/ar/units-register';
+import en from '@/messages/en/units-register';
 
 const UNIT_TYPES = ['apartment', 'villa', 'townhouse', 'duplex', 'penthouse', 'studio', 'commercial', 'other'] as const;
 
 /** The compound's buildings (ADR 0072): added ahead of their units, deleted when empty, never renamed. */
 export function BuildingsCard() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const list = useQuery({ queryKey: keys.buildings, queryFn: () => fetchers.buildings() });
   const [name, setName] = useState('');
@@ -34,7 +42,7 @@ export function BuildingsCard() {
   const add = useAction(() => unwrap(api.POST('/api/v1/buildings', { body: { name: name.trim() } })), {
     invalidate: [keys.buildings],
     onDone: (b) => {
-      toast.show(`Building ${b.name} added.`);
+      toast.show(t('buildingAdded', { name: b.name }));
       setName('');
     },
   });
@@ -43,21 +51,21 @@ export function BuildingsCard() {
     {
       invalidate: [keys.buildings],
       onDone: () => {
-        toast.show('Building deleted.');
+        toast.show(t('buildingDeleted'));
         setRemoving(null);
       },
     },
   );
   return (
     <Card flush>
-      <CardHeader title="Buildings" />
+      <CardHeader title={t('buildings')} />
       <div className="form" style={{ padding: 16 }}>
         <div className="form__row">
-          <Field label="New building" hint="Never renamed: audiences and service areas keep the name." error={fieldError(add.error, 'name')}>
+          <Field label={t('newBuilding')} hint={t('newBuildingHint')} error={fieldError(add.error, 'name')}>
             {(p) => <Input {...p} value={name} maxLength={64} onChange={(e) => setName(e.target.value)} />}
           </Field>
           <Button variant="primary" loading={add.isPending} disabled={!name.trim()} onClick={() => add.mutate(undefined)}>
-            Add
+            {c('add')}
           </Button>
         </div>
         <ErrorAlert error={add.error} />
@@ -66,19 +74,19 @@ export function BuildingsCard() {
         <DataTable<Building>
           rows={list.data?.data ?? []}
           rowKey={(b) => b.id}
-          empty="No buildings yet"
-          emptyHint="A unit added with a building's name brings the building."
+          empty={t('noBuildings')}
+          emptyHint={t('noBuildingsHint')}
           columns={[
-            { key: 'name', header: 'Building', cell: (b) => b.name },
-            { key: 'units', header: 'Units', cell: (b) => <span className="t-num">{b.units}</span> },
-            { key: 'added', header: 'Added', cell: (b) => formatDate(b.createdAt) },
+            { key: 'name', header: c('building'), cell: (b) => b.name },
+            { key: 'units', header: t('col.units'), cell: (b) => <span className="t-num">{fmt.number(b.units)}</span> },
+            { key: 'added', header: t('col.added'), cell: (b) => fmt.date(b.createdAt) },
             {
               key: 'actions',
               header: '',
               cell: (b) =>
                 b.units === 0 ? (
                   <Button size="sm" variant="text" onClick={() => setRemoving(b)}>
-                    Delete
+                    {c('delete')}
                   </Button>
                 ) : null,
             },
@@ -91,9 +99,9 @@ export function BuildingsCard() {
           setRemoving(null);
           remove.reset();
         }}
-        title={`Delete ${removing?.name ?? 'the building'}?`}
-        description="Only a building no unit names can be deleted."
-        confirmLabel="Delete"
+        title={t('deleteTitle', { name: removing?.name ?? t('theBuilding') })}
+        description={t('deleteDescription')}
+        confirmLabel={c('delete')}
         danger
         pending={remove.isPending}
         error={<ErrorAlert error={remove.error} />}
@@ -105,6 +113,9 @@ export function BuildingsCard() {
 
 /** Edit a unit (ADR 0072): building, floor, type and area; never the code. */
 export function EditUnitDialog({ unit, onClose }: { unit: UnitDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const buildings = useQuery({ queryKey: keys.buildings, queryFn: () => fetchers.buildings() });
   const [form, setForm] = useState({
@@ -129,7 +140,7 @@ export function EditUnitDialog({ unit, onClose }: { unit: UnitDetail; onClose: (
     {
       invalidate: [keys.units, keys.buildings],
       onDone: () => {
-        toast.show(`Unit ${unit.code} saved.`);
+        toast.show(t('unitSaved', { code: unit.code }));
         onClose();
       },
     },
@@ -138,23 +149,23 @@ export function EditUnitDialog({ unit, onClose }: { unit: UnitDetail; onClose: (
     <Dialog
       open
       onClose={onClose}
-      title={`Edit unit ${unit.code}`}
-      description="The code stays as it is: QR codes, permits and certificates print it."
+      title={t('editTitle', { code: unit.code })}
+      description={t('editDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Building" error={fieldError(save.error, 'buildingId')}>
+        <Field label={c('building')} error={fieldError(save.error, 'buildingId')}>
           {(p) => (
             <Select {...p} value={form.buildingId} onChange={(e) => setForm({ ...form, buildingId: e.target.value })}>
-              <option value="">None</option>
+              <option value="">{t('noBuilding')}</option>
               {(buildings.data?.data ?? []).map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -164,20 +175,20 @@ export function EditUnitDialog({ unit, onClose }: { unit: UnitDetail; onClose: (
           )}
         </Field>
         <div className="form__row">
-          <Field label="Floor" error={fieldError(save.error, 'floor')}>
+          <Field label={c('floor')} error={fieldError(save.error, 'floor')}>
             {(p) => <Input {...p} type="number" inputMode="numeric" value={form.floor} onChange={(e) => setForm({ ...form, floor: e.target.value })} />}
           </Field>
-          <Field label="Area (m²)" error={fieldError(save.error, 'areaSqm')}>
+          <Field label={t('area')} error={fieldError(save.error, 'areaSqm')}>
             {(p) => <Input {...p} inputMode="decimal" value={form.areaSqm} onChange={(e) => setForm({ ...form, areaSqm: e.target.value })} />}
           </Field>
         </div>
-        <Field label="Type" error={fieldError(save.error, 'unitType')}>
+        <Field label={c('type')} error={fieldError(save.error, 'unitType')}>
           {(p) => (
             <Select {...p} value={form.unitType} onChange={(e) => setForm({ ...form, unitType: e.target.value })}>
-              <option value="">Not set</option>
-              {UNIT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {humanize(t)}
+              <option value="">{t('notSet')}</option>
+              {UNIT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {label(type)}
                 </option>
               ))}
             </Select>
@@ -191,29 +202,37 @@ export function EditUnitDialog({ unit, onClose }: { unit: UnitDetail; onClose: (
 
 /** Every place held in the unit, live or ended (ADR 0072). */
 export function UnitHistoryCard({ unitId }: { unitId: string }) {
-  const list = useCursorList(keys.unitHistory(unitId), (c) => fetchers.unitHistory(unitId, c));
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const list = useCursorList(keys.unitHistory(unitId), (cursor) => fetchers.unitHistory(unitId, cursor));
   return (
     <Card flush>
-      <CardHeader title="Occupancy history" />
+      <CardHeader title={t('history')} />
       <QueryState query={list}>
         <DataTable<UnitHistory>
           rows={list.rows}
           rowKey={(o) => o.occupancyId}
-          empty="Nobody has held a place here yet"
+          empty={t('historyEmpty')}
           columns={[
             {
               key: 'who',
-              header: 'Who',
+              header: t('col.who'),
               cell: (o) => (
                 <Link className="table__link" href={`/residents/${o.account.id}`}>
-                  {o.account.fullName ?? 'Erased account'}
+                  {o.account.fullName ?? t('erased')}
                 </Link>
               ),
             },
-            { key: 'as', header: 'As', cell: (o) => `${humanize(o.occupancyType)}${o.resides ? '' : ' (not living there)'}` },
-            { key: 'from', header: 'From', cell: (o) => formatDate(o.startedAt) },
-            { key: 'to', header: 'To', cell: (o) => (o.endedAt ? formatDate(o.endedAt) : 'Now') },
-            { key: 'why', header: 'Ended', cell: (o) => (o.endReason ? humanize(o.endReason) : '—') },
+            {
+              key: 'as',
+              header: t('col.as'),
+              cell: (o) => (o.resides ? label(o.occupancyType) : t('notLiving', { type: label(o.occupancyType) })),
+            },
+            { key: 'from', header: c('from'), cell: (o) => fmt.date(o.startedAt) },
+            { key: 'to', header: c('to'), cell: (o) => (o.endedAt ? fmt.date(o.endedAt) : t('now')) },
+            { key: 'why', header: t('col.ended'), cell: (o) => (o.endReason ? label(o.endReason) : '—') },
           ]}
         />
         <LoadMore query={list} />
@@ -224,27 +243,30 @@ export function UnitHistoryCard({ unitId }: { unitId: string }) {
 
 /** The unit's workers, as the manager reviews them (ADR 0072). */
 export function UnitWorkersCard({ unitId }: { unitId: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const list = useQuery({ queryKey: keys.unitWorkers(unitId), queryFn: () => fetchers.unitWorkers(unitId) });
   return (
     <Card flush>
-      <CardHeader title="Workers" />
+      <CardHeader title={t('workers')} />
       <QueryState query={list}>
         <DataTable
           rows={list.data?.data ?? []}
           rowKey={(e) => e.id}
-          empty="No workers registered"
+          empty={t('workersEmpty')}
           columns={[
             {
               key: 'worker',
-              header: 'Worker',
+              header: t('col.worker'),
               cell: (e) => (
                 <Link className="table__link" href="/workers">
                   {e.workerName}
                 </Link>
               ),
             },
-            { key: 'capacity', header: 'As', cell: (e) => humanize(e.capacity) },
-            { key: 'status', header: 'Status', cell: (e) => humanize(e.status) },
+            { key: 'capacity', header: t('col.as'), cell: (e) => label(e.capacity) },
+            { key: 'status', header: c('status'), cell: (e) => label(e.status) },
           ]}
         />
       </QueryState>
@@ -254,6 +276,9 @@ export function UnitWorkersCard({ unitId }: { unitId: string }) {
 
 /** A sheet of units or residents (ADR 0072): checked whole, then applied once. */
 export function UnitImportDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const [kind, setKind] = useState<'units' | 'residents'>('units');
   const [checked, setChecked] = useState<UnitImport | null>(null);
@@ -267,7 +292,8 @@ export function UnitImportDialog({ onClose }: { onClose: () => void }) {
       invalidate: [keys.units, keys.residents, keys.buildings, keys.unitImports],
       onDone: (done) => {
         setChecked(done);
-        if (done.status === 'applied') toast.show(`${done.appliedCount} ${kind} added.`);
+        if (done.status === 'applied')
+          toast.show(kind === 'units' ? t('unitsAdded', { n: done.appliedCount }) : t('residentsAdded', { n: done.appliedCount }));
       },
     },
   );
@@ -276,18 +302,14 @@ export function UnitImportDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="Import units or residents"
-      description={
-        kind === 'units'
-          ? 'A CSV with a header row: code, and optionally building (a name), floor, unit_type, area_sqm. Up to 2000 rows.'
-          : 'A CSV with a header row: full_name, phone, email, id_document_type, id_document_number, unit (a code), occupancy_type, and optionally nationality, birth_date, resides (true or false), preferred_locale. One row a person and unit; up to 300 rows. No one is emailed. The sheet is deleted once applied, found invalid, or a day old.'
-      }
+      title={t('importTitle')}
+      description={kind === 'units' ? t('importUnitsHelp') : t('importResidentsHelp')}
       footer={
         <>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{c('close')}</Button>
           {checked?.status === 'valid' ? (
             <Button variant="primary" loading={apply.isPending} onClick={() => apply.mutate(checked.id)}>
-              Apply {checked.rowCount} rows
+              {t('applyRows', { n: checked.rowCount })}
             </Button>
           ) : null}
         </>
@@ -295,7 +317,7 @@ export function UnitImportDialog({ onClose }: { onClose: () => void }) {
     >
       <div className="form">
         <Segmented
-          label="Sheet"
+          label={t('sheet')}
           value={kind}
           onChange={(v) => {
             setKind(v);
@@ -303,28 +325,26 @@ export function UnitImportDialog({ onClose }: { onClose: () => void }) {
             check.reset();
           }}
           options={[
-            { value: 'units', label: 'Units' },
-            { value: 'residents', label: 'Residents' },
+            { value: 'units', label: t('kind.units') },
+            { value: 'residents', label: t('kind.residents') },
           ]}
         />
-        <FileUpload purpose="data_import" label="Choose a sheet" disabled={check.isPending} onUploaded={(id) => check.mutateAsync(id).then(() => undefined)} />
+        <FileUpload purpose="data_import" label={t('chooseSheet')} disabled={check.isPending} onUploaded={(id) => check.mutateAsync(id).then(() => undefined)} />
         <ErrorAlert error={check.error} />
         <ErrorAlert error={apply.error} />
-        {checked?.status === 'applied' ? <Alert tone="info">Applied: {checked.appliedCount} added.</Alert> : null}
-        {checked?.status === 'valid' ? <Alert tone="info">The sheet is valid: {checked.rowCount} rows. Apply it within a day.</Alert> : null}
-        {checked?.status === 'expired' ? <Alert tone="warn">More than a day passed: upload the sheet again.</Alert> : null}
+        {checked?.status === 'applied' ? <Alert tone="info">{t('applied', { n: checked.appliedCount })}</Alert> : null}
+        {checked?.status === 'valid' ? <Alert tone="info">{t('valid', { n: checked.rowCount })}</Alert> : null}
+        {checked?.status === 'expired' ? <Alert tone="warn">{t('expired')}</Alert> : null}
         {checked?.status === 'invalid' ? (
           <>
-            <Alert tone="error">
-              {checked.errorCount} problem{checked.errorCount === 1 ? '' : 's'}; nothing was added. Fix the sheet and upload it again.
-            </Alert>
+            <Alert tone="error">{t('invalid', { n: checked.errorCount })}</Alert>
             <DataTable
               rows={checked.errors}
               rowKey={(e) => `${e.line}:${e.field}:${e.code}`}
               columns={[
-                { key: 'line', header: 'Line', width: 70, cell: (e) => <span className="t-num">{e.line}</span> },
-                { key: 'field', header: 'Column', cell: (e) => <span className="t-mono">{e.field}</span> },
-                { key: 'code', header: 'Problem', cell: (e) => e.code.replace(/_/g, ' ').toLowerCase() },
+                { key: 'line', header: t('col.line'), width: 70, cell: (e) => <span className="t-num">{fmt.number(e.line)}</span> },
+                { key: 'field', header: t('col.column'), cell: (e) => <span className="t-mono">{e.field}</span> },
+                { key: 'code', header: t('col.problem'), cell: (e) => <FieldErrorText code={e.code} /> },
               ]}
             />
           </>

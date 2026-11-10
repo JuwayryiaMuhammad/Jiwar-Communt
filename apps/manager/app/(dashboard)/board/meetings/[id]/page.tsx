@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDate, formatDateTime, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -16,14 +17,21 @@ import {
   ReasonCodeDialog,
   Select,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { codeText } from '@/components/governance/logic';
 import { api } from '@/lib/api';
-import { AGENDA_KIND_TEXT, boardWorkFetchers, boardWorkKeys, MEETING_KIND_TEXT, type MeetingAction } from '@/lib/board-work';
+import { boardWorkFetchers, boardWorkKeys, type MeetingAction } from '@/lib/board-work';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/gov-board-meetings';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-board-meetings';
+import codesEn from '@/messages/en/gov-codes';
 
 type Seat = { id: string; fullName: string | null; role: string; endedAt: string | null };
 
@@ -35,6 +43,11 @@ type Seat = { id: string; fullName: string | null; role: string; endedAt: string
  * follow up.
  */
 export default function BoardMeetingPage() {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const { ready, can } = usePermissions();
@@ -62,16 +75,16 @@ export default function BoardMeetingPage() {
 
   const hold = useAction(
     () => unwrap(api.POST('/api/v1/board/meetings/{id}/hold', { params: { path: { id } }, body: { presentMemberIds: present } })),
-    { invalidate: [key], onDone: () => (setHolding(false), toast.show('Recorded as held.')) },
+    { invalidate: [key], onDone: () => (setHolding(false), toast.show(t('heldToast'))) },
   );
   const cancel = useAction(
     (reasonCode: string) => unwrap(api.POST('/api/v1/board/meetings/{id}/cancel', { params: { path: { id } }, body: { reasonCode } })),
-    { invalidate: [key], onDone: () => (setCancelling(false), toast.show('Called off. The other sitting members are told.')) },
+    { invalidate: [key], onDone: () => (setCancelling(false), toast.show(t('calledOffToast'))) },
   );
   const minutes = useAction(
     () =>
       unwrap(api.POST('/api/v1/board/meetings/{id}/minutes', { params: { path: { id } }, body: { publicationId: minutesId.trim() } })),
-    { invalidate: [key], onDone: () => toast.show('Minutes linked.') },
+    { invalidate: [key], onDone: () => toast.show(t('minutesLinked')) },
   );
   const add = useAction(
     () =>
@@ -83,32 +96,36 @@ export default function BoardMeetingPage() {
       ),
     {
       invalidate: [key],
-      onDone: () => (setAction({ title: '', ownerAccountId: '', dueOn: '' }), toast.show('Added. Its owner is told.')),
+      onDone: () => (setAction({ title: '', ownerAccountId: '', dueOn: '' }), toast.show(t('actionAdded'))),
     },
   );
   const done = useAction(
     (a: MeetingAction) => unwrap(api.POST('/api/v1/board/meeting-actions/{id}/done', { params: { path: { id: a.id } }, body: {} })),
-    { invalidate: [key], onDone: () => toast.show('Marked done.') },
+    { invalidate: [key], onDone: () => toast.show(t('markedDone')) },
   );
   const dropAction = useAction(
     (reasonCode: string) =>
       unwrap(api.POST('/api/v1/board/meeting-actions/{id}/cancel', { params: { path: { id: closing!.id } }, body: { reasonCode } })),
-    { invalidate: [key], onDone: () => (setClosing(null), toast.show('Cancelled.')) },
+    { invalidate: [key], onDone: () => (setClosing(null), toast.show(t('actionCancelled'))) },
   );
 
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Board meeting" />
+        <PageHeader title={t('meeting')} />
         <ForbiddenState />
       </>
     );
   const m = q.data;
   const actionColumns = [
-    { key: 't', header: 'Action', cell: (a: MeetingAction) => a.title },
-    { key: 'o', header: 'Owner', cell: (a: MeetingAction) => a.ownerName ?? '—' },
-    { key: 'd', header: 'Due', cell: (a: MeetingAction) => `${formatDate(a.dueOn)}${a.overdue ? ' · late' : ''}` },
-    { key: 's', header: 'Status', cell: (a: MeetingAction) => <StatusBadge status={a.status} /> },
+    { key: 't', header: t('col.action'), cell: (a: MeetingAction) => a.title },
+    { key: 'o', header: t('col.owner'), cell: (a: MeetingAction) => a.ownerName ?? '—' },
+    {
+      key: 'd',
+      header: t('col.due'),
+      cell: (a: MeetingAction) => (a.overdue ? t('dueLate', { day: fmt.day(a.dueOn) }) : fmt.day(a.dueOn)),
+    },
+    { key: 's', header: c('status'), cell: (a: MeetingAction) => <StatusBadge status={a.status} /> },
     {
       key: 'x',
       header: '',
@@ -116,10 +133,10 @@ export default function BoardMeetingPage() {
         a.status === 'open' ? (
           <span className="toolbar">
             <Button size="sm" loading={done.isPending} onClick={() => done.mutate(a)}>
-              Done
+              {t('done')}
             </Button>
             <Button size="sm" variant="text" onClick={() => setClosing(a)}>
-              Cancel
+              {c('cancel')}
             </Button>
           </span>
         ) : null,
@@ -128,16 +145,20 @@ export default function BoardMeetingPage() {
   return (
     <>
       <PageHeader
-        title={m ? `${m.reference} · ${m.title}` : 'Board meeting'}
-        description={m ? `${MEETING_KIND_TEXT[m.kind] ?? m.kind} · ${formatDateTime(m.scheduledAt)}${m.location ? ` · ${m.location}` : ''}` : undefined}
+        title={m ? `${m.reference} · ${m.title}` : t('meeting')}
+        description={
+          m
+            ? [codeText(g, 'meetingKind', m.kind), fmt.dateTime(m.scheduledAt), ...(m.location ? [m.location] : [])].join(' · ')
+            : undefined
+        }
         actions={
           m?.status === 'scheduled' ? (
             <>
               <Button variant="primary" onClick={() => setHolding(true)}>
-                Record as held
+                {t('recordHeld')}
               </Button>
               <Button variant="text" onClick={() => setCancelling(true)}>
-                Call off
+                {t('callOff')}
               </Button>
             </>
           ) : undefined
@@ -147,78 +168,78 @@ export default function BoardMeetingPage() {
         {m ? (
           <>
             <Card>
-              <CardHeader title="Status" />
+              <CardHeader title={c('status')} />
               <p>
                 <StatusBadge status={m.status} />{' '}
-                {m.status === 'held' ? `${m.present} of ${m.seated} present · ${m.quorate ? 'quorate' : 'no quorum'}` : null}
-                {m.cancelReason ? ` · ${m.cancelReason}` : null}
+                {m.status === 'held' ? t(m.quorate ? 'held' : 'heldNoQuorum', { present: m.present, seated: m.seated }) : null}
+                {m.cancelReason ? ` · ${label(m.cancelReason)}` : null}
               </p>
             </Card>
             <Card flush>
-              <CardHeader title="Agenda" />
+              <CardHeader title={t('agenda')} />
               <DataTable
                 rows={m.agenda}
                 rowKey={(i) => String(i.position)}
-                empty="No agenda"
+                empty={t('noAgenda')}
                 columns={[
                   { key: 'p', header: '#', cell: (i) => i.position },
-                  { key: 'k', header: 'Kind', cell: (i) => AGENDA_KIND_TEXT[i.kind] ?? i.kind },
-                  { key: 't', header: 'Item', cell: (i) => i.reference ?? i.title ?? '—' },
-                  { key: 's', header: 'Now', cell: (i) => (i.subjectStatus ? <StatusBadge status={i.subjectStatus} /> : '—') },
+                  { key: 'k', header: t('kind'), cell: (i) => codeText(g, 'agendaKind', i.kind) },
+                  { key: 't', header: t('col.item'), cell: (i) => i.reference ?? i.title ?? '—' },
+                  { key: 's', header: t('col.now'), cell: (i) => (i.subjectStatus ? <StatusBadge status={i.subjectStatus} /> : '—') },
                 ]}
               />
             </Card>
             {m.status === 'held' ? (
               <>
                 <Card flush>
-                  <CardHeader title="Who was there" />
+                  <CardHeader title={t('whoWasThere')} />
                   <DataTable
                     rows={m.attendance}
                     rowKey={(a) => a.memberId}
                     columns={[
-                      { key: 'n', header: 'Member', cell: (a) => a.fullName ?? '—' },
-                      { key: 'r', header: 'Role', cell: (a) => a.role },
-                      { key: 'p', header: 'Present', cell: (a) => (a.present ? 'Yes' : 'No') },
+                      { key: 'n', header: t('col.member'), cell: (a) => a.fullName ?? '—' },
+                      { key: 'r', header: t('col.role'), cell: (a) => codeText(g, 'role', a.role) },
+                      { key: 'p', header: t('col.present'), cell: (a) => (a.present ? c('yes') : c('no')) },
                     ]}
                   />
                 </Card>
                 <Card>
-                  <CardHeader title="Minutes" />
+                  <CardHeader title={t('minutes')} />
                   {m.minutesPublicationId ? (
-                    <p>Linked: the board publication {m.minutesPublicationId}.</p>
+                    <p>{t('minutesLinkedTo', { id: m.minutesPublicationId })}</p>
                   ) : (
                     <div className="stack">
-                      <p className="t-secondary">Publish the minutes as a board publication of kind “minutes”, then link it here.</p>
-                      <Field label="Publication id" error={fieldError(minutes.error, 'publicationId')}>
+                      <p className="t-secondary">{t('minutesHint')}</p>
+                      <Field label={t('publicationId')} error={fieldError(minutes.error, 'publicationId')}>
                         {(p) => <Input {...p} value={minutesId} onChange={(e) => setMinutesId(e.target.value)} />}
                       </Field>
                       <ErrorAlert error={minutes.error} />
                       <Button loading={minutes.isPending} disabled={!minutesId.trim()} onClick={() => minutes.mutate(undefined)}>
-                        Link the minutes
+                        {t('linkMinutes')}
                       </Button>
                     </div>
                   )}
                 </Card>
                 <Card flush>
-                  <CardHeader title="Action items" />
-                  <DataTable<MeetingAction> rows={m.actions} rowKey={(a) => a.id} empty="None yet" columns={actionColumns} />
+                  <CardHeader title={t('actions')} />
+                  <DataTable<MeetingAction> rows={m.actions} rowKey={(a) => a.id} empty={t('noneYet')} columns={actionColumns} />
                   <div className="stack">
-                    <Field label="Action" error={fieldError(add.error, 'title')}>
+                    <Field label={t('col.action')} error={fieldError(add.error, 'title')}>
                       {(p) => <Input {...p} maxLength={300} value={action.title} onChange={(e) => setAction({ ...action, title: e.target.value })} />}
                     </Field>
-                    <Field label="Owner" hint="One of the meeting’s seats" error={fieldError(add.error, 'ownerAccountId')}>
+                    <Field label={t('col.owner')} hint={t('ownerHint')} error={fieldError(add.error, 'ownerAccountId')}>
                       {(p) => (
                         <Select {...p} value={action.ownerAccountId} onChange={(e) => setAction({ ...action, ownerAccountId: e.target.value })}>
-                          <option value="">Choose…</option>
+                          <option value="">{t('choose')}</option>
                           {m.attendance.map((a) => (
                             <option key={a.memberId} value={a.accountId}>
-                              {a.fullName ?? a.role}
+                              {a.fullName ?? codeText(g, 'role', a.role)}
                             </option>
                           ))}
                         </Select>
                       )}
                     </Field>
-                    <Field label="Due" error={fieldError(add.error, 'dueOn')}>
+                    <Field label={t('col.due')} error={fieldError(add.error, 'dueOn')}>
                       {(p) => <Input {...p} type="date" value={action.dueOn} onChange={(e) => setAction({ ...action, dueOn: e.target.value })} />}
                     </Field>
                     <ErrorAlert error={add.error} />
@@ -227,15 +248,15 @@ export default function BoardMeetingPage() {
                       disabled={!action.title.trim() || !action.ownerAccountId || !action.dueOn}
                       onClick={() => add.mutate(undefined)}
                     >
-                      Add the action
+                      {t('addAction')}
                     </Button>
                   </div>
                 </Card>
               </>
             ) : null}
             <Card flush>
-              <CardHeader title="To follow up from earlier meetings" />
-              <DataTable<MeetingAction> rows={m.followUp} rowKey={(a) => a.id} empty="Nothing open" columns={actionColumns} />
+              <CardHeader title={t('followUp')} />
+              <DataTable<MeetingAction> rows={m.followUp} rowKey={(a) => a.id} empty={t('nothingOpen')} columns={actionColumns} />
             </Card>
           </>
         ) : null}
@@ -243,18 +264,18 @@ export default function BoardMeetingPage() {
       <Dialog
         open={holding}
         onClose={() => setHolding(false)}
-        title="Record the meeting as held"
+        title={t('holdTitle')}
         footer={
           <Button variant="primary" loading={hold.isPending} onClick={() => hold.mutate(undefined)}>
-            Record
+            {t('record')}
           </Button>
         }
       >
-        <p className="t-secondary">Who of the seats sitting now was present. More than half makes the quorum.</p>
+        <p className="t-secondary">{t('holdHint')}</p>
         {(seats.data ?? []).map((s) => (
           <Checkbox
             key={s.id}
-            label={`${s.fullName ?? '—'} (${s.role})`}
+            label={t('seat', { name: s.fullName ?? '—', role: codeText(g, 'role', s.role) })}
             checked={present.includes(s.id)}
             onChange={(e) => setPresent((p) => (e.target.checked ? [...p, s.id] : p.filter((x) => x !== s.id)))}
           />
@@ -264,9 +285,9 @@ export default function BoardMeetingPage() {
       <ReasonCodeDialog
         open={cancelling}
         onClose={() => setCancelling(false)}
-        title="Call the meeting off"
+        title={t('callOffTitle')}
         codes={REASON_CODES.boardMeetingCancel}
-        confirmLabel="Call off"
+        confirmLabel={t('callOff')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
@@ -275,9 +296,9 @@ export default function BoardMeetingPage() {
       <ReasonCodeDialog
         open={closing !== null}
         onClose={() => setClosing(null)}
-        title="Cancel the action item"
+        title={t('cancelActionTitle')}
         codes={REASON_CODES.boardActionCancel}
-        confirmLabel="Cancel it"
+        confirmLabel={t('cancelIt')}
         danger
         pending={dropAction.isPending}
         error={<ErrorAlert error={dropAction.error} />}

@@ -1,20 +1,22 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Button, Card, ForbiddenState, PageHeader, StatusBadge, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { Back } from '@/components/community/bits';
 import { Motions } from '@/components/governance/board-ui';
-import {
-  matterOutcomeText,
-  REPRESENTATIVE_ACTION_TEXT,
-  REPRESENTATIVE_MATTER_STATUS_TEXT,
-} from '@/components/governance/matters';
+import { codeText } from '@/components/governance/logic';
+import { matterOutcomeText } from '@/components/governance/matters';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/gov-representatives';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-representatives';
+import codesEn from '@/messages/en/gov-codes';
 
 /**
  * A matter about a building's representative (ADR 0059) as the board
@@ -23,6 +25,9 @@ import { fetchers, keys } from '@/lib/queries';
  */
 export default function BoardRepresentativeMatterPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const f = useFormat();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('governance.board');
@@ -33,27 +38,28 @@ export default function BoardRepresentativeMatterPage() {
   });
   const withdraw = useAction(
     () => unwrap(api.POST('/api/v1/board/representatives/matters/{id}/withdraw', { params: { path: { id } } })),
-    { invalidate: [keys.governanceAll], onDone: () => toast.show('Withdrawn. Its open motion closed with it.') },
+    { invalidate: [keys.governanceAll], onDone: () => toast.show(t('withdrawn')) },
   );
-  const back = <Back href="/board/representatives" label="Representatives" />;
+  const back = <Back href="/board/representatives" label={t('title')} />;
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={back} title="Matter" />
+        <PageHeader back={back} title={t('matterTitle')} />
         <ForbiddenState />
       </>
     );
   const m = q.data;
   const pending = m?.status === 'pending';
+  const name = m?.fullName ?? t('erased');
   return (
     <>
       <PageHeader
         back={back}
-        title={m ? `${REPRESENTATIVE_ACTION_TEXT[m.action]} · building ${m.building}` : 'Matter'}
+        title={m ? t('matterHeading', { action: codeText(g, 'repAction', m.action), building: m.building }) : t('matterTitle')}
         actions={
           m && pending && m.raisedByMe ? (
             <Button loading={withdraw.isPending} onClick={() => withdraw.mutate(undefined)}>
-              Withdraw
+              {t('withdraw')}
             </Button>
           ) : null
         }
@@ -64,36 +70,36 @@ export default function BoardRepresentativeMatterPage() {
             <ErrorAlert error={withdraw.error} />
             <Card>
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{t('status')}</dt>
                 <dd>
-                  <StatusBadge status={m.status} /> {REPRESENTATIVE_MATTER_STATUS_TEXT[m.status]}
+                  <StatusBadge status={m.status} /> {codeText(g, 'repStatus', m.status)}
                 </dd>
-                <dt>{m.action === 'appoint' ? 'Owner named' : 'Representative'}</dt>
+                <dt>{m.action === 'appoint' ? t('ownerNamed') : t('representative')}</dt>
                 <dd>
-                  {m.fullName ?? 'An erased account'}
-                  {m.unitCode ? ` · unit ${m.unitCode}` : m.action === 'appoint' ? ' · owns no unit in the building now' : ''}
+                  {m.unitCode
+                    ? t('ownerWithUnit', { name, unit: m.unitCode })
+                    : m.action === 'appoint'
+                      ? t('ownerNoUnit', { name })
+                      : name}
                 </dd>
-                <dt>Raised</dt>
-                <dd>
-                  {formatDateTime(m.raisedAt)}
-                  {m.raisedByMe ? ' · by you' : ''}
-                </dd>
-                <dt>Board’s deadline</dt>
-                <dd>{formatDateTime(m.deadlineAt)}</dd>
+                <dt>{t('raised')}</dt>
+                <dd>{m.raisedByMe ? t('raisedByYou', { when: f.dateTime(m.raisedAt) }) : f.dateTime(m.raisedAt)}</dd>
+                <dt>{t('deadline')}</dt>
+                <dd>{f.dateTime(m.deadlineAt)}</dd>
                 {m.decision ? (
                   <>
-                    <dt>Decided</dt>
+                    <dt>{t('decided')}</dt>
                     <dd>
-                      {formatDateTime(m.decision.decidedAt)} · {matterOutcomeText(m.decision)}
+                      {f.dateTime(m.decision.decidedAt)} · {matterOutcomeText(g, m.decision)}
                     </dd>
-                    <dt>Rationale</dt>
+                    <dt>{t('rationale')}</dt>
                     <dd style={{ whiteSpace: 'pre-wrap' }}>{m.decision.rationale}</dd>
                   </>
                 ) : null}
                 {m.withdrawnAt ? (
                   <>
-                    <dt>Withdrawn</dt>
-                    <dd>{formatDateTime(m.withdrawnAt)}</dd>
+                    <dt>{t('withdrawnOn')}</dt>
+                    <dd>{f.dateTime(m.withdrawnAt)}</dd>
                   </>
                 ) : null}
               </dl>

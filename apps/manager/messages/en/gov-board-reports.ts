@@ -1,0 +1,33 @@
+/** The board's reports and handovers (ADR 0075): app/(dashboard)/board/reports and board/handover. */
+export default {
+  // Reports.
+  reportsTitle: 'Board reports',
+  reportsDescription: 'The board’s figures for each month, beside the money and the security overview.',
+  drawn: 'Drawn: {month}, version {version}.',
+  drawTitle: 'Draw a month',
+  month: 'Month',
+  monthHint: 'Up to the current one',
+  draw: 'Draw',
+  noReport: 'No report yet',
+  'col.version': 'Version',
+  'col.written': 'Written',
+  versionMonthly: '{version} · monthly',
+  // Handovers.
+  handoverTitle: 'Handovers',
+  handoverDescription: 'What the board before left open when this board started to sit, and the managers’ handovers.',
+  pdfFailed: 'The PDF could not be downloaded.',
+  packPdf: 'Pack as PDF',
+  packTitle: 'The board’s handover pack',
+  noPack: 'No pack for this board: it started to sit before packs were written, or none sits.',
+  packWritten: 'Written {when} · objections unanswered: {objections} · open proposals: {proposals}',
+  'pack.pending': '{reference} · {type} · awaiting the board',
+  'pack.toImplement': '{reference} · {type} · approved, to implement',
+  'pack.appeal': '{reference} · {kind} · appeal awaiting the board',
+  'pack.action': '{meeting} · {title} · due {day}',
+  'pack.contract': '{code} · {kind} · contract ends {day}',
+  nothingOpen: 'Nothing was left open.',
+  managersTitle: 'Managers’ handovers',
+  noneDelivered: 'None delivered',
+  'col.manager': 'Manager',
+  'col.delivered': 'Delivered',
+} as const;

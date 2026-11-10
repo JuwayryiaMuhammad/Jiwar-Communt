@@ -1,8 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge, useLabel } from '@jiwar/ui';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,8 +12,13 @@ import { TwoLanguages } from '@/components/community/bits';
 import { audienceText } from '@/components/community/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Announcement, type AnnouncementFilters, type AnnouncementKind } from '@/lib/queries';
+import communityAr from '@/messages/ar/community';
+import ar from '@/messages/ar/community-announcements';
+import communityEn from '@/messages/en/community';
+import en from '@/messages/en/community-announcements';
 
 const STATUSES: Announcement['status'][] = ['draft', 'scheduled', 'published', 'expired', 'ended', 'archived'];
+const VIEWS = ['all', 'general', 'works'] as const;
 type KindView = 'all' | AnnouncementKind;
 
 /**
@@ -21,6 +26,10 @@ type KindView = 'all' | AnnouncementKind;
  * drafts, scheduled, out and archived, the newest first.
  */
 export default function AnnouncementsPage() {
+  const t = useT(en, ar);
+  const tc = useT(communityEn, communityAr);
+  const fmt = useFormat();
+  const label = useLabel();
   const router = useRouter();
   const { can, ready } = usePermissions();
   const [view, setView] = useState<KindView>('all');
@@ -34,28 +43,21 @@ export default function AnnouncementsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Announcements"
-        description="What the management tells residents, and works and closures. Each is read by whoever is in its audience on the day they open it."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<KindView>
-          label="Kind shown"
+          label={t('kindShown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'all', label: 'All' },
-            { value: 'general', label: 'Announcements' },
-            { value: 'works', label: 'Works and closures' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
-        <Field label="Status">
+        <Field label={t('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as Announcement['status'] | '')}>
-              <option value="">Any status</option>
+              <option value="">{t('anyStatus')}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
@@ -63,10 +65,10 @@ export default function AnnouncementsPage() {
         </Field>
         <span className="spacer" />
         <Button icon={<Plus aria-hidden />} onClick={() => setCreating('works')}>
-          New works or closure
+          {t('newWorks')}
         </Button>
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating('general')}>
-          New announcement
+          {t('newAnnouncement')}
         </Button>
       </div>
       <Card flush>
@@ -74,36 +76,36 @@ export default function AnnouncementsPage() {
           <DataTable<Announcement>
             rows={list.rows}
             rowKey={(a) => a.id}
-            empty="No announcement here"
-            emptyHint="A new one is saved as a draft; nobody sees it until it is published."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
               {
                 key: 'title',
-                header: 'Announcement',
+                header: t('col.announcement'),
                 cell: (a) => (
                   <span className="stack stack--sm">
                     <Link className="table__link" href={`/announcements/${a.id}`}>
                       <TwoLanguages en={a.titleEn} ar={a.titleAr} strong />
                     </Link>
                     <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-                      {a.kind === 'works' ? <Badge plain>Works and closures</Badge> : null}
-                      {a.priority === 'important' ? <Badge tone="terracotta">Important</Badge> : null}
-                      {a.pinned ? <Badge tone="green">Pinned</Badge> : null}
-                      {a.editedAt ? <Badge plain>Edited</Badge> : null}
+                      {a.kind === 'works' ? <Badge plain>{t('works')}</Badge> : null}
+                      {a.priority === 'important' ? <Badge tone="terracotta">{t('important')}</Badge> : null}
+                      {a.pinned ? <Badge tone="green">{t('pinned')}</Badge> : null}
+                      {a.editedAt ? <Badge plain>{t('edited')}</Badge> : null}
                     </span>
                   </span>
                 ),
               },
-              { key: 'status', header: 'Status', cell: (a) => <StatusBadge status={a.status} /> },
-              { key: 'audience', header: 'Audience', cell: (a) => audienceText(a.audience) },
+              { key: 'status', header: t('col.status'), cell: (a) => <StatusBadge status={a.status} /> },
+              { key: 'audience', header: t('col.audience'), cell: (a) => audienceText(a.audience, tc, fmt) },
               {
                 key: 'when',
-                header: 'Published',
+                header: t('col.published'),
                 cell: (a) =>
                   a.publishAt ? (
-                    <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(a.publishAt)}</span>
+                    <span style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(a.publishAt)}</span>
                   ) : (
-                    <span className="t-secondary">Not yet</span>
+                    <span className="t-secondary">{t('notYet')}</span>
                   ),
               },
             ]}

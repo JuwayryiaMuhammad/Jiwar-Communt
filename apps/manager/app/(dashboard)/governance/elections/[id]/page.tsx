@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -15,34 +16,43 @@ import {
   ReasonCodeDialog,
   Select,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Back } from '@/components/community/bits';
-import {
-  inEither,
-  OUTCOME_TEXT,
-  PHASE_TEXT,
-  seatsLeft,
-  tieChoiceComplete,
-  turnoutText,
-} from '@/components/governance/logic';
+import { codeText, inLocale, seatsLeft, tieChoiceComplete, turnoutText } from '@/components/governance/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StaffGovernanceElection } from '@/lib/queries';
+import ar from '@/messages/ar/gov-elections';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-elections';
+import codesEn from '@/messages/en/gov-codes';
 
 type Candidate = StaffGovernanceElection['candidates'][number];
 
 function Certify({ election, onClose }: { election: StaffGovernanceElection; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
-  const tied = election.candidates.filter((c) => c.outcome === 'tied');
+  const tied = election.candidates.filter((x) => x.outcome === 'tied');
   const remaining = seatsLeft(election.seats, election.candidates);
   const [chosen, setChosen] = useState<string[]>([]);
   const [reason, setReason] = useState('');
-  const complete = !tied.length || (tieChoiceComplete(chosen, tied.map((t) => t.id), remaining) && reason !== '');
+  const complete =
+    !tied.length ||
+    (tieChoiceComplete(
+      chosen,
+      tied.map((x) => x.id),
+      remaining,
+    ) &&
+      reason !== '');
   const certify = useAction(
     () =>
       unwrap(
@@ -54,7 +64,7 @@ function Certify({ election, onClose }: { election: StaffGovernanceElection; onC
     {
       invalidate: [keys.governanceAll],
       onDone: () => {
-        toast.show('Certified. The elected board sits; its members and the owners were told.');
+        toast.show(t('certified'));
         onClose();
       },
     },
@@ -63,14 +73,14 @@ function Certify({ election, onClose }: { election: StaffGovernanceElection; onC
     <Dialog
       open
       onClose={onClose}
-      title={`Certify ${election.reference}?`}
-      description="The board before it ends now; the elected one sits for the election’s term. Record the offices on the Board page afterwards."
+      title={t('certifyTitle', { reference: election.reference })}
+      description={t('certifyDescription')}
       onSubmit={() => certify.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={certify.isPending} disabled={!complete}>
-            Certify
+            {t('certify')}
           </Button>
         </>
       }
@@ -78,24 +88,22 @@ function Certify({ election, onClose }: { election: StaffGovernanceElection; onC
       <div className="form">
         {tied.length ? (
           <>
-            <p>
-              A tie across the last seat: the board chooses {remaining} of the tied candidates.
-            </p>
-            {tied.map((t) => (
+            <p>{t('tie', { remaining })}</p>
+            {tied.map((x) => (
               <Checkbox
-                key={t.id}
-                label={`${t.fullName ?? '—'} (${t.votes ?? 0} votes)`}
-                checked={chosen.includes(t.id)}
-                onChange={(e) => setChosen(e.target.checked ? [...chosen, t.id] : chosen.filter((c) => c !== t.id))}
+                key={x.id}
+                label={t('tiedCandidate', { name: x.fullName ?? '—', votes: x.votes ?? 0 })}
+                checked={chosen.includes(x.id)}
+                onChange={(e) => setChosen(e.target.checked ? [...chosen, x.id] : chosen.filter((y) => y !== x.id))}
               />
             ))}
-            <Field label="How the board chose">
+            <Field label={t('howChose')}>
               {(p) => (
                 <Select {...p} value={reason} onChange={(e) => setReason(e.target.value)}>
-                  <option value="">Choose…</option>
-                  {REASON_CODES.governanceTieBreak.map((c) => (
-                    <option key={c} value={c}>
-                      {humanize(c)}
+                  <option value="">{t('choose')}</option>
+                  {REASON_CODES.governanceTieBreak.map((code) => (
+                    <option key={code} value={code}>
+                      {label(code)}
                     </option>
                   ))}
                 </Select>
@@ -112,6 +120,12 @@ function Certify({ election, onClose }: { election: StaffGovernanceElection; onC
 /** One election of the board (ADR 0051): its candidates, count and certification. */
 export default function GovernanceElectionPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('governance.manage');
@@ -129,7 +143,7 @@ export default function GovernanceElectionPage() {
     {
       invalidate: [keys.governanceAll],
       onDone: () => {
-        toast.show('Cancelled. The board was told.');
+        toast.show(t('cancelled'));
         setCancelling(false);
       },
     },
@@ -145,38 +159,40 @@ export default function GovernanceElectionPage() {
     {
       invalidate: [keys.governanceAll],
       onDone: () => {
-        toast.show('Taken off the list.');
+        toast.show(t('disqualified'));
         setDisqualifying(null);
       },
     },
   );
+  const back = <Back href="/governance/elections" label={t('title')} />;
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={<Back href="/governance/elections" label="Elections" />} title="Election" />
+        <PageHeader back={back} title={t('electionTitle')} />
         <ForbiddenState />
       </>
     );
   const e = election.data;
   const live = e && !['certified', 'cancelled'].includes(e.phase);
   const beforeVoting = e && (e.phase === 'nominating' || e.phase === 'nominations_closed');
+  const period = (from: string, to: string) => `${f.dateTime(from)} – ${f.dateTime(to)}`;
   return (
     <>
       <PageHeader
-        back={<Back href="/governance/elections" label="Elections" />}
-        title={e ? `${e.reference} · ${inEither(e.titleEn, e.titleAr)}` : 'Election'}
-        description={e ? `${e.seats} seats · a term of ${e.termMonths} months` : undefined}
+        back={back}
+        title={e ? `${e.reference} · ${inLocale(locale, e.titleEn, e.titleAr)}` : t('electionTitle')}
+        description={e ? t('summary', { seats: e.seats, months: e.termMonths }) : undefined}
         actions={
           e ? (
             <>
               {live ? (
                 <Button variant="danger" onClick={() => setCancelling(true)}>
-                  Cancel
+                  {t('cancel')}
                 </Button>
               ) : null}
-              {e.phase === 'closed' && e.electorate !== null && e.candidates.some((c) => c.outcome) ? (
+              {e.phase === 'closed' && e.electorate !== null && e.candidates.some((x) => x.outcome) ? (
                 <Button variant="primary" onClick={() => setCertifying(true)}>
-                  Certify
+                  {t('certify')}
                 </Button>
               ) : null}
             </>
@@ -188,64 +204,59 @@ export default function GovernanceElectionPage() {
           <div className="stack">
             <Card>
               <dl className="dl">
-                <dt>Phase</dt>
+                <dt>{t('phase')}</dt>
                 <dd>
-                  <StatusBadge status={e.phase} /> {PHASE_TEXT[e.phase]}
-                  {e.cancelReasonCode ? ` · ${humanize(e.cancelReasonCode)}` : ''}
+                  <StatusBadge status={e.phase} /> {codeText(g, 'phase', e.phase)}
+                  {e.cancelReasonCode ? ` · ${label(e.cancelReasonCode)}` : ''}
                 </dd>
-                <dt>Nominations</dt>
-                <dd>
-                  {formatDateTime(e.nominationsOpenAt)} – {formatDateTime(e.nominationsCloseAt)}
-                </dd>
-                <dt>Voting</dt>
-                <dd>
-                  {formatDateTime(e.votingOpensAt)} – {formatDateTime(e.votingClosesAt)}
-                </dd>
-                <dt>Turnout</dt>
-                <dd>{turnoutText(e.turnout, e.electorate)}</dd>
+                <dt>{t('nominations')}</dt>
+                <dd>{period(e.nominationsOpenAt, e.nominationsCloseAt)}</dd>
+                <dt>{t('voting')}</dt>
+                <dd>{period(e.votingOpensAt, e.votingClosesAt)}</dd>
+                <dt>{t('turnout')}</dt>
+                <dd>{turnoutText(g, e.turnout, e.electorate)}</dd>
                 {e.certifiedAt ? (
                   <>
-                    <dt>Certified</dt>
+                    <dt>{t('certifiedOn')}</dt>
                     <dd>
-                      {formatDateTime(e.certifiedAt)}
-                      {e.tieReasonCode ? ` · the tie resolved by ${humanize(e.tieReasonCode)}` : ''}
+                      {e.tieReasonCode
+                        ? t('certifiedLine', { when: f.dateTime(e.certifiedAt), reason: label(e.tieReasonCode) })
+                        : f.dateTime(e.certifiedAt)}
                     </dd>
                   </>
                 ) : null}
               </dl>
             </Card>
             <Card flush>
-              <CardHeader title="Candidates">
-                {e.phase === 'voting' ? (
-                  <span className="t-secondary">Counts show once voting closes: nobody sees one before.</span>
-                ) : null}
+              <CardHeader title={t('candidates')}>
+                {e.phase === 'voting' ? <span className="t-secondary">{t('countsHidden')}</span> : null}
               </CardHeader>
               <DataTable<Candidate>
                 rows={e.candidates}
-                rowKey={(c) => c.id}
-                empty="Nobody stands yet"
+                rowKey={(x) => x.id}
+                empty={t('nobody')}
                 columns={[
-                  { key: 'n', header: 'Candidate', cell: (c) => c.fullName ?? <span className="t-secondary">Erased</span> },
-                  { key: 'w', header: 'Statement', cell: (c) => c.statement ?? '—' },
+                  { key: 'n', header: t('col.candidate'), cell: (x) => x.fullName ?? <span className="t-secondary">{t('erased')}</span> },
+                  { key: 'w', header: t('col.statement'), cell: (x) => x.statement ?? '—' },
                   {
                     key: 's',
-                    header: 'Status',
-                    cell: (c) => (
+                    header: c('status'),
+                    cell: (x) => (
                       <>
-                        <StatusBadge status={c.status} />
-                        {c.reasonCode ? ` ${humanize(c.reasonCode)}` : ''}
+                        <StatusBadge status={x.status} />
+                        {x.reasonCode ? ` ${label(x.reasonCode)}` : ''}
                       </>
                     ),
                   },
-                  { key: 'v', header: 'Votes', cell: (c) => (c.votes === null ? '—' : c.votes) },
-                  { key: 'o', header: 'Outcome', cell: (c) => (c.outcome ? OUTCOME_TEXT[c.outcome] : '—') },
+                  { key: 'v', header: t('col.votes'), cell: (x) => (x.votes === null ? '—' : f.number(x.votes)) },
+                  { key: 'o', header: t('col.outcome'), cell: (x) => (x.outcome ? codeText(g, 'outcome', x.outcome) : '—') },
                   {
                     key: 'a',
                     header: '',
-                    cell: (c) =>
-                      beforeVoting && c.status === 'nominated' ? (
-                        <Button variant="text" onClick={() => setDisqualifying(c)}>
-                          Disqualify
+                    cell: (x) =>
+                      beforeVoting && x.status === 'nominated' ? (
+                        <Button variant="text" onClick={() => setDisqualifying(x)}>
+                          {t('disqualify')}
                         </Button>
                       ) : null,
                   },
@@ -259,9 +270,9 @@ export default function GovernanceElectionPage() {
       <ReasonCodeDialog
         open={cancelling}
         onClose={() => setCancelling(false)}
-        title="Cancel the election?"
+        title={t('cancelTitle')}
         codes={REASON_CODES.governanceElectionCancel}
-        confirmLabel="Cancel the election"
+        confirmLabel={t('cancelConfirm')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
@@ -270,10 +281,10 @@ export default function GovernanceElectionPage() {
       <ReasonCodeDialog
         open={disqualifying !== null}
         onClose={() => setDisqualifying(null)}
-        title={`Take ${disqualifying?.fullName ?? 'this candidate'} off the list?`}
-        description="Until voting opens; the list is fixed from then on."
+        title={disqualifying?.fullName ? t('disqualifyNamed', { name: disqualifying.fullName }) : t('disqualifyThis')}
+        description={t('disqualifyDescription')}
         codes={REASON_CODES.governanceCandidateDisqualify}
-        confirmLabel="Disqualify"
+        confirmLabel={t('disqualify')}
         danger
         pending={disqualify.isPending}
         error={<ErrorAlert error={disqualify.error} />}

@@ -1,17 +1,18 @@
 'use client';
 
-import { ApiError, formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { ApiError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Button, Checkbox, Dialog, Field, Input, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Button, Checkbox, Dialog, Field, Input, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Erasure } from '@/lib/queries';
-import { BLOCKER_TEXT, fieldLabel } from './labels';
-
-const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+import ar from '@/messages/ar/shell-accounts';
+import en from '@/messages/en/shell-accounts';
+import { blockerText, fieldText } from './labels';
 
 /**
  * Erasing an account, in the API's three steps (ADR 0023): read what goes
@@ -20,6 +21,10 @@ const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : 
  * only the audit trail's ids remain.
  */
 export function EraseDialog({ erasure, name, onClose }: { erasure: Erasure; name: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { can } = usePermissions();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -44,7 +49,7 @@ export function EraseDialog({ erasure, name, onClose }: { erasure: Erasure; name
     {
       invalidate: [keys.erasures, keys.account(erasure.accountId), keys.accounts, keys.residents],
       onDone: () => {
-        toast.show(`${name}'s account is erased.`);
+        toast.show(t('erase.done', { name }));
         onClose();
       },
     },
@@ -59,14 +64,8 @@ export function EraseDialog({ erasure, name, onClose }: { erasure: Erasure; name
       open
       wide
       onClose={onClose}
-      title={`Erase ${name}'s account · step ${step} of 3`}
-      description={
-        step === 1
-          ? 'What will be removed, and what is kept.'
-          : step === 2
-            ? 'Is there a legal obligation to keep this data?'
-            : 'This cannot be undone.'
-      }
+      title={t('erase.title', { name, step: f.number(step) })}
+      description={step === 1 ? t('erase.step1') : step === 2 ? t('erase.step2') : t('erase.step3')}
       onSubmit={() => {
         if (step === 1 && s) setStep(2);
         else if (step === 2 && checked && !held) setStep(3);
@@ -74,18 +73,18 @@ export function EraseDialog({ erasure, name, onClose }: { erasure: Erasure; name
       }}
       footer={
         <>
-          <Button onClick={step === 1 ? onClose : () => setStep((step - 1) as 1 | 2)}>{step === 1 ? 'Cancel' : 'Back'}</Button>
+          <Button onClick={step === 1 ? onClose : () => setStep((step - 1) as 1 | 2)}>{step === 1 ? c('cancel') : c('back')}</Button>
           {step === 1 ? (
             <Button type="submit" variant="primary" disabled={!s}>
-              Continue
+              {t('erase.continue')}
             </Button>
           ) : step === 2 ? (
             <Button type="submit" variant="primary" disabled={!checked || held}>
-              Continue
+              {t('erase.continue')}
             </Button>
           ) : (
             <Button type="submit" variant="danger" loading={erase.isPending} disabled={!s || typed.trim() !== s.scopePhrase}>
-              Erase for good
+              {t('erase.confirm')}
             </Button>
           )}
         </>
@@ -96,34 +95,32 @@ export function EraseDialog({ erasure, name, onClose }: { erasure: Erasure; name
           {s ? (
             <div className="stack">
               <div className="stack stack--sm">
-                <strong>Removed for good</strong>
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
-                  <li>Personal data: {s.erased.personalFields.map(fieldLabel).join(', ').toLowerCase()}</li>
+                <strong>{t('erase.removed')}</strong>
+                <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                  <li>{t('erase.personal', { fields: f.list(s.erased.personalFields.map((field) => fieldText(t, field))) })}</li>
                   <li>
-                    Sign-in: they can never sign in again
-                    {s.erased.sessions ? `; ${count(s.erased.sessions, 'session', 'sessions')} ended now` : ''}
+                    {s.erased.sessions ? t('erase.signInSessions', { n: s.erased.sessions }) : t('erase.signIn')}
                   </li>
-                  {s.erased.activeOccupancies ? <li>{count(s.erased.activeOccupancies, 'occupancy', 'occupancies')} of a unit ended</li> : null}
-                  {s.erased.activeMemberships ? <li>{count(s.erased.activeMemberships, 'household membership', 'household memberships')} ended</li> : null}
-                  {s.erased.workerEngagementsRequested ? (
-                    <li>{count(s.erased.workerEngagementsRequested, 'domestic worker they registered', 'domestic workers they registered')} ended</li>
-                  ) : null}
-                  {s.erased.invitesAccepted ? <li>{count(s.erased.invitesAccepted, 'accepted invite', 'accepted invites')} unlinked</li> : null}
-                  {s.erased.pendingMessages ? <li>{count(s.erased.pendingMessages, 'unsent email', 'unsent emails')} dropped</li> : null}
+                  {s.erased.activeOccupancies ? <li>{t('erase.occupancies', { n: s.erased.activeOccupancies })}</li> : null}
+                  {s.erased.activeMemberships ? <li>{t('erase.memberships', { n: s.erased.activeMemberships })}</li> : null}
+                  {s.erased.workerEngagementsRequested ? <li>{t('erase.workers', { n: s.erased.workerEngagementsRequested })}</li> : null}
+                  {s.erased.invitesAccepted ? <li>{t('erase.invites', { n: s.erased.invitesAccepted })}</li> : null}
+                  {s.erased.pendingMessages ? <li>{t('erase.messages', { n: s.erased.pendingMessages })}</li> : null}
                 </ul>
               </div>
               <div className="stack stack--sm">
-                <strong>Kept</strong>
-                <ul style={{ margin: 0, paddingLeft: 18 }}>
-                  <li>
-                    {count(s.kept.auditEntries, 'audit entry', 'audit entries')}: what was done and when, by id only, with no name or contact detail
-                  </li>
-                  <li>The account's row as an empty record, so tickets and entries it took part in still add up</li>
+                <strong>{t('erase.kept')}</strong>
+                <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                  <li>{t('erase.audit', { n: s.kept.auditEntries })}</li>
+                  <li>{t('erase.row')}</li>
                 </ul>
               </div>
               <p className="t-secondary">
-                Asked {formatDateTime(erasure.requestedAt)}
-                {erasure.assisted ? ' by management for the person' : ' by the person'}; cooling-off ended {formatDateTime(erasure.effectiveAt)}.
+                {t('erase.asked', {
+                  by: erasure.assisted ? 'management' : 'person',
+                  when: f.dateTime(erasure.requestedAt),
+                  ended: f.dateTime(erasure.effectiveAt),
+                })}
               </p>
             </div>
           ) : null}
@@ -132,55 +129,45 @@ export function EraseDialog({ erasure, name, onClose }: { erasure: Erasure; name
 
       {step === 2 ? (
         <div className="stack">
-          <p>
-            Data under a dispute, a regulator's request or a financial audit must be kept. If any applies, stop here and place a legal hold
-            on the account instead.
-          </p>
+          <p>{t('erase.legal')}</p>
           {can('accounts.legal_hold') ? (
             <QueryState query={holds} rows={1}>
               {held ? (
                 <Alert tone="error">
-                  This account is on legal hold ({holds.data?.data.map((h) => humanize(h.reasonCode).toLowerCase()).join(', ')}). It cannot be
-                  erased until the hold is released on <Link href={`/accounts/${erasure.accountId}`}>its account page</Link>.
+                  {t('erase.heldReasons', { reasons: f.list((holds.data?.data ?? []).map((h) => label(h.reasonCode))) })}{' '}
+                  <Link href={`/accounts/${erasure.accountId}`}>{t('erase.releaseLink')}</Link>
                 </Alert>
               ) : (
                 <Alert tone="info">
-                  No legal hold is recorded. To place one, open <Link href={`/accounts/${erasure.accountId}`}>the account page</Link>.
+                  {t('erase.noHold')} <Link href={`/accounts/${erasure.accountId}`}>{t('erase.placeLink')}</Link>
                 </Alert>
               )}
             </QueryState>
           ) : held ? (
-            <Alert tone="error">This account is on legal hold. It cannot be erased until the hold is released.</Alert>
+            <Alert tone="error">{t('erase.held')}</Alert>
           ) : (
-            <Alert tone="info">No legal hold is recorded on this account.</Alert>
+            <Alert tone="info">{t('erase.noHoldHere')}</Alert>
           )}
-          <Checkbox
-            label="I checked: nothing requires this data to be kept"
-            checked={checked}
-            disabled={held}
-            onChange={(e) => setChecked(e.target.checked)}
-          />
+          <Checkbox label={t('erase.checked')} checked={checked} disabled={held} onChange={(e) => setChecked(e.target.checked)} />
         </div>
       ) : null}
 
       {step === 3 && s ? (
         <div className="form">
-          <Alert tone="warn">
-            Erasing blanks {name}'s personal data for good. Nobody, including the platform, can bring it back.
-          </Alert>
+          <Alert tone="warn">{t('erase.warn', { name })}</Alert>
           <div className="stack stack--sm">
-            <span className="t-secondary">The phrase for this account:</span>
+            <span className="t-secondary">{t('erase.phrase')}</span>
             <span className="code-box">{s.scopePhrase}</span>
           </div>
-          <Field label="Type the phrase to confirm" error={typed.trim() !== '' && typed.trim() !== s.scopePhrase ? 'Not the same yet.' : undefined}>
+          <Field label={t('erase.type')} error={typed.trim() !== '' && typed.trim() !== s.scopePhrase ? t('erase.notSame') : undefined}>
             {(p) => <Input {...p} autoComplete="off" spellCheck={false} value={typed} onChange={(e) => setTyped(e.target.value)} />}
           </Field>
           <ErrorAlert error={erase.error} />
           {Array.isArray(blockers) ? (
             <Alert tone="error">
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
+              <ul style={{ margin: 0, paddingInlineStart: 18 }}>
                 {(blockers as string[]).map((b) => (
-                  <li key={b}>{BLOCKER_TEXT[b] ?? humanize(b)}</li>
+                  <li key={b}>{blockerText(t, label, b)}</li>
                 ))}
               </ul>
             </Alert>

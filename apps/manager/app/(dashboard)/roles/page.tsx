@@ -1,19 +1,34 @@
 'use client';
 
-import { humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Badge, Button, Card, CardBody, CardHeader, EmptyState, PageHeader, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Alert, Badge, Button, Card, CardBody, CardHeader, EmptyState, PageHeader, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
-import { PERMISSION_TEXT } from '@/lib/labels';
 import { fetchers, keys, type Role } from '@/lib/queries';
+import ar from '@/messages/ar/res-roles';
+import en from '@/messages/en/res-roles';
+
+/** The catalog's entries under one prefix (`perm.`, `group.`), keyed by what follows it. */
+const withPrefix = (m: Record<string, string>, prefix: string) =>
+  Object.fromEntries(Object.entries(m).flatMap(([key, text]) => (key.startsWith(prefix) ? [[key.slice(prefix.length), text]] : [])));
+/** The words for a permission, keyed by its code (`units.read`). */
+const PERMISSION_LABELS = { en: withPrefix(en, 'perm.'), ar: withPrefix(ar, 'perm.') };
+/** The words for a group of permissions, keyed by the first part of their codes (`units`). */
+const GROUP_LABELS = { en: withPrefix(en, 'group.'), ar: withPrefix(ar, 'group.') };
 
 function group(key: string) {
   return key.split('.')[0] ?? key;
 }
 
 function RoleEditor({ role }: { role: Role }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const permissionText = useLabel(PERMISSION_LABELS);
+  const groupText = useLabel(GROUP_LABELS);
   const toast = useToast();
   const permissions = useQuery({ queryKey: keys.permissions, queryFn: fetchers.permissions });
   // Seeded per role (the parent keys this by role id): a background refetch
@@ -43,7 +58,7 @@ function RoleEditor({ role }: { role: Role }) {
       ),
     {
       invalidate: [keys.roles],
-      onDone: () => toast.show(`${role.name ?? humanize(role.key)} saved. It applies on everyone's next request.`),
+      onDone: () => toast.show(t('saved', { name: role.name ?? label(role.key) })),
     },
   );
 
@@ -59,41 +74,39 @@ function RoleEditor({ role }: { role: Role }) {
       <CardHeader
         title={
           <span className="row">
-            {role.name ?? humanize(role.key)}
-            {role.isSystem ? <Badge tone="beige" plain>System</Badge> : null}
+            {role.name ?? label(role.key)}
+            {role.isSystem ? <Badge tone="beige" plain>{t('system')}</Badge> : null}
           </span>
         }
         actions={
           <>
             <Button size="sm" disabled={!dirty || save.isPending} onClick={() => setSelected(new Set(role.permissions))}>
-              Undo
+              {t('undo')}
             </Button>
             <Button size="sm" variant="primary" disabled={!dirty} loading={save.isPending} onClick={() => save.mutate(undefined)}>
-              Save
+              {c('save')}
             </Button>
           </>
         }
       >
-        <span className="t-secondary">For {humanize(role.kind)} accounts.</span>
+        <span className="t-secondary">{t('forKind', { kind: label(role.kind) })}</span>
       </CardHeader>
       <CardBody>
         <QueryState query={permissions} rows={4}>
           <div className="stack">
-            {role.key === 'manager' ? (
-              <Alert tone="info">Some manager permissions can never be removed, so the compound always has someone who can manage it.</Alert>
-            ) : null}
+            {role.key === 'manager' ? <Alert tone="info">{t('managerNote')}</Alert> : null}
             {groups.map(([name, keysInGroup]) => (
               <div key={name} className="stack stack--sm">
-                <span className="form__section">{humanize(name)}</span>
+                <span className="form__section">{groupText(name)}</span>
                 <div className="grid grid--2" style={{ gap: 8 }}>
                   {keysInGroup.map((key) => (
                     <label key={key} className="perm">
                       <input type="checkbox" checked={selected.has(key)} onChange={() => toggle(key)} />
                       <span>
                         <span className="table__primary" style={{ display: 'block' }}>
-                          {PERMISSION_TEXT[key] ?? humanize(key)}
+                          {permissionText(key)}
                         </span>
-                        <span className="t-mono t-secondary">{key}</span>
+                        <span className="t-mono t-secondary ltr">{key}</span>
                       </span>
                     </label>
                   ))}
@@ -109,6 +122,8 @@ function RoleEditor({ role }: { role: Role }) {
 }
 
 export default function RolesPage() {
+  const t = useT(en, ar);
+  const label = useLabel();
   const roles = useQuery({ queryKey: keys.roles, queryFn: fetchers.roles });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const list = roles.data?.data ?? [];
@@ -116,7 +131,7 @@ export default function RolesPage() {
 
   return (
     <>
-      <PageHeader title="Roles" description="What each kind of account may do in this compound. Changes apply immediately." />
+      <PageHeader title={t('title')} description={t('description')} />
       <QueryState query={roles}>
         {list.length ? (
           <div className="grid grid--main-aside" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2.4fr)' }}>
@@ -137,11 +152,9 @@ export default function RolesPage() {
                     >
                       <span className="list__text">
                         <span className="list__title" style={{ display: 'block' }}>
-                          {r.name ?? humanize(r.key)}
+                          {r.name ?? label(r.key)}
                         </span>
-                        <span className="list__meta">
-                          {humanize(r.kind)} · {r.permissions.length} permissions
-                        </span>
+                        <span className="list__meta">{t('permissionCount', { kind: label(r.kind), n: r.permissions.length })}</span>
                       </span>
                     </button>
                   </li>
@@ -151,7 +164,7 @@ export default function RolesPage() {
             {selected ? <RoleEditor key={selected.id} role={selected} /> : null}
           </div>
         ) : (
-          <EmptyState title="No roles" />
+          <EmptyState title={t('noRoles')} />
         )}
       </QueryState>
     </>

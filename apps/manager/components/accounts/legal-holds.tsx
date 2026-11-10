@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardHeader, DataTable, ReasonDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, CardHeader, DataTable, ReasonDialog, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type LegalHold } from '@/lib/queries';
+import ar from '@/messages/ar/shell-accounts';
+import en from '@/messages/en/shell-accounts';
 
 /**
  * Legal holds (ADR 0023): an obligation to keep the account's data. While
@@ -14,6 +17,10 @@ import { fetchers, keys, type LegalHold } from '@/lib/queries';
  * deletion is on hold, never why. The note is the manager's record.
  */
 export function LegalHolds({ accountId }: { accountId: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [placing, setPlacing] = useState(false);
   const [releasing, setReleasing] = useState<LegalHold | null>(null);
@@ -27,7 +34,7 @@ export function LegalHolds({ accountId }: { accountId: string }) {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Legal hold placed. The account cannot be erased while it stands.');
+        toast.show(t('hold.placed'));
         setPlacing(false);
       },
     },
@@ -43,7 +50,7 @@ export function LegalHolds({ accountId }: { accountId: string }) {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Legal hold released.');
+        toast.show(t('hold.released'));
         setReleasing(null);
       },
     },
@@ -52,10 +59,10 @@ export function LegalHolds({ accountId }: { accountId: string }) {
   return (
     <Card flush>
       <CardHeader
-        title="Legal holds"
+        title={t('hold.title')}
         actions={
           <Button size="sm" onClick={() => setPlacing(true)}>
-            Place a hold
+            {t('hold.place')}
           </Button>
         }
       />
@@ -63,18 +70,18 @@ export function LegalHolds({ accountId }: { accountId: string }) {
         <DataTable<LegalHold>
           rows={holds.data?.data}
           rowKey={(h) => h.id}
-          empty="No legal hold"
-          emptyHint="Place one when the law requires keeping this account's data: a dispute, a regulator's request, an audit."
+          empty={t('hold.empty')}
+          emptyHint={t('hold.emptyHint')}
           columns={[
-            { key: 'reason', header: 'Reason', cell: (h) => humanize(h.reasonCode) },
-            { key: 'placed', header: 'Placed', cell: (h) => formatDateTime(h.placedAt) },
+            { key: 'reason', header: c('reason'), cell: (h) => label(h.reasonCode) },
+            { key: 'placed', header: t('hold.col.placed'), cell: (h) => f.dateTime(h.placedAt) },
             {
               key: 'actions',
-              header: <span className="visually-hidden">Actions</span>,
+              header: <span className="visually-hidden">{c('actions')}</span>,
               className: 'table__actions',
               cell: (h) => (
                 <Button size="sm" onClick={() => setReleasing(h)}>
-                  Release
+                  {t('hold.release')}
                 </Button>
               ),
             },
@@ -87,12 +94,12 @@ export function LegalHolds({ accountId }: { accountId: string }) {
           setPlacing(false);
           place.reset();
         }}
-        title="Place a legal hold?"
-        description="The account's data must be kept: it cannot be erased, by the person or by management, until the hold is released. The person is told their deletion is on hold, never why."
+        title={t('hold.placeTitle')}
+        description={t('hold.placeDescription')}
         codes={REASON_CODES.legalHold}
-        textLabel="Note for the record"
-        textHint="Kept with the hold for management. The person is never told why."
-        confirmLabel="Place hold"
+        textLabel={t('hold.note')}
+        textHint={t('hold.noteHint')}
+        confirmLabel={t('hold.placeConfirm')}
         pending={place.isPending}
         error={<ErrorAlert error={place.error} />}
         onConfirm={(reason) => place.mutate(reason)}
@@ -103,12 +110,12 @@ export function LegalHolds({ accountId }: { accountId: string }) {
           setReleasing(null);
           release.reset();
         }}
-        title="Release this legal hold?"
-        description="Once no hold is left, a queued deletion of this account can be carried out."
+        title={t('hold.releaseTitle')}
+        description={t('hold.releaseDescription')}
         codes={REASON_CODES.legalHoldRelease}
-        textLabel="Note for the record"
-        textHint="Kept with the hold for management. The person is never told why."
-        confirmLabel="Release hold"
+        textLabel={t('hold.note')}
+        textHint={t('hold.noteHint')}
+        confirmLabel={t('hold.releaseConfirm')}
         pending={release.isPending}
         error={<ErrorAlert error={release.error} />}
         onConfirm={(reason) => releasing && release.mutate({ hold: releasing, ...reason })}

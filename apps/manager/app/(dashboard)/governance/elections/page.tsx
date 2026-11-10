@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -14,19 +15,27 @@ import {
   Segmented,
   StatusBadge,
   Textarea,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { inEither, turnoutText } from '@/components/governance/logic';
+import { inLocale, turnoutText } from '@/components/governance/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GovernanceElectionPhase, type StaffGovernanceElection } from '@/lib/queries';
+import ar from '@/messages/ar/gov-elections';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-elections';
+import codesEn from '@/messages/en/gov-codes';
 
 type View = GovernanceElectionPhase | 'all';
+const VIEWS = ['all', 'nominating', 'voting', 'closed', 'certified'] as const satisfies readonly View[];
 const iso = (local: string) => new Date(local).toISOString();
 
 function NewElection({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
   const [titleEn, setTitleEn] = useState('');
@@ -57,7 +66,7 @@ function NewElection({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.governanceAll],
       onDone: () => {
-        toast.show('Called. The owners are told when nominations open.');
+        toast.show(t('called'));
         onClose();
       },
     },
@@ -69,46 +78,46 @@ function NewElection({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="Call an election of the board"
-      description="Owners stand while nominations are open; then each unit’s voting owner picks up to as many candidates as there are seats, in secret."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => create.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending} disabled={!ok}>
-            Call the election
+            {t('callIt')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Title" error={err('titleEn')}>
+        <Field label={t('titleLabel')} error={err('titleEn')}>
           {(p) => <Input {...p} maxLength={200} value={titleEn} onChange={(e) => setTitleEn(e.target.value)} />}
         </Field>
-        <Field label="To the owners" error={err('bodyEn')}>
+        <Field label={t('toOwners')} error={err('bodyEn')}>
           {(p) => <Textarea {...p} rows={3} maxLength={4000} value={bodyEn} onChange={(e) => setBodyEn(e.target.value)} />}
         </Field>
         <div className="row" style={{ gap: 16 }}>
-          <Field label="Seats" error={err('seats')}>
+          <Field label={t('seats')} error={err('seats')}>
             {(p) => <Input {...p} type="number" min={3} max={15} value={seats} onChange={(e) => setSeats(Number(e.target.value))} />}
           </Field>
-          <Field label="Term (months)" error={err('termMonths')}>
+          <Field label={t('termMonths')} error={err('termMonths')}>
             {(p) => <Input {...p} type="number" min={6} max={60} value={termMonths} onChange={(e) => setTerm(Number(e.target.value))} />}
           </Field>
         </div>
         <div className="row" style={{ gap: 16 }}>
-          <Field label="Nominations open (empty: now)" error={err('nominationsOpenAt')}>
+          <Field label={t('nominationsOpen')} error={err('nominationsOpenAt')}>
             {(p) => <Input {...p} type="datetime-local" value={nominationsOpenAt} onChange={(e) => setNomOpen(e.target.value)} />}
           </Field>
-          <Field label="Nominations close" error={err('nominationsCloseAt')}>
+          <Field label={t('nominationsClose')} error={err('nominationsCloseAt')}>
             {(p) => <Input {...p} type="datetime-local" value={nominationsCloseAt} onChange={(e) => setNomClose(e.target.value)} />}
           </Field>
         </div>
         <div className="row" style={{ gap: 16 }}>
-          <Field label="Voting opens" error={err('votingOpensAt')}>
+          <Field label={t('votingOpens')} error={err('votingOpensAt')}>
             {(p) => <Input {...p} type="datetime-local" value={votingOpensAt} onChange={(e) => setVoteOpen(e.target.value)} />}
           </Field>
-          <Field label="Voting closes" error={err('votingClosesAt')}>
+          <Field label={t('votingCloses')} error={err('votingClosesAt')}>
             {(p) => <Input {...p} type="datetime-local" value={votingClosesAt} onChange={(e) => setVoteClose(e.target.value)} />}
           </Field>
         </div>
@@ -120,44 +129,42 @@ function NewElection({ onClose }: { onClose: () => void }) {
 
 /** Elections of the board (ADR 0051). */
 export default function GovernanceElectionsPage() {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const f = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('governance.manage');
   const [view, setView] = useState<View>('all');
   const [creating, setCreating] = useState(false);
   const phase = view === 'all' ? '' : view;
-  const list = useCursorList(keys.governanceElections(phase), (c) => fetchers.governanceElections(phase, c), {
+  const list = useCursorList(keys.governanceElections(phase), (cursor) => fetchers.governanceElections(phase, cursor), {
     enabled: allowed,
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Elections" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Elections"
-        description="Each certified election seats the next board for its term."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
-            New election
+            {t('newElection')}
           </Button>
         }
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Elections shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'all', label: 'All' },
-            { value: 'nominating', label: 'Nominations open' },
-            { value: 'voting', label: 'Voting' },
-            { value: 'closed', label: 'To certify' },
-            { value: 'certified', label: 'Certified' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
       </div>
       <Card flush>
@@ -165,22 +172,26 @@ export default function GovernanceElectionsPage() {
           <DataTable<StaffGovernanceElection>
             rows={list.rows}
             rowKey={(e) => e.id}
-            empty="No election"
+            empty={t('none')}
             columns={[
               {
                 key: 'r',
-                header: 'Election',
+                header: t('col.election'),
                 cell: (e) => (
                   <Link className="table__link" href={`/governance/elections/${e.id}`}>
-                    <span className="t-mono">{e.reference}</span> · {inEither(e.titleEn, e.titleAr)}
+                    <span className="t-mono ltr">{e.reference}</span> · {inLocale(locale, e.titleEn, e.titleAr)}
                   </Link>
                 ),
               },
-              { key: 's', header: 'Seats', cell: (e) => e.seats },
-              { key: 'c', header: 'Candidates', cell: (e) => e.candidates.filter((c) => c.status === 'nominated').length },
-              { key: 'v', header: 'Voting', cell: (e) => `${formatDateTime(e.votingOpensAt)} – ${formatDateTime(e.votingClosesAt)}` },
-              { key: 't', header: 'Turnout', cell: (e) => turnoutText(e.turnout, e.electorate) },
-              { key: 'p', header: 'Phase', cell: (e) => <StatusBadge status={e.phase} /> },
+              { key: 's', header: t('col.seats'), cell: (e) => f.number(e.seats) },
+              { key: 'c', header: t('col.candidates'), cell: (e) => f.number(e.candidates.filter((c) => c.status === 'nominated').length) },
+              {
+                key: 'v',
+                header: t('col.voting'),
+                cell: (e) => `${f.dateTime(e.votingOpensAt)} – ${f.dateTime(e.votingClosesAt)}`,
+              },
+              { key: 't', header: t('col.turnout'), cell: (e) => turnoutText(g, e.turnout, e.electorate) },
+              { key: 'p', header: t('col.phase'), cell: (e) => <StatusBadge status={e.phase} /> },
             ]}
           />
           <LoadMore query={list} />

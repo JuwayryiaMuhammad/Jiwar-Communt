@@ -2,11 +2,14 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Checkbox, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Checkbox, Dialog, Field, Input, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type AnnouncementDetail, type AnnouncementKind } from '@/lib/queries';
+import ar from '@/messages/ar/community';
+import en from '@/messages/en/community';
 import { AttachmentPicker, AudiencePicker, DateTimeField, EVERYONE, TextFields, type AudienceValue, type TwoTexts } from './bits';
 import { announcementActions, audienceBody, languagesReady, textOrNull, toIso, toLocalInput } from './logic';
 
@@ -31,6 +34,8 @@ export function AnnouncementDialog({
   onClose: () => void;
   onSaved: (id: string) => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const a = announcement;
   const kind = a?.kind ?? initialKind;
@@ -97,32 +102,29 @@ export function AnnouncementDialog({
     {
       invalidate: [keys.announcementsAll],
       onDone: (id) => {
-        toast.show(a ? 'The announcement is saved.' : 'The draft is saved. Nobody sees it until it is published.');
+        toast.show(a ? t('announcement.saved') : t('announcement.draftSaved'));
         onSaved(id);
       },
     },
   );
   const ready =
     languagesReady([text.titleEn, text.bodyEn], [text.titleAr, text.bodyAr]) && (kind !== 'works' || (startsAt !== '' && endsAt !== ''));
-  const what = kind === 'works' ? 'works and closures' : 'announcement';
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
       wide
-      title={a ? `Edit ${what}` : `New ${what}`}
+      title={a ? t('announcement.editTitle', { kind }) : t('announcement.newTitle', { kind })}
       description={
-        a && a.status !== 'draft' && a.status !== 'scheduled'
-          ? 'It is out: new words or files show as "edited", and the earlier version is kept.'
-          : 'Saved as a draft. It is published, now or at a time you choose, from its page.'
+        a && a.status !== 'draft' && a.status !== 'scheduled' ? t('announcement.outDescription') : t('announcement.draftDescription')
       }
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
@@ -132,30 +134,30 @@ export function AnnouncementDialog({
         {kind === 'works' ? (
           <>
             <div className="form__row">
-              <DateTimeField label="Starts" value={startsAt} onChange={setStartsAt} error={fieldError(save.error, 'works.startsAt')} />
+              <DateTimeField label={t('starts')} value={startsAt} onChange={setStartsAt} error={fieldError(save.error, 'works.startsAt')} />
               <DateTimeField
-                label="Ends"
-                hint="It stops being shown by itself then."
+                label={t('ends')}
+                hint={t('works.endsHint')}
                 value={endsAt}
                 onChange={setEndsAt}
                 error={fieldError(save.error, 'works.endsAt')}
               />
             </div>
             <div className="form__row">
-              <Field label="What is affected">
+              <Field label={t('works.affected')}>
                 {(p) => (
                   <Select {...p} value={areaKind} onChange={(e) => setAreaKind(e.target.value as AreaKind)}>
-                    <option value="road">A road</option>
-                    <option value="facility">A facility</option>
-                    <option value="gate">A gate</option>
+                    <option value="road">{t('area.road')}</option>
+                    <option value="facility">{t('area.facility')}</option>
+                    <option value="gate">{t('area.gate')}</option>
                   </Select>
                 )}
               </Field>
               {areaKind === 'gate' ? (
-                <Field label="Gate" error={fieldError(save.error, 'works.gateId')}>
+                <Field label={t('works.gate')} error={fieldError(save.error, 'works.gateId')}>
                   {(p) => (
                     <Select {...p} value={gateId} onChange={(e) => setGateId(e.target.value)}>
-                      <option value="">Not one in particular</option>
+                      <option value="">{t('works.anyGate')}</option>
                       {(gates.data?.data ?? []).map((g) => (
                         <option key={g.id} value={g.id}>
                           {g.name}
@@ -166,21 +168,21 @@ export function AnnouncementDialog({
                 </Field>
               ) : null}
             </div>
-            <Field label="Where" hint="In your words, e.g. the road behind building C." error={fieldError(save.error, 'works.place')}>
+            <Field label={t('where')} hint={t('works.whereHint')} error={fieldError(save.error, 'works.place')}>
               {(p) => <Input {...p} maxLength={200} value={place} onChange={(e) => setPlace(e.target.value)} />}
             </Field>
           </>
         ) : null}
         <Checkbox
-          label="Important: its audience is notified when it comes out, and it may be pinned"
+          label={t('announcement.important')}
           checked={important}
           onChange={(e) => setImportant(e.target.checked)}
         />
         <div className="form__row">
           {important ? (
             <DateTimeField
-              label="Pinned until"
-              hint="Stays on top of the feed until then. Empty: not pinned."
+              label={t('announcement.pinnedUntil')}
+              hint={t('announcement.pinnedHint')}
               value={pinnedUntil}
               onChange={setPinnedUntil}
               error={fieldError(save.error, 'pinnedUntil')}
@@ -188,8 +190,8 @@ export function AnnouncementDialog({
           ) : null}
           {kind === 'general' ? (
             <DateTimeField
-              label="Expires"
-              hint="No longer shown from then on. Empty: until archived."
+              label={t('announcement.expires')}
+              hint={t('announcement.expiresHint')}
               value={expiresAt}
               onChange={setExpiresAt}
               error={fieldError(save.error, 'expiresAt')}
@@ -200,7 +202,7 @@ export function AnnouncementDialog({
           value={audience}
           onChange={setAudience}
           disabled={!actions.audience}
-          hint={actions.audience ? undefined : 'The audience is fixed once the announcement is out.'}
+          hint={actions.audience ? undefined : t('announcement.audienceFixed')}
         />
         <AttachmentPicker existing={a?.attachments ?? []} kept={kept} onKeptChange={setKept} added={added} onAddedChange={setAdded} />
         <ErrorAlert error={save.error} />

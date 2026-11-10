@@ -1,16 +1,19 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Suggestion, type SuggestionFilters, type SuggestionStatus } from '@/lib/queries';
+import ar from '@/messages/ar/community-suggestions';
+import en from '@/messages/en/community-suggestions';
 
 const STATUSES: SuggestionStatus[] = ['received', 'under_review', 'planned', 'deferred', 'done', 'declined'];
-type Board = 'all' | 'true' | 'false';
+const BOARDS = ['all', 'true', 'false'] as const;
+type Board = (typeof BOARDS)[number];
 
 /**
  * What residents suggested (ADR 0040), the newest first. Each is private
@@ -18,6 +21,10 @@ type Board = 'all' | 'true' | 'false';
  * their own and without the author.
  */
 export default function SuggestionsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { can, ready } = usePermissions();
   const [status, setStatus] = useState<SuggestionStatus | ''>('');
   const [topicId, setTopicId] = useState('');
@@ -26,45 +33,39 @@ export default function SuggestionsPage() {
   const filters: SuggestionFilters = { status, topicId, published: board === 'all' ? '' : board };
   const topics = useQuery({ queryKey: keys.suggestionTopics, queryFn: fetchers.suggestionTopics, enabled: allowed });
   const list = useCursorList(keys.suggestions(filters), (c) => fetchers.suggestions(filters, c), { enabled: allowed, refetchInterval: 120_000 });
+  const topicName = (x: { nameEn: string; nameAr: string }) => (locale === 'ar' ? x.nameAr : x.nameEn);
 
   if (ready && !allowed) return <ForbiddenState />;
 
   return (
     <>
-      <PageHeader
-        title="Suggestions"
-        description="What residents suggest. A suggestion is private to its author; on the public board it is shown by a summary you write, never by their words or their name."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<Board>
-          label="Suggestions shown"
+          label={t('shown')}
           value={board}
           onChange={setBoard}
-          options={[
-            { value: 'all', label: 'All' },
-            { value: 'true', label: 'On the board' },
-            { value: 'false', label: 'Not on the board' },
-          ]}
+          options={BOARDS.map((v) => ({ value: v, label: t(`board.${v}`) }))}
         />
-        <Field label="Status">
+        <Field label={t('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as SuggestionStatus | '')}>
-              <option value="">Any status</option>
+              <option value="">{t('anyStatus')}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Topic">
+        <Field label={t('topic')}>
           {(p) => (
             <Select {...p} value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-              <option value="">Any topic</option>
-              {(topics.data?.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nameEn}
+              <option value="">{t('anyTopic')}</option>
+              {(topics.data?.data ?? []).map((x) => (
+                <option key={x.id} value={x.id}>
+                  {topicName(x)}
                 </option>
               ))}
             </Select>
@@ -76,38 +77,41 @@ export default function SuggestionsPage() {
           <DataTable<Suggestion>
             rows={list.rows}
             rowKey={(s) => s.id}
-            empty="No suggestion here"
+            empty={t('empty')}
             columns={[
               {
                 key: 'body',
-                header: 'Suggestion',
+                header: t('col.suggestion'),
                 cell: (s) => (
                   <span className="stack stack--sm">
                     <Link className="table__link" href={`/suggestions/${s.id}`}>
-                      <span style={{ display: 'block', maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {s.body ?? 'Erased with its author’s account'}
+                      <span
+                        dir="auto"
+                        style={{ display: 'block', maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      >
+                        {s.body ?? t('erasedBody')}
                       </span>
                     </Link>
                     <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-                      {s.publishedAt ? <Badge tone="green">On the board · {s.supports} support</Badge> : null}
-                      {s.done?.noteEn || s.done?.noteAr ? <Badge plain>We did</Badge> : null}
+                      {s.publishedAt ? <Badge tone="green">{t('onBoard', { n: s.supports })}</Badge> : null}
+                      {s.done?.noteEn || s.done?.noteAr ? <Badge plain>{t('weDid')}</Badge> : null}
                     </span>
                   </span>
                 ),
               },
               {
                 key: 'author',
-                header: 'Resident',
+                header: t('col.resident'),
                 cell: (s) => (
                   <span className="stack stack--sm">
-                    {s.author.fullName ?? <span className="t-secondary">Erased account</span>}
-                    {s.unitCode ? <span className="t-secondary">Unit {s.unitCode}</span> : null}
+                    {s.author.fullName ?? <span className="t-secondary">{t('erased')}</span>}
+                    {s.unitCode ? <span className="t-secondary">{t('unit', { unit: s.unitCode })}</span> : null}
                   </span>
                 ),
               },
-              { key: 'topic', header: 'Topic', cell: (s) => s.topic.nameEn },
-              { key: 'status', header: 'Status', cell: (s) => <StatusBadge status={s.status} /> },
-              { key: 'when', header: 'Received', cell: (s) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(s.createdAt)}</span> },
+              { key: 'topic', header: t('col.topic'), cell: (s) => topicName(s.topic) },
+              { key: 'status', header: t('col.status'), cell: (s) => <StatusBadge status={s.status} /> },
+              { key: 'when', header: t('col.received'), cell: (s) => <span style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(s.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

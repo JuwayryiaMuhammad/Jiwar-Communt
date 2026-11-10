@@ -1,9 +1,12 @@
 /**
  * What the community screens decide without the network (ADR 0040): how an
  * audience reads, whether a text is ready in its languages, which actions a
- * state takes, how a poll's counts are shown. Plain TypeScript with no
- * imports, so the tests run it as is.
+ * state takes, how a poll's counts are shown. Plain TypeScript with type
+ * imports only, so the tests run it as is.
  */
+
+import type { Format, Translate } from '@jiwar/i18n/core';
+import type en from '../../messages/en/community.ts';
 
 export type Occupancy = 'everyone' | 'owners' | 'tenants';
 export interface AudienceLike {
@@ -11,12 +14,10 @@ export interface AudienceLike {
   occupancy: Occupancy;
 }
 
-const WHO: Record<Occupancy, string> = { everyone: 'Everyone', owners: 'Owners only', tenants: 'Tenants only' };
-
-/** "Owners only · buildings A, B" or "Everyone · whole compound". */
-export function audienceText(a: AudienceLike): string {
-  const where = a.buildings?.length ? `building${a.buildings.length === 1 ? '' : 's'} ${a.buildings.join(', ')}` : 'whole compound';
-  return `${WHO[a.occupancy]} · ${where}`;
+/** "Owners only · buildings A and B" or "Everyone · whole compound". */
+export function audienceText(a: AudienceLike, t: Translate<typeof en>, fmt: Format): string {
+  const buildings = a.buildings ?? [];
+  return t('audience.text', { occupancy: a.occupancy, count: buildings.length, buildings: fmt.list(buildings) });
 }
 
 /** What the API takes: no buildings picked means the whole compound. */
@@ -77,19 +78,8 @@ export function pollActions(status: PollStatus, finalized: boolean): { edit: boo
 export type ResultsHidden = 'not_open' | 'not_voted' | 'few_votes' | 'cancelled' | null;
 
 /** Why a poll's counts are not shown, in words; null when they are. */
-export function hiddenText(hidden: ResultsHidden): string | null {
-  switch (hidden) {
-    case 'few_votes':
-      return 'Fewer than 5 votes so far. Counts are shown from the fifth unit on, so that no count can tell who chose what.';
-    case 'not_open':
-      return 'Voting has not opened yet.';
-    case 'cancelled':
-      return 'The poll was cancelled: its ballots were destroyed and nothing was counted.';
-    case 'not_voted':
-      return 'Shown once the unit has voted.';
-    default:
-      return null;
-  }
+export function hiddenText(hidden: ResultsHidden, t: Translate<typeof en>): string | null {
+  return hidden ? t(`hidden.${hidden}`) : null;
 }
 
 /** A share as a whole percentage; 0 when there is nothing to share. */

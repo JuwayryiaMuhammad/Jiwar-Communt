@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import { Alert, Badge, Button, Card, CardBody, ConfirmDialog, ForbiddenState, PageHeader, Stat, StatusBadge, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
@@ -12,20 +13,24 @@ import { PollDialog } from '@/components/community/poll-dialog';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Poll } from '@/lib/queries';
+import communityAr from '@/messages/ar/community';
+import ar from '@/messages/ar/community-polls';
+import communityEn from '@/messages/en/community';
+import en from '@/messages/en/community-polls';
 
 /**
  * The counts, option by option. While a poll is open they are live, and
  * withheld below five units; once it has closed they are final.
  */
 function Results({ poll }: { poll: Poll }) {
-  const hidden = hiddenText(poll.resultsHidden);
+  const t = useT(en, ar);
+  const tc = useT(communityEn, communityAr);
+  const fmt = useFormat();
+  const hidden = hiddenText(poll.resultsHidden, tc);
   const total = poll.options.reduce((sum, o) => sum + (o.votes ?? 0), 0);
   return (
     <Card>
-      <SectionHeader
-        title={poll.status === 'closed' ? 'Results' : 'Results so far'}
-        description="Counts per option. What a unit chose is not kept with the unit, so there is no list of who chose what, for anyone."
-      />
+      <SectionHeader title={poll.status === 'closed' ? t('results') : t('resultsSoFar')} description={t('resultsHint')} />
       <CardBody>
         <div className="stack">
           {hidden ? <Alert>{hidden}</Alert> : null}
@@ -35,16 +40,21 @@ function Results({ poll }: { poll: Poll }) {
                 <TwoLanguages en={o.labelEn} ar={o.labelAr} />
                 {o.votes === null ? null : (
                   <span style={{ whiteSpace: 'nowrap' }}>
-                    {o.votes} · {percent(o.votes, total)}%
+                    {fmt.number(o.votes)} · {fmt.percent(percent(o.votes, total) / 100, 0)}
                   </span>
                 )}
               </span>
               {o.votes === null ? null : (
-                <progress max={Math.max(total, 1)} value={o.votes} style={{ width: '100%' }} aria-label={`${o.votes} of ${total} votes`} />
+                <progress
+                  max={Math.max(total, 1)}
+                  value={o.votes}
+                  style={{ width: '100%' }}
+                  aria-label={t('votesOf', { votes: o.votes, total })}
+                />
               )}
             </div>
           ))}
-          {poll.multiple && !hidden ? <span className="t-secondary">A unit may choose several options, so the counts can add up to more than the units that voted.</span> : null}
+          {poll.multiple && !hidden ? <span className="t-secondary">{t('multipleHint')}</span> : null}
         </div>
       </CardBody>
     </Card>
@@ -52,6 +62,10 @@ function Results({ poll }: { poll: Poll }) {
 }
 
 export default function PollPage() {
+  const t = useT(en, ar);
+  const tc = useT(communityEn, communityAr);
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const { can, ready } = usePermissions();
@@ -67,7 +81,7 @@ export default function PollPage() {
     {
       invalidate: [keys.pollsAll],
       onDone: (_, action) => {
-        toast.show(action === 'close' ? 'The poll is closed. Its results are shown to everyone.' : 'The poll is cancelled. Nothing was counted.');
+        toast.show(action === 'close' ? t('closedToast') : t('cancelledToast'));
         setDialog(null);
       },
     },
@@ -76,25 +90,26 @@ export default function PollPage() {
   if (ready && !allowed) return <ForbiddenState />;
   const p = query.data;
   const actions = p ? pollActions(p.status, p.closedAt !== null) : null;
+  const heading = p ? ((locale === 'ar' ? (p.questionAr ?? p.questionEn) : (p.questionEn ?? p.questionAr)) ?? t('poll')) : t('poll');
 
   return (
     <>
       <PageHeader
-        title={p ? (p.questionEn ?? p.questionAr ?? 'Poll') : 'Poll'}
-        back={<Back href="/polls" label="Polls" />}
+        title={heading}
+        back={<Back href="/polls" label={t('title')} />}
         actions={
           p && actions ? (
             <>
-              {actions.edit ? <Button onClick={() => setDialog('edit')}>Edit</Button> : null}
-              {actions.reschedule ? <Button onClick={() => setDialog('reschedule')}>Change the closing time</Button> : null}
+              {actions.edit ? <Button onClick={() => setDialog('edit')}>{t('edit')}</Button> : null}
+              {actions.reschedule ? <Button onClick={() => setDialog('reschedule')}>{t('changeClosing')}</Button> : null}
               {actions.cancel ? (
                 <Button variant="danger" onClick={() => setDialog('cancel')}>
-                  Cancel the poll
+                  {t('cancelPoll')}
                 </Button>
               ) : null}
               {actions.close ? (
                 <Button variant="primary" onClick={() => setDialog('close')}>
-                  Close now
+                  {t('closeNow')}
                 </Button>
               ) : null}
             </>
@@ -109,29 +124,29 @@ export default function PollPage() {
                 <div className="stack">
                   <span className="row" style={{ gap: 8 }}>
                     <StatusBadge status={p.status} />
-                    {p.multiple ? <Badge plain>Several choices</Badge> : null}
+                    {p.multiple ? <Badge plain>{t('several')}</Badge> : null}
                   </span>
                   <TwoLanguages en={p.questionEn} ar={p.questionAr} strong />
                   <dl className="dl">
-                    <dt>Opens</dt>
-                    <dd>{formatDateTime(p.opensAt)}</dd>
-                    <dt>Closes</dt>
-                    <dd>{formatDateTime(p.closedAt ?? p.closesAt)}</dd>
-                    <dt>Who votes</dt>
-                    <dd>{audienceText(p.audience)}</dd>
+                    <dt>{t('opens')}</dt>
+                    <dd>{fmt.dateTime(p.opensAt)}</dd>
+                    <dt>{t('closes')}</dt>
+                    <dd>{fmt.dateTime(p.closedAt ?? p.closesAt)}</dd>
+                    <dt>{t('whoVotes')}</dt>
+                    <dd>{audienceText(p.audience, tc, fmt)}</dd>
                   </dl>
                 </div>
               </CardBody>
             </Card>
             <div className="row" style={{ gap: 32, flexWrap: 'wrap' }}>
               <Stat
-                label="Units voted"
-                value={p.turnout === null ? (p.resultsHidden === 'few_votes' ? 'Fewer than 5' : '–') : p.turnout}
+                label={t('unitsVoted')}
+                value={p.turnout === null ? (p.resultsHidden === 'few_votes' ? t('fewerThanFive') : '–') : fmt.number(p.turnout)}
                 hint={
                   p.turnout !== null && audience.data
-                    ? `${percent(p.turnout, audience.data.units)}% of the ${audience.data.units} units it is put to now`
+                    ? t('turnoutShare', { share: fmt.percent(percent(p.turnout, audience.data.units) / 100, 0), units: audience.data.units })
                     : audience.data
-                      ? `Put to ${audience.data.units} units now`
+                      ? t('putTo', { units: audience.data.units })
                       : undefined
                 }
               />
@@ -146,9 +161,9 @@ export default function PollPage() {
       <ConfirmDialog
         open={dialog === 'close'}
         onClose={() => setDialog(null)}
-        title="Close this poll now?"
-        description="No more votes are taken. The results are final and shown to everyone it was put to, whatever the turnout. The ballots are destroyed: only the counts are kept."
-        confirmLabel="Close the poll"
+        title={t('closeTitle')}
+        description={t('closeDescription')}
+        confirmLabel={t('closePoll')}
         pending={end.isPending}
         error={end.error ? <ErrorAlert error={end.error} /> : undefined}
         onConfirm={() => end.mutate('close')}
@@ -156,9 +171,9 @@ export default function PollPage() {
       <ConfirmDialog
         open={dialog === 'cancel'}
         onClose={() => setDialog(null)}
-        title="Cancel this poll?"
-        description="It ends with no result. The ballots are destroyed and nothing is counted. It stays listed as cancelled."
-        confirmLabel="Cancel the poll"
+        title={t('cancelTitle')}
+        description={t('cancelDescription')}
+        confirmLabel={t('cancelPoll')}
         danger
         pending={end.isPending}
         error={end.error ? <ErrorAlert error={end.error} /> : undefined}

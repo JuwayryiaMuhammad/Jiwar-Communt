@@ -1,0 +1,30 @@
+/** The management's side of the board's requests (ADR 0055): app/(dashboard)/governance/approvals and governance/approvals/[id]. */
+export default {
+  title: 'Approvals',
+  description:
+    'What the owners’ board decides: a contract above the manager’s limit, a budget increase, a fee, a waiver or a plan above its limit, a legal step. Annual budgets are submitted from their page.',
+  raise: 'Raise',
+  'view.pending': 'With the board',
+  'view.approved': 'Approved, to implement',
+  'view.implemented': 'Implemented',
+  'view.rejected': 'Rejected',
+  'view.withdrawn': 'Withdrawn',
+  nothing: 'Nothing here',
+  'col.request': 'Request',
+  'col.cost': 'Cost',
+  'col.raised': 'Raised',
+  'col.deadline': 'Deadline',
+  raisedByYou: '{when} · by you',
+  deadlineOverdue: '{when} · overdue',
+  // One request.
+  requestTitle: 'Request',
+  implementedToast: 'Marked implemented. The board was told.',
+  implementedTitle: 'Mark it implemented?',
+  implementedDescription: 'Once: the board sees when, and your note.',
+  noteOptional: 'Note (optional)',
+  markImplemented: 'Mark implemented',
+  withdrawn: 'Withdrawn. Any open motion on it closed; the board was told.',
+  withdraw: 'Withdraw',
+  withdrawTitle: 'Withdraw the request?',
+  withdrawDescription: 'The board stops deciding it; a submitted budget goes back to withdrawn, and a new one is drafted.',
+} as const;

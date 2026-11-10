@@ -1,0 +1,45 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/gov-board-inbox.ts';
+
+const ar: Translation<typeof en> = {
+  nothing: 'لا يوجد شيء هنا',
+  'view.pending': 'للقرار',
+  'view.approved': 'معتمدة، للتنفيذ',
+  'view.implemented': 'نُفذت',
+  'view.rejected': 'مرفوضة',
+  'view.withdrawn': 'مسحوبة',
+  'view.upheld': 'أُيد القرار',
+  'view.overturned': 'أُلغي القرار',
+  'col.cost': 'التكلفة',
+  'col.deadline': 'الموعد النهائي',
+  deadlineOverdue: '{when} · متأخر',
+  pastDeadline: 'تجاوز موعده النهائي',
+  deadline: 'الموعد النهائي للمجلس',
+  inboxTitle: 'صندوق وارد مجلس الإدارة',
+  inboxDescription: 'طلبات رفعتها الإدارة ليقرر فيها مجلس الإدارة، لكل منها خلفيته وتكاليفه وبدائله.',
+  'col.request': 'الطلب',
+  request: 'الطلب',
+  about: 'موضوع الطلب',
+  appealsTitle: 'التظلمات إلى مجلس الإدارة',
+  appealsDescription:
+    'يطلب مالك الوحدة أو ساكنها الرئيسي من مجلس الإدارة مراجعة قرار للموظفين. يتنحى الأعضاء الذين يسكنون الوحدة أو يملكونها أو قدّموا التظلم.',
+  'col.appeal': 'التظلم',
+  'col.of': 'موضوعه',
+  'col.lodged': 'تاريخ التقديم',
+  appeal: 'التظلم',
+  appealTitle: '{reference} · {kind} · الوحدة {unit}',
+  lodged: 'تاريخ التقديم',
+  grounds: 'الأسباب',
+  groundsErased: 'حُذفت: حُذف حساب المتظلم.',
+  attachments: 'المرفقات',
+  decided: 'تاريخ القرار',
+  rationale: 'الأسباب',
+  effect: 'الأثر',
+  followedUp: 'تمت المتابعة {when}',
+  appealed: 'القرار المتظلم منه',
+  overviewTitle: 'نظرة عامة',
+  overviewDescription: 'المجمع في لمحة، لمجلس الإدارة.',
+  range: '{from} – {to}',
+};
+
+export default ar;

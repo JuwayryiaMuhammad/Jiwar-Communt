@@ -2,15 +2,21 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Select, Textarea, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Select, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
-import { APPROVAL_SUBJECT, APPROVAL_TYPE_TEXT, CATEGORY_TEXT } from '@/components/governance/matters';
+import { codeText } from '@/components/governance/logic';
+import { APPROVAL_SUBJECT, APPROVAL_TYPES } from '@/components/governance/matters';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ApprovalType } from '@/lib/queries';
+import ar from '@/messages/ar/gov-board-ui';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-board-ui';
+import codesEn from '@/messages/en/gov-codes';
 
 const MAX_ALTERNATIVES = 5;
 const MAX_ATTACHMENTS = 5;
@@ -36,6 +42,10 @@ export function RaiseApproval({
   budgetTransferId?: string;
   capitalPlanId?: string;
 }) {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const router = useRouter();
   const { can } = usePermissions();
@@ -64,9 +74,9 @@ export function RaiseApproval({
     enabled: subject === 'manager',
   });
   const managers = (staff.data?.data ?? []).filter((a) => a.type === 'manager' && a.status === 'active');
-  const types = (Object.keys(APPROVAL_TYPE_TEXT) as ApprovalType[]).filter(
-    (t) =>
-      t !== 'annual_budget' && t !== 'budget_transfer' && t !== 'capital_plan' && (t !== 'budget_increase' || can('finance.budget')),
+  const types = (APPROVAL_TYPES as ApprovalType[]).filter(
+    (x) =>
+      x !== 'annual_budget' && x !== 'budget_transfer' && x !== 'capital_plan' && (x !== 'budget_increase' || can('finance.budget')),
   );
   const raise = useAction(
     () =>
@@ -95,7 +105,7 @@ export function RaiseApproval({
     {
       invalidate: [keys.governanceAll, keys.budgetsAll, keys.capitalPlansAll],
       onDone: (r) => {
-        toast.show('Raised. The board was told; it decides by its deadline.');
+        toast.show(t('raisedToast'));
         onClose();
         router.push(`/governance/approvals/${r.id}`);
       },
@@ -113,28 +123,26 @@ export function RaiseApproval({
       open
       wide
       onClose={onClose}
-      title={
-        budgetId ? 'Submit the budget to the board' : capitalPlanId ? 'Submit the capital plan to the board' : 'Raise a matter for the board'
-      }
-      description="The board sees the whole package: write it for owners who were not in the office. No one’s personal details."
+      title={budgetId ? t('titleBudget') : capitalPlanId ? t('titlePlan') : t('titleRaise')}
+      description={t('raiseDescription')}
       onSubmit={() => raise.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={raise.isPending} disabled={!ready}>
-            {budgetId || budgetTransferId || capitalPlanId ? 'Submit' : 'Raise'}
+            {budgetId || budgetTransferId || capitalPlanId ? t('submit') : t('raise')}
           </Button>
         </>
       }
     >
       <div className="form">
         {budgetId || budgetTransferId || capitalPlanId ? null : (
-          <Field label="Type" error={err('type')}>
+          <Field label={c('type')} error={err('type')}>
             {(p) => (
               <Select {...p} value={type} onChange={(e) => setType(e.target.value as ApprovalType)}>
-                {types.map((t) => (
-                  <option key={t} value={t}>
-                    {APPROVAL_TYPE_TEXT[t]}
+                {types.map((x) => (
+                  <option key={x} value={x}>
+                    {codeText(g, 'approvalType', x)}
                   </option>
                 ))}
               </Select>
@@ -142,10 +150,10 @@ export function RaiseApproval({
           </Field>
         )}
         {subject === 'manager' ? (
-          <Field label="The manager" hint="An active manager who has not delivered a handover" error={err('managerAccountId')}>
+          <Field label={t('manager')} hint={t('managerHint')} error={err('managerAccountId')}>
             {(p) => (
               <Select {...p} value={managerId} onChange={(e) => setManagerId(e.target.value)}>
-                <option value="">{staff.isPending ? 'Loading…' : 'Choose a manager'}</option>
+                <option value="">{staff.isPending ? t('loading') : t('chooseManager')}</option>
                 {managers.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.fullName}
@@ -156,42 +164,43 @@ export function RaiseApproval({
           </Field>
         ) : null}
         {subject === 'budget_line' ? (
-          <Field label="Line of the active budget" error={err('budgetLineId')}>
+          <Field label={t('line')} error={err('budgetLineId')}>
             {(p) => (
               <Select {...p} value={lineId} onChange={(e) => setLineId(e.target.value)}>
-                <option value="">{active.isPending ? 'Loading…' : lines.length ? 'Choose a line' : 'No active budget'}</option>
+                <option value="">{active.isPending ? t('loading') : lines.length ? t('chooseLine') : t('noActiveBudget')}</option>
                 {lines.map((l) => (
                   <option key={l.id} value={l.id}>
-                    {CATEGORY_TEXT[l.category]} · {l.remaining} of {l.allowance} EGP left
+                    {t('lineLeft', {
+                      category: codeText(g, 'category', l.category),
+                      remaining: fmt.number(l.remaining),
+                      allowance: fmt.number(l.allowance),
+                    })}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
         ) : null}
-        <Field label="Context" error={err('context')}>
+        <Field label={t('context')} error={err('context')}>
           {(p) => <Textarea {...p} rows={5} maxLength={4000} value={context} onChange={(e) => setContext(e.target.value)} />}
         </Field>
-        <Field label="Impact" error={err('impact')}>
+        <Field label={t('impact')} error={err('impact')}>
           {(p) => <Textarea {...p} rows={3} maxLength={2000} value={impact} onChange={(e) => setImpact(e.target.value)} />}
         </Field>
         {type === 'annual_budget' || type === 'capital_plan' ? (
-          <p className="t-secondary">Its cost is the {type === 'capital_plan' ? 'plan' : 'budget'}’s total.</p>
+          <p className="t-secondary">{t('costIsTotal', { kind: type })}</p>
         ) : type === 'budget_transfer' ? (
-          <p className="t-secondary">Its cost is the amount transferred.</p>
+          <p className="t-secondary">{t('costIsTransfer')}</p>
         ) : (
-          <Field
-            label={type === 'budget_increase' || type === 'major_contract' ? 'Cost (EGP)' : 'Cost (EGP, optional)'}
-            error={err('cost')}
-          >
+          <Field label={type === 'budget_increase' || type === 'major_contract' ? t('costRequired') : t('costOptional')} error={err('cost')}>
             {(p) => <Input {...p} inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0.00" />}
           </Field>
         )}
         <div className="stack">
-          <span>Alternatives considered</span>
+          <span>{t('alternatives')}</span>
           {alternatives.map((a, i) => (
             <div key={i} className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
-              <Field label={`Alternative ${i + 1}`} error={err(`alternatives.${i}.text`)}>
+              <Field label={t('alternativeN', { n: i + 1 })} error={err(`alternatives.${i}.text`)}>
                 {(p) => (
                   <Input
                     {...p}
@@ -201,7 +210,7 @@ export function RaiseApproval({
                   />
                 )}
               </Field>
-              <Field label="Cost (optional)" error={err(`alternatives.${i}.cost`)}>
+              <Field label={t('alternativeCost')} error={err(`alternatives.${i}.cost`)}>
                 {(p) => (
                   <Input
                     {...p}
@@ -212,20 +221,20 @@ export function RaiseApproval({
                 )}
               </Field>
               <Button variant="text" onClick={() => setAlternatives(alternatives.filter((_, j) => j !== i))}>
-                Remove
+                {c('remove')}
               </Button>
             </div>
           ))}
           {alternatives.length < MAX_ALTERNATIVES ? (
             <Button variant="text" onClick={() => setAlternatives([...alternatives, { text: '', cost: '' }])}>
-              Add an alternative
+              {t('addAlternative')}
             </Button>
           ) : null}
         </div>
-        {files.length ? <p className="t-secondary">{files.length} attached.</p> : null}
+        {files.length ? <p className="t-secondary">{t('attached', { n: files.length })}</p> : null}
         <FileUpload
           purpose="approval_attachment"
-          label="Attach a quote, a report or a photo"
+          label={t('attach')}
           disabled={files.length >= MAX_ATTACHMENTS}
           onUploaded={(id) => setFiles((f) => [...f, id])}
         />

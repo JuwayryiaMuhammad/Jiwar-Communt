@@ -1,26 +1,15 @@
 'use client';
 
-import {
-  ErrorText,
-  formatDateTime,
-  REASON_CODES,
-  unwrap,
-  type Schema,
-} from '@jiwar/api';
+import { ErrorText, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import {
-  Badge,
-  Button,
-  Card,
-  DataTable,
-  PageHeader,
-  ReasonCodeDialog,
-  useToast,
-} from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, PageHeader, ReasonCodeDialog, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/res-identity-changes';
+import en from '@/messages/en/res-identity-changes';
 
 type Change = Schema<'IdentityChangeReviewView'>;
 const KEY = ['identity-changes'] as const;
@@ -33,6 +22,9 @@ const KEY = ['identity-changes'] as const;
  * a reason. The value is erased once decided.
  */
 export default function IdentityChangesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [rejecting, setRejecting] = useState<Change | null>(null);
   const list = useQuery({
@@ -47,15 +39,15 @@ export default function IdentityChangesPage() {
   });
 
   const approve = useAction(
-    (c: Change) =>
+    (change: Change) =>
       unwrap(
         api.POST('/api/v1/identity-changes/{id}/approve', {
-          params: { path: { id: c.id } },
+          params: { path: { id: change.id } },
         }),
       ),
     {
       invalidate: [KEY],
-      onDone: () => toast.show('Changed. The resident is told.'),
+      onDone: () => toast.show(t('approved')),
     },
   );
   const reject = useAction(
@@ -69,7 +61,7 @@ export default function IdentityChangesPage() {
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Rejected. The resident is told why.');
+        toast.show(t('rejected'));
         setRejecting(null);
       },
     },
@@ -77,66 +69,51 @@ export default function IdentityChangesPage() {
 
   return (
     <>
-      <PageHeader
-        title="Name and phone changes"
-        description="Residents ask; you check the new value against their documents, then approve or reject. Nothing changes until you do."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <ErrorAlert error={approve.error} />
       <Card flush>
         <QueryState query={list}>
           <DataTable<Change>
             rows={list.data?.data}
-            rowKey={(c) => c.id}
-            empty="No change waits"
-            emptyHint="A resident asks from the app, after confirming it is them."
+            rowKey={(row) => row.id}
+            empty={t('none')}
+            emptyHint={t('noneHint')}
             columns={[
               {
                 key: 'who',
-                header: 'Account',
-                cell: (c) => (
-                  <Link
-                    className="table__link"
-                    href={`/residents/${c.accountId}`}
-                  >
-                    {c.accountType === 'family' ? 'Family member' : 'Resident'}
+                header: t('col.account'),
+                cell: (row) => (
+                  <Link className="table__link" href={`/residents/${row.accountId}`}>
+                    {row.accountType === 'family' ? t('family') : t('resident')}
                   </Link>
                 ),
               },
               {
                 key: 'field',
-                header: 'What',
-                cell: (c) => (
-                  <Badge tone="beige">
-                    {c.field === 'name' ? 'Name' : 'Phone'}
-                  </Badge>
-                ),
+                header: t('col.what'),
+                cell: (row) => <Badge tone="beige">{row.field === 'name' ? t('name') : t('phone')}</Badge>,
               },
-              { key: 'now', header: 'Now', cell: (c) => c.currentValue ?? '—' },
+              { key: 'now', header: t('col.now'), cell: (row) => row.currentValue ?? '—' },
               {
                 key: 'new',
-                header: 'Asked for',
-                cell: (c) => <strong>{c.newValue}</strong>,
+                header: t('col.asked'),
+                cell: (row) => <strong>{row.newValue}</strong>,
               },
               {
                 key: 'when',
-                header: 'Asked',
-                cell: (c) => formatDateTime(c.createdAt),
+                header: t('col.when'),
+                cell: (row) => f.dateTime(row.createdAt),
               },
               {
                 key: 'act',
                 header: '',
-                cell: (c) => (
+                cell: (row) => (
                   <span style={{ display: 'flex', gap: 8 }}>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      loading={approve.isPending}
-                      onClick={() => approve.mutate(c)}
-                    >
-                      Approve
+                    <Button size="sm" variant="primary" loading={approve.isPending} onClick={() => approve.mutate(row)}>
+                      {c('approve')}
                     </Button>
-                    <Button size="sm" onClick={() => setRejecting(c)}>
-                      Reject
+                    <Button size="sm" onClick={() => setRejecting(row)}>
+                      {c('reject')}
                     </Button>
                   </span>
                 ),
@@ -148,16 +125,14 @@ export default function IdentityChangesPage() {
       <ReasonCodeDialog
         open={rejecting !== null}
         onClose={() => setRejecting(null)}
-        title="Reject the change"
-        description="The resident sees the reason; the value they asked for is erased."
+        title={t('rejectTitle')}
+        description={t('rejectDescription')}
         codes={REASON_CODES.identityChangeReject}
-        confirmLabel="Reject"
+        confirmLabel={c('reject')}
         danger
         pending={reject.isPending}
         error={reject.error ? <ErrorText error={reject.error} /> : undefined}
-        onConfirm={(reasonCode) =>
-          rejecting && reject.mutate({ c: rejecting, reasonCode })
-        }
+        onConfirm={(reasonCode) => rejecting && reject.mutate({ c: rejecting, reasonCode })}
       />
     </>
   );

@@ -1,7 +1,8 @@
 'use client';
 
-import { ApiError, ErrorText, formatDate, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ApiError, ErrorText, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, fieldError, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -16,6 +17,8 @@ import {
   PageHeader,
   ReasonCodeDialog,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -27,11 +30,15 @@ import { emptyOccupancy, OccupancyRow } from '@/components/occupancy-row';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ResidentDetail } from '@/lib/queries';
+import ar from '@/messages/ar/res-residents';
+import en from '@/messages/en/res-residents';
 
 type Occupancy = Schema<'OccupancyResponse'>;
 type OccupancyInput = Schema<'OccupancyInputDto'>;
 
 function ContactDialog({ resident, open, onClose }: { resident: ResidentDetail; open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [email, setEmail] = useState(resident.email ?? '');
   const [phone, setPhone] = useState(resident.phone ?? '');
@@ -49,7 +56,7 @@ function ContactDialog({ resident, open, onClose }: { resident: ResidentDetail; 
     {
       invalidate: [keys.resident(resident.id), keys.residents],
       onDone: () => {
-        toast.show('Contact updated. Pending sign-in codes were cancelled.');
+        toast.show(t('contactUpdated'));
         onClose();
       },
     },
@@ -62,24 +69,24 @@ function ContactDialog({ resident, open, onClose }: { resident: ResidentDetail; 
         save.reset();
         onClose();
       }}
-      title="Update contact"
-      description="Sign-in codes go to the email."
+      title={t('updateContact')}
+      description={t('codesGoToEmail')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={unchanged}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Email" error={fieldError(save.error, 'email')}>
-          {(p) => <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}
+        <Field label={c('email')} error={fieldError(save.error, 'email')}>
+          {(p) => <Input {...p} className="ltr" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}
         </Field>
-        <Field label="Phone" error={fieldError(save.error, 'phone')}>
-          {(p) => <Input {...p} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
+        <Field label={c('phone')} error={fieldError(save.error, 'phone')}>
+          {(p) => <Input {...p} className="ltr" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
       </div>
@@ -88,6 +95,8 @@ function ContactDialog({ resident, open, onClose }: { resident: ResidentDetail; 
 }
 
 function AddUnitDialog({ residentId, open, onClose }: { residentId: string; open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [value, setValue] = useState<OccupancyInput>(emptyOccupancy);
   const add = useAction(
@@ -96,7 +105,7 @@ function AddUnitDialog({ residentId, open, onClose }: { residentId: string; open
     {
       invalidate: [keys.resident(residentId), keys.residents, keys.units],
       onDone: (o) => {
-        toast.show(`Added to unit ${o.unitCode}.`);
+        toast.show(t('addedToUnit', { unit: o.unitCode }));
         close();
       },
     },
@@ -110,13 +119,13 @@ function AddUnitDialog({ residentId, open, onClose }: { residentId: string; open
     <Dialog
       open={open}
       onClose={close}
-      title="Add a unit"
+      title={t('addUnitTitle')}
       onSubmit={() => add.mutate(undefined)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={add.isPending} disabled={!value.unitId}>
-            Add
+            {c('add')}
           </Button>
         </>
       }
@@ -130,6 +139,10 @@ function AddUnitDialog({ residentId, open, onClose }: { residentId: string; open
 }
 
 export default function ResidentPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { can } = usePermissions();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
@@ -151,7 +164,7 @@ export default function ResidentPage() {
     {
       invalidate: [keys.resident(id)],
       onDone: (o) => {
-        toast.show(`Handover of unit ${o.unitCode} recorded.`);
+        toast.show(t('handoverRecorded', { unit: o.unitCode }));
         setHandingOver(null);
       },
     },
@@ -173,7 +186,7 @@ export default function ResidentPage() {
     {
       invalidate: [keys.resident(id), keys.residents],
       onDone: (a) => {
-        toast.show(a.status === 'active' ? 'Account activated.' : 'Account deactivated.');
+        toast.show(a.status === 'active' ? t('activated') : t('deactivated'));
         setStatusChange(false);
       },
     },
@@ -183,32 +196,32 @@ export default function ResidentPage() {
     <>
       <PageHeader
         back={
-          <ButtonLink href="/residents" variant="text" size="sm" icon={<ArrowLeft aria-hidden />}>
-            Residents
+          <ButtonLink href="/residents" variant="text" size="sm" icon={<ArrowLeft aria-hidden className="icon-dir" />}>
+            {t('title')}
           </ButtonLink>
         }
         title={
           r ? (
             <span className="row" style={{ gap: 12 }}>
-              {r.erased ? 'Erased account' : r.fullName} <StatusBadge status={r.erased ? 'erased' : r.status} />
+              {r.erased ? t('erasedAccount') : r.fullName} <StatusBadge status={r.erased ? 'erased' : r.status} />
             </span>
           ) : (
-            'Resident'
+            t('residentTitle')
           )
         }
         actions={
           r && !r.erased ? (
             <>
-              {can('accounts.read') ? <ButtonLink href={`/accounts/${r.id}`}>Account</ButtonLink> : null}
+              {can('accounts.read') ? <ButtonLink href={`/accounts/${r.id}`}>{t('account')}</ButtonLink> : null}
               <Button icon={<Pencil aria-hidden />} onClick={() => setEditing(true)}>
-                Contact
+                {t('contact')}
               </Button>
               <Button icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-                Add unit
+                {t('addUnit')}
               </Button>
               {r.status === 'active' || r.status === 'inactive' ? (
                 <Button variant={active ? 'dark' : 'primary'} onClick={() => setStatusChange(true)}>
-                  {active ? 'Deactivate' : 'Activate'}
+                  {active ? t('deactivate') : t('activate')}
                 </Button>
               ) : null}
             </>
@@ -219,59 +232,57 @@ export default function ResidentPage() {
         {r ? (
           <div className="grid grid--main-aside">
             <Card flush>
-              <CardHeader title="Units" />
+              <CardHeader title={t('occupancies')} />
               <DataTable<Occupancy>
                 rows={r.occupancies}
                 rowKey={(o) => o.id}
-                empty="No occupancy"
+                empty={t('noOccupancy')}
                 columns={[
                   {
                     key: 'unit',
-                    header: 'Unit',
+                    header: t('col.unit'),
                     cell: (o) => (
                       <Link className="table__link" href={`/units/${o.unitId}`}>
-                        {o.unitCode}
+                        <span className="ltr">{o.unitCode}</span>
                       </Link>
                     ),
                   },
                   {
                     key: 'type',
-                    header: 'As',
+                    header: t('col.as'),
                     cell: (o) => (
                       <span className="row">
-                        {humanize(o.occupancyType)}
-                        {o.isPrimary ? <Badge tone="green">Primary</Badge> : null}
+                        {label(o.occupancyType)}
+                        {o.isPrimary ? <Badge tone="green">{t('primary')}</Badge> : null}
                       </span>
                     ),
                   },
-                  { key: 'resides', header: 'Lives there', cell: (o) => (o.resides ? 'Yes' : 'No') },
-                  { key: 'status', header: 'Status', cell: (o) => <StatusBadge status={o.status} /> },
+                  { key: 'resides', header: t('col.lives'), cell: (o) => (o.resides ? c('yes') : c('no')) },
+                  { key: 'status', header: c('status'), cell: (o) => <StatusBadge status={o.status} /> },
                   {
                     key: 'dates',
-                    header: 'Period',
+                    header: t('col.period'),
                     cell: (o) => (
                       <span className="t-num">
-                        {formatDate(o.startedAt)} – {o.endedAt ? formatDate(o.endedAt) : 'now'}
-                        {o.endReason ? <span className="list__meta"> · {humanize(o.endReason)}</span> : null}
+                        {f.date(o.startedAt)} – {o.endedAt ? f.date(o.endedAt) : t('now')}
+                        {o.endReason ? <span className="list__meta"> · {label(o.endReason)}</span> : null}
                       </span>
                     ),
                   },
                   {
                     key: 'handover',
-                    header: 'Handover',
+                    header: t('col.handover'),
                     cell: (o) =>
                       o.status !== 'ended' ? (
                         <span className="t-secondary">—</span>
                       ) : o.handedOverAt ? (
-                        <span title="The unit was handed back: its emergency button no longer shows in their archive.">
-                          {formatDate(o.handedOverAt)}
-                        </span>
+                        <span title={t('handedBack')}>{f.date(o.handedOverAt)}</span>
                       ) : can('residents.manage') ? (
                         <Button size="sm" loading={handover.isPending && handover.variables?.o.id === o.id} onClick={() => setHandingOver(o)}>
-                          Record handover
+                          {t('recordHandover')}
                         </Button>
                       ) : (
-                        <span className="t-secondary">Not yet</span>
+                        <span className="t-secondary">{t('notYet')}</span>
                       ),
                   },
                 ]}
@@ -279,23 +290,23 @@ export default function ResidentPage() {
             </Card>
             <Card>
               {r.erased ? (
-                <p className="t-secondary">This account was erased. Only its id remains.</p>
+                <p className="t-secondary">{t('erasedNote')}</p>
               ) : (
                 <dl className="dl">
-                  <dt>Email</dt>
-                  <dd>{r.email}</dd>
-                  <dt>Phone</dt>
-                  <dd className="t-num">{r.phone ?? 'Released (frozen account)'}</dd>
-                  <dt>Document</dt>
+                  <dt>{c('email')}</dt>
+                  <dd className="ltr">{r.email}</dd>
+                  <dt>{c('phone')}</dt>
+                  <dd className="t-num ltr">{r.phone ?? t('phoneFrozen')}</dd>
+                  <dt>{t('document')}</dt>
                   <dd>
-                    {humanize(r.idDocumentType)} <span className="t-mono">{r.idDocumentNumberMasked}</span>
+                    {label(r.idDocumentType)} <span className="t-mono ltr">{r.idDocumentNumberMasked}</span>
                   </dd>
-                  <dt>Nationality</dt>
+                  <dt>{t('nationality')}</dt>
                   <dd>{r.nationality ?? '—'}</dd>
-                  <dt>Birth date</dt>
-                  <dd>{formatDate(r.birthDate)}</dd>
-                  <dt>Language</dt>
-                  <dd>{r.preferredLocale === 'en' ? 'English' : 'Arabic'}</dd>
+                  <dt>{t('birthDate')}</dt>
+                  <dd>{f.day(r.birthDate)}</dd>
+                  <dt>{t('language')}</dt>
+                  <dd>{r.preferredLocale === 'en' ? t('locale.en') : t('locale.ar')}</dd>
                 </dl>
               )}
             </Card>
@@ -308,9 +319,9 @@ export default function ResidentPage() {
           setHandingOver(null);
           handover.reset();
         }}
-        title={`Record the handover of unit ${handingOver?.unitCode ?? ''}?`}
-        description="For a former occupant who has given the unit back: keys returned, nothing of theirs left. Their archive of the unit stops showing its emergency button. They are told."
-        confirmLabel="Record handover"
+        title={t('handoverTitle', { unit: handingOver?.unitCode ?? '' })}
+        description={t('handoverDescription')}
+        confirmLabel={t('recordHandover')}
         pending={handover.isPending}
         error={<ErrorAlert error={handover.error} />}
         onConfirm={() => handingOver && handover.mutate({ o: handingOver })}
@@ -321,10 +332,10 @@ export default function ResidentPage() {
           setHandingOver(null);
           handover.reset();
         }}
-        title="No clearance on record"
-        description="The unit has no clearance since the notice to move out. The handover still happens: say why."
+        title={t('noClearanceTitle')}
+        description={t('noClearanceDescription')}
         codes={REASON_CODES.handoverWithoutClearance}
-        confirmLabel="Record handover"
+        confirmLabel={t('recordHandover')}
         pending={handover.isPending}
         error={handover.variables?.reasonCode && handover.error ? <ErrorText error={handover.error} /> : undefined}
         onConfirm={(reasonCode) => needsReason && handover.mutate({ o: needsReason, reasonCode })}
@@ -339,11 +350,9 @@ export default function ResidentPage() {
               setStatusChange(false);
               setStatus.reset();
             }}
-            title={active ? `Deactivate ${r.fullName}?` : `Activate ${r.fullName}?`}
-            description={
-              active ? 'They are signed out and cannot sign in. Their units and household stay as they are.' : 'They can sign in again.'
-            }
-            confirmLabel={active ? 'Deactivate' : 'Activate'}
+            title={active ? t('deactivateTitle', { name: r.fullName ?? '' }) : t('activateTitle', { name: r.fullName ?? '' })}
+            description={active ? t('deactivateDescription') : t('activateDescription')}
+            confirmLabel={active ? t('deactivate') : t('activate')}
             danger={active}
             pending={setStatus.isPending}
             error={<ErrorAlert error={setStatus.error} />}

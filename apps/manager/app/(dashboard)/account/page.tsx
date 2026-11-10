@@ -1,8 +1,9 @@
 'use client';
 
-import { formatDateTime, humanize, relativeTime, unwrap, type Schema } from '@jiwar/api';
+import { unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, fieldError, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, DataTable, Field, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, DataTable, Field, PageHeader, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { preferencesChanges, PreferencesFields, toForm, type PrefsForm } from '@/components/notification-preferences';
@@ -10,20 +11,23 @@ import { api, bffAuth } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Session } from '@/lib/queries';
 import { describeUserAgent } from '@/lib/user-agent';
+import ar from '@/messages/ar/accounts-me';
+import en from '@/messages/en/accounts-me';
 
 type Locale = Schema<'Locale'>;
-const LOCALE_TEXT: Record<Locale, string> = { en: 'English', ar: 'Arabic (العربية)' };
+const LOCALES: readonly Locale[] = ['en', 'ar'];
 
 function Language({ current }: { current: Locale }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [locale, setLocale] = useState<Locale>(current);
   const save = useAction((next: Locale) => unwrap(api.PATCH('/api/v1/me/locale', { body: { locale: next } })), {
     invalidate: [keys.me],
-    onDone: () => toast.show('Language saved.'),
+    onDone: () => toast.show(t('language.saved')),
   });
   return (
     <Card flush>
-      <CardHeader title="Language" />
+      <CardHeader title={t('language.title')} />
       <CardBody>
         <form
           className="form"
@@ -33,15 +37,15 @@ function Language({ current }: { current: Locale }) {
           }}
         >
           <Field
-            label="Language of what is sent to you"
-            hint="Emails and notices from the compound. The dashboard itself is in English for now."
+            label={t('language.label')}
+            hint={t('language.hint')}
             error={fieldError(save.error, 'preferredLocale') ?? fieldError(save.error, 'locale')}
           >
             {(p) => (
               <Select {...p} value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
-                {(Object.keys(LOCALE_TEXT) as Locale[]).map((l) => (
+                {LOCALES.map((l) => (
                   <option key={l} value={l}>
-                    {LOCALE_TEXT[l]}
+                    {t(`locale.${l}`)}
                   </option>
                 ))}
               </Select>
@@ -50,7 +54,7 @@ function Language({ current }: { current: Locale }) {
           <ErrorAlert error={save.error} />
           <span className="row">
             <Button type="submit" variant="primary" disabled={locale === current} loading={save.isPending}>
-              Save language
+              {t('language.save')}
             </Button>
           </span>
         </form>
@@ -60,6 +64,7 @@ function Language({ current }: { current: Locale }) {
 }
 
 function NotificationSettings() {
+  const t = useT(en, ar);
   const toast = useToast();
   const prefs = useQuery({ queryKey: keys.myPreferences, queryFn: fetchers.myPreferences });
   const [form, setForm] = useState<PrefsForm | null>(null);
@@ -75,14 +80,14 @@ function NotificationSettings() {
       invalidate: [keys.myPreferences],
       onDone: (next) => {
         setForm(toForm(next));
-        toast.show('Notification settings saved.');
+        toast.show(t('notify.saved'));
       },
     },
   );
 
   return (
     <Card flush>
-      <CardHeader title="Notification settings" />
+      <CardHeader title={t('notify.title')} />
       <CardBody>
         <QueryState query={prefs} rows={4}>
           {form && saved ? (
@@ -93,18 +98,15 @@ function NotificationSettings() {
                 if (changes) save.mutate(changes);
               }}
             >
-              <p className="t-secondary">
-                What is also sent to you by email. Everything stays in your notifications list whatever is set here, and emergencies and
-                security notices always reach you.
-              </p>
+              <p className="t-secondary">{t('notify.intro')}</p>
               <PreferencesFields saved={saved} form={form} onChange={setForm} own error={save.error} />
               <ErrorAlert error={save.error} />
               <span className="row">
                 <Button disabled={changes === null || save.isPending} onClick={() => setForm(toForm(saved))}>
-                  Discard
+                  {t('notify.discard')}
                 </Button>
                 <Button type="submit" variant="primary" disabled={changes === null} loading={save.isPending}>
-                  Save settings
+                  {t('notify.save')}
                 </Button>
               </span>
             </form>
@@ -116,6 +118,9 @@ function NotificationSettings() {
 }
 
 function Sessions() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [ending, setEnding] = useState<Session | null>(null);
   const [endingAll, setEndingAll] = useState(false);
@@ -126,7 +131,7 @@ function Sessions() {
     {
       invalidate: [keys.mySessions],
       onDone: () => {
-        toast.show('That session is signed out.');
+        toast.show(t('sessions.signedOut'));
         setEnding(null);
       },
     },
@@ -142,7 +147,7 @@ function Sessions() {
   return (
     <Card flush>
       <CardHeader
-        title="Where you are signed in"
+        title={t('sessions.title')}
         actions={
           <Button
             size="sm"
@@ -152,7 +157,7 @@ function Sessions() {
               setEndingAll(true);
             }}
           >
-            Sign out everywhere
+            {t('sessions.signOutAll')}
           </Button>
         }
       />
@@ -160,27 +165,27 @@ function Sessions() {
         <DataTable<Session>
           rows={rows}
           rowKey={(s) => s.id}
-          empty="No session"
+          empty={t('sessions.empty')}
           columns={[
             {
               key: 'device',
-              header: 'Device',
+              header: t('sessions.device'),
               cell: (s) => (
                 <span className="row" title={s.userAgent ?? undefined}>
-                  {describeUserAgent(s.userAgent)}
-                  {s.isCurrent ? <Badge tone="green">This session</Badge> : null}
+                  {describeUserAgent(t, s.userAgent)}
+                  {s.isCurrent ? <Badge tone="green">{t('sessions.current')}</Badge> : null}
                 </span>
               ),
             },
-            { key: 'since', header: 'Signed in', cell: (s) => formatDateTime(s.createdAt) },
+            { key: 'since', header: t('sessions.signedIn'), cell: (s) => f.dateTime(s.createdAt) },
             {
               key: 'used',
-              header: 'Last used',
-              cell: (s) => (s.lastUsedAt ? <span title={formatDateTime(s.lastUsedAt)}>{relativeTime(s.lastUsedAt)}</span> : '—'),
+              header: t('sessions.lastUsed'),
+              cell: (s) => (s.lastUsedAt ? <span title={f.dateTime(s.lastUsedAt)}>{f.relative(s.lastUsedAt)}</span> : '—'),
             },
             {
               key: 'actions',
-              header: <span className="visually-hidden">Actions</span>,
+              header: <span className="visually-hidden">{c('actions')}</span>,
               className: 'table__actions',
               cell: (s) =>
                 s.isCurrent ? null : (
@@ -191,7 +196,7 @@ function Sessions() {
                       setEnding(s);
                     }}
                   >
-                    Sign out
+                    {t('sessions.signOut')}
                   </Button>
                 ),
             },
@@ -201,13 +206,11 @@ function Sessions() {
       <ConfirmDialog
         open={ending !== null}
         onClose={() => setEnding(null)}
-        title="Sign this session out?"
+        title={t('sessions.endTitle')}
         description={
-          ending
-            ? `${describeUserAgent(ending.userAgent)}, signed in ${formatDateTime(ending.createdAt)}. It has to sign in again with a code.`
-            : undefined
+          ending ? t('sessions.endDescription', { device: describeUserAgent(t, ending.userAgent), when: f.dateTime(ending.createdAt) }) : undefined
         }
-        confirmLabel="Sign out"
+        confirmLabel={t('sessions.signOut')}
         pending={revoke.isPending}
         error={<ErrorAlert error={revoke.error} />}
         onConfirm={() => ending && revoke.mutate(ending.id)}
@@ -215,9 +218,9 @@ function Sessions() {
       <ConfirmDialog
         open={endingAll}
         onClose={() => setEndingAll(false)}
-        title="Sign out everywhere?"
-        description="Every session of your account ends, this one included, on every device. Use it when a session here is not yours. You sign in again with a code."
-        confirmLabel="Sign out everywhere"
+        title={t('sessions.endAllTitle')}
+        description={t('sessions.endAllDescription')}
+        confirmLabel={t('sessions.signOutAll')}
         danger
         pending={revokeAll.isPending}
         error={<ErrorAlert error={revokeAll.error} />}
@@ -233,22 +236,25 @@ function Sessions() {
  * Their details are changed by whoever manages their account, not here.
  */
 export default function AccountPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const { me, error } = usePermissions();
   return (
     <>
-      <PageHeader title="My account" description="Your own sign-in, language and notification settings." />
+      <PageHeader title={t('title')} description={t('description')} />
       {me ? (
         <div className="stack">
           <Card flush>
-            <CardHeader title={me.fullName ?? 'Your account'} />
+            <CardHeader title={me.fullName ?? t('yourAccount')} />
             <CardBody>
               <dl className="dl">
-                <dt>Role</dt>
-                <dd>{me.role.name ?? humanize(me.role.key)}</dd>
-                <dt>Email</dt>
-                <dd>{me.email ?? '—'}</dd>
-                <dt>Phone</dt>
-                <dd className="t-num">{me.phone ?? '—'}</dd>
+                <dt>{t('role')}</dt>
+                <dd>{me.role.name ?? label(me.role.key)}</dd>
+                <dt>{c('email')}</dt>
+                <dd className="ltr">{me.email ?? '—'}</dd>
+                <dt>{c('phone')}</dt>
+                <dd className="t-num ltr">{me.phone ?? '—'}</dd>
               </dl>
             </CardBody>
           </Card>

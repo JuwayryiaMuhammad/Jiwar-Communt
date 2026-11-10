@@ -2,18 +2,25 @@
 
 import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, ForbiddenState, PageHeader, ReasonCodeDialog, Textarea, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, ForbiddenState, PageHeader, ReasonCodeDialog, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Back } from '@/components/community/bits';
 import { ApprovalPackage } from '@/components/governance/board-ui';
-import { APPROVAL_TYPE_TEXT } from '@/components/governance/matters';
+import { codeText } from '@/components/governance/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/gov-approvals';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-approvals';
+import codesEn from '@/messages/en/gov-codes';
 
 function MarkImplemented({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [note, setNote] = useState('');
   const mark = useAction(
@@ -27,7 +34,7 @@ function MarkImplemented({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.governanceAll],
       onDone: () => {
-        toast.show('Marked implemented. The board was told.');
+        toast.show(t('implementedToast'));
         onClose();
       },
     },
@@ -36,20 +43,20 @@ function MarkImplemented({ id, onClose }: { id: string; onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Mark it implemented?"
-      description="Once: the board sees when, and your note."
+      title={t('implementedTitle')}
+      description={t('implementedDescription')}
       onSubmit={() => mark.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={mark.isPending}>
-            Mark implemented
+            {t('markImplemented')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Note (optional)" error={fieldError(mark.error, 'note')}>
+        <Field label={t('noteOptional')} error={fieldError(mark.error, 'note')}>
           {(p) => <Textarea {...p} rows={3} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />}
         </Field>
         <ErrorAlert error={mark.error} />
@@ -61,6 +68,8 @@ function MarkImplemented({ id, onClose }: { id: string; onClose: () => void }) {
 /** One request as the management follows it (ADR 0055): the package and the board’s decision, never the deliberation. */
 export default function ApprovalPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('governance.approvals');
@@ -73,16 +82,16 @@ export default function ApprovalPage() {
     {
       invalidate: [keys.governanceAll, keys.budgetsAll],
       onDone: () => {
-        toast.show('Withdrawn. Any open motion on it closed; the board was told.');
+        toast.show(t('withdrawn'));
         setWithdrawing(false);
       },
     },
   );
-  const back = <Back href="/governance/approvals" label="Approvals" />;
+  const back = <Back href="/governance/approvals" label={t('title')} />;
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={back} title="Request" />
+        <PageHeader back={back} title={t('requestTitle')} />
         <ForbiddenState />
       </>
     );
@@ -93,17 +102,17 @@ export default function ApprovalPage() {
     <>
       <PageHeader
         back={back}
-        title={a ? `${a.reference} · ${APPROVAL_TYPE_TEXT[a.type]}` : 'Request'}
+        title={a ? `${a.reference} · ${codeText(g, 'approvalType', a.type)}` : t('requestTitle')}
         actions={
           <>
             {mayMark ? (
               <Button variant="primary" onClick={() => setMarking(true)}>
-                Mark implemented
+                {t('markImplemented')}
               </Button>
             ) : null}
             {mayWithdraw ? (
               <Button variant="danger" onClick={() => setWithdrawing(true)}>
-                Withdraw
+                {t('withdraw')}
               </Button>
             ) : null}
           </>
@@ -113,10 +122,10 @@ export default function ApprovalPage() {
       <ReasonCodeDialog
         open={withdrawing}
         onClose={() => setWithdrawing(false)}
-        title="Withdraw the request?"
-        description="The board stops deciding it; a submitted budget goes back to withdrawn, and a new one is drafted."
+        title={t('withdrawTitle')}
+        description={t('withdrawDescription')}
         codes={REASON_CODES.approvalWithdraw}
-        confirmLabel="Withdraw"
+        confirmLabel={t('withdraw')}
         danger
         pending={withdraw.isPending}
         error={<ErrorAlert error={withdraw.error} />}

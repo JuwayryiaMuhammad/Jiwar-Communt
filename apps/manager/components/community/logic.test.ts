@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { createFormat, stripIsolates, translator } from '@jiwar/i18n/core';
+import ar from '../../messages/ar/community.ts';
+import en from '../../messages/en/community.ts';
 import {
   announcementActions,
   audienceBody,
@@ -17,10 +20,18 @@ import {
   toLocalInput,
 } from './logic.ts';
 
+const tEn = translator('en', en, ar);
+const tAr = translator('ar', en, ar);
+const fmtEn = createFormat('en');
+const fmtAr = createFormat('ar');
+
 test('an audience reads as who and where; no buildings is the whole compound', () => {
-  assert.equal(audienceText({ occupancy: 'everyone', buildings: null }), 'Everyone · whole compound');
-  assert.equal(audienceText({ occupancy: 'owners', buildings: ['A'] }), 'Owners only · building A');
-  assert.equal(audienceText({ occupancy: 'tenants', buildings: ['A', 'B'] }), 'Tenants only · buildings A, B');
+  const text = (a: Parameters<typeof audienceText>[0]) => stripIsolates(audienceText(a, tEn, fmtEn));
+  assert.equal(text({ occupancy: 'everyone', buildings: null }), 'Everyone · whole compound');
+  assert.equal(text({ occupancy: 'owners', buildings: ['A'] }), 'Owners only · building A');
+  assert.equal(text({ occupancy: 'tenants', buildings: ['A', 'B'] }), 'Tenants only · buildings A and B');
+  assert.equal(stripIsolates(audienceText({ occupancy: 'everyone', buildings: [] }, tAr, fmtAr)), 'الجميع · المجمع كله');
+  assert.equal(stripIsolates(audienceText({ occupancy: 'owners', buildings: ['A'] }, tAr, fmtAr)), 'الملاك فقط · المبنى A');
   assert.deepEqual(audienceBody('owners', []), { occupancy: 'owners' });
   assert.deepEqual(audienceBody('everyone', ['B']), { occupancy: 'everyone', buildings: ['B'] });
 });
@@ -62,9 +73,10 @@ test('a poll: everything changes before it opens, only its closing time after; a
 });
 
 test('withheld counts say why; shown counts say nothing', () => {
-  assert.match(hiddenText('few_votes') ?? '', /^Fewer than 5 votes so far/);
-  assert.match(hiddenText('cancelled') ?? '', /nothing was counted/);
-  assert.equal(hiddenText(null), null);
+  assert.match(hiddenText('few_votes', tEn) ?? '', /^Fewer than 5 votes so far/);
+  assert.match(hiddenText('cancelled', tEn) ?? '', /nothing was counted/);
+  assert.match(hiddenText('not_open', tAr) ?? '', /لم يبدأ التصويت/);
+  assert.equal(hiddenText(null, tEn), null);
   assert.equal(percent(1, 3), 33);
   assert.equal(percent(0, 0), 0);
 });

@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -16,18 +17,26 @@ import {
   Select,
   StatusBadge,
   Textarea,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { inEither, RESULT_TEXT, turnoutText } from '@/components/governance/logic';
+import { codeText, inLocale, turnoutText } from '@/components/governance/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GovernanceContestStatus, type StaffGovernancePoll } from '@/lib/queries';
+import ar from '@/messages/ar/gov-polls';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-polls';
+import codesEn from '@/messages/en/gov-codes';
 
 type View = GovernanceContestStatus | 'all';
+const VIEWS = ['open', 'scheduled', 'closed', 'cancelled', 'all'] as const satisfies readonly View[];
 
 function NewPoll({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
   const [kind, setKind] = useState<'yes_no' | 'choice'>('yes_no');
@@ -61,7 +70,7 @@ function NewPoll({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.governanceAll],
       onDone: () => {
-        toast.show('Put to the owners. Their units’ voting owners are told when it opens.');
+        toast.show(t('put'));
         onClose();
       },
     },
@@ -72,36 +81,36 @@ function NewPoll({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="Put a poll to the owners"
-      description="One vote per unit, cast by its voting owner. Its secrecy is fixed once put; nobody sees a count before it closes."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => create.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending} disabled={!titleEn.trim() || !bodyEn.trim() || !closesAt}>
-            Put the poll
+            {t('putIt')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Question" error={err('titleEn')}>
+        <Field label={t('question')} error={err('titleEn')}>
           {(p) => <Input {...p} maxLength={200} value={titleEn} onChange={(e) => setTitleEn(e.target.value)} />}
         </Field>
-        <Field label="What it is about" error={err('bodyEn')}>
+        <Field label={t('about')} error={err('bodyEn')}>
           {(p) => <Textarea {...p} rows={4} maxLength={4000} value={bodyEn} onChange={(e) => setBodyEn(e.target.value)} />}
         </Field>
-        <Field label="Answers">
+        <Field label={t('answers')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as 'yes_no' | 'choice')}>
-              <option value="yes_no">Yes, no or abstain</option>
-              <option value="choice">One of several</option>
+              <option value="yes_no">{t('yesNo')}</option>
+              <option value="choice">{t('choice')}</option>
             </Select>
           )}
         </Field>
         {kind === 'choice'
           ? options.map((o, i) => (
-              <Field key={i} label={`Option ${i + 1}`} error={err(`options.${i}.labelEn`)}>
+              <Field key={i} label={t('optionN', { n: i + 1 })} error={err(`options.${i}.labelEn`)}>
                 {(p) => (
                   <Input
                     {...p}
@@ -115,29 +124,25 @@ function NewPoll({ onClose }: { onClose: () => void }) {
           : null}
         {kind === 'choice' && options.length < 10 ? (
           <Button variant="text" onClick={() => setOptions([...options, ''])}>
-            Add an option
+            {t('addOption')}
           </Button>
         ) : null}
-        <Checkbox
-          label="Secret ballot (no choice is ever stored with its unit). Unticked: an open vote, each unit’s choice shown to the owners after the close."
-          checked={secret}
-          onChange={(e) => setSecret(e.target.checked)}
-        />
+        <Checkbox label={t('secretLabel')} checked={secret} onChange={(e) => setSecret(e.target.checked)} />
         <div className="row" style={{ gap: 16 }}>
-          <Field label="Quorum (% of units)" error={err('quorumPct')}>
+          <Field label={t('quorumLabel')} error={err('quorumPct')}>
             {(p) => <Input {...p} type="number" min={1} max={100} value={quorumPct} onChange={(e) => setQuorum(Number(e.target.value))} />}
           </Field>
-          <Field label="To pass (% of votes)" error={err('thresholdPct')}>
+          <Field label={t('passLabel')} error={err('thresholdPct')}>
             {(p) => (
               <Input {...p} type="number" min={50} max={100} value={thresholdPct} onChange={(e) => setThreshold(Number(e.target.value))} />
             )}
           </Field>
         </div>
         <div className="row" style={{ gap: 16 }}>
-          <Field label="Opens (empty: now)" error={err('opensAt')}>
+          <Field label={t('opens')} error={err('opensAt')}>
             {(p) => <Input {...p} type="datetime-local" value={opensAt} onChange={(e) => setOpensAt(e.target.value)} />}
           </Field>
-          <Field label="Closes" error={err('closesAt')}>
+          <Field label={t('closes')} error={err('closesAt')}>
             {(p) => <Input {...p} type="datetime-local" value={closesAt} onChange={(e) => setClosesAt(e.target.value)} />}
           </Field>
         </div>
@@ -149,42 +154,41 @@ function NewPoll({ onClose }: { onClose: () => void }) {
 
 /** The owners' polls (ADR 0051): put by the board, or the manager for it. */
 export default function GovernancePollsPage() {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('governance.manage');
   const [view, setView] = useState<View>('open');
   const [creating, setCreating] = useState(false);
   const status = view === 'all' ? '' : view;
-  const list = useCursorList(keys.governancePolls(status), (c) => fetchers.governancePolls(status, c), { enabled: allowed });
+  const list = useCursorList(keys.governancePolls(status), (cursor) => fetchers.governancePolls(status, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Owners’ polls" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Owners’ polls"
-        description="Binding votes of the owners, one per unit, with a quorum and a pass threshold. The board puts them in the app; the manager may too."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
-            New poll
+            {t('newPoll')}
           </Button>
         }
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Polls shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'open', label: 'Open' },
-            { value: 'scheduled', label: 'Scheduled' },
-            { value: 'closed', label: 'Closed' },
-            { value: 'cancelled', label: 'Cancelled' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
       </div>
       <Card flush>
@@ -192,26 +196,26 @@ export default function GovernancePollsPage() {
           <DataTable<StaffGovernancePoll>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty="No poll"
+            empty={t('none')}
             columns={[
               {
                 key: 'r',
-                header: 'Poll',
+                header: t('col.poll'),
                 cell: (p) => (
                   <Link className="table__link" href={`/governance/polls/${p.id}`}>
-                    <span className="t-mono">{p.reference}</span> · {inEither(p.titleEn, p.titleAr)}
+                    <span className="t-mono ltr">{p.reference}</span> · {inLocale(locale, p.titleEn, p.titleAr)}
                   </Link>
                 ),
               },
-              { key: 'k', header: 'Ballot', cell: (p) => (p.secret ? 'Secret' : 'Open') },
-              { key: 'c', header: 'Closes', cell: (p) => formatDateTime(p.closesAt) },
-              { key: 't', header: 'Turnout', cell: (p) => turnoutText(p.turnout, p.electorate) },
+              { key: 'k', header: t('col.ballot'), cell: (p) => (p.secret ? t('secret') : t('openBallot')) },
+              { key: 'c', header: t('col.closes'), cell: (p) => f.dateTime(p.closesAt) },
+              { key: 't', header: t('col.turnout'), cell: (p) => turnoutText(g, p.turnout, p.electorate) },
               {
                 key: 's',
-                header: 'Status',
+                header: c('status'),
                 cell: (p) => <StatusBadge status={p.result ?? p.status} />,
               },
-              { key: 'x', header: 'Result', cell: (p) => (p.result ? RESULT_TEXT[p.result] : '—') },
+              { key: 'x', header: t('col.result'), cell: (p) => (p.result ? codeText(g, 'result', p.result) : '—') },
             ]}
           />
           <LoadMore query={list} />

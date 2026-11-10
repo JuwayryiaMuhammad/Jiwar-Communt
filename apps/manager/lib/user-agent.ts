@@ -1,10 +1,14 @@
 /**
  * A session's user agent in a few words ("Chrome on Windows"), for the
  * account's own list of sessions. A guess from the string, good enough to
- * tell one's devices apart; an unknown one reads as "Unknown device".
+ * tell one's devices apart; an unknown one reads as "Unknown device". The
+ * browser and system are names; the words around them come from `t`.
  */
-export function describeUserAgent(userAgent: string | null | undefined): string {
-  if (!userAgent) return 'Unknown device';
+import type { Translate } from '@jiwar/i18n/core';
+import type en from '../messages/en/accounts-me.ts';
+
+export function describeUserAgent(t: Translate<typeof en>, userAgent: string | null | undefined): string {
+  if (!userAgent) return t('device.unknown');
   const ua = userAgent;
   const os = /iPhone|iPad|iPod/.test(ua)
     ? 'iOS'
@@ -29,8 +33,8 @@ export function describeUserAgent(userAgent: string | null | undefined): string 
           : /Safari\//.test(ua)
             ? 'Safari'
             : /okhttp|Dart|CFNetwork/i.test(ua)
-              ? 'The mobile app'
+              ? t('device.app')
               : null;
-  if (browser && os) return `${browser} on ${os}`;
-  return browser ?? os ?? 'Unknown device';
+  if (browser && os) return t('device.on', { browser, system: os });
+  return browser ?? os ?? t('device.unknown');
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { humanize, unwrap, type Schema } from '@jiwar/api';
+import { unwrap, type Schema } from '@jiwar/api';
 import {
   emptyPerson,
   ErrorAlert,
@@ -13,7 +13,8 @@ import {
   useCursorList,
   type Person,
 } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, PageHeader, StatusBadge, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, PageHeader, StatusBadge, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,10 +22,14 @@ import { useState } from 'react';
 import { emptyOccupancy, OccupancyRow } from '@/components/occupancy-row';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Resident } from '@/lib/queries';
+import ar from '@/messages/ar/res-residents';
+import en from '@/messages/en/res-residents';
 
 type OccupancyInput = Schema<'OccupancyInputDto'>;
 
 function NewResidentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const router = useRouter();
   const [person, setPerson] = useState<Person>(emptyPerson);
@@ -42,7 +47,7 @@ function NewResidentDialog({ open, onClose }: { open: boolean; onClose: () => vo
     {
       invalidate: [keys.residents, keys.units],
       onDone: (r) => {
-        toast.show(`${r.fullName ?? 'Resident'} added. They sign in with a code sent to their email.`);
+        toast.show(t('added', { name: r.fullName ?? t('residentFallback') }));
         close();
         router.push(`/residents/${r.id}`);
       },
@@ -59,21 +64,21 @@ function NewResidentDialog({ open, onClose }: { open: boolean; onClose: () => vo
       wide
       open={open}
       onClose={close}
-      title="New resident"
-      description="Creates the resident's account and their occupancy of one or more units."
+      title={t('newResident')}
+      description={t('newDescription')}
       onSubmit={() => create.mutate(undefined)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending} disabled={!units.some((u) => u.unitId)}>
-            Add resident
+            {t('addResident')}
           </Button>
         </>
       }
     >
       <div className="form">
         <PersonFields value={person} onChange={setPerson} error={create.error} />
-        <p className="form__section">Units</p>
+        <p className="form__section">{t('unitsSection')}</p>
         {units.map((u, i) => (
           <OccupancyRow
             key={i}
@@ -85,7 +90,7 @@ function NewResidentDialog({ open, onClose }: { open: boolean; onClose: () => vo
         ))}
         <div>
           <Button size="sm" icon={<Plus aria-hidden />} onClick={() => setUnits([...units, emptyOccupancy])}>
-            Another unit
+            {t('anotherUnit')}
           </Button>
         </div>
         <ErrorAlert error={create.error} />
@@ -95,16 +100,19 @@ function NewResidentDialog({ open, onClose }: { open: boolean; onClose: () => vo
 }
 
 export default function ResidentsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const [creating, setCreating] = useState(false);
-  const list = useCursorList(keys.residents, (c) => fetchers.residents(c));
+  const list = useCursorList(keys.residents, (cursor) => fetchers.residents(cursor));
   return (
     <>
       <PageHeader
-        title="Residents"
-        description="Owners and tenants with an account in the compound."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            New resident
+            {t('newResident')}
           </Button>
         }
       />
@@ -113,14 +121,14 @@ export default function ResidentsPage() {
           <DataTable<Resident>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty="No residents yet"
+            empty={t('none')}
             columns={[
               {
                 key: 'name',
-                header: 'Resident',
+                header: t('col.resident'),
                 cell: (r) =>
                   r.erased ? (
-                    <span className="t-secondary">Erased account</span>
+                    <span className="t-secondary">{t('erasedAccount')}</span>
                   ) : (
                     <Link className="table__link" href={`/residents/${r.id}`}>
                       {r.fullName}
@@ -129,30 +137,31 @@ export default function ResidentsPage() {
               },
               {
                 key: 'contact',
-                header: 'Contact',
+                header: t('col.contact'),
                 cell: (r) =>
                   r.erased ? null : (
                     <div>
-                      <div>{r.email}</div>
-                      <div className="list__meta t-num">{r.phone ?? 'Phone released'}</div>
+                      <div className="ltr">{r.email}</div>
+                      <div className="list__meta t-num ltr">{r.phone ?? t('phoneReleased')}</div>
                     </div>
                   ),
               },
               {
                 key: 'units',
-                header: 'Units',
+                header: t('col.units'),
                 cell: (r) => (
                   <span className="chip-list">
                     {(r.units ?? []).map((u) => (
                       <Badge key={u.unitId} tone={u.isPrimary ? 'green' : 'beige'} plain>
-                        {u.unitCode} · {humanize(u.occupancyType)}
-                        {u.isPrimary ? ' · primary' : ''}
+                        {u.isPrimary
+                          ? t('unitLinePrimary', { unit: u.unitCode, type: label(u.occupancyType) })
+                          : `${u.unitCode} · ${label(u.occupancyType)}`}
                       </Badge>
                     ))}
                   </span>
                 ),
               },
-              { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.erased ? 'erased' : r.status} /> },
+              { key: 'status', header: c('status'), cell: (r) => <StatusBadge status={r.erased ? 'erased' : r.status} /> },
             ]}
           />
           <LoadMore query={list} />

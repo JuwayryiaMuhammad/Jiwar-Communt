@@ -1,44 +1,46 @@
 'use client';
 
-import { formatDateTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge, useCommonT } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { APPEAL_KIND_TEXT } from '@/components/governance/matters';
+import { codeText } from '@/components/governance/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BoardAppealStatus, type StaffBoardAppeal } from '@/lib/queries';
+import ar from '@/messages/ar/gov-board-inbox';
+import codesAr from '@/messages/ar/gov-codes';
+import en from '@/messages/en/gov-board-inbox';
+import codesEn from '@/messages/en/gov-codes';
+
+const VIEWS = ['pending', 'upheld', 'overturned', 'withdrawn'] as const satisfies readonly BoardAppealStatus[];
 
 /** Appeals to the board (ADR 0055): staff decisions a unit asked the board to review. */
 export default function BoardAppealsPage() {
+  const t = useT(en, ar);
+  const g = useT(codesEn, codesAr);
+  const c = useCommonT();
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('governance.board');
   const [status, setStatus] = useState<BoardAppealStatus>('pending');
-  const list = useCursorList(keys.boardAppeals(status), (c) => fetchers.boardAppeals(status, c), { enabled: allowed });
+  const list = useCursorList(keys.boardAppeals(status), (cursor) => fetchers.boardAppeals(status, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Appeals to the board" />
+        <PageHeader title={t('appealsTitle')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Appeals to the board"
-        description="A unit’s owner or primary asks the board to review a staff decision. Members who live in or own the unit, or appealed, are recused."
-      />
+      <PageHeader title={t('appealsTitle')} description={t('appealsDescription')} />
       <div className="toolbar">
         <Segmented<BoardAppealStatus>
-          label="Status"
+          label={c('status')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'pending', label: 'To decide' },
-            { value: 'upheld', label: 'Upheld' },
-            { value: 'overturned', label: 'Overturned' },
-            { value: 'withdrawn', label: 'Withdrawn' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
       </div>
       <Card flush>
@@ -46,14 +48,18 @@ export default function BoardAppealsPage() {
           <DataTable<StaffBoardAppeal>
             rows={list.rows}
             rowKey={(a) => a.id}
-            empty="Nothing here"
+            empty={t('nothing')}
             columns={[
-              { key: 'r', header: 'Appeal', cell: (a) => <Link href={`/board/appeals/${a.id}`}>{a.reference}</Link> },
-              { key: 'k', header: 'Of', cell: (a) => APPEAL_KIND_TEXT[a.kind] },
-              { key: 'u', header: 'Unit', cell: (a) => <span className="t-mono">{a.unitCode}</span> },
-              { key: 'l', header: 'Lodged', cell: (a) => formatDateTime(a.lodgedAt) },
-              { key: 'd', header: 'Deadline', cell: (a) => `${formatDateTime(a.deadlineAt)}${a.overdue ? ' · overdue' : ''}` },
-              { key: 's', header: 'Status', cell: (a) => <StatusBadge status={a.status} /> },
+              { key: 'r', header: t('col.appeal'), cell: (a) => <Link href={`/board/appeals/${a.id}`}>{a.reference}</Link> },
+              { key: 'k', header: t('col.of'), cell: (a) => codeText(g, 'appealKind', a.kind) },
+              { key: 'u', header: c('unit'), cell: (a) => <span className="t-mono">{a.unitCode}</span> },
+              { key: 'l', header: t('col.lodged'), cell: (a) => fmt.dateTime(a.lodgedAt) },
+              {
+                key: 'd',
+                header: t('col.deadline'),
+                cell: (a) => (a.overdue ? t('deadlineOverdue', { when: fmt.dateTime(a.deadlineAt) }) : fmt.dateTime(a.deadlineAt)),
+              },
+              { key: 's', header: c('status'), cell: (a) => <StatusBadge status={a.status} /> },
             ]}
           />
           <LoadMore query={list} />

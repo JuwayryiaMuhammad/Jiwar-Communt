@@ -1,25 +1,30 @@
 'use client';
 
-import { formatDate, formatDateTime, humanize, relativeTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, Input, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, Field, Input, PageHeader, Segmented, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Download, Plus, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { BuildingsCard, UnitImportDialog } from '@/components/units/register';
+import { REVIEW_LABELS } from '@/components/units/review-labels';
 import { api } from '@/lib/api';
 import { download } from '@/lib/download';
-import { REVIEW_TEXT } from '@/lib/labels';
 import { usePermissions } from '@/lib/permissions';
 import { clean, fetchers, keys, type Unit, type UnitFilters, type UnitNeedingReview } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/units-list';
+import en from '@/messages/en/units-list';
 
 const TABS = ['all', 'review', 'buildings'] as const;
 const STATES = ['vacant', 'occupied', 'closed'] as const;
 
 function NewUnitDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const router = useRouter();
   const [form, setForm] = useState({ code: '', building: '', floor: '' });
@@ -37,7 +42,7 @@ function NewUnitDialog({ open, onClose }: { open: boolean; onClose: () => void }
     {
       invalidate: [keys.units],
       onDone: (unit) => {
-        toast.show(`Unit ${unit.code} added.`);
+        toast.show(t('added', { code: unit.code }));
         close();
         router.push(`/units/${unit.id}`);
       },
@@ -52,26 +57,26 @@ function NewUnitDialog({ open, onClose }: { open: boolean; onClose: () => void }
     <Dialog
       open={open}
       onClose={close}
-      title="New unit"
+      title={t('newUnit')}
       onSubmit={() => create.mutate(undefined)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending} disabled={!form.code.trim()}>
-            Add unit
+            {t('addUnit')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Code" hint="As written on the door, e.g. A-101." error={fieldError(create.error, 'code')}>
+        <Field label={t('code')} hint={t('codeHint')} error={fieldError(create.error, 'code')}>
           {(p) => <Input {...p} autoFocus value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />}
         </Field>
         <div className="form__row">
-          <Field label="Building" error={fieldError(create.error, 'building')}>
+          <Field label={c('building')} error={fieldError(create.error, 'building')}>
             {(p) => <Input {...p} value={form.building} onChange={(e) => setForm({ ...form, building: e.target.value })} />}
           </Field>
-          <Field label="Floor" error={fieldError(create.error, 'floor')}>
+          <Field label={c('floor')} error={fieldError(create.error, 'floor')}>
             {(p) => (
               <Input {...p} type="number" inputMode="numeric" value={form.floor} onChange={(e) => setForm({ ...form, floor: e.target.value })} />
             )}
@@ -85,26 +90,35 @@ function NewUnitDialog({ open, onClose }: { open: boolean; onClose: () => void }
 
 /** The register (ADR 0072): by code, building, where a unit stands and who holds it; the same as CSV. */
 function AllUnits() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const { can } = usePermissions();
   const manages = can('units.manage');
   const [filters, setFilters] = useState<UnitFilters>({});
   const [csvError, setCsvError] = useState<unknown>(null);
   const buildings = useQuery({ queryKey: keys.buildings, queryFn: () => fetchers.buildings(), enabled: manages });
-  const list = useCursorList(keys.unitsFiltered(filters), (c) => fetchers.unitsFiltered(filters, c));
+  const list = useCursorList(keys.unitsFiltered(filters), (cursor) => fetchers.unitsFiltered(filters, cursor));
   return (
     <div className="stack">
       <div className="form__row">
-        <Field label="Search">
+        <Field label={c('search')}>
           {(p) => (
-            <Input {...p} placeholder="Part of the code" value={filters.q ?? ''} onChange={(e) => setFilters({ ...filters, q: e.target.value || undefined })} />
+            <Input
+              {...p}
+              placeholder={t('searchPlaceholder')}
+              value={filters.q ?? ''}
+              onChange={(e) => setFilters({ ...filters, q: e.target.value || undefined })}
+            />
           )}
         </Field>
         {manages ? (
           <>
-            <Field label="Building">
+            <Field label={c('building')}>
               {(p) => (
                 <Select {...p} value={filters.buildingId ?? ''} onChange={(e) => setFilters({ ...filters, buildingId: e.target.value || undefined })}>
-                  <option value="">Any</option>
+                  <option value="">{t('any')}</option>
                   {(buildings.data?.data ?? []).map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.name}
@@ -113,17 +127,17 @@ function AllUnits() {
                 </Select>
               )}
             </Field>
-            <Field label="Status">
+            <Field label={c('status')}>
               {(p) => (
                 <Select
                   {...p}
                   value={filters.status ?? ''}
                   onChange={(e) => setFilters({ ...filters, status: (e.target.value || undefined) as UnitFilters['status'] })}
                 >
-                  <option value="">Any</option>
+                  <option value="">{t('any')}</option>
                   {STATES.map((s) => (
                     <option key={s} value={s}>
-                      {humanize(s)}
+                      {label(s)}
                     </option>
                   ))}
                 </Select>
@@ -136,7 +150,7 @@ function AllUnits() {
                 download('/api/v1/staff/units/export', clean(filters), 'units.csv').catch(setCsvError);
               }}
             >
-              CSV
+              {t('csv')}
             </Button>
           </>
         ) : null}
@@ -147,21 +161,21 @@ function AllUnits() {
           <DataTable<Unit>
             rows={list.rows}
             rowKey={(u) => u.id}
-            empty="No units match"
-            emptyHint="Add the compound's units so residents can be assigned to them."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
               {
                 key: 'code',
-                header: 'Unit',
+                header: c('unit'),
                 cell: (u) => (
                   <Link className="table__link" href={`/units/${u.id}`}>
                     {u.code}
                   </Link>
                 ),
               },
-              { key: 'building', header: 'Building', cell: (u) => u.building ?? '—' },
-              { key: 'floor', header: 'Floor', cell: (u) => <span className="t-num">{u.floor ?? '—'}</span> },
-              { key: 'created', header: 'Added', cell: (u) => formatDate(u.createdAt) },
+              { key: 'building', header: c('building'), cell: (u) => u.building ?? '—' },
+              { key: 'floor', header: c('floor'), cell: (u) => <span className="t-num">{u.floor ?? '—'}</span> },
+              { key: 'created', header: t('col.added'), cell: (u) => fmt.date(u.createdAt) },
             ]}
           />
           <LoadMore query={list} />
@@ -172,28 +186,32 @@ function AllUnits() {
 }
 
 function NeedingReview() {
-  const list = useCursorList(keys.unitsReview, (c) => fetchers.unitsReview(c));
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const reviewText = useLabel(REVIEW_LABELS);
+  const list = useCursorList(keys.unitsReview, (cursor) => fetchers.unitsReview(cursor));
   return (
     <Card flush>
       <QueryState query={list}>
         <DataTable<UnitNeedingReview>
           rows={list.rows}
           rowKey={(r) => r.flagId}
-          empty="No unit is under review"
-          emptyHint="A unit is flagged when its primary resident leaves, is frozen or dies, or a separation is reported."
+          empty={t('reviewEmpty')}
+          emptyHint={t('reviewEmptyHint')}
           columns={[
             {
               key: 'code',
-              header: 'Unit',
+              header: c('unit'),
               cell: (r) => (
                 <Link className="table__link" href={`/units/${r.unitId}`}>
                   {r.code}
                 </Link>
               ),
             },
-            { key: 'reason', header: 'Reason', cell: (r) => <Badge tone="terracotta">{REVIEW_TEXT[r.reason] ?? humanize(r.reason)}</Badge> },
-            { key: 'occupants', header: 'Active occupants', cell: (r) => <span className="t-num">{r.activeOccupants}</span> },
-            { key: 'when', header: 'Flagged', cell: (r) => <span title={formatDateTime(r.flaggedAt)}>{relativeTime(r.flaggedAt)}</span> },
+            { key: 'reason', header: c('reason'), cell: (r) => <Badge tone="terracotta">{reviewText(r.reason)}</Badge> },
+            { key: 'occupants', header: t('col.occupants'), cell: (r) => <span className="t-num">{fmt.number(r.activeOccupants)}</span> },
+            { key: 'when', header: t('col.flagged'), cell: (r) => <span title={fmt.dateTime(r.flaggedAt)}>{fmt.relative(r.flaggedAt)}</span> },
           ]}
         />
         <LoadMore query={list} />
@@ -203,6 +221,7 @@ function NeedingReview() {
 }
 
 function UnitsView() {
+  const t = useT(en, ar);
   const [tab, setTab] = useTab(TABS, 'all');
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -210,27 +229,27 @@ function UnitsView() {
   return (
     <>
       <PageHeader
-        title="Units"
-        description="Apartments, villas and shops in the compound."
+        title={t('title')}
+        description={t('description')}
         actions={
           <>
             <Segmented
-              label="Units"
+              label={t('title')}
               value={tab}
               onChange={setTab}
               options={[
-                { value: 'all', label: 'All units' },
-                { value: 'review', label: 'Under review' },
-                ...(can('units.manage') ? [{ value: 'buildings' as const, label: 'Buildings' }] : []),
+                { value: 'all', label: t('tab.all') },
+                { value: 'review', label: t('tab.review') },
+                ...(can('units.manage') ? [{ value: 'buildings' as const, label: t('tab.buildings') }] : []),
               ]}
             />
             {can('units.manage') ? (
               <Button icon={<Upload aria-hidden />} onClick={() => setImporting(true)}>
-                Import
+                {t('import')}
               </Button>
             ) : null}
             <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-              New unit
+              {t('newUnit')}
             </Button>
           </>
         }

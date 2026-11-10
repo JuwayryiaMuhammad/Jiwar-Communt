@@ -1,33 +1,37 @@
 'use client';
 
-import { fieldError, formatDate, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Alert, Badge, Button, Card, CardBody, CardHeader, Checkbox, Field, ReasonCodeDialog, ReasonDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Checkbox,
+  Field,
+  ReasonCodeDialog,
+  ReasonDialog,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { REVIEW_TEXT } from '@/lib/labels';
 import { fetchers, keys, type UnitDetail } from '@/lib/queries';
+import ar from '@/messages/ar/units-states';
+import en from '@/messages/en/units-states';
+import { REVIEW_LABELS } from './review-labels';
 
 type Flag = Schema<'UnitReviewFlagView'>;
 type Open = 'deceased' | 'separation' | 'end-household' | 'transfer' | null;
 
-/** What each open flag waits for, and whether it can be cleared by hand. */
-const FLAG_HELP: Record<string, { text: string; clearable: boolean }> = {
-  primary_left: {
-    text: 'The primary resident left. Name a new primary among the occupants if the family stays, or end the household. It cannot be cleared by hand.',
-    clearable: false,
-  },
-  primary_frozen: { text: "The primary resident's account is frozen. It clears when the account is reactivated or a new primary is named.", clearable: true },
-  primary_deceased: {
-    text: 'Household grants and revocations are frozen and payments stopped; tickets, visitors and emergency continue. Name a new primary, or clear the flag if it was recorded by mistake.',
-    clearable: true,
-  },
-  separation: {
-    text: "Removing an adult or revoking an adult's access is your decision now, from the household table. Clear the flag once it is settled.",
-    clearable: true,
-  },
-};
+/** The flags whose catalog entry says what they wait for (`help.<reason>`). */
+const HELP_REASONS = ['primary_left', 'primary_frozen', 'primary_deceased', 'separation'] as const;
 
 /**
  * A unit's review flags and the manager's decisions about who holds it
@@ -35,6 +39,10 @@ const FLAG_HELP: Record<string, { text: string; clearable: boolean }> = {
  * the household, or move the ownership to another resident.
  */
 export function UnitStates({ unit }: { unit: UnitDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const reviewText = useLabel(REVIEW_LABELS);
   const toast = useToast();
   const [open, setOpen] = useState<Open>(null);
   const [clearing, setClearing] = useState<Flag | null>(null);
@@ -68,15 +76,15 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
   type Reason = { reasonCode: string; reason: string };
   const deceased = useAction(
     (reason: Reason) => unwrap(api.POST('/api/v1/units/{id}/deceased', { params: path, body: reason })),
-    options('Recorded. The household is under review and the adults are told so, never why.'),
+    options(t('recordedDeceased')),
   );
   const separation = useAction(
     (reason: Reason) => unwrap(api.POST('/api/v1/units/{id}/separation', { params: path, body: reason })),
-    options('Separation recorded. Removing an adult is now your decision.'),
+    options(t('separationRecorded')),
   );
   const endHousehold = useAction(
     (reason: Reason) => unwrap(api.POST('/api/v1/units/{id}/end-household', { params: path, body: reason })),
-    options('Household ended. Its members, delegations and worker engagements have ended.'),
+    options(t('householdEnded')),
   );
   // A transfer is requested here and approved on the Transfers page, past
   // the dues check (ADR 0083).
@@ -91,7 +99,7 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
     {
       invalidate: [...refresh, ['ownership-transfers']],
       onDone: () => {
-        toast.show('Transfer requested. Approve it on the Transfers page once the dues are checked.');
+        toast.show(t('transferRequested'));
         close();
       },
     },
@@ -99,59 +107,62 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
   const clear = useAction(
     (v: { flag: Flag; reasonCode: string }) =>
       unwrap(api.POST('/api/v1/review-flags/{id}/clear', { params: { path: { id: v.flag.id } }, body: { reasonCode: v.reasonCode } })),
-    options('Review flag cleared.'),
+    options(t('flagCleared')),
   );
 
   const occupantIds = new Set((unit.occupants ?? []).map((o) => o.account.id));
   const buyers = (residents.data?.data ?? []).filter((r) => !r.erased);
-  const noteHint = 'Kept with the flag for management. Never shown to the household and never in the audit trail.';
+  const noteHint = t('noteHint');
 
   return (
     <>
       {flags.length ? (
         <Card tone="beige">
           <div className="stack">
-            <h2 className="t-title-md">Under review</h2>
-            {flags.map((f) => (
-              <div key={f.id} className="stack stack--sm">
-                <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                  <Badge tone="terracotta">{REVIEW_TEXT[f.reason] ?? humanize(f.reason)}</Badge>
-                  <span className="t-secondary">since {formatDate(f.flaggedAt)}</span>
-                  <span className="spacer" />
-                  {FLAG_HELP[f.reason]?.clearable !== false ? (
-                    <Button size="sm" onClick={() => setClearing(f)}>
-                      Clear
-                    </Button>
-                  ) : null}
-                </span>
-                <p className="t-secondary">{FLAG_HELP[f.reason]?.text}</p>
-              </div>
-            ))}
+            <h2 className="t-title-md">{t('underReview')}</h2>
+            {flags.map((f) => {
+              const help = HELP_REASONS.find((r) => r === f.reason);
+              return (
+                <div key={f.id} className="stack stack--sm">
+                  <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                    <Badge tone="terracotta">{reviewText(f.reason)}</Badge>
+                    <span className="t-secondary">{t('since', { date: fmt.date(f.flaggedAt) })}</span>
+                    <span className="spacer" />
+                    {help !== 'primary_left' ? (
+                      <Button size="sm" onClick={() => setClearing(f)}>
+                        {t('clear')}
+                      </Button>
+                    ) : null}
+                  </span>
+                  {help ? <p className="t-secondary">{t(`help.${help}`)}</p> : null}
+                </div>
+              );
+            })}
           </div>
         </Card>
       ) : null}
 
       <Card flush>
-        <CardHeader title="Who holds the unit" />
+        <CardHeader title={t('whoHolds')} />
         <CardBody>
           <div className="stack stack--sm">
-            <p className="t-secondary">For when something changed that the residents cannot settle themselves.</p>
+            <p className="t-secondary">{t('whoHoldsHint')}</p>
             <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
               {!has('primary_deceased') ? (
                 <Button size="sm" onClick={() => setOpen('deceased')}>
-                  Primary has died
+                  {t('primaryDied')}
                 </Button>
               ) : null}
               {!has('separation') ? (
                 <Button size="sm" onClick={() => setOpen('separation')}>
-                  Separation
+                  {t('separation')}
                 </Button>
               ) : null}
               <Button size="sm" onClick={() => setOpen('transfer')}>
-                Transfer ownership
+                {t('transferOwnership')}
               </Button>
               <Button size="sm" variant="danger" onClick={() => setOpen('end-household')}>
-                End household
+                {t('endHousehold')}
               </Button>
             </span>
           </div>
@@ -161,12 +172,12 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
       <ReasonDialog
         open={open === 'deceased'}
         onClose={close}
-        title={`Record that unit ${unit.code}'s primary resident has died?`}
-        description="Nothing is closed or revoked. The household's permissions freeze and payments stop until a new primary is named; tickets, visitors and emergency continue. The adults are told the unit is under review, never why."
+        title={t('deceasedTitle', { code: unit.code })}
+        description={t('deceasedDescription')}
         codes={['deceased', 'other']}
-        textLabel="Note for the record"
+        textLabel={t('noteForRecord')}
         textHint={noteHint}
-        confirmLabel="Record"
+        confirmLabel={t('record')}
         pending={deceased.isPending}
         error={<ErrorAlert error={deceased.error} />}
         onConfirm={(reason) => deceased.mutate(reason)}
@@ -174,12 +185,12 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
       <ReasonDialog
         open={open === 'separation'}
         onClose={close}
-        title={`Record a separation in unit ${unit.code}?`}
-        description="Removing an adult or revoking an adult's access becomes your decision, and the household's shared activity view stops. Entry, tickets, emergency and visitor notices continue for everyone. The adults are told."
+        title={t('separationTitle', { code: unit.code })}
+        description={t('separationDescription')}
         codes={['separation', 'other']}
-        textLabel="Note for the record"
+        textLabel={t('noteForRecord')}
         textHint={noteHint}
-        confirmLabel="Record"
+        confirmLabel={t('record')}
         pending={separation.isPending}
         error={<ErrorAlert error={separation.error} />}
         onConfirm={(reason) => separation.mutate(reason)}
@@ -187,10 +198,10 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
       <ReasonDialog
         open={open === 'end-household'}
         onClose={close}
-        title={`End the household of unit ${unit.code}?`}
-        description="Every membership, pending invite, delegation and domestic worker engagement of the unit ends, and each person is told. The occupancies stay: end those separately if the occupants left. This cannot be undone; a new household starts from invitations."
+        title={t('endTitle', { code: unit.code })}
+        description={t('endDescription')}
         codes={REASON_CODES.householdEnd}
-        confirmLabel="End household"
+        confirmLabel={t('endHousehold')}
         danger
         pending={endHousehold.isPending}
         error={<ErrorAlert error={endHousehold.error} />}
@@ -199,46 +210,44 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
       <ReasonDialog
         open={open === 'transfer'}
         onClose={close}
-        title={`Request the transfer of unit ${unit.code}?`}
-        description="It waits on the Transfers page and in the inbox. When it is approved, every current occupancy of the unit ends and the household ends with it, including every domestic worker engagement of the household; each person is told. A unit that owes the compound is not transferred unless the approval is an exception with a reason."
+        title={t('transferTitle', { code: unit.code })}
+        description={t('transferDescription')}
         codes={REASON_CODES.householdEnd}
-        confirmLabel="Request the transfer"
+        confirmLabel={t('transferConfirm')}
         danger
         pending={transfer.isPending}
         error={
           <div className="stack stack--sm">
-            {buyerId === '' ? <Alert tone="info">Pick the new owner first.</Alert> : null}
+            {buyerId === '' ? <Alert tone="info">{t('pickOwnerFirst')}</Alert> : null}
             <ErrorAlert error={transfer.error} />
           </div>
         }
         onConfirm={(reason) => buyerId !== '' && transfer.mutate(reason)}
       >
-        <Field
-          label="New owner"
-          hint="A resident of the compound (the first 100). Add them on the Residents page first if they are new."
-          error={fieldError(transfer.error, 'toAccountId')}
-        >
+        <Field label={t('newOwner')} hint={t('newOwnerHint')} error={fieldError(transfer.error, 'toAccountId')}>
           {(p) => (
             <Select {...p} value={buyerId} onChange={(e) => setBuyerId(e.target.value)}>
-              <option value="">Select a resident…</option>
-              {buyers.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.fullName ?? 'Resident'}
-                  {occupantIds.has(r.id) ? ' (lives here now)' : ''}
-                </option>
-              ))}
+              <option value="">{t('selectResident')}</option>
+              {buyers.map((r) => {
+                const name = r.fullName ?? c('resident');
+                return (
+                  <option key={r.id} value={r.id}>
+                    {occupantIds.has(r.id) ? t('livesHereNow', { name }) : name}
+                  </option>
+                );
+              })}
             </Select>
           )}
         </Field>
-        <Checkbox label="The new owner will live in the unit (they become its primary resident)" checked={resides} onChange={(e) => setResides(e.target.checked)} />
+        <Checkbox label={t('newOwnerLives')} checked={resides} onChange={(e) => setResides(e.target.checked)} />
       </ReasonDialog>
       <ReasonCodeDialog
         open={clearing !== null}
         onClose={close}
-        title={clearing ? `Clear "${REVIEW_TEXT[clearing.reason] ?? humanize(clearing.reason)}"?` : ''}
-        description="The household works normally again where this flag held it back."
+        title={clearing ? t('clearTitle', { reason: reviewText(clearing.reason) }) : ''}
+        description={t('clearDescription')}
         codes={REASON_CODES.reviewClear}
-        confirmLabel="Clear flag"
+        confirmLabel={t('clearConfirm')}
         pending={clear.isPending}
         error={<ErrorAlert error={clear.error} />}
         onConfirm={(reasonCode) => clearing && clear.mutate({ flag: clearing, reasonCode })}

@@ -1,19 +1,36 @@
 'use client';
 
-import { ApiError, ErrorText, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ApiError, ErrorText, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Badge, Button, Card, DataTable, Dialog, Field, PageHeader, ReasonCodeDialog, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  PageHeader,
+  ReasonCodeDialog,
+  Segmented,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { StepUpDialog } from '@/components/step-up-dialog';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/res-ownership-transfers';
+import en from '@/messages/en/res-ownership-transfers';
 
 type Transfer = Schema<'OwnershipTransferView'>;
 const VIEWS = ['pending', 'done', 'cancelled'] as const;
 type View = (typeof VIEWS)[number];
 const KEY = ['ownership-transfers'] as const;
-const words = (code: string) => code.replace(/_/g, ' ');
 
 /**
  * Ownership transfers (ADR 0083): requested from a unit's page, approved
@@ -22,6 +39,10 @@ const words = (code: string) => code.replace(/_/g, ' ');
  * with what was owed.
  */
 export default function OwnershipTransfersPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [view, setView] = useState<View>('pending');
   const [approving, setApproving] = useState<Transfer | null>(null);
@@ -31,79 +52,76 @@ export default function OwnershipTransfersPage() {
     queryFn: () => unwrap(api.GET('/api/v1/staff/ownership-transfers', { params: { query: { status: view } } })),
   });
   const cancel = useAction(
-    (v: { t: Transfer; reasonCode: string }) =>
+    (v: { transfer: Transfer; reasonCode: string }) =>
       unwrap(
         api.POST('/api/v1/staff/ownership-transfers/{id}/cancel', {
-          params: { path: { id: v.t.id } },
+          params: { path: { id: v.transfer.id } },
           body: { reasonCode: v.reasonCode },
         }),
       ),
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Transfer cancelled.');
+        toast.show(t('cancelled'));
         setCancelling(null);
       },
     },
   );
   return (
     <>
-      <PageHeader
-        title="Ownership transfers"
-        description="Units changing hands. Request one from the unit’s page; approve it here once its dues are checked."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <Segmented<View>
-        label="Show"
+        label={t('show')}
         value={view}
         onChange={setView}
-        options={VIEWS.map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }))}
+        options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
       />
       <Card flush>
         <QueryState query={list}>
           <DataTable<Transfer>
             rows={list.data?.data}
-            rowKey={(t) => t.id}
-            empty="No transfer here"
-            emptyHint="Request one from a unit’s page: Transfer ownership."
+            rowKey={(row) => row.id}
+            empty={t('none')}
+            emptyHint={t('noneHint')}
             columns={[
-              { key: 'ref', header: 'Transfer', cell: (t) => <span className="t-mono">{t.reference}</span> },
+              { key: 'ref', header: t('col.transfer'), cell: (row) => <span className="t-mono ltr">{row.reference}</span> },
               {
                 key: 'unit',
-                header: 'Unit',
-                cell: (t) => (
-                  <Link className="table__link" href={`/units/${t.unitId}`}>
-                    {t.unitCode}
+                header: t('col.unit'),
+                cell: (row) => (
+                  <Link className="table__link" href={`/units/${row.unitId}`}>
+                    <span className="ltr">{row.unitCode}</span>
                   </Link>
                 ),
               },
-              { key: 'buyer', header: 'New owner', cell: (t) => t.buyerName ?? '—' },
-              { key: 'asked', header: 'Requested', cell: (t) => formatDateTime(t.requestedAt) },
+              { key: 'buyer', header: t('col.buyer'), cell: (row) => row.buyerName ?? '—' },
+              { key: 'asked', header: t('col.requested'), cell: (row) => f.dateTime(row.requestedAt) },
               {
                 key: 'owed',
-                header: 'Owed',
-                cell: (t) => {
-                  const owed = t.status === 'pending' ? t.owedNow : t.owedAtApproval;
+                header: t('col.owed'),
+                cell: (row) => {
+                  const owed = row.status === 'pending' ? row.owedNow : row.owedAtApproval;
                   if (owed === null) return '—';
-                  return Number(owed) > 0 ? <Badge tone="terracotta">{owed} EGP</Badge> : <span className="t-secondary">Nothing</span>;
+                  return Number(owed) > 0 ? <Badge tone="terracotta">{f.money(owed)}</Badge> : <span className="t-secondary">{t('nothing')}</span>;
                 },
               },
               {
                 key: 'act',
                 header: '',
-                cell: (t) =>
-                  t.status === 'pending' ? (
+                cell: (row) =>
+                  row.status === 'pending' ? (
                     <span style={{ display: 'flex', gap: 8 }}>
-                      <Button size="sm" variant="primary" onClick={() => setApproving(t)}>
-                        Approve
+                      <Button size="sm" variant="primary" onClick={() => setApproving(row)}>
+                        {c('approve')}
                       </Button>
-                      <Button size="sm" onClick={() => setCancelling(t)}>
-                        Cancel
+                      <Button size="sm" onClick={() => setCancelling(row)}>
+                        {c('cancel')}
                       </Button>
                     </span>
-                  ) : t.duesExceptionCode ? (
-                    <span className="t-secondary">Exception: {words(t.duesExceptionCode)}</span>
+                  ) : row.duesExceptionCode ? (
+                    <span className="t-secondary">{t('exception', { reason: label(row.duesExceptionCode) })}</span>
                   ) : (
-                    <span className="t-secondary">{t.cancelReason ? words(t.cancelReason) : t.status}</span>
+                    <span className="t-secondary">{label(row.cancelReason ?? row.status)}</span>
                   ),
               },
             ]}
@@ -114,14 +132,14 @@ export default function OwnershipTransfersPage() {
       <ReasonCodeDialog
         open={cancelling !== null}
         onClose={() => setCancelling(null)}
-        title="Cancel the transfer"
-        description="Nothing changes on the unit."
+        title={t('cancelTitle')}
+        description={t('cancelDescription')}
         codes={REASON_CODES.ownershipTransferCancel}
-        confirmLabel="Cancel the transfer"
+        confirmLabel={t('cancelTitle')}
         danger
         pending={cancel.isPending}
         error={cancel.error ? <ErrorText error={cancel.error} /> : undefined}
-        onConfirm={(reasonCode) => cancelling && cancel.mutate({ t: cancelling, reasonCode })}
+        onConfirm={(reasonCode) => cancelling && cancel.mutate({ transfer: cancelling, reasonCode })}
       />
     </>
   );
@@ -132,6 +150,10 @@ export default function OwnershipTransfersPage() {
  * exception, with a reason and a fresh code (the step-up).
  */
 function ApproveDialog({ transfer, onClose }: { transfer: Transfer; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const owes = Number(transfer.owedNow ?? '0') > 0;
   const [exception, setException] = useState('');
@@ -149,7 +171,7 @@ function ApproveDialog({ transfer, onClose }: { transfer: Transfer; onClose: () 
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Ownership transferred. The previous occupancies and household have ended; each person is told.');
+        toast.show(t('approved'));
         onClose();
       },
     },
@@ -161,8 +183,8 @@ function ApproveDialog({ transfer, onClose }: { transfer: Transfer; onClose: () 
   if (stepping)
     return (
       <StepUpDialog
-        title="Confirm it is you"
-        description="Transferring a unit that owes the compound is an exception: we sent a code to your email."
+        title={t('stepTitle')}
+        description={t('stepDescription')}
         onClose={() => setStepping(false)}
         onVerified={() => {
           setStepping(false);
@@ -174,14 +196,14 @@ function ApproveDialog({ transfer, onClose }: { transfer: Transfer; onClose: () 
     <Dialog
       open
       onClose={onClose}
-      title={`Approve ${transfer.reference}?`}
-      description={`Unit ${transfer.unitCode} passes to ${transfer.buyerName ?? 'the new owner'}. Every current occupancy and the household end; this cannot be undone.`}
+      title={t('approveTitle', { reference: transfer.reference })}
+      description={t('approveDescription', { unit: transfer.unitCode, buyer: transfer.buyerName ?? t('theNewOwner') })}
       onSubmit={() => (owes ? setStepping(true) : approve.mutate(undefined))}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="danger" loading={approve.isPending} disabled={owes && exception === ''}>
-            {owes ? 'Approve as an exception' : 'Approve the transfer'}
+            {owes ? t('approveException') : t('approveTransfer')}
           </Button>
         </>
       }
@@ -190,16 +212,14 @@ function ApproveDialog({ transfer, onClose }: { transfer: Transfer; onClose: () 
         <ErrorAlert error={approve.error} />
         {owes ? (
           <>
-            <Alert tone="warn">
-              The unit owes {owedNow} EGP. It is not transferred unless you approve it as an exception, with a reason.
-            </Alert>
-            <Field label="Why it goes ahead">
+            <Alert tone="warn">{t('owes', { amount: f.money(owedNow) })}</Alert>
+            <Field label={t('whyAhead')}>
               {(p) => (
                 <Select {...p} value={exception} onChange={(e) => setException(e.target.value)}>
-                  <option value="">Select a reason…</option>
-                  {REASON_CODES.transferDuesException.map((c) => (
-                    <option key={c} value={c}>
-                      {words(c)}
+                  <option value="">{t('selectReason')}</option>
+                  {REASON_CODES.transferDuesException.map((code) => (
+                    <option key={code} value={code}>
+                      {label(code)}
                     </option>
                   ))}
                 </Select>
@@ -207,7 +227,7 @@ function ApproveDialog({ transfer, onClose }: { transfer: Transfer; onClose: () 
             </Field>
           </>
         ) : (
-          <p className="t-secondary">The unit owes nothing.</p>
+          <p className="t-secondary">{t('owesNothing')}</p>
         )}
       </div>
     </Dialog>

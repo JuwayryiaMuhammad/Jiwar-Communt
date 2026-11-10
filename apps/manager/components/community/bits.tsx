@@ -1,13 +1,16 @@
 'use client';
 
 import { fieldError, unwrap } from '@jiwar/api';
-import { Button, ButtonLink, CardHeader, Checkbox, Field, Input, Select, Textarea } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, ButtonLink, CardHeader, Checkbox, Field, Input, Select, Textarea, useCommonT } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { fetchers, keys, type CommunityAttachment } from '@/lib/queries';
+import ar from '@/messages/ar/community';
+import en from '@/messages/en/community';
 import { audienceBody, type Occupancy } from './logic';
 
 export const MAX_ATTACHMENTS = 5;
@@ -34,6 +37,7 @@ export function AudiencePicker({
   disabled?: boolean;
   hint?: string;
 }) {
+  const t = useT(en, ar);
   const buildings = useQuery({ queryKey: keys.communityBuildings, queryFn: fetchers.communityBuildings });
   const size = useQuery({
     queryKey: ['community', 'audience-size', value],
@@ -46,21 +50,18 @@ export function AudiencePicker({
 
   return (
     <div className="stack stack--sm">
-      <Field
-        label="Who it is for"
-        hint={hint ?? 'Owners: every owner of a unit, landlords included, and nobody else. Tenants: tenants and their households.'}
-      >
+      <Field label={t('audience.label')} hint={hint ?? t('audience.hint')}>
         {(p) => (
           <Select {...p} disabled={disabled} value={value.occupancy} onChange={(e) => onChange({ ...value, occupancy: e.target.value as Occupancy })}>
-            <option value="everyone">Everyone</option>
-            <option value="owners">Owners only</option>
-            <option value="tenants">Tenants only</option>
+            <option value="everyone">{t('occupancy.everyone')}</option>
+            <option value="owners">{t('occupancy.owners')}</option>
+            <option value="tenants">{t('occupancy.tenants')}</option>
           </Select>
         )}
       </Field>
       {all.length ? (
         <fieldset className="stack stack--sm" disabled={disabled} style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="t-secondary">Buildings (none ticked: the whole compound)</legend>
+          <legend className="t-secondary">{t('audience.buildings')}</legend>
           <div className="row" style={{ flexWrap: 'wrap', gap: 12 }}>
             {all.map((b) => (
               <Checkbox key={b} label={b} checked={value.buildings.includes(b)} onChange={(e) => toggle(b, e.target.checked)} />
@@ -69,9 +70,7 @@ export function AudiencePicker({
         </fieldset>
       ) : null}
       <span className="t-secondary" aria-live="polite">
-        {size.data
-          ? `Right now: ${size.data.accounts} ${size.data.accounts === 1 ? 'person' : 'people'} in ${size.data.units} ${size.data.units === 1 ? 'unit' : 'units'}. Whoever moves in later is included; whoever leaves is not.`
-          : ' '}
+        {size.data ? t('audience.size', { accounts: size.data.accounts, units: size.data.units }) : ' '}
       </span>
     </div>
   );
@@ -94,8 +93,8 @@ export function TextFields({
   value,
   onChange,
   error,
-  titleLabel = 'Title',
-  bodyLabel = 'Text',
+  titleLabel,
+  bodyLabel,
   titleKey = 'title',
   bodyKey = 'body',
   titleMax = 150,
@@ -104,6 +103,7 @@ export function TextFields({
   value: TwoTexts;
   onChange: (next: TwoTexts) => void;
   error: unknown;
+  /** Defaults to “Title” and “Text”, in the page's language. */
   titleLabel?: string;
   bodyLabel?: string;
   /** The API's field names, for its errors: `title`/`body`, `title`/`description`, `title`/`text`. */
@@ -112,23 +112,24 @@ export function TextFields({
   titleMax?: number;
   bodyMax?: number;
 }) {
+  const t = useT(en, ar);
+  const title = titleLabel ?? t('text.title');
+  const body = bodyLabel ?? t('text.body');
   const set = (patch: Partial<TwoTexts>) => onChange({ ...value, ...patch });
   return (
     <>
-      <Field label={`${titleLabel} (English)`} error={fieldError(error, `${titleKey}En`)}>
-        {(p) => <Input {...p} maxLength={titleMax} value={value.titleEn} onChange={(e) => set({ titleEn: e.target.value })} />}
+      <Field label={t('text.inEnglish', { label: title })} error={fieldError(error, `${titleKey}En`)}>
+        {(p) => <Input {...p} dir="ltr" lang="en" maxLength={titleMax} value={value.titleEn} onChange={(e) => set({ titleEn: e.target.value })} />}
       </Field>
-      <Field label={`${bodyLabel} (English)`} error={fieldError(error, `${bodyKey}En`)}>
-        {(p) => <Textarea {...p} rows={4} maxLength={bodyMax} value={value.bodyEn} onChange={(e) => set({ bodyEn: e.target.value })} />}
+      <Field label={t('text.inEnglish', { label: body })} error={fieldError(error, `${bodyKey}En`)}>
+        {(p) => (
+          <Textarea {...p} dir="ltr" lang="en" rows={4} maxLength={bodyMax} value={value.bodyEn} onChange={(e) => set({ bodyEn: e.target.value })} />
+        )}
       </Field>
-      <Field label={`${titleLabel} (Arabic)`} error={fieldError(error, `${titleKey}Ar`)}>
+      <Field label={t('text.inArabic', { label: title })} error={fieldError(error, `${titleKey}Ar`)}>
         {(p) => <Input {...p} dir="rtl" lang="ar" maxLength={titleMax} value={value.titleAr} onChange={(e) => set({ titleAr: e.target.value })} />}
       </Field>
-      <Field
-        label={`${bodyLabel} (Arabic)`}
-        hint="Write one language or both. A language needs both its fields."
-        error={fieldError(error, `${bodyKey}Ar`)}
-      >
+      <Field label={t('text.inArabic', { label: body })} hint={t('text.hint')} error={fieldError(error, `${bodyKey}Ar`)}>
         {(p) => (
           <Textarea {...p} dir="rtl" lang="ar" rows={4} maxLength={bodyMax} value={value.bodyAr} onChange={(e) => set({ bodyAr: e.target.value })} />
         )}
@@ -171,15 +172,19 @@ export function AttachmentPicker({
   onKeptChange,
   added,
   onAddedChange,
-  label = 'Attach an image or a PDF',
+  label,
 }: {
   existing: readonly CommunityAttachment[];
   kept: string[];
   onKeptChange: (ids: string[]) => void;
   added: string[];
   onAddedChange: (ids: string[]) => void;
+  /** Defaults to “Attach an image or a PDF”, in the page's language. */
   label?: string;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const text = label ?? t('attach.label');
   const count = kept.length + added.length;
   return (
     <div className="stack stack--sm">
@@ -189,23 +194,21 @@ export function AttachmentPicker({
           <span key={a.id} className="row" style={{ gap: 8 }}>
             <AttachmentLink attachment={a} />
             <Button type="button" size="sm" variant="text" icon={<X aria-hidden />} onClick={() => onKeptChange(kept.filter((id) => id !== a.id))}>
-              Remove
+              {c('remove')}
             </Button>
           </span>
         ))}
       {added.length ? (
         <span className="row" style={{ gap: 8 }}>
-          <span className="t-secondary">
-            {added.length} new file{added.length === 1 ? '' : 's'} uploaded
-          </span>
+          <span className="t-secondary">{t('attach.added', { n: added.length })}</span>
           <Button type="button" size="sm" variant="text" icon={<X aria-hidden />} onClick={() => onAddedChange([])}>
-            Remove the new files
+            {t('attach.removeNew')}
           </Button>
         </span>
       ) : null}
       <FileUpload
         purpose="community_attachment"
-        label={count ? `${label} (${count} of ${MAX_ATTACHMENTS})` : label}
+        label={count ? t('attach.count', { label: text, count, max: MAX_ATTACHMENTS }) : text}
         disabled={count >= MAX_ATTACHMENTS}
         onUploaded={(id) => onAddedChange([...added, id])}
       />
@@ -214,13 +217,19 @@ export function AttachmentPicker({
 }
 
 function AttachmentLink({ attachment }: { attachment: CommunityAttachment }) {
-  if (!attachment.url) return <span className="t-secondary">File no longer available</span>;
+  const t = useT(en, ar);
+  if (!attachment.url) return <span className="t-secondary">{t('attach.gone')}</span>;
   return (
     <a href={attachment.url} target="_blank" rel="noreferrer noopener" referrerPolicy="no-referrer">
       {attachment.contentType.startsWith('image/') ? (
-        <img src={attachment.url} alt="Attachment" referrerPolicy="no-referrer" style={{ maxWidth: 160, maxHeight: 120, borderRadius: 8, display: 'block' }} />
+        <img
+          src={attachment.url}
+          alt={t('attach.alt')}
+          referrerPolicy="no-referrer"
+          style={{ maxWidth: 160, maxHeight: 120, borderRadius: 8, display: 'block' }}
+        />
       ) : (
-        'Document (PDF)'
+        t('attach.pdf')
       )}
     </a>
   );
@@ -238,10 +247,10 @@ export function Attachments({ items }: { items: readonly CommunityAttachment[] }
   );
 }
 
-/** Text in the two languages, each shown only when it was written. */
+/** Text in the two languages, each shown only when it was written, each in its own direction. */
 export function TwoLanguages({
-  en,
-  ar,
+  en: english,
+  ar: arabic,
   strong,
 }: {
   en: string | null | undefined;
@@ -251,14 +260,14 @@ export function TwoLanguages({
   const cls = strong ? 'table__primary' : undefined;
   return (
     <span className="stack stack--sm">
-      {en ? (
-        <span className={cls} style={{ whiteSpace: 'pre-wrap' }}>
-          {en}
+      {english ? (
+        <span className={cls} dir="ltr" lang="en" style={{ whiteSpace: 'pre-wrap' }}>
+          {english}
         </span>
       ) : null}
-      {ar ? (
-        <span className={en ? 't-secondary' : cls} dir="rtl" lang="ar" style={{ whiteSpace: 'pre-wrap' }}>
-          {ar}
+      {arabic ? (
+        <span className={english ? 't-secondary' : cls} dir="rtl" lang="ar" style={{ whiteSpace: 'pre-wrap' }}>
+          {arabic}
         </span>
       ) : null}
     </span>
@@ -277,7 +286,7 @@ export function SectionHeader({ title, description, actions }: { title: ReactNod
 /** The way back from a detail page to its list. */
 export function Back({ href, label }: { href: string; label: string }) {
   return (
-    <ButtonLink href={href} variant="text" size="sm" icon={<ArrowLeft aria-hidden />}>
+    <ButtonLink href={href} variant="text" size="sm" icon={<ArrowLeft aria-hidden className="icon-dir" />}>
       {label}
     </ButtonLink>
   );

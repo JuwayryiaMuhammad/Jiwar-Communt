@@ -1,8 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Field, ForbiddenState, PageHeader, Select, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Field, ForbiddenState, PageHeader, Select, StatusBadge, useLabel } from '@jiwar/ui';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,11 +12,19 @@ import { EventDialog } from '@/components/community/event-dialog';
 import { audienceText } from '@/components/community/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type CommunityEvent, type EventFilters } from '@/lib/queries';
+import communityAr from '@/messages/ar/community';
+import ar from '@/messages/ar/community-events';
+import communityEn from '@/messages/en/community';
+import en from '@/messages/en/community-events';
 
 const STATUSES: CommunityEvent['status'][] = ['upcoming', 'ongoing', 'ended', 'cancelled'];
 
 /** The compound's events (ADR 0040), the latest start first. */
 export default function EventsPage() {
+  const t = useT(en, ar);
+  const tc = useT(communityEn, communityAr);
+  const fmt = useFormat();
+  const label = useLabel();
   const router = useRouter();
   const { can, ready } = usePermissions();
   const [status, setStatus] = useState<CommunityEvent['status'] | ''>('');
@@ -29,15 +37,15 @@ export default function EventsPage() {
 
   return (
     <>
-      <PageHeader title="Events" description="What the compound holds, and how many said they are coming. No payment is taken here." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Field label="Status">
+        <Field label={t('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as CommunityEvent['status'] | '')}>
-              <option value="">Any status</option>
+              <option value="">{t('anyStatus')}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
@@ -45,7 +53,7 @@ export default function EventsPage() {
         </Field>
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-          New event
+          {t('newEvent')}
         </Button>
       </div>
       <Card flush>
@@ -53,11 +61,11 @@ export default function EventsPage() {
           <DataTable<CommunityEvent>
             rows={list.rows}
             rowKey={(e) => e.id}
-            empty="No event here"
+            empty={t('empty')}
             columns={[
               {
                 key: 'title',
-                header: 'Event',
+                header: t('col.event'),
                 cell: (e) => (
                   <span className="stack stack--sm">
                     <Link className="table__link" href={`/events/${e.id}`}>
@@ -67,14 +75,14 @@ export default function EventsPage() {
                   </span>
                 ),
               },
-              { key: 'when', header: 'Starts', cell: (e) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(e.startsAt)}</span> },
-              { key: 'status', header: 'Status', cell: (e) => <StatusBadge status={e.status} /> },
+              { key: 'when', header: t('col.starts'), cell: (e) => <span style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(e.startsAt)}</span> },
+              { key: 'status', header: t('col.status'), cell: (e) => <StatusBadge status={e.status} /> },
               {
                 key: 'seats',
-                header: 'Coming',
-                cell: (e) => (e.capacity === null ? `${e.counts.seats}` : `${e.counts.seats} of ${e.capacity}`),
+                header: t('col.coming'),
+                cell: (e) => (e.capacity === null ? fmt.number(e.counts.seats) : t('ofTotal', { part: e.counts.seats, whole: e.capacity })),
               },
-              { key: 'audience', header: 'Audience', cell: (e) => audienceText(e.audience) },
+              { key: 'audience', header: t('col.audience'), cell: (e) => audienceText(e.audience, tc, fmt) },
             ]}
           />
           <LoadMore query={list} />

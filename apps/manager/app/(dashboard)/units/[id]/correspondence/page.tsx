@@ -1,13 +1,16 @@
 'use client';
 
-import { formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Badge, Card, DataTable, ForbiddenState, PageHeader, Select } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Card, DataTable, ForbiddenState, PageHeader, Select, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/units-correspondence';
+import en from '@/messages/en/units-correspondence';
 
 interface Row {
   type: string;
@@ -27,6 +30,10 @@ const TYPES = ['management_request', 'official_letter', 'announcement', 'neighbo
  * logged in the audit trail.
  */
 export default function UnitCorrespondencePage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const { id } = useParams<{ id: string }>();
   const { can } = usePermissions();
   const [type, setType] = useState('');
@@ -43,13 +50,13 @@ export default function UnitCorrespondencePage() {
   if (!can('correspondence.read')) return <ForbiddenState />;
   return (
     <>
-      <PageHeader title="Correspondence" description="Everything the unit’s people and the management wrote each other, newest first. Opening this page is recorded in the audit trail." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Select aria-label="Kind" value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="">Everything</option>
-          {TYPES.map((t) => (
-            <option key={t} value={t}>
-              {humanize(t)}
+        <Select aria-label={c('kind')} value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="">{t('everything')}</option>
+          {TYPES.map((v) => (
+            <option key={v} value={v}>
+              {label(v)}
             </option>
           ))}
         </Select>
@@ -60,12 +67,12 @@ export default function UnitCorrespondencePage() {
             rows={rows.data?.data ?? []}
             rowKey={(r) => `${r.type}:${r.id}`}
             columns={[
-              { key: 'when', header: 'When', cell: (r) => formatDateTime(r.at) },
-              { key: 'what', header: 'What', cell: (r) => humanize(r.type) },
-              { key: 'reference', header: 'Reference', cell: (r) => r.number ?? '—' },
-              { key: 'kind', header: 'Kind', cell: (r) => (r.kind ? humanize(r.kind) : '—') },
-              { key: 'status', header: 'Status', cell: (r) => (r.status ? humanize(r.status) : '—') },
-              { key: 'direction', header: '', cell: (r) => <Badge>{r.direction === 'from_unit' ? 'From the unit' : 'To the unit'}</Badge> },
+              { key: 'when', header: t('col.when'), cell: (r) => fmt.dateTime(r.at) },
+              { key: 'what', header: t('col.what'), cell: (r) => label(r.type) },
+              { key: 'reference', header: t('col.reference'), cell: (r) => r.number ?? '—' },
+              { key: 'kind', header: c('kind'), cell: (r) => (r.kind ? label(r.kind) : '—') },
+              { key: 'status', header: c('status'), cell: (r) => (r.status ? label(r.status) : '—') },
+              { key: 'direction', header: '', cell: (r) => <Badge>{r.direction === 'from_unit' ? t('fromUnit') : t('toUnit')}</Badge> },
             ]}
           />
         </QueryState>

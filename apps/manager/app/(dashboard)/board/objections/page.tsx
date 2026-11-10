@@ -1,19 +1,16 @@
 'use client';
 
-import { formatDate, formatDateTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Card, DataTable, ForbiddenState, PageHeader } from '@jiwar/ui';
 import Link from 'next/link';
+import { inLocale } from '@/components/governance/logic';
 import { objectionState } from '@/components/governance/matters';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BoardPublication } from '@/lib/queries';
 import { useNow } from '@/lib/use-now';
-
-const STATE_TEXT: Record<string, string> = {
-  open: 'Taking objections',
-  closed: 'Its days have passed',
-  answered: 'Answered',
-};
+import ar from '@/messages/ar/gov-board-objections';
+import en from '@/messages/en/gov-board-objections';
 
 /**
  * The board's decisions and the owners' objections to them (ADR 0059), a
@@ -21,6 +18,8 @@ const STATE_TEXT: Record<string, string> = {
  * whether the board answered. The objections themselves are on its page.
  */
 export default function BoardObjectionsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('governance.board');
   const now = useNow(60_000);
@@ -28,7 +27,7 @@ export default function BoardObjectionsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Objections" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -36,30 +35,31 @@ export default function BoardObjectionsPage() {
   const decisions = (list.rows ?? []).filter((p) => p.objections !== null);
   return (
     <>
-      <PageHeader
-        title="Objections"
-        description="Owners may object to a decision of the board within the compound’s objection days. The board answers once, with its reasons, to every objector; then the decision takes no more."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <Card flush>
         <QueryState query={list}>
           <DataTable<BoardPublication>
             rows={decisions}
             rowKey={(p) => p.id}
-            empty="No decision takes objections"
+            empty={t('empty')}
             columns={[
               {
                 key: 't',
-                header: 'Decision',
-                cell: (p) => <Link href={`/board/objections/${p.id}`}>{p.titleEn ?? p.titleAr ?? 'A decision'}</Link>,
+                header: t('col.decision'),
+                cell: (p) => (
+                  <Link href={`/board/objections/${p.id}`}>
+                    {p.titleEn || p.titleAr ? inLocale(fmt.locale, p.titleEn, p.titleAr) : t('aDecision')}
+                  </Link>
+                ),
               },
-              { key: 'd', header: 'Decided on', cell: (p) => formatDate(p.decidedOn) },
-              { key: 'u', header: 'Objections until', cell: (p) => (p.objections ? formatDateTime(p.objections.until) : '—') },
+              { key: 'd', header: t('col.decidedOn'), cell: (p) => fmt.day(p.decidedOn) },
+              { key: 'u', header: t('col.until'), cell: (p) => (p.objections ? fmt.dateTime(p.objections.until) : '—') },
               {
                 key: 's',
-                header: 'State',
+                header: t('col.state'),
                 cell: (p) => {
                   const state = objectionState(p.objections, new Date(now));
-                  return state ? STATE_TEXT[state] : '—';
+                  return state ? t(`state.${state}`) : '—';
                 },
               },
             ]}

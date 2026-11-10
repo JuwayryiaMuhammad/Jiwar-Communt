@@ -1,8 +1,9 @@
 'use client';
 
-import { formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardBody, ConfirmDialog, Dialog, ForbiddenState, PageHeader, Stat, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, CardBody, ConfirmDialog, Dialog, ForbiddenState, PageHeader, Stat, StatusBadge, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { AnnouncementDelivery } from '@/components/office-queue/announcement-delivery';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
@@ -13,9 +14,15 @@ import { announcementActions, audienceText, percent, toIso } from '@/components/
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type AnnouncementDetail } from '@/lib/queries';
+import communityAr from '@/messages/ar/community';
+import ar from '@/messages/ar/community-announcements';
+import communityEn from '@/messages/en/community';
+import en from '@/messages/en/community-announcements';
 
 /** Publishes now, or at a time; moves the time of one that is scheduled. */
 function PublishDialog({ announcement, onClose }: { announcement: AnnouncementDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [at, setAt] = useState('');
   const publish = useAction(
@@ -29,7 +36,7 @@ function PublishDialog({ announcement, onClose }: { announcement: AnnouncementDe
     {
       invalidate: [keys.announcementsAll],
       onDone: () => {
-        toast.show(at ? 'The announcement is scheduled.' : 'The announcement is out.');
+        toast.show(at ? t('scheduledToast') : t('outToast'));
         onClose();
       },
     },
@@ -38,24 +45,20 @@ function PublishDialog({ announcement, onClose }: { announcement: AnnouncementDe
     <Dialog
       open
       onClose={onClose}
-      title="Publish"
-      description={
-        announcement.priority === 'important'
-          ? 'Its audience reads it from then on, and is notified once, when it comes out.'
-          : 'Its audience reads it from then on. Nobody is notified: it is not marked important.'
-      }
+      title={t('publish')}
+      description={announcement.priority === 'important' ? t('publishImportant') : t('publishNormal')}
       onSubmit={() => publish.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={publish.isPending}>
-            {at ? 'Schedule' : 'Publish now'}
+            {at ? t('schedule') : t('publishNow')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <DateTimeField label="When" hint="Empty: now." value={at} onChange={setAt} />
+        <DateTimeField label={t('when')} hint={t('whenHint')} value={at} onChange={setAt} />
         <ErrorAlert error={publish.error} />
       </div>
     </Dialog>
@@ -64,23 +67,26 @@ function PublishDialog({ announcement, onClose }: { announcement: AnnouncementDe
 
 /** How many opened it. Counts only: who read it is not stored anywhere. */
 function ReadCounts({ id }: { id: string }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const reads = useQuery({ queryKey: keys.announcementPart(id, 'reads'), queryFn: () => fetchers.announcementReads(id), refetchInterval: 60_000 });
+  const share = (part: number, whole: number) => fmt.percent(percent(part, whole) / 100, 0);
   return (
     <Card>
-      <SectionHeader title="Opened by" description="Counts only. Who opened it is not recorded, so there is no list to show." />
+      <SectionHeader title={t('openedBy')} description={t('openedByHint')} />
       <CardBody>
         <QueryState query={reads}>
           {reads.data ? (
             <div className="row" style={{ gap: 32, flexWrap: 'wrap' }}>
               <Stat
-                label="Units"
-                value={`${reads.data.units} of ${reads.data.audienceUnits}`}
-                hint={`${percent(reads.data.units, reads.data.audienceUnits)}% of the units it is for now`}
+                label={t('units')}
+                value={t('ofTotal', { part: reads.data.units, whole: reads.data.audienceUnits })}
+                hint={t('unitsShare', { share: share(reads.data.units, reads.data.audienceUnits) })}
               />
               <Stat
-                label="People"
-                value={`${reads.data.accounts} of ${reads.data.audienceAccounts}`}
-                hint={`${percent(reads.data.accounts, reads.data.audienceAccounts)}% of the people it is for now`}
+                label={t('people')}
+                value={t('ofTotal', { part: reads.data.accounts, whole: reads.data.audienceAccounts })}
+                hint={t('peopleShare', { share: share(reads.data.accounts, reads.data.audienceAccounts) })}
               />
             </div>
           ) : null}
@@ -91,18 +97,20 @@ function ReadCounts({ id }: { id: string }) {
 }
 
 function Versions({ id }: { id: string }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const versions = useQuery({ queryKey: keys.announcementPart(id, 'versions'), queryFn: () => fetchers.announcementVersions(id) });
   return (
     <Card>
-      <SectionHeader title="Versions" description="What it said, each time it was changed. Nothing is rewritten." />
+      <SectionHeader title={t('versions')} description={t('versionsHint')} />
       <CardBody>
         <QueryState query={versions}>
           <div className="stack">
             {[...(versions.data?.data ?? [])].reverse().map((v) => (
               <div key={v.version} className="stack stack--sm">
                 <span className="row" style={{ gap: 8 }}>
-                  <Badge plain>Version {v.version}</Badge>
-                  <span className="t-secondary">{formatDateTime(v.createdAt)}</span>
+                  <Badge plain>{t('version', { version: v.version })}</Badge>
+                  <span className="t-secondary">{fmt.dateTime(v.createdAt)}</span>
                 </span>
                 <TwoLanguages en={v.titleEn} ar={v.titleAr} strong />
                 <TwoLanguages en={v.bodyEn} ar={v.bodyAr} />
@@ -117,6 +125,11 @@ function Versions({ id }: { id: string }) {
 }
 
 export default function AnnouncementPage() {
+  const t = useT(en, ar);
+  const tc = useT(communityEn, communityAr);
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const { can, ready } = usePermissions();
@@ -126,7 +139,7 @@ export default function AnnouncementPage() {
   const archive = useAction(() => unwrap(api.POST('/api/v1/community/announcements/{id}/archive', { params: { path: { id } } })), {
     invalidate: [keys.announcementsAll],
     onDone: () => {
-      toast.show('The announcement is archived.');
+      toast.show(t('archived'));
       setDialog(null);
     },
   });
@@ -135,24 +148,30 @@ export default function AnnouncementPage() {
   const a = query.data;
   // The board's decisions and minutes change under Governance (ADR 0051).
   const actions = a && a.kind !== 'board' ? announcementActions(a.status) : null;
+  // The title in the page's language when it was written in it.
+  const heading = a ? ((locale === 'ar' ? (a.titleAr ?? a.titleEn) : (a.titleEn ?? a.titleAr)) ?? t('announcement')) : t('announcement');
+  const affects = (w: NonNullable<AnnouncementDetail['works']>) => {
+    const area = w.gate ? t('affects.gate', { area: label(w.areaKind), gate: w.gate.name }) : label(w.areaKind);
+    return w.place ? t('affects.place', { what: area, place: w.place }) : area;
+  };
 
   return (
     <>
       <PageHeader
-        title={a ? (a.titleEn ?? a.titleAr ?? 'Announcement') : 'Announcement'}
-        back={<Back href="/announcements" label="Announcements" />}
+        title={heading}
+        back={<Back href="/announcements" label={t('title')} />}
         actions={
           a && actions ? (
             <>
-              {actions.edit ? <Button onClick={() => setDialog('edit')}>Edit</Button> : null}
+              {actions.edit ? <Button onClick={() => setDialog('edit')}>{t('edit')}</Button> : null}
               {actions.archive ? (
                 <Button variant="danger" onClick={() => setDialog('archive')}>
-                  Archive
+                  {t('archive')}
                 </Button>
               ) : null}
               {actions.publish ? (
                 <Button variant="primary" onClick={() => setDialog('publish')}>
-                  {a.status === 'scheduled' ? 'Change the time' : 'Publish'}
+                  {a.status === 'scheduled' ? t('changeTime') : t('publish')}
                 </Button>
               ) : null}
             </>
@@ -163,14 +182,14 @@ export default function AnnouncementPage() {
         {a ? (
           <div className="stack">
             <Card>
-              <SectionHeader title="As residents read it" description={`Version ${a.version}${a.editedAt ? ', shown as edited' : ''}.`} />
+              <SectionHeader title={t('asRead')} description={t('versionLine', { version: a.version, edited: a.editedAt ? 'yes' : 'no' })} />
               <CardBody>
                 <div className="stack">
                   <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
                     <StatusBadge status={a.status} />
-                    {a.kind === 'works' ? <Badge plain>Works and closures</Badge> : null}
-                    {a.priority === 'important' ? <Badge tone="terracotta">Important</Badge> : null}
-                    {a.pinned ? <Badge tone="green">Pinned</Badge> : null}
+                    {a.kind === 'works' ? <Badge plain>{t('works')}</Badge> : null}
+                    {a.priority === 'important' ? <Badge tone="terracotta">{t('important')}</Badge> : null}
+                    {a.pinned ? <Badge tone="green">{t('pinned')}</Badge> : null}
                   </span>
                   <TwoLanguages en={a.titleEn} ar={a.titleAr} strong />
                   <TwoLanguages en={a.bodyEn} ar={a.bodyAr} />
@@ -179,40 +198,38 @@ export default function AnnouncementPage() {
               </CardBody>
             </Card>
             <Card>
-              <SectionHeader title="Settings" />
+              <SectionHeader title={t('settings')} />
               <CardBody>
                 <dl className="dl">
-                  <dt>Audience</dt>
-                  <dd>{audienceText(a.audience)}</dd>
-                  <dt>Published</dt>
-                  <dd>{a.publishAt ? formatDateTime(a.publishAt) : 'Not yet: a draft'}</dd>
+                  <dt>{t('audience')}</dt>
+                  <dd>{audienceText(a.audience, tc, fmt)}</dd>
+                  <dt>{t('published')}</dt>
+                  <dd>{a.publishAt ? fmt.dateTime(a.publishAt) : t('notYetDraft')}</dd>
                   {a.kind === 'general' ? (
                     <>
-                      <dt>Expires</dt>
-                      <dd>{a.expiresAt ? formatDateTime(a.expiresAt) : 'When archived'}</dd>
+                      <dt>{t('expires')}</dt>
+                      <dd>{a.expiresAt ? fmt.dateTime(a.expiresAt) : t('whenArchived')}</dd>
                     </>
                   ) : null}
                   {a.priority === 'important' ? (
                     <>
-                      <dt>Pinned until</dt>
-                      <dd>{a.pinnedUntil ? formatDateTime(a.pinnedUntil) : 'Not pinned'}</dd>
-                      <dt>Audience notified</dt>
-                      <dd>{a.notifiedAt ? formatDateTime(a.notifiedAt) : 'When it comes out'}</dd>
+                      <dt>{t('pinnedUntil')}</dt>
+                      <dd>{a.pinnedUntil ? fmt.dateTime(a.pinnedUntil) : t('notPinned')}</dd>
+                      <dt>{t('notified')}</dt>
+                      <dd>{a.notifiedAt ? fmt.dateTime(a.notifiedAt) : t('whenOut')}</dd>
                     </>
                   ) : null}
                   {a.works ? (
                     <>
-                      <dt>Works</dt>
+                      <dt>{t('worksLabel')}</dt>
                       <dd>
-                        {formatDateTime(a.works.startsAt)} to {formatDateTime(a.works.endsAt)}
-                        {a.works.active ? ' (under way)' : ''}
+                        {t(a.works.active ? 'worksSpanActive' : 'worksSpan', {
+                          from: fmt.dateTime(a.works.startsAt),
+                          to: fmt.dateTime(a.works.endsAt),
+                        })}
                       </dd>
-                      <dt>Affects</dt>
-                      <dd>
-                        {humanize(a.works.areaKind)}
-                        {a.works.gate ? `: ${a.works.gate.name}` : ''}
-                        {a.works.place ? `, ${a.works.place}` : ''}
-                      </dd>
+                      <dt>{t('affects')}</dt>
+                      <dd>{affects(a.works)}</dd>
                     </>
                   ) : null}
                 </dl>
@@ -238,9 +255,9 @@ export default function AnnouncementPage() {
       <ConfirmDialog
         open={dialog === 'archive'}
         onClose={() => setDialog(null)}
-        title="Archive this announcement?"
-        description="Residents stop seeing it. It stays here with its versions; an announcement is never deleted, and an archived one cannot be brought back."
-        confirmLabel="Archive"
+        title={t('archiveTitle')}
+        description={t('archiveDescription')}
+        confirmLabel={t('archive')}
         danger
         pending={archive.isPending}
         error={archive.error ? <ErrorAlert error={archive.error} /> : undefined}

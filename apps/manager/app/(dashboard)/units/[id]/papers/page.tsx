@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  errorText,
+  ErrorText,
   formatDate,
   formatDateTime,
   REASON_CODES,
@@ -165,7 +165,7 @@ function Proxies({ unitId }: { unitId: string }) {
         confirmLabel="End the proxy"
         danger
         pending={revoke.isPending}
-        error={revoke.error ? errorText(revoke.error) : undefined}
+        error={revoke.error ? <ErrorText error={revoke.error} /> : undefined}
         onConfirm={(reasonCode) =>
           revoking && revoke.mutate({ id: revoking.id, reasonCode })
         }
@@ -322,7 +322,7 @@ function Contracts({
         confirmLabel="Void"
         danger
         pending={voidIt.isPending}
-        error={voidIt.error ? errorText(voidIt.error) : undefined}
+        error={voidIt.error ? <ErrorText error={voidIt.error} /> : undefined}
         onConfirm={(reasonCode) =>
           voiding && voidIt.mutate({ c: voiding, reasonCode })
         }

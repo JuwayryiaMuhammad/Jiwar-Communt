@@ -1,6 +1,6 @@
 'use client';
 
-import { ApiError, errorText, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ApiError, ErrorText, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { Alert, Badge, Button, Card, DataTable, Dialog, Field, PageHeader, ReasonCodeDialog, Segmented, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -120,7 +120,7 @@ export default function OwnershipTransfersPage() {
         confirmLabel="Cancel the transfer"
         danger
         pending={cancel.isPending}
-        error={cancel.error ? errorText(cancel.error) : undefined}
+        error={cancel.error ? <ErrorText error={cancel.error} /> : undefined}
         onConfirm={(reasonCode) => cancelling && cancel.mutate({ t: cancelling, reasonCode })}
       />
     </>

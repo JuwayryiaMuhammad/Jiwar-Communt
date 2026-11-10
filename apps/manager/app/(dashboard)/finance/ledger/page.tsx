@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, formatDateTime } from '@jiwar/api';
+import { useErrorText, formatDateTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
 import { Alert, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Select } from '@jiwar/ui';
 import { Download } from 'lucide-react';
@@ -27,6 +27,7 @@ export default function LedgerPage() {
   const [to, setTo] = useState(today());
   const [type, setType] = useState<LedgerType | ''>('');
   const [building, setBuilding] = useState('');
+  const errorText = useErrorText();
   const [exportError, setExportError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const filters: LedgerFilters = { from, to, type, building: building.trim() };

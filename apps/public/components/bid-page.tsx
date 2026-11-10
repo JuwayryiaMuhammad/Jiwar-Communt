@@ -277,7 +277,7 @@ function Withdraw({ token, onDone, onDead }: { token: string; onDone: () => void
  * link is the only credential; only what the API returns.
  */
 export function BidPage() {
-  const { t, locale } = useLocale();
+  const { t, locale, format } = useLocale();
   const link = useLinkToken('bid');
   const token = link.state === 'ready' ? link.token : null;
   const [lookup, setLookup] = useState<Lookup>({ state: 'loading' });
@@ -323,7 +323,7 @@ export function BidPage() {
   const dead = () => setLookup({ state: 'dead' });
   const when = (iso: string) => {
     try {
-      return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+      return format().custom(iso, { dateStyle: 'medium', timeStyle: 'short' });
     } catch {
       return iso;
     }

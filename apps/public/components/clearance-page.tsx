@@ -31,7 +31,7 @@ type Lookup =
  * which shows this page's address and the code apart.
  */
 export function ClearancePage() {
-  const { t, locale } = useLocale();
+  const { t, format } = useLocale();
   const link = useLinkToken('clearance');
   const [typed, setTyped] = useState<string | null>(null);
   const code = link.state === 'ready' ? link.token : typed;
@@ -78,10 +78,7 @@ export function ClearancePage() {
   }
 
   const { view } = lookup;
-  const when = (iso: string) =>
-    new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG-u-nu-latn' : 'en-EG', { dateStyle: 'medium', timeStyle: 'short' }).format(
-      new Date(iso),
-    );
+  const when = (iso: string) => format().custom(iso, { dateStyle: 'medium', timeStyle: 'short' });
   return (
     <Shell title={t('clearance.title')}>
       <p className={`state state--${view.status === 'valid' ? 'ok' : 'off'}`} role="status">

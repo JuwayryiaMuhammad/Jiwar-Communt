@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  errorText,
+  ErrorText,
   formatDateTime,
   REASON_CODES,
   unwrap,
@@ -154,7 +154,7 @@ export default function IdentityChangesPage() {
         confirmLabel="Reject"
         danger
         pending={reject.isPending}
-        error={reject.error ? errorText(reject.error) : undefined}
+        error={reject.error ? <ErrorText error={reject.error} /> : undefined}
         onConfirm={(reasonCode) =>
           rejecting && reject.mutate({ c: rejecting, reasonCode })
         }

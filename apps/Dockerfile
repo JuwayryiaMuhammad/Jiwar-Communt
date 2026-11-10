@@ -18,6 +18,7 @@ COPY apps/manager/package.json apps/manager/
 COPY apps/public/package.json apps/public/
 COPY packages/api/package.json packages/api/
 COPY packages/bff/package.json packages/bff/
+COPY packages/i18n/package.json packages/i18n/
 COPY packages/ui/package.json packages/ui/
 # The app and its workspace dependencies only. No install scripts: the root
 # (backend) postinstall would run `prisma generate`, and nothing the

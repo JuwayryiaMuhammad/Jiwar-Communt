@@ -3,6 +3,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
 import { Button } from './button';
+import { useCommonT } from './i18n';
 
 /**
  * Native <dialog>: focus trap, Escape and the top layer come from the
@@ -27,6 +28,7 @@ export function Dialog({
   onSubmit?: (e: FormEvent<HTMLFormElement>) => void;
   wide?: boolean;
 }) {
+  const t = useCommonT();
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function Dialog({
           <h2 className="t-title-md">{title}</h2>
           {description ? <p className="t-secondary">{description}</p> : null}
         </div>
-        <Button variant="text" iconOnly aria-label="Close" onClick={onClose} icon={<X aria-hidden />} />
+        <Button variant="text" iconOnly aria-label={t('close')} onClick={onClose} icon={<X aria-hidden />} />
       </header>
       <div className="dialog__body">{children}</div>
       {footer ? <footer className="dialog__footer">{footer}</footer> : null}

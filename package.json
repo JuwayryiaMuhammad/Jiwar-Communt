@@ -37,7 +37,7 @@
     "dev:public": "pnpm --filter @jiwar/public dev",
     "dashboards:typecheck": "pnpm --filter \"./apps/*\" --filter \"./packages/*\" run typecheck",
     "dashboards:build": "pnpm --filter \"./apps/*\" run build",
-    "dashboards:test": "pnpm --filter @jiwar/bff --filter @jiwar/manager --filter @jiwar/public test",
+    "dashboards:test": "pnpm --filter @jiwar/bff --filter @jiwar/manager --filter @jiwar/public --filter @jiwar/admin --filter @jiwar/i18n --filter @jiwar/ui --filter @jiwar/api test",
     "api:generate": "pnpm --filter @jiwar/api generate"
   },
   "dependencies": {

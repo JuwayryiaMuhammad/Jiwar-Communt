@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, humanize } from '@jiwar/api';
+import { useErrorText, humanize } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
 import { Alert, Button, Card, CardHeader, DataTable, Field, ForbiddenState, Input, PageHeader } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +20,7 @@ const n = (v: number) => <span className="t-num">{v}</span>;
 
 function Export({ path, period, name }: { path: string; period: { from: string; to: string }; name: string }) {
   const [busy, setBusy] = useState(false);
+  const errorText = useErrorText();
   const [error, setError] = useState<string | null>(null);
   return (
     <>

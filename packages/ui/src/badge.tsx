@@ -1,4 +1,7 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { useLabel } from './i18n';
 
 export type Tone = 'green' | 'beige' | 'terracotta' | 'error' | 'dark';
 
@@ -159,8 +162,9 @@ const STATUS_TONE: Record<string, Tone> = {
   voided: 'beige',
 };
 
-export function StatusBadge({ status }: { status: string | null | undefined }) {
+/** A status in its tone, in the shared words for it (`useLabel`), or the page's own `label`. */
+export function StatusBadge({ status, label: own }: { status: string | null | undefined; label?: string }) {
+  const label = useLabel();
   if (!status) return <span className="t-secondary">—</span>;
-  const label = status.replace(/_/g, ' ');
-  return <Badge tone={STATUS_TONE[status] ?? 'beige'}>{label.charAt(0).toUpperCase() + label.slice(1)}</Badge>;
+  return <Badge tone={STATUS_TONE[status] ?? 'beige'}>{own ?? label(status)}</Badge>;
 }

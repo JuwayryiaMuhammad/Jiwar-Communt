@@ -16,7 +16,7 @@ export function Field({
 }: {
   label: ReactNode;
   hint?: ReactNode;
-  error?: string;
+  error?: ReactNode;
   children: (props: { id: string; 'aria-invalid'?: true; 'aria-describedby'?: string }) => ReactNode;
 }) {
   const id = useId();

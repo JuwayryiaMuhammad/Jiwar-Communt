@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from './button';
+import { useCommonT } from './i18n';
 
 export interface NavItem {
   href: string;
@@ -74,6 +75,7 @@ export function AppShell({
   crumb?: string;
   children: ReactNode;
 }) {
+  const t = useCommonT();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
@@ -85,7 +87,7 @@ export function AppShell({
 
   return (
     <div className="shell" data-nav-open={open}>
-      <aside className="sidebar" aria-label="Main navigation">
+      <aside className="sidebar" aria-label={t('shell.nav')}>
         <Link href="/" className="sidebar__brand">
           <span className="sidebar__mark" aria-hidden>
             J
@@ -119,7 +121,7 @@ export function AppShell({
         <div className="sidebar__footer">
           {user ? (
             user.href ? (
-              <Link href={user.href} className="sidebar__user" aria-current={pathname === user.href ? 'page' : undefined} title="My account">
+              <Link href={user.href} className="sidebar__user" aria-current={pathname === user.href ? 'page' : undefined} title={t('shell.myAccount')}>
                 {userInner(user)}
               </Link>
             ) : (
@@ -127,7 +129,7 @@ export function AppShell({
             )
           ) : null}
           <Button variant="ghost-dark" icon={<LogOut aria-hidden />} onClick={onSignOut} loading={signingOut}>
-            Sign out
+            {t('shell.signOut')}
           </Button>
         </div>
       </aside>
@@ -139,7 +141,7 @@ export function AppShell({
             variant="secondary"
             size="sm"
             iconOnly
-            aria-label="Open navigation"
+            aria-label={t('shell.openNav')}
             icon={<Menu aria-hidden />}
             onClick={() => setOpen(true)}
           />

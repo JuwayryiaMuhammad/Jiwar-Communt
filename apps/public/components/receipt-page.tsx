@@ -27,7 +27,7 @@ type Lookup =
  * name or a unit. The code lives in the fragment and is stripped at once.
  */
 export function ReceiptPage() {
-  const { t, locale } = useLocale();
+  const { t, format } = useLocale();
   const link = useLinkToken('receipt');
   const code = link.state === 'ready' ? link.token : null;
   const [lookup, setLookup] = useState<Lookup>({ state: 'loading' });
@@ -71,10 +71,7 @@ export function ReceiptPage() {
   }
 
   const { view } = lookup;
-  const amount = new Intl.NumberFormat(locale === 'ar' ? 'ar-EG-u-nu-latn' : 'en-EG', {
-    style: 'currency',
-    currency: view.currency,
-  }).format(Number(view.amount));
+  const amount = format().number(view.amount, { style: 'currency', currency: view.currency, minimumFractionDigits: 2 });
   return (
     <Shell title={t('receipt.title')}>
       <p className={`state state--${view.status === 'valid' ? 'ok' : 'off'}`} role="status">

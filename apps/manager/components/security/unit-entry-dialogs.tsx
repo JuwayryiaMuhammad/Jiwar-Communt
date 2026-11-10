@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, REASON_CODES, unwrap } from '@jiwar/api';
+import { ErrorText, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, useAction } from '@jiwar/api/react';
 import { Button, Dialog, Field, Input, Select, Textarea, useToast } from '@jiwar/ui';
 import { useState } from 'react';
@@ -174,7 +174,7 @@ export function ReportEntryDialog({
       }
     >
       <div className="form">
-        {save.error ? <p className="t-error">{errorText(save.error)}</p> : null}
+        {save.error ? <p className="t-error"><ErrorText error={save.error} /></p> : null}
         <Field label="What was found" error={fieldError(save.error, 'outcome')}>
           {(p) => (
             <Select {...p} value={outcome} onChange={(e) => setOutcome(e.target.value)}>

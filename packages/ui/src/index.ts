@@ -8,3 +8,4 @@ export * from './shell';
 export * from './table';
 export * from './toast';
 export * from './reason-dialog';
+export * from './i18n';

@@ -1,6 +1,6 @@
 'use client';
 
-import { ApiError, errorText, unwrap, type Schema } from '@jiwar/api';
+import { ApiError, useErrorText, unwrap, type Schema } from '@jiwar/api';
 import { Alert, Button } from '@jiwar/ui';
 import { Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -111,6 +111,7 @@ export function FileUpload({
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const errorText = useErrorText();
   const [error, setError] = useState<string | null>(null);
   const rules = RULES[purpose];
 

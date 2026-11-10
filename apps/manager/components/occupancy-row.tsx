@@ -3,6 +3,7 @@
 import type { Schema } from '@jiwar/api';
 import { Button, Checkbox, Field, Select } from '@jiwar/ui';
 import { Trash2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { UnitPicker } from './unit-picker';
 
 type OccupancyInput = Schema<'OccupancyInputDto'>;
@@ -18,7 +19,7 @@ export function OccupancyRow({
   value: OccupancyInput;
   onChange: (v: OccupancyInput) => void;
   onRemove?: () => void;
-  error?: string;
+  error?: ReactNode;
 }) {
   return (
     <div className="stack stack--sm">

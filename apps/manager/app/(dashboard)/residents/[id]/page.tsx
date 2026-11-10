@@ -1,6 +1,6 @@
 'use client';
 
-import { ApiError, errorText, formatDate, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ApiError, ErrorText, formatDate, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, fieldError, QueryState, useAction } from '@jiwar/api/react';
 import {
   Badge,
@@ -326,7 +326,7 @@ export default function ResidentPage() {
         codes={REASON_CODES.handoverWithoutClearance}
         confirmLabel="Record handover"
         pending={handover.isPending}
-        error={handover.variables?.reasonCode && handover.error ? errorText(handover.error) : undefined}
+        error={handover.variables?.reasonCode && handover.error ? <ErrorText error={handover.error} /> : undefined}
         onConfirm={(reasonCode) => needsReason && handover.mutate({ o: needsReason, reasonCode })}
       />
       {r && !r.erased ? (

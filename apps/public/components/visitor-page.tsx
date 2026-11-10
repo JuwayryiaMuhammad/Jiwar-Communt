@@ -15,7 +15,7 @@ type Lookup = { state: 'loading' } | { state: 'dead' } | { state: 'failed'; code
 
 /** /v (ADR 0030): what the visitor shows at the gate. Only what the API returns. */
 export function VisitorPage() {
-  const { t, locale } = useLocale();
+  const { t, locale, format } = useLocale();
   const link = useLinkToken('visitor');
   const token = link.state === 'ready' ? link.token : null;
   const [lookup, setLookup] = useState<Lookup>({ state: 'loading' });
@@ -70,11 +70,7 @@ export function VisitorPage() {
   const { view } = lookup;
   const state = passState(view, now);
   const live = view.status === 'active';
-  const when = new Intl.DateTimeFormat(locale === 'ar' ? 'ar-u-nu-latn' : 'en-GB', {
-    timeZone: view.timeZone,
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  const when = { format: (d: Date) => format(view.timeZone).custom(d, { dateStyle: 'medium', timeStyle: 'short' }) };
   const date = (iso: string) => {
     try {
       return when.format(new Date(iso));

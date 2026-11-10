@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start --port 3002",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test --experimental-strip-types lib/*.test.ts components/**/*.test.ts"
+    "test": "node --test --experimental-strip-types lib/*.test.ts components/**/*.test.ts messages/*.test.ts"
   },
   "dependencies": {
     "@jiwar/api": "workspace:*",
     "@jiwar/bff": "workspace:*",
+    "@jiwar/i18n": "workspace:*",
     "@jiwar/ui": "workspace:*",
     "@tanstack/react-query": "^5.104.1",
     "lucide-react": "^1.51.0",

@@ -126,9 +126,9 @@ function Answer({
 }
 
 function RequestCard({ token, request, timeZone, onChanged }: { token: string; request: DeskRequest; timeZone: string; onChanged: (r: DeskRequest) => void }) {
-  const { t, locale } = useLocale();
+  const { t, locale, format } = useLocale();
   const [open, setOpen] = useState<DeskAction | null>(null);
-  const when = new Intl.DateTimeFormat(locale === 'ar' ? 'ar-u-nu-latn' : 'en-GB', { timeZone, dateStyle: 'medium', timeStyle: 'short' });
+  const when = { format: (d: Date) => format(timeZone).custom(d, { dateStyle: 'medium', timeStyle: 'short' }) };
   const date = (iso: string | null) => {
     if (!iso) return '';
     try {

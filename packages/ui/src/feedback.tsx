@@ -1,5 +1,8 @@
+'use client';
+
 import { AlertCircle, Info, Inbox, Lock, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useCommonT } from './i18n';
 
 export function Alert({ tone = 'info', children }: { tone?: 'info' | 'error' | 'warn'; children: ReactNode }) {
   const Icon = tone === 'error' ? AlertCircle : tone === 'warn' ? TriangleAlert : Info;
@@ -22,11 +25,12 @@ export function EmptyState({ title, children, icon }: { title: string; children?
 }
 
 export function ForbiddenState() {
+  const t = useCommonT();
   return (
     <div className="state">
       <Lock aria-hidden />
-      <p className="state__title">No access</p>
-      <p>Your role does not include this section.</p>
+      <p className="state__title">{t('state.noAccess')}</p>
+      <p>{t('state.noAccessBody')}</p>
     </div>
   );
 }
@@ -36,8 +40,9 @@ export function Skeleton({ width = '100%', height = 14 }: { width?: number | str
 }
 
 export function SkeletonRows({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
+  const t = useCommonT();
   return (
-    <div className="stack" style={{ padding: 24 }} aria-busy="true" aria-label="Loading">
+    <div className="stack" style={{ padding: 24 }} aria-busy="true" aria-label={t('state.loading')}>
       {Array.from({ length: rows }, (_, r) => (
         <div key={r} className="row" style={{ gap: 24, flexWrap: 'nowrap' }}>
           {Array.from({ length: cols }, (_, c) => (

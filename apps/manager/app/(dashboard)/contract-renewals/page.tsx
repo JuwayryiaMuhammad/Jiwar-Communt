@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  errorText,
+  ErrorText,
   formatDateTime,
   REASON_CODES,
   unwrap,
@@ -111,7 +111,7 @@ export default function ContractRenewalsPage() {
         confirmLabel="Decline"
         danger
         pending={decline.isPending}
-        error={decline.error ? errorText(decline.error) : undefined}
+        error={decline.error ? <ErrorText error={decline.error} /> : undefined}
         onConfirm={(reasonCode) =>
           declining && decline.mutate({ r: declining, reasonCode })
         }

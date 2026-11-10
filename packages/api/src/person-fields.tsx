@@ -1,7 +1,10 @@
 'use client';
 
 import { Field, Input, Select } from '@jiwar/ui';
-import { fieldError } from './errors';
+import { useT } from '@jiwar/i18n';
+import { fieldError } from './field-error';
+import ar from './messages/ar/person.ts';
+import en from './messages/en/person.ts';
 
 /**
  * Identity every account carries (ADR 0018): an Egyptian national ID, or a
@@ -57,37 +60,38 @@ export function PersonFields({
   prefix?: string;
   locale?: boolean;
 }) {
+  const t = useT(en, ar);
   const set = <K extends keyof Person>(key: K, v: Person[K]) => onChange({ ...value, [key]: v });
   const err = (field: string) => fieldError(error, prefix + field);
   const passport = value.idDocumentType === 'passport';
 
   return (
     <>
-      <Field label="Full name" error={err('fullName')}>
+      <Field label={t('fullName')} error={err('fullName')}>
         {(p) => <Input {...p} value={value.fullName} onChange={(e) => set('fullName', e.target.value)} />}
       </Field>
       <div className="form__row">
-        <Field label="Email" hint="Sign-in codes go here." error={err('email')}>
+        <Field label={t('email')} hint={t('emailHint')} error={err('email')}>
           {(p) => <Input {...p} type="email" value={value.email} onChange={(e) => set('email', e.target.value)} />}
         </Field>
-        <Field label="Phone" hint="e.g. 01012345678 or +44…" error={err('phone')}>
+        <Field label={t('phone')} hint={t('phoneHint')} error={err('phone')}>
           {(p) => <Input {...p} type="tel" value={value.phone} onChange={(e) => set('phone', e.target.value)} />}
         </Field>
       </div>
       <div className="form__row">
-        <Field label="Identity document" error={err('idDocumentType')}>
+        <Field label={t('document')} error={err('idDocumentType')}>
           {(p) => (
             <Select
               {...p}
               value={value.idDocumentType}
               onChange={(e) => set('idDocumentType', e.target.value as Person['idDocumentType'])}
             >
-              <option value="national_id">Egyptian national ID</option>
-              <option value="passport">Passport</option>
+              <option value="national_id">{t('nationalId')}</option>
+              <option value="passport">{t('passport')}</option>
             </Select>
           )}
         </Field>
-        <Field label={passport ? 'Passport number' : 'National ID (14 digits)'} error={err('idDocumentNumber')}>
+        <Field label={passport ? t('passportNumber') : t('nationalIdNumber')} error={err('idDocumentNumber')}>
           {(p) => (
             <Input
               {...p}
@@ -100,12 +104,12 @@ export function PersonFields({
       </div>
       {passport ? (
         <div className="form__row">
-          <Field label="Nationality" hint="Two letters, e.g. GB" error={err('nationality')}>
+          <Field label={t('nationality')} hint={t('nationalityHint')} error={err('nationality')}>
             {(p) => (
               <Input {...p} maxLength={2} value={value.nationality ?? ''} onChange={(e) => set('nationality', e.target.value)} />
             )}
           </Field>
-          <Field label="Birth date" error={err('birthDate')}>
+          <Field label={t('birthDate')} error={err('birthDate')}>
             {(p) => (
               <Input {...p} type="date" value={value.birthDate ?? ''} onChange={(e) => set('birthDate', e.target.value)} />
             )}
@@ -113,15 +117,15 @@ export function PersonFields({
         </div>
       ) : null}
       {locale ? (
-        <Field label="Email language" error={err('preferredLocale')}>
+        <Field label={t('emailLanguage')} error={err('preferredLocale')}>
           {(p) => (
             <Select
               {...p}
               value={value.preferredLocale ?? 'ar'}
               onChange={(e) => set('preferredLocale', e.target.value as Person['preferredLocale'])}
             >
-              <option value="ar">Arabic</option>
-              <option value="en">English</option>
+              <option value="ar">{t('arabic')}</option>
+              <option value="en">{t('english')}</option>
             </Select>
           )}
         </Field>

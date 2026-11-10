@@ -20,7 +20,7 @@ import {
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { moved, patrolScheduleText, timesFrom } from '@/components/patrols/logic';
 import { postBody, postName, WEEKDAYS } from '@/components/security/logic';
 import { PostPicker } from '@/components/security/pickers';
@@ -68,7 +68,7 @@ function versionBody(f: VersionForm) {
 }
 
 /** Checkpoints in the order walked, chosen from those in service; and the schedule. */
-function VersionFields({ form, onChange, errorOf }: { form: VersionForm; onChange: (f: VersionForm) => void; errorOf: (field: string) => string | undefined }) {
+function VersionFields({ form, onChange, errorOf }: { form: VersionForm; onChange: (f: VersionForm) => void; errorOf: (field: string) => ReactNode }) {
   const checkpoints = useQuery({ queryKey: keys.checkpoints('active'), queryFn: () => fetchers.checkpoints('active') });
   const all = checkpoints.data?.data ?? [];
   const name = (id: string) => all.find((c) => c.id === id)?.nameEn ?? id;

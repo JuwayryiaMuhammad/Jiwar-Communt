@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { EmptyState, SkeletonRows } from './feedback';
+import { useCommonT } from './i18n';
 
 export interface Column<T> {
   key: string;
@@ -16,7 +17,7 @@ export function DataTable<T>({
   rows,
   rowKey,
   loading,
-  empty = 'Nothing here yet',
+  empty,
   emptyHint,
 }: {
   columns: Column<T>[];
@@ -26,8 +27,9 @@ export function DataTable<T>({
   empty?: string;
   emptyHint?: ReactNode;
 }) {
+  const t = useCommonT();
   if (loading && !rows?.length) return <SkeletonRows cols={Math.min(columns.length, 5)} />;
-  if (!rows?.length) return <EmptyState title={empty}>{emptyHint}</EmptyState>;
+  if (!rows?.length) return <EmptyState title={empty ?? t('state.empty')}>{emptyHint}</EmptyState>;
   return (
     <div className="table-wrap">
       <table className="table">

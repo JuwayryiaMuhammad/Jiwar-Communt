@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, formatDateTime } from '@jiwar/api';
+import { useErrorText, formatDateTime } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
 import { Alert, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, Stat } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -29,6 +29,7 @@ const today = () => new Date().toLocaleDateString('en-CA');
 /** A report's CSV, saved under the server's name. */
 function ExportButton({ name, query }: { name: Tab; query: Record<string, string | undefined> }) {
   const [busy, setBusy] = useState(false);
+  const errorText = useErrorText();
   const [error, setError] = useState<string | null>(null);
   return (
     <>

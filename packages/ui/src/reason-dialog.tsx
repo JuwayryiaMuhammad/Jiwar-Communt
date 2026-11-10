@@ -4,11 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Button } from './button';
 import { Dialog } from './dialog';
 import { Field, Select, Textarea } from './form';
-
-function label(code: string) {
-  const t = code.replace(/_/g, ' ');
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
+import { useCommonT, useLabel, type CodeLabels } from './i18n';
 
 /**
  * Every rejection, suspension or removal takes a code from the action's
@@ -25,8 +21,9 @@ export function ReasonDialog({
   pending,
   error,
   onConfirm,
-  textLabel = 'Message to the person',
-  textHint = 'Kept on the record and in the notice, never in the audit trail.',
+  textLabel,
+  textHint,
+  labels,
   children,
 }: {
   open: boolean;
@@ -42,8 +39,12 @@ export function ReasonDialog({
   textLabel?: string;
   /** Where the text goes: not every reason reaches the person. */
   textHint?: string;
+  /** The page's own words for its codes, where the shared ones do not fit. */
+  labels?: { en: CodeLabels; ar: CodeLabels };
   children?: ReactNode;
 }) {
+  const t = useCommonT();
+  const label = useLabel(labels);
   const [code, setCode] = useState('');
   const [text, setText] = useState('');
   const [touched, setTouched] = useState(false);
@@ -68,7 +69,7 @@ export function ReasonDialog({
       }}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{t('cancel')}</Button>
           <Button type="submit" variant={danger ? 'danger' : 'primary'} loading={pending}>
             {confirmLabel}
           </Button>
@@ -77,10 +78,10 @@ export function ReasonDialog({
     >
       <div className="form">
         {children}
-        <Field label="Reason" error={touched && !code ? 'Pick a reason.' : undefined}>
+        <Field label={t('reason.label')} error={touched && !code ? t('reason.pick') : undefined}>
           {(p) => (
             <Select {...p} value={code} onChange={(e) => setCode(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{t('select')}</option>
               {codes.map((c) => (
                 <option key={c} value={c}>
                   {label(c)}
@@ -90,9 +91,9 @@ export function ReasonDialog({
           )}
         </Field>
         <Field
-          label={textLabel}
-          hint={textHint}
-          error={touched && !text.trim() ? 'Required.' : undefined}
+          label={textLabel ?? t('reason.textLabel')}
+          hint={textHint ?? t('reason.textHint')}
+          error={touched && !text.trim() ? t('required') : undefined}
         >
           {(p) => <Textarea {...p} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} />}
         </Field>
@@ -118,7 +119,8 @@ export function ReasonCodeDialog({
   pending,
   error,
   ready = true,
-  codeLabel = 'Reason',
+  codeLabel,
+  labels,
   onConfirm,
   children,
 }: {
@@ -134,9 +136,13 @@ export function ReasonCodeDialog({
   ready?: boolean;
   /** What the code answers, when it is not a reason (e.g. how someone asked). */
   codeLabel?: string;
+  /** The page's own words for its codes, where the shared ones do not fit. */
+  labels?: { en: CodeLabels; ar: CodeLabels };
   onConfirm: (reasonCode: string) => void;
   children?: ReactNode;
 }) {
+  const t = useCommonT();
+  const label = useLabel(labels);
   const [code, setCode] = useState('');
   const [touched, setTouched] = useState(false);
 
@@ -158,7 +164,7 @@ export function ReasonCodeDialog({
       }}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{t('cancel')}</Button>
           <Button type="submit" variant={danger ? 'danger' : 'primary'} loading={pending}>
             {confirmLabel}
           </Button>
@@ -167,10 +173,10 @@ export function ReasonCodeDialog({
     >
       <div className="form">
         {children}
-        <Field label={codeLabel} error={touched && !code ? 'Pick one.' : undefined}>
+        <Field label={codeLabel ?? t('reason.label')} error={touched && !code ? t('reason.pickOne') : undefined}>
           {(p) => (
             <Select {...p} value={code} onChange={(e) => setCode(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{t('select')}</option>
               {codes.map((c) => (
                 <option key={c} value={c}>
                   {label(c)}
@@ -206,6 +212,7 @@ export function ConfirmDialog({
   error?: ReactNode;
   onConfirm: () => void;
 }) {
+  const t = useCommonT();
   return (
     <Dialog
       open={open}
@@ -215,7 +222,7 @@ export function ConfirmDialog({
       onSubmit={onConfirm}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t('cancel')}</Button>
           <Button type="submit" variant={danger ? 'danger' : 'primary'} loading={pending}>
             {confirmLabel}
           </Button>

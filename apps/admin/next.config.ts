@@ -15,7 +15,7 @@ const config: NextConfig = {
   // repo root so the workspace packages come along.
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname, '../..'),
-  transpilePackages: ['@jiwar/ui', '@jiwar/api', '@jiwar/bff'],
+  transpilePackages: ['@jiwar/ui', '@jiwar/api', '@jiwar/bff', '@jiwar/i18n'],
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

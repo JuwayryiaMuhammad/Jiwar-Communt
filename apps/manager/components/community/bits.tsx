@@ -150,7 +150,7 @@ export function DateTimeField({
   hint?: string;
   value: string;
   onChange: (next: string) => void;
-  error?: string;
+  error?: ReactNode;
   disabled?: boolean;
 }) {
   return (

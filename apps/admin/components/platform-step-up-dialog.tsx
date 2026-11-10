@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, unwrap } from '@jiwar/api';
+import { useErrorText, unwrap } from '@jiwar/api';
 import { Button, Dialog, Field, Input } from '@jiwar/ui';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
@@ -24,6 +24,7 @@ export function PlatformStepUpDialog({
   onClose: () => void;
 }) {
   const [code, setCode] = useState('');
+  const errorText = useErrorText();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);

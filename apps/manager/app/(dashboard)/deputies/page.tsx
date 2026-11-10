@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, fieldError, formatDateTime, unwrap, type Schema } from '@jiwar/api';
+import { ErrorText, fieldError, formatDateTime, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { Badge, Button, Card, Checkbox, DataTable, Field, Input, PageHeader, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -141,7 +141,7 @@ export default function DeputiesPage() {
               />
             ))}
           </fieldset>
-          {appoint.error ? <span className="t-error">{errorText(appoint.error)}</span> : null}
+          {appoint.error ? <span className="t-error"><ErrorText error={appoint.error} /></span> : null}
           <Button
             variant="primary"
             disabled={!deputyId || !picked.size || !endsAt}

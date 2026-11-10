@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, formatDateTime } from '@jiwar/api';
+import { useErrorText, formatDateTime } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
 import { Alert, Button, Card, CardHeader, DataTable, Field, ForbiddenState, Input, PageHeader } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -27,6 +27,7 @@ export default function SecurityReportsPage() {
     enabled: allowed && date !== '',
   });
   const [busy, setBusy] = useState(false);
+  const errorText = useErrorText();
   const [error, setError] = useState<string | null>(null);
   if (ready && !allowed)
     return (

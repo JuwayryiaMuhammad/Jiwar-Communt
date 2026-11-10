@@ -1,6 +1,6 @@
 'use client';
 
-import { errorText, formatDate, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ErrorText, formatDate, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { Badge, Button, Card, DataTable, Dialog, PageHeader, ReasonCodeDialog, Segmented, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -206,7 +206,7 @@ function MoveDialog({ move, onClose }: { move: Move; onClose: () => void }) {
         confirmLabel="Cancel the move"
         danger
         pending={cancel.isPending}
-        error={cancel.error ? errorText(cancel.error) : undefined}
+        error={cancel.error ? <ErrorText error={cancel.error} /> : undefined}
         onConfirm={(reasonCode) => cancel.mutate(reasonCode)}
       />
     </>

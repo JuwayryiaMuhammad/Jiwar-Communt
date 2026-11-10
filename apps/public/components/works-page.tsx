@@ -28,7 +28,7 @@ type Lookup =
  * printed certificate, which shows this page's address and the code apart.
  */
 export function WorksPage() {
-  const { t, locale } = useLocale();
+  const { t, format } = useLocale();
   const link = useLinkToken('works');
   const [typed, setTyped] = useState<string | null>(null);
   const code = link.state === 'ready' ? link.token : typed;
@@ -75,10 +75,7 @@ export function WorksPage() {
   }
 
   const { view } = lookup;
-  const when = (iso: string) =>
-    new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG-u-nu-latn' : 'en-EG', { dateStyle: 'medium', timeStyle: 'short' }).format(
-      new Date(iso),
-    );
+  const when = (iso: string) => format().custom(iso, { dateStyle: 'medium', timeStyle: 'short' });
   return (
     <Shell title={t('works.title')}>
       <p className="state state--ok" role="status">

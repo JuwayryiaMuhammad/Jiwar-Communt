@@ -1,11 +1,12 @@
 'use client';
 
 import { ApiError } from '@jiwar/api';
+import { I18nProvider, type Locale } from '@jiwar/i18n';
 import { ToastProvider } from '@jiwar/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({ locale, children }: { locale: Locale; children: ReactNode }) {
   const [client] = useState(
     () =>
       new QueryClient({
@@ -21,8 +22,10 @@ export function Providers({ children }: { children: ReactNode }) {
       }),
   );
   return (
-    <QueryClientProvider client={client}>
-      <ToastProvider>{children}</ToastProvider>
-    </QueryClientProvider>
+    <I18nProvider locale={locale}>
+      <QueryClientProvider client={client}>
+        <ToastProvider>{children}</ToastProvider>
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }

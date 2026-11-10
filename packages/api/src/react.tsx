@@ -8,9 +8,12 @@ import {
 } from '@tanstack/react-query';
 import { Alert, Button, ForbiddenState, SkeletonRows } from '@jiwar/ui';
 import type { ReactNode } from 'react';
+import { useLocale, useT } from '@jiwar/i18n';
 import { ApiError, errorText, fieldText } from './errors';
+import genericAr from './messages/ar/generic.ts';
+import genericEn from './messages/en/generic.ts';
 
-export { fieldError } from './errors';
+export { fieldError, useErrorText } from './field-error';
 export * from './person-fields';
 
 export interface Page<T> {
@@ -41,11 +44,12 @@ export function LoadMore({
 }: {
   query: { hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => unknown };
 }) {
+  const t = useT(genericEn, genericAr);
   if (!query.hasNextPage) return null;
   return (
     <div className="card__footer">
       <Button size="sm" loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>
-        Load more
+        {t('loadMore')}
       </Button>
     </div>
   );
@@ -61,11 +65,12 @@ export function QueryState({
   children: ReactNode;
   rows?: number;
 }) {
+  const { locale } = useLocale();
   if (query.error) {
     if (query.error instanceof ApiError && query.error.status === 403) return <ForbiddenState />;
     return (
       <div style={{ padding: 16 }}>
-        <Alert tone="error">{errorText(query.error)}</Alert>
+        <Alert tone="error">{errorText(query.error, locale)}</Alert>
       </div>
     );
   }
@@ -74,16 +79,17 @@ export function QueryState({
 }
 
 export function ErrorAlert({ error }: { error: unknown }) {
+  const { locale } = useLocale();
   if (!error) return null;
   const fields = error instanceof ApiError ? error.fields : [];
   return (
     <Alert tone="error">
-      {errorText(error)}
+      {errorText(error, locale)}
       {fields.length ? (
-        <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+        <ul style={{ margin: '4px 0 0', paddingInlineStart: 18 }}>
           {fields.map((f) => (
             <li key={f.field + f.code}>
-              <strong>{f.field}</strong>: {fieldText(f.code, f.params)}
+              <bdi dir="ltr">{f.field}</bdi>: {fieldText(f.code, f.params, locale)}
             </li>
           ))}
         </ul>

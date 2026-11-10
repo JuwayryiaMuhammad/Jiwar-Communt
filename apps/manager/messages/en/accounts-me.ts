@@ -1,16 +1,16 @@
 /** The signed-in account's own page and its sessions list: app/(dashboard)/account, lib/user-agent. */
 export default {
   title: 'My account',
-  description: 'Your own sign-in, language and notification settings.',
+  description: 'Your own sign-in, email language and notification settings.',
   yourAccount: 'Your account',
   role: 'Role',
   'locale.en': 'English',
   'locale.ar': 'Arabic (العربية)',
-  'language.title': 'Language',
-  'language.label': 'Language of what is sent to you',
-  'language.hint': 'Emails and notices from the compound. The dashboard’s own language is switched from the menu.',
-  'language.saved': 'Language saved.',
-  'language.save': 'Save language',
+  'language.title': 'Language of emails',
+  'language.label': 'Language of the emails sent to you',
+  'language.hint': 'Only the emails and notices sent to you. It does not change the language of this dashboard: use the language button in the top bar.',
+  'language.saved': 'Email language saved.',
+  'language.save': 'Save email language',
   'notify.title': 'Notification settings',
   'notify.intro':
     'What is also sent to you by email. Everything stays in your notifications list whatever is set here, and emergencies and security notices always reach you.',

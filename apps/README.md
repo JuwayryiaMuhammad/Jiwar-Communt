@@ -105,14 +105,48 @@ Because of the BFF, the API needs no `CORS_ORIGINS` for the dashboards.
 - Cash flow (ADR 0091): "Cash flow" (`/finance/cash-flow`) needs `finance.cashflow` (the manager's and the accountant's by default): from today, by week (Saturday to Friday) or month, the accounts' balances, what payables already schedules out and the residents' dues at the 90-day collection rate in, each period's closing against the minimum, and its CSV. "Minimum cash" needs `finance.treasury`. Unscheduled spending (salaries, utilities) is not forecast; with no dues in the last 90 days nothing is expected from the residents. The realised cash flow is the `cash_flow` report.
 - The general ledger (ADR 0092): "Chart of accounts", "Financial statements", "Journal entries" and "Closing months" need `finance.ledger` (the manager's and the accountant's by default); writing needs `finance.ledger_write`, reopening a month `finance.ledger_reopen` (the manager's). Every money event posts its own entry; the chart shows each account's balance on a day and the reconciliation with the registers (a difference other than zero is a fault). A manual entry is approved by someone other than its maker, on accounts no register keeps: bank and cash, receivables, unit credit, deposits, payables, retentions and advances are corrected in their registers. Not built here: adding a top-level account (sub-accounts only), changing a code and a year-end closing entry (a manual one). The journal of a period is paged, 50 entries at a time. ADR 0048's "Ledger" page is the units' computed journal and stays.
 - Topic names are entered in English and Arabic (the residents' app shows the Arabic one); the Arabic field is the only right-to-left input.
-- English only for now. Error texts are keyed by API error code in `packages/api/src/errors.ts`, ready for an Arabic dictionary.
+- Not translated: the text a manager types (announcements, notes, topic names in the language they are written), the fields the API holds in English only (a board publication's `titleEn` / `bodyEn`), the permission codes shown beside their plain words on the roles page, and the CSV files' column names and file names.
 
 - Tenders (ADR 0088): a tender's page adds and removes its documents (`tender_document`), invites a registered vendor or makes a bid link (shown once), renews a link (the old one stops) or revokes an invitation, moves the deadline later, and awards an opened bid (the board's approved major contract picked above the manager's limit, for `governance.approvals` holders). The vendor page's contractors and the dispatch page's "offer to a vendor" are API-only. The bid link's page is the public app's `/b#<token>` (`apps/public`), where the company attaches its bid's documents; the tender's page shows each opened bid's documents (none before the opening: they are sealed with the bid).
+
+## Arabic and English
+
+The owner's decision of 2026-11-10: the dashboards and the public pages speak Arabic and English, **Arabic by default**, right to left. A language switch sits in the top bar (and on the sign-in pages); the choice is kept in the `jiwar_locale` cookie (one year, `SameSite=Lax`, holds the choice and nothing else).
+
+- **The layer** is `packages/i18n`, with no dependency: the locale (`ar`, `en`; anything else reads as `ar`), the cookie, a small ICU subset for messages (`{name}`, Arabic plurals with every form, `select`; values are isolated in their own direction), `I18nProvider`, `useT(en, ar)`, `useFormat()`, and the test helpers.
+- **The locale is not in the URLs.** The root layouts read the cookie on the server and render `<html lang dir>` with it, so the first paint is already in the right direction. The public pages are not indexed (`noindex`) and carry a token in the fragment, so locale-prefixed URLs would buy nothing and would break the links the API emails.
+- **Catalogs**, one file per page or feature, English as the source and Arabic typed against it (a missing or extra key does not compile):
+  - `apps/<app>/messages/{en,ar}/*.ts` for each app (the public app keeps `messages/{ar,en}.ts`);
+  - `packages/ui/src/messages` for the shared words and the labels of the API's codes (statuses, kinds, reasons; `useLabel()`);
+  - `packages/api/src/messages` for the API's error codes and field errors (`errorText`, `fieldError`, `ErrorText`), with a fallback for an unknown code.
+- **Formatting** is in one place, `useFormat()` (`packages/i18n/src/format.ts`): dates and times in the browser's zone (the compound's, as before; the public pages pass the compound's zone), plain `YYYY-MM-DD` days never shifted, relative times, numbers, `EGP` / `ج.م` amounts, percentages and lists. Arabic uses `ar-EG` with **Western digits** (`nu-latn`): codes, references, phone numbers, plates and amounts are typed and printed in Western digits, so a row never mixes two systems, money columns line up and compare at a glance, and a copy into a spreadsheet stays a number.
+- **Right to left** is in the shared components: logical properties (start and end) in `packages/ui/src/styles.css`, `.icon-dir` mirrors an icon that points a way, `.ltr` keeps a code or a number left to right inside Arabic text, email, phone, link, number and password inputs read left to right. The dashboards' Arabic face is IBM Plex Sans Arabic.
+- **Tests** (`pnpm dashboards:test`): every catalog has the same files, keys and `{values}` in both languages, no empty text, the Arabic is Arabic; and a scan (`@jiwar/i18n/testing`, `findHardCodedText`) fails on any text left in a component outside the catalogs, in the three apps and in the shared packages. To see the text left in a file: `node --experimental-strip-types packages/i18n/src/scan-cli.ts <files or folders>`. `pnpm dashboards:test` also runs `@jiwar/admin`, `@jiwar/i18n`, `@jiwar/ui` and `@jiwar/api`, each with its own light tests (no network, no API server).
+- **Adding a text:** add the key to `messages/en/<page>.ts`, then to `messages/ar/<page>.ts`, and use `const t = useT(en, ar)`. Never build a sentence from pieces; give the whole sentence with `{values}` and let Arabic reorder it. Counts use `plural`.
+
+### Glossary
+
+One Arabic word per domain term, the same on every page.
+
+| English | Arabic | | English | Arabic |
+|---|---|---|---|---|
+| Compound | المجمع | | Unit | وحدة |
+| Resident | ساكن | | Owner | مالك |
+| Tenant | مستأجر | | Management | الإدارة |
+| Board | مجلس الإدارة | | Invoice | فاتورة |
+| Payment | دفعة | | Ledger entry | قيد |
+| Maintenance ticket | بلاغ صيانة | | Technician | فني |
+| Guard | حارس | | Gate | بوابة |
+| Tender | مناقصة | | Bid | عطاء |
+| Vendor | مورد | | Partner | شريك |
+| Vehicle fine | غرامة | | Violation | مخالفة |
+| Permit | تصريح | | Visitor | زائر |
+| Appeal | تظلم | | SLA | SLA (kept in Latin) |
 
 ## Checks
 
 ```bash
 pnpm dashboards:typecheck
-pnpm dashboards:test     # BFF (refresh, same-origin, user agent); the manager's access rule, notification texts and session names
+pnpm dashboards:test     # BFF (refresh, same-origin, user agent); the manager's access rule, notification texts and session names; the catalogs and the shared i18n, ui and api packages
 pnpm dashboards:build
 ```

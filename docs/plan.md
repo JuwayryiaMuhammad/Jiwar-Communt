@@ -27,6 +27,7 @@ What landed, the owner's standing decisions, and what is left. It replaces the l
 | M3-3 | 0086 | The reports platform |
 | M3-4 | 0091 | Cash flow and liquidity |
 | M3-5 | 0092 | The general ledger |
+| i18n | 0013 | The dashboards and the public pages in Arabic and English, Arabic by default, right to left, switchable (the owner's decision of 2026-11-10): `packages/i18n`, see `apps/README.md` |
 
 ## The owner's standing decisions
 
@@ -55,7 +56,6 @@ Still open:
 
 ### Waiting on the owner
 
-- Arabic for the dashboards: translation and right-to-left. Not started (0013).
 - SMS and WhatsApp channels: waiting on the owner's provider (0004, 0009, 0019, 0027, 0080).
 
 ### Real device integrations

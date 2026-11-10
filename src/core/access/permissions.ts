@@ -256,6 +256,11 @@ export const PERMISSIONS = {
   // manual journal entries and approves another's (never its own), and
   // closes months. `finance.ledger_reopen` reopens a closed month: the
   // manager's alone. All `finance.*`: never a deputy's (ADR 0073).
+  // Taxes and the year-end close (ADR 0093) use the same three: reading
+  // the tax settings, declarations and certificates with `finance.ledger`;
+  // the settings, a vendor's withholding category, declaring a month,
+  // paying a tax and closing a fiscal year with `finance.ledger_write`;
+  // reopening a closed year with `finance.ledger_reopen`.
   'finance.ledger': { kinds: ['staff', 'manager'] },
   'finance.ledger_write': { kinds: ['staff', 'manager'] },
   'finance.ledger_reopen': { kinds: ['manager'] },

@@ -316,6 +316,11 @@ describe('audit catalog', () => {
         // ADR 0092.
         'gl_account',
         'gl_manual_entry',
+        // ADR 0093.
+        'gl_year_close',
+        'vat_declaration',
+        'withholding_certificate',
+        'tax_payment',
       ]).toContain(def.target);
     }
   });

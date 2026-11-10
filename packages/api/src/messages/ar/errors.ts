@@ -719,6 +719,19 @@ const ar: Translation<typeof en> = {
   GL_MANUAL_ENTRY_NOT_FOUND: 'القيد غير موجود.',
   GL_MANUAL_ENTRY_STATE: 'تم البت في هذا القيد بالفعل.',
   GL_SELF_APPROVAL: 'أنت من كتب هذا القيد: يعتمده شخص آخر.',
+  // إقفال السنة المالية والضرائب (ADR 0093).
+  GL_YEAR_MONTHS_OPEN: 'أقفل كل أشهر السنة أولًا.',
+  GL_YEAR_PREVIOUS_OPEN: 'أقفل السنة المالية السابقة أولًا.',
+  GL_YEAR_CLOSED: 'هذه السنة المالية مقفلة.',
+  GL_YEAR_NOT_CLOSED: 'هذه السنة المالية مفتوحة.',
+  GL_YEAR_LATER_CLOSED: 'توجد سنة مالية لاحقة مقفلة: أعد فتحها أولًا.',
+  TAX_VAT_NOT_REGISTERED: 'المجمع غير مسجّل في ضريبة القيمة المضافة.',
+  TAX_MONTH_NOT_CLOSED: 'أقفل الشهر في دفتر الأستاذ قبل تقديم إقراره.',
+  TAX_MONTH_DECLARED: 'تم تقديم إقرار ضريبة هذا الشهر، وأرقامه مقفلة.',
+  TAX_MONTH_OUT_OF_ORDER: 'تُقدَّم الإقرارات بالترتيب: قدّم إقرار الشهر الأسبق أولًا.',
+  TAX_DECLARATION_NOT_FOUND: 'الإقرار غير موجود.',
+  TAX_PAYMENT_EXCEEDED: 'المبلغ أكبر من المتبقي سداده.',
+  WITHHOLDING_CERTIFICATE_NOT_FOUND: 'شهادة الخصم غير موجودة.',
 };
 
 export default ar;

@@ -39,13 +39,19 @@ describe('finance counters (ADR 0046, 0048, 0055)', () => {
       'vendor_invoice',
       'disbursement',
       'payout',
+      // A payout's withholding certificate, after its payout (ADR 0093).
+      'withholding_certificate',
       // A custody hand-in takes no other counter (ADR 0085).
       'handin',
       // A manual journal entry takes no other counter (ADR 0092).
       'journal_entry',
+      // A tax paid takes no other counter (ADR 0093).
+      'tax_payment',
     ]);
     expect(formatNumber('expense', 12)).toBe('EX-000012');
     expect(formatNumber('handin', 3)).toBe('HI-000003');
     expect(formatNumber('journal_entry', 7)).toBe('JE-000007');
+    expect(formatNumber('withholding_certificate', 4)).toBe('WHT-000004');
+    expect(formatNumber('tax_payment', 2)).toBe('TXP-000002');
   });
 });

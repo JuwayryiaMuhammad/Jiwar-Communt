@@ -3014,6 +3014,31 @@ export const AUDIT_ACTIONS = {
   // the manager (the month, the reason code).
   'gl_period.closed': { log: 'tenant', target: 'tenant' },
   'gl_period.reopened': { log: 'tenant', target: 'tenant' },
+  // The fiscal year-end close (ADR 0093): a year closed (its days, the
+  // closing entry, revenue, expenses and the result) and reopened by the
+  // manager (the reason code, the entry that reversed it).
+  'gl_year.closed': { log: 'tenant', target: 'gl_year_close' },
+  'gl_year.reopened': { log: 'tenant', target: 'gl_year_close' },
+  // Taxes (ADR 0093). Ids, codes, rates, days and amounts only.
+  // changes: vatRegistered, vatRate, vatNumber ({ changed }), taxableKinds,
+  // recoverableCategories, withholdingEnabled, the three rates, the threshold.
+  'tax_settings.updated': {
+    log: 'tenant',
+    target: 'tenant',
+    sensitive: ['vatNumber'],
+  },
+  // A vendor's withholding category (changes: withholdingCategory).
+  'vendor.withholding_category_set': { log: 'tenant', target: 'vendor' },
+  // A month's VAT declared (its figures and the entry that set them off).
+  'vat_declaration.declared': { log: 'tenant', target: 'vat_declaration' },
+  // A payout's withholding certificate (number, payout, vendor, category,
+  // rate, base, amount).
+  'withholding_certificate.issued': {
+    log: 'tenant',
+    target: 'withholding_certificate',
+  },
+  // VAT or withholding paid to the tax authority from a treasury account.
+  'tax_payment.recorded': { log: 'tenant', target: 'tax_payment' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

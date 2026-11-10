@@ -13,7 +13,9 @@ export type CounterKind =
   | 'disbursement'
   | 'payout'
   | 'handin'
-  | 'journal_entry';
+  | 'journal_entry'
+  | 'withholding_certificate'
+  | 'tax_payment';
 
 /**
  * The one order in which a transaction takes numbers (ADR 0048). A counter
@@ -35,10 +37,14 @@ export const COUNTER_ORDER: readonly CounterKind[] = [
   'vendor_invoice',
   'disbursement',
   'payout',
+  // A payout's withholding certificate, after its payout (ADR 0093).
+  'withholding_certificate',
   // A custody hand-in takes no other counter (ADR 0085).
   'handin',
   // A manual journal entry takes no other counter (ADR 0092).
   'journal_entry',
+  // A tax paid takes no other counter (ADR 0093).
+  'tax_payment',
 ];
 
 const lastTaken = new WeakMap<object, number>();
@@ -89,6 +95,8 @@ const PREFIX: Record<CounterKind, string> = {
   payout: 'VP',
   handin: 'HI',
   journal_entry: 'JE',
+  withholding_certificate: 'WHT',
+  tax_payment: 'TXP',
 };
 
 /** `INV-000123`: six digits at least, as the house numbers are. */

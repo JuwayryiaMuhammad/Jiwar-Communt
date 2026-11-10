@@ -2168,6 +2168,30 @@ export const ErrorCode = {
   GL_MANUAL_ENTRY_STATE: 'GL_MANUAL_ENTRY_STATE',
   /** Its maker never approves it (409). */
   GL_SELF_APPROVAL: 'GL_SELF_APPROVAL',
+  // The fiscal year-end close (ADR 0093).
+  /** A month of the year is not closed yet (409, params.months: YYYY-MM). */
+  GL_YEAR_MONTHS_OPEN: 'GL_YEAR_MONTHS_OPEN',
+  /** An earlier fiscal year with entries is not closed (409, params.startsOn). */
+  GL_YEAR_PREVIOUS_OPEN: 'GL_YEAR_PREVIOUS_OPEN',
+  /** The fiscal year is closed: closed once, its months stay closed (409, params.startsOn). */
+  GL_YEAR_CLOSED: 'GL_YEAR_CLOSED',
+  /** The fiscal year is open (409, params.startsOn). */
+  GL_YEAR_NOT_CLOSED: 'GL_YEAR_NOT_CLOSED',
+  /** A later fiscal year is closed: reopen it first (409, params.startsOn). */
+  GL_YEAR_LATER_CLOSED: 'GL_YEAR_LATER_CLOSED',
+  // Taxes (ADR 0093).
+  /** The compound was never registered for VAT: nothing to declare (409). */
+  TAX_VAT_NOT_REGISTERED: 'TAX_VAT_NOT_REGISTERED',
+  /** A month is declared once the ledger closed it (409, params.month). */
+  TAX_MONTH_NOT_CLOSED: 'TAX_MONTH_NOT_CLOSED',
+  /** That month's VAT is declared: its figures are locked (409, params.month). */
+  TAX_MONTH_DECLARED: 'TAX_MONTH_DECLARED',
+  /** Months are declared in order (409, params.next: YYYY-MM). */
+  TAX_MONTH_OUT_OF_ORDER: 'TAX_MONTH_OUT_OF_ORDER',
+  TAX_DECLARATION_NOT_FOUND: 'TAX_DECLARATION_NOT_FOUND',
+  /** More than is still due (409, params.open). */
+  TAX_PAYMENT_EXCEEDED: 'TAX_PAYMENT_EXCEEDED',
+  WITHHOLDING_CERTIFICATE_NOT_FOUND: 'WITHHOLDING_CERTIFICATE_NOT_FOUND',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

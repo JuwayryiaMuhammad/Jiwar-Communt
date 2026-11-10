@@ -717,4 +717,17 @@ export default {
   GL_MANUAL_ENTRY_NOT_FOUND: 'Journal entry not found.',
   GL_MANUAL_ENTRY_STATE: 'This journal entry was decided already.',
   GL_SELF_APPROVAL: 'You wrote this entry: someone else approves it.',
+  // The fiscal year-end close and taxes (ADR 0093).
+  GL_YEAR_MONTHS_OPEN: 'Close every month of the year first.',
+  GL_YEAR_PREVIOUS_OPEN: 'Close the earlier fiscal year first.',
+  GL_YEAR_CLOSED: 'That fiscal year is closed.',
+  GL_YEAR_NOT_CLOSED: 'That fiscal year is open.',
+  GL_YEAR_LATER_CLOSED: 'A later fiscal year is closed: reopen it first.',
+  TAX_VAT_NOT_REGISTERED: 'The compound is not registered for VAT.',
+  TAX_MONTH_NOT_CLOSED: 'Close the month in the ledger before declaring it.',
+  TAX_MONTH_DECLARED: 'That month’s VAT is declared: its figures are locked.',
+  TAX_MONTH_OUT_OF_ORDER: 'Months are declared in order: declare the earlier one first.',
+  TAX_DECLARATION_NOT_FOUND: 'Declaration not found.',
+  TAX_PAYMENT_EXCEEDED: 'More than is still due.',
+  WITHHOLDING_CERTIFICATE_NOT_FOUND: 'Certificate not found.',
 } as const;

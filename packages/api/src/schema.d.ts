@@ -18859,6 +18859,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/finance/gl/years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The fiscal years, newest first
+         * @description From the first entry’s year to this one, on the compound’s start month (ADR 0055): open or closed, whether it may be closed now, and its months still open.
+         */
+        get: operations["GlController_years"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/years/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close a fiscal year
+         * @description Once every month of it is closed (GL_YEAR_MONTHS_OPEN {months}) and every earlier year with entries is (GL_YEAR_PREVIOUS_OPEN {startsOn}): one closing entry, dated its last day, zeroes each revenue and expense account into accumulated surplus, and the year is locked (GL_YEAR_CLOSED). Audited.
+         */
+        post: operations["GlController_closeYear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/gl/years/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reopen a closed fiscal year
+         * @description The manager’s alone, with a `glPeriodReopen` reason, the latest closed year first (GL_YEAR_LATER_CLOSED): its closing entry is reversed on the same day. Its months stay closed until one is reopened. Audited.
+         */
+        post: operations["GlController_reopenYear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/finance/late-notices": {
         parameters: {
             query?: never;
@@ -19368,6 +19428,193 @@ export interface paths {
         put?: never;
         /** Undo a match, once; what it moved is reversed */
         post: operations["TreasuryController_undo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The taxes paid, newest first */
+        get: operations["TaxController_payments"];
+        put?: never;
+        /**
+         * Pay VAT or withholding to the tax authority
+         * @description VAT against a declaration, withholding against a calendar quarter, at most what is still due (TAX_PAYMENT_EXCEEDED {open}), from a treasury account of the method’s kind (a `tax_payment` movement); it posts against VAT payable or withholding payable. Audited.
+         */
+        post: operations["TaxController_pay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compound’s tax settings */
+        get: operations["TaxController_getSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the compound’s tax settings
+         * @description VAT registered or not (off by default; its number required while on), its rate (14 %), the taxable invoice kinds and the categories whose input VAT is recovered (none by default); withholding on or off (off), its rates (supplies 1 %, services 3 %, professional fees 5 %) and its threshold (300 EGP). A change applies from the next event; nothing is reposted. Audited.
+         */
+        patch: operations["TaxController_setSettings"];
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/vat/declarations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Declare a month’s VAT
+         * @description A month the ledger closed (TAX_MONTH_NOT_CLOSED), the next one (TAX_MONTH_OUT_OF_ORDER {next}), once (TAX_MONTH_DECLARED): its figures are locked, the input set off against the output, due or carried forward. The month is not reopened after. Audited.
+         */
+        post: operations["TaxController_declare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/vat/months": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The months’ VAT, newest first
+         * @description From the month VAT began to this one (at most 36): from the ledger by its entries’ days, or as declared.
+         */
+        get: operations["TaxController_vatMonths"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The vendors and what their payouts withhold by, newest first */
+        get: operations["TaxController_vendors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/vendors/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set a vendor’s withholding category
+         * @description Its payouts from now withhold by it, unless an invoice names its own; null: by its trades. Audited.
+         */
+        put: operations["TaxController_setVendor"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/withholding/certificates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The withholding certificates, newest first */
+        get: operations["TaxController_certificates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/withholding/certificates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A withholding certificate */
+        get: operations["TaxController_certificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/withholding/certificates/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A withholding certificate as a PDF, for its vendor */
+        get: operations["TaxController_certificatePdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/tax/withholding/quarters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The calendar quarters’ tax withheld and paid, newest first */
+        get: operations["TaxController_quarters"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -32079,7 +32326,7 @@ export interface components {
             totals: components["schemas"]["CashFlowTotalsView"];
         };
         /** @enum {string} */
-        CashMovementKind: "opening" | "handin" | "recovery" | "transfer" | "cheque" | "statement_payment" | "adjustment" | "reversal" | "payout";
+        CashMovementKind: "opening" | "handin" | "recovery" | "transfer" | "cheque" | "statement_payment" | "adjustment" | "reversal" | "payout" | "tax_payment";
         CashMovementView: {
             /** Format: uuid */
             accountId: string;
@@ -32106,6 +32353,11 @@ export interface components {
             recordedBy: components["schemas"]["StaffRefView"];
             /** Format: uuid */
             reversesId: string | null;
+            /**
+             * Format: uuid
+             * @description The tax it paid (ADR 0093).
+             */
+            taxPaymentId: string | null;
             /** Format: uuid */
             transferId: string | null;
         };
@@ -36584,6 +36836,8 @@ export interface components {
             reasonCode: string;
             /** @description What it gave back of paid money to the unit’s credit: the part beyond what the invoice still owed (ADR 0048). */
             released: string;
+            /** @description The share of the invoice’s VAT it takes back (ADR 0093). */
+            vat: string;
         };
         CustodyHandinDetailView: {
             /** Format: uuid */
@@ -39945,10 +40199,25 @@ export interface components {
             assets: components["schemas"]["GlStatementRowView"][];
             /** @description Assets equal liabilities and equity. */
             balanced: boolean;
+            /**
+             * @description The fiscal year’s result to the day, apart from accumulated surplus (its own closing entry left out).
+             * @example 1250.00
+             */
+            currentYearResult: string;
             equity: components["schemas"]["GlStatementRowView"][];
+            /**
+             * Format: date
+             * @description The first day of the fiscal year the day is in (ADR 0093).
+             */
+            fiscalYearStartsOn: string;
             liabilities: components["schemas"]["GlStatementRowView"][];
             /**
-             * @description Revenue less expenses up to the day, not closed into equity.
+             * @description Earlier fiscal years’ results not yet closed.
+             * @example 1250.00
+             */
+            priorYearsResult: string;
+            /**
+             * @description Revenue less expenses up to the day that no closed fiscal year took into accumulated surplus: currentYearResult and priorYearsResult.
              * @example 1250.00
              */
             surplus: string;
@@ -39998,6 +40267,13 @@ export interface components {
              * @example 2026-10
              */
             month: string;
+        };
+        GlCloseYearDto: {
+            /**
+             * @description The fiscal year’s first day, on the compound’s start month (INVALID_VALUE otherwise).
+             * @example 2026-01-01
+             */
+            startsOn: string;
         };
         GlCreateAccountDto: {
             /**
@@ -40049,7 +40325,7 @@ export interface components {
              */
             seq: string;
             /** @enum {string} */
-            source: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual";
+            source: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual" | "vat_declaration" | "tax_payment" | "year_close" | "year_reopen";
             /**
              * Format: uuid
              * @description The row it posted from: an invoice, a payment, a movement, a manual entry…
@@ -40104,7 +40380,7 @@ export interface components {
             /** @example INV-000123 */
             reference: string | null;
             /** @enum {string} */
-            source: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual";
+            source: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual" | "vat_declaration" | "tax_payment" | "year_close" | "year_reopen";
             /** Format: uuid */
             sourceId: string;
             unitCode: string | null;
@@ -40259,6 +40535,15 @@ export interface components {
             /** @description A `glPeriodReopen` code. */
             reasonCode: string;
         };
+        GlReopenYearDto: {
+            /** @description A `glPeriodReopen` code. */
+            reasonCode: string;
+            /**
+             * @description The closed fiscal year’s first day.
+             * @example 2026-01-01
+             */
+            startsOn: string;
+        };
         GlReverseEntryDto: {
             memo: string;
             /** @description A day of an open month, no later than this month’s end. */
@@ -40292,6 +40577,60 @@ export interface components {
             debit: string;
             /** @description Each account with lines: its balance as a debit or a credit. */
             rows: components["schemas"]["GlStatementRowView"][];
+        };
+        GlYearView: {
+            /** @description It may be closed now: open, its last month closed, every month of it closed and every earlier year with entries closed. */
+            closable: boolean;
+            /**
+             * Format: uuid
+             * @description The live close, if closed.
+             */
+            closeId: string | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            closedBy: components["schemas"]["StaffRefView"] | null;
+            /** Format: date */
+            endsOn: string;
+            /**
+             * Format: uuid
+             * @description Its closing entry; none when nothing was to close.
+             */
+            entryId: string | null;
+            /**
+             * @description Closed: its expenses.
+             * @example 1250.00
+             */
+            expenses: string;
+            /**
+             * @description Its months not closed yet (YYYY-MM).
+             * @example [
+             *       "2026-12"
+             *     ]
+             */
+            openMonths: string[];
+            /** @description How many times it was closed and reopened. */
+            reopenings: number;
+            /**
+             * @description Closed: revenue less expenses, into accumulated surplus.
+             * @example 1250.00
+             */
+            result: string;
+            /**
+             * @description Closed: its revenue.
+             * @example 1250.00
+             */
+            revenue: string;
+            /**
+             * Format: date
+             * @description Its first day (ADR 0055’s start month).
+             */
+            startsOn: string;
+            /** @enum {string} */
+            status: "open" | "closed";
+        };
+        GlYearViewList: {
+            data: components["schemas"]["GlYearView"][];
+            nextCursor: string | null;
         };
         GovernanceCandidacyView: {
             /** Format: uuid */
@@ -42063,6 +42402,8 @@ export interface components {
              */
             issuedOn: string;
             kind: components["schemas"]["InvoiceKind"];
+            /** @description The total less its VAT. */
+            net: string;
             /** @example INV-000123 */
             number: string;
             /** @description Still owed. */
@@ -42073,11 +42414,15 @@ export interface components {
             position: number;
             /** @enum {string} */
             status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled";
-            /** @description EGP, two decimals. */
+            /** @description EGP, two decimals: what the unit owes, net and VAT. */
             total: string;
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+            /** @description Its VAT (ADR 0093): 0.00 when the compound is not registered or the kind is not taxable. */
+            vat: string;
+            /** @description The VAT rate in percent; 0.00 when untaxed. */
+            vatRate: string;
         };
         InstructionRecipientView: {
             /** Format: date-time */
@@ -42228,6 +42573,8 @@ export interface components {
             issuedOn: string;
             kind: components["schemas"]["InvoiceKind"];
             lines: components["schemas"]["InvoiceLineView"][];
+            /** @description The total less its VAT. */
+            net: string;
             /** @example INV-000123 */
             number: string;
             /** @description Still owed. */
@@ -42241,11 +42588,15 @@ export interface components {
             rescheduledBy: components["schemas"]["InvoiceRescheduledByView"] | null;
             /** @enum {string} */
             status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled";
-            /** @description EGP, two decimals. */
+            /** @description EGP, two decimals: what the unit owes, net and VAT. */
             total: string;
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+            /** @description Its VAT (ADR 0093): 0.00 when the compound is not registered or the kind is not taxable. */
+            vat: string;
+            /** @description The VAT rate in percent; 0.00 when untaxed. */
+            vatRate: string;
         };
         InvoiceDisputeRefView: {
             /** Format: uuid */
@@ -42280,11 +42631,13 @@ export interface components {
             descriptionEn: string;
         };
         InvoiceLineView: {
-            /** @description EGP, two decimals. */
+            /** @description EGP, two decimals, net of VAT. */
             amount: string;
             descriptionAr: string;
             descriptionEn: string;
             position: number;
+            /** @description Its VAT (ADR 0093): 0.00 when untaxed. */
+            vat: string;
         };
         InvoicePayoutDto: {
             /** @description Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED). */
@@ -42350,6 +42703,8 @@ export interface components {
              */
             issuedOn: string;
             kind: components["schemas"]["InvoiceKind"];
+            /** @description The total less its VAT. */
+            net: string;
             /** @example INV-000123 */
             number: string;
             /** @description Still owed. */
@@ -42358,11 +42713,15 @@ export interface components {
             paid: string;
             /** @enum {string} */
             status: "unpaid" | "partially_paid" | "overdue" | "paid" | "credited" | "rescheduled";
-            /** @description EGP, two decimals. */
+            /** @description EGP, two decimals: what the unit owes, net and VAT. */
             total: string;
             unitCode: string;
             /** Format: uuid */
             unitId: string;
+            /** @description Its VAT (ADR 0093): 0.00 when the compound is not registered or the kind is not taxable. */
+            vat: string;
+            /** @description The VAT rate in percent; 0.00 when untaxed. */
+            vatRate: string;
         };
         InvoiceViewList: {
             data: components["schemas"]["InvoiceView"][];
@@ -46249,6 +46608,23 @@ export interface components {
              * @example 1200.00
              */
             retentionHeld: string;
+            /**
+             * @description Tax withheld (ADR 0093), deducted from what was paid: at withholdingRate on withholdingBase.
+             * @example 1200.00
+             */
+            withholding: string;
+            /**
+             * @description The invoice’s subtotal it was withheld on; 0.00 when none.
+             * @example 1200.00
+             */
+            withholdingBase: string;
+            /**
+             * @description The category it withheld by; null when nothing was.
+             * @enum {string|null}
+             */
+            withholdingCategory: "supplies" | "services" | "professional" | null;
+            /** @example 3.00 */
+            withholdingRate: string;
         };
         PendingErasureView: {
             /** Format: uuid */
@@ -48182,6 +48558,8 @@ export interface components {
             vendorId?: string;
             /** @description The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). */
             vendorNumber: string;
+            /** @description What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt. */
+            withholdingCategory?: components["schemas"]["WithholdingCategory"];
         };
         RecordViolationPaymentDto: {
             /** @description The whole amount of the violation (AMOUNT_MISMATCH, params.amount). */
@@ -48795,7 +49173,7 @@ export interface components {
             unitCode?: string;
         };
         /** @enum {string} */
-        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building" | "cash_flow" | "gl_trial_balance" | "gl_income_statement" | "gl_balance_sheet" | "gl_general_ledger";
+        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building" | "cash_flow" | "gl_trial_balance" | "gl_income_statement" | "gl_balance_sheet" | "gl_general_ledger" | "tax_vat" | "tax_withholding";
         ReportListingDto: {
             /** @description For the staff alone; the seller never reads it. */
             note?: string;
@@ -54160,6 +54538,148 @@ export interface components {
          * @enum {string}
          */
         TaxCode: "zero" | "exempt" | "vat_14";
+        TaxPaymentDto: {
+            /** @description At most what is still due (TAX_PAYMENT_EXCEEDED {open}). */
+            amount: string;
+            /**
+             * Format: uuid
+             * @description The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque. CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT.
+             */
+            cashAccountId: string;
+            /**
+             * Format: uuid
+             * @description VAT: the declaration it pays (required); refused otherwise.
+             */
+            declarationId?: string;
+            kind: components["schemas"]["TaxPaymentKind"];
+            method: components["schemas"]["PayoutMethod"];
+            /** @description The day it was paid: not ahead, at most 31 days back. */
+            paidOn: string;
+            /**
+             * @description Withholding: the calendar quarter it pays (required), not ahead; refused otherwise.
+             * @example 2026-Q3
+             */
+            quarter?: string;
+            /** @description The tax authority’s receipt or the transfer’s reference. */
+            reference?: string;
+        };
+        /** @enum {string} */
+        TaxPaymentKind: "vat" | "withholding";
+        TaxPaymentView: {
+            /** @example 1250.00 */
+            amount: string;
+            /** Format: uuid */
+            cashAccountId: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            declarationId: string | null;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["TaxPaymentKind"];
+            method: components["schemas"]["PayoutMethod"];
+            /** @example 2026-10 */
+            month: string | null;
+            /** @example TXP-000001 */
+            number: string;
+            paidBy: components["schemas"]["StaffRefView"];
+            /** Format: date */
+            paidOn: string;
+            /** @example 2026-Q3 */
+            quarter: string | null;
+            reference: string | null;
+        };
+        TaxPaymentViewList: {
+            data: components["schemas"]["TaxPaymentView"][];
+            nextCursor: string | null;
+        };
+        TaxSettingsDto: {
+            /**
+             * @description Professional fees, in percent (0–100).
+             * @example 5.00
+             */
+            professionalRate?: string;
+            /** @description The budget categories whose input VAT is recovered while registered; none by default (the VAT stays part of the cost). */
+            recoverableCategories?: ("security" | "cleaning" | "landscaping" | "maintenance" | "utilities" | "staff" | "insurance" | "administration" | "reserve_fund" | "other")[];
+            /**
+             * @description Services and contracting, in percent (0–100).
+             * @example 3.00
+             */
+            servicesRate?: string;
+            /**
+             * @description Supplies, in percent (0–100).
+             * @example 1.00
+             */
+            suppliesRate?: string;
+            /** @description The invoice kinds that carry VAT; none by default. */
+            taxableKinds?: components["schemas"]["InvoiceKind"][];
+            /** @description The tax registration number: required while registered (FIELD_REQUIRED). */
+            vatNumber?: string | null;
+            /**
+             * @description In percent, above 0 and at most 100 (INVALID_VALUE).
+             * @example 14.00
+             */
+            vatRate?: string;
+            /** @description Registered for VAT: invoices of the taxable kinds carry VAT from now on, and the VAT vendors charge on the recoverable categories is recovered. Turned on the first time, VAT starts that day. */
+            vatRegistered?: boolean;
+            /** @description Withhold tax from vendors’ payouts; off by default. */
+            withholdingEnabled?: boolean;
+            /**
+             * @description An invoice whose subtotal is below it withholds nothing (EGP, from 0).
+             * @example 300.00
+             */
+            withholdingThreshold?: string;
+        };
+        TaxSettingsView: {
+            recoverableCategories: ("security" | "cleaning" | "landscaping" | "maintenance" | "utilities" | "staff" | "insurance" | "administration" | "reserve_fund" | "other")[];
+            taxableKinds: components["schemas"]["InvoiceKind"][];
+            vatNumber: string | null;
+            /** @example 14.00 */
+            vatRate: string;
+            vatRegistered: boolean;
+            /**
+             * Format: date
+             * @description The day VAT was first turned on: VAT starts there.
+             */
+            vatSince: string | null;
+            withholdingEnabled: boolean;
+            withholdingRates: components["schemas"]["TaxWithholdingRatesView"];
+            /**
+             * @description An invoice whose subtotal is below it withholds nothing.
+             * @example 1250.00
+             */
+            withholdingThreshold: string;
+        };
+        TaxVendorDto: {
+            /** @description What its payouts withhold by; null: by its trades (professional, then supplies alone, else services). */
+            withholdingCategory: components["schemas"]["WithholdingCategory"] | null;
+        };
+        TaxVendorView: {
+            /** @description Its trades (ADR 0077). */
+            categories: string[];
+            /** @description What its payouts withhold by. */
+            effectiveCategory: components["schemas"]["WithholdingCategory"];
+            /** Format: uuid */
+            id: string;
+            name: string;
+            number: number;
+            status: string;
+            taxNumber: string | null;
+            /** @description Set for it; null: by its trades. */
+            withholdingCategory: components["schemas"]["WithholdingCategory"] | null;
+        };
+        TaxVendorViewList: {
+            data: components["schemas"]["TaxVendorView"][];
+            nextCursor: string | null;
+        };
+        TaxWithholdingRatesView: {
+            /** @example 5.00 */
+            professional: string;
+            /** @example 3.00 */
+            services: string;
+            /** @example 1.00 */
+            supplies: string;
+        };
         TechnicianAttendanceView: {
             /** @description Of them, not on duty an hour after they were due. */
             absent: number;
@@ -56459,6 +56979,77 @@ export interface components {
         VarianceSettingView: {
             varianceReasonPct: number | null;
         };
+        VatDeclareDto: {
+            /**
+             * @description The month: closed in the ledger (TAX_MONTH_NOT_CLOSED), the next to declare (TAX_MONTH_OUT_OF_ORDER {next}), once (TAX_MONTH_DECLARED).
+             * @example 2026-10
+             */
+            month: string;
+        };
+        VatMonthView: {
+            /**
+             * @description What the month before carried forward.
+             * @example 1250.00
+             */
+            carriedIn: string;
+            /**
+             * @description Carried forward to the next month.
+             * @example 1250.00
+             */
+            carriedOut: string;
+            /** Format: uuid */
+            declarationId: string | null;
+            /** Format: date-time */
+            declaredAt: string | null;
+            declaredBy: components["schemas"]["StaffRefView"] | null;
+            /**
+             * @description VAT recovered on vendors’ invoices approved, less those called off.
+             * @example 1250.00
+             */
+            inputVat: string;
+            ledgerClosed: boolean;
+            /** @example 2026-10 */
+            month: string;
+            /**
+             * @description Due: output less input and what was carried in.
+             * @example 1250.00
+             */
+            netDue: string;
+            /**
+             * @description Still to pay.
+             * @example 1250.00
+             */
+            open: string;
+            /**
+             * @description VAT on invoices less what credit notes took back.
+             * @example 1250.00
+             */
+            outputVat: string;
+            /**
+             * @description Paid of it.
+             * @example 1250.00
+             */
+            paid: string;
+            /**
+             * @description open: the ledger has not closed it; ready: closed, not declared; declared: its figures locked.
+             * @enum {string}
+             */
+            status: "open" | "ready" | "declared";
+            /**
+             * @description Expense net of the VAT recovered on vendors’ invoices.
+             * @example 1250.00
+             */
+            taxablePurchases: string;
+            /**
+             * @description Revenue net of VAT on the taxed invoices less credit notes.
+             * @example 1250.00
+             */
+            taxableSales: string;
+        };
+        VatMonthViewList: {
+            data: components["schemas"]["VatMonthView"][];
+            nextCursor: string | null;
+        };
         VehicleCountedView: {
             /** @enum {boolean} */
             counted: true;
@@ -56673,9 +57264,19 @@ export interface components {
             tax: string;
             /** @example 1200.00 */
             total: string;
+            /**
+             * @description Of its tax, what the compound recovers as input VAT (ADR 0093), set at its approval: its tax while registered for VAT and its line’s category is marked recoverable, else 0.00 (the tax stays part of the cost).
+             * @example 1200.00
+             */
+            vatRecoverable: string;
             /** Format: uuid */
             vendorId: string;
             vendorNumber: string;
+            /**
+             * @description What its payout withholds by (ADR 0093); null: its vendor’s.
+             * @enum {string|null}
+             */
+            withholdingCategory: "supplies" | "services" | "professional" | "exempt" | null;
         };
         VendorInvoiceViewList: {
             data: components["schemas"]["VendorInvoiceView"][];
@@ -57287,6 +57888,69 @@ export interface components {
         WithdrawDamageClaimDto: {
             /** @description REASON_CODES.damageClaimWithdraw, but `appeal_accepted`. */
             reasonCode: string;
+        };
+        /**
+         * @description What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt.
+         * @enum {string}
+         */
+        WithholdingCategory: "supplies" | "services" | "professional" | "exempt";
+        WithholdingCertificateView: {
+            /** @example 1250.00 */
+            amount: string;
+            /**
+             * @description The invoice’s subtotal it was withheld on.
+             * @example 1250.00
+             */
+            base: string;
+            /** @enum {string} */
+            category: "supplies" | "services" | "professional";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** @example WHT-000001 */
+            number: string;
+            /** Format: date */
+            paidOn: string;
+            /** Format: uuid */
+            payoutId: string;
+            /** @example VP-000001 */
+            payoutNumber: string;
+            /** @example 2026-Q3 */
+            quarter: string;
+            /** @example 3.00 */
+            rate: string;
+            /** Format: uuid */
+            vendorId: string;
+            /** @description Its legal name, else its name. */
+            vendorName: string;
+            vendorTaxNumber: string | null;
+        };
+        WithholdingCertificateViewList: {
+            data: components["schemas"]["WithholdingCertificateView"][];
+            nextCursor: string | null;
+        };
+        WithholdingQuarterView: {
+            certificates: number;
+            /** Format: date */
+            endsOn: string;
+            /**
+             * @description Withheld, not yet paid.
+             * @example 1250.00
+             */
+            open: string;
+            /** @example 1250.00 */
+            paid: string;
+            /** @example 2026-Q3 */
+            quarter: string;
+            /** Format: date */
+            startsOn: string;
+            /** @example 1250.00 */
+            withheld: string;
+        };
+        WithholdingQuarterViewList: {
+            data: components["schemas"]["WithholdingQuarterView"][];
+            nextCursor: string | null;
         };
         /** @enum {string} */
         WorkHazard: "hot_work" | "height" | "live_electrical" | "confined_space" | "pool_chemicals";
@@ -85282,7 +85946,7 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
-                source?: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual";
+                source?: "invoice" | "credit_note" | "payment" | "payment_reversal" | "allocation" | "allocation_release" | "refund" | "refund_reversal" | "deposit" | "deposit_event" | "expense" | "expense_void" | "vendor_invoice" | "vendor_invoice_cancel" | "vendor_payout" | "cash_movement" | "custody_handin" | "club_payment" | "vehicle_fine_payment" | "violation_payment" | "manual" | "vat_declaration" | "tax_payment" | "year_close" | "year_reopen";
             };
             header?: never;
             path?: never;
@@ -85631,6 +86295,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GlTrialBalanceView"];
+                };
+            };
+        };
+    };
+    GlController_years: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlYearViewList"];
+                };
+            };
+        };
+    };
+    GlController_closeYear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlCloseYearDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlYearViewList"];
+                };
+            };
+        };
+    };
+    GlController_reopenYear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlReopenYearDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlYearViewList"];
                 };
             };
         };
@@ -86348,6 +87077,271 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatementLineView"];
+                };
+            };
+        };
+    };
+    TaxController_payments: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                kind?: components["schemas"]["TaxPaymentKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxPaymentViewList"];
+                };
+            };
+        };
+    };
+    TaxController_pay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxPaymentDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxPaymentView"];
+                };
+            };
+        };
+    };
+    TaxController_getSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSettingsView"];
+                };
+            };
+        };
+    };
+    TaxController_setSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxSettingsView"];
+                };
+            };
+        };
+    };
+    TaxController_declare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VatDeclareDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatMonthView"];
+                };
+            };
+        };
+    };
+    TaxController_vatMonths: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatMonthViewList"];
+                };
+            };
+        };
+    };
+    TaxController_vendors: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxVendorViewList"];
+                };
+            };
+        };
+    };
+    TaxController_setVendor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxVendorDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxVendorView"];
+                };
+            };
+        };
+    };
+    TaxController_certificates: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                quarter?: string;
+                vendorId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingCertificateViewList"];
+                };
+            };
+        };
+    };
+    TaxController_certificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingCertificateView"];
+                };
+            };
+        };
+    };
+    TaxController_certificatePdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    TaxController_quarters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WithholdingQuarterViewList"];
                 };
             };
         };

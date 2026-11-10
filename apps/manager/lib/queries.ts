@@ -1026,6 +1026,15 @@ export const keys = {
   glJournal: (from: string, to: string) => ['gl', 'journal', from, to] as const,
   glManualEntries: (status: string) => ['gl', 'manual-entries', status] as const,
   glPeriods: ['gl', 'periods'] as const,
+  glYears: ['gl', 'years'] as const,
+  // Taxes and the year-end close (ADR 0093).
+  taxAll: ['tax'] as const,
+  taxSettings: ['tax', 'settings'] as const,
+  taxVendors: ['tax', 'vendors'] as const,
+  taxVatMonths: ['tax', 'vat-months'] as const,
+  taxQuarters: ['tax', 'quarters'] as const,
+  taxCertificates: (quarter: string) => ['tax', 'certificates', quarter] as const,
+  taxPayments: (kind: string) => ['tax', 'payments', kind] as const,
   traffic: (from: string, to: string, gateId: string) => ['gate', 'traffic', from, to, gateId] as const,
 };
 
@@ -1902,6 +1911,22 @@ export const fetchers = {
   glManualEntries: (status: '' | 'pending' | 'approved' | 'rejected' | 'withdrawn') =>
     unwrap(api.GET('/api/v1/staff/finance/gl/manual-entries', { params: { query: { status: status || undefined, limit: 100 } } })),
   glPeriods: () => unwrap(api.GET('/api/v1/staff/finance/gl/periods')),
+  glYears: () => unwrap(api.GET('/api/v1/staff/finance/gl/years')),
+  // Taxes (ADR 0093).
+  taxSettings: () => unwrap(api.GET('/api/v1/staff/finance/tax/settings')),
+  taxVendors: (cursor?: string) => unwrap(api.GET('/api/v1/staff/finance/tax/vendors', { params: { query: { cursor, limit: 50 } } })),
+  taxVatMonths: () => unwrap(api.GET('/api/v1/staff/finance/tax/vat/months')),
+  taxQuarters: () => unwrap(api.GET('/api/v1/staff/finance/tax/withholding/quarters')),
+  taxCertificates: (quarter: string, cursor?: string) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/tax/withholding/certificates', {
+        params: { query: { quarter: quarter || undefined, cursor, limit: 50 } },
+      }),
+    ),
+  taxPayments: (kind: '' | 'vat' | 'withholding', cursor?: string) =>
+    unwrap(
+      api.GET('/api/v1/staff/finance/tax/payments', { params: { query: { kind: kind || undefined, cursor, limit: 50 } } }),
+    ),
   briefs: (kind: BriefKind | '', cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/staff/briefs', { params: { query: { kind: kind || undefined, cursor, limit } } })),
   brief: (id: string) => unwrap(api.GET('/api/v1/staff/briefs/{id}', { params: { path: { id } } })),

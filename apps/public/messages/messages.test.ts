@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { findHardCodedText, tsxFiles } from '@jiwar/i18n/testing';
 import { ar } from './ar.ts';
 import { en } from './en.ts';
 
@@ -22,4 +25,9 @@ test('Arabic copy is Arabic, apart from the language switch', () => {
     if (key === 'lang.switch') continue;
     assert.match(text, /[؀-ۿ]/, key);
   }
+});
+
+test('no page or component shows text outside the catalogs', () => {
+  const app = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+  assert.deepEqual(findHardCodedText(tsxFiles(path.join(app, 'app'), path.join(app, 'components'))), []);
 });

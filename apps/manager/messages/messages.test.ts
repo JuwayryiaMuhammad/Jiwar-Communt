@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { assertCatalogs } from '@jiwar/i18n/testing';
+import { assertCatalogs, findHardCodedText, tsxFiles } from '@jiwar/i18n/testing';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,6 +17,7 @@ const LATIN = [
   'maint-thread.view.sla',
   'maint-thread.transition',
   'maint-ticket.sla',
+  'ms-page.tab.sla',
   'ops-readiness.days',
   'ops-readiness.summary',
   'ops-readiness.stateDecision',
@@ -39,4 +40,9 @@ const LATIN = [
 test('every manager catalog carries the same keys in Arabic and English', async () => {
   const { files } = await assertCatalogs(here, { latin: LATIN });
   assert.ok(files > 0);
+});
+
+test('no page or component shows text outside the catalogs', () => {
+  const app = path.join(here, '..');
+  assert.deepEqual(findHardCodedText(tsxFiles(path.join(app, 'app'), path.join(app, 'components'))), []);
 });

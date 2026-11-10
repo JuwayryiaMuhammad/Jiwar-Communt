@@ -1,0 +1,32 @@
+/** Signing in to the management dashboard: app/login. */
+export default {
+  'title.signIn': 'Manager sign-in',
+  'title.account': 'Choose a compound',
+  'title.denied': 'No access',
+  'intro.identifier': 'Enter your email or phone. We email you a 6-digit code.',
+  'intro.code': 'Check your email for the code. It expires in a few minutes.',
+  'intro.account': 'You have more than one account. Pick one for this session.',
+  'intro.denied':
+    'This account has no access to the management dashboard. It is for compound managers and maintenance supervisors; everyone else uses the Jiwar app.',
+  identifier: 'Email or phone',
+  sendCode: 'Send code',
+  code: 'Code',
+  sentFor: 'Sent for {identifier}',
+  verify: 'Verify',
+  changeIdentifier: 'Change email or phone',
+  resend: 'Send a new code',
+  deniedHint: 'If this is wrong, ask your compound’s manager to check your role.',
+  anotherAccount: 'Sign in with another account',
+  noEligible: 'None of your accounts is a manager or staff account. Residents use the Jiwar app.',
+  'role.manager': 'Manager',
+  'role.staff': 'Staff',
+  useApp: '{type} · use the app',
+  startOver: 'Start over',
+  // The band beside the form.
+  product: 'Jiwar Manager',
+  tagline: 'Your compound, in one place.',
+  lede: 'Residents, households, staff, workers and the gate — with every decision on the record.',
+  'point.residents': 'Residents, households and requests',
+  'point.gates': 'Gates and the entry log',
+  'point.roles': 'Roles, settings and the audit trail',
+} as const;

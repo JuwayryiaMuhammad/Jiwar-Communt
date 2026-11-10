@@ -1,9 +1,31 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, type Schema } from '@jiwar/api';
-import { Checkbox, Field, Input, Select } from '@jiwar/ui';
-import { NOTIFICATION_CATEGORY_TEXT } from '@/components/accounts/labels';
+import { fieldError, type Schema } from '@jiwar/api';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Checkbox, Field, Input, Select, useLabel } from '@jiwar/ui';
 import type { Preferences } from '@/lib/queries';
+import ar from '@/messages/ar/shell-components';
+import en from '@/messages/en/shell-components';
+
+const CATEGORIES = [
+  'maintenance',
+  'gate_visitors',
+  'parcels',
+  'household',
+  'account_security',
+  'management',
+  'community',
+  'neighbours',
+  'bookings',
+  'safety',
+  'permits',
+  'governance',
+  'partners',
+  'utilities',
+  'market',
+] as const;
+type Category = (typeof CATEGORIES)[number];
+const isCategory = (c: string): c is Category => (CATEGORIES as readonly string[]).includes(c);
 
 type Pause = '' | '1h' | '8h' | 'until_resumed' | 'resume';
 export interface PrefsForm {
@@ -56,16 +78,19 @@ export function PreferencesFields({
   /** The save's error: a refused quiet-hours window is explained at its field. */
   error?: unknown;
 }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   return (
     <>
       <div className="stack stack--sm">
         {saved.categories.map((c) => (
           <span key={c.category} className="row" style={{ gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ minWidth: 170 }}>{NOTIFICATION_CATEGORY_TEXT[c.category] ?? humanize(c.category)}</span>
+            <span style={{ minWidth: 170 }}>{isCategory(c.category) ? t(`category.${c.category}`) : label(c.category)}</span>
             {(['email', 'push'] as const).map((channel) => (
               <Checkbox
                 key={channel}
-                label={channel === 'email' ? 'Email' : 'Push'}
+                label={t(`channel.${channel}`)}
                 checked={form.categories[c.category]?.[channel] ?? false}
                 onChange={(e) =>
                   onChange({
@@ -79,41 +104,41 @@ export function PreferencesFields({
         ))}
       </div>
       <Checkbox
-        label={`Quiet hours: hold non-urgent notices at night (${own ? "the compound's" : 'their'} time zone, ${saved.timeZone})`}
+        label={t('quietHours', { own: own ? 'yes' : 'no', zone: saved.timeZone })}
         checked={form.quiet}
         onChange={(e) => onChange({ ...form, quiet: e.target.checked })}
       />
       {form.quiet ? (
         <div className="form__row">
-          <Field label="Quiet from">
+          <Field label={t('quietFrom')}>
             {(p) => <Input {...p} type="time" value={form.start} onChange={(e) => onChange({ ...form, start: e.target.value })} />}
           </Field>
           <Field
-            label="Quiet until"
-            hint="Before the start: the window runs past midnight."
-            error={fieldError(error, 'quietHours') ? 'The end must differ from the start.' : undefined}
+            label={t('quietUntil')}
+            hint={t('quietUntilHint')}
+            error={fieldError(error, 'quietHours') ? t('quietSame') : undefined}
           >
             {(p) => <Input {...p} type="time" value={form.end} onChange={(e) => onChange({ ...form, end: e.target.value })} />}
           </Field>
         </div>
       ) : null}
       <Field
-        label="Pause"
+        label={t('pause')}
         hint={
           saved.pause
             ? saved.pause.until
-              ? `Paused now, until ${formatDateTime(saved.pause.until)}.`
-              : 'Paused now, until resumed.'
-            : 'Not paused now.'
+              ? t('pausedUntil', { when: fmt.dateTime(saved.pause.until) })
+              : t('pausedUntilResumed')
+            : t('notPaused')
         }
       >
         {(p) => (
           <Select {...p} value={form.pause} onChange={(e) => onChange({ ...form, pause: e.target.value as Pause })}>
-            <option value="">Leave as it is</option>
-            <option value="1h">Pause for 1 hour</option>
-            <option value="8h">Pause for 8 hours</option>
-            <option value="until_resumed">Pause until resumed</option>
-            {saved.pause ? <option value="resume">Resume now</option> : null}
+            <option value="">{t('pause.keep')}</option>
+            <option value="1h">{t('pause.1h')}</option>
+            <option value="8h">{t('pause.8h')}</option>
+            <option value="until_resumed">{t('pause.until_resumed')}</option>
+            {saved.pause ? <option value="resume">{t('pause.resume')}</option> : null}
           </Select>
         )}
       </Field>

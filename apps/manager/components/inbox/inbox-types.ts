@@ -35,11 +35,3 @@ export const INBOX_TYPE: Record<string, { label: string; href: (id: string) => s
   // ADR 0092.
   gl_manual_entry: { label: 'Journal entry', href: () => '/finance/gl/entries' },
 };
-
-export const inboxLabel = (type: string) => INBOX_TYPE[type]?.label ?? type;
-
-/** How long something has waited: "3 h", "2 d". */
-export function waited(since: string, now: number): string {
-  const h = Math.max(0, Math.floor((now - new Date(since).getTime()) / 3_600_000));
-  return h < 48 ? `${h} h` : `${Math.floor(h / 24)} d`;
-}

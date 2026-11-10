@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDate, unwrap, type Schema } from '@jiwar/api';
+import { unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import {
   Badge,
@@ -14,10 +14,13 @@ import {
   Textarea,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/compound-docs';
+import en from '@/messages/en/compound-docs';
 
 type Summary = Schema<'CompoundDocumentSummaryView'>;
 type Kind =
@@ -32,66 +35,17 @@ type Kind =
   | 'emergency_facilities';
 const KEY = ['compound-documents'] as const;
 
-const KINDS: { value: Kind; label: string; hint: string }[] = [
-  {
-    value: 'bylaws',
-    label: 'Bylaws',
-    hint: 'Adopted by the board: cite its published decision.',
-  },
-  {
-    value: 'occupant_rights',
-    label: 'Your rights',
-    hint: 'What an occupant may rely on, in plain words.',
-  },
-  {
-    value: 'conduct_guide',
-    label: 'Code of conduct',
-    hint: 'How neighbours live together.',
-  },
-  {
-    value: 'moving_guide',
-    label: 'Moving guide',
-    hint: 'Renewing a lease or moving out: what each means, the dates, the fees.',
-  },
-  {
-    value: 'saving_tips',
-    label: 'Saving tips',
-    hint: 'How a household uses less water, power and gas.',
-  },
-  {
-    value: 'emergency_medical',
-    label: 'Emergency: medical',
-    hint: 'What to do in a medical emergency, and whom to call.',
-  },
-  {
-    value: 'emergency_fire',
-    label: 'Emergency: fire',
-    hint: 'What to do in a fire: the way out, the assembly point.',
-  },
-  {
-    value: 'emergency_security',
-    label: 'Emergency: security',
-    hint: 'What to do when security is threatened.',
-  },
-  {
-    value: 'emergency_facilities',
-    label: 'Emergency: facilities',
-    hint: 'A gas leak, a flood, a power failure: what to shut and whom to call.',
-  },
+const KINDS: Kind[] = [
+  'bylaws',
+  'occupant_rights',
+  'conduct_guide',
+  'moving_guide',
+  'saving_tips',
+  'emergency_medical',
+  'emergency_fire',
+  'emergency_security',
+  'emergency_facilities',
 ];
-
-/** A plain-language starting point for the occupants' rights (ADR 0062); the management edits it. */
-const RIGHTS_TEMPLATE = `## Your home
-- You may live in your unit and use the common areas the compound opens to residents.
-- Nobody enters your unit without you, except in an emergency.
-
-## Your requests
-- You may ask the management anything, and get an answer within the time it publishes.
-- You may appeal a decision about your unit, first to the management, then to the board.
-
-## Your money
-- You see every invoice of your unit and every payment, and you may dispute an invoice.
-- A deposit the management holds is yours; you may ask for it back when you leave.`;
 
 /**
  * The compound's documents (ADR 0062): the bylaws, the occupants' rights,
@@ -101,6 +55,8 @@ const RIGHTS_TEMPLATE = `## Your home
  * rights is announced to everyone.
  */
 export default function CompoundDocumentsPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
   const [publishing, setPublishing] = useState<Kind | null>(null);
   const list = useQuery({
     queryKey: KEY,
@@ -111,34 +67,33 @@ export default function CompoundDocumentsPage() {
   return (
     <>
       <PageHeader
-        title="Compound documents"
-        description="What residents read in the app: the bylaws, their rights, the code of conduct and the moving guide. Each new version keeps the ones before."
+        title={t('title')}
+        description={t('description')}
       />
       <Card flush>
         <QueryState query={list}>
-          <DataTable<(typeof KINDS)[number]>
+          <DataTable<Kind>
             rows={KINDS}
-            rowKey={(k) => k.value}
+            rowKey={(k) => k}
             empty=""
             columns={[
               {
                 key: 'kind',
-                header: 'Document',
-                cell: (k) => <strong>{k.label}</strong>,
+                header: t('document'),
+                cell: (k) => <strong>{t(`kind.${k}`)}</strong>,
               },
               {
                 key: 'version',
-                header: 'Published',
+                header: t('published'),
                 cell: (k) => {
-                  const d: Summary | undefined = latest(k.value);
+                  const d: Summary | undefined = latest(k);
                   return d ? (
                     <span>
-                      Version {d.versionNo} · in force{' '}
-                      {formatDate(d.effectiveOn)}{' '}
+                      {t('versionLine', { no: f.number(d.versionNo), date: f.day(d.effectiveOn) })}{' '}
                       {d.hasFile ? <Badge tone="beige">PDF</Badge> : null}
                     </span>
                   ) : (
-                    <span className="t-secondary">Not published yet</span>
+                    <span className="t-secondary">{t('notPublished')}</span>
                   );
                 },
               },
@@ -146,8 +101,8 @@ export default function CompoundDocumentsPage() {
                 key: 'act',
                 header: '',
                 cell: (k) => (
-                  <Button size="sm" onClick={() => setPublishing(k.value)}>
-                    {latest(k.value) ? 'Publish an amendment' : 'Publish'}
+                  <Button size="sm" onClick={() => setPublishing(k)}>
+                    {latest(k) ? t('publishAmendment') : t('publish')}
                   </Button>
                 ),
               },
@@ -175,13 +130,13 @@ function PublishDialog({
   first: boolean;
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
   const toast = useToast();
-  const meta = KINDS.find((k) => k.value === kind)!;
   const [v, setV] = useState({
-    titleEn: meta.label,
-    titleAr: '',
-    bodyEn: kind === 'occupant_rights' && first ? RIGHTS_TEMPLATE : '',
-    bodyAr: '',
+    titleEn: en[`kind.${kind}`],
+    titleAr: ar[`kind.${kind}`],
+    bodyEn: kind === 'occupant_rights' && first ? en.rightsTemplate : '',
+    bodyAr: kind === 'occupant_rights' && first ? ar.rightsTemplate : '',
     changesEn: '',
     changesAr: '',
     effectiveOn: new Date().toISOString().slice(0, 10),
@@ -214,7 +169,7 @@ function PublishDialog({
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Published.');
+        toast.show(t('publishedToast'));
         onClose();
       },
     },
@@ -224,25 +179,25 @@ function PublishDialog({
       open
       wide
       onClose={onClose}
-      title={`${first ? 'Publish' : 'Amend'}: ${meta.label}`}
-      description={meta.hint}
+      title={t(first ? 'publishTitle' : 'amendTitle', { kind: t(`kind.${kind}`) })}
+      description={t(`hint.${kind}`)}
       onSubmit={(e) => {
         e.preventDefault();
         publish.mutate(undefined);
       }}
       footer={
         <Button variant="primary" type="submit" loading={publish.isPending}>
-          Publish
+          {t('publish')}
         </Button>
       }
     >
       <ErrorAlert error={publish.error} />
-      <Field label="Title (English)">
+      <Field label={t('titleEn')}>
         {(p) => (
-          <Input {...p} value={v.titleEn} onChange={set('titleEn')} required />
+          <Input {...p} dir="ltr" value={v.titleEn} onChange={set('titleEn')} required />
         )}
       </Field>
-      <Field label="Title (Arabic)">
+      <Field label={t('titleAr')}>
         {(p) => (
           <Input
             {...p}
@@ -253,10 +208,11 @@ function PublishDialog({
           />
         )}
       </Field>
-      <Field label="Text (English)" hint="Markdown.">
+      <Field label={t('textEn')} hint={t('markdown')}>
         {(p) => (
           <Textarea
             {...p}
+            dir="ltr"
             rows={8}
             value={v.bodyEn}
             onChange={set('bodyEn')}
@@ -264,7 +220,7 @@ function PublishDialog({
           />
         )}
       </Field>
-      <Field label="Text (Arabic)" hint="Markdown.">
+      <Field label={t('textAr')} hint={t('markdown')}>
         {(p) => (
           <Textarea
             {...p}
@@ -278,10 +234,11 @@ function PublishDialog({
       </Field>
       {first ? null : (
         <>
-          <Field label="What it changes (English)">
+          <Field label={t('changesEn')}>
             {(p) => (
               <Textarea
                 {...p}
+                dir="ltr"
                 rows={3}
                 value={v.changesEn}
                 onChange={set('changesEn')}
@@ -289,7 +246,7 @@ function PublishDialog({
               />
             )}
           </Field>
-          <Field label="What it changes (Arabic)">
+          <Field label={t('changesAr')}>
             {(p) => (
               <Textarea
                 {...p}
@@ -303,7 +260,7 @@ function PublishDialog({
           </Field>
         </>
       )}
-      <Field label="In force from">
+      <Field label={t('inForceFrom')}>
         {(p) => (
           <Input
             {...p}
@@ -316,8 +273,8 @@ function PublishDialog({
       </Field>
       {kind === 'bylaws' ? (
         <Field
-          label="The board’s decision"
-          hint="The id of the decision the board published (Board → Publications)."
+          label={t('boardDecision')}
+          hint={t('boardDecisionHint')}
         >
           {(p) => (
             <Input
@@ -333,8 +290,8 @@ function PublishDialog({
         purpose="compound_document"
         label={
           v.fileId
-            ? 'Signed PDF attached — replace'
-            : 'Attach the signed PDF (optional)'
+            ? t('fileAttached')
+            : t('attachFile')
         }
         onUploaded={(fileId) => setV({ ...v, fileId })}
       />

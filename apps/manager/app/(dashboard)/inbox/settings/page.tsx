@@ -2,18 +2,24 @@
 
 import { fieldError, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, ForbiddenState, Input, PageHeader, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, ForbiddenState, Input, PageHeader, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { inboxLabel } from '@/components/inbox/inbox-types';
+import { useInboxText } from '@/components/inbox/use-inbox-text';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/inbox';
+import en from '@/messages/en/inbox';
 
 type Setting = Schema<'InboxSettingView'>;
 const KEY = ['staff-inbox', 'settings'] as const;
 
 /** How long each type may wait before it is overdue (ADR 0073). */
 export default function InboxSettingsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const text = useInboxText();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('settings.manage');
@@ -39,12 +45,12 @@ export default function InboxSettingsPage() {
           },
         }),
       ),
-    { invalidate: [KEY, ['staff-inbox']], onDone: () => toast.show('Saved. Items already overdue were told once.') },
+    { invalidate: [KEY, ['staff-inbox']], onDone: () => toast.show(t('saved')) },
   );
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Inbox due times" />
+        <PageHeader title={t('settingsTitle')} />
         <ForbiddenState />
       </>
     );
@@ -52,11 +58,11 @@ export default function InboxSettingsPage() {
   return (
     <>
       <PageHeader
-        title="Inbox due times"
-        description="Hours from when something starts waiting until it is overdue. Past it, whoever decides that type is told once."
+        title={t('settingsTitle')}
+        description={t('settingsDescription')}
         actions={
           <Button variant="primary" disabled={!changed.length} loading={save.isPending} onClick={() => save.mutate(undefined)}>
-            Save
+            {c('save')}
           </Button>
         }
       />
@@ -66,14 +72,14 @@ export default function InboxSettingsPage() {
             rows={rows}
             rowKey={(s) => s.type}
             columns={[
-              { key: 't', header: 'What', cell: (s) => inboxLabel(s.type) },
+              { key: 't', header: t('what'), cell: (s) => text.type(s.type) },
               {
                 key: 'h',
-                header: 'Hours',
+                header: t('hoursColumn'),
                 cell: (s) => (
                   <>
                     <Input
-                      aria-label={`Hours: ${inboxLabel(s.type)}`}
+                      aria-label={t('hoursOf', { what: text.type(s.type) })}
                       type="number"
                       min={1}
                       max={720}
@@ -86,14 +92,14 @@ export default function InboxSettingsPage() {
               },
               {
                 key: 'd',
-                header: 'Default',
+                header: t('defaultColumn'),
                 cell: (s) =>
                   s.custom ? (
                     <Button size="sm" onClick={() => save.mutate(s)}>
-                      Back to {s.defaultDueHours} h
+                      {t('backTo', { hours: t('hours', { n: s.defaultDueHours }) })}
                     </Button>
                   ) : (
-                    `${s.defaultDueHours} h`
+                    t('hours', { n: s.defaultDueHours })
                   ),
               },
             ]}

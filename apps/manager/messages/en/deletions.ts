@@ -1,0 +1,26 @@
+/** Account deletion requests (ADR 0023, 0036): app/(dashboard)/deletions. */
+export default {
+  title: 'Deletion requests',
+  description:
+    'Accounts that asked to be deleted. After a 14-day cooling-off the system erases an account by itself; one that something blocks waits here for you.',
+  thisPerson: 'This person',
+  closedToast: 'Request closed. The account stays as it is.',
+  empty: 'No deletion request is open',
+  emptyHint: 'A resident asks from the app, or management asks for them from their account page.',
+  account: 'Account',
+  waiting: 'Waiting for you',
+  due: 'Due: the system erases it shortly',
+  coolingOff: 'Cooling off',
+  coolingEnds: 'Cooling-off ends',
+  askedOn: 'Asked {when}',
+  daysAgo: '{days, plural, one {# day ago} other {# days ago}}',
+  askedBy: 'Asked by',
+  byManagement: 'Management, for them',
+  byPerson: 'The person',
+  blocks: 'What blocks it',
+  nothingKnown: 'Nothing known',
+  erase: 'Erase…',
+  closeRequest: 'Close request',
+  closeTitle: "Close {name}'s deletion request?",
+  closeDescription: 'The account is not erased and keeps working. The person is told, and may ask again later.',
+} as const;

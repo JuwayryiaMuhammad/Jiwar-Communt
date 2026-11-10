@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, humanize, shortId } from '@jiwar/api';
+import { shortId } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, Input, PageHeader } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, Input, PageHeader, useLabel } from '@jiwar/ui';
 import { RotateCcw } from 'lucide-react';
 import { useDeferredValue, useState } from 'react';
 import { DateRange, endOfDay, startOfDay } from '@/components/date-range';
 import { fetchers, keys, type AuditEntry } from '@/lib/queries';
+import ar from '@/messages/ar/audit-log';
+import en from '@/messages/en/audit-log';
 
 const EMPTY = { action: '', targetType: '', from: '', to: '' };
 
@@ -24,7 +27,7 @@ function Changes({ value }: { value: AuditEntry['changes'] }) {
         const c = change as { from?: unknown; to?: unknown } | null;
         return (
           <Badge key={field} tone="beige" plain>
-            {c && typeof c === 'object' && 'to' in c ? `${field}: ${show(c.from)} → ${show(c.to)}` : field}
+            <span className="ltr">{c && typeof c === 'object' && 'to' in c ? `${field}: ${show(c.from)} → ${show(c.to)}` : field}</span>
           </Badge>
         );
       })}
@@ -33,6 +36,9 @@ function Changes({ value }: { value: AuditEntry['changes'] }) {
 }
 
 export default function AuditPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
   const [filters, setFilters] = useState(EMPTY);
   const typed = useDeferredValue(filters);
   const query = {
@@ -47,20 +53,20 @@ export default function AuditPage() {
   return (
     <>
       <PageHeader
-        title="Audit log"
-        description="Every change in the compound, append-only. Entries name people by id and never hold personal values."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
-        <Field label="Action" hint="Exact, e.g. resident.created">
+        <Field label={t('action')} hint={t('actionHint')}>
           {(p) => <Input {...p} value={filters.action} onChange={(e) => setFilters({ ...filters, action: e.target.value })} />}
         </Field>
-        <Field label="Target type" hint="e.g. account, unit">
+        <Field label={t('targetType')} hint={t('targetTypeHint')}>
           {(p) => <Input {...p} value={filters.targetType} onChange={(e) => setFilters({ ...filters, targetType: e.target.value })} />}
         </Field>
         <DateRange from={filters.from} to={filters.to} onChange={(r) => setFilters({ ...filters, ...r })} />
         {dirty ? (
           <Button variant="text" icon={<RotateCcw aria-hidden />} onClick={() => setFilters(EMPTY)} style={{ height: 40, alignSelf: 'center' }}>
-            Reset
+            {t('reset')}
           </Button>
         ) : null}
       </div>
@@ -69,44 +75,44 @@ export default function AuditPage() {
           <DataTable<AuditEntry>
             rows={list.rows}
             rowKey={(a) => a.id}
-            empty={dirty ? 'No entry matches these filters' : 'Nothing recorded yet'}
+            empty={dirty ? t('emptyFiltered') : t('empty')}
             columns={[
               {
                 key: 'when',
-                header: 'When',
-                cell: (a) => <span className="t-num" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(a.occurredAt)}</span>,
+                header: t('when'),
+                cell: (a) => <span className="t-num" style={{ whiteSpace: 'nowrap' }}>{f.dateTime(a.occurredAt)}</span>,
               },
               {
                 key: 'action',
-                header: 'Action',
+                header: t('action'),
                 cell: (a) => (
                   <div>
-                    <div className="table__primary">{humanize(a.action)}</div>
-                    <div className="t-mono t-secondary">{a.action}</div>
+                    <div className="table__primary">{label(a.action)}</div>
+                    <div className="t-mono t-secondary ltr">{a.action}</div>
                   </div>
                 ),
               },
               {
                 key: 'actor',
-                header: 'By',
+                header: t('by'),
                 cell: (a) => (
                   <span title={a.actorId ?? ''}>
-                    {humanize(a.actorType)}
+                    {label(a.actorType)}
                     {a.actorId ? <span className="t-mono t-secondary"> {shortId(a.actorId)}</span> : null}
                   </span>
                 ),
               },
               {
                 key: 'target',
-                header: 'Target',
+                header: t('target'),
                 cell: (a) => (
                   <span>
-                    {humanize(a.targetType)}
+                    {label(a.targetType)}
                     {a.targetId ? <span className="t-mono t-secondary"> {shortId(a.targetId)}</span> : null}
                   </span>
                 ),
               },
-              { key: 'changes', header: 'Changes', cell: (a) => <Changes value={a.changes} /> },
+              { key: 'changes', header: t('changes'), cell: (a) => <Changes value={a.changes} /> },
             ]}
           />
           <LoadMore query={list} />

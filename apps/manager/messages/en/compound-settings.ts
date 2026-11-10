@@ -1,0 +1,28 @@
+/** Compound-wide settings: app/(dashboard)/settings. */
+export default {
+  title: 'Settings',
+  description: 'Compound-wide rules for households, visitors and the gate.',
+  discard: 'Discard',
+  saved: 'Settings saved.',
+  compound: 'Compound',
+  timezone: 'Time zone',
+  timezoneHint: 'IANA name, e.g. Africa/Cairo. Schedules and attendance use it.',
+  emergencyPhone: 'Emergency phone',
+  emergencyPhoneHint: 'On the visitor page, the worker card and every unit’s emergency contacts.',
+  officePhone: 'Community office phone',
+  officePhoneHint: 'In every unit’s emergency contacts.',
+  dutyPhone: 'Duty manager phone',
+  dutyPhoneHint: 'In every unit’s emergency contacts, and what a household sees when the management answers an emergency.',
+  directions: 'Directions for visitors',
+  directionsHint: 'On the visitor’s pass page.',
+  households: 'Households',
+  approvalRequired: 'New household members need a manager’s approval',
+  maxMembers: 'Most members per household',
+  visitorsAndGate: 'Visitors and gate',
+  maxPasses: 'Active visitor passes per unit',
+  gateTimeout: 'Gate approval timeout (seconds)',
+  gateTimeoutHint: 'How long a household has to answer the gate before its gate instructions apply (30–1800).',
+  alwaysAllow: 'Households may tell the gate to always let someone in',
+  alwaysAllowNote:
+    'When off, no new “always allow” instruction can be added, and the guard treats existing ones as “call first”. The guard logs every entry either way.',
+} as const;

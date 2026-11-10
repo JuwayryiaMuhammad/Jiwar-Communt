@@ -1,8 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, relativeTime } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Badge, ButtonLink, Card, CardHeader, DataTable, EmptyState, PageHeader, Stat } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, ButtonLink, Card, CardHeader, DataTable, EmptyState, PageHeader, Stat, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -19,12 +19,17 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { liquidityText } from '@/components/finance/cash-flow';
-import { INBOX_TYPE, inboxLabel, waited } from '@/components/inbox/inbox-types';
-import { ALERT, BAND, alertText, percent } from '@/components/operations/dashboard';
+import { liquidityDays } from '@/components/finance/cash-flow';
+import { INBOX_TYPE } from '@/components/inbox/inbox-types';
+import { useInboxText } from '@/components/inbox/use-inbox-text';
+import { BAND_TONE, alertHref, alertText, bandText } from '@/components/operations/dashboard';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BuildingStatus } from '@/lib/queries';
 import { useNow } from '@/lib/use-now';
+import finAr from '@/messages/ar/fin-codes';
+import ar from '@/messages/ar/shell-overview';
+import finEn from '@/messages/en/fin-codes';
+import en from '@/messages/en/shell-overview';
 
 /**
  * The operations dashboard (ADR 0079): the cards in one call, what needs
@@ -32,6 +37,11 @@ import { useNow } from '@/lib/use-now';
  * reads its section; the server leaves the others null.
  */
 export default function OverviewPage() {
+  const t = useT(en, ar);
+  const finT = useT(finEn, finAr);
+  const inbox = useInboxText();
+  const fmt = useFormat();
+  const label = useLabel();
   const { can } = usePermissions();
   const now = useNow(60_000);
   const me = useQuery({ queryKey: keys.me, queryFn: fetchers.me });
@@ -52,20 +62,17 @@ export default function OverviewPage() {
   const money = f?.finance;
   const alerts = needs.data?.alerts ?? [];
   const items = needs.data?.items ?? [];
+  const n = (x: number) => fmt.number(x);
 
   return (
     <>
       <PageHeader
-        title={me.data?.fullName ? `Hello, ${me.data.fullName.split(' ')[0]}` : 'Overview'}
-        description={
-          summary.data
-            ? `The compound’s day, ${summary.data.date}. What needs you, and how each part of the compound is doing.`
-            : undefined
-        }
+        title={me.data?.fullName ? t('hello', { name: me.data.fullName.split(' ')[0] }) : t('title')}
+        description={summary.data ? t('description', { date: fmt.day(summary.data.date) }) : undefined}
         actions={
           can('dashboard.read') ? (
-            <ButtonLink href="/briefs" size="sm" variant="text" icon={<ArrowRight aria-hidden />}>
-              Daily briefs
+            <ButtonLink href="/briefs" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
+              {t('briefs')}
             </ButtonLink>
           ) : null
         }
@@ -76,10 +83,10 @@ export default function OverviewPage() {
           {summary.data?.inbox ? (
             <Stat
               tone={summary.data.inbox.overdue ? 'beige' : 'green'}
-              label="Waiting for you"
+              label={t('inbox.label')}
               icon={<Inbox aria-hidden />}
-              value={summary.data.inbox.total}
-              hint={`${summary.data.inbox.overdue} overdue`}
+              value={n(summary.data.inbox.total)}
+              hint={t('inbox.hint', { n: summary.data.inbox.overdue })}
               href="/inbox"
             />
           ) : null}
@@ -87,25 +94,25 @@ export default function OverviewPage() {
             <>
               <Stat
                 tone="dark"
-                label="Open tickets"
+                label={t('tickets.label')}
                 icon={<Wrench aria-hidden />}
-                value={m.open}
-                hint={`${m.unassigned} unassigned · ${m.awaitingConfirmation} awaiting the resident`}
+                value={n(m.open)}
+                hint={t('tickets.hint', { unassigned: m.unassigned, awaiting: m.awaitingConfirmation })}
                 href="/maintenance"
               />
               <Stat
                 tone={m.overdue ? 'beige' : undefined}
-                label="Past the SLA"
+                label={t('sla.label')}
                 icon={<TriangleAlert aria-hidden />}
-                value={m.slaEnabled ? m.overdue : '—'}
-                hint={m.slaEnabled ? `${m.atRisk} at risk` : 'The SLA is off'}
+                value={m.slaEnabled ? n(m.overdue) : '—'}
+                hint={m.slaEnabled ? t('sla.hint', { n: m.atRisk }) : t('sla.off')}
                 href="/maintenance"
               />
               <Stat
-                label="Emergencies open"
+                label={t('emergencies.label')}
                 icon={<Siren aria-hidden />}
-                value={m.emergencyOpen}
-                hint={m.emergencyUnassigned ? `${m.emergencyUnassigned} unassigned` : 'All assigned'}
+                value={n(m.emergencyOpen)}
+                hint={m.emergencyUnassigned ? t('emergencies.hint', { n: m.emergencyUnassigned }) : t('emergencies.allAssigned')}
                 href="/maintenance"
               />
             </>
@@ -115,64 +122,68 @@ export default function OverviewPage() {
           {money ? (
             <>
               <Stat
-                label="Collected this month"
+                label={t('collected.label')}
                 icon={<Banknote aria-hidden />}
-                value={percent(money.collectionRate)}
-                hint={`${money.collectedMonth} ${money.currency} · ${money.collectedToday} today`}
+                value={fmt.percent(money.collectionRate)}
+                hint={t('collected.hint', { month: fmt.money(money.collectedMonth), today: fmt.money(money.collectedToday) })}
                 href="/finance"
               />
               <Stat
-                label="Owed past its day"
+                label={t('owed.label')}
                 icon={<Wallet aria-hidden />}
-                value={money.overdueAmount}
-                hint={`${money.overdueInvoices} invoice${money.overdueInvoices === 1 ? '' : 's'}`}
+                value={fmt.money(money.overdueAmount)}
+                hint={t('owed.hint', { n: money.overdueInvoices })}
                 href="/finance"
               />
             </>
           ) : null}
           {can('finance.cashflow') ? (
             <Stat
-              label="Liquidity"
+              label={t('liquidity.label')}
               icon={<Wallet aria-hidden />}
-              value={liquidityText(summary.data?.liquidityDays)}
-              hint="Days of spending the cash covers"
+              value={liquidityDays(finT, summary.data?.liquidityDays)}
+              hint={t('liquidity.hint')}
               href="/finance/cash-flow"
             />
           ) : null}
           {f?.security ? (
             <Stat
               tone={f.security.lockdownsLive ? 'beige' : undefined}
-              label="Incidents today"
+              label={t('incidents.label')}
               icon={<ShieldAlert aria-hidden />}
-              value={f.security.incidentsToday}
-              hint={`${f.security.incidentsOpen} open${f.security.lockdownsLive ? ` · ${f.security.lockdownsLive} lockdown` : ''}`}
+              value={n(f.security.incidentsToday)}
+              hint={
+                f.security.lockdownsLive
+                  ? t('incidents.hintLockdown', { open: f.security.incidentsOpen, lockdowns: f.security.lockdownsLive })
+                  : t('incidents.hint', { open: f.security.incidentsOpen })
+              }
               href="/security/incidents"
             />
           ) : null}
           {f?.gate ? (
             <Stat
-              label="Gate entries today"
+              label={t('gate.label')}
               icon={<DoorOpen aria-hidden />}
-              value={f.gate.entriesToday}
-              hint={`${f.gate.visitorsToday} visitors · ${f.gate.exitsToday} out`}
+              value={n(f.gate.entriesToday)}
+              hint={t('gate.hint', { visitors: f.gate.visitorsToday, exits: f.gate.exitsToday })}
               href="/gate/traffic"
             />
           ) : null}
           {f?.energy ? (
             <Stat
-              label="Outages in force"
+              label={t('outages.label')}
               icon={<ZapOff aria-hidden />}
-              value={f.energy.outagesActive}
-              hint={`${f.energy.outagesLaterToday} later today`}
+              value={n(f.energy.outagesActive)}
+              hint={t('outages.hint', { n: f.energy.outagesLaterToday })}
               href="/outages"
             />
           ) : null}
           {f?.units ? (
             <Stat
-              label="Units"
+              label={t('units.label')}
               icon={<Building aria-hidden />}
-              value={f.units.units}
-              hint={`${f.units.occupied} occupied · ${f.units.vacant} vacant · ${f.units.closed} closed`}
+              value={n(f.units.units)}
+              hint={t('units.hint', { occupied: f.units.occupied, vacant: f.units.vacant, closed: f.units.closed })}
               href="/units"
             />
           ) : null}
@@ -182,16 +193,16 @@ export default function OverviewPage() {
       <div className="grid grid--main-aside">
         <Card flush>
           <CardHeader
-            title="Needs you now"
+            title={t('needsTitle')}
             actions={
               can('inbox.read') ? (
-                <ButtonLink href="/inbox" size="sm" variant="text" icon={<ArrowRight aria-hidden />}>
-                  Inbox
+                <ButtonLink href="/inbox" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
+                  {t('inbox')}
                 </ButtonLink>
               ) : null
             }
           >
-            <span className="t-secondary">The critical first, then what is overdue.</span>
+            <span className="t-secondary">{t('needsHint')}</span>
           </CardHeader>
           <QueryState query={needs}>
             {alerts.length || items.length ? (
@@ -199,20 +210,20 @@ export default function OverviewPage() {
                 {alerts.map((a) => (
                   <li key={`${a.section}:${a.code}`} className="list__item">
                     <Badge tone={a.severity === 'critical' ? 'terracotta' : 'beige'}>
-                      {a.severity === 'critical' ? 'Critical' : 'Warning'}
+                      {a.severity === 'critical' ? t('severity.critical') : t('severity.warning')}
                     </Badge>
                     <div className="list__text">
-                      <Link href={ALERT[a.code]?.href ?? '/'} className="list__title table__link" style={{ display: 'block' }}>
-                        {alertText(a.code, a.count)}
+                      <Link href={alertHref(a.code)} className="list__title table__link" style={{ display: 'block' }}>
+                        {alertText(t, a.code, a.count)}
                       </Link>
-                      <div className="list__meta">{humanize(a.section)}</div>
+                      <div className="list__meta">{label(a.section)}</div>
                     </div>
                   </li>
                 ))}
                 {items.map((i) => (
                   <li key={`${i.type}:${i.id}`} className="list__item">
                     <Badge tone={i.overdue ? 'terracotta' : 'green'} plain>
-                      {inboxLabel(i.type)}
+                      {inbox.type(i.type)}
                     </Badge>
                     <div className="list__text">
                       <Link
@@ -220,20 +231,20 @@ export default function OverviewPage() {
                         className="list__title table__link"
                         style={{ display: 'block' }}
                       >
-                        {i.number ?? inboxLabel(i.type)}
+                        {i.number ?? inbox.type(i.type)}
                       </Link>
                       <div className="list__meta">
-                        {i.overdue ? 'Overdue since' : 'Due'} {formatDateTime(i.dueAt)}
+                        {i.overdue ? t('overdueSince', { when: fmt.dateTime(i.dueAt) }) : t('due', { when: fmt.dateTime(i.dueAt) })}
                       </div>
                     </div>
-                    <span className="list__meta" title={formatDateTime(i.requestedAt)}>
-                      {waited(i.requestedAt, now)}
+                    <span className="list__meta" title={fmt.dateTime(i.requestedAt)}>
+                      {inbox.waited(i.requestedAt, now)}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <EmptyState title="All clear">Nothing critical, and nothing waits for your decision.</EmptyState>
+              <EmptyState title={t('allClear')}>{t('allClearBody')}</EmptyState>
             )}
           </QueryState>
         </Card>
@@ -241,10 +252,10 @@ export default function OverviewPage() {
         {can('gate.read') ? (
           <Card flush>
             <CardHeader
-              title="Latest at the gate"
+              title={t('gateTitle')}
               actions={
-                <ButtonLink href="/gate?tab=entries" size="sm" variant="text" icon={<ArrowRight aria-hidden />}>
-                  Log
+                <ButtonLink href="/gate?tab=entries" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
+                  {t('log')}
                 </ButtonLink>
               }
             />
@@ -253,30 +264,28 @@ export default function OverviewPage() {
                 <ul className="list">
                   {entries.data.data.map((e) => (
                     <li key={e.id} className="list__item">
-                      <Badge tone={e.direction === 'in' ? 'green' : 'beige'}>{e.direction === 'in' ? 'In' : 'Out'}</Badge>
+                      <Badge tone={e.direction === 'in' ? 'green' : 'beige'}>{e.direction === 'in' ? t('in') : t('out')}</Badge>
                       <div className="list__text">
                         <div className="list__title">
-                          {humanize(
-                            e.subjectType === 'worker_engagement'
-                              ? 'worker'
-                              : e.subjectType === 'visitor_pass'
-                                ? 'visitor'
-                                : 'approved visit',
-                          )}{' '}
-                          · {e.unitCode}
+                          {e.subjectType === 'worker_engagement'
+                            ? t('entry.worker')
+                            : e.subjectType === 'visitor_pass'
+                              ? t('entry.visitor')
+                              : t('entry.visit')}{' '}
+                          · <bdi>{e.unitCode}</bdi>
                         </div>
                         <div className="list__meta">
-                          {gateNames.get(e.gateId) ?? 'Gate'} · {humanize(e.method)}
+                          {gateNames.get(e.gateId) ?? t('gate')} · {label(e.method)}
                         </div>
                       </div>
-                      <span className="list__meta" title={formatDateTime(e.occurredAt)}>
-                        {relativeTime(e.occurredAt)}
+                      <span className="list__meta" title={fmt.dateTime(e.occurredAt)}>
+                        {fmt.relative(e.occurredAt)}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <EmptyState title="No entries yet" />
+                <EmptyState title={t('noEntries')} />
               )}
             </QueryState>
           </Card>
@@ -284,28 +293,26 @@ export default function OverviewPage() {
       </div>
 
       <Card flush>
-        <CardHeader title="Buildings">
-          <span className="t-secondary">
-            Critical with an outage in force or an emergency open; attention with a ticket past the SLA.
-          </span>
+        <CardHeader title={t('buildingsTitle')}>
+          <span className="t-secondary">{t('buildingsHint')}</span>
         </CardHeader>
         <QueryState query={buildings}>
           <DataTable<BuildingStatus>
             rows={buildings.data?.buildings ?? []}
             rowKey={(b) => b.id}
-            empty="No building in the register yet"
+            empty={t('noBuildings')}
             columns={[
-              { key: 'name', header: 'Building', cell: (b) => <Link href={`/units?buildingId=${b.id}`}>{b.name}</Link> },
+              { key: 'name', header: t('col.building'), cell: (b) => <Link href={`/units?buildingId=${b.id}`}>{b.name}</Link> },
               {
                 key: 'band',
-                header: 'Status',
-                cell: (b) => <Badge tone={BAND[b.band]?.tone ?? 'beige'}>{BAND[b.band]?.label ?? b.band}</Badge>,
+                header: t('col.status'),
+                cell: (b) => <Badge tone={BAND_TONE[b.band] ?? 'beige'}>{bandText(t, b.band)}</Badge>,
               },
-              { key: 'units', header: 'Occupied', cell: (b) => (b.units ? `${b.units.occupied} / ${b.units.units}` : '—') },
-              { key: 'open', header: 'Open tickets', cell: (b) => b.maintenance?.open ?? '—' },
-              { key: 'overdue', header: 'Past the SLA', cell: (b) => b.maintenance?.overdue ?? '—' },
-              { key: 'emergency', header: 'Emergencies', cell: (b) => b.maintenance?.emergencyOpen ?? '—' },
-              { key: 'outages', header: 'Outages', cell: (b) => b.energy?.outagesActive ?? '—' },
+              { key: 'units', header: t('col.occupied'), cell: (b) => (b.units ? `${n(b.units.occupied)} / ${n(b.units.units)}` : '—') },
+              { key: 'open', header: t('col.open'), cell: (b) => (b.maintenance ? n(b.maintenance.open) : '—') },
+              { key: 'overdue', header: t('col.overdue'), cell: (b) => (b.maintenance ? n(b.maintenance.overdue) : '—') },
+              { key: 'emergency', header: t('col.emergency'), cell: (b) => (b.maintenance ? n(b.maintenance.emergencyOpen) : '—') },
+              { key: 'outages', header: t('col.outages'), cell: (b) => (b.energy ? n(b.energy.outagesActive) : '—') },
             ]}
           />
         </QueryState>

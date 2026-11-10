@@ -1,0 +1,30 @@
+/** My notifications (ADR 0027) and my corrective actions (ADR 0087): app/(dashboard)/notifications, my-actions. */
+export default {
+  title: 'Notifications',
+  description:
+    'What the compound told you. Your notification settings decide what is also sent by email, never what is listed here.',
+  settings: 'Settings',
+  markAllRead: 'Mark all read',
+  which: 'Which notifications',
+  unread: 'Unread',
+  unreadCount: 'Unread ({count})',
+  all: 'All',
+  urgent: 'Urgent',
+  readSuffix: ' · read',
+  markRead: 'Mark read',
+  markedRead: '{n, plural, one {# notification marked read.} other {# notifications marked read.}}',
+  nothingUnread: 'Nothing unread',
+  noNotifications: 'No notifications',
+  allRead: 'You have read everything. Earlier notifications are under All.',
+  emptyAll: 'Emergencies, tickets that need a dispatcher, parcels held too long and deletion requests appear here.',
+  // My corrective actions.
+  actionsTitle: 'My corrective actions',
+  actionsDescription: 'What an incident’s investigation asked of you, by its day.',
+  actionsEmpty: 'Nothing asked of you',
+  markedDone: 'Marked done.',
+  incident: 'Incident',
+  action: 'Action',
+  due: 'Due',
+  dueOverdue: '{date} · overdue',
+  done: 'Done',
+} as const;

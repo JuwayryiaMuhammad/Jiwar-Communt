@@ -1,13 +1,16 @@
 'use client';
 
-import { ApiError, humanize } from '@jiwar/api';
+import { ApiError } from '@jiwar/api';
 import { ErrorAlert } from '@jiwar/api/react';
-import { Alert, Button, Field, Input } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Alert, Button, Field, Input, useLabel } from '@jiwar/ui';
 import { Building2, ChevronRight, DoorOpen, ShieldCheck, Users } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { bffAuth } from '@/lib/api';
 import { safeNext } from '@/lib/nav';
+import ar from '@/messages/ar/shell-login';
+import en from '@/messages/en/shell-login';
 
 interface LoginAccount {
   accountId: string;
@@ -18,6 +21,8 @@ interface LoginAccount {
 type Step = 'identifier' | 'code' | 'account' | 'denied';
 
 function LoginFlow() {
+  const t = useT(en, ar);
+  const label = useLabel();
   const router = useRouter();
   const params = useSearchParams();
   const [step, setStep] = useState<Step>('identifier');
@@ -87,14 +92,13 @@ function LoginFlow() {
           J
         </span>
         <h1 className="t-display-md" style={{ marginTop: 16 }}>
-          {step === 'account' ? 'Choose a compound' : step === 'denied' ? 'No access' : 'Manager sign-in'}
+          {step === 'account' ? t('title.account') : step === 'denied' ? t('title.denied') : t('title.signIn')}
         </h1>
         <p className="t-secondary">
-          {step === 'identifier' && 'Enter your email or phone. We email you a 6-digit code.'}
-          {step === 'code' && 'Check your email for the code. It expires in a few minutes.'}
-          {step === 'account' && 'You have more than one account. Pick one for this session.'}
-          {step === 'denied' &&
-            'This account has no access to the management dashboard. It is for compound managers and maintenance supervisors; everyone else uses the Jiwar app.'}
+          {step === 'identifier' && t('intro.identifier')}
+          {step === 'code' && t('intro.code')}
+          {step === 'account' && t('intro.account')}
+          {step === 'denied' && t('intro.denied')}
         </p>
       </div>
 
@@ -107,7 +111,7 @@ function LoginFlow() {
             if (identifier.trim()) void requestCode();
           }}
         >
-          <Field label="Email or phone">
+          <Field label={t('identifier')}>
             {(p) => (
               <Input
                 {...p}
@@ -120,7 +124,7 @@ function LoginFlow() {
           </Field>
           <ErrorAlert error={error} />
           <Button type="submit" variant="primary" loading={pending === 'request'} disabled={!identifier.trim()}>
-            Send code
+            {t('sendCode')}
           </Button>
         </form>
       ) : null}
@@ -134,7 +138,7 @@ function LoginFlow() {
             if (/^\d{6}$/.test(code)) void verify();
           }}
         >
-          <Field label="Code" hint={`Sent for ${identifier}`}>
+          <Field label={t('code')} hint={t('sentFor', { identifier })}>
             {(p) => (
               <Input
                 {...p}
@@ -150,14 +154,14 @@ function LoginFlow() {
           </Field>
           <ErrorAlert error={error} />
           <Button type="submit" variant="primary" loading={pending === 'verify'} disabled={code.length !== 6}>
-            Verify
+            {t('verify')}
           </Button>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <Button variant="text" onClick={() => setStep('identifier')}>
-              Change email or phone
+              {t('changeIdentifier')}
             </Button>
             <Button variant="text" onClick={() => void requestCode()} disabled={pending !== null}>
-              Send a new code
+              {t('resend')}
             </Button>
           </div>
         </form>
@@ -165,7 +169,7 @@ function LoginFlow() {
 
       {step === 'denied' ? (
         <div className="stack">
-          <p className="t-secondary">If this is wrong, ask your compound's manager to check your role.</p>
+          <p className="t-secondary">{t('deniedHint')}</p>
           <Button
             onClick={() => {
               setStep('identifier');
@@ -174,7 +178,7 @@ function LoginFlow() {
               setError(null);
             }}
           >
-            Sign in with another account
+            {t('anotherAccount')}
           </Button>
         </div>
       ) : null}
@@ -182,9 +186,7 @@ function LoginFlow() {
       {step === 'account' ? (
         <div className="stack">
           {eligible.length === 0 ? (
-            <Alert tone="warn">
-              None of your accounts is a manager or staff account. Residents use the Jiwar app.
-            </Alert>
+            <Alert tone="warn">{t('noEligible')}</Alert>
           ) : null}
           <div className="stack stack--sm">
             {accounts.map((a) => {
@@ -206,10 +208,10 @@ function LoginFlow() {
                       {a.tenantName}
                     </span>
                     <span className="list__meta">
-                      {isManager ? 'Manager' : canTry ? 'Staff' : `${humanize(a.accountType)} · use the app`}
+                      {isManager ? t('role.manager') : canTry ? t('role.staff') : t('useApp', { type: label(a.accountType) })}
                     </span>
                   </span>
-                  {pending === a.accountId ? <span className="btn__spinner" aria-hidden /> : canTry ? <ChevronRight size={18} aria-hidden /> : null}
+                  {pending === a.accountId ? <span className="btn__spinner" aria-hidden /> : canTry ? <ChevronRight size={18} aria-hidden className="icon-dir" /> : null}
                 </button>
               );
             })}
@@ -222,7 +224,7 @@ function LoginFlow() {
               setAccounts([]);
             }}
           >
-            Start over
+            {t('startOver')}
           </Button>
         </div>
       ) : null}
@@ -231,6 +233,7 @@ function LoginFlow() {
 }
 
 export default function LoginPage() {
+  const t = useT(en, ar);
   return (
     <div className="auth">
       <div className="auth__panel">
@@ -240,21 +243,21 @@ export default function LoginPage() {
       </div>
       <aside className="auth__band">
         <span className="badge badge--green badge--plain" style={{ alignSelf: 'flex-start' }}>
-          Jiwar Manager
+          {t('product')}
         </span>
         <div className="stack" style={{ gap: 16 }}>
-          <h2>Your compound, in one place.</h2>
-          <p>Residents, households, staff, workers and the gate — with every decision on the record.</p>
+          <h2>{t('tagline')}</h2>
+          <p>{t('lede')}</p>
         </div>
         <div className="auth__points">
           <span className="auth__point">
-            <Users aria-hidden /> Residents, households and requests
+            <Users aria-hidden /> {t('point.residents')}
           </span>
           <span className="auth__point">
-            <DoorOpen aria-hidden /> Gates and the entry log
+            <DoorOpen aria-hidden /> {t('point.gates')}
           </span>
           <span className="auth__point">
-            <ShieldCheck aria-hidden /> Roles, settings and the audit trail
+            <ShieldCheck aria-hidden /> {t('point.roles')}
           </span>
         </div>
       </aside>

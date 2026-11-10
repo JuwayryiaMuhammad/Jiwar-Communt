@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDate, humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import {
   emptyPerson,
   ErrorAlert,
@@ -24,19 +24,27 @@ import {
   Segmented,
   Select,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Account } from '@/lib/queries';
+import ar from '@/messages/ar/staff';
+import en from '@/messages/en/staff';
 
 type StaffType = 'staff' | 'manager';
 type Filter = 'staff' | 'manager' | 'everyone';
 
 function NewStaffDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [person, setPerson] = useState<Person>(emptyPerson);
   const [type, setType] = useState<StaffType>('staff');
@@ -54,7 +62,7 @@ function NewStaffDialog({ open, onClose }: { open: boolean; onClose: () => void 
     {
       invalidate: [keys.accounts],
       onDone: (a) => {
-        toast.show(`${a.fullName ?? 'Account'} created. They sign in with a code sent to their email.`);
+        toast.show(t('created', { name: a.fullName ?? t('account') }));
         close();
       },
     },
@@ -71,21 +79,21 @@ function NewStaffDialog({ open, onClose }: { open: boolean; onClose: () => void 
       wide
       open={open}
       onClose={close}
-      title="New staff account"
-      description="Guards and other staff use the Jiwar app; another manager uses this dashboard."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => create.mutate(undefined)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending}>
-            Create account
+            {t('createAccount')}
           </Button>
         </>
       }
     >
       <div className="form">
         <div className="form__row">
-          <Field label="Account type">
+          <Field label={t('accountType')}>
             {(p) => (
               <Select
                 {...p}
@@ -95,18 +103,18 @@ function NewStaffDialog({ open, onClose }: { open: boolean; onClose: () => void 
                   setRoleKey('');
                 }}
               >
-                <option value="staff">Staff</option>
-                <option value="manager">Manager</option>
+                <option value="staff">{t('staff')}</option>
+                <option value="manager">{t('manager')}</option>
               </Select>
             )}
           </Field>
-          <Field label="Role" hint="Empty: the default role of the type." error={fieldError(create.error, 'roleKey')}>
+          <Field label={t('role')} hint={t('roleHint')} error={fieldError(create.error, 'roleKey')}>
             {(p) => (
               <Select {...p} value={roleKey} onChange={(e) => setRoleKey(e.target.value)}>
-                <option value="">Default</option>
+                <option value="">{t('defaultRole')}</option>
                 {options.map((r) => (
                   <option key={r.id} value={r.key}>
-                    {r.name ?? humanize(r.key)}
+                    {r.name ?? label(r.key)}
                   </option>
                 ))}
               </Select>
@@ -121,6 +129,10 @@ function NewStaffDialog({ open, onClose }: { open: boolean; onClose: () => void 
 }
 
 export default function StaffPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<Filter>('staff');
@@ -144,7 +156,7 @@ export default function StaffPage() {
     {
       invalidate: [keys.accounts],
       onDone: (a) => {
-        toast.show(a.status === 'active' ? `${a.fullName} can sign in again.` : `${a.fullName} can no longer sign in.`);
+        toast.show(a.status === 'active' ? t('canSignIn', { name: a.fullName }) : t('cannotSignIn', { name: a.fullName }));
         setChanging(null);
       },
     },
@@ -153,22 +165,22 @@ export default function StaffPage() {
   return (
     <>
       <PageHeader
-        title="Staff"
-        description="Accounts that work for the compound: managers and staff such as guards."
+        title={t('title')}
+        description={t('description')}
         actions={
           <>
             <Segmented<Filter>
-              label="Account type"
+              label={t('accountType')}
               value={filter}
               onChange={setFilter}
               options={[
-                { value: 'staff', label: 'Staff' },
-                { value: 'manager', label: 'Managers' },
-                { value: 'everyone', label: 'All accounts' },
+                { value: 'staff', label: t('staff') },
+                { value: 'manager', label: t('managers') },
+                { value: 'everyone', label: t('everyone') },
               ]}
             />
             <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-              New account
+              {t('newAccount')}
             </Button>
           </>
         }
@@ -178,45 +190,45 @@ export default function StaffPage() {
           <DataTable<Account>
             rows={rows}
             rowKey={(a) => a.id}
-            empty={filter === 'staff' ? 'No staff accounts yet' : 'No accounts'}
+            empty={filter === 'staff' ? t('emptyStaff') : t('empty')}
             columns={[
               {
                 key: 'name',
-                header: 'Name',
+                header: c('name'),
                 cell: (a) =>
                   a.erased ? (
-                    <span className="t-secondary">Erased account</span>
+                    <span className="t-secondary">{t('erased')}</span>
                   ) : (
                     <span className="table__primary">
                       <Link className="table__link" href={`/accounts/${a.id}`}>
                         {a.fullName}
                       </Link>
-                      {a.id === me.data?.id ? <span className="t-secondary"> (you)</span> : null}
+                      {a.id === me.data?.id ? <span className="t-secondary">{t('you')}</span> : null}
                     </span>
                   ),
               },
-              { key: 'type', header: 'Type', cell: (a) => humanize(a.type) },
+              { key: 'type', header: c('type'), cell: (a) => label(a.type) },
               {
                 key: 'contact',
-                header: 'Contact',
+                header: t('contact'),
                 cell: (a) =>
                   a.erased ? null : (
                     <div>
-                      <div>{a.email}</div>
-                      <div className="list__meta t-num">{a.phone ?? '—'}</div>
+                      <div className="ltr">{a.email}</div>
+                      <div className="list__meta t-num ltr">{a.phone ?? '—'}</div>
                     </div>
                   ),
               },
-              { key: 'status', header: 'Status', cell: (a) => <StatusBadge status={a.erased ? 'erased' : a.status} /> },
-              { key: 'created', header: 'Since', cell: (a) => formatDate(a.createdAt) },
+              { key: 'status', header: c('status'), cell: (a) => <StatusBadge status={a.erased ? 'erased' : a.status} /> },
+              { key: 'created', header: t('since'), cell: (a) => f.date(a.createdAt) },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (a) =>
                   a.erased || a.id === me.data?.id || (a.status !== 'active' && a.status !== 'inactive') ? null : (
                     <Button size="sm" onClick={() => setChanging(a)}>
-                      {a.status === 'active' ? 'Deactivate' : 'Activate'}
+                      {a.status === 'active' ? t('deactivate') : t('activate')}
                     </Button>
                   ),
               },
@@ -232,13 +244,17 @@ export default function StaffPage() {
           setChanging(null);
           setStatus.reset();
         }}
-        title={changing?.status === 'active' ? `Deactivate ${changing.fullName}?` : `Activate ${changing?.fullName ?? ''}?`}
+        title={
+          changing?.status === 'active'
+            ? t('deactivateTitle', { name: changing.fullName })
+            : t('activateTitle', { name: changing?.fullName ?? '' })
+        }
         description={
           changing?.status === 'active'
-            ? 'They are signed out on their next request and cannot sign in.'
-            : 'They can sign in again with a code sent to their email.'
+            ? t('deactivateDescription')
+            : t('activateDescription')
         }
-        confirmLabel={changing?.status === 'active' ? 'Deactivate' : 'Activate'}
+        confirmLabel={changing?.status === 'active' ? t('deactivate') : t('activate')}
         danger={changing?.status === 'active'}
         pending={setStatus.isPending}
         error={<ErrorAlert error={setStatus.error} />}

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { notificationHref, notificationText } from './notifications.ts';
+import { stripIsolates, type Locale } from '@jiwar/i18n/core';
+import { notificationHref, notificationText, type NotificationLike } from './notifications.ts';
+
+/** The sentence without the direction isolates around its values. */
+const text = (x: NotificationLike, locale: Locale = 'en') => stripIsolates(notificationText(x, locale));
 
 const n = (kind: string, params: Record<string, string | number>, targetType: string | null = null, targetId: string | null = null) => ({
   kind,
@@ -10,36 +14,36 @@ const n = (kind: string, params: Record<string, string | number>, targetType: st
 });
 
 test('a kind reads as a sentence built from its params', () => {
-  assert.equal(notificationText(n('ticket.sla_breached', { ticketNumber: 'MT-000041', clock: 'resolution' })), 'Ticket MT-000041 passed its resolution target');
+  assert.equal(text(n('ticket.sla_breached', { ticketNumber: 'MT-000041', clock: 'resolution' })), 'Ticket MT-000041 passed its resolution target');
   assert.equal(
-    notificationText(n('ticket.emergency', { ticketNumber: 'MT-000007', categoryKey: 'water_leak', unitCode: 'A-12' })),
+    text(n('ticket.emergency', { ticketNumber: 'MT-000007', categoryKey: 'water_leak', unitCode: 'A-12' })),
     'Emergency: Ticket MT-000007 · water leak · unit A-12',
   );
   assert.equal(
-    notificationText(n('parcel.held_long', { parcelNumber: 3, carrier: 'egypt_post', days: 14, unitCode: 'B-2' })),
+    text(n('parcel.held_long', { parcelNumber: 3, carrier: 'egypt_post', days: 14, unitCode: 'B-2' })),
     'Parcel 3 (egypt post) has waited 14 days for unit B-2',
   );
 });
 
 test('an optional param that is absent leaves no gap', () => {
-  assert.equal(notificationText(n('ticket.declined', { ticketNumber: 'MT-000003' })), 'Ticket MT-000003 was declined by its technician and is back in the queue');
+  assert.equal(text(n('ticket.declined', { ticketNumber: 'MT-000003' })), 'Ticket MT-000003 was declined by its technician and is back in the queue');
 });
 
 test('a number inside a sentence keeps its letters, and a device is named in words', () => {
-  assert.equal(notificationText(n('ticket.message', { ticketNumber: 'MT-000005', unitCode: 'A-301' })), 'New message on ticket MT-000005 · unit A-301');
-  assert.match(notificationText(n('account.new_device_login', { deviceType: 'desktop_web', at: '2026-10-10T15:55:56.365Z' })), /^Your account was signed in to from a new computer browser, 10 Oct/);
-  assert.equal(notificationText(n('account.new_device_login', { deviceType: 'unknown', at: 'x' })), 'Your account was signed in to from a new device');
+  assert.equal(text(n('ticket.message', { ticketNumber: 'MT-000005', unitCode: 'A-301' })), 'New message on ticket MT-000005 · unit A-301');
+  assert.match(text(n('account.new_device_login', { deviceType: 'desktop_web', at: '2026-10-10T15:55:56.365Z' })), /^Your account was signed in to from a new computer browser, 10 Oct/);
+  assert.equal(text(n('account.new_device_login', { deviceType: 'unknown', at: 'x' })), 'Your account was signed in to from a new device');
 });
 
 test('blocker codes are listed in words', () => {
   assert.equal(
-    notificationText(n('account.deletion_queued', { blockers: 'primary_resident,legal_hold' })),
+    text(n('account.deletion_queued', { blockers: 'primary_resident,legal_hold' })),
     'A deletion request is waiting for management: primary resident, legal hold',
   );
 });
 
 test('an unknown kind still reads as something', () => {
-  assert.equal(notificationText(n('future.new_kind', { x: 1 })), 'Future new kind');
+  assert.equal(text(n('future.new_kind', { x: 1 })), 'Future new kind');
 });
 
 test('a link is offered only where the reader may open the page', () => {
@@ -53,11 +57,11 @@ test('a link is offered only where the reader may open the page', () => {
 
 test('a community notice says what happened and leads to its page only for whoever may open it', () => {
   const important = n('community_announcement.important', {}, 'community_announcement', 'a-1');
-  assert.equal(notificationText(important), 'An important announcement was published');
+  assert.equal(text(important), 'An important announcement was published');
   assert.equal(notificationHref(important, (p) => p === 'community.publish'), '/announcements/a-1');
   assert.equal(notificationHref(important, () => false), null);
   const moved = n('community_suggestion.status_changed', { status: 'under_review', topicKey: 'events_activities' }, 'community_suggestion', 's-1');
-  assert.equal(notificationText(moved), 'Your suggestion about events activities is now under review');
+  assert.equal(text(moved), 'Your suggestion about events activities is now under review');
   assert.equal(notificationHref(moved, (p) => p === 'community.suggestions'), '/suggestions/s-1');
   assert.equal(notificationHref(moved, (p) => p === 'community.publish'), null);
   const cancelled = n('community_event.cancelled', {}, 'community_event', 'e-1');
@@ -66,9 +70,9 @@ test('a community notice says what happened and leads to its page only for whoev
 
 test('a request to the management is named by its number and topic, and leads to its page for a handler', () => {
   const escalated = n('management_request.escalated', { requestNumber: 'MR-000012', topicKey: 'billing_fees' }, 'management_request', 'r-1');
-  assert.equal(notificationText(escalated), 'Request MR-000012 (billing fees) is overdue: nobody has responded');
+  assert.equal(text(escalated), 'Request MR-000012 (billing fees) is overdue: nobody has responded');
   assert.equal(
-    notificationText(n('management_appointment.requested', { requestNumber: 'MR-000003', topicKey: 'general' })),
+    text(n('management_appointment.requested', { requestNumber: 'MR-000003', topicKey: 'general' })),
     'Request MR-000003 (general): the resident picked an appointment slot',
   );
   assert.equal(notificationHref(escalated, (p) => p === 'requests.handle'), '/management-requests/r-1');
@@ -103,27 +107,29 @@ const NEIGHBOUR_KINDS = [
 
 test('every neighbours kind has its own sentence, never the fallback', () => {
   const params = { complaintNumber: 'NC-000123', categoryKey: 'loud_noise', postKind: 'found' };
-  const texts = NEIGHBOUR_KINDS.map((kind) => {
-    const text = notificationText(n(kind, params));
-    const fallback = kind.replace(/[._]/g, ' ').replace(/^./, (c) => c.toUpperCase());
-    assert.notEqual(text, fallback, kind);
-    assert.doesNotMatch(text, /undefined/, kind);
-    return text;
-  });
-  assert.equal(new Set(texts).size, NEIGHBOUR_KINDS.length);
+  for (const locale of ['en', 'ar'] as const) {
+    const texts = NEIGHBOUR_KINDS.map((kind) => {
+      const sentence = text(n(kind, params), locale);
+      const fallback = kind.replace(/[._]/g, ' ').replace(/^./, (c) => c.toUpperCase());
+      assert.notEqual(sentence, fallback, kind);
+      assert.doesNotMatch(sentence, /undefined/, kind);
+      return sentence;
+    });
+    assert.equal(new Set(texts).size, NEIGHBOUR_KINDS.length, locale);
+  }
 });
 
 test('a complaint is named by its number and category, a post by its kind', () => {
   const submitted = n('neighbour_complaint.submitted', { complaintNumber: 'NC-000123', categoryKey: 'loud_noise' }, 'neighbour_complaint', 'c-1');
-  assert.equal(notificationText(submitted), 'Complaint NC-000123 (loud noise) is new');
+  assert.equal(text(submitted), 'Complaint NC-000123 (loud noise) is new');
   assert.equal(
-    notificationText(n('neighbour_notice.unit_replied', { complaintNumber: 'NC-000007', categoryKey: 'parking' })),
+    text(n('neighbour_notice.unit_replied', { complaintNumber: 'NC-000007', categoryKey: 'parking' })),
     'Complaint NC-000007 (parking): the unit answered its notice',
   );
-  assert.equal(notificationText(n('neighbour_item.claimed', { postKind: 'found' })), 'A resident claimed a found item at the desk');
-  assert.equal(notificationText(n('neighbour_post.removed', { postKind: 'borrow' })), 'Your request to borrow was removed from its board by the management');
-  assert.equal(notificationText(n('neighbour_post.removed', {})), 'Your post was removed from its board by the management');
-  assert.equal(notificationText(n('neighbour_notice.received', { categoryKey: 'loud_noise' })), 'The management sent your unit a notice about loud noise');
+  assert.equal(text(n('neighbour_item.claimed', { postKind: 'found' })), 'A resident claimed a found item at the desk');
+  assert.equal(text(n('neighbour_post.removed', { postKind: 'borrow' })), 'Your request to borrow was removed from its board by the management');
+  assert.equal(text(n('neighbour_post.removed', {})), 'Your post was removed from its board by the management');
+  assert.equal(text(n('neighbour_notice.received', { categoryKey: 'loud_noise' })), 'The management sent your unit a notice about loud noise');
 });
 
 test('a neighbours notice leads to its page for a handler, and nowhere for what is the residents’ own', () => {
@@ -147,39 +153,39 @@ test('a neighbours notice leads to its page for a handler, and nowhere for what 
 
 test('an emergency or a gate service says the kind, never a name, and leads to its queue (ADR 0047)', () => {
   const late = n('emergency.escalated', { emergencyType: 'medical' }, 'emergency', 'e-1');
-  assert.equal(notificationText(late), 'Nobody has answered a medical emergency');
+  assert.equal(text(late), 'Nobody has answered a medical emergency');
   assert.equal(notificationHref(late, (p) => p === 'emergencies.manage'), '/emergencies');
   assert.equal(notificationHref(late, () => false), null);
   const asked = n('gate_service.requested', { serviceKind: 'escort' }, 'gate_service_request', 'g-1');
-  assert.equal(notificationText(asked), 'A resident asked security for escort');
+  assert.equal(text(asked), 'A resident asked security for escort');
   assert.equal(notificationHref(asked, (p) => p === 'gate_services.handle'), '/gate-services');
 });
 
 test('a permit to decide says its kind, never a name, and leads to the permit for whoever decides (ADR 0049)', () => {
   const asked = n('unit_permit.requested', { permitKind: 'material_exit' }, 'unit_permit', 'p-1');
-  assert.equal(notificationText(asked), 'A unit asked for a permit: material exit');
+  assert.equal(text(asked), 'A unit asked for a permit: material exit');
   assert.equal(notificationHref(asked, (p) => p === 'permits.manage'), '/permits/p-1');
   assert.equal(notificationHref(asked, () => false), null);
 });
 
 test('the guards’ duty says codes only, and leads a keeper to its page (ADR 0050)', () => {
   const absent = { kind: 'guard_shift.absent_unmanned', params: {}, targetType: 'guard_roster_slot', targetId: 's1' };
-  assert.equal(notificationText(absent), 'A guard did not start their shift and nobody is on duty there');
+  assert.equal(text(absent), 'A guard did not start their shift and nobody is on duty there');
   assert.equal(notificationHref(absent, (p) => p === 'guard_roster.manage'), '/security/roster');
   assert.equal(notificationHref(absent, () => false), null);
   const swap = { kind: 'guard_swap.accepted', params: {}, targetType: 'guard_shift_swap', targetId: 'w1' };
   assert.equal(notificationHref(swap, (p) => p === 'guard_roster.manage'), '/security/swaps');
   const task = { kind: 'guard_task.assigned', params: { taskKind: 'custom' }, targetType: 'guard_task', targetId: 't1' };
-  assert.equal(notificationText(task), 'A custom task for you');
+  assert.equal(text(task), 'A custom task for you');
 });
 
 test('an election to certify says whether the board has a tie to resolve, and leads to it for the manager (ADR 0051)', () => {
   const tied = n('governance_election.awaiting_certification', { tied: 'yes' }, 'governance_election', 'e-1');
-  assert.equal(notificationText(tied), 'An election closed with a tie: record the board’s choice and certify it');
+  assert.equal(text(tied), 'An election closed with a tie: record the board’s choice and certify it');
   assert.equal(notificationHref(tied, (p) => p === 'governance.manage'), '/governance/elections/e-1');
   assert.equal(notificationHref(tied, () => false), null);
   const plain = n('governance_election.awaiting_certification', { tied: 'no' }, 'governance_election', 'e-1');
-  assert.equal(notificationText(plain), 'An election closed: certify its result');
+  assert.equal(text(plain), 'An election closed: certify its result');
 });
 
 test('a patrol run’s notice leads to the runs, for whoever reads them (ADR 0052)', () => {
@@ -190,10 +196,10 @@ test('a patrol run’s notice leads to the runs, for whoever reads them (ADR 005
 });
 
 test('the security notices of ADR 0053 say what happened by code, and lead to the keeper’s page', () => {
-  assert.equal(notificationText(n('gate_lockdown.started', { scope: 'all' })), 'Every gate is locked down');
-  assert.equal(notificationText(n('incident.reported', { severity: 'high', incidentType: 'near_miss' })), 'A high near miss incident was reported');
+  assert.equal(text(n('gate_lockdown.started', { scope: 'all' })), 'Every gate is locked down');
+  assert.equal(text(n('incident.reported', { severity: 'high', incidentType: 'near_miss' })), 'A high near miss incident was reported');
   assert.equal(
-    notificationText(n('blocklist.ban_matched', { source: 'visitor_pass' })),
+    text(n('blocklist.ban_matched', { source: 'visitor_pass' })),
     'A banned plate or person was refused at the gate (visitor pass)',
   );
   const lockdown = n('gate_lockdown.started', { scope: 'gate' }, 'gate_lockdown', 'l-1');
@@ -207,7 +213,7 @@ test('the security notices of ADR 0053 say what happened by code, and lead to th
 
 test('an unauthorized child pickup reads as a code and leads to the keepers’ alert (ADR 0054)', () => {
   const alert = { kind: 'child.unauthorized_pickup', targetType: 'child_pickup', targetId: 'p1', params: {} };
-  assert.equal(notificationText(alert), 'Someone not allowed tried to collect a child at the gate');
+  assert.equal(text(alert), 'Someone not allowed tried to collect a child at the gate');
   assert.equal(notificationHref(alert, (p) => p === 'guard_roster.manage'), '/security/child-alerts?open=p1');
   assert.equal(notificationHref(alert, () => false), null);
 });
@@ -226,15 +232,17 @@ const BOARD_KINDS = [
 
 test('every board matters kind has its own sentence from codes only (ADR 0055)', () => {
   const params = { type: 'major_contract', decision: 'approved', matter: 'approval', kind: 'vehicle_fine', outcome: 'overturned' };
-  const texts = BOARD_KINDS.map((kind) => {
-    const text = notificationText(n(kind, params));
-    assert.notEqual(text, kind.replace(/[._]/g, ' ').replace(/^./, (c) => c.toUpperCase()), kind);
-    assert.doesNotMatch(text, /undefined/, kind);
-    return text;
-  });
-  assert.equal(new Set(texts).size, BOARD_KINDS.length);
-  assert.equal(notificationText(n('governance_approval.raised', { type: 'major_contract' })), 'A major contract request awaits the board’s decision');
-  assert.equal(notificationText(n('governance_approval.decided', { type: 'annual_budget', decision: 'rejected' })), 'The board rejected an annual budget request');
+  for (const locale of ['en', 'ar'] as const) {
+    const texts = BOARD_KINDS.map((kind) => {
+      const sentence = text(n(kind, params), locale);
+      assert.notEqual(sentence, kind.replace(/[._]/g, ' ').replace(/^./, (c) => c.toUpperCase()), kind);
+      assert.doesNotMatch(sentence, /undefined/, kind);
+      return sentence;
+    });
+    assert.equal(new Set(texts).size, BOARD_KINDS.length, locale);
+  }
+  assert.equal(text(n('governance_approval.raised', { type: 'major_contract' })), 'A major contract request awaits the board’s decision');
+  assert.equal(text(n('governance_approval.decided', { type: 'annual_budget', decision: 'rejected' })), 'The board rejected an annual budget request');
 });
 
 test('a board matter opens the board’s page for a member, the management’s for staff', () => {
@@ -251,20 +259,20 @@ test('a board matter opens the board’s page for a member, the management’s f
 
 test('a field exception to answer, and a patrol out of its area, read as codes and lead to their pages (ADR 0056)', () => {
   const asked = n('gate_exception.requested', { exceptionKind: 'visitor_without_pass', unitCode: 'B7', gateName: 'North gate' }, 'gate_field_exception', 'x-1');
-  assert.equal(notificationText(asked), 'A guard at North gate asks to let a visitor without a pass in for unit B7');
+  assert.equal(text(asked), 'A guard at North gate asks to let a visitor without a pass in for unit B7');
   assert.equal(notificationHref(asked, (p) => p === 'gate_exceptions.decide'), '/security/field-exceptions?exception=x-1');
   assert.equal(notificationHref(asked, () => false), null);
   const exit = n('patrol.geofence_exit', { minutes: 3 }, 'patrol_run', 'r-1');
-  assert.equal(notificationText(exit), 'A guard on patrol was outside the route’s area for 3 minutes or more');
+  assert.equal(text(exit), 'A guard on patrol was outside the route’s area for 3 minutes or more');
   assert.equal(notificationHref(exit, (p) => p === 'patrols.manage'), '/security/patrols/runs');
 });
 
 test('the gate offline (ADR 0057): its kinds read as sentences and lead to its pages', () => {
-  assert.equal(notificationText(n('gate_device.sync_overdue', { minutes: 15 })), 'A gate device on shift has not been seen for 15 minutes');
-  assert.equal(notificationText(n('gate_offline.security_conflict', { flags: 2 })), 'A gate device synced 2 security conflict(s) from offline');
-  assert.equal(notificationText(n('gate_device.upload_rejected', { reason: 'signature' })), 'A gate device’s offline upload was refused (signature)');
+  assert.equal(text(n('gate_device.sync_overdue', { minutes: 15 })), 'A gate device on shift has not been seen for 15 minutes');
+  assert.equal(text(n('gate_offline.security_conflict', { flags: 2 })), 'A gate device synced 2 security conflict(s) from offline');
+  assert.equal(text(n('gate_device.upload_rejected', { reason: 'signature' })), 'A gate device’s offline upload was refused (signature)');
   assert.equal(
-    notificationText(n('blocklist.ban_matched', { source: 'offline_sync' })),
+    text(n('blocklist.ban_matched', { source: 'offline_sync' })),
     'A banned plate was let in while the gate was offline',
   );
   const manages = (p: string) => p === 'gate_devices.manage';
@@ -274,8 +282,8 @@ test('the gate offline (ADR 0057): its kinds read as sentences and lead to its p
 });
 
 test('the control room (ADR 0068): the event in words, and to the control room for its watchers', () => {
-  assert.equal(notificationText(n('control_room.alert', { eventKind: 'guard_alarm' })), 'Control room alert: guard alarm');
-  assert.equal(notificationText(n('control_room.event', { eventKind: 'device_sync_overdue' })), 'Control room: device sync overdue');
+  assert.equal(text(n('control_room.alert', { eventKind: 'guard_alarm' })), 'Control room alert: guard alarm');
+  assert.equal(text(n('control_room.event', { eventKind: 'device_sync_overdue' })), 'Control room: device sync overdue');
   const alert = n('control_room.alert', { eventKind: 'lockdown_started' }, 'control_room_event', 'e1');
   assert.equal(notificationHref(alert, (p) => p === 'control_room.watch'), '/security/control-room?event=e1');
   assert.equal(notificationHref(alert, () => false), null);
@@ -283,14 +291,14 @@ test('the control room (ADR 0068): the event in words, and to the control room f
 
 test('a request to relay says the category, never a name, and leads its keeper to it (ADR 0060)', () => {
   const relay = n('partner_request.awaiting_relay', { category: 'home_services' }, 'partner_request', 'r-1');
-  assert.equal(notificationText(relay), 'A resident asked a partner without a desk link: home services');
+  assert.equal(text(relay), 'A resident asked a partner without a desk link: home services');
   assert.equal(notificationHref(relay, (p) => p === 'partners.manage'), '/partners/requests/r-1');
   assert.equal(notificationHref(relay, () => false), null);
 });
 
 test('a decision appealed says what of, never who, and leads its deciders to it (ADR 0059)', () => {
   const lodged = n('decision_appeal.lodged', { kind: 'permit_rejection' }, 'decision_appeal', 'ap-1');
-  assert.equal(notificationText(lodged), 'A resident appealed a staff decision: permit rejection');
+  assert.equal(text(lodged), 'A resident appealed a staff decision: permit rejection');
   assert.equal(notificationHref(lodged, (p) => p === 'appeals.decide'), '/appeals/ap-1');
   assert.equal(notificationHref(lodged, () => false), null);
 });
@@ -298,105 +306,105 @@ test('a decision appealed says what of, never who, and leads its deciders to it 
 test('the owners’ voice leads a sitting member to the board’s page, never saying who (ADR 0059)', () => {
   const board = (p: string) => p === 'governance.board';
   const proposed = n('governance_agenda.proposed', {}, 'governance_agenda_proposal', 'ag-1');
-  assert.equal(notificationText(proposed), 'An owner proposed a matter for the board’s agenda');
+  assert.equal(text(proposed), 'An owner proposed a matter for the board’s agenda');
   assert.equal(notificationHref(proposed, board), '/board/agenda/ag-1');
   assert.equal(notificationHref(proposed, () => false), null);
   const objected = n('governance_objection.lodged', {}, 'board_publication', 'pub-1');
-  assert.equal(notificationText(objected), 'An owner objected to a decision of the board');
+  assert.equal(text(objected), 'An owner objected to a decision of the board');
   assert.equal(notificationHref(objected, board), '/board/objections/pub-1');
   const motion = n('governance_motion.proposed', { matter: 'representative' }, 'board_motion', 'm1');
-  assert.equal(notificationText(motion), 'A motion on a building’s representative awaits your vote');
+  assert.equal(text(motion), 'A motion on a building’s representative awaits your vote');
   assert.equal(notificationHref(motion, board), '/board/representatives');
 });
 
 test('the asset register’s notices (ADR 0064): their words and where they lead', () => {
   const warranty = { kind: 'asset.warranty_expiring', params: { assetRef: 'PUMP-03', endsOn: '2026-11-20' }, targetType: 'asset', targetId: 'a1' };
-  assert.equal(notificationText(warranty), 'The warranty of asset PUMP-03 ends on 2026-11-20');
+  assert.equal(text(warranty), 'The warranty of asset PUMP-03 ends on 2026-11-20');
   assert.equal(notificationHref(warranty, (p) => p === 'assets.read'), '/assets/a1');
   assert.equal(notificationHref(warranty, () => false), null);
   const overdue = { kind: 'maintenance.plan_overdue', params: { assetRef: 'GEN-1', dueOn: '2026-10-20' }, targetType: 'maintenance_plan', targetId: 'p1' };
   assert.equal(notificationHref(overdue, (p) => p === 'assets.read'), '/maintenance-plans/p1');
   const inspection = { kind: 'inspection.overdue', params: { targetRef: 'ROOF', dueOn: '2026-10-20' }, targetType: 'inspection', targetId: 'i1' };
-  assert.equal(notificationText(inspection), 'The inspection of ROOF, due 2026-10-20, is overdue');
+  assert.equal(text(inspection), 'The inspection of ROOF, due 2026-10-20, is overdue');
   assert.equal(notificationHref(inspection, (p) => p === 'inspections.manage'), '/inspections/i1');
 });
 
 test('a technician’s suggested quote (ADR 0065) reads as an amount to send and opens the ticket for dispatch', () => {
   const suggested = { kind: 'ticket.quote_suggested', params: { ticketNumber: 'MT-000042', amount: '350.00' }, targetType: 'ticket', targetId: 't1' };
-  assert.match(notificationText(suggested), /350\.00 EGP quote to send/);
+  assert.match(text(suggested), /350\.00 EGP quote to send/);
   assert.equal(notificationHref(suggested, (p) => p === 'tickets.dispatch'), '/maintenance/t1');
   assert.equal(notificationHref(suggested, () => false), null);
 });
 
 test('the store’s notices (ADR 0065): a part asked for opens the queue, a reorder warning the item', () => {
   const asked = { kind: 'part_request.created', params: { ticketNumber: 'MT-000042', itemRef: 'VALVE-15' }, targetType: 'ticket', targetId: 't1' };
-  assert.match(notificationText(asked), /asks the store for VALVE-15/);
+  assert.match(text(asked), /asks the store for VALVE-15/);
   assert.equal(notificationHref(asked, (p) => p === 'stock.manage'), '/stock/part-requests');
   assert.equal(notificationHref(asked, (p) => p === 'tickets.dispatch'), null);
   const low = { kind: 'stock.reorder_level', params: { itemRef: 'VALVE-15' }, targetType: 'stock_item', targetId: 'i1' };
-  assert.equal(notificationText(low), 'VALVE-15 is at or under its reorder level');
+  assert.equal(text(low), 'VALVE-15 is at or under its reorder level');
   assert.equal(notificationHref(low, (p) => p === 'stock.manage'), '/stock/i1');
   assert.equal(notificationHref(low, () => false), null);
 });
 
 test('a contract’s end (ADR 0065) reads as its code and date, and opens it for who keeps the register', () => {
   const ending = { kind: 'maintenance_contract.expiring', params: { contractRef: 'AMC-LIFTS', endsOn: '2026-12-31' }, targetType: 'maintenance_contract', targetId: 'c1' };
-  assert.equal(notificationText(ending), 'Contract AMC-LIFTS ends on 2026-12-31');
+  assert.equal(text(ending), 'Contract AMC-LIFTS ends on 2026-12-31');
   assert.equal(notificationHref(ending, (p) => p === 'assets.manage'), '/contracts/c1');
   assert.equal(notificationHref(ending, (p) => p === 'assets.read'), null);
 });
 
 test('a vendor’s paper, a contract payment and a purchase request (ADR 0077) read as their references and open for who decides them', () => {
   const paper = { kind: 'vendor_document.expiring', params: { vendorRef: 'V-0007', paperKind: 'insurance', expiresOn: '2027-01-31' }, targetType: 'vendor', targetId: 'v1' };
-  assert.equal(notificationText(paper), 'A paper of vendor V-0007 expires on 2027-01-31');
+  assert.equal(text(paper), 'A paper of vendor V-0007 expires on 2027-01-31');
   assert.equal(notificationHref(paper, (p) => p === 'vendors.manage'), '/vendors/v1');
   assert.equal(notificationHref(paper, (p) => p === 'assets.manage'), null);
   const due = { kind: 'maintenance_contract.payment_due', params: { contractRef: 'AMC-LIFTS', dueOn: '2027-01-10', amount: '1000.00' }, targetType: 'maintenance_contract', targetId: 'c1' };
-  assert.equal(notificationText(due), 'Contract AMC-LIFTS has 1000.00 EGP due on 2027-01-10');
+  assert.equal(text(due), 'Contract AMC-LIFTS has 1000.00 EGP due on 2027-01-10');
   const waiting = { kind: 'purchase_request.submitted', params: { requestRef: 'PR-0003', amount: '3500.00' }, targetType: 'purchase_request', targetId: 'p1' };
-  assert.equal(notificationText(waiting), 'Purchase request PR-0003 (3500.00 EGP) waits for approval');
+  assert.equal(text(waiting), 'Purchase request PR-0003 (3500.00 EGP) waits for approval');
   assert.equal(notificationHref(waiting, (p) => p === 'purchases.approve'), '/purchases/p1');
   assert.equal(notificationHref(waiting, () => false), null);
   const decided = { kind: 'purchase_request.decided', params: { requestRef: 'PR-0003', decision: 'rejected' }, targetType: 'purchase_request', targetId: 'p1' };
-  assert.equal(notificationText(decided), 'Your purchase request PR-0003 was turned down');
+  assert.equal(text(decided), 'Your purchase request PR-0003 was turned down');
 });
 
 test('a compliance item’s notices and a corrective action’s (ADR 0087) read as their kind and day, and open for who keeps them', () => {
   const soon = { kind: 'compliance.due_soon', params: { complianceKind: 'fire_system', dueOn: '2027-06-01', daysLeft: 30 }, targetType: 'compliance_item', targetId: 'c1' };
-  assert.equal(notificationText(soon), 'A compliance item (fire system) is due on 2027-06-01, in 30 days');
+  assert.equal(text(soon), 'A compliance item (fire system) is due on 2027-06-01, in 30 days');
   assert.equal(notificationHref(soon, (p) => p === 'compliance.manage'), '/compliance/c1');
   assert.equal(notificationHref(soon, () => false), null);
   const late = { kind: 'compliance.overdue', params: { complianceKind: 'lift', dueOn: '2027-06-01' }, targetType: 'compliance_item', targetId: 'c1' };
-  assert.equal(notificationText(late), 'A compliance item (lift) due on 2027-06-01 is not done');
+  assert.equal(text(late), 'A compliance item (lift) due on 2027-06-01 is not done');
   const action = { kind: 'incident_action.overdue', params: { dueOn: '2027-06-01' }, targetType: 'incident', targetId: 'i1' };
-  assert.equal(notificationText(action), 'A corrective action due 2027-06-01 is still open');
+  assert.equal(text(action), 'A corrective action due 2027-06-01 is still open');
   assert.equal(notificationHref(action, (p) => p === 'incidents.manage'), '/security/incidents?incident=i1');
 });
 
 test('a meter’s spike (ADR 0066) reads as its code and day, and opens the meter for who reads energy', () => {
   const high = { kind: 'meter.anomaly', params: { meterRef: 'W-POOL', readOn: '2026-12-20' }, targetType: 'meter', targetId: 'm1' };
-  assert.equal(notificationText(high), 'Meter W-POOL used far more than usual up to 2026-12-20');
+  assert.equal(text(high), 'Meter W-POOL used far more than usual up to 2026-12-20');
   assert.equal(notificationHref(high, (p) => p === 'energy.read'), '/meters/m1');
   assert.equal(notificationHref(high, (p) => p === 'assets.read'), null);
 });
 
 test('a readiness item (ADR 0067) reads as its day, never its title, and opens its program for who keeps readiness', () => {
   const late = { kind: 'readiness_item.overdue', params: { dueOn: '2027-02-20' }, targetType: 'readiness_program', targetId: 'p1' };
-  assert.equal(notificationText(late), 'Your readiness item, due 2027-02-20, is overdue');
-  assert.equal(notificationText({ ...late, kind: 'readiness_item.assigned' }), 'An item of a readiness program is yours, due 2027-02-20');
+  assert.equal(text(late), 'Your readiness item, due 2027-02-20, is overdue');
+  assert.equal(text({ ...late, kind: 'readiness_item.assigned' }), 'An item of a readiness program is yours, due 2027-02-20');
   assert.equal(notificationHref(late, (p) => p === 'readiness.manage'), '/readiness/p1');
   assert.equal(notificationHref(late, () => false), null);
 });
 
 test('a work permit (ADR 0067) reads as its hazard and ticket, never its precautions, and opens the ticket for who dispatches', () => {
   const asked = n('work_permit.requested', { hazard: 'live_electrical', ticketNumber: 'MT-000007' }, 'ticket', 't1');
-  assert.equal(notificationText(asked), 'Ticket MT-000007 asks for a live electrical permit');
+  assert.equal(text(asked), 'Ticket MT-000007 asks for a live electrical permit');
   assert.equal(
-    notificationText({ ...asked, kind: 'work_permit.approved' }),
+    text({ ...asked, kind: 'work_permit.approved' }),
     'The live electrical permit for ticket MT-000007 is approved',
   );
   assert.equal(
-    notificationText({ ...asked, kind: 'work_permit.revoked' }),
+    text({ ...asked, kind: 'work_permit.revoked' }),
     'The live electrical permit for ticket MT-000007 was revoked',
   );
   assert.equal(notificationHref(asked, (p) => p === 'tickets.dispatch'), '/maintenance/t1');
@@ -404,13 +412,13 @@ test('a work permit (ADR 0067) reads as its hazard and ticket, never its precaut
 
 test('a request to call off an SOS (ADR 0067) says to check on who raised it, and opens the emergencies for who answers', () => {
   const asked = n('emergency.cancel_requested', {}, 'emergency', 'e-1');
-  assert.equal(notificationText(asked), 'Who raised an SOS asked to call it off: check on them, then resolve it');
+  assert.equal(text(asked), 'Who raised an SOS asked to call it off: check on them, then resolve it');
   assert.equal(notificationHref(asked, (p) => p === 'emergencies.respond'), '/emergencies');
 });
 
 test('money and the unit (ADR 0069): a plan request and a collector visit open the finance queues', () => {
   const all = () => true;
-  assert.equal(notificationText(n('instalment_plan_request.submitted', {}, 'plan_request', 'x')), 'A resident asked for a payment plan on an invoice');
+  assert.equal(text(n('instalment_plan_request.submitted', {}, 'plan_request', 'x')), 'A resident asked for a payment plan on an invoice');
   assert.equal(notificationHref(n('instalment_plan_request.submitted', {}, 'plan_request', 'x'), all), '/finance/plan-requests');
   assert.equal(notificationHref(n('collector_visit.requested', {}, 'collector_visit', 'x'), all), '/finance/collector-visits');
   assert.equal(notificationHref(n('collector_visit.requested', {}, 'collector_visit', 'x'), () => false), null);
@@ -428,24 +436,24 @@ test('an overdue inbox item opens the inbox, a deputyship the deputy page (ADR 0
   assert.equal(notificationHref(n('staff_inbox.overdue', { itemType: 'vehicle' }, 'inbox_item', 'x'), all), '/inbox');
   assert.equal(notificationHref(n('staff_inbox.overdue', { itemType: 'vehicle' }, 'inbox_item', 'x'), () => false), null);
   assert.equal(notificationHref(n('deputy.appointed', { permissions: 2 }, 'account_deputy', 'x'), () => false), '/deputies');
-  assert.equal(notificationText(n('deputy.appointed', { permissions: 2 }, 'account_deputy', 'x')), 'You are a deputy: 2 permission(s) are yours until it ends');
+  assert.equal(text(n('deputy.appointed', { permissions: 2 }, 'account_deputy', 'x')), 'You are a deputy: 2 permission(s) are yours until it ends');
 });
 
 test('a brief or a review opens the briefs, service pressure the dispatch list (ADR 0079)', () => {
   const all = () => true;
   assert.equal(notificationHref(n('staff_brief.ready', { date: '2026-11-02' }, 'staff_brief', 'x'), all), '/briefs');
   assert.equal(notificationHref(n('staff_review.ready', { date: '2026-11-02' }, 'staff_brief', 'x'), () => false), null);
-  assert.equal(notificationText(n('staff_brief.ready', { date: '2026-11-02' }, 'staff_brief', 'x')), 'The daily brief for 2026-11-02 is ready');
+  assert.equal(text(n('staff_brief.ready', { date: '2026-11-02' }, 'staff_brief', 'x')), 'The daily brief for 2026-11-02 is ready');
   const pressure = n('maintenance.service_pressure', { open: 12, available: 1, threshold: 8 }, 'service_pressure', 'x');
   assert.equal(notificationHref(pressure, all), '/maintenance');
-  assert.equal(notificationText(pressure), 'Service pressure: 12 open tickets for 1 available technician');
+  assert.equal(text(pressure), 'Service pressure: 12 open tickets for 1 available technician');
 });
 
 // The board's work (ADR 0075): codes only, to the board's pages.
 test('the board’s work: meetings, action items, handovers and reports', () => {
   const all = () => true;
-  assert.equal(notificationText(n('board_meeting.scheduled', { kind: 'extraordinary' })), 'An extraordinary meeting of the board was scheduled');
-  assert.equal(notificationText(n('board_meeting.cancelled', { reason: 'postponed' })), 'A meeting of the board was called off (postponed)');
+  assert.equal(text(n('board_meeting.scheduled', { kind: 'extraordinary' })), 'An extraordinary meeting of the board was scheduled');
+  assert.equal(text(n('board_meeting.cancelled', { reason: 'postponed' })), 'A meeting of the board was called off (postponed)');
   assert.equal(notificationHref(n('board_meeting.scheduled', { kind: 'regular' }, 'board_meeting', 'm-1'), all), '/board/meetings/m-1');
   assert.equal(notificationHref(n('board_meeting_action.overdue', {}, 'board_meeting_action', 'a-1'), all), '/board/meetings');
   assert.equal(notificationHref(n('manager_handover.delivered', {}, 'manager_handover', 'h-1'), all), '/board/handover');
@@ -460,35 +468,35 @@ test('a technician’s call for help says its kind, never the words, and leads t
     targetType: 'technician_help_request',
     targetId: '00000000-0000-0000-0000-000000000001',
   };
-  assert.equal(notificationText(n), 'A technician called for help (extra hands)');
+  assert.equal(text(n), 'A technician called for help (extra hands)');
   assert.equal(notificationHref(n, (p) => p === 'field_team.manage'), '/field-team');
   assert.equal(notificationHref(n, () => false), null);
 });
 
 test('a vendor’s invoice, an advance and a guarantee (ADR 0089) read as references, never amounts, and open for who keeps payables', () => {
   const received = { kind: 'vendor_invoice.received', params: { invoiceRef: 'VI-000004' }, targetType: 'vendor_invoice', targetId: 'i1' };
-  assert.equal(notificationText(received), 'Vendor invoice VI-000004 waits for approval');
+  assert.equal(text(received), 'Vendor invoice VI-000004 waits for approval');
   assert.equal(notificationHref(received, (p) => p === 'finance.payables_approve'), '/finance/payables/i1');
   assert.equal(notificationHref(received, () => false), null);
   const decided = { kind: 'vendor_invoice.decided', params: { invoiceRef: 'VI-000004', decision: 'rejected' }, targetType: 'vendor_invoice', targetId: 'i1' };
-  assert.equal(notificationText(decided), 'Vendor invoice VI-000004 was turned down');
+  assert.equal(text(decided), 'Vendor invoice VI-000004 was turned down');
   const asked = { kind: 'contract_disbursement.requested', params: { disbursementRef: 'VD-000002', disbursementKind: 'advance' }, targetType: 'contract_disbursement', targetId: 'd1' };
-  assert.equal(notificationText(asked), 'An advance VD-000002 waits for approval');
+  assert.equal(text(asked), 'An advance VD-000002 waits for approval');
   assert.equal(notificationHref(asked, (p) => p === 'finance.payables'), '/finance/payables/contracts');
   const expiring = { kind: 'vendor_guarantee.expiring', params: { guaranteeKind: 'performance', expiresOn: '2027-03-01' }, targetType: 'vendor_guarantee', targetId: 'g1' };
-  assert.equal(notificationText(expiring), 'A vendor’s guarantee expires on 2027-03-01');
+  assert.equal(text(expiring), 'A vendor’s guarantee expires on 2027-03-01');
 });
 
 test('a certificate, a reinforcement, a dangling account and an access review read from codes and open their pages (ADR 0090)', () => {
   const expiring = n('staff_certificate.expiring', { certificateKind: 'working_at_height', expiresOn: '2027-03-01', daysLeft: 30 }, 'staff_certificate', 'c1');
-  assert.equal(notificationText(expiring), 'A working at height certificate expires on 2027-03-01, in 30 days');
+  assert.equal(text(expiring), 'A working at height certificate expires on 2027-03-01, in 30 days');
   assert.equal(notificationHref(expiring, (p) => p === 'field_team.manage'), '/field-team?tab=certificates');
   assert.equal(notificationHref(expiring, () => false), null);
   const called = n('reinforcement.called', { needed: 2, startsAt: 'x', endsAt: 'y' }, 'reinforcement_call', 'r1');
-  assert.equal(notificationText(called), 'The field team asks 2 technicians to come in');
+  assert.equal(text(called), 'The field team asks 2 technicians to come in');
   assert.equal(notificationHref(called, (p) => p === 'field_team.manage'), '/field-team?tab=reinforcement');
   const dangling = n('dangling_account.found', { reason: 'never_signed_in' }, 'dangling_account', 'd1');
-  assert.equal(notificationText(dangling), 'A staff account looks dangling (never signed in)');
+  assert.equal(text(dangling), 'A staff account looks dangling (never signed in)');
   assert.equal(notificationHref(dangling, (p) => p === 'accounts.manage'), '/access-checks');
   assert.equal(notificationHref(n('access_review.opened', { lines: 4 }, 'access_review', 'a1'), () => false), null);
 });

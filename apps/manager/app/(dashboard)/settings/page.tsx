@@ -2,11 +2,14 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, Checkbox, Field, Input, PageHeader, Textarea, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, Checkbox, Field, Input, PageHeader, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Settings } from '@/lib/queries';
+import ar from '@/messages/ar/compound-settings';
+import en from '@/messages/en/compound-settings';
 
 type Form = {
   timezone: string;
@@ -53,6 +56,8 @@ function diff(s: Settings, f: Form) {
 }
 
 export default function SettingsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const settings = useQuery({ queryKey: keys.settings, queryFn: fetchers.settings });
   const [form, setForm] = useState<Form | null>(null);
@@ -68,7 +73,7 @@ export default function SettingsPage() {
     invalidate: [keys.settings],
     onDone: (saved) => {
       setForm(toForm(saved));
-      toast.show('Settings saved.');
+      toast.show(t('saved'));
     },
   });
 
@@ -78,15 +83,15 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader
-        title="Settings"
-        description="Compound-wide rules for households, visitors and the gate."
+        title={t('title')}
+        description={t('description')}
         actions={
           <>
             <Button disabled={!dirty} onClick={() => settings.data && setForm(toForm(settings.data))}>
-              Discard
+              {t('discard')}
             </Button>
             <Button variant="primary" disabled={!dirty} loading={save.isPending} onClick={() => save.mutate(undefined)}>
-              Save changes
+              {c('saveChanges')}
             </Button>
           </>
         }
@@ -102,34 +107,34 @@ export default function SettingsPage() {
             }}
           >
             <Card flush>
-              <CardHeader title="Compound" />
+              <CardHeader title={t('compound')} />
               <CardBody>
                 <div className="form">
-                  <Field label="Time zone" hint="IANA name, e.g. Africa/Cairo. Schedules and attendance use it." error={err('timezone')}>
-                    {(p) => <Input {...p} value={form.timezone} onChange={(e) => set('timezone', e.target.value)} />}
+                  <Field label={t('timezone')} hint={t('timezoneHint')} error={err('timezone')}>
+                    {(p) => <Input {...p} className="ltr" value={form.timezone} onChange={(e) => set('timezone', e.target.value)} />}
                   </Field>
                   <Field
-                    label="Emergency phone"
-                    hint="On the visitor page, the worker card and every unit's emergency contacts."
+                    label={t('emergencyPhone')}
+                    hint={t('emergencyPhoneHint')}
                     error={err('emergencyPhone')}
                   >
-                    {(p) => <Input {...p} type="tel" value={form.emergencyPhone} onChange={(e) => set('emergencyPhone', e.target.value)} />}
+                    {(p) => <Input {...p} type="tel" className="ltr" value={form.emergencyPhone} onChange={(e) => set('emergencyPhone', e.target.value)} />}
                   </Field>
                   <Field
-                    label="Community office phone"
-                    hint="In every unit's emergency contacts."
+                    label={t('officePhone')}
+                    hint={t('officePhoneHint')}
                     error={err('officePhone')}
                   >
-                    {(p) => <Input {...p} type="tel" value={form.officePhone} onChange={(e) => set('officePhone', e.target.value)} />}
+                    {(p) => <Input {...p} type="tel" className="ltr" value={form.officePhone} onChange={(e) => set('officePhone', e.target.value)} />}
                   </Field>
                   <Field
-                    label="Duty manager phone"
-                    hint="In every unit's emergency contacts, and what a household sees when the management answers an emergency."
+                    label={t('dutyPhone')}
+                    hint={t('dutyPhoneHint')}
                     error={err('dutyPhone')}
                   >
-                    {(p) => <Input {...p} type="tel" value={form.dutyPhone} onChange={(e) => set('dutyPhone', e.target.value)} />}
+                    {(p) => <Input {...p} type="tel" className="ltr" value={form.dutyPhone} onChange={(e) => set('dutyPhone', e.target.value)} />}
                   </Field>
-                  <Field label="Directions for visitors" hint="On the visitor's pass page." error={err('visitorDirections')}>
+                  <Field label={t('directions')} hint={t('directionsHint')} error={err('visitorDirections')}>
                     {(p) => (
                       <Textarea {...p} value={form.visitorDirections} onChange={(e) => set('visitorDirections', e.target.value)} />
                     )}
@@ -139,15 +144,15 @@ export default function SettingsPage() {
             </Card>
             <div className="stack">
               <Card flush>
-                <CardHeader title="Households" />
+                <CardHeader title={t('households')} />
                 <CardBody>
                   <div className="form">
                     <Checkbox
-                      label="New household members need a manager's approval"
+                      label={t('approvalRequired')}
                       checked={form.familyJoinRequiresApproval}
                       onChange={(e) => set('familyJoinRequiresApproval', e.target.checked)}
                     />
-                    <Field label="Most members per household" error={err('maxHouseholdMembers')}>
+                    <Field label={t('maxMembers')} error={err('maxHouseholdMembers')}>
                       {(p) => (
                         <Input
                           {...p}
@@ -162,10 +167,10 @@ export default function SettingsPage() {
                 </CardBody>
               </Card>
               <Card flush>
-                <CardHeader title="Visitors and gate" />
+                <CardHeader title={t('visitorsAndGate')} />
                 <CardBody>
                   <div className="form">
-                    <Field label="Active visitor passes per unit" error={err('maxActiveVisitorPasses')}>
+                    <Field label={t('maxPasses')} error={err('maxActiveVisitorPasses')}>
                       {(p) => (
                         <Input
                           {...p}
@@ -177,8 +182,8 @@ export default function SettingsPage() {
                       )}
                     </Field>
                     <Field
-                      label="Gate approval timeout (seconds)"
-                      hint="How long a household has to answer the gate before its gate instructions apply (30–1800)."
+                      label={t('gateTimeout')}
+                      hint={t('gateTimeoutHint')}
                       error={err('gateRequestTimeoutSeconds')}
                     >
                       {(p) => (
@@ -193,13 +198,12 @@ export default function SettingsPage() {
                       )}
                     </Field>
                     <Checkbox
-                      label="Households may tell the gate to always let someone in"
+                      label={t('alwaysAllow')}
                       checked={form.allowAlwaysAllow}
                       onChange={(e) => set('allowAlwaysAllow', e.target.checked)}
                     />
                     <p className="field__hint" style={{ margin: 0 }}>
-                      When off, no new “always allow” instruction can be added, and the guard treats existing ones as
-                      “call first”. The guard logs every entry either way.
+                      {t('alwaysAllowNote')}
                     </p>
                   </div>
                 </CardBody>

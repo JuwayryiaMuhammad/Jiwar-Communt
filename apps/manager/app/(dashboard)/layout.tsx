@@ -1,7 +1,8 @@
 'use client';
 
 import { ErrorAlert } from '@jiwar/api/react';
-import { Alert, AppShell, Button, EmptyState, SkeletonRows, type NavGroup, type NavItem } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Alert, AppShell, Button, EmptyState, SkeletonRows, useCommonT, type NavGroup, type NavItem } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import {
   Ban,
@@ -105,6 +106,8 @@ import { mayEnter } from '@/lib/access';
 import { bffAuth } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/shell-layout';
+import en from '@/messages/en/shell-layout';
 
 /** A queue's size for the sidebar; not asked for by a role without access. */
 function useQueueSize(key: readonly unknown[], fetch: () => Promise<{ data: unknown[] }>, enabled: boolean) {
@@ -115,6 +118,8 @@ function useQueueSize(key: readonly unknown[], fetch: () => Promise<{ data: unkn
 type GatedItem = NavItem & { show: boolean };
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const [signingOut, setSigningOut] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -290,37 +295,37 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         // The operations dashboard (ADR 0079): each card to its own permission.
         {
           href: '/',
-          label: 'Overview',
+          label: t('nav.overview'),
           icon: <LayoutDashboard aria-hidden />,
           exact: true,
           show: isManager || can('dashboard.read'),
         },
         // What waits for my decision, across the compound (ADR 0073).
-        { href: '/inbox', label: 'Inbox', icon: <Inbox aria-hidden />, show: can('inbox.read') },
-        { href: '/briefs', label: 'Daily briefs', icon: <Newspaper aria-hidden />, show: can('dashboard.read') },
+        { href: '/inbox', label: t('nav.inbox'), icon: <Inbox aria-hidden />, show: can('inbox.read') },
+        { href: '/briefs', label: t('nav.briefs'), icon: <Newspaper aria-hidden />, show: can('dashboard.read') },
       ],
     },
     {
-      label: 'Community',
+      label: t('group.community'),
       items: [
         {
           href: '/requests',
-          label: 'Requests',
+          label: t('nav.requests'),
           icon: <Inbox aria-hidden />,
           count: registrations + household,
           show: can('residents.manage') || can('household.approve'),
         },
-        { href: '/units', label: 'Units', icon: <Building aria-hidden />, show: isManager && can('units.read') },
-        { href: '/residents', label: 'Residents', icon: <Users aria-hidden />, show: can('residents.read') },
-        { href: '/identity-changes', label: 'Name & phone changes', icon: <Users aria-hidden />, show: can('residents.manage') },
-        { href: '/contract-renewals', label: 'Lease renewals', icon: <FileText aria-hidden />, show: can('contracts.manage') },
-        { href: '/moves', label: 'Moves', icon: <Building aria-hidden />, show: can('residents.manage') },
+        { href: '/units', label: t('nav.units'), icon: <Building aria-hidden />, show: isManager && can('units.read') },
+        { href: '/residents', label: t('nav.residents'), icon: <Users aria-hidden />, show: can('residents.read') },
+        { href: '/identity-changes', label: t('nav.identity-changes'), icon: <Users aria-hidden />, show: can('residents.manage') },
+        { href: '/contract-renewals', label: t('nav.contract-renewals'), icon: <FileText aria-hidden />, show: can('contracts.manage') },
+        { href: '/moves', label: t('nav.moves'), icon: <Building aria-hidden />, show: can('residents.manage') },
         // ADR 0083.
-        { href: '/ownership-transfers', label: 'Ownership transfers', icon: <Building aria-hidden />, show: can('residents.manage') },
-        { href: '/compound-documents', label: 'Compound documents', icon: <BookOpen aria-hidden />, show: can('content.manage') },
+        { href: '/ownership-transfers', label: t('nav.ownership-transfers'), icon: <Building aria-hidden />, show: can('residents.manage') },
+        { href: '/compound-documents', label: t('nav.compound-documents'), icon: <BookOpen aria-hidden />, show: can('content.manage') },
         {
           href: '/workers',
-          label: 'Workers',
+          label: t('nav.workers'),
           icon: <HardHat aria-hidden />,
           count: workers,
           show: can('workers.review') || can('workers.compliance') || can('workers.incidents'),
@@ -329,198 +334,198 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     },
     {
       // The asset register, its plans and inspections (ADR 0064).
-      label: 'Assets',
+      label: t('group.assets'),
       items: [
-        { href: '/assets', label: 'Assets', icon: <Boxes aria-hidden />, show: can('assets.read') },
-        { href: '/areas', label: 'Common areas', icon: <MapPinned aria-hidden />, show: can('assets.read') },
+        { href: '/assets', label: t('nav.assets'), icon: <Boxes aria-hidden />, show: can('assets.read') },
+        { href: '/areas', label: t('nav.areas'), icon: <MapPinned aria-hidden />, show: can('assets.read') },
         {
           href: '/maintenance-plans',
-          label: 'Planned maintenance',
+          label: t('nav.maintenance-plans'),
           icon: <CalendarSync aria-hidden />,
           show: can('assets.read'),
         },
         // The planned work across every plan, and warranty claims (ADR 0076).
-        { href: '/plan-calendar', label: 'Planned work calendar', icon: <CalendarSync aria-hidden />, show: can('assets.read') },
-        { href: '/warranty-claims', label: 'Warranty claims', icon: <ShieldCheck aria-hidden />, show: can('assets.manage') },
-        { href: '/inspections', label: 'Inspections', icon: <ClipboardCheck aria-hidden />, show: can('inspections.manage') },
+        { href: '/plan-calendar', label: t('nav.plan-calendar'), icon: <CalendarSync aria-hidden />, show: can('assets.read') },
+        { href: '/warranty-claims', label: t('nav.warranty-claims'), icon: <ShieldCheck aria-hidden />, show: can('assets.manage') },
+        { href: '/inspections', label: t('nav.inspections'), icon: <ClipboardCheck aria-hidden />, show: can('inspections.manage') },
         {
           href: '/replacement-recommendations',
-          label: 'Replacements',
+          label: t('nav.replacement-recommendations'),
           icon: <RefreshCcw aria-hidden />,
           show: can('assets.manage'),
         },
         // The store, contracts and what it all cost (ADR 0065).
-        { href: '/stock', label: 'Stock', icon: <Package aria-hidden />, show: can('stock.manage') },
-        { href: '/contracts', label: 'Contracts', icon: <Handshake aria-hidden />, show: can('assets.manage') },
-        { href: '/vendors', label: 'Vendors', icon: <Handshake aria-hidden />, show: can('vendors.manage') },
+        { href: '/stock', label: t('nav.stock'), icon: <Package aria-hidden />, show: can('stock.manage') },
+        { href: '/contracts', label: t('nav.contracts'), icon: <Handshake aria-hidden />, show: can('assets.manage') },
+        { href: '/vendors', label: t('nav.vendors'), icon: <Handshake aria-hidden />, show: can('vendors.manage') },
         // Tenders and their opening by two people (ADR 0088).
-        { href: '/tenders', label: 'Tenders', icon: <Handshake aria-hidden />, show: can('tenders.manage') || can('tenders.open') },
+        { href: '/tenders', label: t('nav.tenders'), icon: <Handshake aria-hidden />, show: can('tenders.manage') || can('tenders.open') },
         {
           href: '/purchases',
-          label: 'Purchase requests',
+          label: t('nav.purchases'),
           icon: <Handshake aria-hidden />,
           show: can('purchases.approve') || can('purchases.request'),
         },
-        { href: '/economics', label: 'Economics', icon: <Receipt aria-hidden />, show: can('assets.manage') },
+        { href: '/economics', label: t('nav.economics'), icon: <Receipt aria-hidden />, show: can('assets.manage') },
         // Energy and utilities (ADR 0066).
-        { href: '/meters', label: 'Meters', icon: <Gauge aria-hidden />, show: can('energy.read') },
-        { href: '/energy', label: 'Energy', icon: <Zap aria-hidden />, show: can('energy.read') },
-        { href: '/outages', label: 'Outages', icon: <ZapOff aria-hidden />, show: can('energy.read') },
+        { href: '/meters', label: t('nav.meters'), icon: <Gauge aria-hidden />, show: can('energy.read') },
+        { href: '/energy', label: t('nav.energy'), icon: <Zap aria-hidden />, show: can('energy.read') },
+        { href: '/outages', label: t('nav.outages'), icon: <ZapOff aria-hidden />, show: can('energy.read') },
         // Readiness and field safety (ADR 0067).
-        { href: '/readiness', label: 'Readiness', icon: <CalendarCheck aria-hidden />, show: can('readiness.manage') },
-        { href: '/work-permits', label: 'Work permits', icon: <HardHat aria-hidden />, show: can('safety.manage') },
+        { href: '/readiness', label: t('nav.readiness'), icon: <CalendarCheck aria-hidden />, show: can('readiness.manage') },
+        { href: '/work-permits', label: t('nav.work-permits'), icon: <HardHat aria-hidden />, show: can('safety.manage') },
         // Compliance (ADR 0087).
-        { href: '/compliance', label: 'Compliance', icon: <CalendarCheck aria-hidden />, show: can('compliance.manage') },
+        { href: '/compliance', label: t('nav.compliance'), icon: <CalendarCheck aria-hidden />, show: can('compliance.manage') },
         {
           href: '/compliance/calendar',
-          label: 'Compliance calendar',
+          label: t('nav.compliance.calendar'),
           icon: <CalendarCheck aria-hidden />,
           show: can('compliance.manage'),
         },
         // The field team (ADR 0078).
-        { href: '/field-team', label: 'Field team', icon: <HardHat aria-hidden />, show: can('field_team.manage') },
+        { href: '/field-team', label: t('nav.field-team'), icon: <HardHat aria-hidden />, show: can('field_team.manage') },
       ],
     },
     {
-      label: 'Operations',
+      label: t('group.operations'),
       items: [
         {
           href: '/maintenance',
-          label: 'Maintenance',
+          label: t('nav.maintenance'),
           icon: <Wrench aria-hidden />,
           count: unassigned,
           show: can('tickets.dispatch'),
         },
         // Whether the SLA was kept (ADR 0076).
-        { href: '/sla-report', label: 'SLA report', icon: <Gauge aria-hidden />, show: can('tickets.dispatch') },
+        { href: '/sla-report', label: t('nav.sla-report'), icon: <Gauge aria-hidden />, show: can('tickets.dispatch') },
         // Maintenance analytics and cases (ADR 0081).
-        { href: '/recurrence', label: 'Repeat faults', icon: <Repeat aria-hidden />, show: can('tickets.dispatch') },
-        { href: '/complaints-map', label: 'Complaints map', icon: <MapPinned aria-hidden />, show: can('tickets.dispatch') },
-        { href: '/cases', label: 'Community cases', icon: <Users aria-hidden />, show: can('tickets.dispatch') },
+        { href: '/recurrence', label: t('nav.recurrence'), icon: <Repeat aria-hidden />, show: can('tickets.dispatch') },
+        { href: '/complaints-map', label: t('nav.complaints-map'), icon: <MapPinned aria-hidden />, show: can('tickets.dispatch') },
+        { href: '/cases', label: t('nav.cases'), icon: <Users aria-hidden />, show: can('tickets.dispatch') },
         {
           href: '/management-requests',
-          label: 'Management requests',
+          label: t('nav.management-requests'),
           icon: <MessagesSquare aria-hidden />,
           count: queued,
           show: can('requests.handle'),
         },
-        { href: '/appointments', label: 'Appointments', icon: <CalendarClock aria-hidden />, show: can('requests.handle') },
+        { href: '/appointments', label: t('nav.appointments'), icon: <CalendarClock aria-hidden />, show: can('requests.handle') },
         // Experience and recovery (ADR 0082): the cases and signals, the compensations, the setup and the reports.
-        { href: '/experience', label: 'Resident experience', icon: <HeartPulse aria-hidden />, show: can('experience.manage') },
-        { href: '/experience/compensations', label: 'Compensations', icon: <HandCoins aria-hidden />, show: can('experience.manage') },
+        { href: '/experience', label: t('nav.experience'), icon: <HeartPulse aria-hidden />, show: can('experience.manage') },
+        { href: '/experience/compensations', label: t('nav.experience.compensations'), icon: <HandCoins aria-hidden />, show: can('experience.manage') },
         // A staff decision appealed by those it is about (ADR 0059).
-        { href: '/appeals', label: 'Decision appeals', icon: <Gavel aria-hidden />, show: can('appeals.decide') },
-        { href: '/announcements', label: 'Announcements', icon: <Megaphone aria-hidden />, show: can('community.publish') },
+        { href: '/appeals', label: t('nav.appeals'), icon: <Gavel aria-hidden />, show: can('appeals.decide') },
+        { href: '/announcements', label: t('nav.announcements'), icon: <Megaphone aria-hidden />, show: can('community.publish') },
         // ADR 0080: the office's templates and letters.
-        { href: '/message-templates', label: 'Message templates', icon: <Megaphone aria-hidden />, show: can('community.publish') || can('requests.manage') },
-        { href: '/official-letters', label: 'Official letters', icon: <MessagesSquare aria-hidden />, show: can('letters.issue') },
-        { href: '/events', label: 'Events', icon: <CalendarDays aria-hidden />, show: can('community.publish') },
-        { href: '/polls', label: 'Polls', icon: <Vote aria-hidden />, show: can('community.publish') },
+        { href: '/message-templates', label: t('nav.message-templates'), icon: <Megaphone aria-hidden />, show: can('community.publish') || can('requests.manage') },
+        { href: '/official-letters', label: t('nav.official-letters'), icon: <MessagesSquare aria-hidden />, show: can('letters.issue') },
+        { href: '/events', label: t('nav.events'), icon: <CalendarDays aria-hidden />, show: can('community.publish') },
+        { href: '/polls', label: t('nav.polls'), icon: <Vote aria-hidden />, show: can('community.publish') },
         {
           href: '/suggestions',
-          label: 'Suggestions',
+          label: t('nav.suggestions'),
           icon: <Lightbulb aria-hidden />,
           count: received,
           show: can('community.suggestions'),
         },
         {
           href: '/complaints',
-          label: 'Complaints',
+          label: t('nav.complaints'),
           icon: <Scale aria-hidden />,
           count: complaints,
           show: can('neighbours.handle'),
         },
-        { href: '/lost-found', label: 'Lost & found', icon: <PackageSearch aria-hidden />, show: can('neighbours.handle') },
+        { href: '/lost-found', label: t('nav.lost-found'), icon: <PackageSearch aria-hidden />, show: can('neighbours.handle') },
         {
           href: '/conversation-reports',
-          label: 'Conversation reports',
+          label: t('nav.conversation-reports'),
           icon: <Flag aria-hidden />,
           count: reports,
           show: can('neighbours.handle'),
         },
         // The market: review, reports, shops; group and partner offers (ADR 0071).
-        { href: '/market', label: 'Market', icon: <ShoppingBag aria-hidden />, exact: true, show: can('market.handle') },
-        { href: '/market/offers', label: 'Offers', icon: <Tag aria-hidden />, show: can('market.handle') || can('partners.manage') },
+        { href: '/market', label: t('nav.market'), icon: <ShoppingBag aria-hidden />, exact: true, show: can('market.handle') },
+        { href: '/market/offers', label: t('nav.market.offers'), icon: <Tag aria-hidden />, show: can('market.handle') || can('partners.manage') },
         // Prayer times, buses and the gallery (ADR 0071).
-        { href: '/daily-life', label: 'Daily life', icon: <Sun aria-hidden />, show: can('content.manage') },
+        { href: '/daily-life', label: t('nav.daily-life'), icon: <Sun aria-hidden />, show: can('content.manage') },
         {
           href: '/facilities',
-          label: 'Facilities',
+          label: t('nav.facilities'),
           icon: <Dumbbell aria-hidden />,
           show: can('facilities.manage') || can('bookings.handle'),
         },
-        { href: '/bookings', label: 'Bookings', icon: <CalendarCheck aria-hidden />, exact: true, show: can('bookings.handle') },
+        { href: '/bookings', label: t('nav.bookings'), icon: <CalendarCheck aria-hidden />, exact: true, show: can('bookings.handle') },
         {
           href: '/bookings/approvals',
-          label: 'Approvals',
+          label: t('nav.bookings.approvals'),
           icon: <ClipboardCheck aria-hidden />,
           count: approvals,
           show: can('bookings.handle'),
         },
-        { href: '/booking-suspensions', label: 'Suspensions', icon: <Ban aria-hidden />, show: can('bookings.handle') },
+        { href: '/booking-suspensions', label: t('nav.booking-suspensions'), icon: <Ban aria-hidden />, show: can('bookings.handle') },
         // Facility bans and use (ADR 0067).
-        { href: '/facility-bans', label: 'Facility bans', icon: <UserX aria-hidden />, show: can('bookings.handle') },
+        { href: '/facility-bans', label: t('nav.facility-bans'), icon: <UserX aria-hidden />, show: can('bookings.handle') },
         {
           href: '/facility-usage',
-          label: 'Facility use',
+          label: t('nav.facility-usage'),
           icon: <ChartColumn aria-hidden />,
           show: can('facilities.manage') || can('bookings.handle'),
         },
         // Spaces (ADR 0084).
         {
           href: '/space-uses',
-          label: 'Common-area uses',
+          label: t('nav.space-uses'),
           icon: <TreePine aria-hidden />,
           show: can('bookings.handle') || can('spaces.manage'),
         },
-        { href: '/holidays', label: 'Holidays', icon: <CalendarOff aria-hidden />, show: can('spaces.manage') },
-        { href: '/site-map', label: 'Site map', icon: <MapIcon aria-hidden />, show: can('spaces.manage') },
-        { href: '/floor-plans', label: 'Floor plans', icon: <LayoutGrid aria-hidden />, show: can('spaces.manage') },
-        { href: '/gate', label: 'Gate', icon: <DoorOpen aria-hidden />, exact: true, show: can('gate.read') },
+        { href: '/holidays', label: t('nav.holidays'), icon: <CalendarOff aria-hidden />, show: can('spaces.manage') },
+        { href: '/site-map', label: t('nav.site-map'), icon: <MapIcon aria-hidden />, show: can('spaces.manage') },
+        { href: '/floor-plans', label: t('nav.floor-plans'), icon: <LayoutGrid aria-hidden />, show: can('spaces.manage') },
+        { href: '/gate', label: t('nav.gate'), icon: <DoorOpen aria-hidden />, exact: true, show: can('gate.read') },
         // The gate's traffic and its log search (ADR 0056, 0079).
-        { href: '/gate/traffic', label: 'Gate traffic', icon: <ChartColumn aria-hidden />, show: can('gate.read') },
-        { href: '/gate/log-search', label: 'Gate log search', icon: <Search aria-hidden />, show: can('gate_log.search') },
-        { href: '/parcels', label: 'Parcels', icon: <Package aria-hidden />, show: can('parcels.manage') },
-        { href: '/staff', label: 'Staff', icon: <UserCog aria-hidden />, show: can('accounts.read') },
+        { href: '/gate/traffic', label: t('nav.gate.traffic'), icon: <ChartColumn aria-hidden />, show: can('gate.read') },
+        { href: '/gate/log-search', label: t('nav.gate.log-search'), icon: <Search aria-hidden />, show: can('gate_log.search') },
+        { href: '/parcels', label: t('nav.parcels'), icon: <Package aria-hidden />, show: can('parcels.manage') },
+        { href: '/staff', label: t('nav.staff'), icon: <UserCog aria-hidden />, show: can('accounts.read') },
         // Dangling accounts and access reviews (ADR 0090).
-        { href: '/access-checks', label: 'Access checks', icon: <UserCog aria-hidden />, show: can('accounts.manage') },
+        { href: '/access-checks', label: t('nav.access-checks'), icon: <UserCog aria-hidden />, show: can('accounts.manage') },
       ],
     },
     {
-      label: 'Vehicles & parking',
+      label: t('group.vehicles-and-parking'),
       items: [
-        { href: '/vehicles', label: 'Vehicles', icon: <Car aria-hidden />, count: vehiclesToApprove, show: can('vehicles.manage') },
-        { href: '/visitor-parking', label: 'Visitor parking', icon: <ParkingMeter aria-hidden />, show: can('vehicles.manage') },
+        { href: '/vehicles', label: t('nav.vehicles'), icon: <Car aria-hidden />, count: vehiclesToApprove, show: can('vehicles.manage') },
+        { href: '/visitor-parking', label: t('nav.visitor-parking'), icon: <ParkingMeter aria-hidden />, show: can('vehicles.manage') },
         {
           href: '/fines',
-          label: 'Fines',
+          label: t('nav.fines'),
           icon: <Ticket aria-hidden />,
           count: appeals,
           show: can('fines.issue') || can('fines.billing'),
         },
         {
           href: '/parking-reports',
-          label: 'Parking reports',
+          label: t('nav.parking-reports'),
           icon: <Siren aria-hidden />,
           count: parkingReports,
           show: can('parking_reports.handle'),
         },
-        { href: '/parking', label: 'Parking setup', icon: <CircleParking aria-hidden />, show: can('vehicles.manage') },
+        { href: '/parking', label: t('nav.parking'), icon: <CircleParking aria-hidden />, show: can('vehicles.manage') },
       ],
     },
     {
-      label: 'Safety',
+      label: t('group.safety'),
       items: [
         {
           href: '/emergencies',
-          label: 'Emergencies',
+          label: t('nav.emergencies'),
           icon: <Siren aria-hidden />,
           count: openEmergencies,
           show: can('emergencies.manage') || can('emergencies.respond'),
         },
         {
           href: '/gate-services',
-          label: 'Gate services',
+          label: t('nav.gate-services'),
           icon: <LifeBuoy aria-hidden />,
           count: gateServices,
           show: can('gate_services.handle'),
@@ -528,127 +533,127 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       ],
     },
     {
-      label: 'Permits',
+      label: t('group.permits'),
       items: [
         {
           href: '/permits',
-          label: 'Permits',
+          label: t('nav.permits'),
           icon: <ClipboardCheck aria-hidden />,
           exact: true,
           count: permitsToDecide,
           show: can('permits.manage'),
         },
-        { href: '/permits/materials', label: 'Materials log', icon: <Package aria-hidden />, show: can('permits.manage') },
-        { href: '/permits/inspections', label: 'Works inspections', icon: <ClipboardPen aria-hidden />, show: can('permits.manage') },
-        { href: '/permits/settings', label: 'Work hours', icon: <CalendarRange aria-hidden />, show: can('permits.manage') },
+        { href: '/permits/materials', label: t('nav.permits.materials'), icon: <Package aria-hidden />, show: can('permits.manage') },
+        { href: '/permits/inspections', label: t('nav.permits.inspections'), icon: <ClipboardPen aria-hidden />, show: can('permits.manage') },
+        { href: '/permits/settings', label: t('nav.permits.settings'), icon: <CalendarRange aria-hidden />, show: can('permits.manage') },
       ],
     },
     {
       // The compound's service partners (ADR 0060).
-      label: 'Partners',
+      label: t('group.partners'),
       items: [
-        { href: '/partners', label: 'Partners', icon: <Handshake aria-hidden />, exact: true, show: can('partners.manage') },
-        { href: '/partners/requests', label: 'Partner requests', icon: <Inbox aria-hidden />, show: can('partners.manage') },
-        { href: '/partners/complaints', label: 'Partner complaints', icon: <Scale aria-hidden />, show: can('partners.manage') },
-        { href: '/partners/settings', label: 'Partner settings', icon: <SlidersHorizontal aria-hidden />, show: can('partners.manage') },
+        { href: '/partners', label: t('nav.partners'), icon: <Handshake aria-hidden />, exact: true, show: can('partners.manage') },
+        { href: '/partners/requests', label: t('nav.partners.requests'), icon: <Inbox aria-hidden />, show: can('partners.manage') },
+        { href: '/partners/complaints', label: t('nav.partners.complaints'), icon: <Scale aria-hidden />, show: can('partners.manage') },
+        { href: '/partners/settings', label: t('nav.partners.settings'), icon: <SlidersHorizontal aria-hidden />, show: can('partners.manage') },
       ],
     },
     {
-      label: 'Security',
+      label: t('group.security'),
       items: [
-        { href: '/security/roster', label: 'Roster', icon: <CalendarCog aria-hidden />, show: can('guard_roster.manage') },
+        { href: '/security/roster', label: t('nav.security.roster'), icon: <CalendarCog aria-hidden />, show: can('guard_roster.manage') },
         {
           href: '/security/swaps',
-          label: 'Shift swaps',
+          label: t('nav.security.swaps'),
           icon: <Repeat aria-hidden />,
           count: swapsToDecide,
           show: can('guard_roster.manage'),
         },
-        { href: '/security/handovers', label: 'Handovers', icon: <ClipboardPen aria-hidden />, show: can('guard_roster.manage') },
-        { href: '/security/tasks', label: 'Guard tasks', icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
-        { href: '/security/inspection-requests', label: 'Inspection requests', icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
+        { href: '/security/handovers', label: t('nav.security.handovers'), icon: <ClipboardPen aria-hidden />, show: can('guard_roster.manage') },
+        { href: '/security/tasks', label: t('nav.security.tasks'), icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
+        { href: '/security/inspection-requests', label: t('nav.security.inspection-requests'), icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
         // ADR 0083.
-        { href: '/security/closed-units', label: 'Closed units', icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
-        { href: '/security/unit-entries', label: 'Emergency entries', icon: <ClipboardPen aria-hidden />, show: can('guard_tasks.manage') },
+        { href: '/security/closed-units', label: t('nav.security.closed-units'), icon: <ClipboardList aria-hidden />, show: can('guard_tasks.manage') },
+        { href: '/security/unit-entries', label: t('nav.security.unit-entries'), icon: <ClipboardPen aria-hidden />, show: can('guard_tasks.manage') },
         {
           href: '/security/instructions',
-          label: 'Instructions',
+          label: t('nav.security.instructions'),
           icon: <BellRing aria-hidden />,
           show: can('guard_instructions.manage'),
         },
-        { href: '/security/found-items', label: 'Found at the gate', icon: <Briefcase aria-hidden />, show: can('found_items.manage') },
-        { href: '/security/reports', label: 'Daily report', icon: <FileChartColumn aria-hidden />, show: can('guard_reports.read') },
+        { href: '/security/found-items', label: t('nav.security.found-items'), icon: <Briefcase aria-hidden />, show: can('found_items.manage') },
+        { href: '/security/reports', label: t('nav.security.reports'), icon: <FileChartColumn aria-hidden />, show: can('guard_reports.read') },
         // Patrols (ADR 0052).
-        { href: '/security/patrols/checkpoints', label: 'Checkpoints', icon: <QrCode aria-hidden />, show: can('patrols.manage') },
-        { href: '/security/patrols/routes', label: 'Patrol routes', icon: <Route aria-hidden />, show: can('patrols.manage') },
+        { href: '/security/patrols/checkpoints', label: t('nav.security.patrols.checkpoints'), icon: <QrCode aria-hidden />, show: can('patrols.manage') },
+        { href: '/security/patrols/routes', label: t('nav.security.patrols.routes'), icon: <Route aria-hidden />, show: can('patrols.manage') },
         {
           href: '/security/patrols/runs',
-          label: 'Patrol runs',
+          label: t('nav.security.patrols.runs'),
           icon: <Footprints aria-hidden />,
           show: can('patrols.manage') || can('guard_reports.read'),
         },
         {
           href: '/security/patrols/report',
-          label: 'Patrol report',
+          label: t('nav.security.patrols.report'),
           icon: <ChartNoAxesColumn aria-hidden />,
           show: can('patrols.manage') || can('guard_reports.read'),
         },
         // Incidents, the blocklist, the lockdown and violations (ADR 0053).
         {
           href: '/security/lockdowns',
-          label: 'Lockdown',
+          label: t('nav.security.lockdowns'),
           icon: <ShieldAlert aria-hidden />,
           count: liveLockdowns.length,
           show: can('lockdown.end') || can('lockdown.start'),
         },
-        { href: '/security/blocklist', label: 'Blocklist', icon: <ShieldBan aria-hidden />, show: can('blocklist.manage') },
+        { href: '/security/blocklist', label: t('nav.security.blocklist'), icon: <ShieldBan aria-hidden />, show: can('blocklist.manage') },
         {
           href: '/security/incidents',
-          label: 'Incidents',
+          label: t('nav.security.incidents'),
           icon: <TriangleAlert aria-hidden />,
           count: openIncidents,
           show: can('incidents.manage'),
         },
         {
           href: '/violations',
-          label: 'Violations',
+          label: t('nav.violations'),
           icon: <FileExclamationPoint aria-hidden />,
           count: violationAppeals,
           show: can('violations.manage') || can('violations.issue') || can('fines.billing'),
         },
         {
           href: '/security/summary',
-          label: 'Incidents & violations report',
+          label: t('nav.security.summary'),
           icon: <ChartPie aria-hidden />,
           show: can('incidents.manage') || can('violations.manage') || can('guard_reports.read'),
         },
         // Safety KPIs and the owner's corrective actions (ADR 0087).
         {
           href: '/security/safety',
-          label: 'Safety KPIs',
+          label: t('nav.security.safety'),
           icon: <ChartPie aria-hidden />,
           show: can('incidents.manage') || can('guard_reports.read'),
         },
-        { href: '/my-actions', label: 'My corrective actions', icon: <TriangleAlert aria-hidden />, show: true },
+        { href: '/my-actions', label: t('nav.my-actions'), icon: <TriangleAlert aria-hidden />, show: true },
         // Children (ADR 0054): unauthorized pickups, for the keepers.
-        { href: '/security/child-alerts', label: 'Child alerts', icon: <Baby aria-hidden />, show: can('guard_roster.manage') },
+        { href: '/security/child-alerts', label: t('nav.security.child-alerts'), icon: <Baby aria-hidden />, show: can('guard_roster.manage') },
         // The gate's completion (ADR 0056).
         {
           href: '/security/field-exceptions',
-          label: 'Field exceptions',
+          label: t('nav.security.field-exceptions'),
           icon: <DoorOpen aria-hidden />,
           count: exceptionsWaiting,
           show: can('gate_exceptions.decide'),
         },
-        { href: '/security/gate-settings', label: 'Gate settings', icon: <SlidersHorizontal aria-hidden />, show: can('gate.manage') },
+        { href: '/security/gate-settings', label: t('nav.security.gate-settings'), icon: <SlidersHorizontal aria-hidden />, show: can('gate.manage') },
         // The gate offline (ADR 0057).
-        { href: '/security/gate-devices', label: 'Gate devices', icon: <Smartphone aria-hidden />, show: can('gate_devices.manage') },
+        { href: '/security/gate-devices', label: t('nav.security.gate-devices'), icon: <Smartphone aria-hidden />, show: can('gate_devices.manage') },
         // Guard vendors (ADR 0068): the control room and the guard-down wearables.
-        { href: '/security/control-room', label: 'Control room', icon: <MonitorDot aria-hidden />, show: can('control_room.watch') },
-        { href: '/security/alarm-devices', label: 'Alarm wearables', icon: <Watch aria-hidden />, show: can('gate_devices.manage') },
+        { href: '/security/control-room', label: t('nav.security.control-room'), icon: <MonitorDot aria-hidden />, show: can('control_room.watch') },
+        { href: '/security/alarm-devices', label: t('nav.security.alarm-devices'), icon: <Watch aria-hidden />, show: can('gate_devices.manage') },
         {
           href: '/security/offline-flags',
-          label: 'Offline flags',
+          label: t('nav.security.offline-flags'),
           icon: <CloudOff aria-hidden />,
           count: offlineToLookAt,
           show: can('gate_devices.manage'),
@@ -656,160 +661,160 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       ],
     },
     {
-      label: 'Governance',
+      label: t('group.governance'),
       items: [
-        { href: '/governance/board', label: 'Board', icon: <Landmark aria-hidden />, show: can('governance.manage') },
-        { href: '/governance/polls', label: 'Owners’ polls', icon: <Vote aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/board', label: t('nav.governance.board'), icon: <Landmark aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/polls', label: t('nav.governance.polls'), icon: <Vote aria-hidden />, show: can('governance.manage') },
         {
           href: '/governance/elections',
-          label: 'Elections',
+          label: t('nav.governance.elections'),
           icon: <Gavel aria-hidden />,
           count: electionsToCertify,
           show: can('governance.manage'),
         },
-        { href: '/governance/decisions', label: 'Decisions', icon: <ScrollText aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/decisions', label: t('nav.governance.decisions'), icon: <ScrollText aria-hidden />, show: can('governance.manage') },
         // Board matters (ADR 0055): the management's side; never a motion or a vote.
-        { href: '/governance/approvals', label: 'Approvals', icon: <ClipboardCheck aria-hidden />, show: can('governance.approvals') },
-        { href: '/governance/board-appeals', label: 'Appeals to the board', icon: <Scale aria-hidden />, show: can('governance.manage') },
-        { href: '/governance/settings', label: 'Board settings', icon: <SlidersHorizontal aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/approvals', label: t('nav.governance.approvals'), icon: <ClipboardCheck aria-hidden />, show: can('governance.approvals') },
+        { href: '/governance/board-appeals', label: t('nav.governance.board-appeals'), icon: <Scale aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/settings', label: t('nav.governance.settings'), icon: <SlidersHorizontal aria-hidden />, show: can('governance.manage') },
         // The board's work (ADR 0075): shares for weighted polls, the rules, the manager's handover.
-        { href: '/governance/unit-shares', label: 'Ownership shares', icon: <Vote aria-hidden />, show: can('governance.manage') },
-        { href: '/governance/rules', label: 'Board rules', icon: <SlidersHorizontal aria-hidden />, show: can('governance.manage') },
-        { href: '/governance/handover', label: 'My handover', icon: <ScrollText aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/unit-shares', label: t('nav.governance.unit-shares'), icon: <Vote aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/rules', label: t('nav.governance.rules'), icon: <SlidersHorizontal aria-hidden />, show: can('governance.manage') },
+        { href: '/governance/handover', label: t('nav.governance.handover'), icon: <ScrollText aria-hidden />, show: can('governance.manage') },
       ],
     },
     {
       // A sitting member's own (ADR 0055): what the board decides.
-      label: 'The board',
+      label: t('group.the-board'),
       items: [
-        { href: '/board/approvals', label: 'Inbox', icon: <Inbox aria-hidden />, show: can('governance.board') },
-        { href: '/board/appeals', label: 'Appeals', icon: <Scale aria-hidden />, show: can('governance.board') },
-        { href: '/board/overview', label: 'Overview', icon: <LayoutDashboard aria-hidden />, show: can('governance.board') },
+        { href: '/board/approvals', label: t('nav.board.approvals'), icon: <Inbox aria-hidden />, show: can('governance.board') },
+        { href: '/board/appeals', label: t('nav.board.appeals'), icon: <Scale aria-hidden />, show: can('governance.board') },
+        { href: '/board/overview', label: t('nav.board.overview'), icon: <LayoutDashboard aria-hidden />, show: can('governance.board') },
         // The owners' voice (ADR 0059): representatives by the board's motions; proposals and objections answered once.
-        { href: '/board/representatives', label: 'Representatives', icon: <Users aria-hidden />, show: can('governance.board') },
-        { href: '/board/agenda', label: 'Agenda proposals', icon: <Lightbulb aria-hidden />, show: can('governance.board') },
-        { href: '/board/objections', label: 'Objections', icon: <MessageSquareWarning aria-hidden />, show: can('governance.board') },
+        { href: '/board/representatives', label: t('nav.board.representatives'), icon: <Users aria-hidden />, show: can('governance.board') },
+        { href: '/board/agenda', label: t('nav.board.agenda'), icon: <Lightbulb aria-hidden />, show: can('governance.board') },
+        { href: '/board/objections', label: t('nav.board.objections'), icon: <MessageSquareWarning aria-hidden />, show: can('governance.board') },
         // The board's work (ADR 0075): meetings, handovers and the monthly report; the manager reads them too.
-        { href: '/board/meetings', label: 'Meetings', icon: <CalendarClock aria-hidden />, show: can('governance.board') || can('governance.manage') },
-        { href: '/board/handover', label: 'Handovers', icon: <ScrollText aria-hidden />, show: can('governance.board') || can('governance.manage') },
-        { href: '/board/reports', label: 'Monthly reports', icon: <ChartColumn aria-hidden />, show: can('governance.board') || can('governance.manage') },
+        { href: '/board/meetings', label: t('nav.board.meetings'), icon: <CalendarClock aria-hidden />, show: can('governance.board') || can('governance.manage') },
+        { href: '/board/handover', label: t('nav.board.handover'), icon: <ScrollText aria-hidden />, show: can('governance.board') || can('governance.manage') },
+        { href: '/board/reports', label: t('nav.board.reports'), icon: <ChartColumn aria-hidden />, show: can('governance.board') || can('governance.manage') },
       ],
     },
     {
-      label: 'Finance',
+      label: t('group.finance'),
       items: [
-        { href: '/finance/invoices', label: 'Invoices', icon: <FileText aria-hidden />, show: can('finance.invoice') },
-        { href: '/finance/instalments', label: 'Instalment plans', icon: <CalendarRange aria-hidden />, show: can('finance.invoice') },
+        { href: '/finance/invoices', label: t('nav.finance.invoices'), icon: <FileText aria-hidden />, show: can('finance.invoice') },
+        { href: '/finance/instalments', label: t('nav.finance.instalments'), icon: <CalendarRange aria-hidden />, show: can('finance.invoice') },
         // Payment plans residents ask for, and the terms for them (ADR 0069).
-        { href: '/finance/plan-requests', label: 'Plan requests', icon: <CalendarRange aria-hidden />, show: can('finance.invoice') },
-        { href: '/finance/disputes', label: 'Disputes', icon: <MessageSquareWarning aria-hidden />, show: can('finance.invoice') },
+        { href: '/finance/plan-requests', label: t('nav.finance.plan-requests'), icon: <CalendarRange aria-hidden />, show: can('finance.invoice') },
+        { href: '/finance/disputes', label: t('nav.finance.disputes'), icon: <MessageSquareWarning aria-hidden />, show: can('finance.invoice') },
         // The formal late-payment notices and their proofs (ADR 0058).
-        { href: '/finance/late-notices', label: 'Late notices', icon: <Scale aria-hidden />, show: can('finance.invoice') },
-        { href: '/finance/payments', label: 'Payments', icon: <Banknote aria-hidden />, show: can('finance.payments') },
+        { href: '/finance/late-notices', label: t('nav.finance.late-notices'), icon: <Scale aria-hidden />, show: can('finance.invoice') },
+        { href: '/finance/payments', label: t('nav.finance.payments'), icon: <Banknote aria-hidden />, show: can('finance.payments') },
         // Field collectors' visits and their margin (ADR 0069).
-        { href: '/finance/collector-visits', label: 'Collector visits', icon: <Banknote aria-hidden />, show: can('finance.payments') },
-        { href: '/finance/custody', label: 'Custody', icon: <Banknote aria-hidden />, show: can('finance.payments') || can('finance.custody') },
-        { href: '/finance/cheques', label: 'Cheques', icon: <Banknote aria-hidden />, show: can('finance.payments') },
-        { href: '/finance/treasury', label: 'Bank and cash', icon: <Wallet aria-hidden />, show: can('finance.treasury') },
-        { href: '/finance/statements', label: 'Bank statements', icon: <BookOpen aria-hidden />, show: can('finance.treasury') },
+        { href: '/finance/collector-visits', label: t('nav.finance.collector-visits'), icon: <Banknote aria-hidden />, show: can('finance.payments') },
+        { href: '/finance/custody', label: t('nav.finance.custody'), icon: <Banknote aria-hidden />, show: can('finance.payments') || can('finance.custody') },
+        { href: '/finance/cheques', label: t('nav.finance.cheques'), icon: <Banknote aria-hidden />, show: can('finance.payments') },
+        { href: '/finance/treasury', label: t('nav.finance.treasury'), icon: <Wallet aria-hidden />, show: can('finance.treasury') },
+        { href: '/finance/statements', label: t('nav.finance.statements'), icon: <BookOpen aria-hidden />, show: can('finance.treasury') },
         // The cash flow forecast and liquidity (ADR 0091).
-        { href: '/finance/cash-flow', label: 'Cash flow', icon: <ChartColumn aria-hidden />, show: can('finance.cashflow') },
-        { href: '/finance/plans', label: 'Billing plans', icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
-        { href: '/finance/refunds', label: 'Refunds', icon: <Undo2 aria-hidden />, show: can('finance.refund') },
-        { href: '/finance/ledger', label: 'Ledger', icon: <BookOpen aria-hidden />, show: can('finance.reports') },
+        { href: '/finance/cash-flow', label: t('nav.finance.cash-flow'), icon: <ChartColumn aria-hidden />, show: can('finance.cashflow') },
+        { href: '/finance/plans', label: t('nav.finance.plans'), icon: <CalendarClock aria-hidden />, show: can('finance.billing') || can('finance.invoice') },
+        { href: '/finance/refunds', label: t('nav.finance.refunds'), icon: <Undo2 aria-hidden />, show: can('finance.refund') },
+        { href: '/finance/ledger', label: t('nav.finance.ledger'), icon: <BookOpen aria-hidden />, show: can('finance.reports') },
         // The general ledger, double entry (ADR 0092).
-        { href: '/finance/gl', label: 'Chart of accounts', icon: <BookOpen aria-hidden />, show: can('finance.ledger') },
-        { href: '/finance/gl/statements', label: 'Financial statements', icon: <ChartColumn aria-hidden />, show: can('finance.ledger') },
-        { href: '/finance/gl/entries', label: 'Journal entries', icon: <BookOpen aria-hidden />, show: can('finance.ledger') },
-        { href: '/finance/gl/periods', label: 'Closing months', icon: <CalendarClock aria-hidden />, show: can('finance.ledger') },
-        { href: '/finance/reports', label: 'Reports', icon: <ChartColumn aria-hidden />, show: can('finance.reports') },
+        { href: '/finance/gl', label: t('nav.finance.gl'), icon: <BookOpen aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/gl/statements', label: t('nav.finance.gl.statements'), icon: <ChartColumn aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/gl/entries', label: t('nav.finance.gl.entries'), icon: <BookOpen aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/gl/periods', label: t('nav.finance.gl.periods'), icon: <CalendarClock aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/reports', label: t('nav.finance.reports'), icon: <ChartColumn aria-hidden />, show: can('finance.reports') },
         // Where the fees went, published to every payer (ADR 0069).
-        { href: '/finance/spending-reports', label: 'Where the fees went', icon: <PiggyBank aria-hidden />, show: can('finance.reports') || can('finance.budget') },
-        { href: '/finance/budgets', label: 'Budgets', icon: <PiggyBank aria-hidden />, show: can('finance.budget') },
-        { href: '/finance/expenses', label: 'Expenses', icon: <Wallet aria-hidden />, show: can('finance.budget') },
+        { href: '/finance/spending-reports', label: t('nav.finance.spending-reports'), icon: <PiggyBank aria-hidden />, show: can('finance.reports') || can('finance.budget') },
+        { href: '/finance/budgets', label: t('nav.finance.budgets'), icon: <PiggyBank aria-hidden />, show: can('finance.budget') },
+        { href: '/finance/expenses', label: t('nav.finance.expenses'), icon: <Wallet aria-hidden />, show: can('finance.budget') },
         {
           href: '/finance/budget-planning',
-          label: 'Budget planning',
+          label: t('nav.finance.budget-planning'),
           icon: <PiggyBank aria-hidden />,
           show: can('finance.budget'),
         },
         {
           href: '/finance/payables',
-          label: 'Payables',
+          label: t('nav.finance.payables'),
           icon: <Wallet aria-hidden />,
           show: can('finance.payables') || can('finance.payables_approve'),
         },
-        { href: '/finance/gateway', label: 'Online payments', icon: <CreditCard aria-hidden />, show: can('finance.gateway') },
+        { href: '/finance/gateway', label: t('nav.finance.gateway'), icon: <CreditCard aria-hidden />, show: can('finance.gateway') },
       ],
     },
     {
-      label: 'Club',
+      label: t('group.club'),
       items: [
-        { href: '/club/memberships', label: 'Memberships', icon: <IdCard aria-hidden />, show: can('club.billing') },
-        { href: '/club/plans', label: 'Plans', icon: <Receipt aria-hidden />, show: can('facilities.manage') || can('club.billing') },
-        { href: '/club/requests', label: 'Requests', icon: <Receipt aria-hidden />, show: can('club.billing') },
+        { href: '/club/memberships', label: t('nav.club.memberships'), icon: <IdCard aria-hidden />, show: can('club.billing') },
+        { href: '/club/plans', label: t('nav.club.plans'), icon: <Receipt aria-hidden />, show: can('facilities.manage') || can('club.billing') },
+        { href: '/club/requests', label: t('nav.club.requests'), icon: <Receipt aria-hidden />, show: can('club.billing') },
       ],
     },
     {
       // The reports platform (ADR 0086): each report by its own permission.
-      label: 'Reports',
+      label: t('group.reports'),
       items: [
         {
           href: '/reports',
-          label: 'Reports',
+          label: t('nav.reports'),
           icon: <ChartColumn aria-hidden />,
           show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'].some((p) => can(p)),
         },
-        { href: '/reports/schedules', label: 'Scheduled reports', icon: <CalendarClock aria-hidden />, show: can('reports.schedule') },
+        { href: '/reports/schedules', label: t('nav.reports.schedules'), icon: <CalendarClock aria-hidden />, show: can('reports.schedule') },
         {
           href: '/reports/runs',
-          label: 'Sent reports',
+          label: t('nav.reports.runs'),
           icon: <FileChartColumn aria-hidden />,
           show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'].some((p) => can(p)),
         },
-        { href: '/capital-plans', label: 'Capital plans', icon: <Landmark aria-hidden />, show: can('assets.manage') },
-        { href: '/compound-export', label: 'Compound export', icon: <Boxes aria-hidden />, show: can('compound.export') },
+        { href: '/capital-plans', label: t('nav.capital-plans'), icon: <Landmark aria-hidden />, show: can('assets.manage') },
+        { href: '/compound-export', label: t('nav.compound-export'), icon: <Boxes aria-hidden />, show: can('compound.export') },
       ],
     },
     {
-      label: 'Administration',
+      label: t('group.administration'),
       items: [
-        { href: '/roles', label: 'Roles', icon: <ShieldCheck aria-hidden />, show: can('roles.read') },
-        { href: '/settings', label: 'Settings', icon: <Settings aria-hidden />, show: can('settings.manage') },
+        { href: '/roles', label: t('nav.roles'), icon: <ShieldCheck aria-hidden />, show: can('roles.read') },
+        { href: '/settings', label: t('nav.settings'), icon: <Settings aria-hidden />, show: can('settings.manage') },
         // Who decides in my place while I am away (ADR 0073).
-        { href: '/deputies', label: 'Deputy', icon: <ShieldCheck aria-hidden />, show: can('deputies.manage') },
+        { href: '/deputies', label: t('nav.deputies'), icon: <ShieldCheck aria-hidden />, show: can('deputies.manage') },
         {
           href: '/maintenance-setup',
-          label: 'Maintenance setup',
+          label: t('nav.maintenance-setup'),
           icon: <SlidersHorizontal aria-hidden />,
           show: can('maintenance.manage'),
         },
         {
           href: '/management-setup',
-          label: 'Requests setup',
+          label: t('nav.management-setup'),
           icon: <MessageSquareMore aria-hidden />,
           show: can('requests.manage'),
         },
         {
           href: '/community-setup',
-          label: 'Community setup',
+          label: t('nav.community-setup'),
           icon: <ListChecks aria-hidden />,
           show: can('community.publish') || can('community.suggestions'),
         },
         {
           href: '/neighbours-setup',
-          label: 'Neighbours setup',
+          label: t('nav.neighbours-setup'),
           icon: <Handshake aria-hidden />,
           show: can('neighbours.manage'),
         },
         {
           href: '/deletions',
-          label: 'Deletion requests',
+          label: t('nav.deletions'),
           icon: <UserX aria-hidden />,
           count: deletions,
           show: can('accounts.erase'),
         },
-        { href: '/audit', label: 'Audit log', icon: <ScrollText aria-hidden />, show: can('audit.read') },
+        { href: '/audit', label: t('nav.audit'), icon: <ScrollText aria-hidden />, show: can('audit.read') },
       ],
     },
   ];
@@ -836,12 +841,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     body = meError ? <ErrorAlert error={meError} /> : <SkeletonRows rows={6} />;
   } else if (!allowed) {
     body = (
-      <EmptyState title="No access" icon={<Lock aria-hidden />}>
-        <p>
-          Your role does not include the management dashboard. It is for compound managers and maintenance supervisors.
-        </p>
+      <EmptyState title={c('state.noAccess')} icon={<Lock aria-hidden />}>
+        <p>{t('noAccessBody')}</p>
         <Button onClick={() => void signOut()} loading={signingOut}>
-          Sign out
+          {c('shell.signOut')}
         </Button>
       </EmptyState>
     );
@@ -849,8 +852,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     body = <SkeletonRows rows={6} />;
   } else if (!isManager && pathname === '/') {
     body = (
-      <EmptyState title="Nothing here yet" icon={<Wrench aria-hidden />}>
-        <p>Your role has no section in this dashboard yet.</p>
+      <EmptyState title={c('state.empty')} icon={<Wrench aria-hidden />}>
+        <p>{t('noSection')}</p>
       </EmptyState>
     );
   } else {
@@ -858,7 +861,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <>
         {lockdownLine && pathname !== '/security/lockdowns' ? (
           <Alert tone="error">
-            {lockdownLine}. <Link href="/security/lockdowns">End it or read its overrides</Link>
+            {lockdownLine}. <Link href="/security/lockdowns">{t('lockdownLink')}</Link>
           </Alert>
         ) : null}
         {children}
@@ -868,12 +871,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <AppShell
-      product="Jiwar Manager"
-      context={session.data?.tenantName ?? 'Compound'}
+      product={t('product')}
+      context={session.data?.tenantName ?? t('compound')}
       nav={ready && allowed ? nav : []}
-      user={me ? { name: me.fullName ?? humanRole(me.type), meta: me.email ?? me.phone ?? '', href: allowed ? '/account' : undefined } : null}
+      user={
+        me
+          ? {
+              name: me.fullName ?? (me.type === 'manager' ? t('role.manager') : t('role.staff')),
+              meta: me.email ?? me.phone ?? '',
+              href: allowed ? '/account' : undefined,
+            }
+          : null
+      }
       onSignOut={signOut}
-      crumb={pathname === '/notifications' ? 'Notifications' : pathname === '/account' ? 'My account' : undefined}
+      crumb={pathname === '/notifications' ? t('crumb.notifications') : pathname === '/account' ? c('shell.myAccount') : undefined}
       topbarEnd={
         ready && allowed ? (
           <>
@@ -887,8 +898,4 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {body}
     </AppShell>
   );
-}
-
-function humanRole(type: string): string {
-  return type === 'manager' ? 'Manager' : 'Staff';
 }

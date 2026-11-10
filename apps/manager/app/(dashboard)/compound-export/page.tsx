@@ -2,13 +2,16 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { StepUpDialog } from '@/components/step-up-dialog';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type CompoundExport } from '@/lib/queries';
+import ar from '@/messages/ar/compound-export';
+import en from '@/messages/en/compound-export';
 
 /**
  * The compound's export (ADR 0086): its operational data as one archive —
@@ -17,6 +20,10 @@ import { fetchers, keys, type CompoundExport } from '@/lib/queries';
  * once a day; ready for 7 days.
  */
 export default function CompoundExportPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('compound.export');
@@ -25,12 +32,12 @@ export default function CompoundExportPage() {
   const [error, setError] = useState<unknown>(null);
   const request = useAction(() => unwrap(api.POST('/api/v1/staff/compound-exports', {})), {
     invalidate: [keys.compoundExports()],
-    onDone: () => toast.show('Asked for. You are told in the app when it is ready.'),
+    onDone: () => toast.show(t('asked')),
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Compound export" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -46,11 +53,11 @@ export default function CompoundExportPage() {
   return (
     <>
       <PageHeader
-        title="Compound export"
-        description="The compound’s operational data as one archive of fixed tables. No one’s name, phone, email or words; a person’s own data leaves only through their own export."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" loading={request.isPending} onClick={() => setConfirming(true)}>
-            Export the compound
+            {t('export')}
           </Button>
         }
       />
@@ -60,18 +67,18 @@ export default function CompoundExportPage() {
           <DataTable<CompoundExport>
             rows={list.data?.data ?? []}
             rowKey={(x) => x.id}
-            empty="No export yet"
+            empty={t('empty')}
             columns={[
-              { key: 'asked', header: 'Asked', cell: (x) => new Date(x.requestedAt).toLocaleString('en-GB') },
-              { key: 'status', header: 'Status', cell: (x) => <Badge tone={x.status === 'ready' ? 'green' : 'beige'}>{x.status}</Badge> },
-              { key: 'rows', header: 'Rows', cell: (x) => x.rows ?? '—' },
+              { key: 'asked', header: t('askedOn'), cell: (x) => f.dateTime(x.requestedAt) },
+              { key: 'status', header: c('status'), cell: (x) => <Badge tone={x.status === 'ready' ? 'green' : 'beige'}>{label(x.status)}</Badge> },
+              { key: 'rows', header: t('rows'), cell: (x) => (x.rows === null || x.rows === undefined ? '—' : f.number(x.rows)) },
               {
                 key: 'file',
                 header: '',
                 cell: (x) =>
                   x.status === 'ready' ? (
                     <Button size="sm" onClick={() => void open(x)}>
-                      Download
+                      {c('download')}
                     </Button>
                   ) : null,
               },
@@ -81,8 +88,8 @@ export default function CompoundExportPage() {
       </QueryState>
       {confirming ? (
         <StepUpDialog
-          title="Confirm it is you"
-          description="The whole compound’s data leaves with this export: it is prepared only after a fresh code sent to your email."
+          title={t('confirmTitle')}
+          description={t('confirmDescription')}
           onClose={() => setConfirming(false)}
           onVerified={() => {
             setConfirming(false);

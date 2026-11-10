@@ -1,15 +1,19 @@
 'use client';
 
-import { formatDateTime, unwrap, type Schema } from '@jiwar/api';
+import { unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, PageHeader, Segmented, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
-import { INBOX_TYPE, inboxLabel, waited } from '@/components/inbox/inbox-types';
+import { INBOX_TYPE } from '@/components/inbox/inbox-types';
+import { useInboxText } from '@/components/inbox/use-inbox-text';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { useNow } from '@/lib/use-now';
+import ar from '@/messages/ar/inbox';
+import en from '@/messages/en/inbox';
 
 type Item = Schema<'InboxItemView'>;
 type InboxType = Item['type'];
@@ -21,6 +25,11 @@ const KEY = ['staff-inbox'] as const;
  * ones whose approval takes no input may be approved together.
  */
 export default function InboxPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const text = useInboxText();
   const toast = useToast();
   const { can } = usePermissions();
   const now = useNow(60_000);
@@ -54,7 +63,7 @@ export default function InboxPage() {
       invalidate: [KEY],
       onDone: (res) => {
         const failed = res.data.filter((o) => o.outcome === 'failed').length;
-        toast.show(failed ? `Approved ${res.data.length - failed}; ${failed} could not be.` : `Approved ${res.data.length}.`);
+        toast.show(failed ? t('approvedSome', { ok: res.data.length - failed, failed }) : t('approvedAll', { ok: res.data.length }));
         setPicked(new Set());
       },
     },
@@ -72,41 +81,41 @@ export default function InboxPage() {
   return (
     <>
       <PageHeader
-        title="Inbox"
+        title={t('title')}
         description={
           count.data
-            ? `${count.data.total} waiting, ${count.data.overdue} past their due time. Each opens on its own page; due times are set in the inbox settings.`
-            : 'What waits for your decision, across the compound.'
+            ? t('descriptionCount', { total: count.data.total, overdue: count.data.overdue })
+            : t('descriptionEmpty')
         }
         actions={
           <>
             {can('settings.manage') ? (
               <Link className="btn" href="/inbox/settings">
-                Due times
+                {t('dueTimes')}
               </Link>
             ) : null}
             <Button variant="primary" disabled={!chosen.length} loading={bulk.isPending} onClick={() => bulk.mutate(chosen)}>
-              Approve selected
+              {t('approveSelected')}
             </Button>
           </>
         }
       />
       <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-        <Select aria-label="Type" value={type} onChange={(e) => setType(e.target.value as InboxType | '')}>
-          <option value="">Every type</option>
-          {(count.data?.types ?? []).map((t) => (
-            <option key={t.type} value={t.type}>
-              {inboxLabel(t.type)} ({t.total})
+        <Select aria-label={c('type')} value={type} onChange={(e) => setType(e.target.value as InboxType | '')}>
+          <option value="">{t('everyType')}</option>
+          {(count.data?.types ?? []).map((x) => (
+            <option key={x.type} value={x.type}>
+              {text.type(x.type)} ({f.number(x.total)})
             </option>
           ))}
         </Select>
         <Segmented
-          label="When"
+          label={t('when')}
           value={when}
           onChange={setWhen}
           options={[
-            { value: 'all', label: 'All' },
-            { value: 'overdue', label: 'Overdue' },
+            { value: 'all', label: c('all') },
+            { value: 'overdue', label: t('overdue') },
           ]}
         />
       </div>
@@ -116,8 +125,8 @@ export default function InboxPage() {
           <DataTable<Item>
             rows={rows}
             rowKey={key}
-            empty="Nothing waits for you"
-            emptyHint="Requests, permits, appeals and the rest appear here as they come in."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
               {
                 key: 'pick',
@@ -126,7 +135,7 @@ export default function InboxPage() {
                   i.bulk ? (
                     <Checkbox
                       label=""
-                      aria-label={`Select ${inboxLabel(i.type)}`}
+                      aria-label={t('selectItem', { what: text.type(i.type) })}
                       checked={picked.has(key(i))}
                       onChange={(e) => toggle(i, e.target.checked)}
                     />
@@ -134,29 +143,29 @@ export default function InboxPage() {
               },
               {
                 key: 'type',
-                header: 'What',
+                header: t('what'),
                 cell: (i) => (
                   <Link className="table__link" href={INBOX_TYPE[i.type]?.href(i.id) ?? '/'}>
-                    {inboxLabel(i.type)}
+                    {text.type(i.type)}
                     {i.number ? ` ${i.number}` : ''}
                   </Link>
                 ),
               },
-              { key: 'kind', header: 'Kind', cell: (i) => i.kind ?? '—' },
-              { key: 'age', header: 'Waited', cell: (i) => waited(i.requestedAt, now) },
+              { key: 'kind', header: c('kind'), cell: (i) => (i.kind ? label(i.kind) : '—') },
+              { key: 'age', header: t('waited'), cell: (i) => text.waited(i.requestedAt, now) },
               {
                 key: 'due',
-                header: 'Due',
-                cell: (i) => (i.overdue ? <Badge tone="error">Overdue</Badge> : formatDateTime(i.dueAt)),
+                header: t('due'),
+                cell: (i) => (i.overdue ? <Badge tone="error">{t('overdue')}</Badge> : f.dateTime(i.dueAt)),
               },
               {
                 key: 'who',
-                header: 'Decides',
+                header: t('decides'),
                 cell: (i) =>
                   i.authority?.decider === 'board' ? (
-                    <Badge tone="beige">The board (above {i.authority.limit} EGP)</Badge>
+                    <Badge tone="beige">{t('board', { limit: f.money(i.authority.limit) })}</Badge>
                   ) : (
-                    'You'
+                    t('you')
                   ),
               },
             ]}

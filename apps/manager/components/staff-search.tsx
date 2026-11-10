@@ -1,19 +1,14 @@
 'use client';
 
+import { useT } from '@jiwar/i18n';
+import { useCommonT } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { fetchers, keys, type StaffSearchHit } from '@/lib/queries';
-
-const KIND: Record<StaffSearchHit['type'], string> = {
-  unit: 'Units',
-  building: 'Buildings',
-  resident: 'Residents',
-  staff: 'Staff',
-  ticket: 'Tickets',
-  asset: 'Assets',
-};
+import ar from '@/messages/ar/shell-components';
+import en from '@/messages/en/shell-components';
 
 /** Where a hit opens. */
 function hrefOf(h: StaffSearchHit): string {
@@ -39,12 +34,14 @@ function hrefOf(h: StaffSearchHit): string {
  * short pause; `/` focuses it.
  */
 export function StaffSearch() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const [text, setText] = useState('');
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setQ(text.trim()), 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setQ(text.trim()), 250);
+    return () => clearTimeout(timer);
   }, [text]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -65,14 +62,14 @@ export function StaffSearch() {
   return (
     <div className="search" style={{ position: 'relative' }}>
       <label className="sr-only" htmlFor="staff-search">
-        Search
+        {c('search')}
       </label>
       <Search aria-hidden size={16} />
       <input
         id="staff-search"
         className="input"
         type="search"
-        placeholder="Search units, people, tickets… ( / )"
+        placeholder={t('searchPlaceholder')}
         value={text}
         maxLength={64}
         autoComplete="off"
@@ -84,12 +81,12 @@ export function StaffSearch() {
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
       {open && q.length >= 2 ? (
-        <div className="card" role="listbox" style={{ position: 'absolute', top: '100%', right: 0, width: 360, zIndex: 20, padding: 8 }}>
-          {hits.isPending ? <div className="t-meta">Searching…</div> : null}
-          {hits.isSuccess && rows.length === 0 ? <div className="t-meta">Nothing found</div> : null}
+        <div className="card" role="listbox" style={{ position: 'absolute', top: '100%', insetInlineEnd: 0, width: 360, zIndex: 20, padding: 8 }}>
+          {hits.isPending ? <div className="t-meta">{t('searching')}</div> : null}
+          {hits.isSuccess && rows.length === 0 ? <div className="t-meta">{t('nothingFound')}</div> : null}
           {kinds.map((k) => (
             <div key={k} className="stack stack--sm" style={{ marginBottom: 8 }}>
-              <div className="t-label">{KIND[k]}</div>
+              <div className="t-label">{t(`kind.${k}`)}</div>
               {rows
                 .filter((h) => h.type === k)
                 .map((h) => (

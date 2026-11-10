@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, relativeTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import { Badge, Button, ButtonLink, Card, EmptyState, PageHeader, Segmented, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Bell } from 'lucide-react';
@@ -11,6 +12,8 @@ import { api } from '@/lib/api';
 import { notificationHref, notificationText } from '@/lib/notifications';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Notification } from '@/lib/queries';
+import ar from '@/messages/ar/notifications-page';
+import en from '@/messages/en/notifications-page';
 
 type View = 'unread' | 'all';
 
@@ -20,6 +23,9 @@ type View = 'unread' | 'all';
  * read. Read notifications are removed by the API after its retention period.
  */
 export default function NotificationsPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const { can } = usePermissions();
   const [view, setView] = useState<View>('unread');
@@ -34,31 +40,31 @@ export default function NotificationsPage() {
   });
   const readAll = useAction(() => unwrap(api.POST('/api/v1/me/notifications/read-all')), {
     invalidate: [keys.notificationsAll],
-    onDone: (result) => toast.show(result.read === 1 ? '1 notification marked read.' : `${result.read} notifications marked read.`),
+    onDone: (result) => toast.show(t('markedRead', { n: result.read })),
   });
 
   return (
     <>
       <PageHeader
-        title="Notifications"
-        description="What the compound told you. Your notification settings decide what is also sent by email, never what is listed here."
+        title={t('title')}
+        description={t('description')}
         actions={
           <>
-            <ButtonLink href="/account">Settings</ButtonLink>
+            <ButtonLink href="/account">{t('settings')}</ButtonLink>
             <Button variant="primary" disabled={unread === 0} loading={readAll.isPending} onClick={() => readAll.mutate(undefined)}>
-              Mark all read
+              {t('markAllRead')}
             </Button>
           </>
         }
       />
       <div className="row" style={{ marginBottom: 16 }}>
         <Segmented<View>
-          label="Which notifications"
+          label={t('which')}
           value={view}
           onChange={setView}
           options={[
-            { value: 'unread', label: unread ? `Unread (${unread > 99 ? '99+' : unread})` : 'Unread' },
-            { value: 'all', label: 'All' },
+            { value: 'unread', label: unread ? t('unreadCount', { count: unread > 99 ? '99+' : unread }) : t('unread') },
+            { value: 'all', label: t('all') },
           ]}
         />
       </div>
@@ -69,7 +75,7 @@ export default function NotificationsPage() {
             <ul className="list">
               {list.rows.map((n) => {
                 const href = notificationHref(n, can);
-                const text = notificationText(n);
+                const text = notificationText(n, locale);
                 const isUnread = n.readAt === null;
                 return (
                   <li key={n.id} className={`list__item${isUnread ? ' list__item--unread' : ''}`}>
@@ -89,16 +95,16 @@ export default function NotificationsPage() {
                         ) : (
                           <span style={{ fontWeight: isUnread ? 600 : 400, color: 'var(--color-ink)' }}>{text}</span>
                         )}
-                        {n.priority === 'critical' ? <Badge tone="error">Urgent</Badge> : null}
+                        {n.priority === 'critical' ? <Badge tone="error">{t('urgent')}</Badge> : null}
                       </span>
-                      <span className="list__meta" title={formatDateTime(n.createdAt)}>
-                        {relativeTime(n.createdAt)}
-                        {isUnread ? '' : ' · read'}
+                      <span className="list__meta" title={f.dateTime(n.createdAt)}>
+                        {f.relative(n.createdAt)}
+                        {isUnread ? '' : t('readSuffix')}
                       </span>
                     </span>
                     {isUnread ? (
                       <Button size="sm" disabled={read.isPending && read.variables === n.id} onClick={() => read.mutate(n.id)}>
-                        Mark read
+                        {t('markRead')}
                       </Button>
                     ) : null}
                   </li>
@@ -106,11 +112,9 @@ export default function NotificationsPage() {
               })}
             </ul>
           ) : (
-            <EmptyState title={view === 'unread' ? 'Nothing unread' : 'No notifications'} icon={<Bell aria-hidden />}>
+            <EmptyState title={view === 'unread' ? t('nothingUnread') : t('noNotifications')} icon={<Bell aria-hidden />}>
               <p>
-                {view === 'unread'
-                  ? 'You have read everything. Earlier notifications are under All.'
-                  : 'Emergencies, tickets that need a dispatcher, parcels held too long and deletion requests appear here.'}
+                {view === 'unread' ? t('allRead') : t('emptyAll')}
               </p>
             </EmptyState>
           )}

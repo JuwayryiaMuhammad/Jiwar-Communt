@@ -1,0 +1,57 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/fin-cash-flow.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'التدفق النقدي',
+  description:
+    'من اليوم: أرصدة الحسابات البنكية والنقدية، وما جدولته المدفوعات المستحقة للموردين بالفعل، وما ستدخله مستحقات السكان بمعدل التحصيل في الكمبوند.',
+  minimumTitle: 'الحد الأدنى للنقدية',
+  minimumDescription:
+    'أقل رصيد نقدي تريد الإدارة الاحتفاظ به. تُعلَّم أي فترة في التوقعات تنتهي دون هذا الحد، ومن يطّلع على التدفق النقدي يُنبَّه عند أول انخفاض، مرة واحدة في اليوم على الأكثر.',
+  minimumSaved: 'تم حفظ الحد الأدنى للنقدية.',
+  minimumField: 'الحد الأدنى بالجنيه',
+  turnOff: 'إيقاف',
+  by: 'حسب',
+  byWeek: 'بالأسبوع',
+  byMonth: 'بالشهر',
+  periods: 'الفترات',
+  weeks: '{n, plural, =0 {0 أسبوع} one {أسبوع واحد} two {أسبوعان} few {# أسابيع} many {# أسبوعًا} other {# أسبوع}}',
+  months: '{n, plural, =0 {0 شهر} one {شهر واحد} two {شهران} few {# أشهر} many {# شهرًا} other {# شهر}}',
+  exportCsv: 'تصدير CSV',
+  cashOnHand: 'النقدية المتاحة',
+  accounts: '{n, plural, =0 {لا حسابات} one {حساب واحد} two {حسابان} few {# حسابات} many {# حسابًا} other {# حساب}}',
+  liquidity: 'السيولة',
+  spentPerDay: 'يُصرف {amount} يوميًا في آخر 90 يومًا',
+  collectionRate: 'معدل التحصيل',
+  notSet: 'غير محدد',
+  noNotice: 'بلا تنبيه',
+  belowNow: 'الرصيد دونه الآن',
+  belowFrom: 'يقل عنه من {day}',
+  aboveThroughout: 'أعلى منه طوال الفترة',
+  forecastTitle: 'التوقعات',
+  forecastDescription:
+    'المدفوعات المتأخرة للموردين ({count}، {amount}) تقع في الفترة الأولى. لا تُحسب مستحقات السكان المتأخرة ({overdue}) ولا المتنازع عليها ({disputed}).',
+  'col.period': 'الفترة',
+  'col.dues': 'المستحقات',
+  'col.expectedIn': 'المتوقع دخوله',
+  'col.out': 'الخارج',
+  'col.net': 'الصافي',
+  'col.closing': 'الرصيد الختامي',
+  belowMinimum: 'دون الحد الأدنى',
+  outTitle: 'ما يخرج',
+  outDescription: 'فقط ما جدولته المدفوعات المستحقة بالفعل: لا شيء مفترض.',
+  'col.from': 'من',
+  'col.vendorInvoices': 'فواتير الموردين',
+  'col.contractPayments': 'دفعات العقود',
+  'col.purchases': 'المشتريات',
+  'col.advances': 'السلف والإفراجات',
+  'col.retentions': 'المبالغ المحتجزة',
+  inTitle: 'ما يدخل',
+  inDescription: 'المستحقات بمعدل التحصيل، والأموال المحصّلة التي لم تدخل حسابًا بعد.',
+  'col.invoiced': 'المفوتر',
+  'col.projected': 'المتوقع',
+  'col.expected': 'المرجّح',
+  'col.inTransit': 'في الطريق',
+};
+
+export default ar;

@@ -2,16 +2,19 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Checkbox, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Checkbox, Dialog, Field, Input, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { fetchers, keys } from '@/lib/queries';
-import { METHOD_TEXT, needsReference, validMoney, validReference } from './logic';
+import ar from '@/messages/ar/fin-dialogs';
+import en from '@/messages/en/fin-dialogs';
+import { useFinanceCode } from './codes';
+import { needsReference, OFFICE_METHODS, validMoney, validReference } from './logic';
 
-type Method = 'cash' | 'bank_transfer' | 'cheque';
+type Method = (typeof OFFICE_METHODS)[number];
 const day = (n = 0) => new Date(Date.now() + n * 86_400_000).toLocaleDateString('en-CA');
 
 /**
@@ -20,6 +23,10 @@ const day = (n = 0) => new Date(Date.now() + n * 86_400_000).toLocaleDateString(
  * issued; a wrong record is reversed, never edited.
  */
 export function RecordPaymentDialog({ unitId: fixedUnit, onClose }: { unitId?: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const code = useFinanceCode();
   const toast = useToast();
   const [unitId, setUnitId] = useState(fixedUnit ?? '');
   const statement = useQuery({ queryKey: keys.statement(unitId), queryFn: () => fetchers.statement(unitId), enabled: unitId !== '' });
@@ -45,7 +52,7 @@ export function RecordPaymentDialog({ unitId: fixedUnit, onClose }: { unitId?: s
     {
       invalidate: [keys.paymentsAll, keys.invoicesAll],
       onDone: (p) => {
-        toast.show(`Recorded. Receipt ${p.receiptNumber}; the unit is told.`);
+        toast.show(t('record.done', { receipt: p.receiptNumber }));
         onClose();
       },
     },
@@ -64,21 +71,21 @@ export function RecordPaymentDialog({ unitId: fixedUnit, onClose }: { unitId?: s
     <Dialog
       open
       onClose={onClose}
-      title="Record a payment made at the office"
-      description="Cash, a bank transfer or a cheque. At most what is owed: the office never takes credit."
+      title={t('record.title')}
+      description={t('record.description')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Record payment
+            {t('record.confirm')}
           </Button>
         </>
       }
     >
       <div className="form">
         {fixedUnit ? null : (
-          <Field label="Unit">
+          <Field label={c('unit')}>
             {(p) => (
               <UnitPicker
                 {...p}
@@ -93,18 +100,19 @@ export function RecordPaymentDialog({ unitId: fixedUnit, onClose }: { unitId?: s
         )}
         {statement.data ? (
           <p className="t-secondary">
-            Owed: {egp(statement.data.outstanding)}
-            {Number(statement.data.credit) > 0 ? ` · credit ${egp(statement.data.credit)}` : ''}
+            {Number(statement.data.credit) > 0
+              ? t('record.owedCredit', { amount: fmt.money(statement.data.outstanding), credit: fmt.money(statement.data.credit) })
+              : t('record.owed', { amount: fmt.money(statement.data.outstanding) })}
           </p>
         ) : null}
         {open.length > 1 ? (
-          <Field label="Pay these invoices" hint="None picked: the oldest due first.">
+          <Field label={t('record.pick')} hint={t('record.pickHint')}>
             {() => (
               <div className="stack stack--sm">
                 {open.map((i) => (
                   <Checkbox
                     key={i.id}
-                    label={`${i.number} · due ${i.dueOn} · owes ${egp(i.outstanding)}`}
+                    label={t('record.invoiceOption', { number: i.number, due: fmt.day(i.dueOn), amount: fmt.money(i.outstanding) })}
                     checked={picked.includes(i.id)}
                     onChange={(e) => setPicked(e.target.checked ? [...picked, i.id] : picked.filter((x) => x !== i.id))}
                   />
@@ -114,28 +122,34 @@ export function RecordPaymentDialog({ unitId: fixedUnit, onClose }: { unitId?: s
           </Field>
         ) : null}
         <Field
-          label="Amount, EGP"
-          error={fieldError(save.error, 'amount') ?? (amount && validMoney(amount) && Number(amount) > owed ? `At most ${egp(owed.toFixed(2))}.` : undefined)}
+          label={t('amountEgp')}
+          error={
+            fieldError(save.error, 'amount') ??
+            (amount && validMoney(amount) && Number(amount) > owed ? t('record.atMost', { amount: fmt.money(owed.toFixed(2)) }) : undefined)
+          }
         >
           {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
         </Field>
-        <Field label="Method">
+        <Field label={t('record.method')}>
           {(p) => (
             <Select {...p} value={method} onChange={(e) => setMethod(e.target.value as Method)}>
-              {(['cash', 'bank_transfer', 'cheque'] as const).map((m) => (
+              {OFFICE_METHODS.map((m) => (
                 <option key={m} value={m}>
-                  {METHOD_TEXT[m]}
+                  {code('method', m)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         {needsReference(method) ? (
-          <Field label={method === 'cheque' ? 'Cheque number' : 'Transfer reference'} error={fieldError(save.error, 'reference') ?? (reference && !validReference(reference) ? 'Letters, digits, / and - only.' : undefined)}>
+          <Field
+            label={method === 'cheque' ? t('record.chequeNumber') : t('record.transferReference')}
+            error={fieldError(save.error, 'reference') ?? (reference && !validReference(reference) ? t('referenceInvalid') : undefined)}
+          >
             {(p) => <Input {...p} maxLength={40} value={reference} onChange={(e) => setReference(e.target.value)} />}
           </Field>
         ) : null}
-        <Field label="Paid on" hint="Today or up to 31 days ago." error={fieldError(save.error, 'paidOn')}>
+        <Field label={t('record.paidOn')} hint={t('record.paidOnHint')} error={fieldError(save.error, 'paidOn')}>
           {(p) => <Input {...p} type="date" min={day(-31)} max={day()} value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />

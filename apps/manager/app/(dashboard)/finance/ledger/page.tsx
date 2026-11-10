@@ -1,18 +1,32 @@
 'use client';
 
-import { useErrorText, formatDateTime } from '@jiwar/api';
+import { useErrorText } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Alert, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Select } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Select, useCommonT, useLabel } from '@jiwar/ui';
 import { Download } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
-import { firstOfMonth, LEDGER_TEXT, METHOD_TEXT } from '@/components/finance/logic';
+import { useFinanceCode } from '@/components/finance/codes';
+import { firstOfMonth } from '@/components/finance/logic';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type LedgerEntry, type LedgerFilters, type LedgerType } from '@/lib/queries';
+import ar from '@/messages/ar/fin-ledger';
+import en from '@/messages/en/fin-ledger';
 
 const today = () => new Date().toLocaleDateString('en-CA');
+
+const TYPES: readonly LedgerType[] = [
+  'invoice',
+  'credit_note',
+  'payment',
+  'payment_reversal',
+  'refund',
+  'refund_reversal',
+  'credit_applied',
+  'allocation_release',
+];
 
 /**
  * The compound's ledger (ADR 0048): every money event of a period, from
@@ -21,6 +35,11 @@ const today = () => new Date().toLocaleDateString('en-CA');
  * money move between a unit's credit and an invoice.
  */
 export default function LedgerPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const code = useFinanceCode();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('finance.reports');
   const [from, setFrom] = useState(firstOfMonth(today()));
@@ -31,7 +50,7 @@ export default function LedgerPage() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const filters: LedgerFilters = { from, to, type, building: building.trim() };
-  const list = useCursorList(keys.ledger(filters), (c) => fetchers.ledger(filters, c), { enabled: allowed && Boolean(from && to) });
+  const list = useCursorList(keys.ledger(filters), (cursor) => fetchers.ledger(filters, cursor), { enabled: allowed && Boolean(from && to) });
   const exportCsv = async () => {
     setExporting(true);
     setExportError(null);
@@ -46,37 +65,37 @@ export default function LedgerPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Ledger" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Ledger"
-        description="Every invoice, credit note, payment and refund of the period, and their reversals, oldest first."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button icon={<Download aria-hidden />} loading={exporting} onClick={() => void exportCsv()}>
-            Export CSV
+            {t('exportCsv')}
           </Button>
         }
       />
       <div className="toolbar">
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
-        <Field label="Type">
+        <Field label={c('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={c('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={c('type')}>
           {(p) => (
             <Select {...p} value={type} onChange={(e) => setType(e.target.value as LedgerType | '')}>
-              <option value="">Any</option>
-              {Object.entries(LEDGER_TEXT).map(([v, label]) => (
+              <option value="">{t('any')}</option>
+              {TYPES.map((v) => (
                 <option key={v} value={v}>
-                  {label}
+                  {code('ledger', v)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Building">{(p) => <Input {...p} value={building} onChange={(e) => setBuilding(e.target.value)} />}</Field>
+        <Field label={c('building')}>{(p) => <Input {...p} value={building} onChange={(e) => setBuilding(e.target.value)} />}</Field>
       </div>
       {exportError ? <Alert tone="error">{exportError}</Alert> : null}
       <Card flush>
@@ -84,25 +103,25 @@ export default function LedgerPage() {
           <DataTable<LedgerEntry>
             rows={list.rows}
             rowKey={(e) => `${e.type}-${e.id}`}
-            empty="Nothing in this period"
+            empty={t('empty')}
             columns={[
-              { key: 'd', header: 'Day', cell: (e) => <span title={formatDateTime(e.at)}>{e.day}</span> },
-              { key: 't', header: 'Type', cell: (e) => LEDGER_TEXT[e.type] ?? e.type },
-              { key: 'n', header: 'Number', cell: (e) => <span className="t-mono">{e.number}</span> },
-              { key: 'r', header: 'Related', cell: (e) => (e.relatedNumber ? <span className="t-mono">{e.relatedNumber}</span> : '') },
+              { key: 'd', header: t('day'), cell: (e) => <span title={f.dateTime(e.at)}>{f.day(e.day)}</span> },
+              { key: 't', header: c('type'), cell: (e) => code('ledger', e.type) },
+              { key: 'n', header: t('number'), cell: (e) => <span className="t-mono ltr">{e.number}</span> },
+              { key: 'r', header: t('related'), cell: (e) => (e.relatedNumber ? <span className="t-mono ltr">{e.relatedNumber}</span> : '') },
               {
                 key: 'u',
-                header: 'Unit',
+                header: c('unit'),
                 cell: (e) => (
-                  <Link className="t-mono" href={`/finance/units/${e.unitId}`}>
+                  <Link className="t-mono ltr" href={`/finance/units/${e.unitId}`}>
                     {e.unitCode}
                   </Link>
                 ),
               },
-              { key: 'm', header: 'How', cell: (e) => (e.method ? (METHOD_TEXT[e.method] ?? e.method) : (e.channel ?? '')) },
-              { key: 'dr', header: 'Debit', cell: (e) => (e.debit ? egp(e.debit) : '') },
-              { key: 'cr', header: 'Credit', cell: (e) => (e.credit ? egp(e.credit) : '') },
-              { key: 'a', header: 'Moved', cell: (e) => (e.debit || e.credit ? '' : egp(e.amount)) },
+              { key: 'm', header: t('how'), cell: (e) => (e.method ? code('method', e.method) : e.channel ? label(e.channel) : '') },
+              { key: 'dr', header: t('debit'), cell: (e) => (e.debit ? f.money(e.debit) : '') },
+              { key: 'cr', header: t('credit'), cell: (e) => (e.credit ? f.money(e.credit) : '') },
+              { key: 'a', header: t('moved'), cell: (e) => (e.debit || e.credit ? '' : f.money(e.amount)) },
             ]}
           />
           <LoadMore query={list} />

@@ -2,13 +2,16 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { StepUpDialog } from '@/components/step-up-dialog';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
-import { REFUND_CHANNEL_TEXT, validMoney, validReference } from './logic';
+import ar from '@/messages/ar/fin-dialogs';
+import en from '@/messages/en/fin-dialogs';
+import { useFinanceCode } from './codes';
+import { REFUND_CHANNELS, validMoney, validReference } from './logic';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
@@ -19,9 +22,13 @@ const today = () => new Date().toLocaleDateString('en-CA');
  * dashboard first.
  */
 export function RefundDialog({ unitId, credit, onClose }: { unitId: string; credit: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const code = useFinanceCode();
   const toast = useToast();
   const [amount, setAmount] = useState(credit);
-  const [channel, setChannel] = useState<'cash' | 'bank_transfer' | 'gateway_manual'>('cash');
+  const [channel, setChannel] = useState<(typeof REFUND_CHANNELS)[number]>('cash');
   const [reference, setReference] = useState('');
   const [refundedOn, setRefundedOn] = useState(today());
   const [confirming, setConfirming] = useState(false);
@@ -36,7 +43,7 @@ export function RefundDialog({ unitId, credit, onClose }: { unitId: string; cred
     {
       invalidate: [keys.invoicesAll],
       onDone: (r) => {
-        toast.show(`Refund ${r.number}: ${egp(r.amount)} paid back.`);
+        toast.show(t('refund.done', { number: r.number, amount: fmt.money(r.amount) }));
         onClose();
       },
     },
@@ -47,37 +54,37 @@ export function RefundDialog({ unitId, credit, onClose }: { unitId: string; cred
       <Dialog
         open={!confirming}
         onClose={onClose}
-        title="Refund the unit’s credit"
-        description={`It holds ${egp(credit)}. Pay it back first, then record it here.`}
+        title={t('refund.title')}
+        description={t('refund.description', { amount: fmt.money(credit) })}
         onSubmit={() => ready && setConfirming(true)}
         footer={
           <>
-            <Button onClick={onClose}>Cancel</Button>
+            <Button onClick={onClose}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-              Record refund
+              {t('refund.confirm')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="Amount, EGP" error={fieldError(save.error, 'amount')}>
+          <Field label={t('amountEgp')} error={fieldError(save.error, 'amount')}>
             {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
           </Field>
-          <Field label="Paid back by">
+          <Field label={t('refund.channel')}>
             {(p) => (
               <Select {...p} value={channel} onChange={(e) => setChannel(e.target.value as typeof channel)}>
-                {Object.entries(REFUND_CHANNEL_TEXT).map(([v, label]) => (
+                {REFUND_CHANNELS.map((v) => (
                   <option key={v} value={v}>
-                    {label}
+                    {code('refundChannel', v)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Reference" hint="The transfer’s or the provider’s own, if any." error={fieldError(save.error, 'reference')}>
+          <Field label={t('refund.reference')} hint={t('refund.referenceHint')} error={fieldError(save.error, 'reference')}>
             {(p) => <Input {...p} value={reference} onChange={(e) => setReference(e.target.value)} />}
           </Field>
-          <Field label="Paid back on" error={fieldError(save.error, 'refundedOn')}>
+          <Field label={t('refund.on')} error={fieldError(save.error, 'refundedOn')}>
             {(p) => <Input {...p} type="date" value={refundedOn} onChange={(e) => setRefundedOn(e.target.value)} />}
           </Field>
           <ErrorAlert error={save.error} />
@@ -85,8 +92,8 @@ export function RefundDialog({ unitId, credit, onClose }: { unitId: string; cred
       </Dialog>
       {confirming ? (
         <StepUpDialog
-          title="Confirm it is you"
-          description="A refund pays money out: it is recorded only after a fresh code sent to your email."
+          title={t('refund.stepTitle')}
+          description={t('refund.stepDescription')}
           onClose={() => setConfirming(false)}
           onVerified={() => {
             setConfirming(false);

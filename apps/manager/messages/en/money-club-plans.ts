@@ -1,0 +1,28 @@
+/** The club's plans (ADR 0044): app/(dashboard)/club/plans. */
+export default {
+  title: 'Club plans',
+  description: 'What a payment at the office buys: a period of the plan. Residents see the active plans and their prices.',
+  newPlan: 'New plan',
+  empty: 'No plan yet',
+  'col.plan': 'Plan',
+  'col.duration': 'Duration',
+  'col.price': 'Price',
+  retired: 'Retired',
+  retire: 'Retire',
+  restore: 'Restore',
+  offeredAgain: '{name} is offered again.',
+  retiredToast: '{name} is retired.',
+  // The plan's dialog.
+  editTitle: 'Edit {name}',
+  dialogDescription: 'A plan says how long a payment keeps a membership active. Its price is shown; the amount paid is what the accountant records.',
+  saved: '{name} is saved.',
+  nameEn: 'Name in English',
+  nameAr: 'Name in Arabic',
+  duration: 'Duration',
+  durationHint: 'Never changes once created.',
+  'option.custom': 'A number of days',
+  days: 'Days',
+  daysRange: 'From 1 to 730.',
+  price: 'Price, EGP',
+  moneyInvalid: 'Up to two decimals, more than zero.',
+} as const;

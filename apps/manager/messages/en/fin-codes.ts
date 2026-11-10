@@ -1,0 +1,63 @@
+/** The finance codes and the finance helpers' words (ADR 0046, 0048, 0091, 0092): components/finance. */
+export default {
+  // Invoice kinds issued by hand.
+  'kind.service_charge': 'Service charge',
+  'kind.maintenance': 'Maintenance',
+  'kind.other': 'Other',
+  // The kinds only the charges port issues (ADR 0070, 0074).
+  'kind.facility': 'Facility booking',
+  'kind.club': 'Club membership',
+  'kind.fine': 'Vehicle fine',
+  'kind.damage': 'Works damage',
+  'frequency.monthly': 'Monthly',
+  'frequency.quarterly': 'Quarterly',
+  'frequency.annual': 'Annual',
+  'method.cash': 'Cash',
+  'method.bank_transfer': 'Bank transfer',
+  'method.cheque': 'Cheque',
+  'method.card': 'Card',
+  'method.wallet': 'Mobile wallet',
+  // What became of a gateway callback.
+  'outcome.applied': 'Paid',
+  'outcome.duplicate': 'Repeated callback (ignored)',
+  'outcome.failed_attempt': 'Failed attempt',
+  'outcome.not_final': 'Not final yet',
+  'outcome.verification_pending': 'Waiting for Paymob to confirm',
+  'outcome.contradicted': 'Paymob contradicted it',
+  'outcome.order_mismatch': 'Another checkout’s order',
+  'outcome.amount_mismatch': 'Wrong amount',
+  'outcome.unknown_reference': 'Unknown checkout',
+  // A unit's ledger lines.
+  'ledger.invoice': 'Invoice',
+  'ledger.credit_note': 'Credit note',
+  'ledger.payment': 'Payment',
+  'ledger.payment_reversal': 'Payment reversed',
+  'ledger.refund': 'Refund',
+  'ledger.refund_reversal': 'Refund reversed',
+  'ledger.credit_applied': 'Credit applied',
+  'ledger.allocation_release': 'Released to credit',
+  'refundChannel.cash': 'Cash',
+  'refundChannel.bank_transfer': 'Bank transfer',
+  'refundChannel.gateway_manual': 'In the payment provider’s dashboard',
+  // Instalments the API would refuse.
+  'instalments.count': 'Between 2 and 24 instalments.',
+  'instalments.minimum': 'Each instalment is at least {amount}.',
+  'instalments.order': 'Each instalment falls due after the one before.',
+  'instalments.sum': 'They must add up to {amount}.',
+  // Paymob keys.
+  'key.prefix': 'Starts with {test} or {live}.',
+  'key.live': 'Live mode takes a live key.',
+  'key.test': 'Sandbox takes a test key.',
+  // Cash flow (ADR 0091).
+  'cashFlow.noHistory': 'Nothing fell due in the last 90 days: no resident money is expected',
+  'cashFlow.basis': '{collected} of {due} due {from} – {to}',
+  'cashFlow.days': '{n, plural, one {# day} other {# days}}',
+  // What a general-ledger reconciliation line checks (ADR 0092).
+  'reconciliation.receivables': 'Receivables',
+  'reconciliation.unit_credit': 'Unit credit',
+  'reconciliation.deposits_held': 'Deposits held',
+  'reconciliation.payables': 'Payables',
+  'reconciliation.retentions': 'Retentions',
+  'reconciliation.vendor_advances': 'Vendor advances',
+  'reconciliation.cash_account': 'Bank or cash account',
+} as const;

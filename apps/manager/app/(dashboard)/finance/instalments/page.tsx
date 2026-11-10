@@ -1,62 +1,54 @@
 'use client';
 
-import { formatDateTime, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge, useCommonT } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type InstalmentPlan, type InstalmentPlanFilters } from '@/lib/queries';
+import ar from '@/messages/ar/fin-instalments';
+import en from '@/messages/en/fin-instalments';
 
-type View = 'active' | 'settled' | 'cancelled' | 'all';
+const VIEWS = ['active', 'settled', 'cancelled', 'all'] as const;
+type View = (typeof VIEWS)[number];
 
 /**
  * Instalment plans (ADR 0048): an invoice's outstanding split into
  * instalment invoices. Split one from its invoice; cancel one here.
  */
 export default function InstalmentPlansPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('finance.invoice');
   const [view, setView] = useState<View>('active');
   const filters: InstalmentPlanFilters = { status: view === 'all' ? '' : view };
-  const list = useCursorList(keys.instalmentPlans(filters), (c) => fetchers.instalmentPlans(filters, c), { enabled: allowed });
+  const list = useCursorList(keys.instalmentPlans(filters), (cursor) => fetchers.instalmentPlans(filters, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Instalment plans" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Instalment plans"
-        description="Invoices split into instalments. To split one, open the invoice and choose “Split into instalments”."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Segmented<View>
-          label="Plans shown"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'active', label: 'Active' },
-            { value: 'settled', label: 'Settled' },
-            { value: 'cancelled', label: 'Cancelled' },
-            { value: 'all', label: 'All' },
-          ]}
-        />
+        <Segmented<View> label={t('shown')} value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))} />
       </div>
       <Card flush>
         <QueryState query={list}>
           <DataTable<InstalmentPlan>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty="No plan"
+            empty={t('empty')}
             columns={[
               {
                 key: 'n',
-                header: 'Plan',
+                header: t('col.plan'),
                 cell: (p) => (
                   <Link className="t-mono" href={`/finance/instalments/${p.id}`}>
                     {p.number}
@@ -65,19 +57,19 @@ export default function InstalmentPlansPage() {
               },
               {
                 key: 'u',
-                header: 'Unit',
+                header: c('unit'),
                 cell: (p) => (
                   <Link className="t-mono" href={`/finance/units/${p.unitId}`}>
                     {p.unitCode}
                   </Link>
                 ),
               },
-              { key: 'i', header: 'Invoice', cell: (p) => <span className="t-mono">{p.invoiceNumber}</span> },
-              { key: 'c', header: 'Instalments', cell: (p) => p.instalmentCount },
-              { key: 't', header: 'Total', cell: (p) => egp(p.total) },
-              { key: 'o', header: 'Owed', cell: (p) => egp(p.outstanding) },
-              { key: 's', header: 'Status', cell: (p) => <StatusBadge status={p.status} /> },
-              { key: 'w', header: 'Set up', cell: (p) => <span title={formatDateTime(p.createdAt)}>{relativeTime(p.createdAt)}</span> },
+              { key: 'i', header: t('col.invoice'), cell: (p) => <span className="t-mono">{p.invoiceNumber}</span> },
+              { key: 'c', header: t('col.instalments'), cell: (p) => fmt.number(p.instalmentCount) },
+              { key: 't', header: c('total'), cell: (p) => fmt.money(p.total) },
+              { key: 'o', header: t('col.owed'), cell: (p) => fmt.money(p.outstanding) },
+              { key: 's', header: c('status'), cell: (p) => <StatusBadge status={p.status} /> },
+              { key: 'w', header: t('col.setUp'), cell: (p) => <span title={fmt.dateTime(p.createdAt)}>{fmt.relative(p.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

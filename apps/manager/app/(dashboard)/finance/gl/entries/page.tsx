@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -14,6 +15,8 @@ import {
   PageHeader,
   ReasonCodeDialog,
   Select,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -24,12 +27,13 @@ import { today } from '@/components/security/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/money-gl-entries';
+import en from '@/messages/en/money-gl-entries';
 
 type Manual = Schema<'GlManualEntryView'>;
 type Entry = Schema<'GlEntryView'>;
 type Status = '' | 'pending' | 'approved' | 'rejected' | 'withdrawn';
 
-const money = (v: string) => <span className="t-mono">{v}</span>;
 const TONE: Record<string, 'beige' | 'green' | 'terracotta' | 'dark'> = {
   pending: 'beige',
   approved: 'green',
@@ -37,7 +41,23 @@ const TONE: Record<string, 'beige' | 'green' | 'terracotta' | 'dark'> = {
   withdrawn: 'dark',
 };
 
+/** An account's name in the page's language. */
+function useAccountName() {
+  const { locale } = useLocale();
+  return (a: { nameEn: string; nameAr: string }) => (locale === 'ar' ? a.nameAr : a.nameEn);
+}
+
+/** A debit or credit amount as the ledger writes it, two decimals. */
+function useAmount() {
+  const f = useFormat();
+  return (v: string) => f.number(v, { minimumFractionDigits: 2 });
+}
+
 function NewEntryDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const amountText = useAmount();
+  const accountName = useAccountName();
   const toast = useToast();
   const chart = useQuery({ queryKey: keys.glChart(''), queryFn: () => fetchers.glChart() });
   const choices = (chart.data?.accounts ?? []).filter((a) => a.postable && !a.control);
@@ -47,7 +67,7 @@ function NewEntryDialog({ onClose }: { onClose: () => void }) {
     { accountId: '', side: 'debit', amount: '' },
     { accountId: '', side: 'credit', amount: '' },
   ]);
-  const t = draftTotals(lines);
+  const totals = draftTotals(lines);
   const set = (i: number, patch: Partial<DraftLine>) => setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   const submit = useAction(
     () =>
@@ -63,7 +83,7 @@ function NewEntryDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.glAll],
       onDone: (m) => {
-        toast.show(`${m.number} waits for a second person’s approval.`);
+        toast.show(t('submitted', { number: m.number }));
         onClose();
       },
     },
@@ -72,53 +92,53 @@ function NewEntryDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="A manual journal entry"
-      description="It posts only once someone else who keeps the ledger approves it. Accounts a register keeps (bank and cash, receivables, unit credit, deposits, payables) are corrected in their register, not here."
-      onSubmit={() => t.ready && memo.trim() && submit.mutate(undefined)}
+      title={t('newTitle')}
+      description={t('newDescription')}
+      onSubmit={() => totals.ready && memo.trim() && submit.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary" loading={submit.isPending} disabled={!t.ready || !memo.trim()}>
-            Submit for approval
+          <Button onClick={onClose}>{c('cancel')}</Button>
+          <Button type="submit" variant="primary" loading={submit.isPending} disabled={!totals.ready || !memo.trim()}>
+            {t('submitForApproval')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Day" error={fieldError(submit.error, 'postedOn')}>
+        <Field label={t('day')} error={fieldError(submit.error, 'postedOn')}>
           {(p) => <Input {...p} type="date" value={postedOn} onChange={(e) => setPostedOn(e.target.value)} />}
         </Field>
-        <Field label="What it is for" error={fieldError(submit.error, 'memo')}>
+        <Field label={t('memo')} error={fieldError(submit.error, 'memo')}>
           {(p) => <Input {...p} value={memo} onChange={(e) => setMemo(e.target.value)} />}
         </Field>
         {lines.map((l, i) => (
           <div key={i} className="row" style={{ gap: 8 }}>
-            <Select aria-label="Account" value={l.accountId} onChange={(e) => set(i, { accountId: e.target.value })}>
-              <option value="">Account…</option>
+            <Select aria-label={t('account')} value={l.accountId} onChange={(e) => set(i, { accountId: e.target.value })}>
+              <option value="">{t('accountPick')}</option>
               {choices.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.code} {a.nameEn}
+                  {a.code} {accountName(a)}
                 </option>
               ))}
             </Select>
-            <Select aria-label="Side" value={l.side} onChange={(e) => set(i, { side: e.target.value as DraftLine['side'] })}>
-              <option value="debit">Debit</option>
-              <option value="credit">Credit</option>
+            <Select aria-label={t('side')} value={l.side} onChange={(e) => set(i, { side: e.target.value as DraftLine['side'] })}>
+              <option value="debit">{t('side.debit')}</option>
+              <option value="credit">{t('side.credit')}</option>
             </Select>
-            <Input aria-label="Amount" inputMode="decimal" value={l.amount} onChange={(e) => set(i, { amount: e.target.value })} />
+            <Input aria-label={c('amount')} inputMode="decimal" className="ltr" value={l.amount} onChange={(e) => set(i, { amount: e.target.value })} />
             {lines.length > 2 ? (
               <Button size="sm" onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))}>
-                Remove
+                {c('remove')}
               </Button>
             ) : null}
           </div>
         ))}
         <Button size="sm" onClick={() => setLines((ls) => [...ls, { accountId: '', side: 'debit', amount: '' }])}>
-          Add a line
+          {t('addLine')}
         </Button>
         <p className="t-muted">
-          Debits {t.debit} · credits {t.credit}
-          {t.ready ? '' : ' — they must agree'}
+          {t('totals', { debit: amountText(totals.debit), credit: amountText(totals.credit) })}
+          {totals.ready ? '' : ` — ${t('mustAgree')}`}
         </p>
         <ErrorAlert error={submit.error} />
       </div>
@@ -127,9 +147,11 @@ function NewEntryDialog({ onClose }: { onClose: () => void }) {
 }
 
 function ReverseDialog({ entry, onClose }: { entry: Entry; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [postedOn, setPostedOn] = useState(today());
-  const [memo, setMemo] = useState(`Reverses ${entry.reference ?? ''}`.trim());
+  const [memo, setMemo] = useState(t('reverseMemo', { reference: entry.reference ?? '' }).trim());
   const reverse = useAction(
     () =>
       unwrap(
@@ -141,7 +163,7 @@ function ReverseDialog({ entry, onClose }: { entry: Entry; onClose: () => void }
     {
       invalidate: [keys.glAll],
       onDone: (m) => {
-        toast.show(`${m.number} waits for approval.`);
+        toast.show(t('reverseQueued', { number: m.number }));
         onClose();
       },
     },
@@ -150,23 +172,23 @@ function ReverseDialog({ entry, onClose }: { entry: Entry; onClose: () => void }
     <Dialog
       open
       onClose={onClose}
-      title={`Reverse ${entry.reference ?? 'the entry'}`}
-      description="Its lines the other way round, on a day of an open month, for a second person’s approval."
+      title={entry.reference ? t('reverseTitle', { reference: entry.reference }) : t('reverseTheEntry')}
+      description={t('reverseDescription')}
       onSubmit={() => reverse.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={reverse.isPending}>
-            Write the reversal
+            {t('writeReversal')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Day" error={fieldError(reverse.error, 'postedOn')}>
+        <Field label={t('day')} error={fieldError(reverse.error, 'postedOn')}>
           {(p) => <Input {...p} type="date" value={postedOn} onChange={(e) => setPostedOn(e.target.value)} />}
         </Field>
-        <Field label="Why" error={fieldError(reverse.error, 'memo')}>
+        <Field label={t('why')} error={fieldError(reverse.error, 'memo')}>
           {(p) => <Input {...p} value={memo} onChange={(e) => setMemo(e.target.value)} />}
         </Field>
         <ErrorAlert error={reverse.error} />
@@ -181,6 +203,12 @@ function ReverseDialog({ entry, onClose }: { entry: Entry; onClose: () => void }
  * entry with its lines, a manual one reversible once.
  */
 export default function JournalEntriesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const amountText = useAmount();
+  const accountName = useAccountName();
   const { ready, can, me } = usePermissions();
   const allowed = can('finance.ledger');
   const write = can('finance.ledger_write');
@@ -192,13 +220,16 @@ export default function JournalEntriesPage() {
   const [from, setFrom] = useState(`${today().slice(0, 7)}-01`);
   const [to, setTo] = useState(today());
   const manual = useQuery({ queryKey: keys.glManualEntries(status), queryFn: () => fetchers.glManualEntries(status), enabled: allowed });
-  const journal = useCursorList(keys.glJournal(from, to), (c) => fetchers.glJournal(from, to, c), { enabled: allowed });
+  const journal = useCursorList(keys.glJournal(from, to), (cursor) => fetchers.glJournal(from, to, cursor), { enabled: allowed });
   const decide = useAction(
     ({ id, action }: { id: string; action: 'approve' | 'withdraw' }) =>
       action === 'approve'
         ? unwrap(api.POST('/api/v1/staff/finance/gl/manual-entries/{id}/approve', { params: { path: { id } } }))
         : unwrap(api.POST('/api/v1/staff/finance/gl/manual-entries/{id}/withdraw', { params: { path: { id } } })),
-    { invalidate: [keys.glAll], onDone: (m) => toast.show(`${m.number}: ${m.status}.`) },
+    {
+      invalidate: [keys.glAll],
+      onDone: (m, vars) => toast.show(t(vars.action === 'approve' ? 'approvedToast' : 'withdrawnToast', { number: m.number })),
+    },
   );
   const reject = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
@@ -206,7 +237,7 @@ export default function JournalEntriesPage() {
     {
       invalidate: [keys.glAll],
       onDone: () => {
-        toast.show('Turned down.');
+        toast.show(t('turnedDown'));
         setRejecting(null);
       },
     },
@@ -214,7 +245,7 @@ export default function JournalEntriesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Journal entries" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -222,12 +253,12 @@ export default function JournalEntriesPage() {
   return (
     <>
       <PageHeader
-        title="Journal entries"
-        description="Every money event posts its own entry. A manual entry takes effect once a second person approves it."
+        title={t('title')}
+        description={t('description')}
         actions={
           write ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
-              New manual entry
+              {t('newManual')}
             </Button>
           ) : null
         }
@@ -235,39 +266,42 @@ export default function JournalEntriesPage() {
       <div className="stack">
         <ErrorAlert error={decide.error} />
         <Card flush>
-          <SectionHeader
-            title="Manual entries"
-            description="Approved by someone other than whoever wrote them."
-          />
+          <SectionHeader title={t('manualTitle')} description={t('manualDescription')} />
           <div style={{ padding: 12 }}>
-            <Select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value as Status)}>
-              <option value="pending">Waiting</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Turned down</option>
-              <option value="withdrawn">Withdrawn</option>
-              <option value="">All</option>
+            <Select aria-label={c('status')} value={status} onChange={(e) => setStatus(e.target.value as Status)}>
+              <option value="pending">{t('status.pending')}</option>
+              <option value="approved">{t('status.approved')}</option>
+              <option value="rejected">{t('status.rejected')}</option>
+              <option value="withdrawn">{t('status.withdrawn')}</option>
+              <option value="">{c('all')}</option>
             </Select>
           </div>
           <QueryState query={manual} rows={4}>
             <DataTable<Manual>
               rows={manual.data?.data}
               rowKey={(m) => m.id}
-              empty="No manual entry"
+              empty={t('noManual')}
               columns={[
-                { key: 'n', header: 'Entry', cell: (m) => m.number },
-                { key: 'd', header: 'Day', cell: (m) => m.postedOn },
-                { key: 'm', header: 'For', cell: (m) => m.memo },
+                { key: 'n', header: t('col.entry'), cell: (m) => <span className="ltr">{m.number}</span> },
+                { key: 'd', header: t('col.day'), cell: (m) => f.day(m.postedOn) },
+                { key: 'm', header: t('col.for'), cell: (m) => m.memo },
                 {
                   key: 'l',
-                  header: 'Lines',
+                  header: t('col.lines'),
                   cell: (m) =>
-                    m.lines.map((l) => `${l.code} ${l.debit !== '0.00' ? `Dr ${l.debit}` : `Cr ${l.credit}`}`).join(' · '),
+                    m.lines
+                      .map((l) => `${l.code} ${l.debit !== '0.00' ? t('dr', { amount: amountText(l.debit) }) : t('cr', { amount: amountText(l.credit) })}`)
+                      .join(' · '),
                 },
-                { key: 'b', header: 'By', cell: (m) => m.createdBy.fullName ?? '—' },
+                { key: 'b', header: c('by'), cell: (m) => m.createdBy.fullName ?? '—' },
                 {
                   key: 's',
-                  header: 'Status',
-                  cell: (m) => <Badge tone={TONE[m.status]}>{m.rejectReason ? `${m.status}: ${humanize(m.rejectReason)}` : m.status}</Badge>,
+                  header: c('status'),
+                  cell: (m) => (
+                    <Badge tone={TONE[m.status]}>
+                      {m.rejectReason ? t('statusReason', { status: t(`status.${m.status}`), reason: label(m.rejectReason) }) : t(`status.${m.status}`)}
+                    </Badge>
+                  ),
                 },
                 {
                   key: 'a',
@@ -276,15 +310,15 @@ export default function JournalEntriesPage() {
                     write && m.status === 'pending' ? (
                       mine(m) ? (
                         <Button size="sm" onClick={() => decide.mutate({ id: m.id, action: 'withdraw' })}>
-                          Withdraw
+                          {t('withdraw')}
                         </Button>
                       ) : (
                         <span className="row" style={{ gap: 6 }}>
                           <Button size="sm" variant="primary" onClick={() => decide.mutate({ id: m.id, action: 'approve' })}>
-                            Approve
+                            {c('approve')}
                           </Button>
                           <Button size="sm" onClick={() => setRejecting(m)}>
-                            Turn down
+                            {t('turnDown')}
                           </Button>
                         </span>
                       )
@@ -295,29 +329,30 @@ export default function JournalEntriesPage() {
           </QueryState>
         </Card>
         <Card flush>
-          <SectionHeader title="The journal" description="Every entry of the period, in order, with its lines." />
+          <SectionHeader title={t('journalTitle')} description={t('journalDescription')} />
           <div className="row" style={{ gap: 8, padding: 12 }}>
-            <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-            <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+            <Field label={c('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+            <Field label={c('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
           </div>
           <QueryState query={journal} rows={6}>
             <DataTable<Entry>
               rows={journal.rows}
               rowKey={(e) => e.id}
-              empty="No entry in this period"
+              empty={t('noEntry')}
               columns={[
                 { key: 'q', header: '#', cell: (e) => e.seq },
-                { key: 'd', header: 'Day', cell: (e) => e.postedOn },
-                { key: 's', header: 'From', cell: (e) => humanize(e.source) },
-                { key: 'r', header: 'Reference', cell: (e) => e.reference ?? '—' },
+                { key: 'd', header: t('col.day'), cell: (e) => f.day(e.postedOn) },
+                { key: 's', header: t('col.from'), cell: (e) => label(e.source) },
+                { key: 'r', header: t('col.reference'), cell: (e) => (e.reference ? <span className="ltr">{e.reference}</span> : '—') },
                 {
                   key: 'l',
-                  header: 'Lines',
+                  header: t('col.lines'),
                   cell: (e) => (
                     <span>
                       {e.lines.map((l) => (
                         <span key={l.lineNo} style={{ display: 'block' }}>
-                          {l.code} {l.nameEn} {l.debit !== '0.00' ? <>Dr {money(l.debit)}</> : <>Cr {money(l.credit)}</>}
+                          {l.code} {accountName(l)}{' '}
+                          <span className="t-mono">{l.debit !== '0.00' ? t('dr', { amount: amountText(l.debit) }) : t('cr', { amount: amountText(l.credit) })}</span>
                         </span>
                       ))}
                     </span>
@@ -329,7 +364,7 @@ export default function JournalEntriesPage() {
                   cell: (e) =>
                     write && e.source === 'manual' ? (
                       <Button size="sm" onClick={() => setReversing(e)}>
-                        Reverse
+                        {t('reverse')}
                       </Button>
                     ) : null,
                 },
@@ -344,9 +379,9 @@ export default function JournalEntriesPage() {
       <ReasonCodeDialog
         open={rejecting !== null}
         onClose={() => setRejecting(null)}
-        title={`Turn down ${rejecting?.number ?? ''}`}
+        title={t('rejectTitle', { number: rejecting?.number ?? '' })}
         codes={REASON_CODES.glEntryReject}
-        confirmLabel="Turn down"
+        confirmLabel={t('turnDown')}
         danger
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}

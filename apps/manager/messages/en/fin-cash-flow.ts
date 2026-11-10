@@ -1,0 +1,57 @@
+/** The cash flow forecast (ADR 0091): app/(dashboard)/finance/cash-flow. */
+export default {
+  title: 'Cash flow',
+  description:
+    'From today: the bank and cash accounts’ balances, what payables already schedules out, and what the residents’ dues bring in at the compound’s collection rate.',
+  // The minimum cash dialog.
+  minimumTitle: 'Minimum cash',
+  minimumDescription:
+    'The least cash the compound wants to hold. A period of the forecast closing below it is flagged, and whoever reads cash flow is told once a dip, at most once a day.',
+  minimumSaved: 'Minimum cash saved.',
+  minimumField: 'Minimum, EGP',
+  turnOff: 'Turn off',
+  // The controls.
+  by: 'By',
+  byWeek: 'By week',
+  byMonth: 'By month',
+  periods: 'Periods',
+  weeks: '{n, plural, one {# week} other {# weeks}}',
+  months: '{n, plural, one {# month} other {# months}}',
+  exportCsv: 'Export CSV',
+  // The figures.
+  cashOnHand: 'Cash on hand',
+  accounts: '{n, plural, one {# account} other {# accounts}}',
+  liquidity: 'Liquidity',
+  spentPerDay: '{amount} a day spent over the last 90 days',
+  collectionRate: 'Collection rate',
+  notSet: 'Not set',
+  noNotice: 'No notice',
+  belowNow: 'Below it now',
+  belowFrom: 'Below it from {day}',
+  aboveThroughout: 'Above it throughout',
+  // The tables.
+  forecastTitle: 'The forecast',
+  forecastDescription:
+    'Overdue payables ({count}, {amount}) fall in the first period. Residents’ dues past their day ({overdue}) and under dispute ({disputed}) are not counted.',
+  'col.period': 'Period',
+  'col.dues': 'Dues',
+  'col.expectedIn': 'Expected in',
+  'col.out': 'Out',
+  'col.net': 'Net',
+  'col.closing': 'Closing',
+  belowMinimum: 'Below minimum',
+  outTitle: 'What goes out',
+  outDescription: 'Only what payables already schedules: nothing is invented.',
+  'col.from': 'From',
+  'col.vendorInvoices': 'Vendors’ invoices',
+  'col.contractPayments': 'Contract payments',
+  'col.purchases': 'Purchases',
+  'col.advances': 'Advances and releases',
+  'col.retentions': 'Retentions',
+  inTitle: 'What comes in',
+  inDescription: 'Dues at the collection rate, and money collected but not yet in an account.',
+  'col.invoiced': 'Invoiced',
+  'col.projected': 'Projected',
+  'col.expected': 'Expected',
+  'col.inTransit': 'On its way',
+} as const;

@@ -1,22 +1,26 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardHeader, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Stat, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, CardHeader, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Stat, StatusBadge, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { Back } from '@/components/facilities/bits';
 import { InvoiceDetailDialog } from '@/components/finance/invoice-detail';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type InstalmentPlanDetail } from '@/lib/queries';
+import ar from '@/messages/ar/fin-instalments';
+import en from '@/messages/en/fin-instalments';
 
 const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toLocaleDateString('en-CA');
 
 function CancelPlan({ plan, onClose }: { plan: InstalmentPlanDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const toast = useToast();
   const [dueOn, setDueOn] = useState(inDays(14));
   const cancel = useAction(
@@ -24,7 +28,7 @@ function CancelPlan({ plan, onClose }: { plan: InstalmentPlanDetail; onClose: ()
     {
       invalidate: [keys.invoicesAll],
       onDone: (p) => {
-        toast.show(`Cancelled. ${p.remainderInvoiceNumber ?? 'A remainder invoice'} asks for what the instalments owed.`);
+        toast.show(p.remainderInvoiceNumber ? t('cancelled', { invoice: p.remainderInvoiceNumber }) : t('cancelledNoNumber'));
         onClose();
       },
     },
@@ -33,20 +37,20 @@ function CancelPlan({ plan, onClose }: { plan: InstalmentPlanDetail; onClose: ()
     <Dialog
       open
       onClose={onClose}
-      title={`Cancel ${plan.number}?`}
-      description={`What its instalments still owe (${egp(plan.outstanding)}) is credited off them and asked for again in one invoice, announced to the unit.`}
+      title={t('cancelTitle', { number: plan.number })}
+      description={t('cancelDescription', { amount: fmt.money(plan.outstanding) })}
       onSubmit={() => cancel.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Keep the plan</Button>
+          <Button onClick={onClose}>{t('keep')}</Button>
           <Button type="submit" variant="danger" loading={cancel.isPending}>
-            Cancel the plan
+            {t('cancelConfirm')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="The remainder falls due" error={fieldError(cancel.error, 'dueOn')}>
+        <Field label={t('remainderDue')} error={fieldError(cancel.error, 'dueOn')}>
           {(p) => <Input {...p} type="date" value={dueOn} onChange={(e) => setDueOn(e.target.value)} />}
         </Field>
         <ErrorAlert error={cancel.error} />
@@ -57,6 +61,9 @@ function CancelPlan({ plan, onClose }: { plan: InstalmentPlanDetail; onClose: ()
 
 /** One instalment plan (ADR 0048): its instalments and where each stands. */
 export default function InstalmentPlanPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const { id } = useParams<{ id: string }>();
   const { ready, can } = usePermissions();
   const allowed = can('finance.invoice');
@@ -66,7 +73,7 @@ export default function InstalmentPlanPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={<Back href="/finance/instalments" label="Instalment plans" />} title="Instalment plan" />
+        <PageHeader back={<Back href="/finance/instalments" label={t('title')} />} title={t('plan')} />
         <ForbiddenState />
       </>
     );
@@ -74,13 +81,13 @@ export default function InstalmentPlanPage() {
   return (
     <>
       <PageHeader
-        back={<Back href="/finance/instalments" label="Instalment plans" />}
-        title={p ? `Plan ${p.number}` : 'Instalment plan'}
-        description={p ? `Unit ${p.unitCode} · from ${p.invoiceNumber} · set up ${formatDateTime(p.createdAt)}` : undefined}
+        back={<Back href="/finance/instalments" label={t('title')} />}
+        title={p ? t('planTitle', { number: p.number }) : t('plan')}
+        description={p ? t('planDescription', { unit: p.unitCode, invoice: p.invoiceNumber, when: fmt.dateTime(p.createdAt) }) : undefined}
         actions={
           p && p.status === 'active' ? (
             <Button variant="danger" onClick={() => setCancelling(true)}>
-              Cancel plan
+              {t('cancelPlan')}
             </Button>
           ) : null
         }
@@ -89,41 +96,40 @@ export default function InstalmentPlanPage() {
         {p ? (
           <div className="stack">
             <div className="row" style={{ gap: 16 }}>
-              <Stat label="Total" value={egp(p.total)} />
-              <Stat label="Still owed" value={egp(p.outstanding)} />
-              <Stat label="Status" value={<StatusBadge status={p.status} />} />
+              <Stat label={c('total')} value={fmt.money(p.total)} />
+              <Stat label={t('stillOwed')} value={fmt.money(p.outstanding)} />
+              <Stat label={c('status')} value={<StatusBadge status={p.status} />} />
             </div>
             {p.remainderInvoiceId ? (
               <p>
-                Cancelled {p.cancelledAt ? formatDateTime(p.cancelledAt) : ''}: the remainder is{' '}
+                {t('cancelledRemainder', { when: fmt.dateTime(p.cancelledAt) })}{' '}
                 <Button variant="text" className="t-mono" onClick={() => setOpen(p.remainderInvoiceId)}>
                   {p.remainderInvoiceNumber}
                 </Button>
-                .
               </p>
             ) : null}
             <Card flush>
-              <CardHeader title="Instalments" actions={<Link href={`/finance/units/${p.unitId}`}>Unit statement</Link>} />
+              <CardHeader title={t('instalments')} actions={<Link href={`/finance/units/${p.unitId}`}>{t('statement')}</Link>} />
               <DataTable<InstalmentPlanDetail['instalments'][number]>
                 rows={p.instalments}
                 rowKey={(i) => i.id}
-                empty="No instalment"
+                empty={t('noInstalment')}
                 columns={[
-                  { key: 'p', header: '#', cell: (i) => i.position },
+                  { key: 'p', header: '#', cell: (i) => fmt.number(i.position) },
                   {
                     key: 'n',
-                    header: 'Invoice',
+                    header: t('col.invoice'),
                     cell: (i) => (
                       <Button variant="text" className="table__link t-mono" onClick={() => setOpen(i.id)}>
                         {i.number}
                       </Button>
                     ),
                   },
-                  { key: 'd', header: 'Due', cell: (i) => i.dueOn },
-                  { key: 't', header: 'Amount', cell: (i) => egp(i.total) },
-                  { key: 'paid', header: 'Paid', cell: (i) => egp(i.paid) },
-                  { key: 'o', header: 'Owed', cell: (i) => egp(i.outstanding) },
-                  { key: 's', header: 'Status', cell: (i) => <StatusBadge status={i.status} /> },
+                  { key: 'd', header: t('col.due'), cell: (i) => fmt.day(i.dueOn) },
+                  { key: 't', header: c('amount'), cell: (i) => fmt.money(i.total) },
+                  { key: 'paid', header: t('col.paid'), cell: (i) => fmt.money(i.paid) },
+                  { key: 'o', header: t('col.owed'), cell: (i) => fmt.money(i.outstanding) },
+                  { key: 's', header: c('status'), cell: (i) => <StatusBadge status={i.status} /> },
                 ]}
               />
             </Card>

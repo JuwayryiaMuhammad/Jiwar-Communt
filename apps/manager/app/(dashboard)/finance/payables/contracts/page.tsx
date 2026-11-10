@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDate, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -13,20 +14,24 @@ import {
   PageHeader,
   ReasonCodeDialog,
   Select,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { SectionHeader } from '@/components/community/bits';
 import { PayoutAccountField } from '@/components/finance/payout-account';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Disbursement } from '@/lib/queries';
+import ar from '@/messages/ar/fin-payable-contracts';
+import en from '@/messages/en/fin-payable-contracts';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
 function DisbursementActions({ d }: { d: Disbursement }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const { can } = usePermissions();
   const path = { params: { path: { id: d.id } } };
@@ -35,7 +40,7 @@ function DisbursementActions({ d }: { d: Disbursement }) {
   const [account, setAccount] = useState('');
   const approve = useAction(() => unwrap(api.POST('/api/v1/staff/finance/contract-disbursements/{id}/approve', path)), {
     invalidate: [keys.payablesAll],
-    onDone: () => toast.show(`${d.number} is approved.`),
+    onDone: () => toast.show(t('approved', { number: d.number })),
   });
   const pay = useAction(
     () =>
@@ -47,7 +52,7 @@ function DisbursementActions({ d }: { d: Disbursement }) {
       ),
     {
       invalidate: [keys.payablesAll, ['finance', 'cash-accounts']],
-      onDone: (r) => toast.show(`${r.number} is paid as ${r.payout?.number}.`),
+      onDone: (r) => toast.show(t('paid', { number: r.number, payout: r.payout?.number ?? '' })),
     },
   );
   const reject = useAction(
@@ -56,7 +61,7 @@ function DisbursementActions({ d }: { d: Disbursement }) {
     {
       invalidate: [keys.payablesAll],
       onDone: () => {
-        toast.show(`${d.number} is turned down.`);
+        toast.show(t('rejected', { number: d.number }));
         setRejecting(false);
       },
     },
@@ -67,10 +72,10 @@ function DisbursementActions({ d }: { d: Disbursement }) {
       {d.status === 'requested' && can('finance.payables_approve') && !d.requestedByMe ? (
         <>
           <Button size="sm" loading={approve.isPending} onClick={() => approve.mutate()}>
-            Approve
+            {t('approve')}
           </Button>{' '}
           <Button size="sm" onClick={() => setRejecting(true)}>
-            Turn down
+            {t('turnDown')}
           </Button>
         </>
       ) : null}
@@ -78,16 +83,16 @@ function DisbursementActions({ d }: { d: Disbursement }) {
         <>
           <PayoutAccountField method="bank_transfer" value={account} onChange={setAccount} error={pay.error} />
           <Button size="sm" loading={pay.isPending} disabled={!account} onClick={() => pay.mutate()}>
-            Pay today
+            {t('payToday')}
           </Button>
         </>
       ) : null}
       <ReasonCodeDialog
         open={rejecting}
         onClose={() => setRejecting(false)}
-        title={`Turn down ${d.number}?`}
+        title={t('rejectTitle', { number: d.number })}
         codes={REASON_CODES.disbursementReject}
-        confirmLabel="Turn down"
+        confirmLabel={t('turnDown')}
         danger
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}
@@ -98,6 +103,10 @@ function DisbursementActions({ d }: { d: Disbursement }) {
 }
 
 function ContractMoney({ contractId }: { contractId: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { can } = usePermissions();
   const q = useQuery({ queryKey: keys.contractPayables(contractId), queryFn: () => fetchers.contractPayables(contractId) });
@@ -112,7 +121,7 @@ function ContractMoney({ contractId }: { contractId: string }) {
           body: { kind, amount: amount.trim() },
         }),
       ),
-    { invalidate: [keys.payablesAll], onDone: (d) => toast.show(`Asked as ${d.number}; the approvers were told.`) },
+    { invalidate: [keys.payablesAll], onDone: (d) => toast.show(t('asked', { number: d.number })) },
   );
   const p = q.data;
   return (
@@ -121,24 +130,34 @@ function ContractMoney({ contractId }: { contractId: string }) {
         <>
           <Card>
             <SectionHeader
-              title="The contract’s money"
-              description={`Retention ${p.retentionPct ? `${p.retentionPct}%` : 'none'}: ${egp(p.retention.held)} held, ${egp(p.retention.released)} released, ${egp(p.retention.open)} open. Advances: ${egp(p.advances.paid)} paid, ${egp(p.advances.setOff)} set off, ${egp(p.advances.open)} open. Invoices: ${egp(p.invoices.approved)} to pay, ${egp(p.invoices.paid)} paid.`}
+              title={t('moneyTitle')}
+              description={t('summary', {
+                pct: p.retentionPct ? `${f.number(p.retentionPct)}%` : t('retentionNone'),
+                held: f.money(p.retention.held),
+                released: f.money(p.retention.released),
+                open: f.money(p.retention.open),
+                advPaid: f.money(p.advances.paid),
+                advSetOff: f.money(p.advances.setOff),
+                advOpen: f.money(p.advances.open),
+                toPay: f.money(p.invoices.approved),
+                paid: f.money(p.invoices.paid),
+              })}
             />
             {can('finance.payables') ? (
               <div className="row" style={{ gap: 16, alignItems: 'flex-end' }}>
-                <Field label="Ask for">
-                  {(f) => (
-                    <Select {...f} value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
-                      <option value="advance">An advance</option>
-                      <option value="retention_release">The retention’s release (after its end)</option>
+                <Field label={t('askFor')}>
+                  {(x) => (
+                    <Select {...x} value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
+                      <option value="advance">{t('advance')}</option>
+                      <option value="retention_release">{t('release')}</option>
                     </Select>
                   )}
                 </Field>
-                <Field label="EGP" error={fieldError(ask.error, 'amount')}>
-                  {(f) => <Input {...f} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
+                <Field label={t('egp')} error={fieldError(ask.error, 'amount')}>
+                  {(x) => <Input {...x} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
                 </Field>
                 <Button loading={ask.isPending} disabled={!amount.trim()} onClick={() => ask.mutate()}>
-                  Ask
+                  {t('ask')}
                 </Button>
               </div>
             ) : null}
@@ -148,11 +167,11 @@ function ContractMoney({ contractId }: { contractId: string }) {
             <DataTable<Disbursement>
               rows={p.disbursements}
               rowKey={(d) => d.id}
-              empty="No advance or release"
+              empty={t('noDisbursement')}
               columns={[
-                { key: 'n', header: 'Request', cell: (d) => `${d.number} · ${humanize(d.kind)}` },
-                { key: 'a', header: 'Amount', cell: (d) => egp(d.amount) },
-                { key: 's', header: 'Status', cell: (d) => humanize(d.status) },
+                { key: 'n', header: t('request'), cell: (d) => `${d.number} · ${label(d.kind)}` },
+                { key: 'a', header: c('amount'), cell: (d) => f.money(d.amount) },
+                { key: 's', header: c('status'), cell: (d) => label(d.status) },
                 { key: 'x', header: '', cell: (d) => <DisbursementActions d={d} /> },
               ]}
             />
@@ -161,12 +180,12 @@ function ContractMoney({ contractId }: { contractId: string }) {
             <DataTable
               rows={p.guarantees}
               rowKey={(g) => g.id}
-              empty="No guarantee"
+              empty={t('noGuarantee')}
               columns={[
-                { key: 'k', header: 'Guarantee', cell: (g) => `${humanize(g.kind)} · ${g.issuer} ${g.reference}` },
-                { key: 'a', header: 'Amount', cell: (g) => egp(g.amount) },
-                { key: 'e', header: 'Expires', cell: (g) => formatDate(g.expiresOn) },
-                { key: 's', header: 'Status', cell: (g) => humanize(g.status) },
+                { key: 'k', header: t('guarantee'), cell: (g) => `${label(g.kind)} · ${g.issuer} ${g.reference}` },
+                { key: 'a', header: c('amount'), cell: (g) => f.money(g.amount) },
+                { key: 'e', header: t('expires'), cell: (g) => f.day(g.expiresOn) },
+                { key: 's', header: c('status'), cell: (g) => label(g.status) },
               ]}
             />
           </Card>
@@ -178,6 +197,10 @@ function ContractMoney({ contractId }: { contractId: string }) {
 
 /** A contract's advances, retention and guarantees (ADR 0089). */
 export default function ContractPayablesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('finance.payables') || can('finance.payables_approve');
   const [contractId, setContractId] = useState('');
@@ -185,35 +208,40 @@ export default function ContractPayablesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Advances, retentions and guarantees" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Advances, retentions and guarantees"
-        description="An advance is set off against the contract’s later invoices; a retention held of each payout is released at its end. Nobody approves what they asked for."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <Card flush>
-        <CardHeader title="Waiting for a decision or a payout" />
+        <CardHeader title={t('waiting')} />
         <QueryState query={pending}>
           <DataTable<Disbursement>
             rows={pending.data ?? []}
             rowKey={(d) => d.id}
-            empty="Nothing waiting"
+            empty={t('waitingEmpty')}
             columns={[
-              { key: 'n', header: 'Request', cell: (d) => `${d.number} · ${humanize(d.kind)}` },
-              { key: 'a', header: 'Amount', cell: (d) => egp(d.amount) },
-              { key: 's', header: 'Status', cell: (d) => humanize(d.status) },
-              { key: 'c', header: '', cell: (d) => <Button size="sm" onClick={() => setContractId(d.contractId)}>Its contract</Button> },
+              { key: 'n', header: t('request'), cell: (d) => `${d.number} · ${label(d.kind)}` },
+              { key: 'a', header: c('amount'), cell: (d) => f.money(d.amount) },
+              { key: 's', header: c('status'), cell: (d) => label(d.status) },
+              {
+                key: 'c',
+                header: '',
+                cell: (d) => (
+                  <Button size="sm" onClick={() => setContractId(d.contractId)}>
+                    {t('itsContract')}
+                  </Button>
+                ),
+              },
               { key: 'x', header: '', cell: (d) => <DisbursementActions d={d} /> },
             ]}
           />
         </QueryState>
       </Card>
-      <Field label="Contract id">
-        {(f) => <Input {...f} value={contractId} onChange={(e) => setContractId(e.target.value.trim())} />}
+      <Field label={t('contractId')}>
+        {(x) => <Input {...x} dir="ltr" value={contractId} onChange={(e) => setContractId(e.target.value.trim())} />}
       </Field>
       {/^[0-9a-f-]{36}$/.test(contractId) ? <ContractMoney contractId={contractId} /> : null}
     </>

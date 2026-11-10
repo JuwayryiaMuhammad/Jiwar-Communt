@@ -1,0 +1,22 @@
+/** Where a unit stands (ADR 0046, 0048): app/(dashboard)/finance/units/[unitId]. */
+export default {
+  back: 'Invoices',
+  title: 'Unit statement',
+  unitTitle: 'Unit {code}',
+  onlineOn: 'Its residents can pay online.',
+  onlineOff: 'Online payment is off in this compound.',
+  issue: 'Issue an invoice',
+  refund: 'Refund credit',
+  record: 'Record a payment',
+  owed: 'Owed',
+  credit: 'Credit',
+  oldestFirst: 'Owed, oldest due first',
+  nothingOwed: 'Nothing owed',
+  invoice: 'Invoice',
+  due: 'Due',
+  latest: 'Latest activity',
+  noActivity: 'No activity yet',
+  number: 'Number',
+  when: 'When',
+  withRelease: '{amount} ({released} back to credit)',
+} as const;

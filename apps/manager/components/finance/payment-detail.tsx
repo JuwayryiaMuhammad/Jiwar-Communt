@@ -1,18 +1,25 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, ReasonCodeDialog, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
-import { METHOD_TEXT } from './logic';
+import ar from '@/messages/ar/fin-dialogs';
+import en from '@/messages/en/fin-dialogs';
+import { useFinanceCode } from './codes';
 
 /** One payment: its receipt, what it paid, and its reversal (office only). */
 export function PaymentDetailDialog({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const code = useFinanceCode();
   const toast = useToast();
   const { can } = usePermissions();
   const payment = useQuery({ queryKey: keys.payment(id), queryFn: () => fetchers.payment(id) });
@@ -22,7 +29,7 @@ export function PaymentDetailDialog({ id, onClose }: { id: string; onClose: () =
     {
       invalidate: [keys.paymentsAll, keys.invoicesAll],
       onDone: () => {
-        toast.show('Reversed. What it paid is owed again; the receipt reads reversed.');
+        toast.show(t('payment.reversedToast'));
         setReversing(false);
       },
     },
@@ -35,21 +42,21 @@ export function PaymentDetailDialog({ id, onClose }: { id: string; onClose: () =
         open={!reversing}
         wide
         onClose={onClose}
-        title={p ? `Receipt ${p.receiptNumber} · unit ${p.unitCode}` : 'Payment'}
-        description={p ? `${METHOD_TEXT[p.method] ?? p.method} · ${egp(p.amount)} · paid on ${p.paidOn}` : undefined}
+        title={p ? t('payment.title', { receipt: p.receiptNumber, unit: p.unitCode }) : t('payment.fallback')}
+        description={p ? t('payment.description', { method: code('method', p.method), amount: fmt.money(p.amount), paidOn: fmt.day(p.paidOn) }) : undefined}
         footer={
           <>
             {p ? (
               <a className="btn btn--secondary" href={p.receiptUrl} target="_blank" rel="noreferrer">
-                The public receipt
+                {t('payment.publicReceipt')}
               </a>
             ) : null}
             {reversible ? (
               <Button variant="danger" onClick={() => setReversing(true)}>
-                Reverse
+                {t('payment.reverse')}
               </Button>
             ) : null}
-            <Button onClick={onClose}>Close</Button>
+            <Button onClick={onClose}>{c('close')}</Button>
           </>
         }
       >
@@ -57,32 +64,33 @@ export function PaymentDetailDialog({ id, onClose }: { id: string; onClose: () =
           {p ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Channel</dt>
-                <dd>{p.channel === 'online' ? 'Online, through Paymob' : 'At the office'}</dd>
+                <dt>{t('payment.channel')}</dt>
+                <dd>{p.channel === 'online' ? t('channel.online') : t('channel.office')}</dd>
                 {p.reference ? (
                   <>
-                    <dt>Reference</dt>
+                    <dt>{t('payment.reference')}</dt>
                     <dd className="t-mono">{p.reference}</dd>
                   </>
                 ) : null}
-                <dt>Recorded</dt>
+                <dt>{t('payment.recorded')}</dt>
                 <dd>
-                  {formatDateTime(p.createdAt)}
-                  {p.recordedBy ? ` · by ${p.recordedBy.fullName ?? 'an erased account'}` : ''}
+                  {p.recordedBy
+                    ? t('payment.recordedBy', { when: fmt.dateTime(p.createdAt), who: p.recordedBy.fullName ?? c('erasedAccount') })
+                    : fmt.dateTime(p.createdAt)}
                 </dd>
-                <dt>Paid to invoices</dt>
-                <dd>{egp(p.allocated)}</dd>
+                <dt>{t('payment.allocated')}</dt>
+                <dd>{fmt.money(p.allocated)}</dd>
                 {Number(p.unallocated) > 0 ? (
                   <>
-                    <dt>Unit’s credit</dt>
-                    <dd>{egp(p.unallocated)}</dd>
+                    <dt>{t('payment.credit')}</dt>
+                    <dd>{fmt.money(p.unallocated)}</dd>
                   </>
                 ) : null}
                 {p.reversal ? (
                   <>
-                    <dt>Reversed</dt>
+                    <dt>{t('reversed')}</dt>
                     <dd>
-                      <Badge tone="beige">{humanize(p.reversal.reasonCode)}</Badge> {formatDateTime(p.reversal.createdAt)}
+                      <Badge tone="beige">{label(p.reversal.reasonCode)}</Badge> {fmt.dateTime(p.reversal.createdAt)}
                     </dd>
                   </>
                 ) : null}
@@ -91,10 +99,10 @@ export function PaymentDetailDialog({ id, onClose }: { id: string; onClose: () =
                 <DataTable
                   rows={p.allocations}
                   rowKey={(a) => `${a.invoiceId}-${a.amount}`}
-                  empty="Not paid to any invoice"
+                  empty={t('payment.noAllocation')}
                   columns={[
-                    { key: 'i', header: 'Invoice', cell: (a) => <span className="t-mono">{a.invoiceNumber}</span> },
-                    { key: 'a', header: 'Paid', cell: (a) => egp(a.amount) },
+                    { key: 'i', header: t('invoice'), cell: (a) => <span className="t-mono">{a.invoiceNumber}</span> },
+                    { key: 'a', header: t('paid'), cell: (a) => fmt.money(a.amount) },
                   ]}
                 />
               </Card>
@@ -106,10 +114,10 @@ export function PaymentDetailDialog({ id, onClose }: { id: string; onClose: () =
       <ReasonCodeDialog
         open={reversing}
         onClose={() => setReversing(false)}
-        title={`Reverse receipt ${p?.receiptNumber ?? ''}?`}
-        description="A new record cancels this one; nothing is edited. What it paid is owed again."
+        title={t('payment.reverseTitle', { receipt: p?.receiptNumber ?? '' })}
+        description={t('payment.reverseDescription')}
         codes={REASON_CODES.paymentReverse}
-        confirmLabel="Reverse"
+        confirmLabel={t('payment.reverse')}
         danger
         pending={reverse.isPending}
         error={<ErrorAlert error={reverse.error} />}

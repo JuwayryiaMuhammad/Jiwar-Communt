@@ -1,21 +1,27 @@
 'use client';
 
-import { formatDate, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, Field, Input, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Field, Input, PageHeader, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { SectionHeader } from '@/components/community/bits';
+import { useFinanceCode } from '@/components/finance/codes';
 import { PayoutAccountField } from '@/components/finance/payout-account';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type VendorInvoice } from '@/lib/queries';
+import ar from '@/messages/ar/fin-payable-invoice';
+import en from '@/messages/en/fin-payable-invoice';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
 function Decide({ i }: { i: VendorInvoice }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const code = useFinanceCode();
   const toast = useToast();
   const { can } = usePermissions();
   const path = { params: { path: { id: i.id } } };
@@ -37,14 +43,14 @@ function Decide({ i }: { i: VendorInvoice }) {
     {
       ...done,
       onDone: () => {
-        toast.show(`${i.number} is ${asking === 'reject' ? 'turned down' : 'called off'}.`);
+        toast.show(asking === 'reject' ? t('rejected', { number: i.number }) : t('cancelled', { number: i.number }));
         setAsking(null);
       },
     },
   );
   const approve = useAction(() => unwrap(api.POST('/api/v1/staff/finance/vendor-invoices/{id}/approve', { ...path, body: {} })), {
     ...done,
-    onDone: () => toast.show(`${i.number} is approved: its line keeps the money until it is paid.`),
+    onDone: () => toast.show(t('approved', { number: i.number })),
   });
   const pay = useAction(
     () =>
@@ -63,7 +69,7 @@ function Decide({ i }: { i: VendorInvoice }) {
       ),
     {
       invalidate: [...done.invalidate, ['finance', 'cash-accounts']],
-      onDone: (r) => toast.show(`Paid as ${r.payout?.number}; its expense is written and its account moved.`),
+      onDone: (r) => toast.show(t('paid', { payout: r.payout?.number ?? '' })),
     },
   );
   return (
@@ -71,21 +77,21 @@ function Decide({ i }: { i: VendorInvoice }) {
       <ErrorAlert error={approve.error ?? pay.error} />
       {i.status === 'received' && can('finance.payables_approve') ? (
         i.recordedByMe ? (
-          <p className="t-secondary">You recorded it: another approver decides it.</p>
+          <p className="t-secondary">{t('recordedByYou')}</p>
         ) : (
           <>
             <Button variant="primary" loading={approve.isPending} onClick={() => approve.mutate()}>
-              Approve
+              {c('approve')}
             </Button>{' '}
-            <Button onClick={() => setAsking('reject')}>Turn down</Button>
+            <Button onClick={() => setAsking('reject')}>{t('turnDown')}</Button>
           </>
         )
       ) : null}
       {i.status === 'approved' && can('finance.payables') ? (
         <div className="form">
           <div className="row" style={{ gap: 16 }}>
-            <Field label="Paid on">{(p) => <Input {...p} type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />}</Field>
-            <Field label="How">
+            <Field label={t('paidOn')}>{(p) => <Input {...p} type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />}</Field>
+            <Field label={t('how')}>
               {(p) => (
                 <Select
                   {...p}
@@ -95,34 +101,34 @@ function Decide({ i }: { i: VendorInvoice }) {
                     setAccount('');
                   }}
                 >
-                  <option value="bank_transfer">Bank transfer</option>
-                  <option value="cheque">Cheque</option>
-                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">{code('method', 'bank_transfer')}</option>
+                  <option value="cheque">{code('method', 'cheque')}</option>
+                  <option value="cash">{code('method', 'cash')}</option>
                 </Select>
               )}
             </Field>
             <PayoutAccountField method={method} value={account} onChange={setAccount} error={pay.error} />
-            <Field label="Reference">{(p) => <Input {...p} maxLength={100} value={reference} onChange={(e) => setReference(e.target.value)} />}</Field>
+            <Field label={t('reference')}>{(p) => <Input {...p} maxLength={100} value={reference} onChange={(e) => setReference(e.target.value)} />}</Field>
             {i.contractId ? (
-              <Field label="Set off of advances (EGP)">
+              <Field label={t('setOff')}>
                 {(p) => <Input {...p} inputMode="decimal" value={setOff} onChange={(e) => setSetOff(e.target.value)} />}
               </Field>
             ) : null}
           </div>
           <Button variant="primary" loading={pay.isPending} onClick={() => pay.mutate()}>
-            Pay out
+            {t('payOut')}
           </Button>
         </div>
       ) : null}
       {(i.status === 'received' || (i.status === 'approved' && can('finance.payables_approve'))) ? (
-        <Button onClick={() => setAsking('cancel')}>Call off</Button>
+        <Button onClick={() => setAsking('cancel')}>{t('callOff')}</Button>
       ) : null}
       <ReasonCodeDialog
         open={asking !== null}
         onClose={() => setAsking(null)}
-        title={asking === 'reject' ? `Turn down ${i.number}?` : `Call off ${i.number}?`}
+        title={asking === 'reject' ? t('rejectTitle', { number: i.number }) : t('cancelTitle', { number: i.number })}
         codes={asking === 'reject' ? REASON_CODES.vendorInvoiceReject : REASON_CODES.vendorInvoiceCancel}
-        confirmLabel={asking === 'reject' ? 'Turn down' : 'Call off'}
+        confirmLabel={asking === 'reject' ? t('turnDown') : t('callOff')}
         danger
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
@@ -134,32 +140,37 @@ function Decide({ i }: { i: VendorInvoice }) {
 
 /** A vendor's invoice (ADR 0089): its lines, its decision and its payout. */
 export default function VendorInvoicePage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const code = useFinanceCode();
   const { id } = useParams<{ id: string }>();
   const q = useQuery({ queryKey: keys.vendorInvoice(id), queryFn: () => fetchers.vendorInvoice(id) });
   const i = q.data;
   return (
     <>
-      <PageHeader title={i ? `${i.number} · ${i.vendorNumber}` : 'Vendor invoice'} description={i ? humanize(i.status) : undefined} />
+      <PageHeader title={i ? `${i.number} · ${i.vendorNumber}` : t('title')} description={i ? label(i.status) : undefined} />
       <QueryState query={q}>
         {i ? (
           <>
             <Card>
               <SectionHeader
-                title={`${egp(i.total)} (tax ${egp(i.tax)})`}
-                description={`Dated ${formatDate(i.issuedOn)}, due ${formatDate(i.dueOn)}; recorded ${formatDateTime(i.recordedAt)}.`}
+                title={t('headline', { total: f.money(i.total), tax: f.money(i.tax) })}
+                description={t('dates', { issued: f.day(i.issuedOn), due: f.day(i.dueOn), recorded: f.dateTime(i.recordedAt) })}
               />
               {i.invoiceUrl ? (
                 <a href={i.invoiceUrl} target="_blank" rel="noreferrer">
-                  The scan
+                  {t('scan')}
                 </a>
               ) : null}
               <DataTable
                 rows={i.lines}
                 rowKey={(l) => String(l.position)}
                 columns={[
-                  { key: 'd', header: 'Line', cell: (l) => l.description },
-                  { key: 'a', header: 'Amount', cell: (l) => egp(l.amount) },
-                  { key: 't', header: 'Tax', cell: (l) => `${humanize(l.taxCode)} · ${egp(l.tax)}` },
+                  { key: 'd', header: t('line'), cell: (l) => l.description },
+                  { key: 'a', header: c('amount'), cell: (l) => f.money(l.amount) },
+                  { key: 't', header: t('tax'), cell: (l) => `${t(`tax.${l.taxCode}`)} · ${f.money(l.tax)}` },
                 ]}
               />
               <Decide i={i} />
@@ -167,8 +178,14 @@ export default function VendorInvoicePage() {
             {i.payout ? (
               <Card>
                 <SectionHeader
-                  title={`Paid as ${i.payout.number} on ${formatDate(i.payout.paidOn)}`}
-                  description={`${egp(i.payout.gross)} less ${egp(i.payout.retentionHeld)} held back and ${egp(i.payout.advanceSetOff)} set off: ${egp(i.payout.net)} paid by ${humanize(i.payout.method)}.`}
+                  title={t('paidAs', { number: i.payout.number, day: f.day(i.payout.paidOn) })}
+                  description={t('payout', {
+                    gross: f.money(i.payout.gross),
+                    held: f.money(i.payout.retentionHeld),
+                    setOff: f.money(i.payout.advanceSetOff),
+                    net: f.money(i.payout.net),
+                    method: code('method', i.payout.method),
+                  })}
                 />
               </Card>
             ) : null}

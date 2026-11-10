@@ -1,47 +1,23 @@
 /**
- * The finance screens' rules (ADR 0046). Plain TypeScript with no imports,
- * so the tests run it as is.
+ * The finance screens' rules (ADR 0046). Plain TypeScript with type imports
+ * only, so the tests run it as is; the words come from the fin-codes catalog
+ * through the `t` a caller hands in.
  */
+import type { Format, Translate } from '@jiwar/i18n/core';
+import type codes from '../../messages/en/fin-codes.ts';
 
-export const KIND_TEXT: Record<string, string> = {
-  service_charge: 'Service charge',
-  maintenance: 'Maintenance',
-  other: 'Other',
-};
+/** Invoice kinds issued by hand; their words are `kind.<code>` in fin-codes. */
+export const KINDS = ['service_charge', 'maintenance', 'other'] as const;
 
 /** The kinds only the charges port issues (ADR 0070, 0074): listed, never issued by hand. */
-export const CHARGE_KIND_TEXT: Record<string, string> = {
-  facility: 'Facility booking',
-  club: 'Club membership',
-  fine: 'Vehicle fine',
-  damage: 'Works damage',
-};
+export const CHARGE_KINDS = ['facility', 'club', 'fine', 'damage'] as const;
 
-export const FREQUENCY_TEXT: Record<string, string> = {
-  monthly: 'Monthly',
-  quarterly: 'Quarterly',
-  annual: 'Annual',
-};
+export const FREQUENCIES = ['monthly', 'quarterly', 'annual'] as const;
 
-export const METHOD_TEXT: Record<string, string> = {
-  cash: 'Cash',
-  bank_transfer: 'Bank transfer',
-  cheque: 'Cheque',
-  card: 'Card',
-  wallet: 'Mobile wallet',
-};
+/** How the office takes a payment. */
+export const OFFICE_METHODS = ['cash', 'bank_transfer', 'cheque'] as const;
 
-export const OUTCOME_TEXT: Record<string, string> = {
-  applied: 'Paid',
-  duplicate: 'Repeated callback (ignored)',
-  failed_attempt: 'Failed attempt',
-  not_final: 'Not final yet',
-  verification_pending: 'Waiting for Paymob to confirm',
-  contradicted: 'Paymob contradicted it',
-  order_mismatch: 'Another checkout’s order',
-  amount_mismatch: 'Wrong amount',
-  unknown_reference: 'Unknown checkout',
-};
+export const REFUND_CHANNELS = ['cash', 'bank_transfer', 'gateway_manual'] as const;
 
 /** Outcomes the manager should look at. */
 export const ALARMING = new Set(['contradicted', 'order_mismatch', 'amount_mismatch', 'verification_pending']);
@@ -93,12 +69,12 @@ export const masked = (last4: string | null | undefined) => (last4 ? `•••�
 export const validCode = (code: string) => /^\d{6}$/.test(code.trim());
 
 /** Paymob Egypt keys, and whether they fit the mode. */
-export function keyProblem(key: string, kind: 'sk' | 'pk', mode: 'sandbox' | 'live'): string | undefined {
+export function keyProblem(t: Translate<typeof codes>, key: string, kind: 'sk' | 'pk', mode: 'sandbox' | 'live'): string | undefined {
   const v = key.trim();
   if (!v) return undefined;
-  if (!new RegExp(`^egy_${kind}_(test|live)_[A-Za-z0-9_-]{8,240}$`).test(v)) return `Starts with egy_${kind}_test_ or egy_${kind}_live_.`;
+  if (!new RegExp(`^egy_${kind}_(test|live)_[A-Za-z0-9_-]{8,240}$`).test(v)) return t('key.prefix', { test: `egy_${kind}_test_`, live: `egy_${kind}_live_` });
   const live = v.startsWith(`egy_${kind}_live_`);
-  if (live !== (mode === 'live')) return mode === 'live' ? 'Live mode takes a live key.' : 'Sandbox takes a test key.';
+  if (live !== (mode === 'live')) return mode === 'live' ? t('key.live') : t('key.test');
   return undefined;
 }
 
@@ -131,33 +107,21 @@ export function splitEqually(total: string, count: number, firstDue: string): { 
 }
 
 /** Instalments the API takes: 2–24, each at least 1.00, due dates rising. */
-export function instalmentsProblem(rows: readonly { dueOn: string; amount: string }[], owed: string): string | undefined {
-  if (rows.length < 2 || rows.length > 24) return 'Between 2 and 24 instalments.';
-  if (rows.some((r) => !validMoney(r.amount) || Number(r.amount) < 1)) return 'Each instalment is at least 1.00 EGP.';
-  if (rows.some((r, i) => i > 0 && r.dueOn <= (rows[i - 1]?.dueOn ?? ''))) return 'Each instalment falls due after the one before.';
-  if (linesTotal(rows) !== Number(owed).toFixed(2)) return `They must add up to ${Number(owed).toFixed(2)} EGP.`;
+export function instalmentsProblem(
+  t: Translate<typeof codes>,
+  fmt: Pick<Format, 'money'>,
+  rows: readonly { dueOn: string; amount: string }[],
+  owed: string,
+): string | undefined {
+  if (rows.length < 2 || rows.length > 24) return t('instalments.count');
+  if (rows.some((r) => !validMoney(r.amount) || Number(r.amount) < 1)) return t('instalments.minimum', { amount: fmt.money(1) });
+  if (rows.some((r, i) => i > 0 && r.dueOn <= (rows[i - 1]?.dueOn ?? ''))) return t('instalments.order');
+  if (linesTotal(rows) !== Number(owed).toFixed(2)) return t('instalments.sum', { amount: fmt.money(Number(owed).toFixed(2)) });
   return undefined;
 }
 
 /** What a credit note may still take off an invoice: its total less credit notes. */
 export const creditable = (i: { total: string; credited: string }) => (Math.round((Number(i.total) - Number(i.credited)) * 100) / 100).toFixed(2);
-
-export const LEDGER_TEXT: Record<string, string> = {
-  invoice: 'Invoice',
-  credit_note: 'Credit note',
-  payment: 'Payment',
-  payment_reversal: 'Payment reversed',
-  refund: 'Refund',
-  refund_reversal: 'Refund reversed',
-  credit_applied: 'Credit applied',
-  allocation_release: 'Released to credit',
-};
-
-export const REFUND_CHANNEL_TEXT: Record<string, string> = {
-  cash: 'Cash',
-  bank_transfer: 'Bank transfer',
-  gateway_manual: 'In the payment provider’s dashboard',
-};
 
 /** A file name a download falls back on when the server names none. */
 export function downloadName(disposition: string | null, fallback: string): string {

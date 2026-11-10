@@ -1,23 +1,32 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Textarea, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { codeText, inLocale } from '@/components/governance/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import govAr from '@/messages/ar/gov-codes';
+import ar from '@/messages/ar/fin-spending-reports';
+import govEn from '@/messages/en/gov-codes';
+import en from '@/messages/en/fin-spending-reports';
 
 type Report = Schema<'SpendingReportView'>;
 type Budget = Schema<'BudgetView'>;
 type Publication = Schema<'BoardPublicationView'>;
 type Item = { textEn: string; textAr: string; decisionPublicationId: string };
 const KEY = ['finance', 'spending-reports'] as const;
-const label = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, ' ');
 
 /** A first report of a budget, or — with `supersedes` — a newer one replacing its latest. */
 function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const { can } = usePermissions();
   const budgets = useQuery({
@@ -52,11 +61,7 @@ function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => 
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show(
-          supersedes
-            ? 'Published: residents now read this one only; the earlier report stays here.'
-            : 'Published: everyone who pays a unit’s charges is told, tenants included.',
-        );
+        toast.show(supersedes ? t('publish.supersededDone') : t('publish.done'));
         onClose();
       },
     },
@@ -68,28 +73,24 @@ function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => 
     <Dialog
       open
       onClose={onClose}
-      title={supersedes ? `Supersede the ${supersedes.fiscalYear} report of ${supersedes.asOf}` : 'Publish where the fees went'}
-      description={
-        supersedes
-          ? 'A published report never changes: this newer one, of the same budget as of today, replaces it for residents. The earlier one stays readable here.'
-          : 'The budget’s figures by category as of today, frozen once published, and the improvements it paid for in your words. Never an expense, a vendor or a name.'
-      }
+      title={supersedes ? t('publish.supersedeTitle', { year: String(supersedes.fiscalYear), asOf: f.day(supersedes.asOf) }) : t('publish.title')}
+      description={supersedes ? t('publish.supersedeDescription') : t('publish.description')}
       onSubmit={() => summaryOk && itemsOk && publish.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={publish.isPending} disabled={!summaryOk || !itemsOk}>
-            Publish
+            {t('publish.confirm')}
           </Button>
         </>
       }
     >
       <div className="form">
         {budgets.data && !supersedes ? (
-          <Field label="Budget" hint="The year under way’s when left out." error={fieldError(publish.error, 'budgetId')}>
+          <Field label={t('budget')} hint={t('budgetHint')} error={fieldError(publish.error, 'budgetId')}>
             {(p) => (
               <Select {...p} value={budgetId} onChange={(e) => setBudgetId(e.target.value)}>
-                <option value="">The year under way</option>
+                <option value="">{t('yearUnderWay')}</option>
                 {budgets.data.data
                   .filter((b: Budget) => b.status === 'active')
                   .map((b: Budget) => (
@@ -101,31 +102,31 @@ function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => 
             )}
           </Field>
         ) : null}
-        <Field label="Summary in English" hint="Both languages, or neither." error={fieldError(publish.error, 'summaryEn') ?? (!summaryOk ? 'Write it in both languages, or neither.' : undefined)}>
-          {(p) => <Textarea {...p} maxLength={2000} rows={3} value={summaryEn} onChange={(e) => setSummaryEn(e.target.value)} />}
+        <Field label={t('summaryEn')} hint={t('summaryHint')} error={fieldError(publish.error, 'summaryEn') ?? (!summaryOk ? t('summaryBoth') : undefined)}>
+          {(p) => <Textarea {...p} maxLength={2000} rows={3} dir="ltr" lang="en" value={summaryEn} onChange={(e) => setSummaryEn(e.target.value)} />}
         </Field>
-        <Field label="Summary in Arabic" error={fieldError(publish.error, 'summaryAr')}>
+        <Field label={t('summaryAr')} error={fieldError(publish.error, 'summaryAr')}>
           {(p) => <Textarea {...p} maxLength={2000} rows={3} dir="rtl" lang="ar" value={summaryAr} onChange={(e) => setSummaryAr(e.target.value)} />}
         </Field>
         {items.map((item, i) => (
           <Card key={i}>
             <div className="form" style={{ padding: 12 }}>
-              <Field label={`Improvement ${i + 1}, in English`} error={fieldError(publish.error, `items.${i}.textEn`)}>
-                {(p) => <Input {...p} maxLength={500} value={item.textEn} onChange={(e) => set(i, { textEn: e.target.value })} />}
+              <Field label={t('improvement', { n: f.number(i + 1) })} error={fieldError(publish.error, `items.${i}.textEn`)}>
+                {(p) => <Input {...p} maxLength={500} dir="ltr" lang="en" value={item.textEn} onChange={(e) => set(i, { textEn: e.target.value })} />}
               </Field>
-              <Field label="In Arabic" error={fieldError(publish.error, `items.${i}.textAr`)}>
+              <Field label={t('inArabic')} error={fieldError(publish.error, `items.${i}.textAr`)}>
                 {(p) => <Input {...p} maxLength={500} dir="rtl" lang="ar" value={item.textAr} onChange={(e) => set(i, { textAr: e.target.value })} />}
               </Field>
               {decisions.data ? (
-                <Field label="The board’s decision it carried out" error={fieldError(publish.error, `items.${i}.decisionPublicationId`)}>
+                <Field label={t('decision')} error={fieldError(publish.error, `items.${i}.decisionPublicationId`)}>
                   {(p) => (
                     <Select {...p} value={item.decisionPublicationId} onChange={(e) => set(i, { decisionPublicationId: e.target.value })}>
-                      <option value="">None</option>
+                      <option value="">{c('none')}</option>
                       {decisions.data.data
                         .filter((d: Publication) => d.kind === 'decision' && !d.archivedAt)
                         .map((d: Publication) => (
                           <option key={d.id} value={d.id}>
-                            {d.decidedOn} · {d.titleEn}
+                            {f.day(d.decidedOn)} · {inLocale(locale, d.titleEn, d.titleAr)}
                           </option>
                         ))}
                     </Select>
@@ -134,7 +135,7 @@ function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => 
               ) : null}
               <div>
                 <Button size="sm" onClick={() => setItems(items.filter((_, j) => j !== i))}>
-                  Remove
+                  {c('remove')}
                 </Button>
               </div>
             </div>
@@ -143,7 +144,7 @@ function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => 
         {items.length < 20 ? (
           <div>
             <Button size="sm" icon={<Plus aria-hidden />} onClick={() => setItems([...items, { textEn: '', textAr: '', decisionPublicationId: '' }])}>
-              Add an improvement
+              {t('addImprovement')}
             </Button>
           </div>
         ) : null}
@@ -154,30 +155,35 @@ function Publish({ supersedes, onClose }: { supersedes?: Report; onClose: () => 
 }
 
 function Detail({ report, onClose }: { report: Report; onClose: () => void }) {
+  const t = useT(en, ar);
+  const gov = useT(govEn, govAr);
+  const f = useFormat();
+  const { locale } = useLocale();
+  const params = { year: String(report.fiscalYear), asOf: f.day(report.asOf) };
   return (
     <Dialog
       open
       onClose={onClose}
-      title={`${report.fiscalYear}, as of ${report.asOf}${report.supersededById ? ' (superseded)' : ''}`}
-      description={report.summaryEn ?? undefined}
+      title={report.supersededById ? t('detailSuperseded', params) : t('detailTitle', params)}
+      description={inLocale(locale, report.summaryEn, report.summaryAr) === '—' ? undefined : inLocale(locale, report.summaryEn, report.summaryAr)}
     >
       <Card flush>
         <DataTable<Report['lines'][number]>
           rows={report.lines}
           rowKey={(l) => l.category}
-          empty="No category"
+          empty={t('noCategory')}
           columns={[
-            { key: 'c', header: 'Category', cell: (l) => label(l.category) },
-            { key: 'a', header: 'Allowed', cell: (l) => `${l.allowance} EGP` },
-            { key: 's', header: 'Spent', cell: (l) => `${l.spent} EGP` },
-            { key: 'u', header: 'Used', cell: (l) => `${l.usedPct}%` },
+            { key: 'c', header: t('category'), cell: (l) => codeText(gov, 'category', l.category) },
+            { key: 'a', header: t('allowed'), cell: (l) => f.money(l.allowance) },
+            { key: 's', header: t('spent'), cell: (l) => f.money(l.spent) },
+            { key: 'u', header: t('used'), cell: (l) => f.percent(Number(l.usedPct) / 100, 1) },
           ]}
         />
       </Card>
       {report.items.length ? (
         <ul>
           {report.items.map((i) => (
-            <li key={i.position}>{i.textEn}</li>
+            <li key={i.position}>{inLocale(locale, i.textEn, i.textAr)}</li>
           ))}
         </ul>
       ) : null}
@@ -192,6 +198,8 @@ function Detail({ report, onClose }: { report: Report; onClose: () => void }) {
  * supersedes its latest: residents read only that, the staff every one.
  */
 export default function SpendingReportsPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('finance.reports') || can('finance.budget');
   const list = useQuery({
@@ -205,19 +213,19 @@ export default function SpendingReportsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Where the fees went" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Where the fees went"
-        description="What the residents read of the budget: each category’s allowance and spend, and what the fees paid for."
+        title={t('title')}
+        description={t('description')}
         actions={
           can('finance.reports') ? (
             <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setPublishing(true)}>
-              Publish a report
+              {t('publish')}
             </Button>
           ) : undefined
         }
@@ -227,11 +235,11 @@ export default function SpendingReportsPage() {
           <DataTable<Report>
             rows={list.data?.data}
             rowKey={(r) => r.id}
-            empty="Nothing published yet"
+            empty={t('empty')}
             columns={[
               {
                 key: 'y',
-                header: 'Year',
+                header: t('year'),
                 cell: (r) => (
                   <Button variant="text" className="table__link" onClick={() => setOpen(r)}>
                     {r.fiscalYear}
@@ -240,13 +248,22 @@ export default function SpendingReportsPage() {
               },
               {
                 key: 'st',
-                header: 'Residents',
-                cell: (r) => (r.supersededById ? <Badge tone="beige">Superseded</Badge> : <Badge tone="green">Reading</Badge>),
+                header: t('residents'),
+                cell: (r) => (r.supersededById ? <Badge tone="beige">{t('superseded')}</Badge> : <Badge tone="green">{t('reading')}</Badge>),
               },
-              { key: 'o', header: 'As of', cell: (r) => r.asOf },
-              { key: 's', header: 'Spent', cell: (r) => `${r.totals.spent} of ${r.totals.allowance} EGP (${r.totals.usedPct}%)` },
-              { key: 'i', header: 'Improvements', cell: (r) => r.items.length },
-              { key: 'p', header: 'Published', cell: (r) => formatDateTime(r.publishedAt) },
+              { key: 'o', header: t('asOf'), cell: (r) => f.day(r.asOf) },
+              {
+                key: 's',
+                header: t('spent'),
+                cell: (r) =>
+                  t('spentLine', {
+                    spent: f.money(r.totals.spent),
+                    allowance: f.money(r.totals.allowance),
+                    pct: f.percent(Number(r.totals.usedPct) / 100, 1),
+                  }),
+              },
+              { key: 'i', header: t('improvements'), cell: (r) => f.number(r.items.length) },
+              { key: 'p', header: t('published'), cell: (r) => f.dateTime(r.publishedAt) },
               {
                 key: 'a',
                 header: '',
@@ -254,7 +271,7 @@ export default function SpendingReportsPage() {
                 cell: (r) =>
                   can('finance.reports') && !r.supersededById ? (
                     <Button size="sm" onClick={() => setSuperseding(r)}>
-                      Supersede
+                      {t('supersede')}
                     </Button>
                   ) : null,
               },

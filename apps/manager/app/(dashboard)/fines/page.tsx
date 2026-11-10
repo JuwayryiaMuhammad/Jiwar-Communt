@@ -1,6 +1,6 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import {
   Badge,
@@ -15,24 +15,32 @@ import {
   ReasonCodeDialog,
   Segmented,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useT, type Translate } from '@jiwar/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { validReceipt } from '@/components/facilities/logic';
 import { FineDialog, type FineBody } from '@/components/vehicles/fine-dialog';
 import { fineActions } from '@/components/vehicles/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type FineFilters, type FinePayment, type FineStatus, type StaffFine } from '@/lib/queries';
+import ar from '@/messages/ar/fines';
+import en from '@/messages/en/fines';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 const VIEWS = ['unpaid', 'under_appeal', 'paid', 'cancelled', 'all'] as const;
 type View = (typeof VIEWS)[number];
-const who = (a: { fullName?: string | null; erased?: true } | null) => (a ? (a.erased ? 'an erased account' : (a.fullName ?? '—')) : '—');
+const who = (t: Translate<typeof en>, a: { fullName?: string | null; erased?: true } | null) =>
+  a ? (a.erased ? t('erased') : (a.fullName ?? '—')) : '—';
 
 function RecordPayment({ fine, onClose }: { fine: StaffFine; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [receiptNumber, setReceipt] = useState('');
   const [paidOn, setPaidOn] = useState(today());
@@ -47,7 +55,7 @@ function RecordPayment({ fine, onClose }: { fine: StaffFine; onClose: () => void
     {
       invalidate: [keys.finesAll],
       onDone: () => {
-        toast.show('Payment recorded. The fine is paid.');
+        toast.show(t('paid'));
         onClose();
       },
     },
@@ -57,27 +65,27 @@ function RecordPayment({ fine, onClose }: { fine: StaffFine; onClose: () => void
     <Dialog
       open
       onClose={onClose}
-      title={`Record the payment of ${fine.reference}`}
-      description={`The whole amount, ${egp(fine.amount)}, paid at the office. Records are never edited: a wrong one is reversed.`}
+      title={t('payTitle', { reference: fine.reference })}
+      description={t('payDescription', { amount: f.money(fine.amount) })}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Record payment
+            {t('recordPayment')}
           </Button>
         </>
       }
     >
       <div className="form">
         <Field
-          label="Receipt number"
-          hint="Recorded once among the compound’s fine payments."
-          error={fieldError(save.error, 'receiptNumber') ?? (receiptNumber && !validReceipt(receiptNumber) ? 'Letters, digits, / and - only.' : undefined)}
+          label={t('receiptNumber')}
+          hint={t('receiptHint')}
+          error={fieldError(save.error, 'receiptNumber') ?? (receiptNumber && !validReceipt(receiptNumber) ? t('receiptInvalid') : undefined)}
         >
           {(p) => <Input {...p} maxLength={40} value={receiptNumber} onChange={(e) => setReceipt(e.target.value)} />}
         </Field>
-        <Field label="Paid on" hint="Not before the fine’s day, at most 90 days ago." error={fieldError(save.error, 'paidOn')}>
+        <Field label={t('paidOn')} hint={t('paidOnHint')} error={fieldError(save.error, 'paidOn')}>
           {(p) => <Input {...p} type="date" min={fine.occurredOn} max={today()} value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -87,6 +95,10 @@ function RecordPayment({ fine, onClose }: { fine: StaffFine; onClose: () => void
 }
 
 function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { can } = usePermissions();
   const fine = useQuery({ queryKey: keys.fine(id), queryFn: () => fetchers.fine(id) });
@@ -98,7 +110,7 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.finesAll],
       onDone: (f) => {
-        toast.show(f.status === 'cancelled' ? 'Appeal accepted: the fine is cancelled.' : 'Appeal upheld: the fine stands.');
+        toast.show(f.status === 'cancelled' ? t('appealAccepted') : t('appealUpheld'));
         setStep(null);
       },
     },
@@ -108,7 +120,7 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.finesAll],
       onDone: () => {
-        toast.show('Cancelled.');
+        toast.show(t('cancelled'));
         setStep(null);
       },
     },
@@ -119,7 +131,7 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.finesAll],
       onDone: () => {
-        toast.show('Reversed. The fine is unpaid again.');
+        toast.show(t('reversedToast'));
         setReversing(null);
       },
     },
@@ -133,31 +145,31 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
         open={step === null || step === 'cancel' || step === 'accept'}
         wide
         onClose={onClose}
-        title={f ? `${f.reference} · unit ${f.unitCode}` : 'Fine'}
-        description={f ? `${humanize(f.reason)} · ${egp(f.amount)} · ${f.occurredOn}` : undefined}
+        title={f ? t('detailTitle', { reference: f.reference, unit: f.unitCode }) : t('fine')}
+        description={f ? `${label(f.reason)} · ${fmt.money(f.amount)} · ${fmt.day(f.occurredOn)}` : undefined}
         footer={
           <>
             {actions.includes('decide') ? (
               <>
                 <Button loading={decide.isPending} onClick={() => decide.mutate({ decision: 'upheld' })}>
-                  Uphold
+                  {t('uphold')}
                 </Button>
                 <Button variant="primary" onClick={() => setStep('accept')}>
-                  Accept the appeal
+                  {t('acceptAppeal')}
                 </Button>
               </>
             ) : null}
             {actions.includes('pay') ? (
               <Button variant="primary" onClick={() => setStep('pay')}>
-                Record payment
+                {t('recordPayment')}
               </Button>
             ) : null}
             {actions.includes('cancel') ? (
               <Button variant="danger" onClick={() => setStep('cancel')}>
-                Cancel the fine
+                {t('cancelFine')}
               </Button>
             ) : null}
-            <Button onClick={onClose}>Close</Button>
+            <Button onClick={onClose}>{c('close')}</Button>
           </>
         }
       >
@@ -165,45 +177,43 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
           {f ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{t('status')}</dt>
                 <dd>
                   <StatusBadge status={f.status} />
-                  {f.cancelReason ? <span className="t-secondary"> · {humanize(f.cancelReason)}</span> : null}
+                  {f.cancelReason ? <span className="t-secondary"> · {label(f.cancelReason)}</span> : null}
                 </dd>
-                <dt>Plate</dt>
-                <dd>{f.plate}</dd>
-                <dt>Issued</dt>
+                <dt>{t('plate')}</dt>
                 <dd>
-                  {formatDateTime(f.createdAt)} · by {who(f.issuedBy)}
+                  <bdi>{f.plate}</bdi>
                 </dd>
+                <dt>{t('issuedAt')}</dt>
+                <dd>{t('issuedBy', { when: fmt.dateTime(f.createdAt), who: who(t, f.issuedBy) })}</dd>
                 {f.note ? (
                   <>
-                    <dt>Note for the unit</dt>
+                    <dt>{t('noteForUnit')}</dt>
                     <dd>{f.note}</dd>
                   </>
                 ) : null}
               </dl>
               {f.photoUrl ? (
                 <a className="btn btn--secondary btn--sm" href={f.photoUrl} target="_blank" rel="noreferrer">
-                  Open the photo
+                  {t('openPhoto')}
                 </a>
               ) : null}
               {f.appeal ? (
                 <Card>
                   <div className="stack stack--sm" style={{ padding: 16 }}>
-                    <strong>Appeal</strong>
-                    <span className="t-secondary">
-                      {formatDateTime(f.appeal.appealedAt)} · by {who(f.appealedBy)}
-                    </span>
-                    <span>{f.appeal.reason ?? <span className="t-secondary">The appellant’s words were erased.</span>}</span>
+                    <strong>{t('appeal')}</strong>
+                    <span className="t-secondary">{t('issuedBy', { when: fmt.dateTime(f.appeal.appealedAt), who: who(t, f.appealedBy) })}</span>
+                    <span>{f.appeal.reason ?? <span className="t-secondary">{t('appealErased')}</span>}</span>
                     {f.appeal.photoUrl ? (
                       <a href={f.appeal.photoUrl} target="_blank" rel="noreferrer">
-                        The appeal’s photo
+                        {t('appealPhoto')}
                       </a>
                     ) : null}
                     {f.appeal.decision ? (
                       <Badge tone={f.appeal.decision === 'upheld' ? 'beige' : 'green'}>
-                        {f.appeal.decision === 'upheld' ? 'Upheld' : 'Accepted'} · {who(f.decidedBy)}
+                        {f.appeal.decision === 'upheld' ? t('decision.upheld') : t('decision.cancelled')} · {who(t, f.decidedBy)}
                       </Badge>
                     ) : null}
                   </div>
@@ -213,18 +223,24 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 <DataTable<FinePayment>
                   rows={f.payments}
                   rowKey={(p) => p.id}
-                  empty="No payment"
+                  empty={t('noPayment')}
                   columns={[
                     {
                       key: 'kind',
                       header: '',
                       cell: (p) =>
-                        p.kind === 'reversal' ? <Badge tone="error">Reversal</Badge> : reversed.has(p.id) ? <Badge tone="beige">Reversed</Badge> : <Badge tone="green">Payment</Badge>,
+                        p.kind === 'reversal' ? (
+                          <Badge tone="error">{t('payment.reversal')}</Badge>
+                        ) : reversed.has(p.id) ? (
+                          <Badge tone="beige">{t('payment.reversed')}</Badge>
+                        ) : (
+                          <Badge tone="green">{t('payment.payment')}</Badge>
+                        ),
                     },
-                    { key: 'paid', header: 'Paid on', cell: (p) => p.paidOn ?? new Date(p.createdAt).toLocaleDateString('en-CA') },
-                    { key: 'amount', header: 'Amount', cell: (p) => (p.amount ? egp(p.amount) : humanize(p.reasonCode)) },
-                    { key: 'receipt', header: 'Receipt', cell: (p) => <span className="t-mono">{p.receiptNumber ?? '—'}</span> },
-                    { key: 'by', header: 'By', cell: (p) => who(p.recordedBy) },
+                    { key: 'paid', header: t('col.paidOn'), cell: (p) => (p.paidOn ? fmt.day(p.paidOn) : fmt.date(p.createdAt)) },
+                    { key: 'amount', header: t('col.amount'), cell: (p) => (p.amount ? fmt.money(p.amount) : label(p.reasonCode)) },
+                    { key: 'receipt', header: t('col.receipt'), cell: (p) => <span className="t-mono">{p.receiptNumber ?? '—'}</span> },
+                    { key: 'by', header: t('col.by'), cell: (p) => who(t, p.recordedBy) },
                     {
                       key: 'actions',
                       header: '',
@@ -232,7 +248,7 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       cell: (p) =>
                         p.kind === 'payment' && !reversed.has(p.id) && can('fines.billing') ? (
                           <Button size="sm" onClick={() => setReversing(p)}>
-                            Reverse
+                            {t('reverse')}
                           </Button>
                         ) : null,
                     },
@@ -248,10 +264,10 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'accept'}
         onClose={() => setStep(null)}
-        title={`Accept the appeal of ${f?.reference ?? ''}?`}
-        description="The fine is cancelled and the appellant is told."
+        title={t('acceptTitle', { reference: f?.reference })}
+        description={t('acceptDescription')}
         codes={REASON_CODES.vehicleFineCancel}
-        confirmLabel="Accept and cancel"
+        confirmLabel={t('acceptConfirm')}
         pending={decide.isPending}
         error={<ErrorAlert error={decide.error} />}
         onConfirm={(reasonCode) => decide.mutate({ decision: 'cancelled', reasonCode })}
@@ -259,10 +275,10 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'cancel'}
         onClose={() => setStep(null)}
-        title={`Cancel ${f?.reference ?? ''}?`}
-        description="Final. The unit sees it cancelled, with the reason."
-        codes={REASON_CODES.vehicleFineCancel.filter((c) => c !== 'appeal_accepted')}
-        confirmLabel="Cancel the fine"
+        title={t('cancelTitle', { reference: f?.reference })}
+        description={t('cancelDescription')}
+        codes={REASON_CODES.vehicleFineCancel.filter((code) => code !== 'appeal_accepted')}
+        confirmLabel={t('cancelFine')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
@@ -271,10 +287,10 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={reversing !== null}
         onClose={() => setReversing(null)}
-        title={`Reverse receipt ${reversing?.receiptNumber ?? ''}?`}
-        description="A new record cancels this one; nothing is edited. The fine is unpaid again."
+        title={t('reverseTitle', { receipt: reversing?.receiptNumber })}
+        description={t('reverseDescription')}
         codes={REASON_CODES.vehicleFinePaymentReverse}
-        confirmLabel="Reverse"
+        confirmLabel={t('reverse')}
         danger
         pending={reverse.isPending}
         error={<ErrorAlert error={reverse.error} />}
@@ -290,6 +306,9 @@ function FineDetail({ id, onClose }: { id: string; onClose: () => void }) {
  * accountant). The unit never sees where a fine came from.
  */
 export default function FinesPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('fines.issue') || can('fines.billing');
@@ -308,7 +327,7 @@ export default function FinesPage() {
     {
       invalidate: [keys.finesAll],
       onDone: (f) => {
-        toast.show(`Issued ${f.reference}. The unit is told.`);
+        toast.show(t('issued', { reference: f.reference }));
         setIssuing(false);
       },
     },
@@ -316,38 +335,32 @@ export default function FinesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Fines" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Fines"
-        description="Paid at the office: no online payment yet."
+        title={t('title')}
+        description={t('description')}
         actions={
           can('fines.issue') ? (
             <Button variant="primary" onClick={() => setIssuing(true)}>
-              Issue a fine
+              {t('issue')}
             </Button>
           ) : undefined
         }
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Fines shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'under_appeal', label: 'Appeals' },
-            { value: 'unpaid', label: 'Unpaid' },
-            { value: 'paid', label: 'Paid' },
-            { value: 'cancelled', label: 'Cancelled' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
-        <Field label="Unit code">
-          {(p) => <Input {...p} placeholder="e.g. A-101" value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
+        <Field label={t('unitCode')}>
+          {(p) => <Input {...p} placeholder={t('unitCodePlaceholder')} value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
         </Field>
       </div>
       <Card flush>
@@ -355,29 +368,29 @@ export default function FinesPage() {
           <DataTable<StaffFine>
             rows={list.rows}
             rowKey={(f) => f.id}
-            empty={view === 'under_appeal' ? 'No appeal waits' : 'No fine matches'}
+            empty={view === 'under_appeal' ? t('emptyAppeals') : t('emptyMatch')}
             columns={[
               {
                 key: 'ref',
-                header: 'Fine',
+                header: t('col.fine'),
                 cell: (f) => (
                   <Button variant="text" className="table__link t-mono" onClick={() => setOpen(f.id)}>
                     {f.reference}
                   </Button>
                 ),
               },
-              { key: 'unit', header: 'Unit', cell: (f) => <span className="t-mono">{f.unitCode}</span> },
-              { key: 'plate', header: 'Plate', cell: (f) => f.plate },
-              { key: 'reason', header: 'Reason', cell: (f) => humanize(f.reason) },
-              { key: 'amount', header: 'Amount', cell: (f) => egp(f.amount) },
-              { key: 'status', header: 'Status', cell: (f) => <StatusBadge status={f.status} /> },
+              { key: 'unit', header: t('col.unit'), cell: (f) => <span className="t-mono">{f.unitCode}</span> },
+              { key: 'plate', header: t('col.plate'), cell: (f) => <bdi>{f.plate}</bdi> },
+              { key: 'reason', header: t('col.reason'), cell: (f) => label(f.reason) },
+              { key: 'amount', header: t('col.amount'), cell: (f) => fmt.money(f.amount) },
+              { key: 'status', header: t('col.status'), cell: (f) => <StatusBadge status={f.status} /> },
               // ADR 0070: a fine issued now is owed through the unit's invoice, payable online.
               {
                 key: 'payable',
-                header: 'Paid through',
-                cell: (f) => (f.payable === 'online' ? <Badge tone="green">Invoice</Badge> : <Badge tone="beige">Office</Badge>),
+                header: t('col.payable'),
+                cell: (f) => (f.payable === 'online' ? <Badge tone="green">{t('payable.online')}</Badge> : <Badge tone="beige">{t('payable.office')}</Badge>),
               },
-              { key: 'when', header: 'Issued', cell: (f) => <span title={formatDateTime(f.createdAt)}>{relativeTime(f.createdAt)}</span> },
+              { key: 'when', header: t('col.issued'), cell: (f) => <span title={fmt.dateTime(f.createdAt)}>{fmt.relative(f.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />
@@ -386,9 +399,9 @@ export default function FinesPage() {
       {open ? <FineDetail id={open} onClose={() => setOpen(null)} /> : null}
       {issuing ? (
         <FineDialog
-          title="Issue a fine"
-          description="The unit’s vehicle keepers and its primary are told, with the reason only."
-          confirmLabel="Issue"
+          title={t('issue')}
+          description={t('issueDescription')}
+          confirmLabel={t('issueConfirm')}
           pending={issue.isPending}
           error={issue.error}
           onSubmit={(body) => issue.mutate(body)}

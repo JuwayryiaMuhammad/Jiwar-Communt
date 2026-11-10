@@ -2,20 +2,42 @@
 
 import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardBody, CardHeader, DataTable, Dialog, Field, ForbiddenState, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  PageHeader,
+  Segmented,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/fin-statements';
+import en from '@/messages/en/fin-statements';
 
 type Import = Schema<'StatementImportView'>;
 type Line = Schema<'StatementLineView'>;
 const KEY = ['finance', 'statements'] as const;
-const label = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, ' ');
 
 /** A line matched by hand: one of its candidates, or an adjustment. */
 function Match({ line, onClose }: { line: Line; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const candidates = useQuery({
     queryKey: [...KEY, 'candidates', line.id],
@@ -23,7 +45,7 @@ function Match({ line, onClose }: { line: Line; onClose: () => void }) {
   });
   const [choice, setChoice] = useState('');
   const [code, setCode] = useState('');
-  const picked = candidates.data?.data.find((c) => `${c.kind}:${c.id}` === choice);
+  const picked = candidates.data?.data.find((x) => `${x.kind}:${x.id}` === choice);
   const match = useAction(
     () =>
       unwrap(
@@ -35,7 +57,7 @@ function Match({ line, onClose }: { line: Line; onClose: () => void }) {
     {
       invalidate: [KEY, ['finance', 'cash-accounts']],
       onDone: () => {
-        toast.show('Matched.');
+        toast.show(t('match.done'));
         onClose();
       },
     },
@@ -45,43 +67,43 @@ function Match({ line, onClose }: { line: Line; onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title={`Match ${line.amount} EGP on ${line.bookedOn}`}
+      title={t('match.title', { amount: f.money(line.amount), day: f.day(line.bookedOn) })}
       description={line.reference ?? undefined}
       onSubmit={() => ok && match.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={match.isPending} disabled={!ok}>
-            Match
+            {t('match')}
           </Button>
         </>
       }
     >
       <QueryState query={candidates}>
         <div className="form">
-          <Field label="To" hint="The same amount within 30 days, or an adjustment (a bank charge, an interest).">
+          <Field label={t('match.to')} hint={t('match.hint')}>
             {(p) => (
               <Select {...p} value={choice} onChange={(e) => setChoice(e.target.value)}>
-                <option value="">Choose…</option>
-                {candidates.data?.data.map((c) => (
-                  <option key={c.id} value={`${c.kind}:${c.id}`}>
-                    {label(c.kind)} · {c.amount} EGP · {c.onDay}
-                    {c.reference ? ` · ${c.reference}` : ''}
-                    {c.unitCode ? ` · ${c.unitCode}` : ''}
+                <option value="">{t('match.choose')}</option>
+                {candidates.data?.data.map((x) => (
+                  <option key={x.id} value={`${x.kind}:${x.id}`}>
+                    {label(x.kind)} · {f.money(x.amount)} · {f.day(x.onDay)}
+                    {x.reference ? ` · ${x.reference}` : ''}
+                    {x.unitCode ? ` · ${x.unitCode}` : ''}
                   </option>
                 ))}
-                <option value="adjustment">An adjustment…</option>
+                <option value="adjustment">{t('match.adjustment')}</option>
               </Select>
             )}
           </Field>
           {choice === 'adjustment' ? (
-            <Field label="Why" error={fieldError(match.error, 'reasonCode')}>
+            <Field label={t('match.why')} error={fieldError(match.error, 'reasonCode')}>
               {(p) => (
                 <Select {...p} value={code} onChange={(e) => setCode(e.target.value)}>
-                  <option value="">Choose…</option>
-                  {REASON_CODES.cashAdjust.map((c) => (
-                    <option key={c} value={c}>
-                      {label(c)}
+                  <option value="">{t('match.choose')}</option>
+                  {REASON_CODES.cashAdjust.map((x) => (
+                    <option key={x} value={x}>
+                      {label(x)}
                     </option>
                   ))}
                 </Select>
@@ -102,6 +124,10 @@ function Match({ line, onClose }: { line: Line; onClose: () => void }) {
  * wait here.
  */
 export default function StatementsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('finance.treasury');
   const toast = useToast();
@@ -123,36 +149,40 @@ export default function StatementsPage() {
   const apply = useAction(() => unwrap(api.POST('/api/v1/staff/finance/statement-imports/{id}/apply', { params: { path: { id: checked!.id } } })), {
     invalidate: [KEY, ['finance', 'cash-accounts']],
     onDone: (r) => {
-      toast.show(`${r.importedCount} line(s) imported, ${r.matchedCount} matched on their own.`);
+      toast.show(t('applied', { imported: r.importedCount, matched: f.number(r.matchedCount) }));
       setChecked(null);
     },
   });
   const undo = useAction((l: Line) => unwrap(api.POST('/api/v1/staff/finance/statement-matches/{id}/undo', { params: { path: { id: l.match!.id } } })), {
     invalidate: [KEY, ['finance', 'cash-accounts']],
-    onDone: () => toast.show('Undone.'),
+    onDone: () => toast.show(t('undone')),
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Bank statements" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Bank statements" description="Import a bank's CSV and match its lines to the payments, cheques and transfers recorded here." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="stack">
         <Card>
-          <CardHeader title="Import" />
+          <CardHeader title={t('importTitle')} />
           <CardBody>
             <div className="form">
-              <Field label="Bank account">
+              <Field label={t('bankAccount')}>
                 {(p) => (
-                  <Select {...p} value={accountId} onChange={(e) => {
+                  <Select
+                    {...p}
+                    value={accountId}
+                    onChange={(e) => {
                       setAccountId(e.target.value);
                       setChecked(null);
-                    }}>
-                    <option value="">Choose…</option>
+                    }}
+                  >
+                    <option value="">{t('match.choose')}</option>
                     {banks.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.name}
@@ -161,22 +191,27 @@ export default function StatementsPage() {
                   </Select>
                 )}
               </Field>
-              <p className="t-muted">Columns: date (YYYY-MM-DD), amount (money in positive), reference, description. The same file twice imports nothing new.</p>
-              <FileUpload purpose="data_import" label="Check a statement" disabled={!accountId || check.isPending} onUploaded={(id) => check.mutateAsync(id).then(() => undefined)} />
+              <p className="t-muted">{t('columns')}</p>
+              <FileUpload purpose="data_import" label={t('check')} disabled={!accountId || check.isPending} onUploaded={(id) => check.mutateAsync(id).then(() => undefined)} />
               <ErrorAlert error={check.error} />
               {checked ? (
                 <div className="stack">
                   <span className="row" style={{ gap: 8 }}>
                     <Badge tone={checked.status === 'valid' ? 'green' : 'error'}>{label(checked.status)}</Badge>
                     <span>
-                      {checked.rowCount} line(s): {checked.newCount} new, {checked.duplicateCount} imported before, {checked.errorCount} wrong
+                      {t('summary', {
+                        rows: checked.rowCount,
+                        fresh: f.number(checked.newCount),
+                        duplicates: f.number(checked.duplicateCount),
+                        errors: f.number(checked.errorCount),
+                      })}
                     </span>
                   </span>
                   {checked.errors.length ? (
                     <ul>
                       {checked.errors.map((e) => (
                         <li key={`${e.line}-${e.field}`}>
-                          Line {e.line}, {e.field}: {label(e.code.toLowerCase())}
+                          {t('errorLine', { line: f.number(e.line), field: e.field, what: label(e.code.toLowerCase()) })}
                         </li>
                       ))}
                     </ul>
@@ -184,7 +219,7 @@ export default function StatementsPage() {
                   {checked.status === 'valid' ? (
                     <div>
                       <Button variant="primary" loading={apply.isPending} onClick={() => apply.mutate(undefined)}>
-                        Apply
+                        {t('apply')}
                       </Button>
                     </div>
                   ) : null}
@@ -197,12 +232,12 @@ export default function StatementsPage() {
         {accountId ? (
           <>
             <Segmented
-              label="Lines"
+              label={t('lines')}
               value={status}
               onChange={setStatus}
               options={[
-                { value: 'unmatched', label: 'Waiting' },
-                { value: 'matched', label: 'Matched' },
+                { value: 'unmatched', label: t('waiting') },
+                { value: 'matched', label: t('matched') },
               ]}
             />
             <ErrorAlert error={undo.error} />
@@ -211,16 +246,16 @@ export default function StatementsPage() {
                 <DataTable<Line>
                   rows={lines.data?.data}
                   rowKey={(l) => l.id}
-                  empty="None"
+                  empty={t('empty')}
                   columns={[
-                    { key: 'd', header: 'Day', cell: (l) => l.bookedOn },
-                    { key: 'a', header: 'Amount', cell: (l) => <span className="t-mono">{l.amount}</span> },
-                    { key: 'r', header: 'Reference', cell: (l) => l.reference ?? '—' },
-                    { key: 't', header: 'Description', cell: (l) => l.description ?? '—' },
+                    { key: 'd', header: t('day'), cell: (l) => f.day(l.bookedOn) },
+                    { key: 'a', header: c('amount'), cell: (l) => <span className="t-mono">{f.number(l.amount, { minimumFractionDigits: 2 })}</span> },
+                    { key: 'r', header: t('reference'), cell: (l) => l.reference ?? '—' },
+                    { key: 't', header: t('description2'), cell: (l) => l.description ?? '—' },
                     {
                       key: 'm',
-                      header: 'Match',
-                      cell: (l) => (l.match ? <Badge tone="green">{`${label(l.match.kind)}${l.match.auto ? ' · on its own' : ''}`}</Badge> : '—'),
+                      header: t('match'),
+                      cell: (l) => (l.match ? <Badge tone="green">{l.match.auto ? t('onItsOwn', { kind: label(l.match.kind) }) : label(l.match.kind)}</Badge> : '—'),
                     },
                     {
                       key: 'x',
@@ -229,11 +264,11 @@ export default function StatementsPage() {
                       cell: (l) =>
                         l.match ? (
                           <Button size="sm" onClick={() => undo.mutate(l)}>
-                            Undo
+                            {t('undo')}
                           </Button>
                         ) : (
                           <Button size="sm" variant="primary" onClick={() => setMatching(l)}>
-                            Match
+                            {t('match')}
                           </Button>
                         ),
                     },

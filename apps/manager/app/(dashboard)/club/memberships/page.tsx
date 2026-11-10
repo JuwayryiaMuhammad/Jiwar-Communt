@@ -2,7 +2,8 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, StatusBadge, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -13,12 +14,16 @@ import { PeoplePicker } from '@/components/club/people-picker';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ClubMembership, type ClubMembershipState, type ClubUnit } from '@/lib/queries';
+import ar from '@/messages/ar/money-club-memberships';
+import en from '@/messages/en/money-club-memberships';
 
 const STATES = ['', 'active', 'expiring', 'expired', 'none'] as const;
 type View = (typeof STATES)[number];
 
 /** A unit found by its code, then whom its new membership covers. */
 function NewMembershipDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const router = useRouter();
   const [code, setCode] = useState('');
@@ -35,7 +40,7 @@ function NewMembershipDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.clubAll],
       onDone: (m) => {
-        toast.show(`Unit ${m.unitCode} has a membership. Record its payment next.`);
+        toast.show(t('created', { unit: m.unitCode }));
         router.push(`/club/memberships/${m.id}`);
       },
     },
@@ -45,20 +50,20 @@ function NewMembershipDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="New membership"
-      description="One per unit. It is active once a payment is recorded."
+      title={t('newMembership')}
+      description={t('newDescription')}
       onSubmit={() => (unit ? create.mutate() : code.trim() && find.mutate())}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={find.isPending || create.isPending} disabled={!unit && !code.trim()}>
-            {unit ? 'Create' : 'Find the unit'}
+            {unit ? c('create') : t('findUnit')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Unit code">
+        <Field label={t('unitCode')}>
           {(p) => (
             <Input
               {...p}
@@ -71,7 +76,7 @@ function NewMembershipDialog({ onClose }: { onClose: () => void }) {
           )}
         </Field>
         {unit ? (
-          <Field label="Whom it covers">{() => <PeoplePicker unitId={unit.id} value={people} onChange={setPeople} />}</Field>
+          <Field label={t('covers')}>{() => <PeoplePicker unitId={unit.id} value={people} onChange={setPeople} />}</Field>
         ) : null}
         <ErrorAlert error={find.error ?? create.error} />
       </div>
@@ -81,6 +86,8 @@ function NewMembershipDialog({ onClose }: { onClose: () => void }) {
 
 /** The club's memberships (ADR 0044), for the accountant: one per unit, by state. */
 export default function ClubMembershipsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('club.billing');
   const [view, setView] = useState<View>('');
@@ -94,23 +101,17 @@ export default function ClubMembershipsPage() {
 
   return (
     <>
-      <PageHeader title="Club memberships" description="Each unit’s membership, whom it covers, and the payments made at the office that keep it active." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<View>
-          label="Memberships shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: '', label: 'All' },
-            { value: 'active', label: 'Active' },
-            { value: 'expiring', label: 'Ending this week' },
-            { value: 'expired', label: 'Expired' },
-            { value: 'none', label: 'Never paid' },
-          ]}
+          options={STATES.map((v) => ({ value: v, label: t(`view.${v || 'all'}`) }))}
         />
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-          New membership
+          {t('newMembership')}
         </Button>
       </div>
       <Card flush>
@@ -118,20 +119,20 @@ export default function ClubMembershipsPage() {
           <DataTable<ClubMembership>
             rows={list.data?.data}
             rowKey={(m) => m.id}
-            empty="No membership matches"
+            empty={t('empty')}
             columns={[
               {
                 key: 'unit',
-                header: 'Unit',
+                header: t('col.unit'),
                 cell: (m) => (
                   <Link className="table__link t-mono" href={`/club/memberships/${m.id}`}>
                     {m.unitCode}
                   </Link>
                 ),
               },
-              { key: 'state', header: 'State', cell: (m) => <StatusBadge status={m.state} /> },
-              { key: 'through', header: 'Active through', cell: (m) => m.activeThrough ?? '—' },
-              { key: 'people', header: 'Covers', cell: (m) => `${m.people.length} ${m.people.length === 1 ? 'person' : 'people'}` },
+              { key: 'state', header: t('col.state'), cell: (m) => <StatusBadge status={m.state} /> },
+              { key: 'through', header: t('col.through'), cell: (m) => (m.activeThrough ? fmt.day(m.activeThrough) : '—') },
+              { key: 'people', header: t('col.people'), cell: (m) => t('people', { n: m.people.length }) },
             ]}
           />
         </QueryState>

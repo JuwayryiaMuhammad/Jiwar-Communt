@@ -1,7 +1,9 @@
 /**
  * The general ledger's words and sums on the dashboard (ADR 0092). Plain
- * TypeScript, no imports: amounts are decimal strings, summed in piastres.
+ * TypeScript, type imports only: amounts are decimal strings, summed in piastres.
  */
+import type { Translate } from '@jiwar/i18n/core';
+import type codes from '../../messages/en/fin-codes.ts';
 
 /** A decimal string in piastres; null when it is not an amount. */
 export function piastres(v: string): number | null {
@@ -54,5 +56,10 @@ const KEYS: Record<string, string> = {
   cash_account: 'Bank or cash account',
 };
 
-/** What a reconciliation line checks. */
+/** What a reconciliation line checks (English; `reconciliationText` is in the page's language). */
 export const reconciliationLabel = (key: string) => KEYS[key] ?? key;
+
+/** What a reconciliation line checks, in the page's language (`t` is the fin-codes catalog). */
+export function reconciliationText(t: Translate<typeof codes>, key: string): string {
+  return key in KEYS ? t(`reconciliation.${key}` as keyof typeof codes) : key;
+}

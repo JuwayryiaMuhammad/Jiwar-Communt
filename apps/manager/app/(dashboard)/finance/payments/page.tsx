@@ -1,19 +1,21 @@
 'use client';
 
-import { formatDateTime, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, Select } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useCommonT } from '@jiwar/ui';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
-import { METHOD_TEXT } from '@/components/finance/logic';
+import { useFinanceCode } from '@/components/finance/codes';
 import { PaymentDetailDialog } from '@/components/finance/payment-detail';
 import { RecordPaymentDialog } from '@/components/finance/record-payment';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Payment, type PaymentFilters } from '@/lib/queries';
+import ar from '@/messages/ar/fin-payments';
+import en from '@/messages/en/fin-payments';
 
 type Channel = 'all' | 'office' | 'online';
+const METHODS = ['cash', 'bank_transfer', 'cheque', 'card', 'wallet'] as const;
 
 /**
  * Payments (ADR 0046): online through Paymob, confirmed by Paymob to the
@@ -21,6 +23,10 @@ type Channel = 'all' | 'office' | 'online';
  * office payment recorded by mistake is reversed, never edited.
  */
 export default function PaymentsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const code = useFinanceCode();
   const { ready, can } = usePermissions();
   const allowed = can('finance.payments');
   const [channel, setChannel] = useState<Channel>('all');
@@ -30,85 +36,90 @@ export default function PaymentsPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const filters: PaymentFilters = { channel: channel === 'all' ? '' : channel, method, from, to };
-  const list = useCursorList(keys.payments(filters), (c) => fetchers.payments(filters, c), { enabled: allowed });
+  const list = useCursorList(keys.payments(filters), (cursor) => fetchers.payments(filters, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Payments" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Payments"
-        description="Every payment pays the oldest invoices due first. Money beyond what a unit owes is its credit, applied to its next invoices."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setRecording(true)}>
-            Record a payment
+            {t('record')}
           </Button>
         }
       />
       <div className="toolbar">
         <Segmented<Channel>
-          label="Channel"
+          label={t('channel')}
           value={channel}
           onChange={setChannel}
           options={[
-            { value: 'all', label: 'All' },
-            { value: 'office', label: 'At the office' },
-            { value: 'online', label: 'Online' },
+            { value: 'all', label: c('all') },
+            { value: 'office', label: t('office') },
+            { value: 'online', label: t('online') },
           ]}
         />
-        <Field label="Method">
+        <Field label={t('method')}>
           {(p) => (
             <Select {...p} value={method} onChange={(e) => setMethod(e.target.value as PaymentFilters['method'])}>
-              <option value="">Any</option>
-              {Object.entries(METHOD_TEXT).map(([v, label]) => (
+              <option value="">{t('any')}</option>
+              {METHODS.map((v) => (
                 <option key={v} value={v}>
-                  {label}
+                  {code('method', v)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Paid from">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="to">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={t('paidFrom')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={t('paidTo')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
       </div>
       <Card flush>
         <QueryState query={list}>
           <DataTable<Payment>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty="No payment matches"
+            empty={t('empty')}
             columns={[
               {
                 key: 'receipt',
-                header: 'Receipt',
+                header: t('receipt'),
                 cell: (p) => (
-                  <Button variant="text" className="table__link t-mono" onClick={() => setOpen(p.id)}>
+                  <Button variant="text" className="table__link t-mono ltr" onClick={() => setOpen(p.id)}>
                     {p.receiptNumber}
                   </Button>
                 ),
               },
               {
                 key: 'unit',
-                header: 'Unit',
+                header: c('unit'),
                 cell: (p) => (
-                  <Link className="t-mono" href={`/finance/units/${p.unitId}`}>
+                  <Link className="t-mono ltr" href={`/finance/units/${p.unitId}`}>
                     {p.unitCode}
                   </Link>
                 ),
               },
-              { key: 'method', header: 'Method', cell: (p) => METHOD_TEXT[p.method] ?? p.method },
-              { key: 'amount', header: 'Amount', cell: (p) => egp(p.amount) },
-              { key: 'paid', header: 'Paid on', cell: (p) => p.paidOn },
+              { key: 'method', header: t('method'), cell: (p) => code('method', p.method) },
+              { key: 'amount', header: c('amount'), cell: (p) => f.money(p.amount) },
+              { key: 'paid', header: t('paidOn'), cell: (p) => f.day(p.paidOn) },
               {
                 key: 'state',
                 header: '',
-                cell: (p) => (p.reversal ? <Badge tone="beige">Reversed</Badge> : Number(p.unallocated) > 0 ? <Badge tone="terracotta">Credit {egp(p.unallocated)}</Badge> : null),
+                cell: (p) =>
+                  p.reversal ? (
+                    <Badge tone="beige">{t('reversed')}</Badge>
+                  ) : Number(p.unallocated) > 0 ? (
+                    <Badge tone="terracotta">{t('credit', { amount: f.money(p.unallocated) })}</Badge>
+                  ) : null,
               },
-              { key: 'when', header: 'Recorded', cell: (p) => <span title={formatDateTime(p.createdAt)}>{relativeTime(p.createdAt)}</span> },
+              { key: 'when', header: t('recorded'), cell: (p) => <span title={f.dateTime(p.createdAt)}>{f.relative(p.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

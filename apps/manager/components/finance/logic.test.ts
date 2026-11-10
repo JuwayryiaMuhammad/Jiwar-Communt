@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { createFormat, translator } from '@jiwar/i18n/core';
+import ar from '../../messages/ar/fin-codes.ts';
+import en from '../../messages/en/fin-codes.ts';
 import { firstOfMonth, keyProblem, lineReady, linesTotal, masked, monthStarts, needsReference, validCode, validMoney, validReference, addMonths, splitEqually, instalmentsProblem, creditable, downloadName } from './logic.ts';
+
+const t = translator('en', en, ar);
+const tAr = translator('ar', en, ar);
+const fmt = createFormat('en');
 
 test('money: positive, two decimals at most, up to a million', () => {
   assert.equal(validMoney('1500'), true);
@@ -37,10 +44,11 @@ test('plans start on the first of a month', () => {
 test('credentials: masked, keys fit the mode, codes are six digits', () => {
   assert.equal(masked('abcd'), '••••abcd');
   assert.equal(masked(null), '—');
-  assert.equal(keyProblem('egy_sk_test_0123456789', 'sk', 'sandbox'), undefined);
-  assert.equal(keyProblem('egy_sk_test_0123456789', 'sk', 'live'), 'Live mode takes a live key.');
-  assert.equal(keyProblem('egy_pk_live_0123456789', 'pk', 'sandbox'), 'Sandbox takes a test key.');
-  assert.match(keyProblem('sk_live_x', 'sk', 'live') ?? '', /Starts with/);
+  assert.equal(keyProblem(t, 'egy_sk_test_0123456789', 'sk', 'sandbox'), undefined);
+  assert.equal(keyProblem(t, 'egy_sk_test_0123456789', 'sk', 'live'), 'Live mode takes a live key.');
+  assert.equal(keyProblem(t, 'egy_pk_live_0123456789', 'pk', 'sandbox'), 'Sandbox takes a test key.');
+  assert.match(keyProblem(t, 'sk_live_x', 'sk', 'live') ?? '', /Starts with .*egy_sk_test_.* or .*egy_sk_live_/);
+  assert.match(keyProblem(tAr, 'egy_pk_live_0123456789', 'pk', 'sandbox') ?? '', /وضع التجربة/);
   assert.equal(validCode('123456'), true);
   assert.equal(validCode('12345'), false);
 });
@@ -61,13 +69,15 @@ test('an equal split adds up exactly, the piastres left over on the last', () =>
       ['2027-01-01', '333.34'],
     ],
   );
-  assert.equal(instalmentsProblem(rows, '1000'), undefined);
+  assert.equal(instalmentsProblem(t, fmt, rows, '1000'), undefined);
 });
 
 test('instalments the API would refuse are named before sending', () => {
-  assert.match(instalmentsProblem([{ dueOn: '2026-11-01', amount: '10' }], '10')!, /Between 2/);
+  assert.match(instalmentsProblem(t, fmt, [{ dueOn: '2026-11-01', amount: '10' }], '10')!, /Between 2/);
   assert.match(
     instalmentsProblem(
+      t,
+      fmt,
       [
         { dueOn: '2026-11-01', amount: '5' },
         { dueOn: '2026-11-01', amount: '5' },
@@ -76,16 +86,13 @@ test('instalments the API would refuse are named before sending', () => {
     )!,
     /after the one before/,
   );
-  assert.match(
-    instalmentsProblem(
-      [
-        { dueOn: '2026-11-01', amount: '5' },
-        { dueOn: '2026-12-01', amount: '4' },
-      ],
-      '10',
-    )!,
-    /add up to 10.00/,
-  );
+  const short = [
+    { dueOn: '2026-11-01', amount: '5' },
+    { dueOn: '2026-12-01', amount: '4' },
+  ];
+  assert.match(instalmentsProblem(t, fmt, short, '10')!, /add up to .*10\.00 EGP/);
+  assert.match(instalmentsProblem(tAr, createFormat('ar'), short, '10')!, /مجموع الأقساط .*10\.00 ج\.م/);
+  assert.match(instalmentsProblem(t, fmt, [{ dueOn: '2026-11-01', amount: '0.5' }, { dueOn: '2026-12-01', amount: '9.5' }], '10')!, /at least .*1\.00 EGP/);
 });
 
 test('a credit note may take the total less credit notes; a download keeps the server’s name', () => {

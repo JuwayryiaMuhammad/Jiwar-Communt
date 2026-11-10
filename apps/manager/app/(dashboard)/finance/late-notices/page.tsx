@@ -1,25 +1,31 @@
 'use client';
 
-import { fieldError, formatDate, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, DataTable, Field, ForbiddenState, Input, PageHeader, useToast } from '@jiwar/ui';
+import { useFormat, useT, type Format, type Translate } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, DataTable, Field, ForbiddenState, Input, PageHeader, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type LateNotice } from '@/lib/queries';
+import ar from '@/messages/ar/fin-late-notices';
+import en from '@/messages/en/fin-late-notices';
 
 const CURE = { min: 0, max: 60 };
 
 /** How many of the notice's recipients have each proof. */
-function proofs(n: LateNotice): string {
+function proofs(t: Translate<typeof en>, f: Format, n: LateNotice): string {
   const all = n.recipients.length;
   const emailed = n.recipients.filter((r) => r.emailedAt).length;
   const read = n.recipients.filter((r) => r.readAt).length;
-  return `${all} delivered · ${emailed} emailed · ${read} read`;
+  return t('proofLine', { all: f.number(all), emailed: f.number(emailed), read: f.number(read) });
 }
 
 function CurePeriod() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const settings = useQuery({ queryKey: keys.noticeSettings, queryFn: fetchers.noticeSettings });
   const [days, setDays] = useState('');
@@ -33,26 +39,29 @@ function CurePeriod() {
           body: { lateNoticeCureDays: Number(days) },
         }),
       ),
-    { invalidate: [keys.noticeSettings], onDone: () => toast.show('Cure period saved.') },
+    { invalidate: [keys.noticeSettings], onDone: () => toast.show(t('cure.saved')) },
   );
   const n = Number(days);
   const valid = days !== '' && Number.isInteger(n) && n >= CURE.min && n <= CURE.max;
   return (
     <Card>
-      <CardHeader title="Cure period" />
+      <CardHeader title={t('cure.title')} />
       <CardBody>
         <QueryState query={settings}>
           <div className="form">
             <Field
-              label="Days after the due date"
-              hint="An invoice still owed this many days after its due date, not disputed and not in a plan, gets one formal notice."
-              error={fieldError(save.error, 'lateNoticeCureDays') ?? (days !== '' && !valid ? `A whole number from ${CURE.min} to ${CURE.max}.` : undefined)}
+              label={t('cure.label')}
+              hint={t('cure.hint')}
+              error={
+                fieldError(save.error, 'lateNoticeCureDays') ??
+                (days !== '' && !valid ? t('cure.invalid', { min: f.number(CURE.min), max: f.number(CURE.max) }) : undefined)
+              }
             >
               {(p) => <Input {...p} type="number" min={CURE.min} max={CURE.max} step={1} value={days} onChange={(e) => setDays(e.target.value)} />}
             </Field>
             <div>
               <Button variant="primary" loading={save.isPending} disabled={!valid} onClick={() => save.mutate(undefined)}>
-                Save
+                {c('save')}
               </Button>
             </div>
             <ErrorAlert error={save.error} />
@@ -69,22 +78,21 @@ function CurePeriod() {
  * delivery, of the email and of the first reading.
  */
 export default function LateNoticesPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('finance.invoice');
-  const list = useCursorList(keys.lateNotices, (c) => fetchers.lateNotices(c), { enabled: allowed });
+  const list = useCursorList(keys.lateNotices, (cursor) => fetchers.lateNotices(cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Late notices" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Late notices"
-        description="Formal notices of late payment, the compound’s record: who got each, and the proof they did and read it."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="stack">
         <CurePeriod />
         <Card flush>
@@ -92,13 +100,13 @@ export default function LateNoticesPage() {
             <DataTable<LateNotice>
               rows={list.rows}
               rowKey={(n) => n.id}
-              empty="No notice yet"
+              empty={t('empty')}
               columns={[
-                { key: 'n', header: 'Notice', cell: (n) => <span className="t-mono">{n.number}</span> },
-                { key: 'a', header: 'Owed', cell: (n) => `${n.amount} EGP` },
-                { key: 'd', header: 'Due', cell: (n) => formatDate(n.dueOn) },
-                { key: 'i', header: 'Issued', cell: (n) => formatDateTime(n.issuedAt) },
-                { key: 'p', header: 'Proofs', cell: (n) => proofs(n) },
+                { key: 'n', header: t('notice'), cell: (n) => <span className="t-mono ltr">{n.number}</span> },
+                { key: 'a', header: t('owed'), cell: (n) => f.money(n.amount) },
+                { key: 'd', header: t('due'), cell: (n) => f.day(n.dueOn) },
+                { key: 'i', header: t('issued'), cell: (n) => f.dateTime(n.issuedAt) },
+                { key: 'p', header: t('proofs'), cell: (n) => proofs(t, f, n) },
               ]}
             />
             <LoadMore query={list} />

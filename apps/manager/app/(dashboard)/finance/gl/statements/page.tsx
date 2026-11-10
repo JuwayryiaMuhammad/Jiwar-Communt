@@ -2,7 +2,8 @@
 
 import type { Schema } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented } from '@jiwar/ui';
+import { useFormat, useLocale, useT, type Format, type Translate } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -11,24 +12,39 @@ import { today } from '@/components/security/logic';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/fin-gl-statements';
+import en from '@/messages/en/fin-gl-statements';
 
 type Row = Schema<'GlStatementRowView'>;
 type Tab = 'trial' | 'income' | 'balance';
+type T = Translate<typeof en>;
 
-const money = (v: string) => <span className="t-mono">{v}</span>;
-const account = (r: Row) => <Link href={`/finance/gl/accounts/${r.accountId}`}>{`${r.code} ${r.nameEn}`}</Link>;
+const amount = (f: Format, v: string) => f.number(v, { minimumFractionDigits: 2 });
+const money = (f: Format, v: string) => <span className="t-mono">{amount(f, v)}</span>;
 
-function Rows({ rows, title, total }: { rows: Row[]; title: string; total?: string }) {
+/** An account's name in the page's language. */
+function useAccountCell() {
+  const { locale } = useLocale();
+  return (r: Row) => (
+    <Link href={`/finance/gl/accounts/${r.accountId}`}>
+      <span className="ltr">{r.code}</span> {locale === 'ar' ? r.nameAr : r.nameEn}
+    </Link>
+  );
+}
+
+function Rows({ rows, title, total, t, f }: { rows: Row[]; title: string; total?: string; t: T; f: Format }) {
+  const c = useCommonT();
+  const account = useAccountCell();
   return (
     <Card flush>
-      <SectionHeader title={title} description={total ? `Total ${total}` : undefined} />
+      <SectionHeader title={title} description={total ? t('total', { amount: amount(f, total) }) : undefined} />
       <DataTable<Row>
         rows={rows}
         rowKey={(r) => r.accountId}
-        empty="Nothing here"
+        empty={t('empty')}
         columns={[
-          { key: 'a', header: 'Account', cell: account },
-          { key: 'm', header: 'Amount', cell: (r) => money(r.amount) },
+          { key: 'a', header: t('account'), cell: account },
+          { key: 'm', header: c('amount'), cell: (r) => money(f, r.amount) },
         ]}
       />
     </Card>
@@ -42,6 +58,11 @@ function Rows({ rows, title, total }: { rows: Row[]; title: string; total?: stri
  * journal of a period as CSV for an outside accounting system.
  */
 export default function StatementsPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const c = useCommonT();
+  const label = useLabel();
+  const account = useAccountCell();
   const { ready, can } = usePermissions();
   const allowed = can('finance.ledger');
   const [tab, setTab] = useState<Tab>('trial');
@@ -57,7 +78,7 @@ export default function StatementsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Financial statements" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -65,14 +86,14 @@ export default function StatementsPage() {
   return (
     <>
       <PageHeader
-        title="Financial statements"
-        description="From the general ledger: every figure a sum of its posted lines."
+        title={t('title')}
+        description={t('description')}
         actions={
           <span className="row" style={{ gap: 8 }}>
             {tab === 'income' ? (
-              <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+              <Field label={t('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
             ) : null}
-            <Field label={tab === 'income' ? 'To' : 'As of'}>
+            <Field label={tab === 'income' ? t('to') : t('asOf')}>
               {(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}
             </Field>
             <Button
@@ -80,26 +101,26 @@ export default function StatementsPage() {
                 void download('/api/v1/staff/reports/export', { report, from, to, format: 'xlsx' }, `${report}.xlsx`)
               }
             >
-              Workbook
+              {t('workbook')}
             </Button>
             <Button onClick={() => void download('/api/v1/staff/reports/export', { report, from, to, format: 'csv' }, `${report}.csv`)}>
               CSV
             </Button>
             <Button onClick={() => void download('/api/v1/staff/finance/gl/journal/export', { from, to }, 'journal.csv')}>
-              Journal CSV
+              {t('journalCsv')}
             </Button>
           </span>
         }
       />
       <div className="stack">
         <Segmented<Tab>
-          label="Statement"
+          label={t('statement')}
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'trial', label: 'Trial balance' },
-            { value: 'income', label: 'Income statement' },
-            { value: 'balance', label: 'Balance sheet' },
+            { value: 'trial', label: t('trial') },
+            { value: 'income', label: t('income') },
+            { value: 'balance', label: t('balance') },
           ]}
         />
         {tab === 'trial' ? (
@@ -107,21 +128,21 @@ export default function StatementsPage() {
             {trial.data ? (
               <Card flush>
                 <SectionHeader
-                  title={`Trial balance on ${trial.data.asOf}`}
-                  description={`Debits ${trial.data.debit}, credits ${trial.data.credit}.`}
+                  title={t('trialOn', { day: f.day(trial.data.asOf) })}
+                  description={t('trialTotals', { debit: amount(f, trial.data.debit), credit: amount(f, trial.data.credit) })}
                 />
                 <DataTable<Row>
                   rows={trial.data.rows}
                   rowKey={(r) => r.accountId}
                   columns={[
-                    { key: 'a', header: 'Account', cell: account },
-                    { key: 't', header: 'Type', cell: (r) => r.type },
-                    { key: 'd', header: 'Debit', cell: (r) => (r.debit === '0.00' ? '' : money(r.debit)) },
-                    { key: 'c', header: 'Credit', cell: (r) => (r.credit === '0.00' ? '' : money(r.credit)) },
+                    { key: 'a', header: t('account'), cell: account },
+                    { key: 't', header: c('type'), cell: (r) => label(r.type) },
+                    { key: 'd', header: t('debit'), cell: (r) => (r.debit === '0.00' ? '' : money(f, r.debit)) },
+                    { key: 'c', header: t('credit'), cell: (r) => (r.credit === '0.00' ? '' : money(f, r.credit)) },
                   ]}
                 />
                 <div style={{ padding: 12 }}>
-                  {trial.data.balanced ? <Badge tone="green">Balanced</Badge> : <Badge tone="error">Out of balance</Badge>}
+                  {trial.data.balanced ? <Badge tone="green">{t('balanced')}</Badge> : <Badge tone="error">{t('outOfBalance')}</Badge>}
                 </div>
               </Card>
             ) : null}
@@ -131,10 +152,10 @@ export default function StatementsPage() {
           <QueryState query={income} rows={6}>
             {income.data ? (
               <div className="stack">
-                <Rows rows={income.data.revenue} title="Revenue" total={income.data.totalRevenue} />
-                <Rows rows={income.data.expenses} title="Expenses" total={income.data.totalExpenses} />
+                <Rows rows={income.data.revenue} title={t('revenue')} total={income.data.totalRevenue} t={t} f={f} />
+                <Rows rows={income.data.expenses} title={t('expenses')} total={income.data.totalExpenses} t={t} f={f} />
                 <Card>
-                  <strong>{Number(income.data.surplus) < 0 ? 'Deficit' : 'Surplus'}</strong> {money(income.data.surplus)}
+                  <strong>{Number(income.data.surplus) < 0 ? t('deficit') : t('surplus')}</strong> {money(f, income.data.surplus)}
                 </Card>
               </div>
             ) : null}
@@ -144,12 +165,12 @@ export default function StatementsPage() {
           <QueryState query={balance} rows={6}>
             {balance.data ? (
               <div className="stack">
-                <Rows rows={balance.data.assets} title="Assets" total={balance.data.totalAssets} />
-                <Rows rows={balance.data.liabilities} title="Liabilities" total={balance.data.totalLiabilities} />
-                <Rows rows={balance.data.equity} title="Equity" total={balance.data.totalEquity} />
+                <Rows rows={balance.data.assets} title={t('assets')} total={balance.data.totalAssets} t={t} f={f} />
+                <Rows rows={balance.data.liabilities} title={t('liabilities')} total={balance.data.totalLiabilities} t={t} f={f} />
+                <Rows rows={balance.data.equity} title={t('equity')} total={balance.data.totalEquity} t={t} f={f} />
                 <Card>
-                  Surplus to date, not yet closed into equity: {money(balance.data.surplus)}{' '}
-                  {balance.data.balanced ? <Badge tone="green">Balances</Badge> : <Badge tone="error">Does not balance</Badge>}
+                  {t('surplusToDate')} {money(f, balance.data.surplus)}{' '}
+                  {balance.data.balanced ? <Badge tone="green">{t('balances')}</Badge> : <Badge tone="error">{t('doesNotBalance')}</Badge>}
                 </Card>
               </div>
             ) : null}

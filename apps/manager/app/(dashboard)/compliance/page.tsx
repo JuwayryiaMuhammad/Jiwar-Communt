@@ -1,8 +1,25 @@
 'use client';
 
-import { fieldError, formatDate, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, CardHeader, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, Stat, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  CardHeader,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Segmented,
+  Select,
+  Stat,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,12 +28,17 @@ import { api } from '@/lib/api';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ComplianceItem } from '@/lib/queries';
+import ar from '@/messages/ar/compliance-list';
+import en from '@/messages/en/compliance-list';
 
 /** What the compound keeps valid (ADR 0087). */
 const COMPLIANCE_KINDS = ['fire_system', 'lift', 'insurance', 'licence', 'permit', 'other'] as const;
 type Kind = (typeof COMPLIANCE_KINDS)[number] | '';
 
 function NewItemDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const router = useRouter();
   const accounts = useQuery({ queryKey: [...keys.accounts, 'owners'], queryFn: () => fetchers.accounts(undefined, 100) });
@@ -52,7 +74,7 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.complianceAll],
       onDone: (item) => {
-        toast.show('The item is in the calendar.');
+        toast.show(t('added'));
         router.push(`/compliance/${item.id}`);
       },
     },
@@ -62,13 +84,13 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="New compliance item"
+      title={t('newTitle')}
       onSubmit={() => save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!f.title.trim() || !f.firstDueOn}>
-            Add
+            {t('add')}
           </Button>
         </>
       }
@@ -76,37 +98,37 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
       <div className="form">
         <ErrorAlert error={save.error} />
         <div className="form__row">
-          <Field label="Kind" error={fieldError(save.error, 'kind')}>
+          <Field label={c('kind')} error={fieldError(save.error, 'kind')}>
             {(p) => (
               <Select {...p} value={f.kind} onChange={set('kind')}>
                 {COMPLIANCE_KINDS.map((k) => (
                   <option key={k} value={k}>
-                    {humanize(k)}
+                    {label(k)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="First due" error={fieldError(save.error, 'firstDueOn')}>
+          <Field label={t('firstDue')} error={fieldError(save.error, 'firstDueOn')}>
             {(p) => <Input {...p} type="date" value={f.firstDueOn} onChange={set('firstDueOn')} />}
           </Field>
         </div>
-        <Field label="Title" error={fieldError(save.error, 'title')}>
+        <Field label={t('titleField')} error={fieldError(save.error, 'title')}>
           {(p) => <Input {...p} value={f.title} onChange={set('title')} />}
         </Field>
         <div className="form__row">
-          <Field label="Authority" hint="Who issues it." error={fieldError(save.error, 'authority')}>
+          <Field label={t('authority')} hint={t('authorityHint')} error={fieldError(save.error, 'authority')}>
             {(p) => <Input {...p} value={f.authority} onChange={set('authority')} />}
           </Field>
-          <Field label="Reference" error={fieldError(save.error, 'reference')}>
+          <Field label={t('reference')} error={fieldError(save.error, 'reference')}>
             {(p) => <Input {...p} value={f.reference} onChange={set('reference')} />}
           </Field>
         </div>
         <div className="form__row">
-          <Field label="Staff member" hint="Told when it is near." error={fieldError(save.error, 'ownerId')}>
+          <Field label={t('staffMember')} hint={t('staffHint')} error={fieldError(save.error, 'ownerId')}>
             {(p) => (
               <Select {...p} value={f.ownerId} onChange={set('ownerId')}>
-                <option value="">Nobody</option>
+                <option value="">{t('nobody')}</option>
                 {owners.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.fullName}
@@ -115,10 +137,10 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
               </Select>
             )}
           </Field>
-          <Field label="Vendor" error={fieldError(save.error, 'vendorId')}>
+          <Field label={t('vendor')} error={fieldError(save.error, 'vendorId')}>
             {(p) => (
               <Select {...p} value={f.vendorId} onChange={set('vendorId')}>
-                <option value="">None</option>
+                <option value="">{t('noVendor')}</option>
                 {(vendors.data?.data ?? []).map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.reference} · {v.name}
@@ -128,8 +150,8 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
             )}
           </Field>
         </div>
-        <Field label="Every how many months" hint="Empty: once." error={fieldError(save.error, 'recurrenceMonths')}>
-          {(p) => <Input {...p} inputMode="numeric" value={f.recurrenceMonths} onChange={set('recurrenceMonths')} />}
+        <Field label={t('everyMonths')} hint={t('everyHint')} error={fieldError(save.error, 'recurrenceMonths')}>
+          {(p) => <Input {...p} inputMode="numeric" className="ltr" value={f.recurrenceMonths} onChange={set('recurrenceMonths')} />}
         </Field>
       </div>
     </Dialog>
@@ -138,77 +160,81 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
 
 /** The compliance calendar's items and where they stand (ADR 0087). */
 export default function CompliancePage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('compliance.manage');
   const [kind, setKind] = useState<Kind>('');
   const [creating, setCreating] = useState(false);
   const [csvError, setCsvError] = useState<unknown>(null);
   const filters = { kind, status: 'active' as const };
-  const list = useCursorList(keys.complianceItems(filters), (c) => fetchers.complianceItems(filters, c), { enabled: allowed });
+  const list = useCursorList(keys.complianceItems(filters), (cursor) => fetchers.complianceItems(filters, cursor), { enabled: allowed });
   const report = useQuery({ queryKey: keys.complianceReport, queryFn: fetchers.complianceReport, enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Compliance" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
-  const t = report.data?.totals;
+  const totals = report.data?.totals;
   return (
     <>
       <PageHeader
-        title="Compliance"
-        description="Fire systems, lifts, insurance, licences and permits: who answers for each, when it is due, and its evidence."
+        title={t('title')}
+        description={t('description')}
         actions={
           <>
             <Button onClick={() => download('/api/v1/staff/compliance/report/export', {}, 'compliance-status.csv').catch(setCsvError)}>
-              Export CSV
+              {t('exportCsv')}
             </Button>
             <Button variant="primary" onClick={() => setCreating(true)}>
-              New item
+              {t('newItem')}
             </Button>
           </>
         }
       />
       <ErrorAlert error={csvError} />
-      {t && report.data ? (
+      {totals && report.data ? (
         <div className="grid grid--stats">
-          <Stat label="Valid" value={t.valid} />
-          <Stat label="Due soon" value={t.dueSoon} />
-          <Stat label="Overdue" value={t.overdue} />
-          <Stat label="Done once" value={t.completed} />
-          <Stat label="Vendor papers lapsed" value={report.data.vendorPapers.expired} />
+          <Stat label={t('stat.valid')} value={fmt.number(totals.valid)} />
+          <Stat label={t('stat.dueSoon')} value={fmt.number(totals.dueSoon)} />
+          <Stat label={t('stat.overdue')} value={fmt.number(totals.overdue)} />
+          <Stat label={t('stat.completed')} value={fmt.number(totals.completed)} />
+          <Stat label={t('stat.vendorPapers')} value={fmt.number(report.data.vendorPapers.expired)} />
         </div>
       ) : null}
       <div className="toolbar">
         <Segmented<Kind>
-          label="Kind"
+          label={c('kind')}
           value={kind}
           onChange={setKind}
-          options={[{ value: '', label: 'All' }, ...COMPLIANCE_KINDS.map((k) => ({ value: k, label: humanize(k) }))]}
+          options={[{ value: '', label: c('all') }, ...COMPLIANCE_KINDS.map((k) => ({ value: k, label: label(k) }))]}
         />
       </div>
       <Card flush>
-        <CardHeader title="Items" />
+        <CardHeader title={t('itemsTitle')} />
         <QueryState query={list}>
           <DataTable<ComplianceItem>
             rows={list.rows}
             rowKey={(i) => i.id}
-            empty="No compliance item"
+            empty={t('none')}
             columns={[
               {
                 key: 't',
-                header: 'Item',
+                header: t('col.item'),
                 cell: (i) => (
                   <Link className="table__link" href={`/compliance/${i.id}`}>
                     {i.title}
                   </Link>
                 ),
               },
-              { key: 'k', header: 'Kind', cell: (i) => humanize(i.kind) },
-              { key: 's', header: 'State', cell: (i) => humanize(i.state) },
-              { key: 'd', header: 'Due', cell: (i) => (i.current ? formatDate(i.current.dueOn) : '—') },
-              { key: 'v', header: 'Answers for it', cell: (i) => [i.vendor?.name, i.owner?.fullName].filter(Boolean).join(' · ') || '—' },
+              { key: 'k', header: c('kind'), cell: (i) => label(i.kind) },
+              { key: 's', header: t('col.state'), cell: (i) => label(i.state) },
+              { key: 'd', header: t('col.due'), cell: (i) => (i.current ? fmt.day(i.current.dueOn) : '—') },
+              { key: 'v', header: t('col.answers'), cell: (i) => [i.vendor?.name, i.owner?.fullName].filter(Boolean).join(' · ') || '—' },
             ]}
           />
           <LoadMore query={list} />

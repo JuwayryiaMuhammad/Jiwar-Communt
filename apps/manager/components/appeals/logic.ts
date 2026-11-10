@@ -1,62 +1,67 @@
 /**
  * Decision appeals (ADR 0059): what the management's pages say of them.
- * Pure, so node:test covers it.
+ * Pure, so node:test covers it; the words are in the money-appeals catalog.
  */
+import type { Translate } from '@jiwar/i18n/core';
+import type appealsEn from '../../messages/en/money-appeals.ts';
 
-export const KIND_TEXT: Record<string, string> = {
-  permit_rejection: 'Rejected permit',
-  vehicle_rejection: 'Rejected vehicle',
-  worker_rejection: 'Rejected worker',
-  neighbour_notice: 'Neighbour notice',
-};
+type T = Translate<typeof appealsEn>;
 
-export const STATUS_TEXT: Record<string, string> = {
-  pending: 'To decide',
-  upheld: 'Upheld: the decision stands',
-  overturned: 'Overturned',
-  withdrawn: 'Withdrawn by the appellant',
-};
+/** What a resident may appeal. */
+export const KINDS = ['permit_rejection', 'vehicle_rejection', 'worker_rejection', 'neighbour_notice'] as const;
 
-export const EFFECT_TEXT: Record<string, string> = {
-  applied: 'Applied: the normal approval passed',
-  follow_up: 'For the management to follow up',
-  none: 'Nothing changed',
-};
+export const STATUSES = ['pending', 'upheld', 'overturned', 'withdrawn'] as const;
+
+export const EFFECTS = ['applied', 'follow_up', 'none'] as const;
 
 /** Why an overturn was left to the management: the check that refused it. */
-export const EFFECT_REASON_TEXT: Record<string, string> = {
-  window_passed: 'its window has passed',
-  purged: 'its data was purged',
-  requester_gone: 'its requester may no longer ask for it',
-  unit_limit: 'the unit is at its limit',
-  work_rules: 'the compound’s work days or hours refuse it',
-  blocklisted: 'a plate on it is banned',
-  deposit_required: 'its finishing-works deposit holds nothing yet',
-  needs_sticker: 'a sticker and the permit’s last day are needed',
-  registrant_gone: 'its registrant may no longer keep vehicles there',
-  plate_active: 'another vehicle holds the plate',
-  permit_date: 'the permit’s last day is out of range',
-  sticker_used: 'the sticker was issued before',
-  changed: 'it changed since the appeal',
-  needs_review: 'a worker is approved by a person, from their review',
-};
+export const EFFECT_REASONS = [
+  'window_passed',
+  'purged',
+  'requester_gone',
+  'unit_limit',
+  'work_rules',
+  'blocklisted',
+  'deposit_required',
+  'needs_sticker',
+  'registrant_gone',
+  'plate_active',
+  'permit_date',
+  'sticker_used',
+  'changed',
+  'needs_review',
+] as const;
+
+const among = <C extends string>(codes: readonly C[], code: string): code is C => (codes as readonly string[]).includes(code);
+
+/** A kind's words; an unknown kind shows as its code. */
+export const kindText = (t: T, kind: string) => (among(KINDS, kind) ? t(`kind.${kind}`) : kind);
+
+/** A status's words (`Upheld: the decision stands`). */
+export const statusText = (t: T, status: string) => (among(STATUSES, status) ? t(`status.${status}`) : status);
+
+/** An effect's words (`For the management to follow up`). */
+export const effectText = (t: T, effect: string) => (among(EFFECTS, effect) ? t(`effect.${effect}`) : effect);
 
 /** A vehicle's overturn asks what its approval asks: a sticker and a last day. */
 export const needsSticker = (kind: string, outcome: string) =>
   kind === 'vehicle_rejection' && outcome === 'overturned';
 
 /** What the decided appeal says, in one line. */
-export function decisionLine(d: {
-  outcome: string;
-  effect: string;
-  effectReason: string | null;
-}): string {
-  const base = STATUS_TEXT[d.outcome] ?? d.outcome;
+export function decisionLine(
+  d: {
+    outcome: string;
+    effect: string;
+    effectReason: string | null;
+  },
+  t: T,
+): string {
+  const base = statusText(t, d.outcome);
   if (d.outcome !== 'overturned') return base;
-  const effect = EFFECT_TEXT[d.effect] ?? d.effect;
-  return d.effectReason
-    ? `${base} · ${effect}: ${EFFECT_REASON_TEXT[d.effectReason] ?? d.effectReason}`
-    : `${base} · ${effect}`;
+  const effect = effectText(t, d.effect);
+  if (!d.effectReason) return `${base} · ${effect}`;
+  const reason = among(EFFECT_REASONS, d.effectReason) ? t(`effectReason.${d.effectReason}`) : d.effectReason;
+  return t('line.effectReason', { status: base, effect, reason });
 }
 
 /** Where the decision appealed is opened in the dashboard, if anywhere. */

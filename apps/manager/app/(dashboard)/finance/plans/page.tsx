@@ -2,21 +2,30 @@
 
 import { fieldError, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Textarea, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
-import { FREQUENCY_TEXT, KIND_TEXT, monthStarts, validMoney } from '@/components/finance/logic';
+import { useFinanceCode } from '@/components/finance/codes';
+import { FREQUENCIES, KINDS, monthStarts, validMoney } from '@/components/finance/logic';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BillingOverride, type BillingPlan, type StaffInvoiceKind } from '@/lib/queries';
+import ar from '@/messages/ar/fin-plans';
+import en from '@/messages/en/fin-plans';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 type Frequency = BillingPlan['frequency'];
 type AmountChange = Schema<'BillingAmountChangeView'>;
 type Publication = Schema<'BoardPublicationView'>;
+
+/** A plan's name in the page's language (it carries both). */
+function usePlanName() {
+  const { locale } = useLocale();
+  return (p: { nameEn: string; nameAr: string }) => (locale === 'ar' ? p.nameAr || p.nameEn : p.nameEn);
+}
 
 /** The board's published decisions a new amount may cite (ADR 0069): the manager's list. */
 function useDecisions(enabled: boolean) {
@@ -28,6 +37,12 @@ function useDecisions(enabled: boolean) {
 }
 
 function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const { locale } = useLocale();
+  const code = useFinanceCode();
+  const name = usePlanName();
   const toast = useToast();
   const { can } = usePermissions();
   const decisions = useDecisions(plan !== null && can('governance.manage'));
@@ -79,7 +94,7 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
     {
       invalidate: [keys.billingPlans],
       onDone: (p) => {
-        toast.show(plan ? `${p.nameEn} is saved: periods issued from now on use it.` : `${p.nameEn} is created.`);
+        toast.show(plan ? t('saved', { name: name(p) }) : t('created', { name: name(p) }));
         onClose();
       },
     },
@@ -92,55 +107,55 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
     <Dialog
       open
       onClose={onClose}
-      title={plan ? `Edit ${plan.nameEn}` : 'New billing plan'}
-      description="A plan bills every unit of the compound the same amount each period, unless a unit has terms of its own. What it bills and how often never change once created."
+      title={plan ? t('editTitle', { name: name(plan) }) : t('newTitle')}
+      description={t('dialogDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Name in English" hint="Each invoice’s line reads it, with the period." error={fieldError(save.error, 'nameEn')}>
-          {(p) => <Input {...p} maxLength={80} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
+        <Field label={t('nameEn')} hint={t('nameEnHint')} error={fieldError(save.error, 'nameEn')}>
+          {(p) => <Input {...p} maxLength={80} dir="ltr" lang="en" value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
         </Field>
-        <Field label="Name in Arabic" error={fieldError(save.error, 'nameAr')}>
+        <Field label={t('nameAr')} error={fieldError(save.error, 'nameAr')}>
           {(p) => <Input {...p} maxLength={80} dir="rtl" lang="ar" value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
         </Field>
         {plan ? null : (
           <>
-            <Field label="Kind">
+            <Field label={c('kind')}>
               {(p) => (
                 <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as StaffInvoiceKind)}>
-                  {Object.entries(KIND_TEXT).map(([v, label]) => (
+                  {KINDS.map((v) => (
                     <option key={v} value={v}>
-                      {label}
+                      {code('kind', v)}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
-            <Field label="Every">
+            <Field label={t('every')}>
               {(p) => (
                 <Select {...p} value={frequency} onChange={(e) => setFrequency(e.target.value as Frequency)}>
-                  {Object.entries(FREQUENCY_TEXT).map(([v, label]) => (
+                  {FREQUENCIES.map((v) => (
                     <option key={v} value={v}>
-                      {label}
+                      {code('frequency', v)}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
-            <Field label="First period starts" error={fieldError(save.error, 'startsOn')}>
+            <Field label={t('firstPeriod')} error={fieldError(save.error, 'startsOn')}>
               {(p) => (
                 <Select {...p} value={startsOn} onChange={(e) => setStartsOn(e.target.value)}>
                   {starts.map((d) => (
                     <option key={d} value={d}>
-                      {d}
+                      {fmt.day(d)}
                     </option>
                   ))}
                 </Select>
@@ -148,43 +163,35 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
             </Field>
           </>
         )}
-        <Field label="Amount per unit, EGP" error={fieldError(save.error, 'amount') ?? (amount && !validMoney(amount) ? 'Up to two decimals, more than zero.' : undefined)}>
+        <Field label={t('amount')} error={fieldError(save.error, 'amount') ?? (amount && !validMoney(amount) ? t('amountInvalid') : undefined)}>
           {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
         </Field>
         {amountChanged && decisions.data ? (
-          <Field
-            label="The board’s decision"
-            hint="When the board set the new amount, the residents see its decision beside the change."
-            error={fieldError(save.error, 'decisionPublicationId')}
-          >
+          <Field label={t('decision')} hint={t('decisionHint')} error={fieldError(save.error, 'decisionPublicationId')}>
             {(p) => (
               <Select {...p} value={decisionId} onChange={(e) => setDecisionId(e.target.value)}>
-                <option value="">None</option>
+                <option value="">{c('none')}</option>
                 {decisions.data.data
                   .filter((d: Publication) => d.kind === 'decision' && !d.archivedAt)
                   .map((d: Publication) => (
                     <option key={d.id} value={d.id}>
-                      {d.decidedOn} · {d.titleEn}
+                      {fmt.day(d.decidedOn)} · {(locale === 'ar' ? d.titleAr : d.titleEn) ?? d.titleEn ?? d.titleAr}
                     </option>
                   ))}
               </Select>
             )}
           </Field>
         ) : null}
-        <Field
-          label="What it pays for, in English"
-          hint="The residents it bills read it beside the fee. Both languages, or neither."
-          error={fieldError(save.error, 'descriptionEn') ?? (!described ? 'Write it in both languages, or neither.' : undefined)}
-        >
-          {(p) => <Textarea {...p} maxLength={1000} rows={2} value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} />}
+        <Field label={t('forEn')} hint={t('forEnHint')} error={fieldError(save.error, 'descriptionEn') ?? (!described ? t('bothOrNeither') : undefined)}>
+          {(p) => <Textarea {...p} maxLength={1000} rows={2} dir="ltr" lang="en" value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} />}
         </Field>
-        <Field label="What it pays for, in Arabic" error={fieldError(save.error, 'descriptionAr')}>
+        <Field label={t('forAr')} error={fieldError(save.error, 'descriptionAr')}>
           {(p) => <Textarea {...p} maxLength={1000} rows={2} dir="rtl" lang="ar" value={descriptionAr} onChange={(e) => setDescriptionAr(e.target.value)} />}
         </Field>
-        <Field label="Issue, days before a period" hint="0 to 28." error={fieldError(save.error, 'issueDaysBefore')}>
+        <Field label={t('lead')} hint={t('leadHint')} error={fieldError(save.error, 'issueDaysBefore')}>
           {(p) => <Input {...p} type="number" min={0} max={28} value={lead} onChange={(e) => setLead(e.target.value)} />}
         </Field>
-        <Field label="Due, days after issue" hint="0 to 90." error={fieldError(save.error, 'dueDaysAfterIssue')}>
+        <Field label={t('due')} hint={t('dueHint')} error={fieldError(save.error, 'dueDaysAfterIssue')}>
           {(p) => <Input {...p} type="number" min={0} max={90} value={due} onChange={(e) => setDue(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -194,6 +201,10 @@ function PlanDialog({ plan, onClose }: { plan: BillingPlan | null; onClose: () =
 }
 
 function Overrides({ plan, canEdit, onClose }: { plan: BillingPlan; canEdit: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const name = usePlanName();
   const toast = useToast();
   const list = useQuery({ queryKey: keys.billingOverrides(plan.id), queryFn: () => fetchers.billingOverrides(plan.id) });
   const [unitId, setUnitId] = useState('');
@@ -210,7 +221,7 @@ function Overrides({ plan, canEdit, onClose }: { plan: BillingPlan; canEdit: boo
     {
       invalidate: [keys.billingOverrides(plan.id), keys.billingPlans],
       onDone: (o) => {
-        toast.show(o.excluded ? `Unit ${o.unitCode} is left out.` : `Unit ${o.unitCode} pays ${egp(o.amount)}.`);
+        toast.show(o.excluded ? t('leftOutToast', { unit: o.unitCode }) : t('paysToast', { unit: o.unitCode, amount: fmt.money(o.amount) }));
         setUnitId('');
         setAmount('');
         setExcluded(false);
@@ -220,23 +231,30 @@ function Overrides({ plan, canEdit, onClose }: { plan: BillingPlan; canEdit: boo
   const remove = useAction(
     (u: BillingOverride) =>
       unwrap(api.DELETE('/api/v1/staff/billing-plans/{id}/overrides/{unitId}', { params: { path: { id: plan.id, unitId: u.unitId } } })),
-    { invalidate: [keys.billingOverrides(plan.id), keys.billingPlans], onDone: () => toast.show('Back on the plan’s own terms.') },
+    { invalidate: [keys.billingOverrides(plan.id), keys.billingPlans], onDone: () => toast.show(t('backOnTerms')) },
   );
   const ready = unitId !== '' && (excluded || validMoney(amount));
   return (
-    <Dialog open wide onClose={onClose} title={`Units with their own terms · ${plan.nameEn}`} description={`Everyone else pays ${egp(plan.amount)} each period.`} footer={<Button onClick={onClose}>Close</Button>}>
+    <Dialog
+      open
+      wide
+      onClose={onClose}
+      title={t('overridesTitle', { name: name(plan) })}
+      description={t('overridesDescription', { amount: fmt.money(plan.amount) })}
+      footer={<Button onClick={onClose}>{c('close')}</Button>}
+    >
       <div className="stack">
         {canEdit ? (
           <div className="form">
-            <Field label="Unit">{(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}</Field>
-            <Checkbox label="Leave this unit out" checked={excluded} onChange={(e) => setExcluded(e.target.checked)} />
+            <Field label={c('unit')}>{(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}</Field>
+            <Checkbox label={t('leaveOut')} checked={excluded} onChange={(e) => setExcluded(e.target.checked)} />
             {excluded ? null : (
-              <Field label="Its amount, EGP" error={amount && !validMoney(amount) ? 'Up to two decimals, more than zero.' : undefined}>
+              <Field label={t('itsAmount')} error={amount && !validMoney(amount) ? t('amountInvalid') : undefined}>
                 {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
               </Field>
             )}
             <Button variant="primary" disabled={!ready} loading={set.isPending} onClick={() => set.mutate()}>
-              Save the unit’s terms
+              {t('saveTerms')}
             </Button>
             <ErrorAlert error={set.error ?? remove.error} />
           </div>
@@ -246,10 +264,10 @@ function Overrides({ plan, canEdit, onClose }: { plan: BillingPlan; canEdit: boo
             <DataTable<BillingOverride>
               rows={list.data?.data}
               rowKey={(o) => o.unitId}
-              empty="Every unit is on the plan’s terms"
+              empty={t('noOverride')}
               columns={[
-                { key: 'unit', header: 'Unit', cell: (o) => <span className="t-mono">{o.unitCode}</span> },
-                { key: 'terms', header: 'Terms', cell: (o) => (o.excluded ? <Badge tone="beige">Left out</Badge> : egp(o.amount)) },
+                { key: 'unit', header: c('unit'), cell: (o) => <span className="t-mono">{o.unitCode}</span> },
+                { key: 'terms', header: t('col.terms'), cell: (o) => (o.excluded ? <Badge tone="beige">{t('leftOut')}</Badge> : fmt.money(o.amount)) },
                 {
                   key: 'actions',
                   header: '',
@@ -257,7 +275,7 @@ function Overrides({ plan, canEdit, onClose }: { plan: BillingPlan; canEdit: boo
                   cell: (o) =>
                     canEdit ? (
                       <Button size="sm" loading={remove.isPending && remove.variables?.unitId === o.unitId} onClick={() => remove.mutate(o)}>
-                        Remove
+                        {c('remove')}
                       </Button>
                     ) : null,
                 },
@@ -272,23 +290,27 @@ function Overrides({ plan, canEdit, onClose }: { plan: BillingPlan; canEdit: boo
 
 /** A plan's amount changes, the latest first (ADR 0069). */
 function AmountChanges({ plan, onClose }: { plan: BillingPlan; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const name = usePlanName();
   const list = useQuery({
     queryKey: [...keys.billingPlans, plan.id, 'amount-changes'],
     queryFn: () => unwrap(api.GET('/api/v1/staff/billing-plans/{id}/amount-changes', { params: { path: { id: plan.id } } })),
   });
   return (
-    <Dialog open onClose={onClose} title={`${plan.nameEn}: amount changes`} description="Each new amount, the first period billed at it, and the board’s decision when one set it.">
+    <Dialog open onClose={onClose} title={t('changesTitle', { name: name(plan) })} description={t('changesDescription')}>
       <Card flush>
         <QueryState query={list}>
           <DataTable<AmountChange>
             rows={list.data?.data}
-            rowKey={(c) => c.id}
-            empty="Its amount never changed"
+            rowKey={(x) => x.id}
+            empty={t('noChange')}
             columns={[
-              { key: 'from', header: 'From', cell: (c) => egp(c.fromAmount) },
-              { key: 'to', header: 'To', cell: (c) => egp(c.toAmount) },
-              { key: 'on', header: 'From the period of', cell: (c) => c.effectiveOn },
-              { key: 'd', header: 'Decision', cell: (c) => (c.decisionPublicationId ? <Badge tone="green">Board</Badge> : '—') },
+              { key: 'from', header: c('from'), cell: (x) => fmt.money(x.fromAmount) },
+              { key: 'to', header: c('to'), cell: (x) => fmt.money(x.toAmount) },
+              { key: 'on', header: t('col.fromPeriod'), cell: (x) => fmt.day(x.effectiveOn) },
+              { key: 'd', header: t('col.decision'), cell: (x) => (x.decisionPublicationId ? <Badge tone="green">{t('board')}</Badge> : '—') },
             ]}
           />
         </QueryState>
@@ -303,6 +325,11 @@ function AmountChanges({ plan, onClose }: { plan: BillingPlan; onClose: () => vo
  * Kept by `finance.billing`; read by those who issue invoices.
  */
 export default function BillingPlansPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const code = useFinanceCode();
+  const name = usePlanName();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const canEdit = can('finance.billing');
@@ -313,24 +340,24 @@ export default function BillingPlansPage() {
   const [history, setHistory] = useState<BillingPlan | null>(null);
   const setActive = useAction(
     (p: BillingPlan) => unwrap(api.PATCH('/api/v1/staff/billing-plans/{id}', { params: { path: { id: p.id } }, body: { active: !p.active } })),
-    { invalidate: [keys.billingPlans], onDone: (p) => toast.show(p.active ? `${p.nameEn} bills again.` : `${p.nameEn} is retired: it bills nothing more.`) },
+    { invalidate: [keys.billingPlans], onDone: (p) => toast.show(p.active ? t('billsAgain', { name: name(p) }) : t('retiredToast', { name: name(p) })) },
   );
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Billing plans" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Billing plans"
-        description="Invoices issued every period to every unit, automatically. Each unit’s people who see its money are told."
+        title={t('title')}
+        description={t('description')}
         actions={
           canEdit ? (
             <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen({ plan: null })}>
-              New plan
+              {t('newPlan')}
             </Button>
           ) : undefined
         }
@@ -341,39 +368,45 @@ export default function BillingPlansPage() {
           <DataTable<BillingPlan>
             rows={plans.data?.data}
             rowKey={(p) => p.id}
-            empty="No plan yet"
+            empty={t('empty')}
             columns={[
               {
                 key: 'name',
-                header: 'Plan',
+                header: t('col.plan'),
                 cell: (p) => (
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                    <span className="table__primary">{p.nameEn}</span>
+                    <span className="table__primary" dir="ltr" lang="en">
+                      {p.nameEn}
+                    </span>
                     <span className="t-secondary" dir="rtl" lang="ar">
                       {p.nameAr}
                     </span>
-                    {!p.active ? <Badge tone="beige">Retired</Badge> : null}
+                    {!p.active ? <Badge tone="beige">{t('retired')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'kind', header: 'Kind', cell: (p) => KIND_TEXT[p.kind] ?? p.kind },
-              { key: 'every', header: 'Every', cell: (p) => FREQUENCY_TEXT[p.frequency] ?? p.frequency },
+              { key: 'kind', header: c('kind'), cell: (p) => code('kind', p.kind) },
+              { key: 'every', header: t('col.every'), cell: (p) => code('frequency', p.frequency) },
               {
                 key: 'amount',
-                header: 'Per unit',
+                header: t('col.perUnit'),
                 cell: (p) => (
                   <Button variant="text" className="table__link" onClick={() => setHistory(p)}>
-                    {egp(p.amount)}
+                    {fmt.money(p.amount)}
                   </Button>
                 ),
               },
-              { key: 'next', header: 'Next period', cell: (p) => (p.nextPeriod ? `${p.nextPeriod.startsOn} · issued ${p.nextPeriod.issueOn}` : '—') },
+              {
+                key: 'next',
+                header: t('col.next'),
+                cell: (p) => (p.nextPeriod ? t('next', { starts: fmt.day(p.nextPeriod.startsOn), issued: fmt.day(p.nextPeriod.issueOn) }) : '—'),
+              },
               {
                 key: 'own',
-                header: 'Own terms',
+                header: t('col.ownTerms'),
                 cell: (p) => (
                   <Button variant="text" className="table__link" onClick={() => setTerms(p)}>
-                    {p.overrideCount} unit{p.overrideCount === 1 ? '' : 's'}
+                    {t('units', { n: p.overrideCount })}
                   </Button>
                 ),
               },
@@ -385,10 +418,10 @@ export default function BillingPlansPage() {
                   canEdit ? (
                     <span className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
                       <Button size="sm" onClick={() => setOpen({ plan: p })}>
-                        Edit
+                        {c('edit')}
                       </Button>
                       <Button size="sm" loading={setActive.isPending && setActive.variables?.id === p.id} onClick={() => setActive.mutate(p)}>
-                        {p.active ? 'Retire' : 'Restore'}
+                        {p.active ? t('retire') : t('restore')}
                       </Button>
                     </span>
                   ) : null,

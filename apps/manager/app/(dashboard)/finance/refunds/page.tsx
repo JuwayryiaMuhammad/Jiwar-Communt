@@ -1,15 +1,17 @@
 'use client';
 
-import { formatDateTime, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, useCommonT, useToast } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
-import { REFUND_CHANNEL_TEXT } from '@/components/finance/logic';
+import { useFinanceCode } from '@/components/finance/codes';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Refund } from '@/lib/queries';
+import ar from '@/messages/ar/fin-refunds';
+import en from '@/messages/en/fin-refunds';
 
 /**
  * Refunds of units' credit (ADR 0048), the manager's alone. A refund is
@@ -17,10 +19,14 @@ import { fetchers, keys, type Refund } from '@/lib/queries';
  * the money is the unit's credit again.
  */
 export default function RefundsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const code = useFinanceCode();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('finance.refund');
-  const list = useCursorList(keys.refunds({}), (c) => fetchers.refunds({}, c), { enabled: allowed });
+  const list = useCursorList(keys.refunds({}), (cursor) => fetchers.refunds({}, cursor), { enabled: allowed });
   const [reversing, setReversing] = useState<Refund | null>(null);
   const reverse = useAction(
     (reasonCode: string) =>
@@ -28,7 +34,7 @@ export default function RefundsPage() {
     {
       invalidate: [keys.invoicesAll],
       onDone: (r) => {
-        toast.show(`Refund ${r.number} reversed: the money is the unit’s credit again.`);
+        toast.show(t('reversedToast', { number: r.number }));
         setReversing(null);
       },
     },
@@ -36,46 +42,46 @@ export default function RefundsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Refunds" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Refunds" description="Credit paid back to units. To refund one, open its statement and choose “Refund credit”." />
+      <PageHeader title={t('title')} description={t('description')} />
       <Card flush>
         <QueryState query={list}>
           <DataTable<Refund>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty="No refund yet"
+            empty={t('empty')}
             columns={[
-              { key: 'n', header: 'Refund', cell: (r) => <span className="t-mono">{r.number}</span> },
+              { key: 'n', header: t('refund'), cell: (r) => <span className="t-mono ltr">{r.number}</span> },
               {
                 key: 'u',
-                header: 'Unit',
+                header: c('unit'),
                 cell: (r) => (
-                  <Link className="t-mono" href={`/finance/units/${r.unitId}`}>
+                  <Link className="t-mono ltr" href={`/finance/units/${r.unitId}`}>
                     {r.unitCode}
                   </Link>
                 ),
               },
-              { key: 'a', header: 'Amount', cell: (r) => egp(r.amount) },
-              { key: 'c', header: 'By', cell: (r) => REFUND_CHANNEL_TEXT[r.channel] ?? r.channel },
-              { key: 'ref', header: 'Reference', cell: (r) => (r.reference ? <span className="t-mono">{r.reference}</span> : '—') },
-              { key: 'd', header: 'Paid back on', cell: (r) => r.refundedOn },
-              { key: 'who', header: 'Recorded by', cell: (r) => r.recordedBy.fullName ?? 'An erased account' },
+              { key: 'a', header: c('amount'), cell: (r) => f.money(r.amount) },
+              { key: 'c', header: t('by'), cell: (r) => code('refundChannel', r.channel) },
+              { key: 'ref', header: t('reference'), cell: (r) => (r.reference ? <span className="t-mono ltr">{r.reference}</span> : '—') },
+              { key: 'd', header: t('refundedOn'), cell: (r) => f.day(r.refundedOn) },
+              { key: 'who', header: t('recordedBy'), cell: (r) => r.recordedBy.fullName ?? c('erasedAccount') },
               {
                 key: 's',
                 header: '',
                 cell: (r) =>
                   r.reversal ? (
-                    <span title={formatDateTime(r.reversal.createdAt)}>
-                      <Badge tone="beige">Reversed</Badge>
+                    <span title={f.dateTime(r.reversal.createdAt)}>
+                      <Badge tone="beige">{t('reversed')}</Badge>
                     </span>
                   ) : (
                     <Button variant="text" onClick={() => setReversing(r)}>
-                      Reverse
+                      {t('reverse')}
                     </Button>
                   ),
               },
@@ -87,10 +93,10 @@ export default function RefundsPage() {
       <ReasonCodeDialog
         open={reversing !== null}
         onClose={() => setReversing(null)}
-        title={`Reverse refund ${reversing?.number ?? ''}?`}
-        description="A new record undoes it; nothing is edited. The money is the unit’s credit again and pays what it owes."
+        title={t('reverseTitle', { number: reversing?.number ?? '' })}
+        description={t('reverseDescription')}
         codes={REASON_CODES.refundReverse}
-        confirmLabel="Reverse"
+        confirmLabel={t('reverse')}
         danger
         pending={reverse.isPending}
         error={<ErrorAlert error={reverse.error} />}

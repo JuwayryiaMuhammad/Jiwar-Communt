@@ -1,15 +1,16 @@
 'use client';
 
-import { useErrorText, formatDateTime } from '@jiwar/api';
+import { useErrorText } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Alert, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, Stat } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Segmented, Stat, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
-import { egp } from '@/components/club/logic';
-import { firstOfMonth, METHOD_TEXT } from '@/components/finance/logic';
-import { CATEGORY_TEXT } from '@/components/governance/matters';
+import { useFinanceCode } from '@/components/finance/codes';
+import { firstOfMonth } from '@/components/finance/logic';
+import { codeText } from '@/components/governance/logic';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import {
@@ -22,12 +23,17 @@ import {
   type OutstandingReport,
   type UnitReportFilters,
 } from '@/lib/queries';
+import govAr from '@/messages/ar/gov-codes';
+import ar from '@/messages/ar/fin-reports';
+import govEn from '@/messages/en/gov-codes';
+import en from '@/messages/en/fin-reports';
 
 type Tab = 'aging' | 'collections' | 'outstanding' | 'daily-cash' | 'budget-vs-actual';
 const today = () => new Date().toLocaleDateString('en-CA');
 
 /** A report's CSV, saved under the server's name. */
 function ExportButton({ name, query }: { name: Tab; query: Record<string, string | undefined> }) {
+  const t = useT(en, ar);
   const [busy, setBusy] = useState(false);
   const errorText = useErrorText();
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +54,7 @@ function ExportButton({ name, query }: { name: Tab; query: Record<string, string
           }
         }}
       >
-        Export CSV
+        {t('exportCsv')}
       </Button>
       {error ? <Alert tone="error">{error}</Alert> : null}
     </>
@@ -56,48 +62,53 @@ function ExportButton({ name, query }: { name: Tab; query: Record<string, string
 }
 
 function UnitGrouping({ value, onChange }: { value: UnitReportFilters; onChange: (v: UnitReportFilters) => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   return (
     <>
       <Segmented<UnitReportFilters['groupBy']>
-        label="Per"
+        label={t('per')}
         value={value.groupBy}
         onChange={(groupBy) => onChange({ ...value, groupBy })}
         options={[
-          { value: 'unit', label: 'Unit' },
-          { value: 'building', label: 'Building' },
+          { value: 'unit', label: t('perUnit') },
+          { value: 'building', label: t('perBuilding') },
         ]}
       />
-      <Field label="Building">{(p) => <Input {...p} value={value.building ?? ''} onChange={(e) => onChange({ ...value, building: e.target.value })} />}</Field>
+      <Field label={c('building')}>{(p) => <Input {...p} value={value.building ?? ''} onChange={(e) => onChange({ ...value, building: e.target.value })} />}</Field>
     </>
   );
 }
 
 function Aging() {
-  const [f, setF] = useState<UnitReportFilters>({ groupBy: 'unit' });
-  const q = { ...f, building: f.building?.trim() || undefined };
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const [g, setG] = useState<UnitReportFilters>({ groupBy: 'unit' });
+  const q = { ...g, building: g.building?.trim() || undefined };
   const report = useQuery({ queryKey: keys.report('aging', q), queryFn: () => fetchers.aging(q) });
   type Row = AgingReport['rows'][number];
   return (
     <div className="stack">
       <div className="toolbar">
-        <UnitGrouping value={f} onChange={setF} />
+        <UnitGrouping value={g} onChange={setG} />
         <ExportButton name="aging" query={q} />
       </div>
       <QueryState query={report}>
         {report.data ? (
           <Card flush>
             <DataTable<Row>
-              rows={[...report.data.rows, { ...report.data.totals, unitCode: 'Total', building: null }]}
+              rows={[...report.data.rows, { ...report.data.totals, unitCode: c('total'), building: null }]}
               rowKey={(r) => `${r.unitId ?? ''}-${r.building ?? ''}-${r.unitCode ?? ''}`}
-              empty="Nothing is owed"
+              empty={t('aging.empty')}
               columns={[
-                { key: 'u', header: f.groupBy === 'unit' ? 'Unit' : 'Building', cell: (r) => (f.groupBy === 'unit' ? r.unitCode : (r.building ?? r.unitCode ?? '—')) },
-                { key: 'n', header: 'Not yet due', cell: (r) => egp(r.notDue) },
-                { key: '30', header: '1–30 days', cell: (r) => egp(r.days1to30) },
-                { key: '60', header: '31–60', cell: (r) => egp(r.days31to60) },
-                { key: '90', header: '61–90', cell: (r) => egp(r.days61to90) },
-                { key: '91', header: '91+', cell: (r) => egp(r.days91plus) },
-                { key: 't', header: 'Total', cell: (r) => <strong>{egp(r.total)}</strong> },
+                { key: 'u', header: g.groupBy === 'unit' ? c('unit') : c('building'), cell: (r) => (g.groupBy === 'unit' ? r.unitCode : (r.building ?? r.unitCode ?? '—')) },
+                { key: 'n', header: t('aging.notDue'), cell: (r) => f.money(r.notDue) },
+                { key: '30', header: t('aging.d30'), cell: (r) => f.money(r.days1to30) },
+                { key: '60', header: t('aging.d60'), cell: (r) => f.money(r.days31to60) },
+                { key: '90', header: t('aging.d90'), cell: (r) => f.money(r.days61to90) },
+                { key: '91', header: t('aging.d91'), cell: (r) => f.money(r.days91plus) },
+                { key: 't', header: c('total'), cell: (r) => <strong>{f.money(r.total)}</strong> },
               ]}
             />
           </Card>
@@ -108,6 +119,11 @@ function Aging() {
 }
 
 function Collections() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const code = useFinanceCode();
   const [from, setFrom] = useState(firstOfMonth(today()));
   const [to, setTo] = useState(today());
   const [groupBy, setGroupBy] = useState<'day' | 'month'>('day');
@@ -117,15 +133,15 @@ function Collections() {
   return (
     <div className="stack">
       <div className="toolbar">
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={c('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={c('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
         <Segmented<'day' | 'month'>
-          label="Per"
+          label={t('per')}
           value={groupBy}
           onChange={setGroupBy}
           options={[
-            { value: 'day', label: 'Day' },
-            { value: 'month', label: 'Month' },
+            { value: 'day', label: t('perDay') },
+            { value: 'month', label: t('perMonth') },
           ]}
         />
         <ExportButton name="collections" query={q} />
@@ -134,23 +150,23 @@ function Collections() {
         {report.data ? (
           <>
             <div className="row" style={{ gap: 16 }}>
-              <Stat label="Received" value={egp(report.data.gross)} />
-              <Stat label="Reversed" value={egp(report.data.reversed)} />
-              <Stat label="Net" value={egp(report.data.net)} />
+              <Stat label={t('received')} value={f.money(report.data.gross)} />
+              <Stat label={t('reversed')} value={f.money(report.data.reversed)} />
+              <Stat label={t('net')} value={f.money(report.data.net)} />
             </div>
             <Card flush>
               <DataTable<Row>
                 rows={report.data.rows}
                 rowKey={(r) => `${r.period}-${r.channel}-${r.method}`}
-                empty="Nothing received in this period"
+                empty={t('collections.empty')}
                 columns={[
-                  { key: 'p', header: 'Period', cell: (r) => r.period },
-                  { key: 'c', header: 'Channel', cell: (r) => (r.channel === 'online' ? 'Online' : 'Office') },
-                  { key: 'm', header: 'Method', cell: (r) => METHOD_TEXT[r.method] ?? r.method },
-                  { key: 'n', header: 'Payments', cell: (r) => r.payments },
-                  { key: 'g', header: 'Received', cell: (r) => egp(r.gross) },
-                  { key: 'rv', header: 'Reversed', cell: (r) => (r.reversals ? `${egp(r.reversed)} (${r.reversals})` : '—') },
-                  { key: 'net', header: 'Net', cell: (r) => <strong>{egp(r.net)}</strong> },
+                  { key: 'p', header: t('period'), cell: (r) => f.day(r.period) },
+                  { key: 'c', header: t('channel'), cell: (r) => label(r.channel === 'online' ? 'online' : 'office') },
+                  { key: 'm', header: t('method'), cell: (r) => code('method', r.method) },
+                  { key: 'n', header: t('payments'), cell: (r) => f.number(r.payments) },
+                  { key: 'g', header: t('received'), cell: (r) => f.money(r.gross) },
+                  { key: 'rv', header: t('reversed'), cell: (r) => (r.reversals ? `${f.money(r.reversed)} (${f.number(r.reversals)})` : '—') },
+                  { key: 'net', header: t('net'), cell: (r) => <strong>{f.money(r.net)}</strong> },
                 ]}
               />
             </Card>
@@ -162,30 +178,33 @@ function Collections() {
 }
 
 function Outstanding() {
-  const [f, setF] = useState<UnitReportFilters>({ groupBy: 'unit' });
-  const q = { ...f, building: f.building?.trim() || undefined };
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const [g, setG] = useState<UnitReportFilters>({ groupBy: 'unit' });
+  const q = { ...g, building: g.building?.trim() || undefined };
   const report = useQuery({ queryKey: keys.report('outstanding', q), queryFn: () => fetchers.outstanding(q) });
   type Row = OutstandingReport['rows'][number];
   return (
     <div className="stack">
       <div className="toolbar">
-        <UnitGrouping value={f} onChange={setF} />
+        <UnitGrouping value={g} onChange={setG} />
         <ExportButton name="outstanding" query={q} />
       </div>
       <QueryState query={report}>
         {report.data ? (
           <Card flush>
             <DataTable<Row>
-              rows={[...report.data.rows, { ...report.data.totals, unitCode: 'Total', building: null }]}
+              rows={[...report.data.rows, { ...report.data.totals, unitCode: c('total'), building: null }]}
               rowKey={(r) => `${r.unitId ?? ''}-${r.building ?? ''}-${r.unitCode ?? ''}`}
-              empty="Nothing is owed and no credit is held"
+              empty={t('outstanding.empty')}
               columns={[
-                { key: 'u', header: f.groupBy === 'unit' ? 'Unit' : 'Building', cell: (r) => (f.groupBy === 'unit' ? r.unitCode : (r.building ?? r.unitCode ?? '—')) },
-                { key: 'i', header: 'Open invoices', cell: (r) => r.openInvoices },
-                { key: 'o', header: 'Owed', cell: (r) => egp(r.outstanding) },
-                { key: 'od', header: 'Of it overdue', cell: (r) => egp(r.overdue) },
-                { key: 'c', header: 'Credit', cell: (r) => egp(r.credit) },
-                { key: 'n', header: 'Net', cell: (r) => <strong>{egp(r.net)}</strong> },
+                { key: 'u', header: g.groupBy === 'unit' ? c('unit') : c('building'), cell: (r) => (g.groupBy === 'unit' ? r.unitCode : (r.building ?? r.unitCode ?? '—')) },
+                { key: 'i', header: t('openInvoices'), cell: (r) => f.number(r.openInvoices) },
+                { key: 'o', header: t('owed'), cell: (r) => f.money(r.outstanding) },
+                { key: 'od', header: t('overdue'), cell: (r) => f.money(r.overdue) },
+                { key: 'c', header: t('credit'), cell: (r) => f.money(r.credit) },
+                { key: 'n', header: t('net'), cell: (r) => <strong>{f.money(r.net)}</strong> },
               ]}
             />
           </Card>
@@ -196,6 +215,11 @@ function Outstanding() {
 }
 
 function DailyCash() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const code = useFinanceCode();
   const [day, setDay] = useState(today());
   const report = useQuery({ queryKey: keys.report('daily-cash', { day }), queryFn: () => fetchers.dailyCash(day), enabled: Boolean(day) });
   type Row = DailyCashReport['rows'][number];
@@ -203,25 +227,25 @@ function DailyCash() {
   return (
     <div className="stack">
       <div className="toolbar">
-        <Field label="Day">{(p) => <Input {...p} type="date" value={day} onChange={(e) => setDay(e.target.value)} />}</Field>
+        <Field label={t('day')}>{(p) => <Input {...p} type="date" value={day} onChange={(e) => setDay(e.target.value)} />}</Field>
         <ExportButton name="daily-cash" query={{ day }} />
       </div>
       <QueryState query={report}>
         {report.data ? (
           <>
-            <Stat label="Net for the day" value={egp(report.data.net)} />
+            <Stat label={t('netForDay')} value={f.money(report.data.net)} />
             <Card flush>
               <DataTable<Row>
                 rows={report.data.rows}
                 rowKey={(r) => `${r.recordedBy.id}-${r.method}`}
-                empty="Nothing recorded at the office that day"
+                empty={t('daily.empty')}
                 columns={[
-                  { key: 'w', header: 'Recorded by', cell: (r) => r.recordedBy.fullName ?? 'An erased account' },
-                  { key: 'm', header: 'Method', cell: (r) => METHOD_TEXT[r.method] ?? r.method },
-                  { key: 'p', header: 'Received', cell: (r) => `${egp(r.received)} (${r.payments})` },
-                  { key: 'rv', header: 'Reversed', cell: (r) => (r.reversals ? `${egp(r.reversed)} (${r.reversals})` : '—') },
-                  { key: 'rf', header: 'Refunded in cash', cell: (r) => (r.refunds ? `${egp(r.refunded)} (${r.refunds})` : '—') },
-                  { key: 'n', header: 'Net', cell: (r) => <strong>{egp(r.net)}</strong> },
+                  { key: 'w', header: t('recordedBy'), cell: (r) => r.recordedBy.fullName ?? c('erasedAccount') },
+                  { key: 'm', header: t('method'), cell: (r) => code('method', r.method) },
+                  { key: 'p', header: t('received'), cell: (r) => `${f.money(r.received)} (${f.number(r.payments)})` },
+                  { key: 'rv', header: t('reversed'), cell: (r) => (r.reversals ? `${f.money(r.reversed)} (${f.number(r.reversals)})` : '—') },
+                  { key: 'rf', header: t('refundedInCash'), cell: (r) => (r.refunds ? `${f.money(r.refunded)} (${f.number(r.refunds)})` : '—') },
+                  { key: 'n', header: t('net'), cell: (r) => <strong>{f.money(r.net)}</strong> },
                 ]}
               />
             </Card>
@@ -231,12 +255,12 @@ function DailyCash() {
                 rowKey={(e) => `${e.kind}-${e.number}-${String(e.at)}`}
                 empty=""
                 columns={[
-                  { key: 'a', header: 'When', cell: (e) => formatDateTime(e.at) },
-                  { key: 'k', header: 'What', cell: (e) => e.kind.replace(/_/g, ' ') },
-                  { key: 'n', header: 'Number', cell: (e) => <span className="t-mono">{e.number}</span> },
-                  { key: 'u', header: 'Unit', cell: (e) => <span className="t-mono">{e.unitCode}</span> },
-                  { key: 'r', header: 'Reference', cell: (e) => e.reference ?? '' },
-                  { key: 'amt', header: 'Amount', cell: (e) => egp(e.amount) },
+                  { key: 'a', header: t('when'), cell: (e) => f.dateTime(e.at) },
+                  { key: 'k', header: t('what'), cell: (e) => code('ledger', e.kind) },
+                  { key: 'n', header: t('number'), cell: (e) => <span className="t-mono ltr">{e.number}</span> },
+                  { key: 'u', header: c('unit'), cell: (e) => <span className="t-mono ltr">{e.unitCode}</span> },
+                  { key: 'r', header: t('reference'), cell: (e) => e.reference ?? '' },
+                  { key: 'amt', header: c('amount'), cell: (e) => f.money(e.amount) },
                 ]}
               />
             </Card>
@@ -253,9 +277,13 @@ function DailyCash() {
  * By default the active budget of the year under way.
  */
 function BudgetVsActualReport({ budgetId }: { budgetId: string }) {
+  const t = useT(en, ar);
+  const gov = useT(govEn, govAr);
+  const f = useFormat();
   const report = useQuery({ queryKey: keys.budgetVsActual(budgetId), queryFn: () => fetchers.budgetVsActual(budgetId) });
   type Row = BudgetVsActual['rows'][number];
   const r = report.data;
+  const pct = (v: number | string) => f.percent(Number(v) / 100, 1);
   return (
     <div className="stack">
       <div className="toolbar">
@@ -265,27 +293,27 @@ function BudgetVsActualReport({ budgetId }: { budgetId: string }) {
         {r ? (
           <>
             <p className="t-secondary">
-              Budget {r.fiscalYear} ({r.startsOn} – {r.endsOn}) · as of {r.asOf}
+              {t('budgetHead', { year: String(r.fiscalYear), from: f.day(r.startsOn), to: f.day(r.endsOn), asOf: f.day(r.asOf) })}
             </p>
             <div className="row" style={{ gap: 16, flexWrap: 'wrap' }}>
-              <Stat label="Allowance" value={egp(r.totals.allowance)} />
-              <Stat label="Actual" value={egp(r.totals.actual)} />
-              <Stat label="Remaining" value={egp(r.totals.remaining)} />
-              <Stat label="Used" value={`${r.totals.usedPct} %`} />
+              <Stat label={t('allowance')} value={f.money(r.totals.allowance)} />
+              <Stat label={t('actual')} value={f.money(r.totals.actual)} />
+              <Stat label={t('remaining')} value={f.money(r.totals.remaining)} />
+              <Stat label={t('used')} value={pct(r.totals.usedPct)} />
             </div>
             <Card flush>
               <DataTable<Row>
                 rows={r.rows}
                 rowKey={(x) => x.category}
-                empty="No lines"
+                empty={t('budget.empty')}
                 columns={[
-                  { key: 'c', header: 'Line', cell: (x) => CATEGORY_TEXT[x.category] },
-                  { key: 'b', header: 'Budgeted', cell: (x) => egp(x.budgeted) },
-                  { key: 'i', header: 'Increases', cell: (x) => egp(x.increases) },
-                  { key: 'w', header: 'Allowance', cell: (x) => egp(x.allowance) },
-                  { key: 'a', header: 'Actual', cell: (x) => egp(x.actual) },
-                  { key: 'r', header: 'Remaining', cell: (x) => egp(x.remaining) },
-                  { key: 'u', header: 'Used', cell: (x) => `${x.usedPct} %` },
+                  { key: 'c', header: t('line'), cell: (x) => codeText(gov, 'category', x.category) },
+                  { key: 'b', header: t('budgeted'), cell: (x) => f.money(x.budgeted) },
+                  { key: 'i', header: t('increases'), cell: (x) => f.money(x.increases) },
+                  { key: 'w', header: t('allowance'), cell: (x) => f.money(x.allowance) },
+                  { key: 'a', header: t('actual'), cell: (x) => f.money(x.actual) },
+                  { key: 'r', header: t('remaining'), cell: (x) => f.money(x.remaining) },
+                  { key: 'u', header: t('used'), cell: (x) => pct(x.usedPct) },
                 ]}
               />
             </Card>
@@ -306,6 +334,7 @@ export default function ReportsPage() {
 }
 
 function Reports() {
+  const t = useT(en, ar);
   const { ready, can } = usePermissions();
   // A budget's page links here with its id: that report, for that budget.
   const budgetId = useSearchParams().get('budget') ?? '';
@@ -313,27 +342,24 @@ function Reports() {
   if (ready && !can('finance.reports'))
     return (
       <>
-        <PageHeader title="Finance reports" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Finance reports"
-        description="What is owed and since when, what came in, the office’s day for its closing, and the budget against what was spent."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<Tab>
-          label="Report"
+          label={t('report')}
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'aging', label: 'Aging' },
-            { value: 'collections', label: 'Collections' },
-            { value: 'outstanding', label: 'Outstanding' },
-            { value: 'daily-cash', label: 'Daily cash' },
-            { value: 'budget-vs-actual', label: 'Budget vs actual' },
+            { value: 'aging', label: t('tab.aging') },
+            { value: 'collections', label: t('tab.collections') },
+            { value: 'outstanding', label: t('tab.outstanding') },
+            { value: 'daily-cash', label: t('tab.daily-cash') },
+            { value: 'budget-vs-actual', label: t('tab.budget-vs-actual') },
           ]}
         />
       </div>

@@ -2,12 +2,15 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Alert, Button, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Button, Dialog, Field, Input, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { api } from '@/lib/api';
 import { keys, type InvoiceDetail } from '@/lib/queries';
+import ar from '@/messages/ar/fin-dialogs';
+import en from '@/messages/en/fin-dialogs';
+import { useFinanceT } from './codes';
 import { instalmentsProblem, splitEqually } from './logic';
 
 const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toLocaleDateString('en-CA');
@@ -19,13 +22,17 @@ const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toLocaleDate
  * new figure.
  */
 export function InstalmentsDialog({ invoice, onClose }: { invoice: InvoiceDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const tc = useFinanceT();
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const router = useRouter();
   const [count, setCount] = useState(3);
   const [firstDue, setFirstDue] = useState(inDays(14));
   const [rows, setRows] = useState(() => splitEqually(invoice.outstanding, 3, inDays(14)));
   const resplit = (n: number, first: string) => setRows(splitEqually(invoice.outstanding, n, first));
-  const problem = instalmentsProblem(rows, invoice.outstanding);
+  const problem = instalmentsProblem(tc, fmt, rows, invoice.outstanding);
   const save = useAction(
     () =>
       unwrap(
@@ -37,7 +44,7 @@ export function InstalmentsDialog({ invoice, onClose }: { invoice: InvoiceDetail
     {
       invalidate: [keys.invoicesAll],
       onDone: (plan) => {
-        toast.show(`Plan ${plan.number}: ${plan.instalmentCount} instalments. The unit was told once.`);
+        toast.show(t('split.done', { number: plan.number, count: plan.instalmentCount }));
         onClose();
         router.push(`/finance/instalments/${plan.id}`);
       },
@@ -48,21 +55,21 @@ export function InstalmentsDialog({ invoice, onClose }: { invoice: InvoiceDetail
       open
       wide
       onClose={onClose}
-      title={`Split ${invoice.number} into instalments`}
-      description={`It owes ${egp(invoice.outstanding)}. A credit note closes it; each instalment is an invoice of its own, paid and reminded like any other.`}
+      title={t('split.title', { number: invoice.number })}
+      description={t('split.description', { amount: fmt.money(invoice.outstanding) })}
       onSubmit={() => !problem && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={Boolean(problem)}>
-            Split
+            {t('split.confirm')}
           </Button>
         </>
       }
     >
       <div className="form">
         <div className="row" style={{ gap: 16 }}>
-          <Field label="Instalments">
+          <Field label={t('split.count')}>
             {(p) => (
               <Select
                 {...p}
@@ -75,13 +82,13 @@ export function InstalmentsDialog({ invoice, onClose }: { invoice: InvoiceDetail
               >
                 {Array.from({ length: 23 }, (_, i) => i + 2).map((n) => (
                   <option key={n} value={n}>
-                    {n}, monthly
+                    {t('split.countOption', { n })}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="First due">
+          <Field label={t('split.firstDue')}>
             {(p) => (
               <Input
                 {...p}
@@ -97,7 +104,7 @@ export function InstalmentsDialog({ invoice, onClose }: { invoice: InvoiceDetail
         </div>
         {rows.map((r, i) => (
           <div key={i} className="row" style={{ gap: 16 }}>
-            <Field label={`Instalment ${i + 1} due`} error={fieldError(save.error, `instalments.${i}.dueOn`)}>
+            <Field label={t('split.rowDue', { n: i + 1 })} error={fieldError(save.error, `instalments.${i}.dueOn`)}>
               {(p) => (
                 <Input
                   {...p}
@@ -107,7 +114,7 @@ export function InstalmentsDialog({ invoice, onClose }: { invoice: InvoiceDetail
                 />
               )}
             </Field>
-            <Field label="Amount, EGP" error={fieldError(save.error, `instalments.${i}.amount`)}>
+            <Field label={t('amountEgp')} error={fieldError(save.error, `instalments.${i}.amount`)}>
               {(p) => (
                 <Input
                   {...p}

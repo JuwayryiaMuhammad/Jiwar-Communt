@@ -1,14 +1,17 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, ConfirmDialog, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, ConfirmDialog, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { SectionHeader } from '@/components/community/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/fin-gl-periods';
+import en from '@/messages/en/fin-gl-periods';
 
 type Period = Schema<'GlPeriodView'>;
 
@@ -19,6 +22,10 @@ type Period = Schema<'GlPeriodView'>;
  * alone, with a reason, on the record.
  */
 export default function ClosingMonthsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('finance.ledger');
   const toast = useToast();
@@ -30,7 +37,7 @@ export default function ClosingMonthsPage() {
     {
       invalidate: [keys.glAll],
       onDone: () => {
-        toast.show('Closed.');
+        toast.show(t('closeDone'));
         setClosing(null);
       },
     },
@@ -41,7 +48,7 @@ export default function ClosingMonthsPage() {
     {
       invalidate: [keys.glAll],
       onDone: () => {
-        toast.show('Reopened.');
+        toast.show(t('reopenDone'));
         setReopening(null);
       },
     },
@@ -49,36 +56,36 @@ export default function ClosingMonthsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Closing months" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Closing months" description="A closed month takes no entry: a correction is a reversing entry in an open month." />
+      <PageHeader title={t('title')} description={t('description')} />
       <QueryState query={periods} rows={6}>
         <Card flush>
-          <SectionHeader title="The ledger’s months" description="Newest first, from the first entry’s month." />
+          <SectionHeader title={t('months')} description={t('monthsHint')} />
           <DataTable<Period>
             rows={periods.data?.data}
             rowKey={(p) => p.month}
             columns={[
-              { key: 'm', header: 'Month', cell: (p) => p.month },
+              { key: 'm', header: t('month'), cell: (p) => f.month(p.month) },
               {
                 key: 's',
-                header: 'Status',
-                cell: (p) => (p.status === 'closed' ? <Badge tone="dark">Closed</Badge> : <Badge tone="green">Open</Badge>),
+                header: c('status'),
+                cell: (p) => (p.status === 'closed' ? <Badge tone="dark">{label('closed')}</Badge> : <Badge tone="green">{label('open')}</Badge>),
               },
               {
                 key: 'c',
-                header: 'Closed',
-                cell: (p) => (p.closedAt ? `${formatDateTime(p.closedAt)} · ${p.closedBy?.fullName ?? '—'}` : ''),
+                header: t('closed'),
+                cell: (p) => (p.closedAt ? `${f.dateTime(p.closedAt)} · ${p.closedBy?.fullName ?? '—'}` : ''),
               },
               {
                 key: 'r',
-                header: 'Reopened',
+                header: t('reopened'),
                 cell: (p) =>
-                  p.reopenedAt ? `${formatDateTime(p.reopenedAt)} · ${p.reopenedBy?.fullName ?? '—'} · ${humanize(p.reopenReason ?? '')}` : '',
+                  p.reopenedAt ? `${f.dateTime(p.reopenedAt)} · ${p.reopenedBy?.fullName ?? '—'} · ${label(p.reopenReason)}` : '',
               },
               {
                 key: 'a',
@@ -86,11 +93,11 @@ export default function ClosingMonthsPage() {
                 cell: (p) =>
                   p.status === 'open' && p.ended && can('finance.ledger_write') ? (
                     <Button size="sm" onClick={() => setClosing(p)}>
-                      Close through it
+                      {t('closeThrough')}
                     </Button>
                   ) : p.status === 'closed' && can('finance.ledger_reopen') ? (
                     <Button size="sm" variant="danger" onClick={() => setReopening(p)}>
-                      Reopen
+                      {t('reopen')}
                     </Button>
                   ) : null,
               },
@@ -101,9 +108,9 @@ export default function ClosingMonthsPage() {
       <ConfirmDialog
         open={closing !== null}
         onClose={() => setClosing(null)}
-        title={`Close through ${closing?.month ?? ''}?`}
-        description="It and every open month before it. No entry is then dated in them."
-        confirmLabel="Close"
+        title={t('closeTitle', { month: f.month(closing?.month) })}
+        description={t('closeDescription')}
+        confirmLabel={t('closeConfirm')}
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
         onConfirm={() => closing && close.mutate(closing.month)}
@@ -111,10 +118,10 @@ export default function ClosingMonthsPage() {
       <ReasonCodeDialog
         open={reopening !== null}
         onClose={() => setReopening(null)}
-        title={`Reopen ${reopening?.month ?? ''}`}
-        description="Entries may then be dated in it again. Recorded with the reason."
+        title={t('reopenTitle', { month: f.month(reopening?.month) })}
+        description={t('reopenDescription')}
         codes={REASON_CODES.glPeriodReopen}
-        confirmLabel="Reopen"
+        confirmLabel={t('reopen')}
         danger
         pending={reopen.isPending}
         error={<ErrorAlert error={reopen.error} />}

@@ -1,20 +1,24 @@
 'use client';
 
 import { QueryState } from '@jiwar/api/react';
-import { Badge, Card, DataTable, ForbiddenState, PageHeader, Segmented } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Card, DataTable, ForbiddenState, PageHeader, Segmented, useCommonT } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ClubRequest } from '@/lib/queries';
+import ar from '@/messages/ar/money-club-requests';
+import en from '@/messages/en/money-club-requests';
 
 type Status = '' | 'requested' | 'paid' | 'cancelled';
 
-const STATUS: Record<string, { label: string; tone: 'terracotta' | 'green' | 'beige' }> = {
-  requested: { label: 'Waiting for payment', tone: 'terracotta' },
-  paid: { label: 'Paid', tone: 'green' },
-  cancelled: { label: 'Called off', tone: 'beige' },
+const TONE: Record<string, 'terracotta' | 'green' | 'beige'> = {
+  requested: 'terracotta',
+  paid: 'green',
+  cancelled: 'beige',
 };
+const STATUSES = ['requested', 'paid', 'cancelled'] as const;
+const isStatus = (s: string): s is (typeof STATUSES)[number] => (STATUSES as readonly string[]).includes(s);
 
 /**
  * Club membership requests (ADR 0070): residents ask for a plan, its price
@@ -23,6 +27,9 @@ const STATUS: Record<string, { label: string; tone: 'terracotta' | 'green' | 'be
  * in finance, against the request's invoice.
  */
 export default function ClubRequestsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('club.billing');
   const [status, setStatus] = useState<Status>('requested');
@@ -34,27 +41,19 @@ export default function ClubRequestsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Club requests" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Club requests"
-        description="Plans residents asked for. Each owes its price through the unit's invoice; once paid, the membership starts or is extended on its own."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<Status>
-          label="Status"
+          label={c('status')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'requested', label: 'Waiting for payment' },
-            { value: 'paid', label: 'Paid' },
-            { value: 'cancelled', label: 'Called off' },
-            { value: '', label: 'All' },
-          ]}
+          options={[...STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) })), { value: '' as const, label: c('all') }]}
         />
       </div>
       <QueryState query={requests}>
@@ -63,17 +62,17 @@ export default function ClubRequestsPage() {
             <DataTable<ClubRequest>
               rows={requests.data.data}
               rowKey={(r) => r.id}
-              empty="No request here."
+              empty={t('empty')}
               columns={[
-                { key: 'unit', header: 'Unit', cell: (r) => r.unitCode },
-                { key: 'amount', header: 'Price', cell: (r) => egp(r.amount) },
+                { key: 'unit', header: t('col.unit'), cell: (r) => r.unitCode },
+                { key: 'amount', header: t('col.price'), cell: (r) => fmt.money(r.amount) },
                 {
                   key: 'status',
-                  header: 'Status',
-                  cell: (r) => <Badge tone={STATUS[r.status]?.tone ?? 'beige'}>{STATUS[r.status]?.label ?? r.status}</Badge>,
+                  header: t('col.status'),
+                  cell: (r) => <Badge tone={TONE[r.status] ?? 'beige'}>{isStatus(r.status) ? t(`status.${r.status}`) : r.status}</Badge>,
                 },
-                { key: 'asked', header: 'Asked', cell: (r) => new Date(r.createdAt).toLocaleDateString() },
-                { key: 'paid', header: 'Paid', cell: (r) => (r.paidAt ? new Date(r.paidAt).toLocaleDateString() : '—') },
+                { key: 'asked', header: t('col.asked'), cell: (r) => fmt.date(r.createdAt) },
+                { key: 'paid', header: t('col.paid'), cell: (r) => (r.paidAt ? fmt.date(r.paidAt) : '—') },
               ]}
             />
           </Card>

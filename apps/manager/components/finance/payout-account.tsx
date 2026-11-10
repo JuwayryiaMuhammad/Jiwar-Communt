@@ -1,10 +1,13 @@
 'use client';
 
 import { fieldError, unwrap } from '@jiwar/api';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Field, Select } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/fin-dialogs';
+import en from '@/messages/en/fin-dialogs';
 
 /**
  * The treasury's account a payout leaves (ADR 0085, 0089): a cash box for
@@ -22,6 +25,8 @@ export function PayoutAccountField({
   onChange: (id: string) => void;
   error?: unknown;
 }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { can } = usePermissions();
   const allowed = can('finance.treasury');
   const accounts = useQuery({
@@ -31,19 +36,15 @@ export function PayoutAccountField({
   });
   const kind = method === 'cash' ? 'cash' : 'bank';
   return (
-    <Field
-      label={kind === 'cash' ? 'From the cash box' : 'From the bank account'}
-      error={fieldError(error, 'cashAccountId')}
-      hint={allowed ? undefined : 'Choosing an account needs the treasury permission.'}
-    >
+    <Field label={kind === 'cash' ? t('payout.cash') : t('payout.bank')} error={fieldError(error, 'cashAccountId')} hint={allowed ? undefined : t('payout.hint')}>
       {(p) => (
         <Select {...p} value={value} onChange={(e) => onChange(e.target.value)} disabled={!allowed}>
-          <option value="">{kind === 'cash' ? 'Choose a cash box…' : 'Choose a bank account…'}</option>
+          <option value="">{kind === 'cash' ? t('payout.chooseCash') : t('payout.chooseBank')}</option>
           {accounts.data?.data
             .filter((a) => a.kind === kind)
             .map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} · {a.balance} EGP
+                {a.name} · {fmt.money(a.balance)}
               </option>
             ))}
         </Select>

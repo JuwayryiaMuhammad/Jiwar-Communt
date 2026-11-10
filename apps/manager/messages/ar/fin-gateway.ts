@@ -1,0 +1,53 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/fin-gateway.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'الدفع الإلكتروني',
+  description:
+    'يدفع السكان فواتيرهم بالبطاقة أو المحفظة الإلكترونية على صفحة Paymob نفسها، إلى حساب الكمبوند الخاص في Paymob. ولا تُحتسب الدفعة إلا بعد أن تؤكدها Paymob للخادم.',
+  replaceCredentials: 'استبدال بيانات الاعتماد',
+  setCredentials: 'إدخال بيانات الاعتماد',
+  turnOff: 'إيقاف',
+  turnOn: 'تشغيل',
+  canPay: 'يستطيع السكان الدفع إلكترونيًا',
+  switchedOn: 'مُفعَّل',
+  platform: 'المنصة',
+  platformOff: 'أوقفته المنصة',
+  mode: 'الوضع',
+  'mode.live': 'فعلي',
+  'mode.sandbox': 'تجريبي (اختبار)',
+  secretKey: 'المفتاح السري',
+  publicKey: 'المفتاح العام',
+  hmacSecret: 'سر HMAC',
+  cardIntegration: 'ربط البطاقة',
+  walletIntegration: 'ربط المحفظة',
+  lastSet: 'آخر تعيين',
+  lastSetBy: '{when} · بواسطة {by}',
+  'by.platform': 'المنصة',
+  'by.manager': 'مدير',
+  onToast: 'الدفع الإلكتروني يعمل الآن.',
+  offToast: 'الدفع الإلكتروني متوقف.',
+  stepOn: 'تشغيل الدفع الإلكتروني',
+  stepOff: 'إيقاف الدفع الإلكتروني',
+  stepDescription: 'هذا يغيّر طريقة دفع السكان. أكّد بكود جديد أُرسل إلى بريدك الإلكتروني.',
+  credentialsTitle: 'بيانات اعتماد Paymob',
+  credentialsDescription:
+    'من حساب الكمبوند الخاص في Paymob. تُستبدل كلها معًا وتُحفظ مشفّرة، ولا يستطيع أحد قراءتها مرة أخرى، لا هنا ولا في أي مكان.',
+  saved: 'تم الحفظ. لا يظهر منها إلا آخر أربعة أحرف.',
+  modeHint: 'الوضع التجريبي يقبل مفاتيح الاختبار، والفعلي يقبل المفاتيح الفعلية.',
+  cardId: 'رقم ربط البطاقة',
+  walletId: 'رقم ربط المحفظة الإلكترونية',
+  walletHint: 'اتركه فارغًا إذا كان الدفع بالبطاقة فقط.',
+  confirmTitle: 'أكّد أنك صاحب الحساب',
+  confirmDescription: 'لا تتغير بيانات اعتماد الدفع إلا بكود جديد يُرسل إلى بريدك الإلكتروني.',
+  callbacksTitle: 'إشعارات Paymob',
+  shown: 'المعروض',
+  'view.alerts': 'تحتاج مراجعة',
+  outcome: 'النتيجة',
+  anyOutcome: 'أي نتيجة',
+  nothing: 'لا شيء يحتاج مراجعة',
+  'col.received': 'وقت الاستلام',
+  'col.transaction': 'معاملة Paymob',
+};
+
+export default ar;

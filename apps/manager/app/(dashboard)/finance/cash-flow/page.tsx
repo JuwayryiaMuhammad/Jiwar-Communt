@@ -2,21 +2,28 @@
 
 import { fieldError, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Stat, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Stat, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Banknote, CalendarClock, Percent, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { SectionHeader } from '@/components/community/bits';
-import { cashFlowBasis, cashFlowRate, liquidityText } from '@/components/finance/cash-flow';
+import { cashFlowBasisText, cashFlowRateText, liquidityDays } from '@/components/finance/cash-flow';
 import { api } from '@/lib/api';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/fin-cash-flow';
+import codesAr from '@/messages/ar/fin-codes';
+import en from '@/messages/en/fin-cash-flow';
+import codesEn from '@/messages/en/fin-codes';
 
 type Period = Schema<'CashFlowPeriodView'>;
 const FLOOR = /^\d{1,12}(\.\d{1,2})?$/;
 
 function MinimumDialog({ current, onClose }: { current: string | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [value, setValue] = useState(current ?? '');
   const save = useAction(
@@ -25,7 +32,7 @@ function MinimumDialog({ current, onClose }: { current: string | null; onClose: 
     {
       invalidate: [keys.cashFlowAll],
       onDone: () => {
-        toast.show('Minimum cash saved.');
+        toast.show(t('minimumSaved'));
         onClose();
       },
     },
@@ -35,26 +42,26 @@ function MinimumDialog({ current, onClose }: { current: string | null; onClose: 
     <Dialog
       open
       onClose={onClose}
-      title="Minimum cash"
-      description="The least cash the compound wants to hold. A period of the forecast closing below it is flagged, and whoever reads cash flow is told once a dip, at most once a day."
+      title={t('minimumTitle')}
+      description={t('minimumDescription')}
       onSubmit={() => ok && save.mutate(value.trim())}
       footer={
         <>
           {current ? (
             <Button variant="danger" onClick={() => save.mutate(null)} loading={save.isPending}>
-              Turn off
+              {t('turnOff')}
             </Button>
           ) : null}
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ok}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Minimum, EGP" error={fieldError(save.error, 'minimumCash')}>
-          {(p) => <Input {...p} inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} />}
+        <Field label={t('minimumField')} error={fieldError(save.error, 'minimumCash')}>
+          {(p) => <Input {...p} inputMode="decimal" className="ltr" value={value} onChange={(e) => setValue(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
       </div>
@@ -62,7 +69,7 @@ function MinimumDialog({ current, onClose }: { current: string | null; onClose: 
   );
 }
 
-const money = (v: string) => <span className="t-mono">{v}</span>;
+const money = (v: string) => <span className="t-mono ltr">{v}</span>;
 
 /**
  * The cash flow forecast and liquidity (ADR 0091): the accounts' balances
@@ -71,6 +78,9 @@ const money = (v: string) => <span className="t-mono">{v}</span>;
  * balance against the compound's minimum cash.
  */
 export default function CashFlowPage() {
+  const t = useT(en, ar);
+  const k = useT(codesEn, codesAr);
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('finance.cashflow');
   const [by, setBy] = useState<'week' | 'month'>('week');
@@ -85,20 +95,21 @@ export default function CashFlowPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Cash flow" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   const f = forecast.data;
+  const m = (v: string) => money(fmt.money(v));
   return (
     <>
       <PageHeader
-        title="Cash flow"
-        description="From today: the bank and cash accounts’ balances, what payables already schedules out, and what the residents’ dues bring in at the compound’s collection rate."
+        title={t('title')}
+        description={t('description')}
         actions={
           <span className="row" style={{ gap: 8 }}>
             <Select
-              aria-label="By"
+              aria-label={t('by')}
               value={by}
               onChange={(e) => {
                 const next = e.target.value as 'week' | 'month';
@@ -106,20 +117,20 @@ export default function CashFlowPage() {
                 setPeriods(next === 'week' ? '13' : '6');
               }}
             >
-              <option value="week">By week</option>
-              <option value="month">By month</option>
+              <option value="week">{t('byWeek')}</option>
+              <option value="month">{t('byMonth')}</option>
             </Select>
-            <Select aria-label="Periods" value={periods} onChange={(e) => setPeriods(e.target.value)}>
+            <Select aria-label={t('periods')} value={periods} onChange={(e) => setPeriods(e.target.value)}>
               {(by === 'week' ? [4, 8, 13, 26] : [3, 6, 12]).map((n) => (
                 <option key={n} value={String(n)}>
-                  {n} {by === 'week' ? 'weeks' : 'months'}
+                  {by === 'week' ? t('weeks', { n }) : t('months', { n })}
                 </option>
               ))}
             </Select>
-            <Button onClick={() => void download('/api/v1/staff/finance/cash-flow/export', { by, periods }, 'cash-flow.csv')}>Export CSV</Button>
+            <Button onClick={() => void download('/api/v1/staff/finance/cash-flow/export', { by, periods }, 'cash-flow.csv')}>{t('exportCsv')}</Button>
             {can('finance.treasury') ? (
               <Button variant="primary" onClick={() => setEditing(true)}>
-                Minimum cash
+                {t('minimumTitle')}
               </Button>
             ) : null}
           </span>
@@ -131,61 +142,66 @@ export default function CashFlowPage() {
             <div className="grid grid--stats">
               <Stat
                 tone={f.belowMinimumNow ? 'beige' : 'dark'}
-                label="Cash on hand"
+                label={t('cashOnHand')}
                 icon={<Wallet aria-hidden />}
-                value={`${f.opening.total} ${f.currency}`}
-                hint={`${f.opening.accounts.length} account${f.opening.accounts.length === 1 ? '' : 's'}`}
+                value={fmt.money(f.opening.total)}
+                hint={t('accounts', { n: f.opening.accounts.length })}
                 href="/finance/treasury"
               />
               <Stat
-                label="Liquidity"
+                label={t('liquidity')}
                 icon={<CalendarClock aria-hidden />}
-                value={liquidityText(f.liquidityDays)}
-                hint={`${f.spending.daily} ${f.currency} a day spent over the last 90 days`}
+                value={liquidityDays(k, f.liquidityDays)}
+                hint={t('spentPerDay', { amount: fmt.money(f.spending.daily) })}
               />
               <Stat
-                label="Collection rate"
+                label={t('collectionRate')}
                 icon={<Percent aria-hidden />}
-                value={cashFlowRate(f.collection.rate)}
-                hint={cashFlowBasis(f.collection)}
+                value={cashFlowRateText(fmt, f.collection.rate)}
+                hint={cashFlowBasisText(k, fmt, f.collection)}
               />
               <Stat
                 tone={f.periodsBelowMinimum ? 'beige' : undefined}
-                label="Minimum cash"
+                label={t('minimumTitle')}
                 icon={<Banknote aria-hidden />}
-                value={f.minimumCash ? `${f.minimumCash} ${f.currency}` : 'Not set'}
+                value={f.minimumCash ? fmt.money(f.minimumCash) : t('notSet')}
                 hint={
                   f.minimumCash === null
-                    ? 'No notice'
+                    ? t('noNotice')
                     : f.belowMinimumNow
-                      ? 'Below it now'
+                      ? t('belowNow')
                       : f.firstBelowMinimum
-                        ? `Below it from ${f.firstBelowMinimum}`
-                        : 'Above it throughout'
+                        ? t('belowFrom', { day: fmt.day(f.firstBelowMinimum) })
+                        : t('aboveThroughout')
                 }
               />
             </div>
             <Card flush>
               <SectionHeader
-                title="The forecast"
-                description={`Overdue payables (${f.overdue.payables.count}, ${f.overdue.payables.amount} ${f.currency}) fall in the first period. Residents’ dues past their day (${f.overdue.receivables}) and under dispute (${f.disputed}) are not counted.`}
+                title={t('forecastTitle')}
+                description={t('forecastDescription', {
+                  count: fmt.number(f.overdue.payables.count),
+                  amount: fmt.money(f.overdue.payables.amount),
+                  overdue: fmt.money(f.overdue.receivables),
+                  disputed: fmt.money(f.disputed),
+                })}
               />
               <DataTable<Period>
                 rows={f.periods}
                 rowKey={(p) => p.from}
                 columns={[
-                  { key: 'p', header: 'Period', cell: (p) => (p.from === p.to ? p.from : `${p.from} – ${p.to}`) },
-                  { key: 'd', header: 'Dues', cell: (p) => money(p.inflows.dues) },
-                  { key: 'i', header: 'Expected in', cell: (p) => money(p.inflows.total) },
-                  { key: 'o', header: 'Out', cell: (p) => money(p.outflows.total) },
-                  { key: 'n', header: 'Net', cell: (p) => money(p.net) },
+                  { key: 'p', header: t('col.period'), cell: (p) => (p.from === p.to ? fmt.day(p.from) : `${fmt.day(p.from)} – ${fmt.day(p.to)}`) },
+                  { key: 'd', header: t('col.dues'), cell: (p) => m(p.inflows.dues) },
+                  { key: 'i', header: t('col.expectedIn'), cell: (p) => m(p.inflows.total) },
+                  { key: 'o', header: t('col.out'), cell: (p) => m(p.outflows.total) },
+                  { key: 'n', header: t('col.net'), cell: (p) => m(p.net) },
                   {
                     key: 'c',
-                    header: 'Closing',
+                    header: t('col.closing'),
                     cell: (p) => (
                       <span className="row" style={{ gap: 8 }}>
-                        {money(p.closing)}
-                        {p.belowMinimum ? <Badge tone="terracotta">Below minimum</Badge> : null}
+                        {m(p.closing)}
+                        {p.belowMinimum ? <Badge tone="terracotta">{t('belowMinimum')}</Badge> : null}
                       </span>
                     ),
                   },
@@ -193,31 +209,31 @@ export default function CashFlowPage() {
               />
             </Card>
             <Card flush>
-              <SectionHeader title="What goes out" description="Only what payables already schedules: nothing is invented." />
+              <SectionHeader title={t('outTitle')} description={t('outDescription')} />
               <DataTable<Period>
                 rows={f.periods}
                 rowKey={(p) => p.from}
                 columns={[
-                  { key: 'p', header: 'From', cell: (p) => p.from },
-                  { key: 'v', header: 'Vendors’ invoices', cell: (p) => money(p.outflows.vendorInvoices) },
-                  { key: 'c', header: 'Contract payments', cell: (p) => money(p.outflows.contractPayments) },
-                  { key: 'u', header: 'Purchases', cell: (p) => money(p.outflows.purchases) },
-                  { key: 'a', header: 'Advances and releases', cell: (p) => money(p.outflows.disbursements) },
-                  { key: 'r', header: 'Retentions', cell: (p) => money(p.outflows.retentions) },
+                  { key: 'p', header: t('col.from'), cell: (p) => fmt.day(p.from) },
+                  { key: 'v', header: t('col.vendorInvoices'), cell: (p) => m(p.outflows.vendorInvoices) },
+                  { key: 'c', header: t('col.contractPayments'), cell: (p) => m(p.outflows.contractPayments) },
+                  { key: 'u', header: t('col.purchases'), cell: (p) => m(p.outflows.purchases) },
+                  { key: 'a', header: t('col.advances'), cell: (p) => m(p.outflows.disbursements) },
+                  { key: 'r', header: t('col.retentions'), cell: (p) => m(p.outflows.retentions) },
                 ]}
               />
             </Card>
             <Card flush>
-              <SectionHeader title="What comes in" description="Dues at the collection rate, and money collected but not yet in an account." />
+              <SectionHeader title={t('inTitle')} description={t('inDescription')} />
               <DataTable<Period>
                 rows={f.periods}
                 rowKey={(p) => p.from}
                 columns={[
-                  { key: 'p', header: 'From', cell: (p) => p.from },
-                  { key: 'i', header: 'Invoiced', cell: (p) => money(p.inflows.invoiced) },
-                  { key: 'j', header: 'Projected', cell: (p) => money(p.inflows.projected) },
-                  { key: 'e', header: 'Expected', cell: (p) => money(p.inflows.expected) },
-                  { key: 't', header: 'On its way', cell: (p) => money(p.inflows.inTransit) },
+                  { key: 'p', header: t('col.from'), cell: (p) => fmt.day(p.from) },
+                  { key: 'i', header: t('col.invoiced'), cell: (p) => m(p.inflows.invoiced) },
+                  { key: 'j', header: t('col.projected'), cell: (p) => m(p.inflows.projected) },
+                  { key: 'e', header: t('col.expected'), cell: (p) => m(p.inflows.expected) },
+                  { key: 't', header: t('col.inTransit'), cell: (p) => m(p.inflows.inTransit) },
                 ]}
               />
             </Card>

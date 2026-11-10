@@ -1,22 +1,28 @@
 'use client';
 
-import { fieldError, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardHeader, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, CardHeader, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/fin-custody';
+import en from '@/messages/en/fin-custody';
 
 type Summary = Schema<'CustodySummaryView'>;
 type Handin = Schema<'CustodyHandinView'>;
 type Investigation = Schema<'CustodyInvestigationView'>;
 const KEY = ['finance', 'custody'] as const;
-const label = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, ' ');
 const COUNT = /^\d{1,8}(\.\d{1,2})?$/;
 
 /** The receiver counts the cash against what the custodian holds now. */
 function HandIn({ custodian, onClose }: { custodian: Summary; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const boxes = useQuery({ queryKey: ['finance', 'cash-accounts'], queryFn: () => unwrap(api.GET('/api/v1/staff/finance/cash-accounts')) });
   const [box, setBox] = useState('');
@@ -34,7 +40,7 @@ function HandIn({ custodian, onClose }: { custodian: Summary; onClose: () => voi
     {
       invalidate: [KEY, ['finance', 'cash-accounts']],
       onDone: () => {
-        toast.show(differs ? 'Handed in with a variance: the manager is told.' : 'Handed in.');
+        toast.show(differs ? t('handedInVariance') : t('handedIn'));
         onClose();
       },
     },
@@ -44,24 +50,24 @@ function HandIn({ custodian, onClose }: { custodian: Summary; onClose: () => voi
     <Dialog
       open
       onClose={onClose}
-      title={`Cash from ${custodian.custodian.fullName ?? 'a staff member'}`}
-      description={`${custodian.openCount} payment(s), ${custodian.expected} EGP expected. If a payment lands meanwhile, count again.`}
+      title={t('handInTitle', { name: custodian.custodian.fullName ?? t('aStaffMember') })}
+      description={t('handInDescription', { payments: t('payments', { n: custodian.openCount }), amount: f.money(custodian.expected) })}
       onSubmit={() => ok && record.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={record.isPending} disabled={!ok}>
-            Record the hand-in
+            {t('recordHandIn')}
           </Button>
         </>
       }
     >
       <QueryState query={boxes}>
         <div className="form">
-          <Field label="Into the cash box" error={fieldError(record.error, 'cashAccountId')}>
+          <Field label={t('intoBox')} error={fieldError(record.error, 'cashAccountId')}>
             {(p) => (
               <Select {...p} value={box} onChange={(e) => setBox(e.target.value)}>
-                <option value="">Choose…</option>
+                <option value="">{t('choose')}</option>
                 {boxes.data?.data
                   .filter((a) => a.kind === 'cash')
                   .map((a) => (
@@ -72,17 +78,17 @@ function HandIn({ custodian, onClose }: { custodian: Summary; onClose: () => voi
               </Select>
             )}
           </Field>
-          <Field label="Counted, EGP" error={fieldError(record.error, 'counted')}>
-            {(p) => <Input {...p} inputMode="decimal" value={counted} onChange={(e) => setCounted(e.target.value)} />}
+          <Field label={t('countedEgp')} error={fieldError(record.error, 'counted')}>
+            {(p) => <Input {...p} inputMode="decimal" className="ltr" value={counted} onChange={(e) => setCounted(e.target.value)} />}
           </Field>
           {differs ? (
-            <Field label="Why it differs" error={fieldError(record.error, 'varianceReason')}>
+            <Field label={t('whyDiffers')} error={fieldError(record.error, 'varianceReason')}>
               {(p) => (
                 <Select {...p} value={reason} onChange={(e) => setReason(e.target.value)}>
-                  <option value="">Choose…</option>
-                  {REASON_CODES.custodyVariance.map((c) => (
-                    <option key={c} value={c}>
-                      {label(c)}
+                  <option value="">{t('choose')}</option>
+                  {REASON_CODES.custodyVariance.map((k) => (
+                    <option key={k} value={k}>
+                      {label(k)}
                     </option>
                   ))}
                 </Select>
@@ -98,6 +104,9 @@ function HandIn({ custodian, onClose }: { custodian: Summary; onClose: () => voi
 
 /** Settles a variance: directly, or as an investigation's decision. */
 function Settle({ handin, investigation, onClose }: { handin?: Handin; investigation?: Investigation; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [code, setCode] = useState('');
   const [recovered, setRecovered] = useState('');
@@ -111,7 +120,7 @@ function Settle({ handin, investigation, onClose }: { handin?: Handin; investiga
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Settled.');
+        toast.show(t('settled'));
         onClose();
       },
     },
@@ -120,33 +129,33 @@ function Settle({ handin, investigation, onClose }: { handin?: Handin; investiga
     <Dialog
       open
       onClose={onClose}
-      title={`Settle ${investigation?.handinNumber ?? handin?.number}`}
+      title={t('settleTitle', { number: investigation?.handinNumber ?? handin?.number ?? '' })}
       onSubmit={() => code && settle.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={settle.isPending} disabled={!code}>
-            Settle
+            {t('settle')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Outcome" error={fieldError(settle.error, 'reasonCode')}>
+        <Field label={t('outcome')} error={fieldError(settle.error, 'reasonCode')}>
           {(p) => (
             <Select {...p} value={code} onChange={(e) => setCode(e.target.value)}>
-              <option value="">Choose…</option>
-              {REASON_CODES.custodyOutcome.map((c) => (
-                <option key={c} value={c}>
-                  {label(c)}
+              <option value="">{t('choose')}</option>
+              {REASON_CODES.custodyOutcome.map((k) => (
+                <option key={k} value={k}>
+                  {label(k)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         {code === 'recovered' ? (
-          <Field label="Recovered, EGP" hint="Cash recovered of the shortage, into the hand-in’s box." error={fieldError(settle.error, 'recoveredAmount')}>
-            {(p) => <Input {...p} inputMode="decimal" value={recovered} onChange={(e) => setRecovered(e.target.value)} />}
+          <Field label={t('recoveredEgp')} hint={t('recoveredHint')} error={fieldError(settle.error, 'recoveredAmount')}>
+            {(p) => <Input {...p} inputMode="decimal" className="ltr" value={recovered} onChange={(e) => setRecovered(e.target.value)} />}
           </Field>
         ) : null}
         <ErrorAlert error={settle.error} />
@@ -156,6 +165,8 @@ function Settle({ handin, investigation, onClose }: { handin?: Handin; investiga
 }
 
 function Investigate({ handin, onClose }: { handin: Handin; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const staff = useQuery({ queryKey: ['accounts', 'staff'], queryFn: () => unwrap(api.GET('/api/v1/accounts', { params: { query: { limit: 100 } } })) });
   const [owner, setOwner] = useState('');
@@ -165,7 +176,7 @@ function Investigate({ handin, onClose }: { handin: Handin; onClose: () => void 
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Investigation opened: its owner is told.');
+        toast.show(t('investigationOpened'));
         onClose();
       },
     },
@@ -174,24 +185,24 @@ function Investigate({ handin, onClose }: { handin: Handin; onClose: () => void 
     <Dialog
       open
       onClose={onClose}
-      title={`Investigate ${handin.number}`}
-      description="The owner holds finance.custody or finance.payments and is not the custodian."
+      title={t('investigateTitle', { number: handin.number })}
+      description={t('investigateDescription')}
       onSubmit={() => owner && dueOn && open.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={open.isPending} disabled={!owner || !dueOn}>
-            Open
+            {t('open')}
           </Button>
         </>
       }
     >
       <QueryState query={staff}>
         <div className="form">
-          <Field label="Owner" error={fieldError(open.error, 'ownerId')}>
+          <Field label={t('col.owner')} error={fieldError(open.error, 'ownerId')}>
             {(p) => (
               <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
-                <option value="">Choose…</option>
+                <option value="">{t('choose')}</option>
                 {staff.data?.data
                   .filter((a) => 'type' in a && (a.type === 'staff' || a.type === 'manager') && a.id !== handin.custodian.id)
                   .map((a) => (
@@ -202,7 +213,7 @@ function Investigate({ handin, onClose }: { handin: Handin; onClose: () => void 
               </Select>
             )}
           </Field>
-          <Field label="Due" hint="Within 60 days." error={fieldError(open.error, 'dueOn')}>
+          <Field label={t('col.due')} hint={t('dueHint')} error={fieldError(open.error, 'dueOn')}>
             {(p) => <Input {...p} type="date" value={dueOn} onChange={(e) => setDueOn(e.target.value)} />}
           </Field>
           <ErrorAlert error={open.error} />
@@ -218,6 +229,9 @@ function Investigate({ handin, onClose }: { handin: Handin; onClose: () => void 
  * settled by the manager or through an investigation.
  */
 export default function CustodyPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('finance.payments') || can('finance.custody');
   const keeper = can('finance.custody');
@@ -238,27 +252,31 @@ export default function CustodyPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Custody" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Custody" description="Cash collected at the office or in the field, until it is handed in." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="stack">
         <Card flush>
-          <CardHeader title="Not handed in" />
+          <CardHeader title={t('notHandedIn')} />
           <QueryState query={summary}>
             <DataTable<Summary>
               rows={summary.data?.data}
               rowKey={(r) => r.custodian.id}
-              empty="Everyone has handed in"
+              empty={t('everyoneHandedIn')}
               columns={[
-                { key: 'w', header: 'Who', cell: (r) => r.custodian.fullName ?? '—' },
-                { key: 'n', header: 'Payments', cell: (r) => r.openCount },
-                { key: 'e', header: 'Expected', cell: (r) => <span className="t-mono">{r.expected} EGP</span> },
-                { key: 'a', header: 'Oldest', cell: (r) => (r.ageHours === null ? '—' : <Badge tone={r.ageHours >= 24 ? 'error' : 'beige'}>{`${r.ageHours} h`}</Badge>) },
-                { key: 'v', header: 'Variances open', cell: (r) => r.unresolvedVariances || '—' },
+                { key: 'w', header: t('col.who'), cell: (r) => r.custodian.fullName ?? '—' },
+                { key: 'n', header: t('col.payments'), cell: (r) => f.number(r.openCount) },
+                { key: 'e', header: t('col.expected'), cell: (r) => <span className="t-mono ltr">{f.money(r.expected)}</span> },
+                {
+                  key: 'a',
+                  header: t('col.oldest'),
+                  cell: (r) => (r.ageHours === null ? '—' : <Badge tone={r.ageHours >= 24 ? 'error' : 'beige'}>{t('hours', { n: f.number(r.ageHours) })}</Badge>),
+                },
+                { key: 'v', header: t('col.variancesOpen'), cell: (r) => (r.unresolvedVariances ? f.number(r.unresolvedVariances) : '—') },
                 {
                   key: 'x',
                   header: '',
@@ -266,7 +284,7 @@ export default function CustodyPage() {
                   cell: (r) =>
                     r.openCount ? (
                       <Button size="sm" variant="primary" onClick={() => setHanding(r)}>
-                        Hand in
+                        {t('handIn')}
                       </Button>
                     ) : null,
                 },
@@ -275,18 +293,18 @@ export default function CustodyPage() {
           </QueryState>
         </Card>
         <Card flush>
-          <CardHeader title="Variances to settle" />
+          <CardHeader title={t('variancesTitle')} />
           <QueryState query={variances}>
             <DataTable<Handin>
               rows={variances.data?.data}
               rowKey={(r) => r.id}
-              empty="None"
+              empty={t('none')}
               columns={[
-                { key: 'n', header: 'Hand-in', cell: (r) => <span className="t-mono">{r.number}</span> },
-                { key: 'c', header: 'Custodian', cell: (r) => r.custodian.fullName ?? '—' },
-                { key: 'v', header: 'Variance', cell: (r) => <span className="t-mono">{r.variance} EGP</span> },
-                { key: 'r', header: 'Why', cell: (r) => (r.varianceReason ? label(r.varianceReason) : '—') },
-                { key: 'd', header: 'Counted', cell: (r) => formatDateTime(r.createdAt) },
+                { key: 'n', header: t('col.handin'), cell: (r) => <span className="t-mono ltr">{r.number}</span> },
+                { key: 'c', header: t('col.custodian'), cell: (r) => r.custodian.fullName ?? '—' },
+                { key: 'v', header: t('col.variance'), cell: (r) => <span className="t-mono ltr">{f.money(r.variance)}</span> },
+                { key: 'r', header: t('col.why'), cell: (r) => (r.varianceReason ? label(r.varianceReason) : '—') },
+                { key: 'd', header: t('col.counted'), cell: (r) => f.dateTime(r.createdAt) },
                 {
                   key: 'x',
                   header: '',
@@ -295,14 +313,14 @@ export default function CustodyPage() {
                     keeper && !r.investigationId ? (
                       <span className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
                         <Button size="sm" onClick={() => setInvestigating(r)}>
-                          Investigate
+                          {t('investigate')}
                         </Button>
                         <Button size="sm" variant="primary" onClick={() => setSettling({ handin: r })}>
-                          Settle
+                          {t('settle')}
                         </Button>
                       </span>
                     ) : r.investigationId ? (
-                      <Badge tone="beige">Investigating</Badge>
+                      <Badge tone="beige">{t('investigating')}</Badge>
                     ) : null,
                 },
               ]}
@@ -310,23 +328,23 @@ export default function CustodyPage() {
           </QueryState>
         </Card>
         <Card flush>
-          <CardHeader title="Open investigations" />
+          <CardHeader title={t('investigationsTitle')} />
           <QueryState query={investigations}>
             <DataTable<Investigation>
               rows={investigations.data?.data}
               rowKey={(r) => r.id}
-              empty="None"
+              empty={t('none')}
               columns={[
-                { key: 'n', header: 'Hand-in', cell: (r) => <span className="t-mono">{r.handinNumber}</span> },
-                { key: 'o', header: 'Owner', cell: (r) => r.owner.fullName ?? '—' },
-                { key: 'd', header: 'Due', cell: (r) => (r.overdue ? <Badge tone="error">{r.dueOn}</Badge> : r.dueOn) },
+                { key: 'n', header: t('col.handin'), cell: (r) => <span className="t-mono ltr">{r.handinNumber}</span> },
+                { key: 'o', header: t('col.owner'), cell: (r) => r.owner.fullName ?? '—' },
+                { key: 'd', header: t('col.due'), cell: (r) => (r.overdue ? <Badge tone="error">{f.day(r.dueOn)}</Badge> : f.day(r.dueOn)) },
                 {
                   key: 'x',
                   header: '',
                   className: 'table__actions',
                   cell: (r) => (
                     <Button size="sm" variant="primary" onClick={() => setSettling({ investigation: r })}>
-                      Decide
+                      {t('decide')}
                     </Button>
                   ),
                 },

@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -10,26 +11,28 @@ import {
   Dialog,
   Field,
   ForbiddenState,
-  Input,
   PageHeader,
   Segmented,
   Select,
   StatusBadge,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { egp } from '@/components/club/logic';
-import { BUDGET_STATUS_TEXT } from '@/components/governance/matters';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Budget, type BudgetStatus } from '@/lib/queries';
+import ar from '@/messages/ar/fin-budgets';
+import en from '@/messages/en/fin-budgets';
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 function Draft({ budgets, onClose }: { budgets: Budget[]; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const router = useRouter();
   const thisYear = new Date().getFullYear();
@@ -45,7 +48,7 @@ function Draft({ budgets, onClose }: { budgets: Budget[]; onClose: () => void })
     {
       invalidate: [keys.budgetsAll],
       onDone: (b) => {
-        toast.show('Drafted. Set its lines, then submit it to the board.');
+        toast.show(t('drafted'));
         onClose();
         router.push(`/finance/budgets/${b.id}`);
       },
@@ -55,20 +58,20 @@ function Draft({ budgets, onClose }: { budgets: Budget[]; onClose: () => void })
     <Dialog
       open
       onClose={onClose}
-      title="Draft a budget"
-      description="One live budget per fiscal year: a rejected or withdrawn one is final, and a new draft can copy its lines."
+      title={t('draftABudget')}
+      description={t('draftDescription')}
       onSubmit={() => draft.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={draft.isPending}>
-            Draft
+            {t('draft')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Fiscal year" error={fieldError(draft.error, 'fiscalYear')}>
+        <Field label={t('fiscalYear')} error={fieldError(draft.error, 'fiscalYear')}>
           {(p) => (
             <Select {...p} value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)}>
               {[thisYear - 1, thisYear, thisYear + 1].map((y) => (
@@ -79,13 +82,13 @@ function Draft({ budgets, onClose }: { budgets: Budget[]; onClose: () => void })
             </Select>
           )}
         </Field>
-        <Field label="Copy the lines of" error={fieldError(draft.error, 'copyFromId')}>
+        <Field label={t('copyFrom')} error={fieldError(draft.error, 'copyFromId')}>
           {(p) => (
             <Select {...p} value={copyFromId} onChange={(e) => setCopyFromId(e.target.value)}>
-              <option value="">Nothing: start empty</option>
+              <option value="">{t('copyNothing')}</option>
               {budgets.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.fiscalYear} · {BUDGET_STATUS_TEXT[b.status]}
+                  {b.fiscalYear} · {t(`status.${b.status}`)}
                 </option>
               ))}
             </Select>
@@ -98,6 +101,9 @@ function Draft({ budgets, onClose }: { budgets: Budget[]; onClose: () => void })
 }
 
 function FiscalYearSetting() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const q = useQuery({ queryKey: keys.budgetSettings, queryFn: fetchers.budgetSettings });
   const [month, setMonth] = useState('');
@@ -106,21 +112,21 @@ function FiscalYearSetting() {
   }, [q.data]);
   const save = useAction(
     () => unwrap(api.PATCH('/api/v1/staff/finance/budget-settings', { body: { fiscalYearStartMonth: Number(month) } })),
-    { invalidate: [keys.budgetSettings], onDone: () => toast.show('Saved.') },
+    { invalidate: [keys.budgetSettings], onDone: () => toast.show(c('saved')) },
   );
   return (
     <Card>
-      <CardHeader title="Fiscal year">
-        <span className="t-secondary">The month it starts on. Fixed once a budget was submitted.</span>
+      <CardHeader title={t('fiscalYear')}>
+        <span className="t-secondary">{t('fiscalYearHint')}</span>
       </CardHeader>
       <QueryState query={q}>
         <div className="toolbar">
-          <Field label="Starts in" error={fieldError(save.error, 'fiscalYearStartMonth')}>
+          <Field label={t('startsIn')} error={fieldError(save.error, 'fiscalYearStartMonth')}>
             {(p) => (
               <Select {...p} value={month} onChange={(e) => setMonth(e.target.value)}>
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i + 1}>
-                    {m}
+                {MONTHS.map((m) => (
+                  <option key={m} value={m}>
+                    {f.custom(Date.UTC(2000, m - 1, 1), { month: 'long', timeZone: 'UTC' })}
                   </option>
                 ))}
               </Select>
@@ -131,7 +137,7 @@ function FiscalYearSetting() {
             disabled={!q.data || month === String(q.data.fiscalYearStartMonth)}
             onClick={() => save.mutate(undefined)}
           >
-            Save
+            {c('save')}
           </Button>
         </div>
         <ErrorAlert error={save.error} />
@@ -142,26 +148,29 @@ function FiscalYearSetting() {
 
 /** The compound's annual budgets (ADR 0055): drafted here, approved by the board, then spent against. */
 export default function BudgetsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('finance.budget');
   const [status, setStatus] = useState<BudgetStatus | ''>('');
   const [drafting, setDrafting] = useState(false);
-  const list = useCursorList(keys.budgets(status), (c) => fetchers.budgets(status, c), { enabled: allowed });
+  const list = useCursorList(keys.budgets(status), (cursor) => fetchers.budgets(status, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Budgets" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Budgets"
-        description="A budget is in force only once the board approves it; its approval is announced to the owners."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setDrafting(true)}>
-            Draft a budget
+            {t('draftABudget')}
           </Button>
         }
       />
@@ -169,16 +178,16 @@ export default function BudgetsPage() {
         <FiscalYearSetting />
         <div className="toolbar">
           <Segmented<BudgetStatus | ''>
-            label="Status"
+            label={c('status')}
             value={status}
             onChange={setStatus}
             options={[
-              { value: '', label: 'All' },
-              { value: 'draft', label: 'Drafts' },
-              { value: 'submitted', label: 'With the board' },
-              { value: 'active', label: 'Active' },
-              { value: 'rejected', label: 'Rejected' },
-              { value: 'withdrawn', label: 'Withdrawn' },
+              { value: '', label: c('all') },
+              { value: 'draft', label: t('filter.draft') },
+              { value: 'submitted', label: t('status.submitted') },
+              { value: 'active', label: t('status.active') },
+              { value: 'rejected', label: t('status.rejected') },
+              { value: 'withdrawn', label: t('status.withdrawn') },
             ]}
           />
         </div>
@@ -187,14 +196,14 @@ export default function BudgetsPage() {
             <DataTable<Budget>
               rows={list.rows}
               rowKey={(b) => b.id}
-              empty="No budget yet"
+              empty={t('none')}
               columns={[
-                { key: 'y', header: 'Fiscal year', cell: (b) => <Link href={`/finance/budgets/${b.id}`}>{b.fiscalYear}</Link> },
-                { key: 'p', header: 'Period', cell: (b) => `${b.startsOn} – ${b.endsOn}` },
-                { key: 't', header: 'Budgeted', cell: (b) => egp(b.totals.budgeted) },
-                { key: 'r', header: 'Remaining', cell: (b) => (b.status === 'active' ? egp(b.totals.remaining) : '—') },
-                { key: 'c', header: 'Created', cell: (b) => formatDateTime(b.createdAt) },
-                { key: 's', header: 'Status', cell: (b) => <StatusBadge status={b.status} /> },
+                { key: 'y', header: t('fiscalYear'), cell: (b) => <Link href={`/finance/budgets/${b.id}`}>{b.fiscalYear}</Link> },
+                { key: 'p', header: t('col.period'), cell: (b) => `${f.day(b.startsOn)} – ${f.day(b.endsOn)}` },
+                { key: 't', header: t('col.budgeted'), cell: (b) => f.money(b.totals.budgeted) },
+                { key: 'r', header: t('col.remaining'), cell: (b) => (b.status === 'active' ? f.money(b.totals.remaining) : '—') },
+                { key: 'c', header: c('created'), cell: (b) => f.dateTime(b.createdAt) },
+                { key: 's', header: c('status'), cell: (b) => <StatusBadge status={b.status} label={t(`status.${b.status}`)} /> },
               ]}
             />
             <LoadMore query={list} />

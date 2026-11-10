@@ -1,0 +1,42 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/briefs.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'الملخصات اليومية',
+  description: 'يوم الكمبوند بالأرقام: ملخص الصباح ومراجعة نهاية اليوم. يعرض كل منهما الأجزاء التي يحق لدورك الاطلاع عليها.',
+  'kind.brief': 'الملخص اليومي',
+  'kind.review': 'مراجعة نهاية اليوم',
+  'filter.briefs': 'الملخصات',
+  'filter.reviews': 'المراجعات',
+  empty: 'لم يُكتب شيء بعد',
+  day: 'اليوم',
+  written: 'وقت الكتابة',
+  figures: 'الأرقام',
+  pickOne: 'اختر واحدًا',
+  nothingOpen: 'لا شيء مفتوح',
+  pickHint: 'اختر ملخصًا أو مراجعة لتقرأها.',
+  head: '{kind} ليوم {date} · كُتب في {when} ({zone})',
+  waiting: 'في انتظار قرار: {total} ({overdue} متأخر)',
+  'fig.open': 'البلاغات المفتوحة',
+  'fig.open.value': '{open} ({unassigned} بلا مسؤول، {onHold} معلّق)',
+  'fig.today': 'فُتح · اكتمل · أُغلق اليوم',
+  'fig.emergencies': 'الطوارئ المفتوحة',
+  'fig.sla': 'تجاوز مهلة الخدمة · معرّض للتجاوز',
+  'fig.planned': 'الأعمال المخططة · الفحوصات المستحقة اليوم',
+  'fig.pressure': 'ضغط على الخدمة',
+  'fig.pressure.value': '{open} مفتوح مقابل {available} فني متاح',
+  'fig.outages': 'انقطاعات سارية · لاحقًا اليوم',
+  'fig.incidents': 'حوادث اليوم · مفتوحة · إغلاقات طارئة',
+  'fig.gate': 'دخول البوابة · الزوار · الخروج',
+  'fig.collected': 'المحصَّل اليوم · هذا الشهر',
+  'fig.rate': 'المدفوع من المستحق هذا الشهر',
+  'fig.overdue': 'المتأخر عن موعده',
+  'fig.overdue.value': '{amount} ({n, plural, =0 {لا فواتير} one {فاتورة واحدة} two {فاتورتان} few {# فواتير} many {# فاتورة} other {# فاتورة}})',
+  'fig.units': 'وحدات مسكونة · خالية · مغلقة',
+  'times.title': 'موعد كتابتها',
+  'times.intro': 'بتوقيت الكمبوند ({zone})، مرة في اليوم لكل منهما؛ اتركه فارغًا لإيقافه. يصل إشعار لكل من لديه لوحة التحكم عند جاهزية أحدهما.',
+  'times.saved': 'تم حفظ المواعيد.',
+  'times.save': 'احفظ المواعيد',
+};
+
+export default ar;

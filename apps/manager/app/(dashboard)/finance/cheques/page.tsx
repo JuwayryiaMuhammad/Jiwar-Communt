@@ -2,28 +2,24 @@
 
 import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/fin-cheques';
+import en from '@/messages/en/fin-cheques';
 
 type Cheque = Schema<'ChequeView'>;
 type Filter = 'all' | Cheque['status'];
 const KEY = ['finance', 'cheques'] as const;
-const FILTERS: { value: Filter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'received', label: 'Held' },
-  { value: 'deposited', label: 'Deposited' },
-  { value: 'cleared', label: 'Cleared' },
-  { value: 'bounced', label: 'Bounced' },
-  { value: 'returned', label: 'Given back' },
-];
-const label = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, ' ');
 const today = () => new Date().toLocaleDateString('en-CA');
 
 function Receive({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [unitId, setUnitId] = useState('');
   const [number, setNumber] = useState('');
@@ -41,7 +37,7 @@ function Receive({ onClose }: { onClose: () => void }) {
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show(dueOn > today() ? 'Held until its day.' : 'Received: it paid the unit’s invoices.');
+        toast.show(dueOn > today() ? t('heldToast') : t('receivedToast'));
         onClose();
       },
     },
@@ -51,30 +47,30 @@ function Receive({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Receive a cheque"
-      description="Dated today or earlier, it pays at once. Post-dated, it is held and pays when deposited."
+      title={t('receiveCheque')}
+      description={t('receiveDescription')}
       onSubmit={() => ok && receive.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={receive.isPending} disabled={!ok}>
-            Receive
+            {t('receive')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Unit">{(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}</Field>
-        <Field label="Cheque number" error={fieldError(receive.error, 'number')}>
-          {(p) => <Input {...p} value={number} onChange={(e) => setNumber(e.target.value)} />}
+        <Field label={c('unit')}>{(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}</Field>
+        <Field label={t('number')} error={fieldError(receive.error, 'number')}>
+          {(p) => <Input {...p} className="ltr" value={number} onChange={(e) => setNumber(e.target.value)} />}
         </Field>
-        <Field label="Bank" hint="Optional." error={fieldError(receive.error, 'bankName')}>
+        <Field label={t('bank')} hint={t('bankHint')} error={fieldError(receive.error, 'bankName')}>
           {(p) => <Input {...p} value={bank} onChange={(e) => setBank(e.target.value)} />}
         </Field>
-        <Field label="Amount, EGP" error={fieldError(receive.error, 'amount')}>
-          {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
+        <Field label={t('amountEgp')} error={fieldError(receive.error, 'amount')}>
+          {(p) => <Input {...p} inputMode="decimal" className="ltr" value={amount} onChange={(e) => setAmount(e.target.value)} />}
         </Field>
-        <Field label="The cheque’s date" error={fieldError(receive.error, 'dueOn')}>
+        <Field label={t('chequeDate')} error={fieldError(receive.error, 'dueOn')}>
           {(p) => <Input {...p} type="date" value={dueOn} onChange={(e) => setDueOn(e.target.value)} />}
         </Field>
         <ErrorAlert error={receive.error} />
@@ -84,6 +80,10 @@ function Receive({ onClose }: { onClose: () => void }) {
 }
 
 function Step({ cheque, what, onClose }: { cheque: Cheque; what: 'deposit' | 'bounce' | 'return'; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const banks = useQuery({ queryKey: ['finance', 'cash-accounts'], queryFn: () => unwrap(api.GET('/api/v1/staff/finance/cash-accounts')), enabled: what === 'deposit' });
   const [value, setValue] = useState('');
@@ -98,7 +98,7 @@ function Step({ cheque, what, onClose }: { cheque: Cheque; what: 'deposit' | 'bo
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show(what === 'deposit' ? 'Deposited.' : what === 'bounce' ? 'Bounced: its payment was reversed.' : 'Given back.');
+        toast.show(t(`done.${what}`));
         onClose();
       },
     },
@@ -108,24 +108,24 @@ function Step({ cheque, what, onClose }: { cheque: Cheque; what: 'deposit' | 'bo
     <Dialog
       open
       onClose={onClose}
-      title={`${label(what)} cheque ${cheque.number}`}
-      description={`${cheque.amount} EGP · unit ${cheque.unitCode}`}
+      title={t(`stepTitle.${what}`, { number: cheque.number })}
+      description={t('stepDescription', { amount: f.money(cheque.amount), unit: cheque.unitCode })}
       onSubmit={() => value && act.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant={what === 'deposit' ? 'primary' : 'danger'} loading={act.isPending} disabled={!value}>
-            {label(what)}
+            {t(`step.${what}`)}
           </Button>
         </>
       }
     >
       <div className="form">
         {what === 'deposit' ? (
-          <Field label="Into" error={fieldError(act.error, 'accountId')}>
+          <Field label={t('into')} error={fieldError(act.error, 'accountId')}>
             {(p) => (
               <Select {...p} value={value} onChange={(e) => setValue(e.target.value)}>
-                <option value="">Choose a bank account…</option>
+                <option value="">{t('chooseBank')}</option>
                 {banks.data?.data
                   .filter((a) => a.kind === 'bank')
                   .map((a) => (
@@ -137,13 +137,13 @@ function Step({ cheque, what, onClose }: { cheque: Cheque; what: 'deposit' | 'bo
             )}
           </Field>
         ) : (
-          <Field label="Why" error={fieldError(act.error, 'reasonCode')}>
+          <Field label={t('why')} error={fieldError(act.error, 'reasonCode')}>
             {(p) => (
               <Select {...p} value={value} onChange={(e) => setValue(e.target.value)}>
-                <option value="">Choose…</option>
-                {codes.map((c) => (
-                  <option key={c} value={c}>
-                    {label(c)}
+                <option value="">{t('choose')}</option>
+                {codes.map((k) => (
+                  <option key={k} value={k}>
+                    {label(k)}
                   </option>
                 ))}
               </Select>
@@ -162,59 +162,71 @@ function Step({ cheque, what, onClose }: { cheque: Cheque; what: 'deposit' | 'bo
  * or bounced — a bounce reverses the payment it made.
  */
 export default function ChequesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('finance.payments');
   const toast = useToast();
   const [filter, setFilter] = useState<Filter>('all');
+  const filters: { value: Filter; label: string }[] = [
+    { value: 'all', label: c('all') },
+    { value: 'received', label: t('filter.received') },
+    { value: 'deposited', label: label('deposited') },
+    { value: 'cleared', label: label('cleared') },
+    { value: 'bounced', label: label('bounced') },
+    { value: 'returned', label: t('filter.returned') },
+  ];
   const list = useQuery({
     queryKey: [...KEY, filter],
     queryFn: () => unwrap(api.GET('/api/v1/staff/finance/cheques', { params: { query: filter === 'all' ? { limit: 100 } : { status: filter, limit: 100 } } })),
     enabled: allowed,
   });
-  const clear = useAction((c: Cheque) => unwrap(api.POST('/api/v1/staff/finance/cheques/{id}/clear', { params: { path: { id: c.id } } })), {
+  const clear = useAction((ch: Cheque) => unwrap(api.POST('/api/v1/staff/finance/cheques/{id}/clear', { params: { path: { id: ch.id } } })), {
     invalidate: [KEY],
-    onDone: () => toast.show('Cleared: its money is in the bank account.'),
+    onDone: () => toast.show(t('clearedToast')),
   });
   const [receiving, setReceiving] = useState(false);
   const [stepping, setStepping] = useState<{ cheque: Cheque; what: 'deposit' | 'bounce' | 'return' } | null>(null);
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Cheques" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Cheques"
-        description="Cheques the units paid with, post-dated ones included."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setReceiving(true)}>
-            Receive a cheque
+            {t('receiveCheque')}
           </Button>
         }
       />
       <div className="stack">
-        <Segmented label="Status" value={filter} onChange={setFilter} options={FILTERS} />
+        <Segmented label={c('status')} value={filter} onChange={setFilter} options={filters} />
         <ErrorAlert error={clear.error} />
         <Card flush>
           <QueryState query={list}>
             <DataTable<Cheque>
               rows={list.data?.data}
-              rowKey={(c) => c.id}
-              empty="None"
+              rowKey={(ch) => ch.id}
+              empty={t('none')}
               columns={[
-                { key: 'n', header: 'Cheque', cell: (c) => <span className="t-mono">{c.number}</span> },
-                { key: 'u', header: 'Unit', cell: (c) => <span className="t-mono">{c.unitCode}</span> },
-                { key: 'a', header: 'Amount', cell: (c) => `${c.amount} EGP` },
-                { key: 'd', header: 'Dated', cell: (c) => (c.postDated ? <Badge tone="beige">{c.dueOn}</Badge> : c.dueOn) },
+                { key: 'n', header: t('col.cheque'), cell: (ch) => <span className="t-mono ltr">{ch.number}</span> },
+                { key: 'u', header: c('unit'), cell: (ch) => <span className="t-mono ltr">{ch.unitCode}</span> },
+                { key: 'a', header: c('amount'), cell: (ch) => f.money(ch.amount) },
+                { key: 'd', header: t('col.dated'), cell: (ch) => (ch.postDated ? <Badge tone="beige">{f.day(ch.dueOn)}</Badge> : f.day(ch.dueOn)) },
                 {
                   key: 's',
-                  header: 'Status',
-                  cell: (c) => (
-                    <Badge tone={c.status === 'cleared' ? 'green' : c.status === 'bounced' ? 'error' : 'beige'}>
-                      {c.status === 'received' && !c.paymentId ? 'Held' : label(c.status)}
+                  header: c('status'),
+                  cell: (ch) => (
+                    <Badge tone={ch.status === 'cleared' ? 'green' : ch.status === 'bounced' ? 'error' : 'beige'}>
+                      {ch.status === 'received' && !ch.paymentId ? t('held') : label(ch.status)}
                     </Badge>
                   ),
                 },
@@ -222,25 +234,25 @@ export default function ChequesPage() {
                   key: 'x',
                   header: '',
                   className: 'table__actions',
-                  cell: (c) => (
+                  cell: (ch) => (
                     <span className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
-                      {c.status === 'received' ? (
+                      {ch.status === 'received' ? (
                         <>
-                          <Button size="sm" variant="primary" disabled={c.dueOn > today()} onClick={() => setStepping({ cheque: c, what: 'deposit' })}>
-                            Deposit
+                          <Button size="sm" variant="primary" disabled={ch.dueOn > today()} onClick={() => setStepping({ cheque: ch, what: 'deposit' })}>
+                            {t('deposit')}
                           </Button>
-                          <Button size="sm" onClick={() => setStepping({ cheque: c, what: 'return' })}>
-                            Give back
+                          <Button size="sm" onClick={() => setStepping({ cheque: ch, what: 'return' })}>
+                            {t('giveBack')}
                           </Button>
                         </>
                       ) : null}
-                      {c.status === 'deposited' ? (
+                      {ch.status === 'deposited' ? (
                         <>
-                          <Button size="sm" variant="primary" loading={clear.isPending} onClick={() => clear.mutate(c)}>
-                            Cleared
+                          <Button size="sm" variant="primary" loading={clear.isPending} onClick={() => clear.mutate(ch)}>
+                            {t('cleared')}
                           </Button>
-                          <Button size="sm" variant="danger" onClick={() => setStepping({ cheque: c, what: 'bounce' })}>
-                            Bounced
+                          <Button size="sm" variant="danger" onClick={() => setStepping({ cheque: ch, what: 'bounce' })}>
+                            {t('bounced')}
                           </Button>
                         </>
                       ) : null}

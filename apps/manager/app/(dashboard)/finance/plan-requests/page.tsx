@@ -1,26 +1,22 @@
 'use client';
 
-import { fieldError, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardBody, CardHeader, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, CardBody, CardHeader, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { validMoney } from '@/components/finance/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/fin-plan-requests';
+import en from '@/messages/en/fin-plan-requests';
 
 type PlanRequest = Schema<'PlanRequestView'>;
 type Status = PlanRequest['status'];
 const KEY = ['finance', 'plan-requests'] as const;
 const SETTINGS = ['finance', 'plan-settings'] as const;
-const STATUSES: { value: Status; label: string }[] = [
-  { value: 'pending', label: 'Waiting' },
-  { value: 'accepted', label: 'Accepted' },
-  { value: 'declined', label: 'Declined' },
-  { value: 'withdrawn', label: 'Withdrawn' },
-  { value: 'lapsed', label: 'Lapsed' },
-];
-const label = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, ' ');
+const STATUSES = ['pending', 'accepted', 'declined', 'withdrawn', 'lapsed'] as const satisfies readonly Status[];
 
 /** `n` monthly instalments of what the invoice owes, from a month on; the last takes the rest. */
 function schedule(outstanding: string, n: number): { dueOn: string; amount: string }[] {
@@ -35,6 +31,9 @@ function schedule(outstanding: string, n: number): { dueOn: string; amount: stri
 }
 
 function Accept({ request, onClose }: { request: PlanRequest; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const invoice = useQuery({
     queryKey: ['finance', 'invoices', request.invoiceId],
@@ -49,7 +48,7 @@ function Accept({ request, onClose }: { request: PlanRequest; onClose: () => voi
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show(`${request.invoiceNumber} is now a plan of ${rows.length} instalments.`);
+        toast.show(t('accepted', { invoice: request.invoiceNumber, n: rows.length }));
         onClose();
       },
     },
@@ -59,27 +58,27 @@ function Accept({ request, onClose }: { request: PlanRequest; onClose: () => voi
     <Dialog
       open
       onClose={onClose}
-      title={`Accept the plan on ${request.invoiceNumber}`}
-      description={`Asked over ${request.months} months. The instalments must add up to what the invoice owes now, as when you split it yourself.`}
+      title={t('acceptTitle', { invoice: request.invoiceNumber })}
+      description={t('acceptDescription', { months: request.months })}
       onSubmit={() => ready && accept.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={accept.isPending} disabled={!ready}>
-            Accept
+            {t('accept')}
           </Button>
         </>
       }
     >
       <QueryState query={invoice}>
         <div className="form">
-          <p className="t-secondary">Owed now: {invoice.data?.outstanding} EGP</p>
+          <p className="t-secondary">{t('owedNow', { amount: fmt.money(invoice.data?.outstanding) })}</p>
           {rows.map((r, i) => (
             <div className="row" key={i} style={{ gap: 8 }}>
-              <Field label={`Instalment ${i + 1}, due`} error={fieldError(accept.error, `instalments.${i}.dueOn`)}>
+              <Field label={t('rowDue', { n: i + 1 })} error={fieldError(accept.error, `instalments.${i}.dueOn`)}>
                 {(p) => <Input {...p} type="date" value={r.dueOn} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, dueOn: e.target.value } : x)))} />}
               </Field>
-              <Field label="EGP" error={fieldError(accept.error, `instalments.${i}.amount`)}>
+              <Field label={t('egp')} error={fieldError(accept.error, `instalments.${i}.amount`)}>
                 {(p) => <Input {...p} inputMode="decimal" value={r.amount} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))} />}
               </Field>
             </div>
@@ -92,6 +91,9 @@ function Accept({ request, onClose }: { request: PlanRequest; onClose: () => voi
 }
 
 function Decline({ request, onClose }: { request: PlanRequest; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [code, setCode] = useState('');
   const decline = useAction(
@@ -99,7 +101,7 @@ function Decline({ request, onClose }: { request: PlanRequest; onClose: () => vo
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Declined: the resident is told why, by its code.');
+        toast.show(t('declined'));
         onClose();
       },
     },
@@ -108,25 +110,25 @@ function Decline({ request, onClose }: { request: PlanRequest; onClose: () => vo
     <Dialog
       open
       onClose={onClose}
-      title={`Decline the plan on ${request.invoiceNumber}`}
+      title={t('declineTitle', { invoice: request.invoiceNumber })}
       onSubmit={() => code && decline.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="danger" loading={decline.isPending} disabled={!code}>
-            Decline
+            {t('decline')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Why" error={fieldError(decline.error, 'reasonCode')}>
+        <Field label={t('why')} error={fieldError(decline.error, 'reasonCode')}>
           {(p) => (
             <Select {...p} value={code} onChange={(e) => setCode(e.target.value)}>
-              <option value="">Choose…</option>
-              {REASON_CODES.planRequestDecline.map((c) => (
-                <option key={c} value={c}>
-                  {label(c)}
+              <option value="">{c('select')}</option>
+              {REASON_CODES.planRequestDecline.map((r) => (
+                <option key={r} value={r}>
+                  {label(r)}
                 </option>
               ))}
             </Select>
@@ -140,6 +142,8 @@ function Decline({ request, onClose }: { request: PlanRequest; onClose: () => vo
 
 /** How the compound helps residents plan their payments (ADR 0069). */
 function Terms() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const settings = useQuery({ queryKey: SETTINGS, queryFn: () => unwrap(api.GET('/api/v1/staff/finance/plan-settings')) });
   const [months, setMonths] = useState('');
@@ -158,30 +162,26 @@ function Terms() {
           body: { planMaxMonths: Number(months), planOfferMinAmount: floor.trim() === '' ? null : floor.trim(), duesNotice: dues },
         }),
       ),
-    { invalidate: [SETTINGS], onDone: () => toast.show('Saved: from the next request and notice on.') },
+    { invalidate: [SETTINGS], onDone: () => toast.show(t('saved')) },
   );
   const n = Number(months);
   const valid = Number.isInteger(n) && n >= 2 && n <= 24 && (floor.trim() === '' || validMoney(floor));
   return (
     <Card>
-      <CardHeader title="Terms for residents" />
+      <CardHeader title={t('terms')} />
       <CardBody>
         <QueryState query={settings}>
           <div className="form">
-            <Field label="The most months a resident may ask for" hint="2 to 24." error={fieldError(save.error, 'planMaxMonths')}>
+            <Field label={t('maxMonths')} hint={t('maxMonthsHint')} error={fieldError(save.error, 'planMaxMonths')}>
               {(p) => <Input {...p} type="number" min={2} max={24} value={months} onChange={(e) => setMonths(e.target.value)} />}
             </Field>
-            <Field
-              label="Offer a plan from, EGP"
-              hint="An invoice that still owes at least this is offered a plan with its due-soon notice. Empty: never."
-              error={fieldError(save.error, 'planOfferMinAmount')}
-            >
+            <Field label={t('offerFrom')} hint={t('offerFromHint')} error={fieldError(save.error, 'planOfferMinAmount')}>
               {(p) => <Input {...p} inputMode="decimal" value={floor} onChange={(e) => setFloor(e.target.value)} />}
             </Field>
-            <Checkbox label="Tell a unit when its next month’s dues are far above the months before" checked={dues} onChange={(e) => setDues(e.target.checked)} />
+            <Checkbox label={t('duesNotice')} checked={dues} onChange={(e) => setDues(e.target.checked)} />
             <div>
               <Button variant="primary" loading={save.isPending} disabled={!valid} onClick={() => save.mutate(undefined)}>
-                Save
+                {c('save')}
               </Button>
             </div>
             <ErrorAlert error={save.error} />
@@ -198,6 +198,10 @@ function Terms() {
  * with a reason code. A waiting one on an invoice paid meanwhile lapses.
  */
 export default function PlanRequestsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('finance.invoice');
   const [status, setStatus] = useState<Status>('pending');
@@ -211,26 +215,26 @@ export default function PlanRequestsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Plan requests" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Plan requests" description="Payment plans residents asked for on invoices they owe." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="stack">
-        <Segmented label="Status" value={status} onChange={setStatus} options={STATUSES} />
+        <Segmented<Status> label={c('status')} value={status} onChange={setStatus} options={STATUSES.map((v) => ({ value: v, label: t(`status.${v}`) }))} />
         <Card flush>
           <QueryState query={list}>
             <DataTable<PlanRequest>
               rows={list.data?.data}
               rowKey={(r) => r.id}
-              empty="None"
+              empty={t('empty')}
               columns={[
-                { key: 'i', header: 'Invoice', cell: (r) => <span className="t-mono">{r.invoiceNumber}</span> },
-                { key: 'm', header: 'Months asked', cell: (r) => r.months },
-                { key: 's', header: 'Status', cell: (r) => <Badge tone={r.status === 'pending' ? 'terracotta' : 'beige'}>{label(r.status)}</Badge> },
-                { key: 'c', header: 'Asked', cell: (r) => formatDateTime(r.createdAt) },
+                { key: 'i', header: t('col.invoice'), cell: (r) => <span className="t-mono">{r.invoiceNumber}</span> },
+                { key: 'm', header: t('col.months'), cell: (r) => fmt.number(r.months) },
+                { key: 's', header: c('status'), cell: (r) => <Badge tone={r.status === 'pending' ? 'terracotta' : 'beige'}>{t(`status.${r.status}`)}</Badge> },
+                { key: 'c', header: t('col.asked'), cell: (r) => fmt.dateTime(r.createdAt) },
                 {
                   key: 'a',
                   header: '',
@@ -239,10 +243,10 @@ export default function PlanRequestsPage() {
                     r.status === 'pending' ? (
                       <span className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
                         <Button size="sm" variant="primary" onClick={() => setAccepting(r)}>
-                          Accept
+                          {t('accept')}
                         </Button>
                         <Button size="sm" onClick={() => setDeclining(r)}>
-                          Decline
+                          {t('decline')}
                         </Button>
                       </span>
                     ) : r.declineReason ? (

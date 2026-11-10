@@ -1,0 +1,19 @@
+/** Invoices (ADR 0046): app/(dashboard)/finance/invoices. */
+export default {
+  title: 'Invoices',
+  description: 'What each unit is asked to pay. Residents who see the unit’s money pay online or at the office.',
+  issue: 'Issue invoices',
+  shown: 'Invoices shown',
+  'view.open': 'Owed',
+  'view.overdue': 'Overdue',
+  'view.paid': 'Paid',
+  'view.credited': 'Credited',
+  'view.rescheduled': 'Rescheduled',
+  'view.all': 'All',
+  any: 'Any',
+  empty: 'No invoice matches',
+  'col.invoice': 'Invoice',
+  'col.owed': 'Owed',
+  'col.due': 'Due',
+  'col.issued': 'Issued',
+} as const;

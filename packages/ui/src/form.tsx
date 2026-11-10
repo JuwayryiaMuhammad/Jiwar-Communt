@@ -40,8 +40,13 @@ export function Field({
   );
 }
 
-export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={['input', className].filter(Boolean).join(' ')} {...rest} />;
+/** What is always Latin (an email, a phone, a link, a number) reads left to right in Arabic too. */
+const LTR_TYPES = new Set(['email', 'tel', 'url', 'number', 'password']);
+
+export function Input({ className, dir, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+  // Otherwise a typed value keeps its own direction: an Arabic name right to left, a code left to right.
+  const direction = dir ?? (LTR_TYPES.has(rest.type ?? '') ? 'ltr' : 'auto');
+  return <input className={['input', className].filter(Boolean).join(' ')} dir={direction} {...rest} />;
 }
 
 export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
@@ -53,7 +58,7 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
 }
 
 export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={['textarea', className].filter(Boolean).join(' ')} {...rest} />;
+  return <textarea className={['textarea', className].filter(Boolean).join(' ')} dir="auto" {...rest} />;
 }
 
 export function Checkbox({ label, ...rest }: InputHTMLAttributes<HTMLInputElement> & { label: ReactNode }) {

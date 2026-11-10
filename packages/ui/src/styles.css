@@ -40,7 +40,7 @@
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-primary) 28%, transparent);
 
   /* typography (derived) */
-  --font-sans: var(--font-inter, Inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: var(--font-inter, Inter), var(--font-arabic, 'IBM Plex Sans Arabic'), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* radius (derived) */
@@ -255,7 +255,7 @@ textarea {
 }
 
 .sidebar__count {
-  margin-left: auto;
+  margin-inline-start: auto;
   min-width: 22px;
   padding: 1px 7px;
   border-radius: var(--radius-pill);
@@ -369,7 +369,7 @@ a.sidebar__user[aria-current='page'] {
 }
 
 .topbar__end {
-  margin-left: auto;
+  margin-inline-start: auto;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
@@ -382,7 +382,7 @@ a.sidebar__user[aria-current='page'] {
 .bell__count {
   position: absolute;
   top: -4px;
-  right: -6px;
+  inset-inline-end: -6px;
   min-width: 18px;
   padding: 0 5px;
   border-radius: var(--radius-pill);
@@ -439,7 +439,8 @@ a.sidebar__user[aria-current='page'] {
 
   .sidebar {
     position: fixed;
-    inset: 0 auto 0 0;
+    inset-block: 0;
+    inset-inline-start: 0;
     z-index: 30;
     width: min(var(--sidebar-width), 86vw);
     transform: translateX(-100%);
@@ -565,7 +566,7 @@ a.sidebar__user[aria-current='page'] {
   height: 14px;
   border-radius: 50%;
   border: 2px solid currentColor;
-  border-right-color: transparent;
+  border-inline-end-color: transparent;
   animation: spin 0.7s linear infinite;
 }
 
@@ -792,7 +793,7 @@ a.sidebar__user[aria-current='page'] {
 }
 
 .table th {
-  text-align: left;
+  text-align: start;
   padding: 10px var(--space-md);
   font-size: 12px;
   font-weight: 500;
@@ -815,16 +816,16 @@ a.sidebar__user[aria-current='page'] {
 
 .table th:first-child,
 .table td:first-child {
-  padding-left: var(--space-lg);
+  padding-inline-start: var(--space-lg);
 }
 
 .table th:last-child,
 .table td:last-child {
-  padding-right: var(--space-lg);
+  padding-inline-end: var(--space-lg);
 }
 
 .table td.table__actions {
-  text-align: right;
+  text-align: end;
   white-space: nowrap;
 }
 
@@ -981,7 +982,7 @@ a.sidebar__user[aria-current='page'] {
 
 .select {
   appearance: none;
-  padding-right: 36px;
+  padding-inline-end: 36px;
   background-image: linear-gradient(45deg, transparent 50%, var(--color-body) 50%),
     linear-gradient(135deg, var(--color-body) 50%, transparent 50%);
   background-position: calc(100% - 18px) 17px, calc(100% - 13px) 17px;
@@ -1198,7 +1199,7 @@ a.sidebar__user[aria-current='page'] {
 
 .toasts {
   position: fixed;
-  right: var(--space-lg);
+  inset-inline-end: var(--space-lg);
   bottom: var(--space-lg);
   z-index: 50;
   display: flex;
@@ -1326,7 +1327,7 @@ a.sidebar__user[aria-current='page'] {
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   background: var(--color-canvas);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -1424,19 +1425,20 @@ a.sidebar__user[aria-current='page'] {
 
 .timeline__item {
   position: relative;
-  padding: 0 0 var(--space-md) var(--space-lg);
-  border-left: 1px solid var(--color-hairline);
+  padding-block: 0 var(--space-md);
+  padding-inline: var(--space-lg) 0;
+  border-inline-start: 1px solid var(--color-hairline);
 }
 
 .timeline__item:last-child {
   padding-bottom: 0;
-  border-left-color: transparent;
+  border-inline-start-color: transparent;
 }
 
 .timeline__item::before {
   content: '';
   position: absolute;
-  left: -5px;
+  inset-inline-start: -5px;
   top: 5px;
   width: 9px;
   height: 9px;
@@ -1517,4 +1519,39 @@ a.sidebar__user[aria-current='page'] {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
+}
+
+/* ------------------------------------------------------------ right to left */
+/* Arabic is the default (`<html lang="ar" dir="rtl">`). The rules above use
+   logical properties (start and end), so most of the layout follows the
+   direction by itself; what cannot is here. */
+
+@media (max-width: 1024px) {
+  [dir='rtl'] .sidebar {
+    transform: translateX(100%);
+  }
+
+  [dir='rtl'] .shell[data-nav-open='true'] .sidebar {
+    transform: none;
+  }
+}
+
+[dir='rtl'] .select {
+  background-position: 13px 17px, 18px 17px;
+}
+
+/* Arabic letters join: spacing them apart breaks the words. */
+[lang='ar'] :is(.t-display-md, .t-title-lg, .sidebar__label, .stat__value, .auth__band h2) {
+  letter-spacing: normal;
+}
+
+/* An icon that points a way (a chevron, an arrow, "back") mirrors in Arabic. */
+[dir='rtl'] .icon-dir {
+  transform: scaleX(-1);
+}
+
+/* Codes, numbers, emails and plates keep their own direction inside Arabic text. */
+.ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
 }

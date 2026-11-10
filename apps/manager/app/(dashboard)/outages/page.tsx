@@ -1,25 +1,31 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT, type Translate } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Outage } from '@/lib/queries';
+import ar from '@/messages/ar/outages';
+import en from '@/messages/en/outages';
 
 /** A datetime-local value as an instant with its offset. */
 const instant = (local: string) => new Date(local).toISOString();
 const local = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 
-function statusOf(o: Outage, now = Date.now()): string {
-  if (o.cancelledAt) return 'Cancelled';
-  if (o.endedAt) return 'Ended';
-  if (Date.parse(o.startsAt) <= now) return 'Going on';
-  return o.notifiedAt ? 'Told' : 'To be told';
+function statusOf(t: Translate<typeof en>, o: Outage, now = Date.now()): string {
+  if (o.cancelledAt) return t('state.cancelled');
+  if (o.endedAt) return t('state.ended');
+  if (Date.parse(o.startsAt) <= now) return t('state.going');
+  return o.notifiedAt ? t('state.told') : t('state.toBeTold');
 }
 
 function OutageDialog({ outage, onClose }: { outage: Outage | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const soon = new Date(Date.now() + 3 * 24 * 3_600_000);
   const [f, setF] = useState({
@@ -65,7 +71,7 @@ function OutageDialog({ outage, onClose }: { outage: Outage | null; onClose: () 
     {
       invalidate: [keys.outages],
       onDone: (o) => {
-        toast.show(o.notifiedAt ? 'Saved; its residents are told.' : 'Saved; its residents are told 48 hours before.');
+        toast.show(o.notifiedAt ? t('savedTold') : t('savedLater'));
         onClose();
       },
     },
@@ -75,14 +81,14 @@ function OutageDialog({ outage, onClose }: { outage: Outage | null; onClose: () 
       open
       wide
       onClose={onClose}
-      title={outage ? 'Change the outage' : 'New outage'}
-      description="Its residents are told 48 hours before it starts, or at once when it starts sooner or was not planned. A new start is told again, once."
+      title={outage ? t('changeTitle') : t('newTitle')}
+      description={t('dialogDescription')}
       onSubmit={() => save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
@@ -91,39 +97,39 @@ function OutageDialog({ outage, onClose }: { outage: Outage | null; onClose: () 
         <ErrorAlert error={save.error} />
         {outage ? null : (
           <div className="form__row">
-            <Field label="What is cut" error={fieldError(save.error, 'kind')}>
+            <Field label={t('whatIsCut')} error={fieldError(save.error, 'kind')}>
               {(p) => (
                 <Select {...p} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as typeof f.kind })}>
                   {REASON_CODES.outageKind.map((k) => (
                     <option key={k} value={k}>
-                      {humanize(k)}
+                      {label(k)}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
-            <Field label="Planned">
+            <Field label={t('planned')}>
               {(p) => (
                 <Select {...p} value={f.planned ? 'yes' : 'no'} onChange={(e) => setF({ ...f, planned: e.target.value === 'yes' })}>
-                  <option value="yes">Planned: told 48 hours ahead</option>
-                  <option value="no">Not planned: told now</option>
+                  <option value="yes">{t('plannedYes')}</option>
+                  <option value="no">{t('plannedNo')}</option>
                 </Select>
               )}
             </Field>
           </div>
         )}
-        <Field label="Buildings" hint="Separated by commas. Empty: the whole compound." error={fieldError(save.error, 'buildings')}>
+        <Field label={t('buildings')} hint={t('buildingsHint')} error={fieldError(save.error, 'buildings')}>
           {(p) => <Input {...p} value={f.buildings} onChange={(e) => setF({ ...f, buildings: e.target.value })} />}
         </Field>
         <div className="form__row">
-          <Field label="From" error={fieldError(save.error, 'startsAt')}>
+          <Field label={t('from')} error={fieldError(save.error, 'startsAt')}>
             {(p) => <Input {...p} type="datetime-local" value={f.startsAt} onChange={(e) => setF({ ...f, startsAt: e.target.value })} />}
           </Field>
-          <Field label="To" error={fieldError(save.error, 'endsAt')}>
+          <Field label={t('to')} error={fieldError(save.error, 'endsAt')}>
             {(p) => <Input {...p} type="datetime-local" value={f.endsAt} onChange={(e) => setF({ ...f, endsAt: e.target.value })} />}
           </Field>
         </div>
-        <Field label="What residents should do" error={fieldError(save.error, 'note')}>
+        <Field label={t('residentsShould')} error={fieldError(save.error, 'note')}>
           {(p) => <Input {...p} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />}
         </Field>
       </div>
@@ -133,6 +139,10 @@ function OutageDialog({ outage, onClose }: { outage: Outage | null; onClose: () 
 
 /** Utility outages (ADR 0066), told to the residents of their buildings. */
 export default function OutagesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const toast = useToast();
   const manage = can('energy.manage');
@@ -141,7 +151,7 @@ export default function OutagesPage() {
   const list = useCursorList(keys.outages, (c) => fetchers.outages(c), { enabled: can('energy.read') });
   const end = useAction(
     (id: string) => unwrap(api.POST('/api/v1/maintenance/outages/{id}/end', { params: { path: { id } } })),
-    { invalidate: [keys.outages], onDone: () => toast.show('Ended; those told are told.') },
+    { invalidate: [keys.outages], onDone: () => toast.show(t('ended')) },
   );
   const cancel = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
@@ -149,7 +159,7 @@ export default function OutagesPage() {
     {
       invalidate: [keys.outages],
       onDone: () => {
-        toast.show('Called off; those told are told.');
+        toast.show(t('calledOff'));
         setCancelling(null);
       },
     },
@@ -157,19 +167,19 @@ export default function OutagesPage() {
   if (ready && !can('energy.read'))
     return (
       <>
-        <PageHeader title="Outages" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Outages"
-        description="Water, electricity and gas cut off, told to the residents of their buildings."
+        title={t('title')}
+        description={t('description')}
         actions={
           manage ? (
             <Button variant="primary" onClick={() => setEditing('new')}>
-              New outage
+              {t('newOutage')}
             </Button>
           ) : null
         }
@@ -179,30 +189,30 @@ export default function OutagesPage() {
           <DataTable<Outage>
             rows={list.rows}
             rowKey={(o) => o.id}
-            empty="No outage"
+            empty={t('empty')}
             columns={[
-              { key: 'k', header: 'What', cell: (o) => humanize(o.kind) },
-              { key: 'b', header: 'Where', cell: (o) => (o.buildings.length ? o.buildings.join(', ') : 'The compound') },
-              { key: 'f', header: 'From', cell: (o) => formatDateTime(o.startsAt) },
-              { key: 't', header: 'To', cell: (o) => formatDateTime(o.endsAt) },
-              { key: 's', header: 'Status', cell: (o) => statusOf(o) },
+              { key: 'k', header: t('col.what'), cell: (o) => label(o.kind) },
+              { key: 'b', header: t('col.where'), cell: (o) => (o.buildings.length ? f.list(o.buildings) : t('theCompound')) },
+              { key: 'f', header: t('col.from'), cell: (o) => f.dateTime(o.startsAt) },
+              { key: 't', header: t('col.to'), cell: (o) => f.dateTime(o.endsAt) },
+              { key: 's', header: t('col.status'), cell: (o) => statusOf(t, o) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (o) =>
                   manage && !o.endedAt && !o.cancelledAt ? (
                     <span className="row" style={{ gap: 6 }}>
                       <Button size="sm" onClick={() => setEditing(o)}>
-                        Change
+                        {t('change')}
                       </Button>
                       {Date.parse(o.startsAt) <= Date.now() ? (
                         <Button size="sm" loading={end.isPending} onClick={() => end.mutate(o.id)}>
-                          End
+                          {t('end')}
                         </Button>
                       ) : (
                         <Button size="sm" onClick={() => setCancelling(o)}>
-                          Call off
+                          {t('callOff')}
                         </Button>
                       )}
                     </span>
@@ -217,13 +227,13 @@ export default function OutagesPage() {
       <ReasonCodeDialog
         open={cancelling !== null}
         onClose={() => setCancelling(null)}
-        title="Call the outage off"
+        title={t('callOffTitle')}
         codes={REASON_CODES.outageCancel}
-        confirmLabel="Call off"
+        confirmLabel={t('callOff')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error ?? end.error} />}
-        onConfirm={(c) => cancelling && cancel.mutate({ id: cancelling.id, reasonCode: c })}
+        onConfirm={(code) => cancelling && cancel.mutate({ id: cancelling.id, reasonCode: code })}
       />
     </>
   );

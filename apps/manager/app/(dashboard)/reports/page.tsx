@@ -1,13 +1,16 @@
 'use client';
 
 import { ErrorAlert, QueryState } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import { Button, Card, DataTable, EmptyState, Field, ForbiddenState, Input, PageHeader, Select } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { change, COMPARE_TEXT, GROUP_TEXT, NOTE_TEXT } from '@/components/reports/labels';
+import { change, COMPARES, isGroup, isNote } from '@/components/reports/labels';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ReportCatalogEntry, type ReportResult } from '@/lib/queries';
+import ar from '@/messages/ar/ops-reports';
+import en from '@/messages/en/ops-reports';
 
 type Row = ReportResult['rows'][number] & { n: number };
 const iso = (d: Date) => d.toLocaleDateString('en-CA');
@@ -19,6 +22,9 @@ const READERS = ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.re
  * earlier; drawn as a PDF, a workbook or CSV. Groups only, never a person.
  */
 export default function ReportsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = READERS.some((p) => can(p));
   const catalog = useQuery({ queryKey: keys.reportCatalog(), queryFn: fetchers.reportCatalog, enabled: allowed });
@@ -43,7 +49,7 @@ export default function ReportsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Reports" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -53,21 +59,32 @@ export default function ReportsPage() {
     download('/api/v1/staff/reports/export', { ...q, format }, `${q.report}-${from}-${to}.${format}`).catch(setFileError);
   const rows: Row[] = (r?.rows ?? []).map((x, n) => ({ ...x, n }));
   const figure = (i: number) => r && i >= r.dimensions && r.columns[i]?.kind !== 'text';
+  const groupText = (g: string) => (isGroup(g) ? t(`group.${g}`) : g);
+  /** A figure as people read it: money with its currency, a count grouped; a name as it is. */
+  const value = (i: number, v: string | null | undefined) => {
+    if (v === null || v === undefined) return '—';
+    if (!figure(i)) return v;
+    return r?.columns[i]?.kind === 'money' ? fmt.money(v) : fmt.number(v);
+  };
+  const pct = (now: string | null, before: string | null) => {
+    const ratio = change(now, before);
+    return ratio === null ? '—' : fmt.percent(ratio);
+  };
   return (
     <>
       <PageHeader
-        title="Reports"
-        description="The compound’s figures by building, asset type, item, category or month — compared with the period before or a year earlier. Groups only: never a person or a unit."
+        title={t('title')}
+        description={t('description')}
         actions={
           <div className="row" style={{ gap: 8 }}>
             <Button onClick={() => file('pdf')} disabled={!q}>
-              PDF
+              {t('pdf')}
             </Button>
             <Button onClick={() => file('xlsx')} disabled={!q}>
-              Excel
+              {t('excel')}
             </Button>
             <Button onClick={() => file('csv')} disabled={!q}>
-              CSV
+              {t('csv')}
             </Button>
           </div>
         }
@@ -77,36 +94,36 @@ export default function ReportsPage() {
         {reports.length ? (
           <>
             <div className="form__row" style={{ marginBottom: 12 }}>
-              <Field label="Report">
+              <Field label={t('report')}>
                 {(p) => (
                   <Select {...p} value={key} onChange={(e) => setKey(e.target.value as ReportCatalogEntry['key'])}>
                     {reports.map((x) => (
                       <option key={x.key} value={x.key}>
-                        {x.title.en}
+                        {x.title[locale]}
                       </option>
                     ))}
                   </Select>
                 )}
               </Field>
-              <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-              <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
-              <Field label="Grouped by">
+              <Field label={t('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+              <Field label={t('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+              <Field label={t('groupedBy')}>
                 {(p) => (
                   <Select {...p} value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
                     {(def?.groupBy ?? []).map((g) => (
                       <option key={g} value={g}>
-                        {GROUP_TEXT[g] ?? g}
+                        {groupText(g)}
                       </option>
                     ))}
                   </Select>
                 )}
               </Field>
-              <Field label="Compared with">
+              <Field label={t('comparedWith')}>
                 {(p) => (
                   <Select {...p} value={compare} onChange={(e) => setCompare(e.target.value as ReportResult['compare'])}>
-                    {Object.entries(COMPARE_TEXT).map(([v, t]) => (
+                    {COMPARES.map((v) => (
                       <option key={v} value={v}>
-                        {t}
+                        {t(`compare.${v}`)}
                       </option>
                     ))}
                   </Select>
@@ -119,17 +136,21 @@ export default function ReportsPage() {
                   <DataTable<Row>
                     rows={[...rows, { ...r.totals, n: -1 }]}
                     rowKey={(x) => String(x.n)}
-                    empty="Nothing in this period"
+                    empty={t('emptyPeriod')}
                     columns={r.columns.map((c, i) => ({
                       key: c.key,
-                      header: c.en,
+                      header: c[locale],
                       cell: (x: Row) => {
                         const v = x.values[i];
-                        const shown = c.key === 'note' && v ? (NOTE_TEXT[v] ?? v) : (v ?? '—');
+                        const shown = c.key === 'note' && v ? (isNote(v) ? t(`note.${v}`) : v) : value(i, v);
                         if (!figure(i) || r.compare === 'none') return x.n === -1 ? <strong>{shown}</strong> : shown;
                         const parts = [
-                          r.previousPeriod ? `before ${x.previous?.[i] ?? '—'} (${change(v ?? null, x.previous?.[i] ?? null) ?? '—'})` : null,
-                          r.lastYearPeriod ? `a year ago ${x.lastYear?.[i] ?? '—'} (${change(v ?? null, x.lastYear?.[i] ?? null) ?? '—'})` : null,
+                          r.previousPeriod
+                            ? t('before', { value: value(i, x.previous?.[i]), change: pct(v ?? null, x.previous?.[i] ?? null) })
+                            : null,
+                          r.lastYearPeriod
+                            ? t('aYearAgo', { value: value(i, x.lastYear?.[i]), change: pct(v ?? null, x.lastYear?.[i] ?? null) })
+                            : null,
                         ].filter(Boolean);
                         return (
                           <div className="stack stack--sm">
@@ -145,7 +166,7 @@ export default function ReportsPage() {
             </QueryState>
           </>
         ) : (
-          <EmptyState title="No report for your role">Each report is read with its own permission.</EmptyState>
+          <EmptyState title={t('noReport')}>{t('noReportBody')}</EmptyState>
         )}
       </QueryState>
     </>

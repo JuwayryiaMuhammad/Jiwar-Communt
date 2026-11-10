@@ -1,13 +1,16 @@
 'use client';
 
-import { fieldError, formatDateTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, CardBody, CardHeader, Field, Input, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/ms-analytics';
+import en from '@/messages/en/ms-analytics';
 
 /**
  * Service pressure (ADR 0079): how many open tickets one available
@@ -15,6 +18,8 @@ import { fetchers, keys } from '@/lib/queries';
  * once a rise, at most once an hour; empty turns the alert off.
  */
 export function ServicePressureCard() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const toast = useToast();
   const { can } = usePermissions();
   const state = useQuery({
@@ -34,42 +39,38 @@ export function ServicePressureCard() {
       ),
     {
       invalidate: [keys.servicePressure, keys.dashboardAll],
-      onDone: () => toast.show(value.trim() === '' ? 'The service-pressure alert is off.' : 'The threshold is saved.'),
+      onDone: () => toast.show(value.trim() === '' ? t('alertOff') : t('thresholdSaved')),
     },
   );
   return (
     <Card flush>
-      <CardHeader title="Service pressure" />
+      <CardHeader title={t('pressure')} />
       <CardBody>
         <div className="stack">
-          <p className="t-secondary">
-            When the open tickets (new, or in a technician’s hands) reach this many for each available technician, the
-            maintenance supervisors and the managers are told: once a rise, and at most once an hour however often it comes
-            and goes. Leave it empty for no alert.
-          </p>
+          <p className="t-secondary">{t('pressureHint')}</p>
           {can('tickets.dispatch') ? (
             <QueryState query={state} rows={1}>
               {state.data ? (
                 <div className="row" style={{ gap: 8, alignItems: 'center' }}>
                   <Badge tone={state.data.underPressure ? 'terracotta' : 'green'}>
-                    {state.data.underPressure ? 'Under pressure' : 'Within capacity'}
+                    {state.data.underPressure ? t('underPressure') : t('withinCapacity')}
                   </Badge>
                   <span className="t-secondary">
-                    {state.data.open} open · {state.data.available} available
-                    {state.data.since ? ` · since ${formatDateTime(state.data.since)}` : ''}
+                    {t('counts', { open: state.data.open, available: state.data.available })}
+                    {state.data.since ? t('since', { when: fmt.dateTime(state.data.since) }) : ''}
                   </span>
                 </div>
               ) : null}
             </QueryState>
           ) : null}
-          <Field label="Open tickets per available technician (1–100)" error={fieldError(save.error, 'openPerTechnician')}>
+          <Field label={t('threshold')} error={fieldError(save.error, 'openPerTechnician')}>
             {(f) => (
               <Input {...f} inputMode="numeric" style={{ maxWidth: 160 }} value={value} onChange={(e) => setValue(e.target.value)} />
             )}
           </Field>
           <span>
             <Button variant="primary" loading={save.isPending} onClick={() => save.mutate()}>
-              Save threshold
+              {t('saveThreshold')}
             </Button>
           </span>
           <ErrorAlert error={save.error} />

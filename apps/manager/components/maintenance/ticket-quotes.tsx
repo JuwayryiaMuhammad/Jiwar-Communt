@@ -1,13 +1,16 @@
 'use client';
 
-import { formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardHeader, Dialog, Field, Input, StatusBadge, Textarea, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, CardHeader, Dialog, Field, Input, StatusBadge, Textarea, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { keys, type TicketDetail, type TicketQuote } from '@/lib/queries';
+import ar from '@/messages/ar/maint-operations';
+import en from '@/messages/en/maint-operations';
 
 /** Statuses a quote may be proposed in (the API's QUOTABLE, ADR 0058). */
 const QUOTABLE = ['new', 'assigned', 'en_route'];
@@ -21,6 +24,10 @@ const AMOUNT = /^(?!0+(\.0{1,2})?$)\d{1,7}(\.\d{1,2})?$/;
  * or after a decline. A waiting quote may be withdrawn.
  */
 export function TicketQuotes({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { can } = usePermissions();
   const mayDispatch = can('tickets.dispatch');
@@ -44,7 +51,7 @@ export function TicketQuotes({ ticket }: { ticket: TicketDetail }) {
     {
       invalidate: [keys.ticketsAll],
       onDone: () => {
-        toast.show('Quote proposed. The resident is asked to approve it.');
+        toast.show(t('quoteProposed'));
         setProposing(false);
         setAmount('');
         setNote('');
@@ -58,7 +65,7 @@ export function TicketQuotes({ ticket }: { ticket: TicketDetail }) {
           params: { path: { id: ticket.id, quoteId: q.id } },
         }),
       ),
-    { invalidate: [keys.ticketsAll], onDone: () => toast.show('Quote withdrawn.') },
+    { invalidate: [keys.ticketsAll], onDone: () => toast.show(t('quoteWithdrawn')) },
   );
   // A common-area ticket takes no quote; nor does a reader without dispatch.
   if (!ticket.unit || !mayDispatch) return null;
@@ -68,11 +75,11 @@ export function TicketQuotes({ ticket }: { ticket: TicketDetail }) {
   return (
     <Card flush>
       <CardHeader
-        title="Quotes"
+        title={t('quotes')}
         actions={
           mayPropose ? (
             <Button size="sm" onClick={() => setProposing(true)}>
-              Propose a quote
+              {t('proposeQuote')}
             </Button>
           ) : null
         }
@@ -84,20 +91,20 @@ export function TicketQuotes({ ticket }: { ticket: TicketDetail }) {
               <li key={q.id} className="list__item" style={{ alignItems: 'flex-start' }}>
                 <span className="list__text">
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                    <span className="t-num">{q.amount} EGP</span>
+                    <span className="t-num">{fmt.money(q.amount)}</span>
                     <StatusBadge status={q.status} />
-                    {q.declineReason ? <span className="t-secondary">{humanize(q.declineReason)}</span> : null}
+                    {q.declineReason ? <span className="t-secondary">{label(q.declineReason)}</span> : null}
                   </span>
                   {q.note ? <p style={{ margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{q.note}</p> : null}
                   <span className="list__meta">
-                    Proposed {formatDateTime(q.proposedAt)}
-                    {q.decidedAt ? ` · decided ${formatDateTime(q.decidedAt)}` : ''}
-                    {q.withdrawnAt ? ` · withdrawn ${formatDateTime(q.withdrawnAt)}` : ''}
+                    {t('proposedAt', { when: fmt.dateTime(q.proposedAt) })}
+                    {q.decidedAt ? <> · {t('decidedAt', { when: fmt.dateTime(q.decidedAt) })}</> : null}
+                    {q.withdrawnAt ? <> · {t('withdrawnAt', { when: fmt.dateTime(q.withdrawnAt) })}</> : null}
                   </span>
                 </span>
                 {q.status === 'proposed' ? (
                   <Button size="sm" loading={withdraw.isPending} onClick={() => withdraw.mutate(q)}>
-                    Withdraw
+                    {t('withdraw')}
                   </Button>
                 ) : null}
               </li>
@@ -105,7 +112,7 @@ export function TicketQuotes({ ticket }: { ticket: TicketDetail }) {
           </ul>
         ) : (
           <p className="t-secondary" style={{ margin: 16 }}>
-            No quote. Work that the unit pays for is quoted before it starts.
+            {t('noQuote')}
           </p>
         )}
         <ErrorAlert error={withdraw.error} />
@@ -114,23 +121,23 @@ export function TicketQuotes({ ticket }: { ticket: TicketDetail }) {
         <Dialog
           open
           onClose={() => setProposing(false)}
-          title="Propose a quote"
-          description="The reporter or the unit’s primary approves or declines it; the work does not start before."
+          title={t('proposeQuote')}
+          description={t('proposeDescription')}
           onSubmit={() => propose.mutate()}
           footer={
             <>
-              <Button onClick={() => setProposing(false)}>Cancel</Button>
+              <Button onClick={() => setProposing(false)}>{c('cancel')}</Button>
               <Button type="submit" variant="primary" loading={propose.isPending} disabled={!AMOUNT.test(amount)}>
-                Propose
+                {t('propose')}
               </Button>
             </>
           }
         >
           <div className="form">
-            <Field label="Amount (EGP)">
+            <Field label={t('amount')}>
               {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.trim())} />}
             </Field>
-            <Field label="What it includes" hint="The residents read it.">
+            <Field label={t('includes')} hint={t('includesHint')}>
               {(p) => <Textarea {...p} rows={3} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />}
             </Field>
             <ErrorAlert error={propose.error} />

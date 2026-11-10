@@ -2,15 +2,21 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Specialty } from '@/lib/queries';
-import { NameFields, namesReady, NO_NAMES } from './names';
+import ar from '@/messages/ar/ms-specialties';
+import en from '@/messages/en/ms-specialties';
+import { NameFields, namesReady, NO_NAMES, useNameOf } from './names';
 
 function SpecialtyDialog({ specialty, onClose }: { specialty: Specialty | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const nameOf = useNameOf();
   const toast = useToast();
   const [names, setNames] = useState(specialty ? { key: specialty.key, nameEn: specialty.nameEn, nameAr: specialty.nameAr } : NO_NAMES);
   const [active, setActive] = useState(specialty?.active ?? true);
@@ -23,7 +29,7 @@ function SpecialtyDialog({ specialty, onClose }: { specialty: Specialty | null; 
     {
       invalidate: [keys.specialties, keys.categories, keys.technicians],
       onDone: (saved) => {
-        toast.show(specialty ? `${saved.nameEn} is saved.` : `${saved.nameEn} is added.`);
+        toast.show(specialty ? t('saved', { name: nameOf(saved) }) : t('added', { name: nameOf(saved) }));
         onClose();
       },
     },
@@ -35,14 +41,14 @@ function SpecialtyDialog({ specialty, onClose }: { specialty: Specialty | null; 
       open
       wide
       onClose={onClose}
-      title={specialty ? `Edit ${specialty.nameEn}` : 'New specialty'}
-      description={specialty ? undefined : 'A skill a technician has and a category needs, e.g. plumbing. Auto-dispatch matches the two.'}
+      title={specialty ? t('editTitle', { name: nameOf(specialty) }) : t('newTitle')}
+      description={specialty ? undefined : t('newDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            {specialty ? (retiring ? 'Save and retire' : 'Save') : 'Add specialty'}
+            {specialty ? (retiring ? t('saveAndRetire') : common('save')) : t('addSpecialty')}
           </Button>
         </>
       }
@@ -51,7 +57,7 @@ function SpecialtyDialog({ specialty, onClose }: { specialty: Specialty | null; 
         <NameFields value={names} onChange={setNames} error={save.error} withKey={!specialty} example="hvac" />
         {specialty ? (
           <Checkbox
-            label="In use. Unticked retires it: it counts for no category and no technician, so auto-dispatch stops matching on it"
+            label={t('inUse')}
             checked={active}
             onChange={(e) => setActive(e.target.checked)}
           />
@@ -64,6 +70,8 @@ function SpecialtyDialog({ specialty, onClose }: { specialty: Specialty | null; 
 
 /** The skills auto-dispatch matches technicians and categories on (ADR 0033). */
 export function Specialties() {
+  const t = useT(en, ar);
+  const common = useCommonT();
   const specialties = useQuery({ queryKey: keys.specialties, queryFn: fetchers.specialties });
   const [open, setOpen] = useState<Specialty | 'new' | null>(null);
   return (
@@ -71,7 +79,7 @@ export function Specialties() {
       <div className="toolbar">
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen('new')}>
-          New specialty
+          {t('newSpecialty')}
         </Button>
       </div>
       <Card flush>
@@ -79,30 +87,32 @@ export function Specialties() {
           <DataTable<Specialty>
             rows={specialties.data?.data}
             rowKey={(s) => s.id}
-            empty="No specialty yet"
-            emptyHint="Add the skills your technicians have, then give them to technicians (Maintenance, Technicians) and to categories."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
               {
                 key: 'name',
-                header: 'Specialty',
+                header: t('col.specialty'),
                 cell: (s) => (
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                    <span className="table__primary">{s.nameEn}</span>
+                    <span className="table__primary" dir="ltr" lang="en">
+                      {s.nameEn}
+                    </span>
                     <span className="t-secondary" dir="rtl" lang="ar">
                       {s.nameAr}
                     </span>
-                    {!s.active ? <Badge tone="beige">Retired</Badge> : null}
+                    {!s.active ? <Badge tone="beige">{t('retired')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'key', header: 'Code', cell: (s) => <span className="t-mono">{s.key}</span> },
+              { key: 'key', header: t('col.code'), cell: (s) => <span className="t-mono">{s.key}</span> },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{common('actions')}</span>,
                 className: 'table__actions',
                 cell: (s) => (
                   <Button size="sm" onClick={() => setOpen(s)}>
-                    Edit
+                    {common('edit')}
                   </Button>
                 ),
               },

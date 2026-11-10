@@ -2,6 +2,7 @@
 
 import { ApiError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
+import { useT } from '@jiwar/i18n';
 import { Button, Card, CardBody, CardHeader, ReasonDialog, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -9,13 +10,11 @@ import { useState } from 'react';
 import { ChecklistRunCard } from '@/components/assets/checklist-run';
 import { api } from '@/lib/api';
 import { fetchers, keys, type TicketDetail } from '@/lib/queries';
+import ar from '@/messages/ar/maint-work-order';
+import en from '@/messages/en/maint-work-order';
 
-const ORIGIN_TEXT: Record<string, string> = {
-  plan: 'A maintenance plan opened it',
-  inspection: 'An inspection’s finding opened it',
-  field: 'A technician reported it on site',
-  staff: 'The management opened it',
-};
+const ORIGINS = ['plan', 'inspection', 'field', 'staff'] as const;
+const isOrigin = (o: string): o is (typeof ORIGINS)[number] => (ORIGINS as readonly string[]).includes(o);
 
 /**
  * A work order of the compound's (ADR 0064): where it came from, its
@@ -23,6 +22,7 @@ const ORIGIN_TEXT: Record<string, string> = {
  * back (a resident's ticket is theirs to confirm).
  */
 export function WorkOrder({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [sending, setSending] = useState(false);
   const checklist = useQuery({
@@ -33,7 +33,7 @@ export function WorkOrder({ ticket }: { ticket: TicketDetail }) {
   const refresh = { invalidate: [keys.ticketsAll] };
   const accept = useAction(
     () => unwrap(api.POST('/api/v1/maintenance/tickets/{id}/accept-work', { params: { path: { id: ticket.id } } })),
-    { ...refresh, onDone: () => toast.show(`${ticket.number} is closed.`) },
+    { ...refresh, onDone: () => toast.show(t('closed', { number: ticket.number })) },
   );
   const back = useAction(
     (reason: { reasonCode: string; reason: string }) =>
@@ -41,7 +41,7 @@ export function WorkOrder({ ticket }: { ticket: TicketDetail }) {
     {
       ...refresh,
       onDone: () => {
-        toast.show(`${ticket.number} went back to the technician.`);
+        toast.show(t('sentBack', { number: ticket.number }));
         setSending(false);
       },
     },
@@ -52,25 +52,25 @@ export function WorkOrder({ ticket }: { ticket: TicketDetail }) {
     <>
       <Card flush>
         <CardHeader
-          title="Work order"
+          title={t('workOrder')}
           actions={
             done ? (
               <span className="row" style={{ gap: 6 }}>
                 <Button size="sm" variant="primary" loading={accept.isPending} onClick={() => accept.mutate()}>
-                  Accept the work
+                  {t('accept')}
                 </Button>
                 <Button size="sm" onClick={() => setSending(true)}>
-                  Send back
+                  {t('sendBack')}
                 </Button>
               </span>
             ) : undefined
           }
         />
         <CardBody>
-          <p>{ORIGIN_TEXT[ticket.origin]}.</p>
+          {isOrigin(ticket.origin) ? <p>{t(`origin.${ticket.origin}`)}</p> : null}
           {ticket.assetId ? (
             <Link className="table__link" href={`/assets/${ticket.assetId}`}>
-              Open the asset
+              {t('openAsset')}
             </Link>
           ) : null}
           <ErrorAlert error={accept.error} />
@@ -80,12 +80,12 @@ export function WorkOrder({ ticket }: { ticket: TicketDetail }) {
       <ReasonDialog
         open={sending}
         onClose={() => setSending(false)}
-        title="Send the work back"
-        description="The technician reads why in the ticket's thread."
+        title={t('sendBackTitle')}
+        description={t('sendBackDescription')}
         codes={REASON_CODES.ticketReject}
-        confirmLabel="Send back"
-        textLabel="For the technician"
-        textHint="Posted in the ticket's thread."
+        confirmLabel={t('sendBack')}
+        textLabel={t('forTechnician')}
+        textHint={t('postedInThread')}
         pending={back.isPending}
         error={<ErrorAlert error={back.error} />}
         onConfirm={(r) => back.mutate(r)}

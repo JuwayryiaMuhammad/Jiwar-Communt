@@ -1,58 +1,64 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, CardHeader, DataTable, Dialog, Field, Input, ReasonCodeDialog, Textarea, useToast } from '@jiwar/ui';
+import { useFormat, useT, type Format, type Translate } from '@jiwar/i18n';
+import { Badge, Button, Card, CardHeader, DataTable, Dialog, Field, Input, ReasonCodeDialog, Textarea, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type AssetTimelineEntry, type WarrantyClaim } from '@/lib/queries';
+import ar from '@/messages/ar/assets-asset';
+import en from '@/messages/en/assets-asset';
 
-const KIND_TEXT: Record<string, string> = {
-  asset_event: 'Asset',
-  ticket_opened: 'Ticket opened',
-  ticket_completed: 'Work done',
-  ticket_closed: 'Ticket closed',
-  part_issued: 'Part issued',
-  part_returned: 'Part returned',
-  cost: 'Cost',
-  warranty_claim_opened: 'Warranty claim',
-  warranty_claim_decided: 'Claim decided',
-};
+const KINDS = [
+  'asset_event',
+  'ticket_opened',
+  'ticket_completed',
+  'ticket_closed',
+  'part_issued',
+  'part_returned',
+  'cost',
+  'warranty_claim_opened',
+  'warranty_claim_decided',
+] as const;
 
-const detail = (e: AssetTimelineEntry): string =>
+const detail = (e: AssetTimelineEntry, t: Translate<typeof en>, fmt: Format, label: (code: string) => string): string =>
   [
-    e.code ? humanize(e.code) : null,
-    e.fromValue || e.toValue ? `${e.fromValue ?? '—'} → ${e.toValue ?? '—'}` : null,
-    e.reasonCode ? humanize(e.reasonCode) : null,
-    e.amount ? `${e.amount} EGP` : null,
-    e.quantity ? `× ${e.quantity}` : null,
+    e.code ? label(e.code) : null,
+    e.fromValue || e.toValue ? t('change', { from: e.fromValue ?? '—', to: e.toValue ?? '—' }) : null,
+    e.reasonCode ? label(e.reasonCode) : null,
+    e.amount ? fmt.money(e.amount) : null,
+    e.quantity ? t('quantity', { n: fmt.number(e.quantity) }) : null,
   ]
     .filter(Boolean)
     .join(' · ');
 
 /** An asset's whole history (ADR 0076): events, tickets, parts, costs, warranty claims. */
 export function AssetTimeline({ id }: { id: string }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const list = useCursorList(keys.assetTimeline(id), (c) => fetchers.assetTimeline(id, c));
   return (
     <Card flush>
-      <CardHeader title="Timeline" />
+      <CardHeader title={t('timeline')} />
       <QueryState query={list}>
         <DataTable<AssetTimelineEntry>
           rows={list.rows}
           rowKey={(e) => `${e.kind}:${e.id}`}
-          empty="Nothing yet"
+          empty={t('nothingYet')}
           columns={[
-            { key: 'when', header: 'When', width: 170, cell: (e) => formatDateTime(e.at) },
-            { key: 'kind', header: 'What', cell: (e) => KIND_TEXT[e.kind] ?? humanize(e.kind) },
-            { key: 'detail', header: 'Detail', cell: (e) => detail(e) || '—' },
+            { key: 'when', header: t('col.when'), width: 170, cell: (e) => fmt.dateTime(e.at) },
+            { key: 'kind', header: t('col.what'), cell: (e) => ((KINDS as readonly string[]).includes(e.kind) ? t(`kind.${e.kind}`) : label(e.kind)) },
+            { key: 'detail', header: t('col.detail'), cell: (e) => detail(e, t, fmt, label) || '—' },
             {
               key: 'ticket',
-              header: 'Ticket',
+              header: t('col.ticket'),
               cell: (e) =>
                 e.ticketId ? (
                   <Link className="table__link t-mono" href={`/maintenance/${e.ticketId}`}>
-                    {e.ticketNumber ?? 'Open'}
+                    {e.ticketNumber ?? t('open')}
                   </Link>
                 ) : null,
             },
@@ -66,6 +72,10 @@ export function AssetTimeline({ id }: { id: string }) {
 
 /** The claims under an asset's warranty (ADR 0076): made while it runs, decided once. */
 export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; underWarranty: boolean }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const list = useCursorList(keys.warrantyClaims({ assetId }), (c) => fetchers.warrantyClaims({ assetId }, c));
   const [creating, setCreating] = useState(false);
@@ -80,7 +90,7 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
     {
       ...refresh,
       onDone: () => {
-        toast.show('The claim is open.');
+        toast.show(t('claimOpened'));
         setCreating(false);
         setDescription('');
       },
@@ -97,7 +107,7 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
     {
       ...refresh,
       onDone: () => {
-        toast.show('The claim is accepted.');
+        toast.show(t('claimAccepted'));
         setAccepting(null);
         setAmount('');
       },
@@ -122,11 +132,11 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
   return (
     <Card flush>
       <CardHeader
-        title="Warranty claims"
+        title={t('claims')}
         actions={
           underWarranty ? (
             <Button size="sm" onClick={() => setCreating(true)}>
-              New claim
+              {t('newClaim')}
             </Button>
           ) : null
         }
@@ -135,19 +145,19 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
         <DataTable<WarrantyClaim>
           rows={list.rows}
           rowKey={(c) => c.id}
-          empty="No claim yet"
+          empty={t('noClaim')}
           columns={[
-            { key: 'opened', header: 'Opened', width: 170, cell: (c) => formatDateTime(c.openedAt) },
-            { key: 'what', header: 'What failed', cell: (c) => c.description },
-            { key: 'ref', header: 'Reference', cell: (c) => c.reference ?? '—' },
+            { key: 'opened', header: t('col.opened'), width: 170, cell: (c) => fmt.dateTime(c.openedAt) },
+            { key: 'what', header: t('col.failed'), cell: (c) => c.description },
+            { key: 'ref', header: t('col.reference'), cell: (c) => (c.reference ? <bdi>{c.reference}</bdi> : '—') },
             {
               key: 'status',
-              header: 'Status',
+              header: t('col.status'),
               cell: (c) => (
                 <span className="row" style={{ gap: 6 }}>
-                  <Badge>{humanize(c.status)}</Badge>
-                  {c.reasonCode ? <span className="t-secondary">{humanize(c.reasonCode)}</span> : null}
-                  {c.recoveredAmount ? <span className="t-secondary">{c.recoveredAmount} EGP</span> : null}
+                  <Badge>{label(c.status)}</Badge>
+                  {c.reasonCode ? <span className="t-secondary">{label(c.reasonCode)}</span> : null}
+                  {c.recoveredAmount ? <span className="t-secondary">{fmt.money(c.recoveredAmount)}</span> : null}
                 </span>
               ),
             },
@@ -158,13 +168,13 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
                 c.status === 'open' ? (
                   <span className="row" style={{ gap: 6 }}>
                     <Button size="sm" onClick={() => setAccepting(c)}>
-                      Accepted
+                      {t('markAccepted')}
                     </Button>
                     <Button size="sm" onClick={() => setDeciding({ claim: c, how: 'reject' })}>
-                      Rejected
+                      {t('markRejected')}
                     </Button>
                     <Button size="sm" onClick={() => setDeciding({ claim: c, how: 'withdraw' })}>
-                      Withdraw
+                      {t('withdraw')}
                     </Button>
                   </span>
                 ) : null,
@@ -176,20 +186,20 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
       <Dialog
         open={creating}
         onClose={() => setCreating(false)}
-        title="Claim under the warranty"
-        description="While the warranty runs. What failed is plain data for the warrantor."
+        title={t('claimTitle')}
+        description={t('claimDescription')}
         onSubmit={() => description.trim() && create.mutate()}
         footer={
           <>
-            <Button onClick={() => setCreating(false)}>Cancel</Button>
+            <Button onClick={() => setCreating(false)}>{common('cancel')}</Button>
             <Button type="submit" variant="primary" loading={create.isPending} disabled={!description.trim()}>
-              Open claim
+              {t('openClaim')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="What failed">
+          <Field label={t('whatFailed')}>
             {(p) => <Textarea {...p} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />}
           </Field>
           <ErrorAlert error={create.error} />
@@ -198,20 +208,20 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
       <Dialog
         open={accepting !== null}
         onClose={() => setAccepting(null)}
-        title="The warrantor accepted it"
+        title={t('acceptedTitle')}
         onSubmit={() => accepting && accept.mutate(accepting.id)}
         footer={
           <>
-            <Button onClick={() => setAccepting(null)}>Cancel</Button>
+            <Button onClick={() => setAccepting(null)}>{common('cancel')}</Button>
             <Button type="submit" variant="primary" loading={accept.isPending}>
-              Record
+              {t('record')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="What it paid or covered (EGP)" hint="Optional.">
-            {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
+          <Field label={t('recovered')} hint={common('optional')}>
+            {(p) => <Input {...p} inputMode="decimal" dir="ltr" value={amount} onChange={(e) => setAmount(e.target.value)} />}
           </Field>
           <ErrorAlert error={accept.error} />
         </div>
@@ -219,9 +229,9 @@ export function WarrantyClaims({ assetId, underWarranty }: { assetId: string; un
       <ReasonCodeDialog
         open={deciding !== null}
         onClose={() => setDeciding(null)}
-        title={deciding?.how === 'reject' ? 'The warrantor rejected it' : 'Withdraw the claim'}
+        title={deciding?.how === 'reject' ? t('rejectedTitle') : t('withdrawTitle')}
         codes={deciding?.how === 'reject' ? REASON_CODES.warrantyClaimReject : REASON_CODES.warrantyClaimWithdraw}
-        confirmLabel={deciding?.how === 'reject' ? 'Record' : 'Withdraw'}
+        confirmLabel={deciding?.how === 'reject' ? t('record') : t('withdraw')}
         pending={decide.isPending}
         error={<ErrorAlert error={decide.error} />}
         onConfirm={(reasonCode) => deciding && decide.mutate({ id: deciding.claim.id, how: deciding.how, reasonCode })}

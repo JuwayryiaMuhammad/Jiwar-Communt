@@ -1,29 +1,34 @@
 'use client';
 
-import { formatDate, humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, ForbiddenState, PageHeader, Segmented, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, ForbiddenState, PageHeader, Segmented, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PurchaseRequest } from '@/lib/queries';
+import ar from '@/messages/ar/ops-purchases';
+import en from '@/messages/en/ops-purchases';
 
 type Status = PurchaseRequest['status'] | '';
+const VIEWS = ['requested', 'approved', 'fulfilled', ''] as const;
 
 function Decide({ r }: { r: PurchaseRequest }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const path = { params: { path: { id: r.id } } };
   const approve = useAction(() => unwrap(api.POST('/api/v1/staff/purchase-requests/{id}/approve', { ...path, body: {} })), {
     invalidate: [keys.purchasesAll],
-    onDone: () => toast.show(`${r.reference} is approved.`),
+    onDone: () => toast.show(t('approved', { reference: r.reference })),
   });
   const reject = useAction(
     () => unwrap(api.POST('/api/v1/staff/purchase-requests/{id}/reject', { ...path, body: { reasonCode: 'not_needed' } })),
-    { invalidate: [keys.purchasesAll], onDone: () => toast.show(`${r.reference} is turned down.`) },
+    { invalidate: [keys.purchasesAll], onDone: () => toast.show(t('rejected', { reference: r.reference })) },
   );
   const fulfil = useAction(() => unwrap(api.POST('/api/v1/staff/purchase-requests/{id}/fulfil', { ...path, body: {} })), {
     invalidate: [keys.purchasesAll],
-    onDone: () => toast.show(`${r.reference} is marked bought.`),
+    onDone: () => toast.show(t('fulfilled', { reference: r.reference })),
   });
   return (
     <>
@@ -31,15 +36,15 @@ function Decide({ r }: { r: PurchaseRequest }) {
       {r.status === 'requested' ? (
         <>
           <Button size="sm" loading={approve.isPending} onClick={() => approve.mutate()}>
-            Approve
+            {t('approve')}
           </Button>{' '}
           <Button size="sm" loading={reject.isPending} onClick={() => reject.mutate()}>
-            Turn down
+            {t('reject')}
           </Button>
         </>
       ) : r.status === 'approved' ? (
         <Button size="sm" loading={fulfil.isPending} onClick={() => fulfil.mutate()}>
-          Mark bought
+          {t('fulfil')}
         </Button>
       ) : null}
     </>
@@ -48,6 +53,9 @@ function Decide({ r }: { r: PurchaseRequest }) {
 
 /** Purchase requests (ADR 0077): what the staff ask to buy, decided by the manager up to the limit. */
 export default function PurchasesPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const [status, setStatus] = useState<Status>('requested');
   const filters = { status };
@@ -56,27 +64,19 @@ export default function PurchasesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Purchase requests" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Purchase requests"
-        description="What the staff ask to buy. Above the manager’s limit, the board’s approved major contract covers it."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<Status>
-          label="Status"
+          label={t('status')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'requested', label: 'Waiting' },
-            { value: 'approved', label: 'Approved' },
-            { value: 'fulfilled', label: 'Bought' },
-            { value: '', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v || 'all'}`) }))}
         />
       </div>
       <Card flush>
@@ -84,12 +84,20 @@ export default function PurchasesPage() {
           <DataTable<PurchaseRequest>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty="No purchase request"
+            empty={t('empty')}
             columns={[
-              { key: 'r', header: 'Request', cell: (r) => `${r.reference} · ${r.title}` },
-              { key: 'a', header: 'Amount', cell: (r) => `${r.estimatedAmount} EGP` },
-              { key: 'n', header: 'Needed by', cell: (r) => (r.neededBy ? formatDate(r.neededBy) : '—') },
-              { key: 's', header: 'Status', cell: (r) => humanize(r.status) },
+              {
+                key: 'r',
+                header: t('col.request'),
+                cell: (r) => (
+                  <>
+                    <span className="t-mono">{r.reference}</span> · {r.title}
+                  </>
+                ),
+              },
+              { key: 'a', header: t('col.amount'), cell: (r) => fmt.money(r.estimatedAmount) },
+              { key: 'n', header: t('col.neededBy'), cell: (r) => (r.neededBy ? fmt.day(r.neededBy) : '—') },
+              { key: 's', header: t('col.status'), cell: (r) => label(r.status) },
               { key: 'd', header: '', cell: (r) => (can('purchases.approve') ? <Decide r={r} /> : null) },
             ]}
           />

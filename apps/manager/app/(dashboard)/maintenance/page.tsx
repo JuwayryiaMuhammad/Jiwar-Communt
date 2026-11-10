@@ -1,8 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, relativeTime } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, Input, PageHeader, Segmented, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, Input, PageHeader, Segmented, Select, StatusBadge, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Download, Plus, Wrench } from 'lucide-react';
 import Link from 'next/link';
@@ -11,12 +11,14 @@ import { Suspense, useState } from 'react';
 import { NewTicketDialog } from '@/components/maintenance/new-ticket-dialog';
 import { WorkOrderDialog } from '@/components/maintenance/work-order-dialog';
 import { download } from '@/lib/download';
-import { personName, PriorityBadge, SlaBadges, ticketPlace } from '@/components/maintenance/sla';
+import { PriorityBadge, SlaBadges, useTicketWords } from '@/components/maintenance/sla';
 import { TechnicianPicker } from '@/components/maintenance/technician-picker';
 import { Technicians } from '@/components/maintenance/technicians';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Ticket, type TicketFilters, type TicketPriority, type TicketStatus } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/maint-queue';
+import en from '@/messages/en/maint-queue';
 
 const TABS = ['tickets', 'technicians'] as const;
 type Tab = (typeof TABS)[number];
@@ -24,8 +26,13 @@ type Tab = (typeof TABS)[number];
 const VIEWS = ['open', 'unassigned', 'overdue', 'escalated', 'all'] as const;
 type View = (typeof VIEWS)[number];
 const STATUSES: TicketStatus[] = ['new', 'assigned', 'en_route', 'in_progress', 'on_hold', 'completed', 'closed', 'cancelled'];
+const PRIORITIES: TicketPriority[] = ['emergency', 'urgent', 'normal'];
 
 function Queue() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
+  const words = useTicketWords();
   const toast = useToast();
   const router = useRouter();
   const pathname = usePathname();
@@ -71,43 +78,39 @@ function Queue() {
     <>
       <div className="toolbar">
         <Segmented<View>
-          label="Tickets shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'open', label: 'Open' },
-            { value: 'unassigned', label: 'Unassigned' },
-            { value: 'overdue', label: 'Overdue' },
-            { value: 'escalated', label: 'Escalated' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
-        <Field label="Status">
+        <Field label={t('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as TicketStatus | '')}>
-              <option value="">Any status</option>
+              <option value="">{t('anyStatus')}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Priority">
+        <Field label={t('priority')}>
           {(p) => (
             <Select {...p} value={priority} onChange={(e) => setPriority(e.target.value as TicketPriority | '')}>
-              <option value="">Any priority</option>
-              <option value="emergency">Emergency</option>
-              <option value="urgent">Urgent</option>
-              <option value="normal">Normal</option>
+              <option value="">{t('anyPriority')}</option>
+              {PRIORITIES.map((x) => (
+                <option key={x} value={x}>
+                  {label(x)}
+                </option>
+              ))}
             </Select>
           )}
         </Field>
-        <Field label="Category">
+        <Field label={t('category')}>
           {(p) => (
             <Select {...p} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              <option value="">Any category</option>
+              <option value="">{t('anyCategory')}</option>
               {(categories.data?.data ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nameEn}
@@ -116,11 +119,11 @@ function Queue() {
             </Select>
           )}
         </Field>
-        <Field label="Technician">
+        <Field label={t('technician')}>
           {(p) => (
             <TechnicianPicker
               {...p}
-              placeholder="Any technician"
+              placeholder={t('anyTechnician')}
               style={{ maxWidth: 220 }}
               value={technicianId}
               disabled={view === 'unassigned'}
@@ -128,10 +131,10 @@ function Queue() {
             />
           )}
         </Field>
-        <Field label="Building">
+        <Field label={t('building')}>
           {(p) => (
             <Select {...p} value={buildingId} onChange={(e) => setBuildingId(e.target.value)}>
-              <option value="">Any building</option>
+              <option value="">{t('anyBuilding')}</option>
               {(buildings.data?.data ?? []).map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -140,8 +143,8 @@ function Queue() {
             </Select>
           )}
         </Field>
-        <Field label="Search">
-          {(p) => <Input {...p} value={q} placeholder="MT-000123 or a unit code" onChange={(e) => setQ(e.target.value)} />}
+        <Field label={t('search')}>
+          {(p) => <Input {...p} value={q} placeholder={t('searchPlaceholder')} onChange={(e) => setQ(e.target.value)} />}
         </Field>
         <span className="spacer" />
         <Button
@@ -155,16 +158,16 @@ function Queue() {
             );
           }}
         >
-          Export 30 days
+          {t('export')}
         </Button>
         {can('tickets.dispatch') ? (
           <Button icon={<Wrench aria-hidden />} onClick={() => setOrdering(true)}>
-            New work order
+            {t('newWorkOrder')}
           </Button>
         ) : null}
         {can('residents.read', 'units.read') ? (
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            New ticket
+            {t('newTicket')}
           </Button>
         ) : null}
       </div>
@@ -173,64 +176,60 @@ function Queue() {
         <QueryState query={list}>
           <DataTable<Ticket>
             rows={list.rows}
-            rowKey={(t) => t.id}
+            rowKey={(tk) => tk.id}
             empty={
               view === 'overdue'
-                ? 'No ticket is overdue'
+                ? t('emptyOverdue')
                 : view === 'escalated'
-                  ? 'No ticket was escalated'
+                  ? t('emptyEscalated')
                   : view === 'unassigned'
-                    ? 'No ticket is waiting for a technician'
-                    : 'No ticket matches'
+                    ? t('emptyUnassigned')
+                    : t('emptyMatch')
             }
-            emptyHint={
-              view === 'overdue' || view === 'escalated'
-                ? 'Both lists stay empty while the compound does not measure an SLA.'
-                : undefined
-            }
+            emptyHint={view === 'overdue' || view === 'escalated' ? t('emptySlaHint') : undefined}
             columns={[
               {
                 key: 'number',
-                header: 'Ticket',
-                cell: (t) => (
+                header: t('col.ticket'),
+                cell: (tk) => (
                   <span className="row">
-                    <Link className="table__link t-mono" style={{ whiteSpace: 'nowrap' }} href={`/maintenance/${t.id}`}>
-                      {t.number}
+                    <Link className="table__link t-mono" style={{ whiteSpace: 'nowrap' }} href={`/maintenance/${tk.id}`}>
+                      {tk.number}
                     </Link>
-                    {t.kind === 'preventive' ? <Badge plain>Preventive</Badge> : null}
+                    {tk.kind === 'preventive' ? <Badge plain>{t('preventive')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'place', header: 'Where', cell: (t) => ticketPlace(t) },
+              { key: 'place', header: t('col.where'), cell: (tk) => words.place(tk) },
               {
                 key: 'category',
-                header: 'Category',
-                cell: (t) => (t.preventiveService ? `${t.category.nameEn} · ${t.preventiveService.nameEn}` : t.category.nameEn),
+                header: t('col.category'),
+                cell: (tk) => (tk.preventiveService ? `${tk.category.nameEn} · ${tk.preventiveService.nameEn}` : tk.category.nameEn),
               },
-              { key: 'priority', header: 'Priority', cell: (t) => <PriorityBadge priority={t.priority} /> },
+              { key: 'priority', header: t('col.priority'), cell: (tk) => <PriorityBadge priority={tk.priority} /> },
               {
                 key: 'status',
-                header: 'Status',
-                cell: (t) => (
+                header: t('col.status'),
+                cell: (tk) => (
                   <span className="row" style={{ gap: 6 }}>
-                    <StatusBadge status={t.status} />
-                    {t.holdReason ? <span className="t-secondary">{humanize(t.holdReason)}</span> : null}
-                    {t.rejectionCount > 0 ? <Badge tone="terracotta">Rejected ×{t.rejectionCount}</Badge> : null}
+                    <StatusBadge status={tk.status} />
+                    {tk.holdReason ? <span className="t-secondary">{label(tk.holdReason)}</span> : null}
+                    {tk.rejectionCount > 0 ? <Badge tone="terracotta">{t('rejected', { n: tk.rejectionCount })}</Badge> : null}
                   </span>
                 ),
               },
               {
                 key: 'technician',
-                header: 'Technician',
-                cell: (t) => (t.technician ? personName(t.technician) : <span className="t-secondary">Unassigned</span>),
+                header: t('col.technician'),
+                cell: (tk) => (tk.technician ? words.person(tk.technician) : <span className="t-secondary">{t('unassigned')}</span>),
               },
-              { key: 'sla', header: 'SLA', cell: (t) => <SlaBadges ticket={t} /> },
+              { key: 'sla', header: t('col.sla'), cell: (tk) => <SlaBadges ticket={tk} /> },
               {
                 key: 'opened',
-                header: 'Opened',
-                cell: (t) => (
-                  <span title={formatDateTime(t.createdAt)} style={{ whiteSpace: 'nowrap' }}>
-                    {relativeTime(t.createdAt)}
+                header: t('col.opened'),
+                cell: (tk) => (
+                  <span title={fmt.dateTime(tk.createdAt)} style={{ whiteSpace: 'nowrap' }}>
+                    {fmt.relative(tk.createdAt)}
                   </span>
                 ),
               },
@@ -244,7 +243,7 @@ function Queue() {
         onClose={() => setOrdering(false)}
         onCreated={(ticket) => {
           setOrdering(false);
-          toast.show(`Work order ${ticket.number} is open.`);
+          toast.show(t('workOrderOpen', { number: ticket.number }));
           router.push(`/maintenance/${ticket.id}`);
         }}
       />
@@ -253,7 +252,7 @@ function Queue() {
         onClose={() => setCreating(false)}
         onCreated={(ticket) => {
           setCreating(false);
-          toast.show(`Ticket ${ticket.number} is open.`);
+          toast.show(t('ticketOpen', { number: ticket.number }));
           router.push(`/maintenance/${ticket.id}`);
         }}
       />
@@ -262,21 +261,19 @@ function Queue() {
 }
 
 function MaintenanceView() {
+  const t = useT(en, ar);
   const [tab, setTab] = useTab(TABS, 'tickets');
   return (
     <>
       <PageHeader
-        title="Maintenance"
-        description="The compound's tickets: who has each one, what is late, and who can take the next."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Segmented<Tab>
-            label="Maintenance"
+            label={t('title')}
             value={tab}
             onChange={setTab}
-            options={[
-              { value: 'tickets', label: 'Tickets' },
-              { value: 'technicians', label: 'Technicians' },
-            ]}
+            options={TABS.map((v) => ({ value: v, label: t(`tab.${v}`) }))}
           />
         }
       />

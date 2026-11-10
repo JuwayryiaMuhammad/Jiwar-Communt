@@ -1,15 +1,22 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { translator } from '@jiwar/i18n/core';
+import ar from '../../messages/ar/ms-common.ts';
+import en from '../../messages/en/ms-common.ts';
 import { formatClock, formatMinutes, KEY_PATTERN, suggestKey } from './format.ts';
 
+const t = translator('en', en, ar);
+const tAr = translator('ar', en, ar);
+
 test('minutes read as days, hours and minutes', () => {
-  assert.equal(formatMinutes(5), '5 min');
-  assert.equal(formatMinutes(90), '1 h 30 min');
-  assert.equal(formatMinutes(1440), '1 d');
-  assert.equal(formatMinutes(10080), '7 d');
-  assert.equal(formatMinutes(1500), '1 d 1 h');
-  assert.equal(formatMinutes(0), '0 min');
-  assert.equal(formatMinutes(Number.NaN), '—');
+  assert.equal(formatMinutes(5, t), '5 min');
+  assert.equal(formatMinutes(90, t), '1 h 30 min');
+  assert.equal(formatMinutes(1440, t), '1 d');
+  assert.equal(formatMinutes(10080, t), '7 d');
+  assert.equal(formatMinutes(1500, t), '1 d 1 h');
+  assert.equal(formatMinutes(0, t), '0 min');
+  assert.equal(formatMinutes(Number.NaN, t), '—');
+  assert.equal(formatMinutes(90, tAr), '1 ساعة 30 دقيقة');
 });
 
 test('minutes after midnight read as a clock, the end of the day as 24:00', () => {

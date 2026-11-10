@@ -1,18 +1,25 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type WorkPermit } from '@/lib/queries';
+import ar from '@/messages/ar/work-permits';
+import en from '@/messages/en/work-permits';
 
 const STATUSES = ['requested', 'approved', 'rejected', 'revoked', 'closed'] as const;
 
 /** Technicians' work permits (ADR 0067): approved, rejected or revoked once. */
 export default function WorkPermitsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const toast = useToast();
   const [status, setStatus] = useState<WorkPermit['status'] | ''>('requested');
@@ -30,39 +37,39 @@ export default function WorkPermitsPage() {
   });
   const approve = useAction(
     (id: string) => unwrap(api.POST('/api/v1/maintenance/work-permits/{id}/approve', { params: { path: { id } } })),
-    done('Approved; the technician is told.'),
+    done(t('approved')),
   );
   const reject = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
       unwrap(api.POST('/api/v1/maintenance/work-permits/{id}/reject', { params: { path: { id } }, body: { reasonCode } })),
-    done('Rejected; the technician is told.', () => setRejecting(null)),
+    done(t('rejected'), () => setRejecting(null)),
   );
   const revoke = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
       unwrap(api.POST('/api/v1/maintenance/work-permits/{id}/revoke', { params: { path: { id } }, body: { reasonCode } })),
-    done('Revoked; the technician is told to stop that work.', () => setRevoking(null)),
+    done(t('revoked'), () => setRevoking(null)),
   );
   if (ready && !can('safety.manage'))
     return (
       <>
-        <PageHeader title="Work permits" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Work permits"
-        description="Hot work, height, live electrical, confined spaces and pool chemicals: the work starts only with a permit in force."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="row" style={{ gap: 8, marginBottom: 12 }}>
         <Select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
           {STATUSES.map((s) => (
             <option key={s} value={s}>
-              {humanize(s)}
+              {label(s)}
             </option>
           ))}
-          <option value="">All</option>
+          <option value="">{c('all')}</option>
         </Select>
       </div>
       <ErrorAlert error={approve.error} />
@@ -71,31 +78,31 @@ export default function WorkPermitsPage() {
           <DataTable<WorkPermit>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty="No permit"
+            empty={t('empty')}
             columns={[
-              { key: 'h', header: 'Hazard', cell: (p) => humanize(p.hazard) },
-              { key: 't', header: 'Ticket', cell: (p) => <Link href={`/maintenance/${p.ticketId}`}>Open the ticket</Link> },
-              { key: 'p', header: 'Precautions', cell: (p) => p.precautions },
-              { key: 'a', header: 'Asked', cell: (p) => formatDateTime(p.requestedAt) },
-              { key: 'e', header: 'Expires', cell: (p) => formatDateTime(p.expiresAt) },
-              { key: 's', header: 'Status', cell: (p) => humanize(p.status) },
+              { key: 'h', header: t('col.hazard'), cell: (p) => label(p.hazard) },
+              { key: 't', header: t('col.ticket'), cell: (p) => <Link href={`/maintenance/${p.ticketId}`}>{t('openTicket')}</Link> },
+              { key: 'p', header: t('col.precautions'), cell: (p) => p.precautions },
+              { key: 'a', header: t('col.asked'), cell: (p) => f.dateTime(p.requestedAt) },
+              { key: 'e', header: t('col.expires'), cell: (p) => f.dateTime(p.expiresAt) },
+              { key: 's', header: t('col.status'), cell: (p) => label(p.status) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (p) =>
                   p.status === 'requested' ? (
                     <span className="row" style={{ gap: 6 }}>
                       <Button size="sm" variant="primary" loading={approve.isPending} onClick={() => approve.mutate(p.id)}>
-                        Approve
+                        {c('approve')}
                       </Button>
                       <Button size="sm" onClick={() => setRejecting(p)}>
-                        Reject
+                        {c('reject')}
                       </Button>
                     </span>
                   ) : p.status === 'approved' ? (
                     <Button size="sm" onClick={() => setRevoking(p)}>
-                      Revoke
+                      {t('revokeAction')}
                     </Button>
                   ) : null,
               },
@@ -107,9 +114,9 @@ export default function WorkPermitsPage() {
       <ReasonCodeDialog
         open={rejecting !== null}
         onClose={() => setRejecting(null)}
-        title="Reject the permit"
+        title={t('rejectTitle')}
         codes={REASON_CODES.workPermitReject}
-        confirmLabel="Reject"
+        confirmLabel={c('reject')}
         danger
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}
@@ -118,9 +125,9 @@ export default function WorkPermitsPage() {
       <ReasonCodeDialog
         open={revoking !== null}
         onClose={() => setRevoking(null)}
-        title="Revoke the permit"
+        title={t('revokeTitle')}
         codes={REASON_CODES.workPermitRevoke}
-        confirmLabel="Revoke"
+        confirmLabel={t('revokeAction')}
         danger
         pending={revoke.isPending}
         error={<ErrorAlert error={revoke.error} />}

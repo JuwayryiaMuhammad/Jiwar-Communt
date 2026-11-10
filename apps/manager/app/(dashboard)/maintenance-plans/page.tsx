@@ -1,20 +1,30 @@
 'use client';
 
-import { fieldError, formatDate, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { nameOf } from '@/components/assets/format';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PlanSummary } from '@/lib/queries';
+import ar from '@/messages/ar/assets-plans';
+import en from '@/messages/en/assets-plans';
 
 type Active = 'true' | 'false' | '';
+const VIEWS = ['true', 'false', 'all'] as const;
+const TRIGGERS = ['calendar', 'usage'] as const;
+const UNITS = ['day', 'week', 'month', 'year'] as const;
 
 function NewPlanDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const router = useRouter();
   const assets = useQuery({ queryKey: keys.assets({ status: 'in_service' }), queryFn: () => fetchers.assets({ status: 'in_service' }, undefined, 100) });
@@ -56,7 +66,7 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.plansAll],
       onDone: (p) => {
-        toast.show('The plan is on.');
+        toast.show(t('planOn'));
         router.push(`/maintenance-plans/${p.id}`);
       },
     },
@@ -70,102 +80,99 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="New maintenance plan"
-      description="Planned work on an asset: its work orders open a few days before they are due, go to the asset type's technicians, and carry the checklist."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Add plan
+            {t('addPlan')}
           </Button>
         </>
       }
     >
       <div className="form">
         <div className="form__row">
-          <Field label="Asset" error={fieldError(save.error, 'assetId')}>
+          <Field label={t('asset')} error={fieldError(save.error, 'assetId')}>
             {(p) => (
               <Select {...p} value={f.assetId} onChange={set('assetId')}>
-                <option value="">Select…</option>
+                <option value="">{c('select')}</option>
                 {(assets.data?.data ?? []).map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.code} · {a.nameEn}
+                    {a.code} · {nameOf(fmt.locale, a)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="What is done" error={fieldError(save.error, 'title')}>
+          <Field label={t('whatIsDone')} error={fieldError(save.error, 'title')}>
             {(p) => <Input {...p} value={f.title} onChange={set('title')} />}
           </Field>
         </div>
         <Segmented<'calendar' | 'usage'>
-          label="Comes due"
+          label={t('comesDue')}
           value={f.trigger}
           onChange={(v) => setF({ ...f, trigger: v })}
-          options={[
-            { value: 'calendar', label: 'On the calendar' },
-            { value: 'usage', label: 'By usage' },
-          ]}
+          options={TRIGGERS.map((v) => ({ value: v, label: t(`trigger.${v}`) }))}
         />
         {f.trigger === 'calendar' ? (
           <div className="form__row">
-            <Field label="Every" error={fieldError(save.error, 'every')}>
+            <Field label={t('every')} error={fieldError(save.error, 'every')}>
               {(p) => <Input {...p} type="number" min={1} max={365} value={f.every} onChange={set('every')} />}
             </Field>
-            <Field label="Unit">
+            <Field label={t('unit')}>
               {(p) => (
                 <Select {...p} value={f.unit} onChange={set('unit')}>
-                  {['day', 'week', 'month', 'year'].map((u) => (
+                  {UNITS.map((u) => (
                     <option key={u} value={u}>
-                      {u}s
+                      {t(`unit.${u}`)}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
-            <Field label="From" error={fieldError(save.error, 'anchorOn')}>
+            <Field label={t('from')} error={fieldError(save.error, 'anchorOn')}>
               {(p) => <Input {...p} type="date" value={f.anchorOn} onChange={set('anchorOn')} />}
             </Field>
-            <Field label="Counted">
+            <Field label={t('counted')}>
               {(p) => (
                 <Select {...p} value={f.basis} onChange={set('basis')}>
-                  <option value="fixed">On fixed dates</option>
-                  <option value="floating">From the day it was done</option>
+                  <option value="fixed">{t('basis.fixed')}</option>
+                  <option value="floating">{t('basis.floating')}</option>
                 </Select>
               )}
             </Field>
           </div>
         ) : (
           <div className="form__row">
-            <Field label="Metric" hint="As the checklist's reading names it, e.g. run_hours." error={fieldError(save.error, 'metricKey')}>
-              {(p) => <Input {...p} value={f.metricKey} onChange={set('metricKey')} />}
+            <Field label={t('metric')} hint={t('metricHint')} error={fieldError(save.error, 'metricKey')}>
+              {(p) => <Input {...p} dir="ltr" value={f.metricKey} onChange={set('metricKey')} />}
             </Field>
-            <Field label="Every (of the metric)" error={fieldError(save.error, 'usageInterval')}>
-              {(p) => <Input {...p} value={f.usageInterval} onChange={set('usageInterval')} />}
+            <Field label={t('usageEvery')} error={fieldError(save.error, 'usageInterval')}>
+              {(p) => <Input {...p} dir="ltr" value={f.usageInterval} onChange={set('usageInterval')} />}
             </Field>
           </div>
         )}
         <div className="form__row">
-          <Field label="Checklist" error={fieldError(save.error, 'checklistId')}>
+          <Field label={t('checklist')} error={fieldError(save.error, 'checklistId')}>
             {(p) => (
               <Select {...p} value={f.checklistId} onChange={set('checklistId')}>
-                <option value="">None</option>
+                <option value="">{t('none')}</option>
                 {(checklists.data?.data ?? [])
-                  .filter((c) => c.active && c.purpose !== 'inspection')
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nameEn}
+                  .filter((x) => x.active && x.purpose !== 'inspection')
+                  .map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {nameOf(fmt.locale, x)}
                     </option>
                   ))}
               </Select>
             )}
           </Field>
-          <Field label="Opens days before" error={fieldError(save.error, 'leadDays')}>
+          <Field label={t('leadDays')} error={fieldError(save.error, 'leadDays')}>
             {(p) => <Input {...p} type="number" min={0} max={60} value={f.leadDays} onChange={set('leadDays')} />}
           </Field>
-          <Field label="On time within days after" error={fieldError(save.error, 'graceDays')}>
+          <Field label={t('graceDays')} error={fieldError(save.error, 'graceDays')}>
             {(p) => <Input {...p} type="number" min={0} max={60} value={f.graceDays} onChange={set('graceDays')} />}
           </Field>
         </div>
@@ -177,6 +184,8 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
 
 /** Assets' planned work (ADR 0064). */
 export default function PlansPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const [active, setActive] = useState<Active>('true');
   const [open, setOpen] = useState(false);
@@ -185,33 +194,29 @@ export default function PlansPage() {
   if (ready && !can('assets.read'))
     return (
       <>
-        <PageHeader title="Planned maintenance" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Planned maintenance"
-        description="Work on the compound's assets that comes due on the calendar or by usage, opened as work orders before it is due."
+        title={t('title')}
+        description={t('description')}
         actions={
           can('assets.manage') ? (
             <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen(true)}>
-              New plan
+              {t('newPlan')}
             </Button>
           ) : undefined
         }
       />
       <div className="toolbar">
         <Segmented<Active>
-          label="Plans shown"
+          label={t('shown')}
           value={active}
           onChange={setActive}
-          options={[
-            { value: 'true', label: 'On' },
-            { value: 'false', label: 'Off' },
-            { value: '', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v === 'all' ? '' : v, label: t(`view.${v}`) }))}
         />
       </div>
       <Card flush>
@@ -219,20 +224,20 @@ export default function PlansPage() {
           <DataTable<PlanSummary>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty="No plan"
+            empty={t('noPlan')}
             columns={[
               {
                 key: 't',
-                header: 'Plan',
+                header: t('col.plan'),
                 cell: (p) => (
                   <Link className="table__link" href={`/maintenance-plans/${p.id}`}>
                     {p.title}
                   </Link>
                 ),
               },
-              { key: 'k', header: 'Comes due', cell: (p) => (p.trigger === 'usage' ? 'By usage' : 'On the calendar') },
-              { key: 'n', header: 'Next due', cell: (p) => (p.nextDueOn ? formatDate(p.nextDueOn) : '—') },
-              { key: 'a', header: 'Status', cell: (p) => (p.active ? 'On' : <Badge tone="beige">Off</Badge>) },
+              { key: 'k', header: t('col.trigger'), cell: (p) => (p.trigger === 'usage' ? t('trigger.usage') : t('trigger.calendar')) },
+              { key: 'n', header: t('col.nextDue'), cell: (p) => (p.nextDueOn ? fmt.day(p.nextDueOn) : '—') },
+              { key: 'a', header: t('col.status'), cell: (p) => (p.active ? t('on') : <Badge tone="beige">{t('off')}</Badge>) },
             ]}
           />
           <LoadMore query={list} />

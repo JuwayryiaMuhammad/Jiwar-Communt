@@ -2,17 +2,20 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useLocale, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { CADENCE_TEXT, COMPARE_TEXT, FORMAT_TEXT, GROUP_TEXT } from '@/components/reports/labels';
+import { CADENCES, COMPARES, FORMATS, isGroup } from '@/components/reports/labels';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ReportCatalogEntry, type ReportSchedule } from '@/lib/queries';
+import ar from '@/messages/ar/ops-reports';
+import en from '@/messages/en/ops-reports';
 
-type Cadence = 'daily' | 'weekly' | 'monthly';
-type Format = 'pdf' | 'xlsx' | 'csv';
-type Compare = 'none' | 'previous' | 'last_year' | 'both';
+type Cadence = (typeof CADENCES)[number];
+type Format = (typeof FORMATS)[number];
+type Compare = (typeof COMPARES)[number];
 
 /**
  * Reports sent on a cadence (ADR 0086): each period's run is written once,
@@ -20,6 +23,8 @@ type Compare = 'none' | 'previous' | 'last_year' | 'both';
  * is downloaded from "Sent reports", never carried in the notice.
  */
 export default function ReportSchedulesPage() {
+  const t = useT(en, ar);
+  const { locale } = useLocale();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('reports.schedule');
@@ -39,7 +44,7 @@ export default function ReportSchedulesPage() {
           body: { reportKey: reportKey as ReportCatalogEntry['key'], cadence, format, compare, ...(groupBy ? { groupBy } : {}) },
         }),
       ),
-    { invalidate: [keys.reportsAll], onDone: () => toast.show('Scheduled. The first run comes after its first whole period.') },
+    { invalidate: [keys.reportsAll], onDone: () => toast.show(t('scheduled')) },
   );
   const toggle = useAction(
     (s: ReportSchedule) =>
@@ -49,20 +54,17 @@ export default function ReportSchedulesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Scheduled reports" />
+        <PageHeader title={t('schedulesTitle')} />
         <ForbiddenState />
       </>
     );
-  const title = (k: string) => reports.find((r) => r.key === k)?.title.en ?? k.replace(/_/g, ' ');
+  const title = (k: string) => reports.find((r) => r.key === k)?.title[locale] ?? k.replace(/_/g, ' ');
   return (
     <>
-      <PageHeader
-        title="Scheduled reports"
-        description="A report sent daily, weekly or monthly to the staff who may read it, once per period."
-      />
+      <PageHeader title={t('schedulesTitle')} description={t('schedulesDescription')} />
       <Card>
         <div className="form__row" style={{ padding: 12 }}>
-          <Field label="Report" error={fieldError(create.error, 'reportKey')}>
+          <Field label={t('report')} error={fieldError(create.error, 'reportKey')}>
             {(p) => (
               <Select
                 {...p}
@@ -72,62 +74,62 @@ export default function ReportSchedulesPage() {
                   setGroupBy('');
                 }}
               >
-                <option value="">Choose a report</option>
+                <option value="">{t('chooseReport')}</option>
                 {reports.map((r) => (
                   <option key={r.key} value={r.key}>
-                    {r.title.en}
+                    {r.title[locale]}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Cadence">
+          <Field label={t('cadence')}>
             {(p) => (
               <Select {...p} value={cadence} onChange={(e) => setCadence(e.target.value as Cadence)}>
-                {Object.entries(CADENCE_TEXT).map(([v, t]) => (
+                {CADENCES.map((v) => (
                   <option key={v} value={v}>
-                    {t}
+                    {t(`cadence.${v}`)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Format">
+          <Field label={t('format')}>
             {(p) => (
               <Select {...p} value={format} onChange={(e) => setFormat(e.target.value as Format)}>
-                {Object.entries(FORMAT_TEXT).map(([v, t]) => (
+                {FORMATS.map((v) => (
                   <option key={v} value={v}>
-                    {t}
+                    {t(`format.${v}`)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Compared with">
+          <Field label={t('comparedWith')}>
             {(p) => (
               <Select {...p} value={compare} onChange={(e) => setCompare(e.target.value as Compare)}>
-                {Object.entries(COMPARE_TEXT).map(([v, t]) => (
+                {COMPARES.map((v) => (
                   <option key={v} value={v}>
-                    {t}
+                    {t(`compare.${v}`)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Grouped by" error={fieldError(create.error, 'groupBy')}>
+          <Field label={t('groupedBy')} error={fieldError(create.error, 'groupBy')}>
             {(p) => (
               <Select {...p} value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-                <option value="">The report’s own</option>
+                <option value="">{t('ownGrouping')}</option>
                 {(def?.groupBy ?? []).map((g) => (
                   <option key={g} value={g}>
-                    {GROUP_TEXT[g] ?? g}
+                    {isGroup(g) ? t(`group.${g}`) : g}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
           <Button variant="primary" disabled={!reportKey} loading={create.isPending} onClick={() => create.mutate(undefined)}>
-            Schedule
+            {t('schedule')}
           </Button>
         </div>
         <ErrorAlert error={create.error} />
@@ -137,19 +139,23 @@ export default function ReportSchedulesPage() {
           <DataTable<ReportSchedule>
             rows={list.data?.data ?? []}
             rowKey={(s) => s.id}
-            empty="No report is scheduled"
+            empty={t('schedulesEmpty')}
             columns={[
-              { key: 'report', header: 'Report', cell: (s) => title(s.reportKey) },
-              { key: 'cadence', header: 'Cadence', cell: (s) => CADENCE_TEXT[s.cadence] },
-              { key: 'format', header: 'Format', cell: (s) => FORMAT_TEXT[s.format] },
-              { key: 'compare', header: 'Compared with', cell: (s) => COMPARE_TEXT[s.compare] },
-              { key: 'state', header: 'State', cell: (s) => <Badge tone={s.active ? 'green' : 'beige'}>{s.active ? 'Sending' : 'Paused'}</Badge> },
+              { key: 'report', header: t('col.report'), cell: (s) => title(s.reportKey) },
+              { key: 'cadence', header: t('col.cadence'), cell: (s) => t(`cadence.${s.cadence}`) },
+              { key: 'format', header: t('col.format'), cell: (s) => t(`format.${s.format}`) },
+              { key: 'compare', header: t('col.compare'), cell: (s) => t(`compare.${s.compare}`) },
+              {
+                key: 'state',
+                header: t('col.state'),
+                cell: (s) => <Badge tone={s.active ? 'green' : 'beige'}>{s.active ? t('sending') : t('paused')}</Badge>,
+              },
               {
                 key: 'act',
                 header: '',
                 cell: (s) => (
                   <Button size="sm" onClick={() => toggle.mutate(s)} loading={toggle.isPending}>
-                    {s.active ? 'Pause' : 'Resume'}
+                    {s.active ? t('pause') : t('resume')}
                   </Button>
                 ),
               },

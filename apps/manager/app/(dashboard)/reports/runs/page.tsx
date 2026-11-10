@@ -2,13 +2,15 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { FORMAT_TEXT } from '@/components/reports/labels';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ReportRun } from '@/lib/queries';
+import ar from '@/messages/ar/ops-reports';
+import en from '@/messages/en/ops-reports';
 
 const READERS = ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'];
 
@@ -18,17 +20,23 @@ const READERS = ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.re
  * lasts a few minutes.
  */
 export default function ReportRunsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = READERS.some((p) => can(p));
   const runs = useQuery({ queryKey: keys.reportRuns(), queryFn: fetchers.reportRuns, enabled: allowed });
+  // The reports' titles, in both languages.
+  const catalog = useQuery({ queryKey: keys.reportCatalog(), queryFn: fetchers.reportCatalog, enabled: allowed });
   const [error, setError] = useState<unknown>(null);
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Sent reports" />
+        <PageHeader title={t('runsTitle')} />
         <ForbiddenState />
       </>
     );
+  const title = (k: string) => catalog.data?.data.find((r) => r.key === k)?.title[locale] ?? k.replace(/_/g, ' ');
   const open = async (r: ReportRun) => {
     setError(null);
     try {
@@ -40,29 +48,29 @@ export default function ReportRunsPage() {
   };
   return (
     <>
-      <PageHeader title="Sent reports" description="Every period’s run of a scheduled report, kept for 90 days." />
+      <PageHeader title={t('runsTitle')} description={t('runsDescription')} />
       <ErrorAlert error={error} />
       <QueryState query={runs}>
         <Card flush>
           <DataTable<ReportRun>
             rows={runs.data?.data ?? []}
             rowKey={(r) => r.id}
-            empty="No report was sent yet"
+            empty={t('runsEmpty')}
             columns={[
-              { key: 'report', header: 'Report', cell: (r) => r.reportKey.replace(/_/g, ' ') },
-              { key: 'period', header: 'Period', cell: (r) => `${r.periodFrom} – ${r.periodTo}` },
-              { key: 'format', header: 'Format', cell: (r) => FORMAT_TEXT[r.format] },
-              { key: 'rows', header: 'Rows', cell: (r) => r.rows },
+              { key: 'report', header: t('col.report'), cell: (r) => title(r.reportKey) },
+              { key: 'period', header: t('col.period'), cell: (r) => t('period', { from: fmt.day(r.periodFrom), to: fmt.day(r.periodTo) }) },
+              { key: 'format', header: t('col.format'), cell: (r) => t(`format.${r.format}`) },
+              { key: 'rows', header: t('col.rows'), cell: (r) => fmt.number(r.rows) },
               {
                 key: 'file',
                 header: '',
                 cell: (r) =>
                   r.status === 'ready' ? (
                     <Button size="sm" onClick={() => void open(r)}>
-                      Download
+                      {t('download')}
                     </Button>
                   ) : (
-                    <Badge tone="beige">Expired</Badge>
+                    <Badge tone="beige">{t('expired')}</Badge>
                   ),
               },
             ]}

@@ -2,12 +2,15 @@
 
 import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type TicketDetail, type TicketPriority } from '@/lib/queries';
-import { personName } from './sla';
+import ar from '@/messages/ar/maint-actions';
+import en from '@/messages/en/maint-actions';
+import { useTicketWords } from './sla';
 import { TechnicianPicker } from './technician-picker';
 
 /** The statuses each action is allowed from (the backend's ticket-rules.ts). */
@@ -22,6 +25,10 @@ type Open = 'assign' | 'reassign' | 'priority' | 'category' | 'cancel' | null;
  * which the dialog shows; every action refreshes the page's data.
  */
 export function TicketActions({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const words = useTicketWords();
   const toast = useToast();
   const [open, setOpen] = useState<Open>(null);
   const [technicianId, setTechnicianId] = useState('');
@@ -49,7 +56,7 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
 
   const assign = useAction(
     () => unwrap(api.POST('/api/v1/maintenance/tickets/{id}/assign', { params: path, body: { technicianId } })),
-    { ...refresh, onDone: done(`${ticket.number} is assigned.`) },
+    { ...refresh, onDone: done(t('assigned', { number: ticket.number })) },
   );
   const autoAssign = useAction(
     () => unwrap(api.POST('/api/v1/maintenance/tickets/{id}/auto-assign', { params: path })),
@@ -58,8 +65,8 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
       onDone: (result) =>
         toast.show(
           result.outcome === 'assigned'
-            ? `${ticket.number} went to ${personName(result.technician)}.`
-            : 'No technician qualifies right now: none is available with a specialty this category needs.',
+            ? t('autoAssigned', { number: ticket.number, name: words.person(result.technician) })
+            : t('noCandidate'),
           result.outcome === 'assigned' ? 'success' : 'error',
         ),
     },
@@ -67,7 +74,7 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
   const reassign = useAction(
     (reasonCode: string) =>
       unwrap(api.POST('/api/v1/maintenance/tickets/{id}/reassign', { params: path, body: { technicianId, reasonCode } })),
-    { ...refresh, onDone: done(`${ticket.number} is reassigned.`) },
+    { ...refresh, onDone: done(t('reassigned', { number: ticket.number })) },
   );
   const changePriority = useAction(
     (reasonCode: string) =>
@@ -77,16 +84,16 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
           body: { priority: priority as TicketPriority, reasonCode },
         }),
       ),
-    { ...refresh, onDone: done('Priority changed.') },
+    { ...refresh, onDone: done(t('priorityChanged')) },
   );
   const changeCategory = useAction(
     (reasonCode: string) =>
       unwrap(api.POST('/api/v1/maintenance/tickets/{id}/category', { params: path, body: { categoryId, reasonCode } })),
-    { ...refresh, onDone: done('Category changed.') },
+    { ...refresh, onDone: done(t('categoryChanged')) },
   );
   const cancel = useAction(
     (reasonCode: string) => unwrap(api.POST('/api/v1/maintenance/tickets/{id}/cancel', { params: path, body: { reasonCode } })),
-    { ...refresh, onDone: done(`${ticket.number} is cancelled.`) },
+    { ...refresh, onDone: done(t('cancelled', { number: ticket.number })) },
   );
 
   const s = ticket.status;
@@ -98,18 +105,18 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
         {s === 'new' ? (
           <>
             <Button variant="primary" onClick={() => setOpen('assign')}>
-              Assign
+              {t('assign')}
             </Button>
             <Button loading={autoAssign.isPending} onClick={() => autoAssign.mutate()}>
-              Auto-assign
+              {t('autoAssign')}
             </Button>
           </>
         ) : null}
-        {IN_HAND.includes(s) ? <Button onClick={() => setOpen('reassign')}>Reassign</Button> : null}
-        <Button onClick={() => setOpen('priority')}>Priority</Button>
-        <Button onClick={() => setOpen('category')}>Category</Button>
+        {IN_HAND.includes(s) ? <Button onClick={() => setOpen('reassign')}>{t('reassign')}</Button> : null}
+        <Button onClick={() => setOpen('priority')}>{t('priority')}</Button>
+        <Button onClick={() => setOpen('category')}>{t('category')}</Button>
         <Button variant="danger" onClick={() => setOpen('cancel')}>
-          Cancel ticket
+          {t('cancelTicket')}
         </Button>
       </span>
       <ErrorAlert error={autoAssign.error} />
@@ -117,20 +124,20 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
       <Dialog
         open={open === 'assign'}
         onClose={close}
-        title={`Assign ${ticket.number}`}
-        description="The technician is told. An emergency reaches them at once, whatever their notification settings."
+        title={t('assignTitle', { number: ticket.number })}
+        description={t('assignDescription')}
         onSubmit={() => technicianId && assign.mutate()}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={assign.isPending} disabled={!technicianId}>
-              Assign
+              {t('assign')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="Technician">
+          <Field label={t('technician')}>
             {(p) => <TechnicianPicker {...p} value={technicianId} onChange={(e) => setTechnicianId(e.target.value)} />}
           </Field>
           <ErrorAlert error={assign.error} />
@@ -140,16 +147,16 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={open === 'reassign'}
         onClose={close}
-        title={`Reassign ${ticket.number}`}
-        description={`From ${personName(ticket.technician)}. Both technicians are told; a visit they had agreed ends.`}
+        title={t('reassignTitle', { number: ticket.number })}
+        description={t('reassignDescription', { name: words.person(ticket.technician) })}
         codes={REASON_CODES.ticketReassign}
-        confirmLabel="Reassign"
+        confirmLabel={t('reassign')}
         ready={technicianId !== ''}
         pending={reassign.isPending}
         error={<ErrorAlert error={reassign.error} />}
         onConfirm={(code) => reassign.mutate(code)}
       >
-        <Field label="New technician">
+        <Field label={t('newTechnician')}>
           {(p) => (
             <TechnicianPicker
               {...p}
@@ -164,24 +171,24 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={open === 'priority'}
         onClose={close}
-        title="Change the priority"
-        description="The SLA targets follow the new priority from now on."
+        title={t('priorityTitle')}
+        description={t('priorityDescription')}
         codes={REASON_CODES.ticketPriority}
-        confirmLabel="Change priority"
+        confirmLabel={t('priorityConfirm')}
         ready={priority !== '' && priority !== ticket.priority}
         pending={changePriority.isPending}
         error={<ErrorAlert error={changePriority.error} />}
         onConfirm={(code) => changePriority.mutate(code)}
       >
-        <Field label="Priority" hint={`Now: ${ticket.priority}.`}>
+        <Field label={t('priority')} hint={t('now', { value: label(ticket.priority) })}>
           {(p) => (
             <Select {...p} value={priority} onChange={(e) => setPriority(e.target.value as TicketPriority | '')}>
-              <option value="">Select…</option>
+              <option value="">{c('select')}</option>
               {(['normal', 'urgent', 'emergency'] as const)
                 .filter((x) => x !== ticket.priority)
                 .map((x) => (
                   <option key={x} value={x}>
-                    {x.charAt(0).toUpperCase() + x.slice(1)}
+                    {label(x)}
                   </option>
                 ))}
             </Select>
@@ -192,24 +199,24 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={open === 'category'}
         onClose={close}
-        title="Change the category"
-        description="For a ticket filed under the wrong category. Its SLA targets follow the new one."
+        title={t('categoryTitle')}
+        description={t('categoryDescription')}
         codes={REASON_CODES.ticketCategory}
-        confirmLabel="Change category"
+        confirmLabel={t('categoryConfirm')}
         ready={categoryId !== ''}
         pending={changeCategory.isPending}
         error={<ErrorAlert error={changeCategory.error} />}
         onConfirm={(code) => changeCategory.mutate(code)}
       >
-        <Field label="Category" hint={`Now: ${ticket.category.nameEn}.`}>
+        <Field label={t('category')} hint={t('now', { value: ticket.category.nameEn })}>
           {(p) => (
             <Select {...p} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{c('select')}</option>
               {(categories.data?.data ?? [])
-                .filter((c) => c.id !== ticket.category.id && (ticket.unit !== null || c.commonAreaAllowed))
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nameEn}
+                .filter((cat) => cat.id !== ticket.category.id && (ticket.unit !== null || cat.commonAreaAllowed))
+                .map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.nameEn}
                   </option>
                 ))}
             </Select>
@@ -220,10 +227,10 @@ export function TicketActions({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={open === 'cancel'}
         onClose={close}
-        title={`Cancel ${ticket.number}?`}
-        description="The work stops and the ticket cannot be reopened. The reporter and the technician are told."
+        title={t('cancelTitle', { number: ticket.number })}
+        description={t('cancelDescription')}
         codes={REASON_CODES.ticketCancel}
-        confirmLabel="Cancel ticket"
+        confirmLabel={t('cancelTicket')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}

@@ -1,9 +1,12 @@
 'use client';
 
+import { useT } from '@jiwar/i18n';
 import { Select } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import type { SelectHTMLAttributes } from 'react';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/maint-common';
+import en from '@/messages/en/maint-common';
 
 /**
  * The compound's technicians, the least loaded first within those available.
@@ -12,10 +15,11 @@ import { fetchers, keys } from '@/lib/queries';
 export function TechnicianPicker(
   props: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children'> & { exclude?: string | null; placeholder?: string },
 ) {
-  const { exclude, placeholder = 'Select a technician…', ...rest } = props;
+  const t = useT(en, ar);
+  const { exclude, placeholder = t('picker.select'), ...rest } = props;
   const technicians = useQuery({ queryKey: keys.technicians, queryFn: fetchers.technicians });
   const list = [...(technicians.data?.data ?? [])]
-    .filter((t) => t.id !== exclude)
+    .filter((x) => x.id !== exclude)
     .sort(
       (a, b) =>
         Number(b.availability.state === 'available') - Number(a.availability.state === 'available') ||
@@ -23,11 +27,10 @@ export function TechnicianPicker(
     );
   return (
     <Select {...rest}>
-      <option value="">{technicians.isPending ? 'Loading technicians…' : placeholder}</option>
-      {list.map((t) => (
-        <option key={t.id} value={t.id}>
-          {t.fullName ?? 'Technician'} · {t.availability.state === 'available' ? 'available' : 'unavailable'} ·{' '}
-          {t.openTickets} open
+      <option value="">{technicians.isPending ? t('picker.loading') : placeholder}</option>
+      {list.map((x) => (
+        <option key={x.id} value={x.id}>
+          {t('picker.option', { name: x.fullName ?? t('picker.technician'), state: x.availability.state, n: x.openTickets })}
         </option>
       ))}
     </Select>

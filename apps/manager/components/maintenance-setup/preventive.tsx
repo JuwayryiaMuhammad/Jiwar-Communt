@@ -2,13 +2,16 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Input, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Category, type PreventiveService } from '@/lib/queries';
-import { NameFields, namesReady, NO_NAMES } from './names';
+import ar from '@/messages/ar/ms-preventive';
+import en from '@/messages/en/ms-preventive';
+import { NameFields, namesReady, NO_NAMES, useNameOf } from './names';
 
 function ServiceDialog({
   service,
@@ -19,6 +22,9 @@ function ServiceDialog({
   categories: Category[];
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const nameOf = useNameOf();
   const toast = useToast();
   const [names, setNames] = useState(service ? { key: service.key, nameEn: service.nameEn, nameAr: service.nameAr } : NO_NAMES);
   const [categoryId, setCategoryId] = useState(service?.categoryId ?? '');
@@ -38,7 +44,7 @@ function ServiceDialog({
     {
       invalidate: [keys.preventiveServices],
       onDone: (saved) => {
-        toast.show(service ? `${saved.nameEn} is saved.` : `${saved.nameEn} is added.`);
+        toast.show(service ? t('saved', { name: nameOf(saved) }) : t('added', { name: nameOf(saved) }));
         onClose();
       },
     },
@@ -51,14 +57,14 @@ function ServiceDialog({
       open
       wide
       onClose={onClose}
-      title={service ? `Edit ${service.nameEn}` : 'New preventive service'}
-      description={service ? undefined : 'A check-up residents can book, e.g. a water heater service. They pick it from a list and choose a time.'}
+      title={service ? t('editTitle', { name: nameOf(service) }) : t('newTitle')}
+      description={service ? undefined : t('newDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            {service ? 'Save' : 'Add service'}
+            {service ? common('save') : t('addService')}
           </Button>
         </>
       }
@@ -66,22 +72,21 @@ function ServiceDialog({
       <div className="form">
         <NameFields value={names} onChange={setNames} error={save.error} withKey={!service} example="water_heater" />
         <div className="form__row">
-          <Field label="Category" hint="Its technicians do the check-up, and its SLA targets apply." error={fieldError(save.error, 'categoryId')}>
+          <Field label={t('category')} hint={t('categoryHint')} error={fieldError(save.error, 'categoryId')}>
             {(p) => (
               <Select {...p} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                <option value="">Select…</option>
+                <option value="">{common('select')}</option>
                 {usable.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nameEn}
-                    {c.active ? '' : ' (retired)'}
+                    {c.active ? nameOf(c) : t('retiredSuffix', { name: nameOf(c) })}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
           <Field
-            label="Position"
-            hint={service ? 'The order residents see, lowest first (0 to 1000).' : 'The order residents see, lowest first (0 to 1000). Empty: after the others.'}
+            label={t('position')}
+            hint={service ? t('positionHint') : t('positionHintNew')}
             error={fieldError(save.error, 'position')}
           >
             {(p) => <Input {...p} type="number" min={0} max={1000} value={position} onChange={(e) => setPosition(e.target.value)} />}
@@ -89,7 +94,7 @@ function ServiceDialog({
         </div>
         {service ? (
           <Checkbox
-            label="In use. Unticked retires it: no new request for it; the bookings it has stay"
+            label={t('inUse')}
             checked={active}
             onChange={(e) => setActive(e.target.checked)}
           />
@@ -102,6 +107,9 @@ function ServiceDialog({
 
 /** The check-ups residents can book (ADR 0038), in the order they see them. */
 export function PreventiveServices() {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const nameOf = useNameOf();
   const services = useQuery({ queryKey: keys.preventiveServices, queryFn: fetchers.preventiveServices });
   const categories = useQuery({ queryKey: keys.categories, queryFn: fetchers.categories });
   const [open, setOpen] = useState<PreventiveService | 'new' | null>(null);
@@ -112,7 +120,7 @@ export function PreventiveServices() {
       <div className="toolbar">
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen('new')}>
-          New service
+          {t('newService')}
         </Button>
       </div>
       <Card flush>
@@ -120,33 +128,35 @@ export function PreventiveServices() {
           <DataTable<PreventiveService>
             rows={rows}
             rowKey={(s) => s.id}
-            empty="No preventive service yet"
-            emptyHint="Residents see no check-up to book until you add one."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
-              { key: 'position', header: 'Position', width: 90, cell: (s) => <span className="t-num">{s.position}</span> },
+              { key: 'position', header: t('col.position'), width: 90, cell: (s) => <span className="t-num">{s.position}</span> },
               {
                 key: 'name',
-                header: 'Service',
+                header: t('col.service'),
                 cell: (s) => (
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                    <span className="table__primary">{s.nameEn}</span>
+                    <span className="table__primary" dir="ltr" lang="en">
+                      {s.nameEn}
+                    </span>
                     <span className="t-secondary" dir="rtl" lang="ar">
                       {s.nameAr}
                     </span>
-                    {!s.active ? <Badge tone="beige">Retired</Badge> : null}
+                    {!s.active ? <Badge tone="beige">{t('retired')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'key', header: 'Code', cell: (s) => <span className="t-mono">{s.key}</span> },
+              { key: 'key', header: t('col.code'), cell: (s) => <span className="t-mono">{s.key}</span> },
               {
                 key: 'category',
-                header: 'Category',
+                header: t('col.category'),
                 cell: (s) => {
                   const c = byId.get(s.categoryId);
                   return c ? (
                     <span className="row" style={{ gap: 6 }}>
-                      {c.nameEn}
-                      {!c.active ? <Badge tone="terracotta">Retired category</Badge> : null}
+                      {nameOf(c)}
+                      {!c.active ? <Badge tone="terracotta">{t('retiredCategory')}</Badge> : null}
                     </span>
                   ) : (
                     '—'
@@ -155,11 +165,11 @@ export function PreventiveServices() {
               },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{common('actions')}</span>,
                 className: 'table__actions',
                 cell: (s) => (
                   <Button size="sm" onClick={() => setOpen(s)}>
-                    Edit
+                    {common('edit')}
                   </Button>
                 ),
               },

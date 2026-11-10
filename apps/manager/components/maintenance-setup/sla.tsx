@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/ms-sla';
+import en from '@/messages/en/ms-sla';
 import { Categories } from './categories';
 import { SlaEscalation } from './sla-escalation';
 import { AnalyticsSettingsCard } from './analytics-settings';
@@ -17,6 +20,8 @@ import { AnalyticsSettingsCard } from './analytics-settings';
  * it starts or stops the clocks of every open ticket.
  */
 export function Sla() {
+  const t = useT(en, ar);
+  const f = useFormat();
   const toast = useToast();
   const settings = useQuery({ queryKey: keys.slaSettings, queryFn: fetchers.slaSettings });
   const [confirming, setConfirming] = useState(false);
@@ -24,7 +29,7 @@ export function Sla() {
   const toggle = useAction(() => unwrap(api.PATCH('/api/v1/maintenance/sla-settings', { body: { slaEnabled: !on } })), {
     invalidate: [keys.slaSettings, keys.ticketsAll],
     onDone: (next) => {
-      toast.show(next.slaEnabled ? 'The SLA is on. Clocks start for the open tickets now.' : 'The SLA is off. The running clocks have stopped.');
+      toast.show(next.slaEnabled ? t('turnedOn') : t('turnedOff'));
       setConfirming(false);
     },
   });
@@ -32,18 +37,16 @@ export function Sla() {
   return (
     <div className="stack">
       <Card flush>
-        <CardHeader title="Measuring the SLA" actions={<Badge tone={on ? 'green' : 'beige'}>{on ? 'On' : 'Off'}</Badge>} />
+        <CardHeader title={t('measuring')} actions={<Badge tone={on ? 'green' : 'beige'}>{on ? t('on') : t('off')}</Badge>} />
         <QueryState query={settings} rows={2}>
           <CardBody>
             <div className="stack">
               <p>
-                {on
-                  ? `Response and resolution times are measured against each category's targets below. On since ${formatDateTime(settings.data?.enabledAt)}.`
-                  : 'No ticket has a due time, nothing is overdue, and residents cannot escalate. The targets below are kept for when you turn it on.'}
+                {on ? t('measuredBody', { when: f.dateTime(settings.data?.enabledAt) }) : t('notMeasuredBody')}
               </p>
               <span>
                 <Button variant={on ? 'secondary' : 'primary'} onClick={() => setConfirming(true)}>
-                  {on ? 'Turn off' : 'Turn on'}
+                  {on ? t('turnOff') : t('turnOn')}
                 </Button>
               </span>
             </div>
@@ -54,8 +57,8 @@ export function Sla() {
       {/* ADR 0081. */}
       <AnalyticsSettingsCard />
       <div className="stack stack--sm">
-        <h2 className="t-title-md">Targets by category</h2>
-        <p className="t-secondary">Response / resolution, per priority. A change retargets the clocks still running.</p>
+        <h2 className="t-title-md">{t('targetsByCategory')}</h2>
+        <p className="t-secondary">{t('targetsHint')}</p>
       </div>
       <Categories view="sla" />
       <ConfirmDialog
@@ -64,13 +67,9 @@ export function Sla() {
           setConfirming(false);
           toggle.reset();
         }}
-        title={on ? 'Stop measuring the SLA?' : 'Start measuring the SLA?'}
-        description={
-          on
-            ? 'Every running clock stops now. Open tickets lose their due times, nothing is overdue any more, and residents can no longer escalate. Turning it on again starts fresh clocks; the time in between is never counted.'
-            : "Clocks start now for every open ticket, against its category's targets. Nothing is backdated: a ticket opened last week is measured from this moment. Residents will see due times and may escalate a ticket that becomes overdue."
-        }
-        confirmLabel={on ? 'Turn off and stop the clocks' : 'Turn on and start the clocks'}
+        title={on ? t('stopTitle') : t('startTitle')}
+        description={on ? t('stopBody') : t('startBody')}
+        confirmLabel={on ? t('stopConfirm') : t('startConfirm')}
         // Red only here: stopping the clocks loses what they had measured.
         danger={on}
         pending={toggle.isPending}

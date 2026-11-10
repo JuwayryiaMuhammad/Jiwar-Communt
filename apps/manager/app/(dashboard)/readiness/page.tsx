@@ -1,18 +1,24 @@
 'use client';
 
-import { fieldError, formatDate, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ReadinessProgram } from '@/lib/queries';
+import ar from '@/messages/ar/ops-readiness';
+import en from '@/messages/en/ops-readiness';
 
 const KINDS = ['season', 'event', 'emergency'] as const;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 function NewProgramDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const start = new Date(Date.now() + 30 * 24 * 3_600_000);
   const [f, setF] = useState({
@@ -27,7 +33,7 @@ function NewProgramDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.readinessAll],
       onDone: () => {
-        toast.show('Program started.');
+        toast.show(t('started'));
         onClose();
       },
     },
@@ -36,39 +42,39 @@ function NewProgramDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="New readiness program"
-      description="A season, an event or an emergency, over the days you state: Ramadan and Eid move, so the days are yours to give."
+      title={t('newProgramTitle')}
+      description={t('newProgramDescription')}
       onSubmit={() => save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending}>
-            Start
+            {t('start')}
           </Button>
         </>
       }
     >
       <div className="form">
         <ErrorAlert error={save.error} />
-        <Field label="Kind" error={fieldError(save.error, 'kind')}>
+        <Field label={t('kind')} error={fieldError(save.error, 'kind')}>
           {(p) => (
             <Select {...p} value={f.kind} onChange={set('kind')}>
               {KINDS.map((k) => (
                 <option key={k} value={k}>
-                  {humanize(k)}
+                  {label(k)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Title" error={fieldError(save.error, 'title')}>
-          {(p) => <Input {...p} value={f.title} onChange={set('title')} placeholder="Ramadan 2027" />}
+        <Field label={t('programTitle')} error={fieldError(save.error, 'title')}>
+          {(p) => <Input {...p} value={f.title} onChange={set('title')} placeholder={t('titlePlaceholder')} />}
         </Field>
         <div className="form__row">
-          <Field label="First day" error={fieldError(save.error, 'startsOn')}>
+          <Field label={t('firstDay')} error={fieldError(save.error, 'startsOn')}>
             {(p) => <Input {...p} type="date" value={f.startsOn} onChange={set('startsOn')} />}
           </Field>
-          <Field label="Last day" error={fieldError(save.error, 'endsOn')}>
+          <Field label={t('lastDay')} error={fieldError(save.error, 'endsOn')}>
             {(p) => <Input {...p} type="date" value={f.endsOn} onChange={set('endsOn')} />}
           </Field>
         </div>
@@ -79,6 +85,9 @@ function NewProgramDialog({ onClose }: { onClose: () => void }) {
 
 /** Readiness programs (ADR 0067): seasons, events and emergencies, prepared item by item. */
 export default function ReadinessPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const [filters, setFilters] = useState<{ kind: ReadinessProgram['kind'] | ''; open: 'true' | 'false' | '' }>({
     kind: '',
@@ -91,34 +100,42 @@ export default function ReadinessPage() {
   if (ready && !can('readiness.manage'))
     return (
       <>
-        <PageHeader title="Readiness" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Readiness"
-        description="Seasons, events and emergencies: their tasks, estimates, contract reviews and inspection campaigns."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
-            New program
+            {t('newProgram')}
           </Button>
         }
       />
       <div className="row" style={{ gap: 8, marginBottom: 12 }}>
-        <Select value={filters.kind} onChange={(e) => setFilters({ ...filters, kind: e.target.value as typeof filters.kind })}>
-          <option value="">Every kind</option>
+        <Select
+          aria-label={t('kindFilter')}
+          value={filters.kind}
+          onChange={(e) => setFilters({ ...filters, kind: e.target.value as typeof filters.kind })}
+        >
+          <option value="">{t('everyKind')}</option>
           {KINDS.map((k) => (
             <option key={k} value={k}>
-              {humanize(k)}
+              {label(k)}
             </option>
           ))}
         </Select>
-        <Select value={filters.open} onChange={(e) => setFilters({ ...filters, open: e.target.value as typeof filters.open })}>
-          <option value="true">Open</option>
-          <option value="false">Closed</option>
-          <option value="">Open or closed</option>
+        <Select
+          aria-label={t('openFilter')}
+          value={filters.open}
+          onChange={(e) => setFilters({ ...filters, open: e.target.value as typeof filters.open })}
+        >
+          <option value="true">{t('filter.open')}</option>
+          <option value="false">{t('filter.closed')}</option>
+          <option value="">{t('filter.all')}</option>
         </Select>
       </div>
       <Card flush>
@@ -126,19 +143,19 @@ export default function ReadinessPage() {
           <DataTable<ReadinessProgram>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty="No program"
+            empty={t('empty')}
             columns={[
-              { key: 't', header: 'Program', cell: (p) => <Link href={`/readiness/${p.id}`}>{p.title}</Link> },
-              { key: 'k', header: 'Kind', cell: (p) => humanize(p.kind) },
-              { key: 'd', header: 'Days', cell: (p) => `${formatDate(p.startsOn)} – ${formatDate(p.endsOn)}` },
+              { key: 't', header: t('col.program'), cell: (p) => <Link href={`/readiness/${p.id}`}>{p.title}</Link> },
+              { key: 'k', header: t('col.kind'), cell: (p) => label(p.kind) },
+              { key: 'd', header: t('col.days'), cell: (p) => t('days', { from: fmt.day(p.startsOn), to: fmt.day(p.endsOn) }) },
               {
                 key: 'r',
-                header: 'Ready',
-                cell: (p) => (p.readiness.percent === null ? '—' : `${p.readiness.percent}%`),
+                header: t('col.ready'),
+                cell: (p) => (p.readiness.percent === null ? '—' : fmt.percent(p.readiness.percent / 100)),
               },
-              { key: 'o', header: 'Open items', cell: (p) => p.readiness.open },
-              { key: 'b', header: 'Budget (EGP)', cell: (p) => p.readiness.budget },
-              { key: 's', header: 'Status', cell: (p) => (p.closedAt ? 'Closed' : 'Open') },
+              { key: 'o', header: t('col.openItems'), cell: (p) => fmt.number(p.readiness.open) },
+              { key: 'b', header: t('col.budget'), cell: (p) => fmt.money(p.readiness.budget) },
+              { key: 's', header: t('col.status'), cell: (p) => (p.closedAt ? t('closed') : t('open')) },
             ]}
           />
           <LoadMore query={list} />

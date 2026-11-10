@@ -1,19 +1,42 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  PageHeader,
+  ReasonCodeDialog,
+  Segmented,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useNameOf } from '@/components/maintenance-setup/names';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PartRequest } from '@/lib/queries';
+import ar from '@/messages/ar/stock-part-requests';
+import en from '@/messages/en/stock-part-requests';
 
 type Status = PartRequest['status'] | '';
 
 /** The technicians' part requests (ADR 0065): reserved in a store, issued, or declined. */
 export default function PartRequestsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const f = useFormat();
+  const nameOf = useNameOf();
   const { ready, can } = usePermissions();
   const toast = useToast();
   const [status, setStatus] = useState<Status>('');
@@ -29,14 +52,14 @@ export default function PartRequestsPage() {
     {
       invalidate: [keys.stockAll],
       onDone: () => {
-        toast.show('Reserved; the technician is told.');
+        toast.show(t('reserved'));
         setReserving(null);
       },
     },
   );
   const issue = useAction(
     (id: string) => unwrap(api.POST('/api/v1/maintenance/part-requests/{id}/issue', { params: { path: { id } } })),
-    { invalidate: [keys.stockAll], onDone: () => toast.show('Issued onto the ticket’s costs.') },
+    { invalidate: [keys.stockAll], onDone: () => toast.show(t('issued')) },
   );
   const decline = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
@@ -44,7 +67,7 @@ export default function PartRequestsPage() {
     {
       invalidate: [keys.stockAll],
       onDone: () => {
-        toast.show('Declined.');
+        toast.show(t('declined'));
         setDeclining(null);
       },
     },
@@ -52,24 +75,24 @@ export default function PartRequestsPage() {
   if (ready && !can('stock.manage'))
     return (
       <>
-        <PageHeader title="Part requests" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Part requests" description="What the technicians ask the store for, oldest first." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<Status>
-          label="Status"
+          label={t('status')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: '', label: 'Open' },
-            { value: 'reserved', label: 'Reserved' },
-            { value: 'issued', label: 'Issued' },
-            { value: 'declined', label: 'Declined' },
-            { value: 'cancelled', label: 'Called off' },
+            { value: '', label: t('status.open') },
+            { value: 'reserved', label: t('status.reserved') },
+            { value: 'issued', label: t('status.issued') },
+            { value: 'declined', label: t('status.declined') },
+            { value: 'cancelled', label: t('status.cancelled') },
           ]}
         />
       </div>
@@ -79,47 +102,47 @@ export default function PartRequestsPage() {
           <DataTable<PartRequest>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty="Nothing asked for"
+            empty={t('empty')}
             columns={[
               {
                 key: 't',
-                header: 'Ticket',
+                header: t('col.ticket'),
                 cell: (r) => (
                   <Link className="table__link" href={`/maintenance/${r.ticketId}`}>
-                    Open
+                    {t('open')}
                   </Link>
                 ),
               },
               {
                 key: 'i',
-                header: 'Item',
+                header: t('col.item'),
                 cell: (r) => (
                   <Link className="table__link" href={`/stock/${r.itemId}`}>
-                    Item
+                    {t('item')}
                   </Link>
                 ),
               },
-              { key: 'q', header: 'Quantity', cell: (r) => r.quantity },
-              { key: 's', header: 'Status', cell: (r) => humanize(r.status) },
-              { key: 'w', header: 'Asked', cell: (r) => formatDateTime(r.requestedAt) },
+              { key: 'q', header: t('col.quantity'), cell: (r) => r.quantity },
+              { key: 's', header: t('col.status'), cell: (r) => label(r.status) },
+              { key: 'w', header: t('col.asked'), cell: (r) => f.dateTime(r.requestedAt) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (r) =>
                   r.status === 'requested' || r.status === 'reserved' ? (
                     <span className="row" style={{ gap: 6 }}>
                       {r.status === 'requested' ? (
                         <Button size="sm" variant="primary" onClick={() => setReserving(r)}>
-                          Reserve
+                          {t('reserve')}
                         </Button>
                       ) : (
                         <Button size="sm" variant="primary" loading={issue.isPending} onClick={() => issue.mutate(r.id)}>
-                          Issue
+                          {t('issue')}
                         </Button>
                       )}
                       <Button size="sm" onClick={() => setDeclining(r)}>
-                        Decline
+                        {t('decline')}
                       </Button>
                     </span>
                   ) : null,
@@ -132,29 +155,29 @@ export default function PartRequestsPage() {
       <Dialog
         open={reserving !== null}
         onClose={() => setReserving(null)}
-        title="Reserve the part"
-        description="It is held in the store for the ticket until it is issued or let go."
+        title={t('reserveTitle')}
+        description={t('reserveDescription')}
         onSubmit={() => storeId && reserve.mutate()}
         footer={
           <>
-            <Button onClick={() => setReserving(null)}>Cancel</Button>
+            <Button onClick={() => setReserving(null)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={reserve.isPending} disabled={!storeId}>
-              Reserve
+              {t('reserve')}
             </Button>
           </>
         }
       >
         <div className="form">
           <ErrorAlert error={reserve.error} />
-          <Field label="Store">
+          <Field label={t('store')}>
             {(p) => (
               <Select {...p} value={storeId} onChange={(e) => setStoreId(e.target.value)}>
-                <option value="">Select…</option>
+                <option value="">{c('select')}</option>
                 {(stores.data?.data ?? [])
                   .filter((s) => s.active)
                   .map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.code} · {s.nameEn}
+                      {s.code} · {nameOf(s)}
                     </option>
                   ))}
               </Select>
@@ -165,12 +188,12 @@ export default function PartRequestsPage() {
       <ReasonCodeDialog
         open={declining !== null}
         onClose={() => setDeclining(null)}
-        title="Decline the request"
+        title={t('declineTitle')}
         codes={REASON_CODES.partRequestDecline}
-        confirmLabel="Decline"
+        confirmLabel={t('decline')}
         pending={decline.isPending}
         error={<ErrorAlert error={decline.error} />}
-        onConfirm={(c) => declining && decline.mutate({ id: declining.id, reasonCode: c })}
+        onConfirm={(code) => declining && decline.mutate({ id: declining.id, reasonCode: code })}
       />
     </>
   );

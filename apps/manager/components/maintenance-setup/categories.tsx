@@ -2,7 +2,8 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Select, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -10,11 +11,19 @@ import { PriorityBadge } from '@/components/maintenance/sla';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Category, type Specialty, type TicketPriority } from '@/lib/queries';
+import ar from '@/messages/ar/ms-categories';
+import arCommon from '@/messages/ar/ms-common';
+import en from '@/messages/en/ms-categories';
+import enCommon from '@/messages/en/ms-common';
 import { formatMinutes } from './format';
-import { NameFields, namesReady, NO_NAMES } from './names';
+import { NameFields, namesReady, NO_NAMES, useNameOf } from './names';
 import { SlaTargetsDialog } from './sla-targets-dialog';
 
 function CategoryDialog({ category, onClose }: { category: Category | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const label = useLabel();
+  const nameOf = useNameOf();
   const toast = useToast();
   const [names, setNames] = useState(category ? { key: category.key, nameEn: category.nameEn, nameAr: category.nameAr } : NO_NAMES);
   const [priority, setPriority] = useState<TicketPriority>(category?.defaultPriority ?? 'normal');
@@ -34,7 +43,7 @@ function CategoryDialog({ category, onClose }: { category: Category | null; onCl
     {
       invalidate: [keys.categories, keys.ticketCategories],
       onDone: (saved) => {
-        toast.show(category ? `${saved.nameEn} is saved.` : `${saved.nameEn} is added. Set its specialties and SLA targets next.`);
+        toast.show(category ? t('saved', { name: nameOf(saved) }) : t('added', { name: nameOf(saved) }));
         onClose();
       },
     },
@@ -45,33 +54,33 @@ function CategoryDialog({ category, onClose }: { category: Category | null; onCl
       open
       wide
       onClose={onClose}
-      title={category ? `Edit ${category.nameEn}` : 'New category'}
-      description={category ? undefined : 'What residents pick when they open a ticket. It starts with the default SLA targets and no specialty.'}
+      title={category ? t('editTitle', { name: nameOf(category) }) : t('newTitle')}
+      description={category ? undefined : t('newDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            {category ? 'Save' : 'Add category'}
+            {category ? common('save') : t('addCategory')}
           </Button>
         </>
       }
     >
       <div className="form">
         <NameFields value={names} onChange={setNames} error={save.error} withKey={!category} example="pool" />
-        <Field label="Default priority" hint="What a new ticket gets unless the reporter or dispatch says otherwise." error={fieldError(save.error, 'defaultPriority')}>
+        <Field label={t('defaultPriority')} hint={t('defaultPriorityHint')} error={fieldError(save.error, 'defaultPriority')}>
           {(p) => (
             <Select {...p} value={priority} onChange={(e) => setPriority(e.target.value as TicketPriority)}>
-              <option value="normal">Normal</option>
-              <option value="urgent">Urgent</option>
-              <option value="emergency">Emergency</option>
+              <option value="normal">{label('normal')}</option>
+              <option value="urgent">{label('urgent')}</option>
+              <option value="emergency">{label('emergency')}</option>
             </Select>
           )}
         </Field>
-        <Checkbox label="May be used for common areas, not only units" checked={commonArea} onChange={(e) => setCommonArea(e.target.checked)} />
+        <Checkbox label={t('commonAreas')} checked={commonArea} onChange={(e) => setCommonArea(e.target.checked)} />
         {category ? (
           <Checkbox
-            label="In use. Unticked retires it: no new ticket under it; the tickets it has stay as they are"
+            label={t('inUse')}
             checked={active}
             onChange={(e) => setActive(e.target.checked)}
           />
@@ -83,6 +92,9 @@ function CategoryDialog({ category, onClose }: { category: Category | null; onCl
 }
 
 function CategorySpecialtiesDialog({ category, specialties, onClose }: { category: Category; specialties: Specialty[]; onClose: () => void }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const nameOf = useNameOf();
   const toast = useToast();
   const [picked, setPicked] = useState(() => new Set(category.specialtyIds));
   const save = useAction(
@@ -96,7 +108,7 @@ function CategorySpecialtiesDialog({ category, specialties, onClose }: { categor
     {
       invalidate: [keys.categories],
       onDone: () => {
-        toast.show(`Specialties of ${category.nameEn} are saved.`);
+        toast.show(t('specialtiesSaved', { name: nameOf(category) }));
         onClose();
       },
     },
@@ -106,24 +118,24 @@ function CategorySpecialtiesDialog({ category, specialties, onClose }: { categor
     <Dialog
       open
       onClose={onClose}
-      title={`Specialties for ${category.nameEn}`}
-      description="Auto-dispatch offers a ticket of this category only to a technician with one of these. With none ticked, no technician qualifies and its tickets wait for a dispatcher."
+      title={t('specialtiesTitle', { name: nameOf(category) })}
+      description={t('specialtiesDescription')}
       onSubmit={() => save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending}>
-            Save
+            {common('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        {active.length === 0 ? <p className="t-secondary">Add a specialty first, on the Specialties tab.</p> : null}
+        {active.length === 0 ? <p className="t-secondary">{t('addSpecialtyFirst')}</p> : null}
         {active.map((s) => (
           <Checkbox
             key={s.id}
-            label={s.nameEn}
+            label={nameOf(s)}
             checked={picked.has(s.id)}
             onChange={(e) =>
               setPicked((prev) => {
@@ -145,6 +157,11 @@ type Open = { kind: 'new' } | { kind: 'edit' | 'specialties' | 'sla'; category: 
 
 /** What residents may report, who can fix it, and how fast (ADR 0032-0034). */
 export function Categories({ view }: { view: 'categories' | 'sla' }) {
+  const t = useT(en, ar);
+  const duration = useT(enCommon, arCommon);
+  const common = useCommonT();
+  const label = useLabel();
+  const nameOf = useNameOf();
   const { can } = usePermissions();
   const categories = useQuery({ queryKey: keys.categories, queryFn: fetchers.categories });
   // The specialties list reads with either permission (a dispatcher's, or the
@@ -154,7 +171,7 @@ export function Categories({ view }: { view: 'categories' | 'sla' }) {
   const [open, setOpen] = useState<Open>(null);
   const names = new Map((specialties.data?.data ?? []).map((s) => [s.id, s]));
   const target = (c: Category, p: TicketPriority) =>
-    `${formatMinutes(c.slaTargets[p].responseMinutes)} / ${formatMinutes(c.slaTargets[p].resolutionMinutes)}`;
+    `${formatMinutes(c.slaTargets[p].responseMinutes, duration)} / ${formatMinutes(c.slaTargets[p].resolutionMinutes, duration)}`;
 
   return (
     <>
@@ -162,7 +179,7 @@ export function Categories({ view }: { view: 'categories' | 'sla' }) {
         <div className="toolbar">
           <span className="spacer" />
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen({ kind: 'new' })}>
-            New category
+            {t('newCategoryButton')}
           </Button>
         </div>
       ) : null}
@@ -171,41 +188,43 @@ export function Categories({ view }: { view: 'categories' | 'sla' }) {
           <DataTable<Category>
             rows={categories.data?.data}
             rowKey={(c) => c.id}
-            empty="No category yet"
+            empty={t('empty')}
             columns={[
               {
                 key: 'name',
-                header: 'Category',
+                header: t('col.category'),
                 cell: (c) => (
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                    <span className="table__primary">{c.nameEn}</span>
+                    <span className="table__primary" dir="ltr" lang="en">
+                      {c.nameEn}
+                    </span>
                     <span className="t-secondary" dir="rtl" lang="ar">
                       {c.nameAr}
                     </span>
-                    {!c.active ? <Badge tone="beige">Retired</Badge> : null}
+                    {!c.active ? <Badge tone="beige">{t('retired')}</Badge> : null}
                   </span>
                 ),
               },
               ...(view === 'categories'
                 ? [
-                    { key: 'key', header: 'Code', cell: (c: Category) => <span className="t-mono">{c.key}</span> },
-                    { key: 'priority', header: 'Default priority', cell: (c: Category) => <PriorityBadge priority={c.defaultPriority} /> },
+                    { key: 'key', header: t('col.code'), cell: (c: Category) => <span className="t-mono">{c.key}</span> },
+                    { key: 'priority', header: t('col.priority'), cell: (c: Category) => <PriorityBadge priority={c.defaultPriority} /> },
                     {
                       key: 'where',
-                      header: 'Where',
-                      cell: (c: Category) => (c.commonAreaAllowed ? 'Units and common areas' : 'Units only'),
+                      header: t('col.where'),
+                      cell: (c: Category) => (c.commonAreaAllowed ? t('whereBoth') : t('whereUnits')),
                     },
                     {
                       key: 'specialties',
-                      header: 'Specialties',
+                      header: t('col.specialties'),
                       cell: (c: Category) =>
                         c.specialtyIds.length === 0 ? (
-                          <Badge tone="terracotta">None: no auto-dispatch</Badge>
+                          <Badge tone="terracotta">{t('noSpecialty')}</Badge>
                         ) : specialties.data ? (
                           <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
                             {c.specialtyIds.map((id) => (
                               <Badge key={id} plain>
-                                {names.get(id)?.nameEn ?? 'Retired specialty'}
+                                {nameOf(names.get(id) ?? { nameEn: t('retiredSpecialty'), nameAr: t('retiredSpecialty') })}
                               </Badge>
                             ))}
                           </span>
@@ -216,29 +235,29 @@ export function Categories({ view }: { view: 'categories' | 'sla' }) {
                   ]
                 : (['emergency', 'urgent', 'normal'] as const).map((p) => ({
                     key: p,
-                    header: <span title="Response / resolution">{p.charAt(0).toUpperCase() + p.slice(1)}</span>,
+                    header: <span title={t('col.responseResolution')}>{label(p)}</span>,
                     cell: (c: Category) => <span style={{ whiteSpace: 'nowrap' }}>{target(c, p)}</span>,
                   }))),
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{common('actions')}</span>,
                 className: 'table__actions',
                 cell: (c) => (
                   <span className="row" style={{ justifyContent: 'flex-end' }}>
                     {view === 'categories' ? (
                       <>
                         <Button size="sm" onClick={() => setOpen({ kind: 'edit', category: c })}>
-                          Edit
+                          {common('edit')}
                         </Button>
                         {readsSpecialties ? (
                           <Button size="sm" onClick={() => setOpen({ kind: 'specialties', category: c })}>
-                            Specialties
+                            {t('specialtiesButton')}
                           </Button>
                         ) : null}
                       </>
                     ) : (
                       <Button size="sm" onClick={() => setOpen({ kind: 'sla', category: c })}>
-                        Change targets
+                        {t('changeTargets')}
                       </Button>
                     )}
                   </span>

@@ -1,13 +1,16 @@
 'use client';
 
-import { formatDateTime, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, ReasonCodeDialog, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, ReasonCodeDialog, StatusBadge, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Specialty, type Technician } from '@/lib/queries';
+import ar from '@/messages/ar/maint-technicians';
+import en from '@/messages/en/maint-technicians';
 
 function SpecialtiesDialog({
   technician,
@@ -18,6 +21,8 @@ function SpecialtiesDialog({
   specialties: Specialty[];
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [picked, setPicked] = useState(() => new Set(technician.specialties.map((s) => s.id)));
   const save = useAction(
@@ -31,7 +36,7 @@ function SpecialtiesDialog({
     {
       invalidate: [keys.technicians],
       onDone: () => {
-        toast.show(`${technician.fullName ?? 'Technician'}'s specialties are saved.`);
+        toast.show(t('specialtiesSaved', { name: technician.fullName ?? t('technician') }));
         onClose();
       },
     },
@@ -43,24 +48,24 @@ function SpecialtiesDialog({
     <Dialog
       open
       onClose={onClose}
-      title={`Specialties of ${technician.fullName ?? 'this technician'}`}
-      description="Auto-dispatch offers a ticket only to technicians with a specialty its category needs. None ticked clears them all."
+      title={t('specialtiesTitle', { name: technician.fullName ?? t('thisTechnician') })}
+      description={t('specialtiesDescription')}
       onSubmit={() => save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        {shown.length === 0 ? <p className="t-secondary">The compound has no specialties yet.</p> : null}
+        {shown.length === 0 ? <p className="t-secondary">{t('noSpecialties')}</p> : null}
         {shown.map((s) => (
           <Checkbox
             key={s.id}
-            label={s.active ? s.nameEn : `${s.nameEn} (no longer in use)`}
+            label={s.active ? s.nameEn : t('retired', { name: s.nameEn })}
             checked={picked.has(s.id)}
             onChange={(e) =>
               setPicked((prev) => {
@@ -80,6 +85,9 @@ function SpecialtiesDialog({
 
 /** Who can take a ticket now: availability, specialties and workload (ADR 0033). */
 export function Technicians() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const technicians = useQuery({ queryKey: keys.technicians, queryFn: fetchers.technicians, refetchInterval: 60_000 });
   const specialties = useQuery({ queryKey: keys.specialties, queryFn: fetchers.specialties });
@@ -99,7 +107,7 @@ export function Technicians() {
     {
       invalidate: [keys.technicians, keys.ticketsAll],
       onDone: (state, v) => {
-        toast.show(`${v.t.fullName ?? 'Technician'} is now ${state.state}.`);
+        toast.show(t('availabilitySaved', { name: v.t.fullName ?? t('technician'), state: state.state }));
         setSwitching(null);
       },
     },
@@ -113,76 +121,76 @@ export function Technicians() {
         <QueryState query={technicians}>
           <DataTable<Technician>
             rows={technicians.data?.data}
-            rowKey={(t) => t.id}
-            empty="No technician yet"
-            emptyHint="Add a staff account with the technician role on the Staff page."
+            rowKey={(x) => x.id}
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
-              { key: 'name', header: 'Technician', cell: (t) => <span className="table__primary">{t.fullName ?? '—'}</span> },
+              { key: 'name', header: t('col.technician'), cell: (x) => <span className="table__primary">{x.fullName ?? '—'}</span> },
               {
                 key: 'availability',
-                header: 'Availability',
-                cell: (t) => (
-                  <span className="row" title={t.availability.since ? `Since ${formatDateTime(t.availability.since)}` : undefined}>
-                    <StatusBadge status={t.availability.state} />
-                    {t.availability.since ? <span className="t-secondary">{relativeTime(t.availability.since)}</span> : null}
+                header: t('col.availability'),
+                cell: (x) => (
+                  <span className="row" title={x.availability.since ? t('since', { when: fmt.dateTime(x.availability.since) }) : undefined}>
+                    <StatusBadge status={x.availability.state} />
+                    {x.availability.since ? <span className="t-secondary">{fmt.relative(x.availability.since)}</span> : null}
                   </span>
                 ),
               },
               {
                 key: 'specialties',
-                header: 'Specialties',
-                cell: (t) =>
-                  t.specialties.length ? (
+                header: t('col.specialties'),
+                cell: (x) =>
+                  x.specialties.length ? (
                     <span className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
-                      {t.specialties.map((s) => (
+                      {x.specialties.map((s) => (
                         <Badge key={s.id} plain>
                           {names.get(s.id) ?? s.key}
                         </Badge>
                       ))}
                     </span>
                   ) : (
-                    <span className="t-secondary">None</span>
+                    <span className="t-secondary">{c('none')}</span>
                   ),
               },
               {
                 key: 'open',
-                header: 'Open tickets',
-                cell: (t) =>
-                  t.openTickets ? (
-                    <Link className="table__link t-num" href={`/maintenance?technicianId=${t.id}`}>
-                      {t.openTickets}
+                header: t('col.open'),
+                cell: (x) =>
+                  x.openTickets ? (
+                    <Link className="table__link t-num" href={`/maintenance?technicianId=${x.id}`}>
+                      {fmt.number(x.openTickets)}
                     </Link>
                   ) : (
-                    <span className="t-num">0</span>
+                    <span className="t-num">{fmt.number(0)}</span>
                   ),
               },
               {
                 key: 'workload',
-                header: <span title="Open tickets weighted by status and priority: what auto-dispatch balances.">Workload</span>,
-                cell: (t) => <span className="t-num">{t.workload}</span>,
+                header: <span title={t('workloadHint')}>{t('col.workload')}</span>,
+                cell: (x) => <span className="t-num">{fmt.number(x.workload)}</span>,
               },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
-                cell: (t) => (
+                cell: (x) => (
                   <span className="row" style={{ justifyContent: 'flex-end' }}>
-                    <Button size="sm" onClick={() => setEditing(t)}>
-                      Specialties
+                    <Button size="sm" onClick={() => setEditing(x)}>
+                      {t('specialties')}
                     </Button>
-                    {t.availability.state === 'available' ? (
+                    {x.availability.state === 'available' ? (
                       <Button
                         size="sm"
                         onClick={() => {
                           setAvailability.reset();
-                          setSwitching(t);
+                          setSwitching(x);
                         }}
                       >
-                        Set unavailable
+                        {t('setUnavailable')}
                       </Button>
                     ) : (
-                      <Button size="sm" disabled={setAvailability.isPending} onClick={() => setAvailability.mutate({ t })}>
-                        Set available
+                      <Button size="sm" disabled={setAvailability.isPending} onClick={() => setAvailability.mutate({ t: x })}>
+                        {t('setAvailable')}
                       </Button>
                     )}
                   </span>
@@ -201,10 +209,10 @@ export function Technicians() {
           setSwitching(null);
           setAvailability.reset();
         }}
-        title={`Set ${switching?.fullName ?? 'this technician'} unavailable?`}
-        description="Auto-dispatch stops offering them tickets. The tickets they already have stay with them until you reassign them."
+        title={t('unavailableTitle', { name: switching?.fullName ?? t('thisTechnician') })}
+        description={t('unavailableDescription')}
         codes={REASON_CODES.availabilityChange}
-        confirmLabel="Set unavailable"
+        confirmLabel={t('setUnavailable')}
         pending={setAvailability.isPending}
         error={<ErrorAlert error={setAvailability.error} />}
         onConfirm={(reasonCode) => switching && setAvailability.mutate({ t: switching, reasonCode })}

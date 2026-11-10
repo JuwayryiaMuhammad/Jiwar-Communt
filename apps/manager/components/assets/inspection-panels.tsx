@@ -1,8 +1,9 @@
 'use client';
 
-import { fieldError, formatDate, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, CardBody, DataTable, Dialog, Field, Input, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, CardBody, DataTable, Dialog, Field, Input, Segmented, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Download, Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -11,9 +12,15 @@ import { TechnicianPicker } from '@/components/maintenance/technician-picker';
 import { api } from '@/lib/api';
 import { download } from '@/lib/download';
 import { fetchers, keys, type InspectionRound, type InspectionSummary } from '@/lib/queries';
-import { rateText, seriesText } from './format';
+import formatAr from '@/messages/ar/assets-format';
+import ar from '@/messages/ar/assets-inspections';
+import formatEn from '@/messages/en/assets-format';
+import en from '@/messages/en/assets-inspections';
+import { nameOf, seriesText } from './format';
 
 type Status = InspectionSummary['status'] | '';
+const VIEWS = ['scheduled', 'in_progress', 'submitted', 'cancelled', 'all'] as const;
+const UNITS = ['day', 'week', 'month', 'year'] as const;
 
 /** Where and what with: the area or asset, the checklist, the inspector. */
 function TargetFields({
@@ -25,37 +32,40 @@ function TargetFields({
   set: (k: 'place' | 'checklistId' | 'assigneeId') => (e: { target: { value: string } }) => void;
   error: unknown;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const areas = useQuery({ queryKey: keys.areas({ active: 'true' }), queryFn: () => fetchers.areas({ active: 'true' }) });
   const checklists = useQuery({ queryKey: keys.checklists, queryFn: fetchers.checklists });
   return (
     <div className="form__row">
-      <Field label="Area" error={fieldError(error, 'commonAreaId')}>
+      <Field label={t('area')} error={fieldError(error, 'commonAreaId')}>
         {(p) => (
           <Select {...p} value={f.place} onChange={set('place')}>
-            <option value="">Select…</option>
+            <option value="">{c('select')}</option>
             {(areas.data?.data ?? []).map((a) => (
               <option key={a.id} value={a.id}>
-                {a.code} · {a.nameEn}
+                {a.code} · {nameOf(fmt.locale, a)}
               </option>
             ))}
           </Select>
         )}
       </Field>
-      <Field label="Checklist" error={fieldError(error, 'checklistId')}>
+      <Field label={t('checklist')} error={fieldError(error, 'checklistId')}>
         {(p) => (
           <Select {...p} value={f.checklistId} onChange={set('checklistId')}>
-            <option value="">Select…</option>
+            <option value="">{c('select')}</option>
             {(checklists.data?.data ?? [])
-              .filter((c) => c.active && c.purpose !== 'pm')
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nameEn}
+              .filter((x) => x.active && x.purpose !== 'pm')
+              .map((x) => (
+                <option key={x.id} value={x.id}>
+                  {nameOf(fmt.locale, x)}
                 </option>
               ))}
           </Select>
         )}
       </Field>
-      <Field label="Inspector" error={fieldError(error, 'assigneeId')}>
+      <Field label={t('inspector')} error={fieldError(error, 'assigneeId')}>
         {(p) => <TechnicianPicker {...p} value={f.assigneeId} onChange={set('assigneeId')} />}
       </Field>
     </div>
@@ -63,6 +73,8 @@ function TargetFields({
 }
 
 function NewInspectionDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [f, setF] = useState({ place: '', checklistId: '', assigneeId: '', dueOn: '' });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -76,7 +88,7 @@ function NewInspectionDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.inspectionsAll],
       onDone: () => {
-        toast.show('Scheduled; the inspector is told.');
+        toast.show(t('scheduled'));
         onClose();
       },
     },
@@ -87,20 +99,20 @@ function NewInspectionDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="Schedule an inspection"
+      title={t('scheduleTitle')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Schedule
+            {t('schedule')}
           </Button>
         </>
       }
     >
       <div className="form">
         <TargetFields f={f} set={set} error={save.error} />
-        <Field label="Due" error={fieldError(save.error, 'dueOn')}>
+        <Field label={t('due')} error={fieldError(save.error, 'dueOn')}>
           {(p) => <Input {...p} type="date" value={f.dueOn} onChange={set('dueOn')} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -110,6 +122,8 @@ function NewInspectionDialog({ onClose }: { onClose: () => void }) {
 }
 
 function NewRoundDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [f, setF] = useState({ place: '', checklistId: '', assigneeId: '', title: '', every: '1', unit: 'week', anchorOn: '', leadDays: '2' });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -132,7 +146,7 @@ function NewRoundDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.inspectionsAll],
       onDone: () => {
-        toast.show('The round is on.');
+        toast.show(t('roundOn'));
         onClose();
       },
     },
@@ -143,42 +157,42 @@ function NewRoundDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="New inspection round"
-      description="An inspection that comes back on the calendar: each due date opens one, a few days before, for its inspector."
+      title={t('roundTitle')}
+      description={t('roundDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Add round
+            {t('addRound')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Title" error={fieldError(save.error, 'title')}>
+        <Field label={t('roundName')} error={fieldError(save.error, 'title')}>
           {(p) => <Input {...p} value={f.title} onChange={set('title')} />}
         </Field>
         <TargetFields f={f} set={set} error={save.error} />
         <div className="form__row">
-          <Field label="Every" error={fieldError(save.error, 'every')}>
+          <Field label={t('every')} error={fieldError(save.error, 'every')}>
             {(p) => <Input {...p} type="number" min={1} max={365} value={f.every} onChange={set('every')} />}
           </Field>
-          <Field label="Unit">
+          <Field label={t('unit')}>
             {(p) => (
               <Select {...p} value={f.unit} onChange={set('unit')}>
-                {['day', 'week', 'month', 'year'].map((u) => (
+                {UNITS.map((u) => (
                   <option key={u} value={u}>
-                    {u}s
+                    {t(`unit.${u}`)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="From" error={fieldError(save.error, 'anchorOn')}>
+          <Field label={t('from')} error={fieldError(save.error, 'anchorOn')}>
             {(p) => <Input {...p} type="date" value={f.anchorOn} onChange={set('anchorOn')} />}
           </Field>
-          <Field label="Opens days before" error={fieldError(save.error, 'leadDays')}>
+          <Field label={t('leadDays')} error={fieldError(save.error, 'leadDays')}>
             {(p) => <Input {...p} type="number" min={0} max={60} value={f.leadDays} onChange={set('leadDays')} />}
           </Field>
         </div>
@@ -189,6 +203,9 @@ function NewRoundDialog({ onClose }: { onClose: () => void }) {
 }
 
 export function InspectionsPanel() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const [status, setStatus] = useState<Status>('scheduled');
   const [open, setOpen] = useState(false);
   const filters = { status };
@@ -197,20 +214,14 @@ export function InspectionsPanel() {
     <>
       <div className="toolbar">
         <Segmented<Status>
-          label="Status"
+          label={t('status')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'scheduled', label: 'Scheduled' },
-            { value: 'in_progress', label: 'In progress' },
-            { value: 'submitted', label: 'Submitted' },
-            { value: 'cancelled', label: 'Cancelled' },
-            { value: '', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v === 'all' ? '' : v, label: t(`view.${v}`) }))}
         />
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen(true)}>
-          Schedule
+          {t('schedule')}
         </Button>
       </div>
       <Card flush>
@@ -218,20 +229,20 @@ export function InspectionsPanel() {
           <DataTable<InspectionSummary>
             rows={list.rows}
             rowKey={(i) => i.id}
-            empty="No inspection"
+            empty={t('empty')}
             columns={[
               {
                 key: 'd',
-                header: 'Due',
+                header: t('col.due'),
                 cell: (i) => (
                   <Link className="table__link" href={`/inspections/${i.id}`}>
-                    {formatDate(i.dueOn)}
+                    {fmt.day(i.dueOn)}
                   </Link>
                 ),
               },
-              { key: 's', header: 'Status', cell: (i) => humanize(i.status) },
-              { key: 'r', header: 'From', cell: (i) => (i.roundId ? 'A round' : 'On its own') },
-              { key: 'c', header: 'Scanned', cell: (i) => (i.scannedAt ? 'Yes' : '—') },
+              { key: 's', header: t('col.status'), cell: (i) => label(i.status) },
+              { key: 'r', header: t('col.from'), cell: (i) => (i.roundId ? t('fromRound') : t('onItsOwn')) },
+              { key: 'c', header: t('col.scanned'), cell: (i) => (i.scannedAt ? t('yes') : '—') },
             ]}
           />
           <LoadMore query={list} />
@@ -243,6 +254,9 @@ export function InspectionsPanel() {
 }
 
 export function RoundsPanel() {
+  const t = useT(en, ar);
+  const tf = useT(formatEn, formatAr);
+  const fmt = useFormat();
   const toast = useToast();
   const rounds = useQuery({ queryKey: keys.inspectionRounds({}), queryFn: () => fetchers.inspectionRounds({}) });
   const [open, setOpen] = useState(false);
@@ -253,14 +267,14 @@ export function RoundsPanel() {
           ? api.POST('/api/v1/maintenance/inspection-rounds/{id}/deactivate', { params: { path: { id: r.id } } })
           : api.POST('/api/v1/maintenance/inspection-rounds/{id}/reactivate', { params: { path: { id: r.id } } }),
       ),
-    { invalidate: [keys.inspectionsAll], onDone: (r) => toast.show(r.active ? 'The round is on.' : 'The round is off.') },
+    { invalidate: [keys.inspectionsAll], onDone: (r) => toast.show(r.active ? t('roundOn') : t('roundOff')) },
   );
   return (
     <>
       <div className="toolbar">
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen(true)}>
-          New round
+          {t('newRound')}
         </Button>
       </div>
       <ErrorAlert error={toggle.error} />
@@ -269,19 +283,19 @@ export function RoundsPanel() {
           <DataTable<InspectionRound>
             rows={rounds.data?.data}
             rowKey={(r) => r.id}
-            empty="No round"
+            empty={t('noRound')}
             columns={[
-              { key: 't', header: 'Round', cell: (r) => <span className="table__primary">{r.title}</span> },
-              { key: 'e', header: 'How often', cell: (r) => seriesText(r) },
-              { key: 'n', header: 'Next due', cell: (r) => formatDate(r.nextDueOn) },
-              { key: 'a', header: 'Status', cell: (r) => (r.active ? 'On' : <Badge tone="beige">Off</Badge>) },
+              { key: 't', header: t('col.round'), cell: (r) => <span className="table__primary">{r.title}</span> },
+              { key: 'e', header: t('col.often'), cell: (r) => seriesText(tf, r) },
+              { key: 'n', header: t('col.nextDue'), cell: (r) => fmt.day(r.nextDueOn) },
+              { key: 'a', header: t('col.status'), cell: (r) => (r.active ? t('on') : <Badge tone="beige">{t('off')}</Badge>) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{t('actions')}</span>,
                 className: 'table__actions',
                 cell: (r) => (
                   <Button size="sm" loading={toggle.isPending} onClick={() => toggle.mutate(r)}>
-                    {r.active ? 'Turn off' : 'Turn on'}
+                    {r.active ? t('turnOff') : t('turnOn')}
                   </Button>
                 ),
               },
@@ -297,15 +311,18 @@ export function RoundsPanel() {
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export function ReportPanel() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const [from, setFrom] = useState(iso(new Date(Date.now() - 30 * 86_400_000)));
   const [to, setTo] = useState(iso(new Date()));
   const report = useQuery({ queryKey: keys.inspectionReport(from, to), queryFn: () => fetchers.inspectionReport(from, to) });
-  const t = report.data?.totals;
+  const r = report.data?.totals;
+  const rate = (x: number | null) => fmt.percent(x, 0);
   return (
     <>
       <div className="toolbar">
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={t('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={t('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
         <span className="spacer" />
         <Button
           icon={<Download aria-hidden />}
@@ -315,29 +332,25 @@ export function ReportPanel() {
         </Button>
       </div>
       <QueryState query={report}>
-        {t ? (
+        {r ? (
           <Card>
             <CardBody>
               <dl className="dl">
-                <dt>Due in the period</dt>
-                <dd>{t.inspections}</dd>
-                <dt>Submitted</dt>
+                <dt>{t('dueInPeriod')}</dt>
+                <dd>{fmt.number(r.inspections)}</dd>
+                <dt>{t('submitted')}</dt>
+                <dd>{t('onTime', { n: fmt.number(r.submitted), rate: rate(r.submitted ? r.onTime / r.submitted : null) })}</dd>
+                <dt>{t('open')}</dt>
                 <dd>
-                  {t.submitted} · on time {rateText(t.submitted ? t.onTime / t.submitted : null)}
+                  {fmt.number(r.open)}
+                  {r.overdue ? <Badge tone="error">{t('overdue', { n: fmt.number(r.overdue) })}</Badge> : null}
                 </dd>
-                <dt>Open</dt>
-                <dd>
-                  {t.open}
-                  {t.overdue ? <Badge tone="error">{t.overdue} overdue</Badge> : null}
-                </dd>
-                <dt>Cancelled</dt>
-                <dd>{t.cancelled}</dd>
-                <dt>Failed items</dt>
-                <dd>{t.failedItems}</dd>
-                <dt>Findings followed up</dt>
-                <dd>
-                  {t.findingsClosed} of {t.findings} · {rateText(t.closureRate)}
-                </dd>
+                <dt>{t('cancelled')}</dt>
+                <dd>{fmt.number(r.cancelled)}</dd>
+                <dt>{t('failedItems')}</dt>
+                <dd>{fmt.number(r.failedItems)}</dd>
+                <dt>{t('followedUp')}</dt>
+                <dd>{t('followedUpValue', { closed: fmt.number(r.findingsClosed), total: fmt.number(r.findings), rate: rate(r.closureRate) })}</dd>
               </dl>
             </CardBody>
           </Card>

@@ -1,13 +1,17 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, Checkbox, DataTable, Dialog, Field, Input, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, Checkbox, DataTable, Dialog, Field, Input, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type AssetType, type Category } from '@/lib/queries';
+import ar from '@/messages/ar/ms-safety';
+import en from '@/messages/en/ms-safety';
+import { useNameOf } from './names';
 
 const HAZARDS = REASON_CODES.workHazard;
 type Hazard = (typeof HAZARDS)[number];
@@ -28,19 +32,22 @@ function HazardsDialog({
   error: unknown;
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const label = useLabel();
   const [chosen, setChosen] = useState<Hazard[]>(HAZARDS.filter((h) => current.includes(h)));
   return (
     <Dialog
       open
       onClose={onClose}
       title={title}
-      description="Its work starts only with an approved permit, not expired, for each of these."
+      description={t('hazardsDescription')}
       onSubmit={() => onSave(chosen)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common('cancel')}</Button>
           <Button type="submit" variant="primary" loading={pending}>
-            Save
+            {common('save')}
           </Button>
         </>
       }
@@ -50,7 +57,7 @@ function HazardsDialog({
         {HAZARDS.map((h) => (
           <Checkbox
             key={h}
-            label={humanize(h)}
+            label={label(h)}
             checked={chosen.includes(h)}
             onChange={(e) => setChosen(e.target.checked ? [...chosen, h] : chosen.filter((x) => x !== h))}
           />
@@ -61,6 +68,10 @@ function HazardsDialog({
 }
 
 function InstructionsDialog({ category, onClose }: { category: Category; onClose: () => void }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const fmt = useFormat();
+  const nameOf = useNameOf();
   const toast = useToast();
   const versions = useQuery({
     queryKey: keys.safetyInstructions(category.id),
@@ -79,7 +90,7 @@ function InstructionsDialog({ category, onClose }: { category: Category; onClose
     {
       invalidate: [keys.safetyInstructions(category.id)],
       onDone: (i) => {
-        toast.show(`Version ${i.version} published: technicians acknowledge it before they start.`);
+        toast.show(t('published', { version: i.version }));
         onClose();
       },
     },
@@ -89,14 +100,14 @@ function InstructionsDialog({ category, onClose }: { category: Category; onClose
       open
       wide
       onClose={onClose}
-      title={`Safety instructions · ${category.nameEn}`}
-      description="Each change is the next version; a version never changes. A technician acknowledges the current one for each ticket before the work starts or resumes."
+      title={t('instructionsTitle', { name: nameOf(category) })}
+      description={t('instructionsDescription')}
       onSubmit={() => publish.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{common('close')}</Button>
           <Button type="submit" variant="primary" loading={publish.isPending}>
-            Publish the next version
+            {t('publish')}
           </Button>
         </>
       }
@@ -105,17 +116,15 @@ function InstructionsDialog({ category, onClose }: { category: Category; onClose
         <ErrorAlert error={publish.error} />
         <QueryState query={versions}>
           {latest ? (
-            <p className="muted">
-              Version {latest.version}, {formatDateTime(latest.createdAt)}: {latest.textEn}
-            </p>
+            <p className="muted">{t('latest', { version: latest.version, when: fmt.dateTime(latest.createdAt), text: latest.textEn })}</p>
           ) : (
-            <p className="muted">None yet.</p>
+            <p className="muted">{t('noneYet')}</p>
           )}
         </QueryState>
-        <Field label="In English" error={fieldError(publish.error, 'textEn')}>
-          {(p) => <Input {...p} value={f.textEn} onChange={(e) => setF({ ...f, textEn: e.target.value })} />}
+        <Field label={t('inEnglish')} error={fieldError(publish.error, 'textEn')}>
+          {(p) => <Input {...p} dir="ltr" value={f.textEn} onChange={(e) => setF({ ...f, textEn: e.target.value })} />}
         </Field>
-        <Field label="In Arabic" error={fieldError(publish.error, 'textAr')}>
+        <Field label={t('inArabic')} error={fieldError(publish.error, 'textAr')}>
           {(p) => <Input {...p} dir="rtl" value={f.textAr} onChange={(e) => setF({ ...f, textAr: e.target.value })} />}
         </Field>
       </div>
@@ -129,6 +138,11 @@ function InstructionsDialog({ category, onClose }: { category: Category; onClose
  * instructions.
  */
 export function Safety() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const common = useCommonT();
+  const label = useLabel();
+  const nameOf = useNameOf();
   const { can } = usePermissions();
   const categories = useQuery({ queryKey: keys.categories, queryFn: fetchers.categories });
   const types = useQuery({ queryKey: keys.assetTypes, queryFn: fetchers.assetTypes, enabled: can('assets.manage') });
@@ -151,32 +165,32 @@ export function Safety() {
           ),
     { invalidate: [keys.categories, keys.assetTypes], onDone: () => setHazardsOf(null) },
   );
-  const list = (hazards: string[]) => (hazards.length ? hazards.map(humanize).join(', ') : 'No permit needed');
+  const list = (hazards: string[]) => (hazards.length ? fmt.list(hazards.map(label)) : t('noPermit'));
   return (
     <div className="stack">
       <Card flush>
-        <CardHeader title="Categories" />
+        <CardHeader title={t('categories')} />
         <CardBody>
           <QueryState query={categories}>
             <DataTable<Category>
               rows={categories.data?.data ?? []}
               rowKey={(c) => c.id}
-              empty="No category"
+              empty={t('emptyCategories')}
               columns={[
-                { key: 'n', header: 'Category', cell: (c) => c.nameEn },
-                { key: 'h', header: 'Needs a permit for', cell: (c) => list(c.requiresPermit) },
+                { key: 'n', header: t('col.category'), cell: (c) => nameOf(c) },
+                { key: 'h', header: t('col.permit'), cell: (c) => list(c.requiresPermit) },
                 {
                   key: 'x',
-                  header: <span className="visually-hidden">Actions</span>,
+                  header: <span className="visually-hidden">{common('actions')}</span>,
                   className: 'table__actions',
                   cell: (c) => (
                     <span className="row" style={{ gap: 6 }}>
                       <Button size="sm" onClick={() => setHazardsOf({ kind: 'category', row: c })}>
-                        Hazards
+                        {t('hazards')}
                       </Button>
                       {can('safety.manage') ? (
                         <Button size="sm" onClick={() => setInstructing(c)}>
-                          Instructions
+                          {t('instructions')}
                         </Button>
                       ) : null}
                     </span>
@@ -189,23 +203,23 @@ export function Safety() {
       </Card>
       {can('assets.manage') ? (
         <Card flush>
-          <CardHeader title="Asset types" />
+          <CardHeader title={t('assetTypes')} />
           <CardBody>
             <QueryState query={types}>
               <DataTable<AssetType>
                 rows={types.data?.data ?? []}
-                rowKey={(t) => t.id}
-                empty="No asset type"
+                rowKey={(x) => x.id}
+                empty={t('emptyTypes')}
                 columns={[
-                  { key: 'n', header: 'Asset type', cell: (t) => t.nameEn },
-                  { key: 'h', header: 'Needs a permit for', cell: (t) => list(t.requiresPermit) },
+                  { key: 'n', header: t('col.assetType'), cell: (x) => nameOf(x) },
+                  { key: 'h', header: t('col.permit'), cell: (x) => list(x.requiresPermit) },
                   {
                     key: 'x',
-                    header: <span className="visually-hidden">Actions</span>,
+                    header: <span className="visually-hidden">{common('actions')}</span>,
                     className: 'table__actions',
-                    cell: (t) => (
-                      <Button size="sm" onClick={() => setHazardsOf({ kind: 'type', row: t })}>
-                        Hazards
+                    cell: (x) => (
+                      <Button size="sm" onClick={() => setHazardsOf({ kind: 'type', row: x })}>
+                        {t('hazards')}
                       </Button>
                     ),
                   },
@@ -217,7 +231,7 @@ export function Safety() {
       ) : null}
       {hazardsOf ? (
         <HazardsDialog
-          title={`What ${hazardsOf.row.nameEn} needs a permit for`}
+          title={t('hazardsTitle', { name: nameOf(hazardsOf.row) })}
           current={hazardsOf.row.requiresPermit}
           onSave={(h) => save.mutate(h)}
           pending={save.isPending}

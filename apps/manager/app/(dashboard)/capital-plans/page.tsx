@@ -2,15 +2,17 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, Checkbox, DataTable, Field, ForbiddenState, Input, PageHeader } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { PLAN_STATUS_TEXT } from '@/components/reports/labels';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type CapitalPlan } from '@/lib/queries';
+import ar from '@/messages/ar/ops-capital-plans';
+import en from '@/messages/en/ops-capital-plans';
 
 /**
  * The capital plans (ADR 0086): one a year, for this year or the next
@@ -18,6 +20,8 @@ import { fetchers, keys, type CapitalPlan } from '@/lib/queries';
  * board once, and locked once it approves.
  */
 export default function CapitalPlansPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const router = useRouter();
   const { ready, can } = usePermissions();
   const allowed = can('assets.manage');
@@ -31,21 +35,21 @@ export default function CapitalPlansPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Capital plans" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Capital plans" description="The replacements and works of a year, for the board to approve once." />
+      <PageHeader title={t('title')} description={t('description')} />
       <Card>
         <div className="form__row" style={{ padding: 12 }}>
-          <Field label="Year" error={fieldError(create.error, 'year')}>
+          <Field label={t('year')} error={fieldError(create.error, 'year')}>
             {(p) => <Input {...p} inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value)} />}
           </Field>
-          <Checkbox label="Start from the replacements due that year" checked={seed} onChange={(e) => setSeed(e.target.checked)} />
+          <Checkbox label={t('seed')} checked={seed} onChange={(e) => setSeed(e.target.checked)} />
           <Button variant="primary" loading={create.isPending} onClick={() => create.mutate(undefined)}>
-            Draw the plan
+            {t('draw')}
           </Button>
         </div>
         <ErrorAlert error={create.error} />
@@ -55,15 +59,19 @@ export default function CapitalPlansPage() {
           <DataTable<CapitalPlan>
             rows={plans.data?.data ?? []}
             rowKey={(p) => p.id}
-            empty="No capital plan yet"
+            empty={t('empty')}
             columns={[
-              { key: 'year', header: 'Year', cell: (p) => <Link href={`/capital-plans/${p.id}`}>{p.year}</Link> },
-              { key: 'lines', header: 'Lines', cell: (p) => p.lines.length },
-              { key: 'total', header: 'Total (EGP)', cell: (p) => p.total },
+              { key: 'year', header: t('col.year'), cell: (p) => <Link href={`/capital-plans/${p.id}`}>{p.year}</Link> },
+              { key: 'lines', header: t('col.lines'), cell: (p) => fmt.number(p.lines.length) },
+              { key: 'total', header: t('col.total'), cell: (p) => fmt.money(p.total) },
               {
                 key: 'status',
-                header: 'Status',
-                cell: (p) => <Badge tone={p.status === 'approved' ? 'green' : p.status === 'submitted' ? 'terracotta' : 'beige'}>{PLAN_STATUS_TEXT[p.status]}</Badge>,
+                header: t('col.status'),
+                cell: (p) => (
+                  <Badge tone={p.status === 'approved' ? 'green' : p.status === 'submitted' ? 'terracotta' : 'beige'}>
+                    {t(`status.${p.status}`)}
+                  </Badge>
+                ),
               },
             ]}
           />

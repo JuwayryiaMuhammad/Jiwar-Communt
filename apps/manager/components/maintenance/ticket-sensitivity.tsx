@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Alert, Button, Card, CardHeader, DataTable, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Button, Card, CardHeader, DataTable, ReasonCodeDialog, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type SensitiveRead, type TicketDetail } from '@/lib/queries';
+import ar from '@/messages/ar/maint-actions';
+import en from '@/messages/en/maint-actions';
 
 /**
  * Sensitive tickets (ADR 0081): "Mark sensitive" for the dispatch (who
@@ -14,6 +17,7 @@ import { fetchers, keys, type SensitiveRead, type TicketDetail } from '@/lib/que
  * read it for the holders. A sensitive ticket says its access is logged.
  */
 export function TicketSensitivity({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const { can } = usePermissions();
   const holder = can('tickets.sensitive');
@@ -31,10 +35,10 @@ export function TicketSensitivity({ ticket }: { ticket: TicketDetail }) {
       onDone: () => {
         toast.show(
           ticket.sensitive
-            ? `${ticket.number} is no longer sensitive.`
+            ? t('notSensitive', { number: ticket.number })
             : holder
-              ? `${ticket.number} is sensitive: only who holds the permission sees it, and every read is logged.`
-              : `${ticket.number} is sensitive. You no longer see it.`,
+              ? t('sensitiveHolder', { number: ticket.number })
+              : t('sensitiveGone', { number: ticket.number }),
         );
         setOpen(false);
       },
@@ -43,20 +47,14 @@ export function TicketSensitivity({ ticket }: { ticket: TicketDetail }) {
   if (ticket.sensitive && !holder) return null;
   return (
     <>
-      <Button onClick={() => setOpen(true)}>{ticket.sensitive ? 'Clear sensitive' : 'Mark sensitive'}</Button>
+      <Button onClick={() => setOpen(true)}>{ticket.sensitive ? t('clearSensitive') : t('markSensitive')}</Button>
       <ReasonCodeDialog
         open={open}
         onClose={() => setOpen(false)}
-        title={ticket.sensitive ? `Clear ${ticket.number}?` : `Mark ${ticket.number} sensitive?`}
-        description={
-          ticket.sensitive
-            ? 'It goes back to every list of the dispatch.'
-            : holder
-              ? 'Only who holds “sensitive tickets” sees it among the compound’s tickets; its technician and residents keep it. Every staff read is logged.'
-              : 'You will no longer see it: only who holds “sensitive tickets” does. Its technician and residents keep it.'
-        }
+        title={ticket.sensitive ? t('clearTitle', { number: ticket.number }) : t('markTitle', { number: ticket.number })}
+        description={ticket.sensitive ? t('clearDescription') : holder ? t('markDescriptionHolder') : t('markDescription')}
         codes={ticket.sensitive ? REASON_CODES.ticketSensitiveClear : REASON_CODES.ticketSensitive}
-        confirmLabel={ticket.sensitive ? 'Clear' : 'Mark sensitive'}
+        confirmLabel={ticket.sensitive ? t('clear') : t('markSensitive')}
         pending={set.isPending}
         error={<ErrorAlert error={set.error} />}
         onConfirm={(code) => set.mutate(code)}
@@ -67,6 +65,9 @@ export function TicketSensitivity({ ticket }: { ticket: TicketDetail }) {
 
 /** The banner and the reads' log, on a sensitive ticket, for the holders. */
 export function SensitiveReads({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const { can } = usePermissions();
   const holder = can('tickets.sensitive');
   const reads = useCursorList(keys.sensitiveReads(ticket.id), (c) => fetchers.sensitiveReads(ticket.id, c), {
@@ -75,19 +76,19 @@ export function SensitiveReads({ ticket }: { ticket: TicketDetail }) {
   if (!ticket.sensitive) return null;
   return (
     <>
-      <Alert tone="warn">Access to this ticket is logged.</Alert>
+      <Alert tone="warn">{t('logged')}</Alert>
       {holder ? (
         <Card flush>
-          <CardHeader title="Who read it" />
+          <CardHeader title={t('whoRead')} />
           <QueryState query={reads}>
             <DataTable<SensitiveRead>
               rows={reads.rows}
               rowKey={(r) => r.id}
-              empty="Nobody yet"
+              empty={t('nobody')}
               columns={[
-                { key: 'at', header: 'When', width: 170, cell: (r) => formatDateTime(r.readAt) },
-                { key: 'who', header: 'Who', cell: (r) => r.reader.fullName ?? 'Erased account' },
-                { key: 'via', header: 'Where', cell: (r) => humanize(r.via) },
+                { key: 'at', header: t('col.when'), width: 170, cell: (r) => fmt.dateTime(r.readAt) },
+                { key: 'who', header: t('col.who'), cell: (r) => r.reader.fullName ?? t('erased') },
+                { key: 'via', header: t('col.where'), cell: (r) => label(r.via) },
               ]}
             />
             <LoadMore query={reads} />

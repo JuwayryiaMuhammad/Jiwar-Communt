@@ -1,44 +1,20 @@
-// The reports platform's words (ADR 0086): pure, tested with the rest.
+// The reports platform's choices (ADR 0086): pure, tested with the rest. Their
+// words are in messages/{en,ar}/ops-reports.ts, keyed by these values.
 
-export const COMPARE_TEXT: Record<string, string> = {
-  none: 'No comparison',
-  previous: 'The period before',
-  last_year: 'A year earlier',
-  both: 'Both',
-};
-
-export const CADENCE_TEXT: Record<string, string> = {
-  daily: 'Daily (the day before)',
-  weekly: 'Weekly (Saturday to Friday)',
-  monthly: 'Monthly (the month before)',
-};
-
-export const FORMAT_TEXT: Record<string, string> = { pdf: 'PDF', xlsx: 'Excel workbook', csv: 'CSV' };
-
+export const COMPARES = ['none', 'previous', 'last_year', 'both'] as const;
+export const CADENCES = ['daily', 'weekly', 'monthly'] as const;
+export const FORMATS = ['pdf', 'xlsx', 'csv'] as const;
 /** Why a figure is missing, as the energy report says. */
-export const NOTE_TEXT: Record<string, string> = {
-  no_tariff: 'No tariff in force',
-  no_area: 'A unit has no recorded area',
-};
+export const NOTES = ['no_tariff', 'no_area'] as const;
+export const GROUPS = ['building', 'asset_type', 'category', 'month', 'item'] as const;
 
-export const PLAN_STATUS_TEXT: Record<string, string> = {
-  draft: 'Draft',
-  submitted: 'With the board',
-  approved: 'Approved (locked)',
-};
+export const isNote = (v: string): v is (typeof NOTES)[number] => (NOTES as readonly string[]).includes(v);
+export const isGroup = (v: string): v is (typeof GROUPS)[number] => (GROUPS as readonly string[]).includes(v);
 
-export const GROUP_TEXT: Record<string, string> = {
-  building: 'Building',
-  asset_type: 'Asset type',
-  category: 'Category',
-  month: 'Month',
-  item: 'Item',
-};
-
-/** A change in percent, from two decimal strings; null with no base. */
-export function change(now: string | null, before: string | null): string | null {
+/** A change as a ratio (0.5 is +50%), from two decimal strings; null with no base. */
+export function change(now: string | null, before: string | null): number | null {
   if (now === null || before === null) return null;
   const b = Number(before);
   if (!b) return null;
-  return `${(((Number(now) - b) / Math.abs(b)) * 100).toFixed(1)}%`;
+  return (Number(now) - b) / Math.abs(b);
 }

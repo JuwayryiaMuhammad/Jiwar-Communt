@@ -1,0 +1,20 @@
+/** Replacement recommendations (ADR 0064): app/(dashboard)/replacement-recommendations. */
+export default {
+  title: 'Replacements',
+  description: 'What the technicians recommend replacing, and why.',
+  status: 'Status',
+  'status.pending': 'To decide',
+  'status.accepted': 'Accepted',
+  'status.declined': 'Declined',
+  accept: 'Accept',
+  accepted: 'Accepted.',
+  declined: 'Declined.',
+  empty: 'Nothing to decide',
+  'col.asset': 'Asset',
+  'col.why': 'Why',
+  'col.note': 'Note',
+  'col.when': 'When',
+  'col.status': 'Status',
+  statusWithReason: '{status} ({reason})',
+  declineTitle: 'Decline the recommendation',
+} as const;

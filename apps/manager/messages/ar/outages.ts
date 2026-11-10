@@ -1,0 +1,42 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/outages.ts';
+
+const ar: Translation<typeof en> = {
+  'state.cancelled': 'ملغى',
+  'state.ended': 'انتهى',
+  'state.going': 'جارٍ الآن',
+  'state.told': 'تم إبلاغ الساكنين',
+  'state.toBeTold': 'لم يُبلَّغ الساكنون بعد',
+  savedTold: 'تم الحفظ، ويُبلَّغ ساكنو المباني المعنية.',
+  savedLater: 'تم الحفظ، ويُبلَّغ ساكنو المباني المعنية قبل الموعد بـ 48 ساعة.',
+  changeTitle: 'تعديل الانقطاع',
+  newTitle: 'انقطاع جديد',
+  dialogDescription: 'يُبلَّغ الساكنون قبل البدء بـ 48 ساعة، أو فورًا إذا كان البدء أقرب من ذلك أو لم يكن مخططًا. وإذا تغيّر موعد البدء يُبلَّغون مرة أخرى، مرة واحدة.',
+  whatIsCut: 'ما الذي ينقطع',
+  planned: 'مخطط',
+  plannedYes: 'مخطط: يُبلَّغ الساكنون قبلها بـ 48 ساعة',
+  plannedNo: 'غير مخطط: يُبلَّغون الآن',
+  buildings: 'المباني',
+  buildingsHint: 'افصل بينها بفواصل. إن تُرك فارغًا فالكمبوند كله.',
+  from: 'من',
+  to: 'إلى',
+  residentsShould: 'ما على الساكنين فعله',
+  ended: 'تم إنهاء الانقطاع، ويُبلَّغ من سبق إبلاغهم.',
+  calledOff: 'تم إلغاء الانقطاع، ويُبلَّغ من سبق إبلاغهم.',
+  title: 'انقطاع الخدمات',
+  description: 'انقطاع المياه والكهرباء والغاز، ويُبلَّغ به ساكنو المباني المعنية.',
+  newOutage: 'انقطاع جديد',
+  empty: 'لا توجد انقطاعات',
+  'col.what': 'ما الذي ينقطع',
+  'col.where': 'أين',
+  'col.from': 'من',
+  'col.to': 'إلى',
+  'col.status': 'الحالة',
+  theCompound: 'الكمبوند',
+  change: 'عدّل',
+  end: 'أنهِ',
+  callOff: 'ألغِ',
+  callOffTitle: 'إلغاء الانقطاع',
+};
+
+export default ar;

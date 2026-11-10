@@ -1,19 +1,43 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { useNameOf } from '@/components/maintenance-setup/names';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StockMovement } from '@/lib/queries';
+import ar from '@/messages/ar/stock-item';
+import en from '@/messages/en/stock-item';
 
 type Open = 'receive' | 'adjust' | 'transfer' | 'edit' | null;
 
 /** One item of the store (ADR 0065): each store's level, its movements, and what changes them. */
 export default function StockItemPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const f = useFormat();
+  const nameOf = useNameOf();
   const { id } = useParams<{ id: string }>();
   const { ready, can } = usePermissions();
   const toast = useToast();
@@ -40,7 +64,7 @@ export default function StockItemPage() {
   const refresh = {
     invalidate: [keys.stockAll],
     onDone: () => {
-      toast.show('Done.');
+      toast.show(t('done'));
       close();
     },
   };
@@ -74,20 +98,20 @@ export default function StockItemPage() {
   if (ready && !can('stock.manage'))
     return (
       <>
-        <PageHeader title="Stock item" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   const i = item.data;
   const active = (stores.data?.data ?? []).filter((s) => s.active);
-  const storeSelect = (value: string, set: (v: string) => void, error: unknown, field: string, label = 'Store') => (
-    <Field label={label} error={fieldError(error, field)}>
+  const storeSelect = (value: string, set: (v: string) => void, error: unknown, field: string, caption = t('store')) => (
+    <Field label={caption} error={fieldError(error, field)}>
       {(p) => (
         <Select {...p} value={value} onChange={(e) => set(e.target.value)}>
-          <option value="">Select…</option>
+          <option value="">{c('select')}</option>
           {active.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.code} · {s.nameEn}
+              {s.code} · {nameOf(s)}
             </option>
           ))}
         </Select>
@@ -98,25 +122,34 @@ export default function StockItemPage() {
   return (
     <>
       <PageHeader
-        title={i ? `${i.sku} · ${i.nameEn}` : 'Stock item'}
-        description={i ? `${i.onHand} ${i.unit} held · ${i.reserved} reserved · average ${i.averageCost ?? '—'} EGP` : undefined}
+        title={i ? `${i.sku} · ${nameOf(i)}` : t('title')}
+        description={
+          i
+            ? t('summary', {
+                onHand: i.onHand,
+                unit: label(i.unit),
+                reserved: i.reserved,
+                average: i.averageCost ? f.money(i.averageCost) : '—',
+              })
+            : undefined
+        }
         actions={
           i?.active ? (
             <>
               <Button variant="primary" onClick={() => setOpen('receive')}>
-                Receive
+                {t('receive')}
               </Button>
-              <Button onClick={() => setOpen('adjust')}>Adjust</Button>
-              <Button onClick={() => setOpen('transfer')}>Transfer</Button>
+              <Button onClick={() => setOpen('adjust')}>{t('adjust')}</Button>
+              <Button onClick={() => setOpen('transfer')}>{t('transfer')}</Button>
               <Button
                 onClick={() => {
                   setReorderLevel(i.reorderLevel ?? '');
                   setOpen('edit');
                 }}
               >
-                Reorder level
+                {t('reorderLevel')}
               </Button>
-              <Button onClick={() => update.mutate({ active: false })}>Retire</Button>
+              <Button onClick={() => update.mutate({ active: false })}>{t('retire')}</Button>
             </>
           ) : undefined
         }
@@ -126,36 +159,41 @@ export default function StockItemPage() {
         {i ? (
           <div className="grid grid--main-aside">
             <Card flush>
-              <CardHeader title="Movements" />
+              <CardHeader title={t('movements')} />
               <QueryState query={movements}>
                 <DataTable<StockMovement>
                   rows={movements.rows}
                   rowKey={(m) => m.id}
-                  empty="No movement yet"
+                  empty={t('emptyMovements')}
                   columns={[
-                    { key: 'w', header: 'When', width: 170, cell: (m) => formatDateTime(m.occurredAt) },
-                    { key: 'k', header: 'What', cell: (m) => humanize(m.kind) + (m.reasonCode ? ` (${humanize(m.reasonCode).toLowerCase()})` : '') },
-                    { key: 'q', header: 'Quantity', cell: (m) => m.quantity },
-                    { key: 's', header: 'Store', cell: (m) => active.find((s) => s.id === m.storeId)?.code ?? '—' },
-                    { key: 'c', header: 'Cost', cell: (m) => (m.unitCost ? `${m.unitCost} EGP` : '—') },
+                    { key: 'w', header: t('col.when'), width: 170, cell: (m) => f.dateTime(m.occurredAt) },
+                    {
+                      key: 'k',
+                      header: t('col.what'),
+                      cell: (m) =>
+                        m.reasonCode ? t('kindWithReason', { kind: label(m.kind), reason: label(m.reasonCode).toLowerCase() }) : label(m.kind),
+                    },
+                    { key: 'q', header: t('col.quantity'), cell: (m) => m.quantity },
+                    { key: 's', header: t('col.store'), cell: (m) => active.find((s) => s.id === m.storeId)?.code ?? '—' },
+                    { key: 'c', header: t('col.cost'), cell: (m) => (m.unitCost ? f.money(m.unitCost) : '—') },
                   ]}
                 />
                 <LoadMore query={movements} />
               </QueryState>
             </Card>
             <Card flush>
-              <CardHeader title="By store" />
+              <CardHeader title={t('byStore')} />
               <CardBody>
                 {i.levels.length ? (
                   i.levels.map((l) => (
                     <p key={l.store.id}>
-                      {l.store.code}: {l.quantity} held, {l.reserved} reserved
+                      {t('levelLine', { code: l.store.code, quantity: l.quantity, reserved: l.reserved })}
                     </p>
                   ))
                 ) : (
-                  <p className="text-muted">Nothing received yet.</p>
+                  <p className="text-muted">{t('nothingReceived')}</p>
                 )}
-                <p className="text-muted">Reorder level: {i.reorderLevel ?? 'none'}</p>
+                <p className="text-muted">{t('reorderLevelLine', { level: i.reorderLevel ?? t('none') })}</p>
               </CardBody>
             </Card>
           </div>
@@ -164,46 +202,46 @@ export default function StockItemPage() {
       <Dialog
         open={open === 'receive' || open === 'adjust' || open === 'transfer'}
         onClose={close}
-        title={open === 'receive' ? 'Receive' : open === 'adjust' ? 'Adjust a level' : 'Transfer'}
+        title={open === 'receive' ? t('receive') : open === 'adjust' ? t('adjustTitle') : t('transfer')}
         onSubmit={() => action.mutate()}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={action.isPending}>
-              Save
+              {c('save')}
             </Button>
           </>
         }
       >
         <div className="form">
           <ErrorAlert error={action.error} />
-          {storeSelect(storeId, setStoreId, action.error, open === 'transfer' ? 'fromStoreId' : 'storeId', open === 'transfer' ? 'From' : 'Store')}
-          {open === 'transfer' ? storeSelect(toStoreId, setToStoreId, action.error, 'toStoreId', 'To') : null}
+          {storeSelect(storeId, setStoreId, action.error, open === 'transfer' ? 'fromStoreId' : 'storeId', open === 'transfer' ? t('from') : t('store'))}
+          {open === 'transfer' ? storeSelect(toStoreId, setToStoreId, action.error, 'toStoreId', t('to')) : null}
           <Field
-            label={open === 'adjust' ? 'Change' : 'Quantity'}
-            hint={open === 'adjust' ? 'Signed: -2 takes two off.' : undefined}
+            label={open === 'adjust' ? t('change') : t('quantity')}
+            hint={open === 'adjust' ? t('changeHint') : undefined}
             error={fieldError(action.error, open === 'adjust' ? 'delta' : 'quantity')}
           >
             {(p) => <Input {...p} value={quantity} onChange={(e) => setQuantity(e.target.value)} />}
           </Field>
           {open === 'receive' ? (
             <>
-              <Field label="Cost of one (EGP)" error={fieldError(action.error, 'unitCost')}>
+              <Field label={t('unitCost')} error={fieldError(action.error, 'unitCost')}>
                 {(p) => <Input {...p} value={unitCost} onChange={(e) => setUnitCost(e.target.value)} />}
               </Field>
-              <Field label="Delivery note or invoice" error={fieldError(action.error, 'reference')}>
+              <Field label={t('reference')} error={fieldError(action.error, 'reference')}>
                 {(p) => <Input {...p} value={reference} onChange={(e) => setReference(e.target.value)} />}
               </Field>
             </>
           ) : null}
           {open === 'adjust' ? (
-            <Field label="Why" error={fieldError(action.error, 'reasonCode')}>
+            <Field label={t('why')} error={fieldError(action.error, 'reasonCode')}>
               {(p) => (
                 <Select {...p} value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>
-                  <option value="">Select…</option>
-                  {REASON_CODES.stockAdjust.map((c) => (
-                    <option key={c} value={c}>
-                      {humanize(c)}
+                  <option value="">{c('select')}</option>
+                  {REASON_CODES.stockAdjust.map((code) => (
+                    <option key={code} value={code}>
+                      {label(code)}
                     </option>
                   ))}
                 </Select>
@@ -215,19 +253,19 @@ export default function StockItemPage() {
       <Dialog
         open={open === 'edit'}
         onClose={close}
-        title="Reorder level"
-        description="Who keeps the store is told once what it holds falls to this. Empty: no warning."
+        title={t('reorderLevel')}
+        description={t('reorderDescription')}
         onSubmit={() => update.mutate({ reorderLevel: reorderLevel.trim() || null })}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={update.isPending}>
-              Save
+              {c('save')}
             </Button>
           </>
         }
       >
-        <Field label="Level" error={fieldError(update.error, 'reorderLevel')}>
+        <Field label={t('level')} error={fieldError(update.error, 'reorderLevel')}>
           {(p) => <Input {...p} value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />}
         </Field>
       </Dialog>

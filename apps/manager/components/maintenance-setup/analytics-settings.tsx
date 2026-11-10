@@ -2,19 +2,17 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, Field, Input, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, Field, Input, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type AnalyticsSettings } from '@/lib/queries';
+import ar from '@/messages/ar/ms-analytics';
+import en from '@/messages/en/ms-analytics';
 
-const FIELDS = [
-  ['recurrenceMinTickets', 'Repeat faults that suggest planned work (2–20)'],
-  ['recurrenceWindowDays', 'Counted over (days, 7–366)'],
-  ['caseMinTickets', 'Residents’ reports that open a community case (2–20)'],
-  ['caseWindowDays', 'Counted over (days, 1–180)'],
-] as const;
-type Form = Record<(typeof FIELDS)[number][0], string>;
+const FIELDS = ['recurrenceMinTickets', 'recurrenceWindowDays', 'caseMinTickets', 'caseWindowDays'] as const;
+type Form = Record<(typeof FIELDS)[number], string>;
 
 const toForm = (s?: AnalyticsSettings): Form => ({
   recurrenceMinTickets: String(s?.recurrenceMinTickets ?? ''),
@@ -30,6 +28,8 @@ const toForm = (s?: AnalyticsSettings): Form => ({
  * applies to the next ticket.
  */
 export function AnalyticsSettingsCard() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const settings = useQuery({ queryKey: keys.analyticsSettings, queryFn: fetchers.analyticsSettings });
   const [form, setForm] = useState<Form>(toForm(settings.data));
@@ -38,20 +38,20 @@ export function AnalyticsSettingsCard() {
     () =>
       unwrap(
         api.PATCH('/api/v1/maintenance/settings/analytics', {
-          body: Object.fromEntries(FIELDS.map(([k]) => [k, Number(form[k])])),
+          body: Object.fromEntries(FIELDS.map((k) => [k, Number(form[k])])),
         }),
       ),
-    { invalidate: [keys.analyticsSettings], onDone: () => toast.show('The analytics settings are saved.') },
+    { invalidate: [keys.analyticsSettings], onDone: () => toast.show(t('analyticsSaved')) },
   );
   return (
     <Card flush>
-      <CardHeader title="Analytics" />
+      <CardHeader title={t('analytics')} />
       <QueryState query={settings} rows={2}>
         <CardBody>
           <div className="stack">
             <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-              {FIELDS.map(([k, label]) => (
-                <Field key={k} label={label} error={fieldError(save.error, k)}>
+              {FIELDS.map((k) => (
+                <Field key={k} label={t(`field.${k}`)} error={fieldError(save.error, k)}>
                   {(f) => (
                     <Input
                       {...f}
@@ -66,7 +66,7 @@ export function AnalyticsSettingsCard() {
             </div>
             <span>
               <Button variant="primary" loading={save.isPending} onClick={() => save.mutate()}>
-                Save
+                {c('save')}
               </Button>
             </span>
             <ErrorAlert error={save.error} />

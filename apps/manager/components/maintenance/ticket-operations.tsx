@@ -1,23 +1,43 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, DataTable, Dialog, Field, Input, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  DataTable,
+  Dialog,
+  Field,
+  Input,
+  ReasonCodeDialog,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type QuoteSuggestion, type TicketCostEntry, type TicketDetail } from '@/lib/queries';
+import ar from '@/messages/ar/maint-operations';
+import en from '@/messages/en/maint-operations';
 
 /** What the technician did at the last completion (ADR 0065). */
 export function TicketCompletion({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   if (!ticket.completion) return null;
   return (
     <Card flush>
-      <CardHeader title="What was done" />
+      <CardHeader title={t('whatWasDone')} />
       <CardBody>
         <p>
-          <strong>{humanize(ticket.completion.actionCode)}</strong> · {formatDateTime(ticket.completion.completedAt)}
+          <strong>{label(ticket.completion.actionCode)}</strong> · {fmt.dateTime(ticket.completion.completedAt)}
         </p>
         {ticket.completion.note ? <p className="text-muted">{ticket.completion.note}</p> : null}
       </CardBody>
@@ -29,6 +49,10 @@ const RECORDED = ['labour', 'contractor', 'other'] as const;
 
 /** A ticket's costs (ADR 0065): dispatch records labour, contractors and others; parts come from the store. */
 export function TicketCosts({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const costs = useQuery({ queryKey: keys.ticketCosts(ticket.id), queryFn: () => fetchers.ticketCosts(ticket.id) });
   const [adding, setAdding] = useState(false);
@@ -48,7 +72,7 @@ export function TicketCosts({ ticket }: { ticket: TicketDetail }) {
     {
       invalidate: [keys.ticketCosts(ticket.id)],
       onDone: () => {
-        toast.show('Recorded.');
+        toast.show(t('recorded'));
         setAdding(false);
         setDescription('');
         setUnitAmount('');
@@ -61,25 +85,32 @@ export function TicketCosts({ ticket }: { ticket: TicketDetail }) {
     {
       invalidate: [keys.ticketCosts(ticket.id)],
       onDone: () => {
-        toast.show('Voided.');
+        toast.show(t('voided'));
         setVoiding(null);
       },
     },
   );
-  const t = costs.data?.totals;
+  const totals = costs.data?.totals;
+  const sum = (x: string) => fmt.number(x, { minimumFractionDigits: 2 });
   return (
     <Card flush>
       <CardHeader
-        title="Costs"
+        title={t('costs')}
         actions={
           <Button size="sm" onClick={() => setAdding(true)}>
-            Record a cost
+            {t('recordCost')}
           </Button>
         }
       >
-        {t ? (
+        {totals ? (
           <span className="text-muted">
-            {t.total} EGP · labour {t.labour} · contractors {t.contractor} · parts {t.parts} · other {t.other}
+            {t('totals', {
+              total: fmt.money(totals.total),
+              labour: sum(totals.labour),
+              contractor: sum(totals.contractor),
+              parts: sum(totals.parts),
+              other: sum(totals.other),
+            })}
           </span>
         ) : null}
       </CardHeader>
@@ -87,24 +118,24 @@ export function TicketCosts({ ticket }: { ticket: TicketDetail }) {
         <DataTable<TicketCostEntry>
           rows={costs.data?.data ?? []}
           rowKey={(e) => e.id}
-          empty="No costs yet"
+          empty={t('noCosts')}
           columns={[
-            { key: 'k', header: 'Kind', cell: (e) => humanize(e.kind) },
-            { key: 'd', header: 'What', cell: (e) => e.description ?? 'Part from the store' },
-            { key: 'q', header: 'Quantity', cell: (e) => e.quantity },
-            { key: 'a', header: 'Amount', cell: (e) => (e.voidedAt ? <s>{e.amount} EGP</s> : `${e.amount} EGP`) },
-            { key: 'w', header: 'When', cell: (e) => formatDateTime(e.enteredAt) },
+            { key: 'k', header: t('col.kind'), cell: (e) => label(e.kind) },
+            { key: 'd', header: t('col.what'), cell: (e) => e.description ?? t('partFromStore') },
+            { key: 'q', header: t('col.quantity'), cell: (e) => fmt.number(e.quantity) },
+            { key: 'a', header: t('col.amount'), cell: (e) => (e.voidedAt ? <s>{fmt.money(e.amount)}</s> : fmt.money(e.amount)) },
+            { key: 'w', header: t('col.when'), cell: (e) => fmt.dateTime(e.enteredAt) },
             {
               key: 'x',
-              header: <span className="visually-hidden">Actions</span>,
+              header: <span className="visually-hidden">{c('actions')}</span>,
               className: 'table__actions',
               cell: (e) =>
                 e.kind !== 'part' && !e.voidedAt ? (
                   <Button size="sm" onClick={() => setVoiding(e)}>
-                    Void
+                    {t('void')}
                   </Button>
                 ) : e.voidReason ? (
-                  humanize(e.voidReason)
+                  label(e.voidReason)
                 ) : null,
             },
           ]}
@@ -113,39 +144,39 @@ export function TicketCosts({ ticket }: { ticket: TicketDetail }) {
       <Dialog
         open={adding}
         onClose={() => setAdding(false)}
-        title="Record a cost"
-        description="Parts are not recorded here: the store writes them as it issues."
+        title={t('recordCost')}
+        description={t('costDescription')}
         onSubmit={() => record.mutate()}
         footer={
           <>
-            <Button onClick={() => setAdding(false)}>Cancel</Button>
+            <Button onClick={() => setAdding(false)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={record.isPending} disabled={!description.trim() || !unitAmount}>
-              Record
+              {t('record')}
             </Button>
           </>
         }
       >
         <div className="form">
           <ErrorAlert error={record.error} />
-          <Field label="Kind" error={fieldError(record.error, 'kind')}>
+          <Field label={t('kind')} error={fieldError(record.error, 'kind')}>
             {(p) => (
               <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
                 {RECORDED.map((k) => (
                   <option key={k} value={k}>
-                    {humanize(k)}
+                    {label(k)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="What it was" error={fieldError(record.error, 'description')}>
+          <Field label={t('whatItWas')} error={fieldError(record.error, 'description')}>
             {(p) => <Input {...p} value={description} onChange={(e) => setDescription(e.target.value)} />}
           </Field>
           <div className="form__row">
-            <Field label="Quantity" hint="Hours, visits, items." error={fieldError(record.error, 'quantity')}>
+            <Field label={t('quantity')} hint={t('quantityHint')} error={fieldError(record.error, 'quantity')}>
               {(p) => <Input {...p} value={quantity} onChange={(e) => setQuantity(e.target.value)} />}
             </Field>
-            <Field label="Unit amount (EGP)" error={fieldError(record.error, 'unitAmount')}>
+            <Field label={t('unitAmount')} error={fieldError(record.error, 'unitAmount')}>
               {(p) => <Input {...p} value={unitAmount} onChange={(e) => setUnitAmount(e.target.value)} />}
             </Field>
           </div>
@@ -154,13 +185,13 @@ export function TicketCosts({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={voiding !== null}
         onClose={() => setVoiding(null)}
-        title="Void the entry"
+        title={t('voidTitle')}
         codes={REASON_CODES.ticketCostVoid}
-        confirmLabel="Void"
+        confirmLabel={t('void')}
         danger
         pending={voidEntry.isPending}
         error={<ErrorAlert error={voidEntry.error} />}
-        onConfirm={(c) => voiding && voidEntry.mutate({ id: voiding.id, reasonCode: c })}
+        onConfirm={(code) => voiding && voidEntry.mutate({ id: voiding.id, reasonCode: code })}
       />
     </Card>
   );
@@ -168,29 +199,34 @@ export function TicketCosts({ ticket }: { ticket: TicketDetail }) {
 
 /** A ticket's parts (ADR 0065): what the technician asked the store for and what it got. */
 export function TicketParts({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const parts = useQuery({ queryKey: keys.ticketParts(ticket.id), queryFn: () => fetchers.ticketParts(ticket.id) });
   if (parts.data && !parts.data.requests.length && !parts.data.parts.length) return null;
   return (
     <Card flush>
-      <CardHeader title="Parts" />
+      <CardHeader title={t('parts')} />
       <QueryState query={parts}>
         <DataTable
           rows={parts.data?.requests ?? []}
           rowKey={(r) => r.id}
-          empty="No part asked for"
+          empty={t('noPartAsked')}
           columns={[
-            { key: 'i', header: 'Item', cell: (r) => parts.data?.parts.find((p) => p.itemId === r.itemId)?.sku ?? '—' },
-            { key: 'q', header: 'Quantity', cell: (r) => r.quantity },
-            { key: 's', header: 'Status', cell: (r) => humanize(r.status) + (r.reasonCode ? ` (${humanize(r.reasonCode).toLowerCase()})` : '') },
-            { key: 'w', header: 'Asked', cell: (r) => formatDateTime(r.requestedAt) },
+            { key: 'i', header: t('col.item'), cell: (r) => parts.data?.parts.find((p) => p.itemId === r.itemId)?.sku ?? '—' },
+            { key: 'q', header: t('col.quantity'), cell: (r) => fmt.number(r.quantity) },
+            {
+              key: 's',
+              header: t('col.status'),
+              cell: (r) => (r.reasonCode ? t('withReason', { status: label(r.status), reason: label(r.reasonCode) }) : label(r.status)),
+            },
+            { key: 'w', header: t('col.asked'), cell: (r) => fmt.dateTime(r.requestedAt) },
           ]}
         />
         {parts.data?.parts.length ? (
           <CardBody>
             {parts.data.parts.map((p) => (
-              <p key={p.itemId}>
-                {p.sku}: issued {p.issued}, returned {p.returned}
-              </p>
+              <p key={p.itemId}>{t('partLine', { sku: p.sku, issued: fmt.number(p.issued), returned: fmt.number(p.returned) })}</p>
             ))}
           </CardBody>
         ) : null}
@@ -201,6 +237,10 @@ export function TicketParts({ ticket }: { ticket: TicketDetail }) {
 
 /** The technician's suggested quotes (ADR 0065): dispatch sends one as the quote, or dismisses it. */
 export function TicketQuoteSuggestions({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { can } = usePermissions();
   const list = useQuery({
@@ -223,7 +263,7 @@ export function TicketQuoteSuggestions({ ticket }: { ticket: TicketDetail }) {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Sent to the residents.');
+        toast.show(t('sentToResidents'));
         setSending(null);
       },
     },
@@ -234,7 +274,7 @@ export function TicketQuoteSuggestions({ ticket }: { ticket: TicketDetail }) {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Dismissed.');
+        toast.show(t('dismissed'));
         setDismissing(null);
       },
     },
@@ -243,19 +283,24 @@ export function TicketQuoteSuggestions({ ticket }: { ticket: TicketDetail }) {
   if (!rows.length) return null;
   return (
     <Card flush>
-      <CardHeader title="Suggested quotes" />
+      <CardHeader title={t('suggestedQuotes')} />
       <DataTable<QuoteSuggestion>
         rows={rows}
         rowKey={(s) => s.id}
-        empty="None"
+        empty={c('none')}
         columns={[
-          { key: 'a', header: 'Amount', cell: (s) => `${s.amount} EGP` },
-          { key: 'n', header: 'Note', cell: (s) => s.note ?? '—' },
-          { key: 's', header: 'Status', cell: (s) => humanize(s.status) + (s.dismissReason ? ` (${humanize(s.dismissReason).toLowerCase()})` : '') },
-          { key: 'w', header: 'When', cell: (s) => formatDateTime(s.suggestedAt) },
+          { key: 'a', header: t('col.amount'), cell: (s) => fmt.money(s.amount) },
+          { key: 'n', header: t('col.note'), cell: (s) => s.note ?? '—' },
+          {
+            key: 's',
+            header: t('col.status'),
+            cell: (s) =>
+              s.dismissReason ? t('withReason', { status: label(s.status), reason: label(s.dismissReason) }) : label(s.status),
+          },
+          { key: 'w', header: t('col.when'), cell: (s) => fmt.dateTime(s.suggestedAt) },
           {
             key: 'x',
-            header: <span className="visually-hidden">Actions</span>,
+            header: <span className="visually-hidden">{c('actions')}</span>,
             className: 'table__actions',
             cell: (s) =>
               s.status === 'pending' ? (
@@ -268,10 +313,10 @@ export function TicketQuoteSuggestions({ ticket }: { ticket: TicketDetail }) {
                       setSending(s);
                     }}
                   >
-                    Send
+                    {t('send')}
                   </Button>
                   <Button size="sm" onClick={() => setDismissing(s)}>
-                    Dismiss
+                    {t('dismiss')}
                   </Button>
                 </span>
               ) : null,
@@ -281,21 +326,21 @@ export function TicketQuoteSuggestions({ ticket }: { ticket: TicketDetail }) {
       <Dialog
         open={sending !== null}
         onClose={() => setSending(null)}
-        title="Send as the quote"
-        description="The residents are asked to approve it before the work starts."
+        title={t('sendTitle')}
+        description={t('sendDescription')}
         onSubmit={() => send.mutate()}
         footer={
           <>
-            <Button onClick={() => setSending(null)}>Cancel</Button>
+            <Button onClick={() => setSending(null)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={send.isPending} disabled={!amount}>
-              Send
+              {t('send')}
             </Button>
           </>
         }
       >
         <div className="form">
           <ErrorAlert error={send.error} />
-          <Field label="Amount (EGP)" error={fieldError(send.error, 'amount')}>
+          <Field label={t('amount')} error={fieldError(send.error, 'amount')}>
             {(p) => <Input {...p} value={amount} onChange={(e) => setAmount(e.target.value)} />}
           </Field>
         </div>
@@ -303,12 +348,12 @@ export function TicketQuoteSuggestions({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={dismissing !== null}
         onClose={() => setDismissing(null)}
-        title="Dismiss the suggestion"
+        title={t('dismissTitle')}
         codes={REASON_CODES.quoteSuggestionDismiss}
-        confirmLabel="Dismiss"
+        confirmLabel={t('dismiss')}
         pending={dismiss.isPending}
         error={<ErrorAlert error={dismiss.error} />}
-        onConfirm={(c) => dismissing && dismiss.mutate({ id: dismissing.id, reasonCode: c })}
+        onConfirm={(code) => dismissing && dismiss.mutate({ id: dismissing.id, reasonCode: code })}
       />
     </Card>
   );

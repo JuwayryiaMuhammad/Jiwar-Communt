@@ -1,33 +1,46 @@
 /**
- * The operations dashboard's words (ADR 0079): what each alert says and
- * which page it opens, and a building's band as a badge. Plain TypeScript,
- * no imports.
+ * The operations dashboard's alerts (ADR 0079): which page each opens and
+ * what it says, and a building's band as a badge's tone. Plain TypeScript,
+ * type imports only; the words are in the shell-overview catalog.
  */
-export const ALERT: Record<string, { label: (count: number) => string; href: string }> = {
-  emergency_overdue: { label: (n) => `${n} emergency ticket${n === 1 ? '' : 's'} past the SLA`, href: '/maintenance' },
-  emergency_unassigned: { label: (n) => `${n} emergency ticket${n === 1 ? '' : 's'} with nobody assigned`, href: '/maintenance' },
-  lockdown_live: { label: (n) => `${n} lockdown${n === 1 ? '' : 's'} in force`, href: '/security/lockdowns' },
-  incident_critical_open: { label: (n) => `${n} critical incident${n === 1 ? '' : 's'} open`, href: '/security/incidents' },
-  tickets_overdue: { label: (n) => `${n} ticket${n === 1 ? '' : 's'} past the SLA`, href: '/maintenance' },
-  service_pressure: { label: (n) => `Service pressure: ${n} open tickets for the technicians available`, href: '/maintenance' },
-  outage_active: { label: (n) => `${n} utility outage${n === 1 ? '' : 's'} in force`, href: '/outages' },
-  meter_alert_open: { label: (n) => `${n} meter spike${n === 1 ? '' : 's'} not yet acknowledged`, href: '/meters' },
-  // Cash flow (ADR 0091): the count is the forecast's periods closing below the minimum.
-  cash_below_minimum: { label: () => 'The cash on hand is below the compound’s minimum', href: '/finance/cash-flow' },
-  cash_forecast_below_minimum: { label: (n) => `The cash falls below the minimum in ${n} coming period${n === 1 ? '' : 's'}`, href: '/finance/cash-flow' },
-};
+import type { Translate } from '@jiwar/i18n/core';
+import type en from '../../messages/en/shell-overview.ts';
 
-export function alertText(code: string, count: number): string {
-  return ALERT[code]?.label(count) ?? `${code.replace(/_/g, ' ')} (${count})`;
+export const ALERT = {
+  emergency_overdue: { href: '/maintenance' },
+  emergency_unassigned: { href: '/maintenance' },
+  lockdown_live: { href: '/security/lockdowns' },
+  incident_critical_open: { href: '/security/incidents' },
+  tickets_overdue: { href: '/maintenance' },
+  service_pressure: { href: '/maintenance' },
+  outage_active: { href: '/outages' },
+  meter_alert_open: { href: '/meters' },
+  // Cash flow (ADR 0091): the count is the forecast's periods closing below the minimum.
+  cash_below_minimum: { href: '/finance/cash-flow' },
+  cash_forecast_below_minimum: { href: '/finance/cash-flow' },
+} as const satisfies Record<string, { href: string }>;
+
+type AlertCode = keyof typeof ALERT;
+const isAlert = (code: string): code is AlertCode => Object.prototype.hasOwnProperty.call(ALERT, code);
+
+export function alertHref(code: string): string {
+  return isAlert(code) ? ALERT[code].href : '/';
 }
 
-export const BAND: Record<string, { label: string; tone: 'green' | 'beige' | 'terracotta' }> = {
-  ok: { label: 'OK', tone: 'green' },
-  attention: { label: 'Attention', tone: 'beige' },
-  critical: { label: 'Critical', tone: 'terracotta' },
+/** What an alert says; an unknown code shows its words and its count. */
+export function alertText(t: Translate<typeof en>, code: string, count: number): string {
+  return isAlert(code) ? t(`alert.${code}`, { n: count }) : t('alert.other', { what: code.replace(/_/g, ' '), n: count });
+}
+
+export const BAND_TONE: Record<string, 'green' | 'beige' | 'terracotta'> = {
+  ok: 'green',
+  attention: 'beige',
+  critical: 'terracotta',
 };
 
-/** A share, 0–1, as a percentage; a dash for none. */
-export function percent(share: number | null | undefined): string {
-  return share === null || share === undefined ? '—' : `${Math.round(share * 1000) / 10}%`;
+const BANDS = ['ok', 'attention', 'critical'] as const;
+
+/** A building's band in words, or the code itself when it is new. */
+export function bandText(t: Translate<typeof en>, band: string): string {
+  return (BANDS as readonly string[]).includes(band) ? t(`band.${band as (typeof BANDS)[number]}`) : band;
 }

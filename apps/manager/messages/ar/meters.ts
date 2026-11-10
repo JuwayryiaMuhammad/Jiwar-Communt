@@ -1,0 +1,41 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/meters.ts';
+
+const ar: Translation<typeof en> = {
+  added: 'تمت إضافة {code}.',
+  newTitle: 'عداد جديد',
+  newDescription: 'يحتفظ العداد بنوعه ونمطه ومعامله ومكانه طوال عمره.',
+  code: 'الرمز',
+  kind: 'النوع',
+  mode: 'النمط',
+  modeHint: 'تراكمي: السجل كما هو الآن.',
+  multiplier: 'المعامل',
+  where: 'المكان',
+  placeArea: 'منطقة مشتركة',
+  placeUnit: 'وحدة',
+  commonArea: 'المنطقة المشتركة',
+  unit: 'الوحدة',
+  choose: 'اختر…',
+  serial: 'الرقم التسلسلي',
+  installedOn: 'تاريخ التركيب',
+  imported: '{n, plural, zero {لم تُستورد قراءات} one {تم استيراد قراءة واحدة} two {تم استيراد قراءتين} few {تم استيراد # قراءات} many {تم استيراد # قراءة} other {تم استيراد # قراءة}}.',
+  importTitle: 'استيراد القراءات',
+  importDescription: 'ملف CSV بالأعمدة meter وread_on وvalue، وreset إذا أُعيد ضبط السجل. يُفحص كاملًا ثم يُطبَّق مرة واحدة.',
+  applyReadings: '{n, plural, one {طبّق قراءة واحدة} two {طبّق قراءتين} few {طبّق # قراءات} many {طبّق # قراءة} other {طبّق # قراءة}}',
+  chooseSheet: 'اختر الملف',
+  checkResult: '{status} · {rows} صفًّا · {problems} مشكلة',
+  'col.line': 'السطر',
+  'col.column': 'العمود',
+  'col.problem': 'المشكلة',
+  title: 'العدادات',
+  description: 'الكهرباء والمياه والغاز والوقود وساعات التشغيل، تُقرأ يدويًا أو بملف أو بواسطة فني.',
+  importReadings: 'استيراد القراءات',
+  newMeter: 'عداد جديد',
+  empty: 'لا توجد عدادات',
+  'col.code': 'الرمز',
+  'col.kind': 'النوع',
+  'col.mode': 'النمط',
+  'col.where': 'المكان',
+};
+
+export default ar;

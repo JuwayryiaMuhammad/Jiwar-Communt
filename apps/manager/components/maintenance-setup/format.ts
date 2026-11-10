@@ -1,10 +1,17 @@
-/** Minutes as a person reads them: `90` → `1 h 30 min`, `10080` → `7 d`. */
-export function formatMinutes(minutes: number): string {
+import type { Translate } from '@jiwar/i18n/core';
+import type en from '../../messages/en/ms-common.ts';
+
+export type DurationT = Translate<typeof en>;
+
+/** Minutes as a person reads them: `90` → `1 h 30 min`, `10080` → `7 d` (the `ms-common` words, handed in as `t`). */
+export function formatMinutes(minutes: number, t: DurationT): string {
   if (!Number.isFinite(minutes) || minutes < 0) return '—';
   const d = Math.floor(minutes / 1440);
   const h = Math.floor((minutes % 1440) / 60);
   const m = Math.round(minutes % 60);
-  return [d ? `${d} d` : '', h ? `${h} h` : '', m || (!d && !h) ? `${m} min` : ''].filter(Boolean).join(' ');
+  return [d ? t('duration.d', { n: d }) : '', h ? t('duration.h', { n: h }) : '', m || (!d && !h) ? t('duration.m', { n: m }) : '']
+    .filter(Boolean)
+    .join(' ');
 }
 
 /** Minutes after midnight as a clock time; 1440 is the end of the day. */

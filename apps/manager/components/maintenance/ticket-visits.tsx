@@ -1,13 +1,16 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardHeader, DataTable, Dialog, Field, Input, ReasonCodeDialog, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, CardHeader, DataTable, Dialog, Field, Input, ReasonCodeDialog, StatusBadge, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type TicketDetail, type Visit } from '@/lib/queries';
-import { personName } from './sla';
+import ar from '@/messages/ar/ticket-visits';
+import en from '@/messages/en/ticket-visits';
+import { useTicketWords } from './sla';
 
 const IN_HAND = ['assigned', 'en_route', 'in_progress', 'on_hold'];
 const ACTIVE = ['proposed', 'confirmed', 'arrived'];
@@ -31,12 +34,13 @@ function WindowFields({
   onChange: (next: { startsAt: string; endsAt: string }) => void;
   error: unknown;
 }) {
+  const t = useT(en, ar);
   return (
     <div className="form__row">
-      <Field label="From" hint="At least 15 minutes from now." error={fieldError(error, 'startsAt')}>
+      <Field label={t('from')} hint={t('fromHint')} error={fieldError(error, 'startsAt')}>
         {(p) => <Input {...p} type="datetime-local" value={startsAt} onChange={(e) => onChange({ startsAt: e.target.value, endsAt })} />}
       </Field>
-      <Field label="To" hint="At most 4 hours later." error={fieldError(error, 'endsAt')}>
+      <Field label={t('to')} hint={t('toHint')} error={fieldError(error, 'endsAt')}>
         {(p) => <Input {...p} type="datetime-local" value={endsAt} onChange={(e) => onChange({ startsAt, endsAt: e.target.value })} />}
       </Field>
     </div>
@@ -49,6 +53,11 @@ function WindowFields({
  * cancels an agreed visit. Arriving and finishing are the technician's own.
  */
 export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const common = useCommonT();
+  const label = useLabel();
+  const f = useFormat();
+  const words = useTicketWords();
   const toast = useToast();
   const [pending, setPending] = useState<Pending>(null);
   const [window, setWindow] = useState({ startsAt: '', endsAt: '' });
@@ -76,16 +85,16 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
 
   const propose = useAction(
     () => unwrap(api.POST('/api/v1/maintenance/tickets/{id}/visits', { params: { path: { id: ticket.id } }, body: range() })),
-    options('Visit proposed. The resident is asked to confirm.'),
+    options(t('proposed')),
   );
   const counter = useAction(
     (visit: Visit) =>
       unwrap(api.POST('/api/v1/maintenance/tickets/{id}/visits/{visitId}/counter', { params: at(visit), body: range() })),
-    options('Another window proposed.'),
+    options(t('counterProposed')),
   );
   const confirm = useAction(
     (visit: Visit) => unwrap(api.POST('/api/v1/maintenance/tickets/{id}/visits/{visitId}/confirm', { params: at(visit) })),
-    options('Visit confirmed.'),
+    options(t('confirmed')),
   );
   const reschedule = useAction(
     (v: { visit: Visit; reasonCode: string }) =>
@@ -95,7 +104,7 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
           body: { ...range(), reasonCode: v.reasonCode },
         }),
       ),
-    options('Visit rescheduled. The resident is asked to confirm the new window.'),
+    options(t('rescheduled')),
   );
   const cancel = useAction(
     (v: { visit: Visit; reasonCode: string }) =>
@@ -105,7 +114,7 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
           body: { reasonCode: v.reasonCode },
         }),
       ),
-    options('Visit cancelled.'),
+    options(t('cancelled')),
   );
 
   const rows = visits.data?.data;
@@ -113,15 +122,16 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
     ticket.unit !== null && IN_HAND.includes(ticket.status) && !(rows ?? []).some((v) => ACTIVE.includes(v.status));
   const windowReady = window.startsAt !== '' && window.endsAt !== '';
   const visit = pending && pending.kind !== 'propose' ? pending.visit : null;
+  const windowText = (v: Visit) => t('windowRange', { from: f.dateTime(v.startsAt), to: f.time(v.endsAt) });
 
   return (
     <Card flush>
       <CardHeader
-        title="Visits"
+        title={t('visits')}
         actions={
           canPropose ? (
             <Button size="sm" onClick={() => setPending({ kind: 'propose' })}>
-              Propose a visit
+              {t('proposeVisit')}
             </Button>
           ) : null
         }
@@ -130,78 +140,73 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
         <DataTable<Visit>
           rows={rows}
           rowKey={(v) => v.id}
-          empty="No visit yet"
+          empty={t('empty')}
           emptyHint={
-            ticket.unit === null
-              ? 'Visits are for tickets in a unit.'
-              : 'A visit is proposed by the technician or dispatch once the ticket is assigned, and confirmed by the resident.'
+            ticket.unit === null ? t('emptyNoUnit') : t('emptyHint')
           }
           columns={[
             {
               key: 'window',
-              header: 'Window',
-              cell: (v) => (
-                <span>
-                  {formatDateTime(v.startsAt)}
-                  <span className="t-secondary"> to {formatDateTime(v.endsAt).slice(-5)}</span>
-                </span>
-              ),
+              header: t('col.window'),
+              cell: (v) => <span>{windowText(v)}</span>,
             },
             {
               key: 'status',
-              header: 'Status',
+              header: t('col.status'),
               cell: (v) => (
                 <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
                   <StatusBadge status={v.status} />
                   {v.status === 'proposed' ? (
                     <span className="t-secondary">
-                      {v.proposedBySide === 'resident' ? 'by the resident: yours to answer' : 'by maintenance: the resident answers'}
+                      {v.proposedBySide === 'resident' ? t('byResident') : t('byMaintenance')}
                     </span>
                   ) : null}
-                  {v.lateNotifiedAt && v.status === 'confirmed' ? <Badge tone="terracotta">Late</Badge> : null}
-                  {v.cancelReasonCode ? <span className="t-secondary">{humanize(v.cancelReasonCode)}</span> : null}
+                  {v.lateNotifiedAt && v.status === 'confirmed' ? <Badge tone="terracotta">{t('late')}</Badge> : null}
+                  {v.cancelReasonCode ? <span className="t-secondary">{label(v.cancelReasonCode)}</span> : null}
                 </span>
               ),
             },
-            { key: 'technician', header: 'Technician', cell: (v) => personName(v.technician) },
+            { key: 'technician', header: t('col.technician'), cell: (v) => words.person(v.technician) },
             {
               key: 'access',
-              header: 'Access',
+              header: t('col.access'),
               cell: (v) =>
                 v.receiver ? (
-                  <span title={`Receiver: ${v.receiver.kind}`}>Received by {v.receiver.fullName ?? 'someone at home'}</span>
+                  <span title={t('receiverTitle', { kind: label(v.receiver.kind) })}>
+                    {t('receivedBy', { name: v.receiver.fullName ?? t('someoneAtHome') })}
+                  </span>
                 ) : v.absenceEntry.approved ? (
-                  <span title={v.absenceEntry.grantedBy ? `Granted by ${personName(v.absenceEntry.grantedBy)}` : undefined}>
-                    May enter while away
+                  <span title={v.absenceEntry.grantedBy ? t('grantedBy', { name: words.person(v.absenceEntry.grantedBy) }) : undefined}>
+                    {t('mayEnter')}
                   </span>
                 ) : (
-                  <span className="t-secondary">Resident at home</span>
+                  <span className="t-secondary">{t('atHome')}</span>
                 ),
             },
             {
               key: 'actions',
-              header: <span className="visually-hidden">Actions</span>,
+              header: <span className="visually-hidden">{common('actions')}</span>,
               className: 'table__actions',
               cell: (v) => (
                 <span className="row" style={{ justifyContent: 'flex-end' }}>
                   {v.status === 'proposed' && v.proposedBySide === 'resident' ? (
                     <>
                       <Button size="sm" variant="primary" onClick={() => setPending({ kind: 'confirm', visit: v })}>
-                        Confirm
+                        {t('confirm')}
                       </Button>
                       <Button size="sm" onClick={() => setPending({ kind: 'counter', visit: v })}>
-                        Other time
+                        {t('otherTime')}
                       </Button>
                     </>
                   ) : null}
                   {v.status === 'confirmed' ? (
                     <Button size="sm" onClick={() => setPending({ kind: 'reschedule', visit: v })}>
-                      Reschedule
+                      {t('reschedule')}
                     </Button>
                   ) : null}
                   {v.status === 'proposed' || v.status === 'confirmed' ? (
                     <Button size="sm" onClick={() => setPending({ kind: 'cancel', visit: v })}>
-                      Cancel
+                      {common('cancel')}
                     </Button>
                   ) : null}
                 </span>
@@ -214,11 +219,11 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
       <Dialog
         open={pending?.kind === 'propose' || pending?.kind === 'counter'}
         onClose={close}
-        title={pending?.kind === 'counter' ? 'Propose another window' : 'Propose a visit'}
+        title={pending?.kind === 'counter' ? t('proposeAnother') : t('proposeVisit')}
         description={
           pending?.kind === 'counter'
-            ? "The resident's proposal is replaced by this one, for them to confirm."
-            : `For ${personName(ticket.technician)}, inside the compound's visiting hours. The resident confirms it.`
+            ? t('counterDescription')
+            : t('proposeDescription', { name: words.person(ticket.technician) })
         }
         onSubmit={() => {
           if (!windowReady) return;
@@ -227,9 +232,9 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
         }}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{common('cancel')}</Button>
             <Button type="submit" variant="primary" loading={propose.isPending || counter.isPending} disabled={!windowReady}>
-              Propose
+              {t('propose')}
             </Button>
           </>
         }
@@ -243,14 +248,14 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
       <Dialog
         open={pending?.kind === 'confirm'}
         onClose={close}
-        title="Confirm the resident's window?"
-        description={visit ? `${formatDateTime(visit.startsAt)} to ${formatDateTime(visit.endsAt).slice(-5)}, for ${personName(visit.technician)}.` : undefined}
+        title={t('confirmTitle')}
+        description={visit ? t('confirmDescription', { window: windowText(visit), name: words.person(visit.technician) }) : undefined}
         onSubmit={() => visit && confirm.mutate(visit)}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{common('cancel')}</Button>
             <Button type="submit" variant="primary" loading={confirm.isPending}>
-              Confirm visit
+              {t('confirmVisit')}
             </Button>
           </>
         }
@@ -261,10 +266,10 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={pending?.kind === 'reschedule'}
         onClose={close}
-        title="Reschedule the visit"
-        description="The agreed visit ends and the new window goes to the resident to confirm. Their consent to enter while away does not carry over."
+        title={t('rescheduleTitle')}
+        description={t('rescheduleDescription')}
         codes={REASON_CODES.visitChange}
-        confirmLabel="Reschedule"
+        confirmLabel={t('reschedule')}
         ready={windowReady}
         pending={reschedule.isPending}
         error={<ErrorAlert error={reschedule.error} />}
@@ -276,10 +281,10 @@ export function TicketVisits({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={pending?.kind === 'cancel'}
         onClose={close}
-        title="Cancel the visit?"
-        description="The resident and the technician are told. The ticket stays as it is."
+        title={t('cancelTitle')}
+        description={t('cancelDescription')}
         codes={REASON_CODES.visitChange}
-        confirmLabel="Cancel visit"
+        confirmLabel={t('cancelVisit')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}

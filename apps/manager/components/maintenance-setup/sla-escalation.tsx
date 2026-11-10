@@ -2,10 +2,13 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, Field, Input, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, Field, Input, useLabel, useToast } from '@jiwar/ui';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type SlaSettings } from '@/lib/queries';
+import ar from '@/messages/ar/ms-sla';
+import en from '@/messages/en/ms-sla';
 
 const PRIORITIES = ['normal', 'urgent', 'emergency'] as const;
 type Shares = Record<(typeof PRIORITIES)[number], string>;
@@ -23,6 +26,8 @@ const shares = (s?: SlaSettings): Shares => ({
  * that priority.
  */
 export function SlaEscalation({ settings }: { settings?: SlaSettings }) {
+  const t = useT(en, ar);
+  const label = useLabel();
   const toast = useToast();
   const [form, setForm] = useState<Shares>(shares(settings));
   useEffect(() => setForm(shares(settings)), [settings]);
@@ -33,21 +38,17 @@ export function SlaEscalation({ settings }: { settings?: SlaSettings }) {
           body: Object.fromEntries(PRIORITIES.map((p) => [p, form[p].trim() === '' ? null : Number(form[p])])),
         }),
       ),
-    { invalidate: [keys.slaSettings], onDone: () => toast.show('The escalation levels are saved.') },
+    { invalidate: [keys.slaSettings], onDone: () => toast.show(t('escalationSaved')) },
   );
   return (
     <Card flush>
-      <CardHeader title="Escalation levels" />
+      <CardHeader title={t('escalationLevels')} />
       <CardBody>
         <div className="stack">
-          <p className="t-secondary">
-            At this share of its target (50–95 %), a running clock is at risk: its technician and the maintenance
-            supervisors are told once. At the target itself, the breach tells the managers too. Leave a priority
-            empty for no warning.
-          </p>
+          <p className="t-secondary">{t('escalationHint')}</p>
           <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
             {PRIORITIES.map((p) => (
-              <Field key={p} label={`${p.charAt(0).toUpperCase()}${p.slice(1)} (%)`} error={fieldError(save.error, p)}>
+              <Field key={p} label={t('priorityPercent', { priority: label(p) })} error={fieldError(save.error, p)}>
                 {(f) => (
                   <Input
                     {...f}
@@ -62,7 +63,7 @@ export function SlaEscalation({ settings }: { settings?: SlaSettings }) {
           </div>
           <span>
             <Button variant="primary" loading={save.isPending} onClick={() => save.mutate()}>
-              Save levels
+              {t('saveLevels')}
             </Button>
           </span>
           <ErrorAlert error={save.error} />

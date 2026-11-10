@@ -1,0 +1,40 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/stock-item.ts';
+
+const ar: Translation<typeof en> = {
+  done: 'تم.',
+  title: 'صنف مخزون',
+  summary: 'المتوفر {onHand} {unit} · المحجوز {reserved} · المتوسط {average}',
+  receive: 'استلام',
+  adjust: 'تسوية',
+  transfer: 'تحويل',
+  reorderLevel: 'حد إعادة الطلب',
+  retire: 'إيقاف الصنف',
+  movements: 'الحركات',
+  emptyMovements: 'لا توجد حركات بعد',
+  'col.when': 'التاريخ',
+  'col.what': 'النوع',
+  'col.quantity': 'الكمية',
+  'col.store': 'المخزن',
+  'col.cost': 'التكلفة',
+  kindWithReason: '{kind} (السبب: {reason})',
+  byStore: 'حسب المخزن',
+  levelLine: '{code}: المتوفر {quantity}، المحجوز {reserved}',
+  nothingReceived: 'لم يُستلم شيء بعد.',
+  reorderLevelLine: 'حد إعادة الطلب: {level}',
+  none: 'لا يوجد',
+  adjustTitle: 'تسوية رصيد',
+  store: 'المخزن',
+  from: 'من',
+  to: 'إلى',
+  change: 'التغيير',
+  changeHint: 'بإشارة: -2 تخصم اثنين.',
+  quantity: 'الكمية',
+  unitCost: 'تكلفة الوحدة الواحدة (جنيه)',
+  reference: 'إذن التسليم أو الفاتورة',
+  why: 'السبب',
+  reorderDescription: 'يُبلَّغ أمين المخزن عندما ينخفض الرصيد إلى هذا الحد. إن تُرك فارغًا فلا تنبيه.',
+  level: 'الحد',
+};
+
+export default ar;

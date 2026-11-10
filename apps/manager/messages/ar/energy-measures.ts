@@ -1,0 +1,41 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/energy-measures.ts';
+
+const ar: Translation<typeof en> = {
+  added: 'تمت إضافة الإجراء.',
+  newTitle: 'إجراء توفير جديد',
+  newDescription: 'على مبنى، أو على الكمبوند كله إذا لم يُذكر مبنى. يُقرأ أثره بمقارنة الأسابيع قبله بالأسابيع بعده.',
+  whatWasDone: 'ما الذي تم',
+  saves: 'يوفّر',
+  building: 'المبنى',
+  buildingHint: 'اتركه فارغًا للكمبوند كله.',
+  from: 'من',
+  costEgp: 'التكلفة (جنيه)',
+  ended: 'تم الإنهاء.',
+  measureDescription: '{kind} منذ {date}',
+  measureDescriptionIn: '{kind} منذ {date} في {building}',
+  endOn: 'إنهاء في {date}',
+  weeks: 'عدد الأسابيع على كل جانب',
+  weeksHint: 'أسابيع كاملة: يضم الجانبان الأيام نفسها من الأسبوع.',
+  endedOn: 'تاريخ الإنهاء',
+  beforeADay: 'قبل، في اليوم',
+  afterADay: 'بعد، في اليوم',
+  notStarted: 'لم يبدأ',
+  change: 'التغيّر',
+  everyDay: 'حُسبت كل الأيام',
+  stillCounting: 'ما زال الحساب جاريًا',
+  title: 'إجراءات التوفير',
+  description: 'ما تم لتقليل الاستهلاك، وما الذي تغيّر بسببه.',
+  newMeasure: 'إجراء جديد',
+  empty: 'لا توجد إجراءات',
+  'col.measure': 'الإجراء',
+  'col.saves': 'يوفّر',
+  'col.where': 'أين',
+  'col.from': 'من',
+  'col.ended': 'انتهى',
+  'col.cost': 'التكلفة',
+  aMeter: 'عداد',
+  theCompound: 'الكمبوند',
+};
+
+export default ar;

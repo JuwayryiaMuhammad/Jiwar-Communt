@@ -2,10 +2,13 @@
 
 import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
+import { useT } from '@jiwar/i18n';
 import { Button, ReasonCodeDialog, ReasonDialog, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type TicketDetail } from '@/lib/queries';
+import ar from '@/messages/ar/maint-actions';
+import en from '@/messages/en/maint-actions';
 
 /**
  * Dispatch's own moves (ADR 0076): close a resident's completed ticket on
@@ -14,6 +17,7 @@ import { keys, type TicketDetail } from '@/lib/queries';
  * each; a compound's work order is accepted instead of closed.
  */
 export function TicketStaffMoves({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [open, setOpen] = useState<'close' | 'reopen' | null>(null);
   const path = { path: { id: ticket.id } };
@@ -30,7 +34,7 @@ export function TicketStaffMoves({ ticket }: { ticket: TicketDetail }) {
     {
       ...refresh,
       onDone: () => {
-        toast.show(`${ticket.number} is closed. The residents are told and may still reopen it.`);
+        toast.show(t('closedForResidents', { number: ticket.number }));
         shut();
       },
     },
@@ -41,14 +45,14 @@ export function TicketStaffMoves({ ticket }: { ticket: TicketDetail }) {
     {
       ...refresh,
       onDone: () => {
-        toast.show(`${ticket.number} is open again.`);
+        toast.show(t('reopened', { number: ticket.number }));
         shut();
       },
     },
   );
   const resume = useAction(() => unwrap(api.POST('/api/v1/maintenance/tickets/{id}/resume', { params: path })), {
     ...refresh,
-    onDone: () => toast.show(`${ticket.number} is back in progress.`),
+    onDone: () => toast.show(t('resumed', { number: ticket.number })),
   });
 
   const closable = ticket.status === 'completed' && ticket.origin === 'resident';
@@ -57,11 +61,11 @@ export function TicketStaffMoves({ ticket }: { ticket: TicketDetail }) {
   return (
     <>
       <span className="row" style={{ gap: 6 }}>
-        {closable ? <Button onClick={() => setOpen('close')}>Close for the residents</Button> : null}
-        {ticket.status === 'closed' ? <Button onClick={() => setOpen('reopen')}>Reopen</Button> : null}
+        {closable ? <Button onClick={() => setOpen('close')}>{t('closeForResidents')}</Button> : null}
+        {ticket.status === 'closed' ? <Button onClick={() => setOpen('reopen')}>{t('reopen')}</Button> : null}
         {ticket.status === 'on_hold' ? (
           <Button loading={resume.isPending} onClick={() => resume.mutate()}>
-            Resume
+            {t('resume')}
           </Button>
         ) : null}
       </span>
@@ -69,10 +73,10 @@ export function TicketStaffMoves({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={open === 'close'}
         onClose={shut}
-        title={`Close ${ticket.number} for the residents?`}
-        description="When they confirmed by phone, cannot be reached, or left. They are told, and may still reopen it in their window."
+        title={t('closeTitle', { number: ticket.number })}
+        description={t('closeDescription')}
         codes={REASON_CODES.ticketStaffClose}
-        confirmLabel="Close ticket"
+        confirmLabel={t('closeConfirm')}
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
         onConfirm={(code) => close.mutate(code)}
@@ -80,12 +84,12 @@ export function TicketStaffMoves({ ticket }: { ticket: TicketDetail }) {
       <ReasonDialog
         open={open === 'reopen'}
         onClose={shut}
-        title={`Reopen ${ticket.number}?`}
-        description="Within 30 days of closing. It goes back to its technician the first time; your words go to the thread, and the residents are told."
+        title={t('reopenTitle', { number: ticket.number })}
+        description={t('reopenDescription')}
         codes={REASON_CODES.ticketReopen}
-        confirmLabel="Reopen"
-        textLabel="For the residents and the technician"
-        textHint="Posted in the ticket's thread."
+        confirmLabel={t('reopen')}
+        textLabel={t('reopenText')}
+        textHint={t('postedInThread')}
         pending={reopen.isPending}
         error={<ErrorAlert error={reopen.error} />}
         onConfirm={(r) => reopen.mutate(r)}

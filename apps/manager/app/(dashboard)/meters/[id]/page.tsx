@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDate, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -15,6 +16,8 @@ import {
   PageHeader,
   ReasonCodeDialog,
   Select,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -23,11 +26,17 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type MeterReading } from '@/lib/queries';
+import ar from '@/messages/ar/meters-detail';
+import en from '@/messages/en/meters-detail';
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 /** A meter (ADR 0066): its readings, corrected or withdrawn once, and its use by month. */
 export default function MeterPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const f = useFormat();
   const { id } = useParams<{ id: string }>();
   const { ready, can } = usePermissions();
   const toast = useToast();
@@ -61,7 +70,7 @@ export default function MeterPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Recorded.');
+        toast.show(t('recorded'));
         setRecording(false);
         setValue('');
         setReset(false);
@@ -83,7 +92,7 @@ export default function MeterPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Corrected.');
+        toast.show(t('corrected'));
         setCorrecting(null);
       },
     },
@@ -99,7 +108,7 @@ export default function MeterPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Withdrawn.');
+        toast.show(t('withdrawn'));
         setWithdrawing(null);
       },
     },
@@ -110,7 +119,7 @@ export default function MeterPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Retired.');
+        toast.show(t('retired'));
         setRetiring(false);
       },
     },
@@ -118,7 +127,7 @@ export default function MeterPage() {
   if (ready && !can('energy.read'))
     return (
       <>
-        <PageHeader title="Meter" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -127,14 +136,23 @@ export default function MeterPage() {
   return (
     <>
       <PageHeader
-        title={m ? m.code : 'Meter'}
-        description={m ? `${humanize(m.kind)} in ${m.unit}, ${m.mode}, ×${m.multiplier}${m.active ? '' : ' — retired'}` : undefined}
+        title={m ? m.code : t('title')}
+        description={
+          m
+            ? t(m.active ? 'description' : 'descriptionRetired', {
+                kind: label(m.kind),
+                unit: m.unit,
+                mode: label(m.mode),
+                multiplier: m.multiplier,
+              })
+            : undefined
+        }
         actions={
           manage && m?.active ? (
             <>
-              <Button onClick={() => setRetiring(true)}>Retire</Button>
+              <Button onClick={() => setRetiring(true)}>{t('retire')}</Button>
               <Button variant="primary" onClick={() => setRecording(true)}>
-                Enter a reading
+                {t('enterReading')}
               </Button>
             </>
           ) : null
@@ -142,10 +160,10 @@ export default function MeterPage() {
       />
       <Card flush>
         <CardHeader
-          title="Readings"
+          title={t('readings')}
           actions={
             <Button size="sm" onClick={() => setSuperseded(!superseded)}>
-              {superseded ? 'Live only' : 'With corrections'}
+              {superseded ? t('liveOnly') : t('withCorrections')}
             </Button>
           }
         />
@@ -153,16 +171,16 @@ export default function MeterPage() {
           <DataTable<MeterReading>
             rows={readings.rows}
             rowKey={(r) => r.id}
-            empty="No reading"
+            empty={t('empty')}
             columns={[
-              { key: 'd', header: 'Day', cell: (r) => formatDate(r.readOn) },
-              { key: 'v', header: 'Reading', cell: (r) => (r.supersededAt ? <s>{r.value}</s> : r.value) },
-              { key: 'r', header: 'Reset', cell: (r) => (r.reset ? 'Yes' : '') },
-              { key: 's', header: 'By', cell: (r) => humanize(r.source) },
-              { key: 'w', header: 'Entered', cell: (r) => formatDateTime(r.recordedAt) },
+              { key: 'd', header: t('col.day'), cell: (r) => f.day(r.readOn) },
+              { key: 'v', header: t('col.reading'), cell: (r) => (r.supersededAt ? <s>{r.value}</s> : r.value) },
+              { key: 'r', header: t('col.reset'), cell: (r) => (r.reset ? c('yes') : '') },
+              { key: 's', header: t('col.by'), cell: (r) => label(r.source) },
+              { key: 'w', header: t('col.entered'), cell: (r) => f.dateTime(r.recordedAt) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (r) =>
                   manage && !r.supersededAt ? (
@@ -174,14 +192,14 @@ export default function MeterPage() {
                           setCorrecting(r);
                         }}
                       >
-                        Correct
+                        {t('correct')}
                       </Button>
                       <Button size="sm" onClick={() => setWithdrawing(r)}>
-                        Withdraw
+                        {t('withdraw')}
                       </Button>
                     </span>
                   ) : r.supersededReason ? (
-                    humanize(r.supersededReason)
+                    label(r.supersededReason)
                   ) : null,
               },
             ]}
@@ -190,8 +208,8 @@ export default function MeterPage() {
         </QueryState>
       </Card>
       <Card flush>
-        <CardHeader title="Use by month">
-          <span className="text-muted">The last twelve months, computed from the live readings.</span>
+        <CardHeader title={t('useByMonth')}>
+          <span className="text-muted">{t('useByMonthHint')}</span>
         </CardHeader>
         <QueryState query={use}>
           <CardBody>
@@ -200,13 +218,13 @@ export default function MeterPage() {
                 rows={months}
                 rowKey={(x) => x.month}
                 columns={[
-                  { key: 'm', header: 'Month', cell: (x) => x.month },
-                  { key: 'u', header: `Use (${use.data!.unit})`, cell: (x) => x.use },
-                  { key: 'c', header: 'Cost', cell: (x) => (x.cost ? `${x.cost} EGP` : '—') },
+                  { key: 'm', header: t('col.month'), cell: (x) => f.month(x.month) },
+                  { key: 'u', header: t('use', { unit: use.data!.unit }), cell: (x) => x.use },
+                  { key: 'c', header: t('cost'), cell: (x) => (x.cost ? f.money(x.cost) : '—') },
                 ]}
               />
             ) : (
-              <p className="text-muted">Two readings make a period: nothing to show yet.</p>
+              <p className="text-muted">{t('twoReadings')}</p>
             )}
           </CardBody>
         </QueryState>
@@ -214,14 +232,14 @@ export default function MeterPage() {
       <Dialog
         open={recording}
         onClose={() => setRecording(false)}
-        title="Enter a reading"
-        description="One live reading a day. A cumulative register only climbs, unless it was reset."
+        title={t('enterReading')}
+        description={t('enterDescription')}
         onSubmit={() => value && record.mutate()}
         footer={
           <>
-            <Button onClick={() => setRecording(false)}>Cancel</Button>
+            <Button onClick={() => setRecording(false)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={record.isPending} disabled={!value}>
-              Record
+              {t('record')}
             </Button>
           </>
         }
@@ -229,29 +247,29 @@ export default function MeterPage() {
         <div className="form">
           <ErrorAlert error={record.error} />
           <div className="form__row">
-            <Field label="Day" error={fieldError(record.error, 'readOn')}>
+            <Field label={t('day')} error={fieldError(record.error, 'readOn')}>
               {(p) => <Input {...p} type="date" value={readOn} onChange={(e) => setReadOn(e.target.value)} />}
             </Field>
-            <Field label="Reading" error={fieldError(record.error, 'value')}>
+            <Field label={t('reading')} error={fieldError(record.error, 'value')}>
               {(p) => <Input {...p} value={value} onChange={(e) => setValue(e.target.value)} />}
             </Field>
           </div>
           <label className="row" style={{ gap: 6 }}>
-            <input type="checkbox" checked={reset} onChange={(e) => setReset(e.target.checked)} /> The register was reset
+            <input type="checkbox" checked={reset} onChange={(e) => setReset(e.target.checked)} /> {t('wasReset')}
           </label>
         </div>
       </Dialog>
       <Dialog
         open={correcting !== null}
         onClose={() => setCorrecting(null)}
-        title="Correct the reading"
-        description="Once: the new reading supersedes it, checked without it."
+        title={t('correctTitle')}
+        description={t('correctDescription')}
         onSubmit={() => fixed.value && correct.mutate()}
         footer={
           <>
-            <Button onClick={() => setCorrecting(null)}>Cancel</Button>
+            <Button onClick={() => setCorrecting(null)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={correct.isPending} disabled={!fixed.value}>
-              Correct
+              {t('correct')}
             </Button>
           </>
         }
@@ -259,19 +277,19 @@ export default function MeterPage() {
         <div className="form">
           <ErrorAlert error={correct.error} />
           <div className="form__row">
-            <Field label="Day" error={fieldError(correct.error, 'readOn')}>
+            <Field label={t('day')} error={fieldError(correct.error, 'readOn')}>
               {(p) => <Input {...p} type="date" value={fixed.readOn} onChange={(e) => setFixed({ ...fixed, readOn: e.target.value })} />}
             </Field>
-            <Field label="Reading" error={fieldError(correct.error, 'value')}>
+            <Field label={t('reading')} error={fieldError(correct.error, 'value')}>
               {(p) => <Input {...p} value={fixed.value} onChange={(e) => setFixed({ ...fixed, value: e.target.value })} />}
             </Field>
           </div>
-          <Field label="Why" error={fieldError(correct.error, 'reasonCode')}>
+          <Field label={t('why')} error={fieldError(correct.error, 'reasonCode')}>
             {(p) => (
               <Select {...p} value={fixed.reasonCode} onChange={(e) => setFixed({ ...fixed, reasonCode: e.target.value })}>
-                {REASON_CODES.readingCorrect.map((c) => (
-                  <option key={c} value={c}>
-                    {humanize(c)}
+                {REASON_CODES.readingCorrect.map((code) => (
+                  <option key={code} value={code}>
+                    {label(code)}
                   </option>
                 ))}
               </Select>
@@ -282,24 +300,24 @@ export default function MeterPage() {
       <ReasonCodeDialog
         open={withdrawing !== null}
         onClose={() => setWithdrawing(null)}
-        title="Withdraw the reading"
+        title={t('withdrawTitle')}
         codes={REASON_CODES.readingCorrect}
-        confirmLabel="Withdraw"
+        confirmLabel={t('withdraw')}
         danger
         pending={withdraw.isPending}
         error={<ErrorAlert error={withdraw.error} />}
-        onConfirm={(c) => withdrawing && withdraw.mutate({ readingId: withdrawing.id, reasonCode: c })}
+        onConfirm={(code) => withdrawing && withdraw.mutate({ readingId: withdrawing.id, reasonCode: code })}
       />
       <ReasonCodeDialog
         open={retiring}
         onClose={() => setRetiring(false)}
-        title="Retire the meter"
+        title={t('retireTitle')}
         codes={REASON_CODES.meterRetire}
-        confirmLabel="Retire"
+        confirmLabel={t('retire')}
         danger
         pending={retire.isPending}
         error={<ErrorAlert error={retire.error} />}
-        onConfirm={(c) => retire.mutate(c)}
+        onConfirm={(code) => retire.mutate(code)}
       />
     </>
   );

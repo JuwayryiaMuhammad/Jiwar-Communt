@@ -1,0 +1,21 @@
+/** Maintenance setup's hours and limits (ADR 0032, 0038, 0065): components/maintenance-setup/rules. */
+export default {
+  saved: 'Maintenance rules saved.',
+  visitingHours: 'Visiting hours',
+  from: 'From',
+  to: 'To',
+  tooShort: 'At least one slot after the start: {time} or later.',
+  slotLength: 'Slot length',
+  slotHint: 'The length of a slot a resident may pick for a visit or a check-up.',
+  localTime: 'The compound’s local time, every day. A visit proposed outside these hours is refused; visits already agreed keep their time.',
+  tickets: 'Tickets',
+  autoClose: 'Auto-close after (hours)',
+  autoCloseHint: 'How long a completed ticket waits for the reporter to confirm before it closes by itself (1 to 720).',
+  reopen: 'Reopen window (days)',
+  reopenHint: 'How long after closing the reporter may reopen the ticket (1 to 90).',
+  photos: 'Photos per report',
+  photosHint: 'How many photos the reporter may attach (1 to 10).',
+  replaceAt: 'Replace at (%)',
+  replaceAtHint: 'Past its expected life, an asset is advised for replacement once a year’s repairs cost this share of a new one.',
+  discard: 'Discard',
+} as const;

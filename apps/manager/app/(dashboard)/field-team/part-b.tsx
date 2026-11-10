@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, DataTable, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT, type Translate } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, DataTable, Field, Input, Select, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/ops-field-team';
+import en from '@/messages/en/ops-field-team';
 
 interface Ref {
   id: string;
@@ -28,7 +31,7 @@ interface Call {
   recipientCount: number;
   startsAt: string;
   endsAt: string;
-  zone: { nameEn: string } | null;
+  zone: { nameEn: string; nameAr: string } | null;
   suggestionId: string | null;
 }
 interface Certificate {
@@ -55,7 +58,7 @@ interface LastLocation {
 }
 
 const HOUR = 3_600_000;
-const name = (r: Ref | null) => (r ? (r.fullName ?? 'Erased') : '—');
+const name = (t: Translate<typeof en>, r: Ref | null) => (r ? (r.fullName ?? t('erased')) : '—');
 const list = <T,>(res: unknown) => (res as { data: T[] }).data;
 const CERTIFICATE_KINDS = [
   'electrical',
@@ -76,6 +79,10 @@ const CERTIFICATE_KINDS = [
  * one writing a roster slot.
  */
 export function ReinforcementTab() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const suggestions = useQuery({
     queryKey: ['field-team', 'reinforcement', 'suggestions'],
@@ -105,7 +112,7 @@ export function ReinforcementTab() {
         }),
       );
     },
-    { invalidate: [['field-team']], onDone: () => toast.show('Sent to every technician off duty.') },
+    { invalidate: [['field-team']], onDone: () => toast.show(t('callSent')) },
   );
   const dismiss = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
@@ -115,7 +122,7 @@ export function ReinforcementTab() {
           body: { reasonCode },
         }),
       ),
-    { invalidate: [['field-team']], onDone: () => toast.show('Dismissed.') },
+    { invalidate: [['field-team']], onDone: () => toast.show(t('dismissed')) },
   );
   const cancel = useAction(
     (id: string) =>
@@ -125,44 +132,48 @@ export function ReinforcementTab() {
           body: { reasonCode: 'no_longer_needed' },
         }),
       ),
-    { invalidate: [['field-team']], onDone: () => toast.show('Called off; the slots nobody filled are cancelled.') },
+    { invalidate: [['field-team']], onDone: () => toast.show(t('calledOff')) },
   );
   return (
     <>
       <Card>
-        <CardHeader title="Call reinforcement" />
+        <CardHeader title={t('callReinforcement')} />
         <CardBody>
           {open ? (
             <p>
-              Suggested {formatDateTime(open.createdAt)}: {open.openTickets} open tickets for {open.available} available
-              technicians (the line is {open.threshold} each). Nothing reaches anyone off duty until you send a call.
+              {t('suggested', {
+                when: f.dateTime(open.createdAt),
+                tickets: open.openTickets,
+                available: open.available,
+                threshold: open.threshold,
+              })}
             </p>
           ) : null}
           <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
-            <Field label="Technicians needed">
+            <Field label={t('needed')}>
               {(p) => <Input {...p} type="number" min={1} max={10} value={form.needed} onChange={(e) => setForm({ ...form, needed: e.target.value })} />}
             </Field>
-            <Field label="Starts in (hours)">
+            <Field label={t('startsIn')}>
               {(p) => (
                 <Input {...p} type="number" min={0.25} max={12} step={0.25} value={form.inHours} onChange={(e) => setForm({ ...form, inHours: e.target.value })} />
               )}
             </Field>
-            <Field label="For (hours)">
+            <Field label={t('forHours')}>
               {(p) => <Input {...p} type="number" min={1} max={12} value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} />}
             </Field>
             <Button variant="primary" loading={send.isPending} onClick={() => send.mutate()}>
-              Send the call
+              {t('sendCall')}
             </Button>
             {open ? (
               <Select
-                aria-label="Dismiss the suggestion"
+                aria-label={t('dismissSuggestion')}
                 value=""
                 onChange={(e) => e.target.value && dismiss.mutate({ id: open.id, reasonCode: e.target.value })}
               >
-                <option value="">Dismiss…</option>
+                <option value="">{t('dismiss')}</option>
                 {REASON_CODES.reinforcementDismiss.map((c) => (
                   <option key={c} value={c}>
-                    {humanize(c)}
+                    {label(c)}
                   </option>
                 ))}
               </Select>
@@ -177,21 +188,29 @@ export function ReinforcementTab() {
           <DataTable<Call>
             rows={calls.data ?? []}
             rowKey={(r) => r.id}
-            empty="No reinforcement call yet"
+            empty={t('noCall')}
             columns={[
-              { key: 's', header: 'Starts', cell: (r) => formatDateTime(r.startsAt) },
-              { key: 'e', header: 'Ends', cell: (r) => formatDateTime(r.endsAt) },
-              { key: 'z', header: 'Zone', cell: (r) => r.zone?.nameEn ?? 'Whole compound' },
-              { key: 'a', header: 'Accepted', cell: (r) => `${r.accepted} of ${r.needed} (${r.recipientCount} reached)` },
-              { key: 'st', header: 'Status', cell: (r) => humanize(r.status) },
+              { key: 's', header: t('col.starts'), cell: (r) => f.dateTime(r.startsAt) },
+              { key: 'e', header: t('col.ends'), cell: (r) => f.dateTime(r.endsAt) },
+              {
+                key: 'z',
+                header: t('col.zone'),
+                cell: (r) => (r.zone ? (locale === 'ar' ? r.zone.nameAr : r.zone.nameEn) : t('wholeCompound')),
+              },
+              {
+                key: 'a',
+                header: t('col.accepted'),
+                cell: (r) => t('accepted', { accepted: r.accepted, needed: r.needed, reached: r.recipientCount }),
+              },
+              { key: 'st', header: t('col.status'), cell: (r) => label(r.status) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{t('actions')}</span>,
                 className: 'table__actions',
                 cell: (r) =>
                   r.status === 'open' ? (
                     <Button size="sm" loading={cancel.isPending} onClick={() => cancel.mutate(r.id)}>
-                      Call off
+                      {t('callOff')}
                     </Button>
                   ) : null,
               },
@@ -208,6 +227,9 @@ export function ReinforcementTab() {
  * 30 days ahead and on the day; an expired one blocks nothing.
  */
 export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const certificates = useQuery({
     queryKey: ['field-team', 'certificates'],
@@ -233,7 +255,7 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
     {
       invalidate: [['field-team']],
       onDone: () => {
-        toast.show('Added.');
+        toast.show(t('certificateAdded'));
         setForm({ ...form, title: '', issuer: '', expiresOn: '' });
         setPaper(null);
       },
@@ -241,13 +263,13 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
   );
   const remove = useAction(
     (id: string) => unwrap(api.DELETE('/api/v1/staff/field-team/certificates/{id}', { params: { path: { id } } })),
-    { invalidate: [['field-team']], onDone: () => toast.show('Removed.') },
+    { invalidate: [['field-team']], onDone: () => toast.show(t('certificateRemoved')) },
   );
   // A filed certificate's paper: replaced (a new upload) or removed (null).
   const file = useAction(
     ({ id, fileId }: { id: string; fileId: string | null }) =>
       unwrap(api.PATCH('/api/v1/staff/field-team/certificates/{id}', { params: { path: { id } }, body: { fileId } })),
-    { invalidate: [['field-team']], onDone: (_, v) => toast.show(v.fileId ? 'Paper filed.' : 'Paper removed.') },
+    { invalidate: [['field-team']], onDone: (_, v) => toast.show(v.fileId ? t('paperFiled') : t('paperRemoved')) },
   );
   // The list carries no links; the certificate's own read does, short-lived.
   const read = useAction(
@@ -257,39 +279,39 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
   return (
     <>
       <Card>
-        <CardHeader title="Add a certificate" />
+        <CardHeader title={t('addCertificate')} />
         <CardBody>
           <div className="row" style={{ gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-            <Field label="Holder">
+            <Field label={t('holder')}>
               {(p) => (
                 <Select {...p} value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })}>
-                  <option value="">Choose</option>
-                  {technicians.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.fullName}
+                  <option value="">{t('choose')}</option>
+                  {technicians.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {x.fullName}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
-            <Field label="Kind">
+            <Field label={t('kind')}>
               {(p) => (
                 <Select {...p} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
                   {CERTIFICATE_KINDS.map((k) => (
                     <option key={k} value={k}>
-                      {humanize(k)}
+                      {label(k)}
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
-            <Field label="Title">
+            <Field label={t('certificateTitle')}>
               {(p) => <Input {...p} maxLength={120} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />}
             </Field>
-            <Field label="Issuer">
+            <Field label={t('issuer')}>
               {(p) => <Input {...p} maxLength={120} value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} />}
             </Field>
-            <Field label="Expires on">
+            <Field label={t('expiresOn')}>
               {(p) => <Input {...p} type="date" value={form.expiresOn} onChange={(e) => setForm({ ...form, expiresOn: e.target.value })} />}
             </Field>
             <Button
@@ -298,19 +320,19 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
               loading={add.isPending}
               onClick={() => add.mutate()}
             >
-              Add
+              {t('add')}
             </Button>
           </div>
           <div className="row" style={{ gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
             {paper ? (
               <>
-                <span>The paper is attached.</span>
+                <span>{t('paperAttached')}</span>
                 <Button size="sm" onClick={() => setPaper(null)}>
-                  Detach
+                  {t('detach')}
                 </Button>
               </>
             ) : (
-              <FileUpload purpose="staff_certificate" label="Attach the paper (optional)" onUploaded={setPaper} />
+              <FileUpload purpose="staff_certificate" label={t('attachPaper')} onUploaded={setPaper} />
             )}
           </div>
           <ErrorAlert error={add.error} />
@@ -322,39 +344,39 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
           <DataTable<Certificate>
             rows={certificates.data ?? []}
             rowKey={(r) => r.id}
-            empty="No certificate yet"
+            empty={t('noCertificate')}
             columns={[
-              { key: 'h', header: 'Holder', cell: (r) => name(r.holder) },
-              { key: 'k', header: 'Kind', cell: (r) => humanize(r.kind) },
-              { key: 't', header: 'Title', cell: (r) => r.title },
-              { key: 'e', header: 'Expires', cell: (r) => r.expiresOn },
+              { key: 'h', header: t('col.holder'), cell: (r) => name(t, r.holder) },
+              { key: 'k', header: t('kind'), cell: (r) => label(r.kind) },
+              { key: 't', header: t('certificateTitle'), cell: (r) => r.title },
+              { key: 'e', header: t('col.expires'), cell: (r) => f.day(r.expiresOn) },
               {
                 key: 's',
-                header: 'State',
-                cell: (r) => (r.state === 'expiring' ? `Expiring (${r.daysLeft} d)` : humanize(r.state)),
+                header: t('col.state'),
+                cell: (r) => (r.state === 'expiring' ? t('expiring', { n: r.daysLeft }) : label(r.state)),
               },
               {
                 key: 'f',
-                header: 'Paper',
+                header: t('col.paper'),
                 cell: (r) => (
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                     {r.hasFile ? (
                       <>
                         <Button size="sm" loading={read.isPending && read.variables === r.id} onClick={() => read.mutate(r.id)}>
-                          Read
+                          {t('read')}
                         </Button>
                         <Button
                           size="sm"
                           loading={file.isPending && file.variables?.id === r.id && file.variables.fileId === null}
                           onClick={() => file.mutate({ id: r.id, fileId: null })}
                         >
-                          Remove the paper
+                          {t('removePaper')}
                         </Button>
                       </>
                     ) : null}
                     <FileUpload
                       purpose="staff_certificate"
-                      label={r.hasFile ? 'Replace' : 'File the paper'}
+                      label={r.hasFile ? t('replace') : t('filePaper')}
                       disabled={file.isPending}
                       onUploaded={(fileId) => file.mutateAsync({ id: r.id, fileId }).then(() => undefined)}
                     />
@@ -363,11 +385,11 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
               },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{t('actions')}</span>,
                 className: 'table__actions',
                 cell: (r) => (
                   <Button size="sm" loading={remove.isPending} onClick={() => remove.mutate(r.id)}>
-                    Remove
+                    {t('remove')}
                   </Button>
                 ),
               },
@@ -384,6 +406,9 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
  * their consent; every read is audited.
  */
 export function LocationTab({ technicians }: { technicians: Ref[] }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
   const [id, setId] = useState('');
   const location = useQuery({
     queryKey: ['field-team', 'location', id],
@@ -396,19 +421,16 @@ export function LocationTab({ technicians }: { technicians: Ref[] }) {
   const last = location.data?.last;
   return (
     <Card>
-      <CardHeader title="Last known location" />
+      <CardHeader title={t('lastLocation')} />
       <CardBody>
-        <p>
-          Taken only with the technician’s consent, on the way, at the door and starting the work; kept 30 days. Each read is
-          recorded.
-        </p>
-        <Field label="Technician">
+        <p>{t('locationNote')}</p>
+        <Field label={t('technician')}>
           {(p) => (
             <Select {...p} value={id} onChange={(e) => setId(e.target.value)}>
-              <option value="">Choose</option>
-              {technicians.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.fullName}
+              <option value="">{t('choose')}</option>
+              {technicians.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.fullName}
                 </option>
               ))}
             </Select>
@@ -418,14 +440,16 @@ export function LocationTab({ technicians }: { technicians: Ref[] }) {
           <QueryState query={location}>
             {last ? (
               <p>
-                {humanize(last.moment)} on {last.ticketNumber ?? 'a ticket'}, {formatDateTime(last.capturedAt)}:{' '}
+                {t('locationOn', { moment: label(last.moment), ticket: last.ticketNumber ?? t('aTicket'), when: f.dateTime(last.capturedAt) })}{' '}
                 <a href={`https://www.openstreetmap.org/?mlat=${last.latitude}&mlon=${last.longitude}#map=18/${last.latitude}/${last.longitude}`}>
-                  {last.latitude.toFixed(5)}, {last.longitude.toFixed(5)}
+                  <span className="ltr">
+                    {last.latitude.toFixed(5)}, {last.longitude.toFixed(5)}
+                  </span>
                 </a>
-                {last.accuracyMeters !== null ? ` (±${last.accuracyMeters} m)` : ''}
+                {last.accuracyMeters !== null ? ` ${t('accuracy', { m: last.accuracyMeters })}` : ''}
               </p>
             ) : (
-              <p>{location.data?.consent ? 'No step with a location in the 30 days.' : 'The technician has not consented.'}</p>
+              <p>{location.data?.consent ? t('noStep') : t('noConsent')}</p>
             )}
           </QueryState>
         ) : null}

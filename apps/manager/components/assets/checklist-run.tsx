@@ -1,34 +1,39 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
-import { Badge, Card, CardBody, CardHeader } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Card, CardBody, CardHeader, useLabel } from '@jiwar/ui';
 import type { ChecklistRun } from '@/lib/queries';
+import ar from '@/messages/ar/assets-inspections';
+import en from '@/messages/en/assets-inspections';
 
 /** A checklist as filled: each item, its answer, and the attestation once submitted. */
-export function ChecklistRunCard({ run, title = 'Checklist' }: { run: ChecklistRun; title?: string }) {
+export function ChecklistRunCard({ run, title }: { run: ChecklistRun; title?: string }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   return (
     <Card flush>
-      <CardHeader title={title} actions={<Badge tone={run.status === 'submitted' ? 'green' : 'beige'}>{humanize(run.status)}</Badge>} />
+      <CardHeader title={title ?? t('checklistTitle')} actions={<Badge tone={run.status === 'submitted' ? 'green' : 'beige'}>{label(run.status)}</Badge>} />
       <CardBody>
         <ol className="list">
           {run.items.map((i) => (
             <li key={i.id} className="row" style={{ gap: 8, justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <span>
-                {i.labelEn}
-                {i.required ? '' : <span className="t-secondary"> (optional)</span>}
+                {fmt.locale === 'ar' ? i.labelAr || i.labelEn : i.labelEn}
+                {i.required ? '' : <span className="t-secondary"> {t('optional')}</span>}
               </span>
               <span className="row" style={{ gap: 6 }}>
-                {i.answer?.result ? <Badge tone={i.answer.result === 'fail' ? 'error' : 'green'}>{humanize(i.answer.result)}</Badge> : null}
+                {i.answer?.result ? <Badge tone={i.answer.result === 'fail' ? 'error' : 'green'}>{label(i.answer.result)}</Badge> : null}
                 {i.answer?.value ? (
-                  <span className="t-num">
+                  <bdi className="t-num">
                     {i.answer.value} {i.unit ?? ''}
-                  </span>
+                  </bdi>
                 ) : null}
                 {i.answer?.note ? <span className="t-secondary">{i.answer.note}</span> : null}
                 {i.answer?.photos.map((p) =>
                   p.url ? (
                     <a key={p.id} className="table__link" href={p.url} target="_blank" rel="noreferrer">
-                      Photo
+                      {t('photo')}
                     </a>
                   ) : null,
                 )}
@@ -39,7 +44,7 @@ export function ChecklistRunCard({ run, title = 'Checklist' }: { run: ChecklistR
         </ol>
         {run.attestationSha256 ? (
           <p className="t-secondary" style={{ marginTop: 12 }}>
-            Submitted {formatDateTime(run.submittedAt)} · SHA-256 <span className="t-mono">{run.attestationSha256.slice(0, 16)}…</span>
+            {t('submittedAt', { when: fmt.dateTime(run.submittedAt), hash: `${run.attestationSha256.slice(0, 16)}…` })}
           </p>
         ) : null}
       </CardBody>

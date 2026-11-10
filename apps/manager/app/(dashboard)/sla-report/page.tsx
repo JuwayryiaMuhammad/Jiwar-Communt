@@ -1,19 +1,25 @@
 'use client';
 
 import { ErrorAlert, QueryState } from '@jiwar/api/react';
-import { Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type SlaReport } from '@/lib/queries';
+import ar from '@/messages/ar/sla-report';
+import en from '@/messages/en/sla-report';
 
 type Row = SlaReport['rows'][number];
 const iso = (d: Date) => d.toISOString().slice(0, 10);
-const pct = (n: number | null) => (n === null ? '—' : `${Math.round(n * 1000) / 10}%`);
 
 /** Whether the SLA was kept over a period (ADR 0076), for the dispatch. */
 export default function SlaReportPage() {
+  const t = useT(en, ar);
+  const label = useLabel();
+  const f = useFormat();
+  const pct = (n: number | null) => (n === null ? '—' : f.percent(n, 1));
   const { ready, can } = usePermissions();
   const allowed = can('tickets.dispatch');
   const [to, setTo] = useState(iso(new Date()));
@@ -23,35 +29,35 @@ export default function SlaReportPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="SLA report" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="SLA report"
-        description="The clocks that ended met or breached over the period, by category, priority and clock. A clock stopped by the SLA being turned off is no verdict."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button onClick={() => download('/api/v1/maintenance/sla-report/export', { from, to }, `sla-${from}-${to}.csv`).catch(setCsvError)}>
-            Export CSV
+            {t('exportCsv')}
           </Button>
         }
       />
       <ErrorAlert error={csvError} />
       <div className="form__row" style={{ marginBottom: 12 }}>
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={t('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={t('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
       </div>
       <QueryState query={report}>
         <div className="row" style={{ gap: 12, marginBottom: 12 }}>
-          {(report.data?.totals ?? []).map((t) => (
-            <Card key={t.clock}>
+          {(report.data?.totals ?? []).map((x) => (
+            <Card key={x.clock}>
               <div className="stack stack--sm" style={{ padding: 12 }}>
-                <span className="t-secondary">{t.clock === 'response' ? 'Response' : 'Resolution'}</span>
-                <strong className="t-title-md">{pct(t.metRate)}</strong>
+                <span className="t-secondary">{label(x.clock)}</span>
+                <strong className="t-title-md">{pct(x.metRate)}</strong>
                 <span className="t-secondary">
-                  {t.met} met · {t.breached} breached
+                  {t('metBreached', { met: x.met, breached: x.breached })}
                 </span>
               </div>
             </Card>
@@ -61,14 +67,14 @@ export default function SlaReportPage() {
           <DataTable<Row>
             rows={report.data?.rows ?? []}
             rowKey={(r) => `${r.categoryKey}:${r.priority}:${r.clock}`}
-            empty="No clock ended in this period"
+            empty={t('empty')}
             columns={[
-              { key: 'category', header: 'Category', cell: (r) => r.categoryKey },
-              { key: 'priority', header: 'Priority', cell: (r) => r.priority },
-              { key: 'clock', header: 'Clock', cell: (r) => r.clock },
-              { key: 'met', header: 'Met', cell: (r) => r.met },
-              { key: 'breached', header: 'Breached', cell: (r) => r.breached },
-              { key: 'rate', header: 'Met share', cell: (r) => pct(r.metRate) },
+              { key: 'category', header: t('col.category'), cell: (r) => label(r.categoryKey) },
+              { key: 'priority', header: t('col.priority'), cell: (r) => label(r.priority) },
+              { key: 'clock', header: t('col.clock'), cell: (r) => label(r.clock) },
+              { key: 'met', header: t('col.met'), cell: (r) => r.met },
+              { key: 'breached', header: t('col.breached'), cell: (r) => r.breached },
+              { key: 'rate', header: t('col.rate'), cell: (r) => pct(r.metRate) },
             ]}
           />
         </Card>

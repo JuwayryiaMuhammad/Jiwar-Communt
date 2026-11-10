@@ -1,0 +1,21 @@
+/** Purchase requests (ADR 0077): app/(dashboard)/purchases. */
+export default {
+  title: 'Purchase requests',
+  description: 'What the staff ask to buy. Above the manager’s limit, the board’s approved major contract covers it.',
+  approved: '{reference} is approved.',
+  rejected: '{reference} is turned down.',
+  fulfilled: '{reference} is marked bought.',
+  approve: 'Approve',
+  reject: 'Turn down',
+  fulfil: 'Mark bought',
+  status: 'Status',
+  'view.requested': 'Waiting',
+  'view.approved': 'Approved',
+  'view.fulfilled': 'Bought',
+  'view.all': 'All',
+  empty: 'No purchase request',
+  'col.request': 'Request',
+  'col.amount': 'Amount',
+  'col.neededBy': 'Needed by',
+  'col.status': 'Status',
+} as const;

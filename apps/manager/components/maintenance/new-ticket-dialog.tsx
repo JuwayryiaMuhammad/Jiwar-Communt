@@ -1,16 +1,20 @@
 'use client';
 
-import { fieldError, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Segmented, Select, Textarea } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Segmented, Select, Textarea, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { fetchers, keys, type TicketPriority } from '@/lib/queries';
+import ar from '@/messages/ar/maint-new-ticket';
+import en from '@/messages/en/maint-new-ticket';
 
 const ROOMS = ['kitchen', 'bathroom', 'living_room', 'bedroom', 'balcony', 'other'] as const;
 type Room = (typeof ROOMS)[number];
+const PRIORITIES: TicketPriority[] = ['normal', 'urgent', 'emergency'];
 
 const EMPTY = {
   place: 'unit' as 'unit' | 'common',
@@ -38,6 +42,9 @@ export function NewTicketDialog({
   onClose: () => void;
   onCreated: (ticket: { id: string; number: string }) => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const [form, setForm] = useState(EMPTY);
   // One key for this form: a retry after a lost answer replays the first, it
   // never opens a second ticket.
@@ -60,8 +67,8 @@ export function NewTicketDialog({
   const usable = (categories.data?.data ?? []).filter((c) => form.place === 'unit' || c.commonAreaAllowed);
   const reporters =
     form.place === 'unit'
-      ? (unitReporters.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? 'Resident' }))
-      : (residents.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? 'Resident' }));
+      ? (unitReporters.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? t('resident') }))
+      : (residents.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? t('resident') }));
 
   const reset = () => {
     setForm(EMPTY);
@@ -110,14 +117,14 @@ export function NewTicketDialog({
       open={open}
       onClose={close}
       wide
-      title="New ticket for a resident"
-      description="For a resident who asked in person or by phone. They are told a ticket was opened for them."
+      title={t('title')}
+      description={t('description')}
       onSubmit={() => ready && create.mutate()}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending} disabled={!ready}>
-            Open ticket
+            {t('open')}
           </Button>
         </>
       }
@@ -125,18 +132,18 @@ export function NewTicketDialog({
       <div className="form">
         <div>
           <Segmented
-            label="Where"
+            label={t('where')}
             value={form.place}
             onChange={(place) => setForm((f) => ({ ...f, place, reporterId: '', categoryId: '' }))}
             options={[
-              { value: 'unit', label: 'In a unit' },
-              { value: 'common', label: 'Common area' },
+              { value: 'unit', label: t('place.unit') },
+              { value: 'common', label: t('place.common') },
             ]}
           />
         </div>
         {form.place === 'unit' ? (
           <div className="form__row">
-            <Field label="Unit" error={err('unitId')}>
+            <Field label={t('unit')} error={err('unitId')}>
               {(p) => (
                 <UnitPicker
                   {...p}
@@ -145,13 +152,13 @@ export function NewTicketDialog({
                 />
               )}
             </Field>
-            <Field label="Room" hint="Optional." error={err('unitLocation')}>
+            <Field label={t('room')} hint={t('roomHint')} error={err('unitLocation')}>
               {(p) => (
                 <Select {...p} value={form.room} onChange={(e) => set('room', e.target.value as Room | '')}>
-                  <option value="">Not given</option>
+                  <option value="">{t('notGiven')}</option>
                   {ROOMS.map((r) => (
                     <option key={r} value={r}>
-                      {humanize(r)}
+                      {label(r)}
                     </option>
                   ))}
                 </Select>
@@ -159,20 +166,20 @@ export function NewTicketDialog({
             </Field>
           </div>
         ) : (
-          <Field label="Common area" hint="Where exactly: the gym, the north gate, the pool." error={err('commonArea')}>
+          <Field label={t('commonArea')} hint={t('commonAreaHint')} error={err('commonArea')}>
             {(p) => <Input {...p} maxLength={120} value={form.commonArea} onChange={(e) => set('commonArea', e.target.value)} />}
           </Field>
         )}
         <Field
-          label="Reported by"
+          label={t('reportedBy')}
           hint={
             form.place === 'unit'
               ? unitReporters.isError
-                ? 'The people of this unit could not be loaded.'
+                ? t('reportersFailed')
                 : unitReporters.isSuccess && reporters.length === 0
-                  ? 'Nobody in this unit may open a ticket there.'
-                  : 'The occupants and the household members who may open tickets there.'
-              : 'A resident of the compound (the first 100 by the list’s order).'
+                  ? t('reportersNone')
+                  : t('reportersUnit')
+              : t('reportersCommon')
           }
           error={err('reporterAccountId')}
         >
@@ -183,7 +190,7 @@ export function NewTicketDialog({
               disabled={form.place === 'unit' && form.unitId === ''}
               onChange={(e) => set('reporterId', e.target.value)}
             >
-              <option value="">{form.place === 'unit' && form.unitId === '' ? 'Pick a unit first' : 'Select a resident…'}</option>
+              <option value="">{form.place === 'unit' && form.unitId === '' ? t('pickUnitFirst') : t('selectResident')}</option>
               {reporters.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -193,34 +200,36 @@ export function NewTicketDialog({
           )}
         </Field>
         <div className="form__row">
-          <Field label="Category" error={err('categoryId')}>
+          <Field label={t('category')} error={err('categoryId')}>
             {(p) => (
               <Select {...p} value={form.categoryId} onChange={(e) => set('categoryId', e.target.value)}>
-                <option value="">Select…</option>
-                {usable.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nameEn}
+                <option value="">{c('select')}</option>
+                {usable.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.nameEn}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
           <Field
-            label="Priority"
-            hint={category ? `Empty: the category's own (${category.defaultPriority}).` : "Empty: the category's own."}
+            label={t('priority')}
+            hint={category ? t('priorityHintOf', { priority: label(category.defaultPriority) }) : t('priorityHint')}
             error={err('priority')}
           >
             {(p) => (
               <Select {...p} value={form.priority} onChange={(e) => set('priority', e.target.value as TicketPriority | '')}>
-                <option value="">Category default</option>
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgent</option>
-                <option value="emergency">Emergency</option>
+                <option value="">{t('categoryDefault')}</option>
+                {PRIORITIES.map((x) => (
+                  <option key={x} value={x}>
+                    {label(x)}
+                  </option>
+                ))}
               </Select>
             )}
           </Field>
         </div>
-        <Field label="What is wrong" error={err('description')}>
+        <Field label={t('whatIsWrong')} error={err('description')}>
           {(p) => (
             <Textarea {...p} maxLength={2000} rows={4} value={form.description} onChange={(e) => set('description', e.target.value)} />
           )}

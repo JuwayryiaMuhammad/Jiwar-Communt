@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Button, Card, CardHeader, Checkbox, Textarea } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type TicketMessage } from '@/lib/queries';
-import { personName } from './sla';
+import ar from '@/messages/ar/maint-thread';
+import en from '@/messages/en/maint-thread';
+import { useTicketWords } from './sla';
 
 /** Messages may be posted until the ticket is closed or cancelled. */
 const WRITABLE = ['new', 'assigned', 'en_route', 'in_progress', 'on_hold', 'completed'];
@@ -16,6 +19,9 @@ const WRITABLE = ['new', 'assigned', 'en_route', 'in_progress', 'on_hold', 'comp
  * notes, which the resident never sees.
  */
 export function TicketThread({ ticketId, status }: { ticketId: string; status: string }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const words = useTicketWords();
   const [body, setBody] = useState('');
   const [internal, setInternal] = useState(false);
   // One key per draft: a retry replays the first post, and a new draft gets a new key.
@@ -51,7 +57,7 @@ export function TicketThread({ ticketId, status }: { ticketId: string; status: s
 
   return (
     <Card flush>
-      <CardHeader title="Messages" />
+      <CardHeader title={t('messages')} />
       <QueryState query={list} rows={3}>
         {list.rows?.length ? (
           <div className="thread">
@@ -61,11 +67,11 @@ export function TicketThread({ ticketId, status }: { ticketId: string; status: s
                 className={`thread__msg${m.internal ? ' thread__msg--internal' : m.senderKind === 'resident' ? '' : ' thread__msg--staff'}`}
               >
                 <span className="thread__meta">
-                  {personName(m.sender)} · {m.senderKind}
-                  {m.internal ? ' · internal note' : ''} · {formatDateTime(m.createdAt)}
+                  {words.person(m.sender)} · {t(`sender.${m.senderKind}`)}
+                  {m.internal ? ` · ${t('internalNote')}` : ''} · {f.dateTime(m.createdAt)}
                 </span>
                 {m.deleted ? (
-                  <p className="thread__body t-secondary">Message removed</p>
+                  <p className="thread__body t-secondary">{t('removed')}</p>
                 ) : (
                   <p className="thread__body">{m.body}</p>
                 )}
@@ -74,7 +80,7 @@ export function TicketThread({ ticketId, status }: { ticketId: string; status: s
           </div>
         ) : (
           <p className="t-secondary" style={{ padding: 16 }}>
-            No message yet.
+            {t('noMessage')}
           </p>
         )}
         <LoadMore query={list} />
@@ -89,22 +95,22 @@ export function TicketThread({ ticketId, status }: { ticketId: string; status: s
           }}
         >
           <Textarea
-            aria-label="Message"
+            aria-label={t('message')}
             rows={3}
             maxLength={2000}
-            placeholder={internal ? 'A note for staff only…' : 'A message to the resident and the technician…'}
+            placeholder={internal ? t('notePlaceholder') : t('messagePlaceholder')}
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
           <span className="row">
             <Checkbox
-              label="Internal note: staff only, never shown to the resident"
+              label={t('internalLabel')}
               checked={internal}
               onChange={(e) => setInternal(e.target.checked)}
             />
             <span className="spacer" />
             <Button type="submit" variant="primary" loading={send.isPending} disabled={!body.trim()}>
-              {internal ? 'Add note' : 'Send'}
+              {internal ? t('addNote') : t('send')}
             </Button>
           </span>
           <ErrorAlert error={send.error} />

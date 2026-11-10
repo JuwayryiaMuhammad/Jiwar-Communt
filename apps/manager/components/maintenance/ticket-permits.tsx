@@ -1,13 +1,16 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, DataTable, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, DataTable, ReasonCodeDialog, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type TicketDetail, type WorkPermit } from '@/lib/queries';
+import ar from '@/messages/ar/maint-operations';
+import en from '@/messages/en/maint-operations';
 
 /**
  * A ticket's work permits (ADR 0067): the hazards its category and asset
@@ -15,6 +18,10 @@ import { fetchers, keys, type TicketDetail, type WorkPermit } from '@/lib/querie
  * field safety. The work starts only with one in force for each hazard.
  */
 export function TicketPermits({ ticket }: { ticket: TicketDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const { can } = usePermissions();
   const toast = useToast();
   const decide = can('safety.manage');
@@ -29,7 +36,7 @@ export function TicketPermits({ ticket }: { ticket: TicketDetail }) {
   const refresh = { invalidate: [keys.ticketPermits(ticket.id), ['work-permits']] };
   const approve = useAction(
     (id: string) => unwrap(api.POST('/api/v1/maintenance/work-permits/{id}/approve', { params: { path: { id } } })),
-    { ...refresh, onDone: () => toast.show('Approved; the technician is told.') },
+    { ...refresh, onDone: () => toast.show(t('permitApproved')) },
   );
   const reject = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
@@ -46,7 +53,7 @@ export function TicketPermits({ ticket }: { ticket: TicketDetail }) {
   if (data && !data.hazards.length && !data.permits.length) return null;
   return (
     <Card flush>
-      <CardHeader title="Work permits" />
+      <CardHeader title={t('permits')} />
       <CardBody>
         <ErrorAlert error={approve.error} />
         <QueryState query={permits}>
@@ -54,35 +61,35 @@ export function TicketPermits({ ticket }: { ticket: TicketDetail }) {
             <>
               <p className="muted">
                 {data.hazards.length
-                  ? `Needs a permit for: ${data.hazards.map(humanize).join(', ')}.`
-                  : 'Its work needs no permit.'}
+                  ? t('needsPermit', { hazards: fmt.list(data.hazards.map((h) => label(h))) })
+                  : t('noPermitNeeded')}
               </p>
               <DataTable<WorkPermit>
                 rows={data.permits}
                 rowKey={(p) => p.id}
-                empty="None asked for in this cycle"
+                empty={t('noPermit')}
                 columns={[
-                  { key: 'h', header: 'Hazard', cell: (p) => humanize(p.hazard) },
-                  { key: 'p', header: 'Precautions', cell: (p) => p.precautions },
-                  { key: 'e', header: 'Expires', cell: (p) => formatDateTime(p.expiresAt) },
-                  { key: 's', header: 'Status', cell: (p) => humanize(p.status) },
+                  { key: 'h', header: t('col.hazard'), cell: (p) => label(p.hazard) },
+                  { key: 'p', header: t('col.precautions'), cell: (p) => p.precautions },
+                  { key: 'e', header: t('col.expires'), cell: (p) => fmt.dateTime(p.expiresAt) },
+                  { key: 's', header: t('col.status'), cell: (p) => label(p.status) },
                   {
                     key: 'x',
-                    header: <span className="visually-hidden">Actions</span>,
+                    header: <span className="visually-hidden">{c('actions')}</span>,
                     className: 'table__actions',
                     cell: (p) =>
                       !decide ? null : p.status === 'requested' ? (
                         <span className="row" style={{ gap: 6 }}>
                           <Button size="sm" variant="primary" loading={approve.isPending} onClick={() => approve.mutate(p.id)}>
-                            Approve
+                            {t('approve')}
                           </Button>
                           <Button size="sm" onClick={() => setRejecting(p)}>
-                            Reject
+                            {t('reject')}
                           </Button>
                         </span>
                       ) : p.status === 'approved' ? (
                         <Button size="sm" onClick={() => setRevoking(p)}>
-                          Revoke
+                          {t('revoke')}
                         </Button>
                       ) : null,
                   },
@@ -95,24 +102,24 @@ export function TicketPermits({ ticket }: { ticket: TicketDetail }) {
       <ReasonCodeDialog
         open={rejecting !== null}
         onClose={() => setRejecting(null)}
-        title="Reject the permit"
+        title={t('rejectTitle')}
         codes={REASON_CODES.workPermitReject}
-        confirmLabel="Reject"
+        confirmLabel={t('reject')}
         danger
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}
-        onConfirm={(c) => rejecting && reject.mutate({ id: rejecting.id, reasonCode: c })}
+        onConfirm={(code) => rejecting && reject.mutate({ id: rejecting.id, reasonCode: code })}
       />
       <ReasonCodeDialog
         open={revoking !== null}
         onClose={() => setRevoking(null)}
-        title="Revoke the permit"
+        title={t('revokeTitle')}
         codes={REASON_CODES.workPermitRevoke}
-        confirmLabel="Revoke"
+        confirmLabel={t('revoke')}
         danger
         pending={revoke.isPending}
         error={<ErrorAlert error={revoke.error} />}
-        onConfirm={(c) => revoking && revoke.mutate({ id: revoking.id, reasonCode: c })}
+        onConfirm={(code) => revoking && revoke.mutate({ id: revoking.id, reasonCode: code })}
       />
     </Card>
   );

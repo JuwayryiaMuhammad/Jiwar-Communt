@@ -1,0 +1,21 @@
+/** A ticket's shared words (ADR 0032, 0033): components/maintenance/sla and technician-picker. */
+export default {
+  erased: 'Erased account',
+  'place.unit': 'Unit {code}',
+  'place.unitRoom': 'Unit {code} · {room}',
+  'place.common': 'Common area',
+  'place.commonNamed': 'Common area · {area}',
+  overdue: 'Overdue',
+  paused: 'Paused',
+  onTime: 'On time',
+  escalated: 'Escalated',
+  escalatedTitle: 'Escalated by a resident {when}',
+  'due.response': 'Response {when}',
+  'due.resolution': 'Resolution {when}',
+  'dueTitle.response': 'Response due {when}',
+  'dueTitle.resolution': 'Resolution due {when}',
+  'picker.select': 'Select a technician…',
+  'picker.loading': 'Loading technicians…',
+  'picker.technician': 'Technician',
+  'picker.option': '{name} · {state, select, available {available} other {unavailable}} · {n} open',
+} as const;

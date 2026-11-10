@@ -2,16 +2,18 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { RaiseApproval } from '@/components/governance/raise';
-import { PLAN_STATUS_TEXT } from '@/components/reports/labels';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type CapitalPlan } from '@/lib/queries';
+import ar from '@/messages/ar/ops-capital-plans';
+import en from '@/messages/en/ops-capital-plans';
 
 type Line = CapitalPlan['lines'][number];
 
@@ -21,6 +23,9 @@ type Line = CapitalPlan['lines'][number];
  * one approval; once approved, nothing of it changes.
  */
 export default function CapitalPlanPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const { id } = useParams<{ id: string }>();
   const { ready, can } = usePermissions();
   const allowed = can('assets.manage');
@@ -52,7 +57,7 @@ export default function CapitalPlanPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Capital plan" />
+        <PageHeader title={t('planTitle')} />
         <ForbiddenState />
       </>
     );
@@ -63,15 +68,15 @@ export default function CapitalPlanPage() {
       {p ? (
         <>
           <PageHeader
-            title={`Capital plan ${p.year}`}
-            description={`${p.lines.length} line(s), ${p.total} EGP in all.`}
+            title={t('planYear', { year: p.year })}
+            description={t('planSummary', { n: p.lines.length, total: fmt.money(p.total) })}
             actions={
               <div className="row" style={{ gap: 8 }}>
-                <Badge tone={p.status === 'approved' ? 'green' : 'beige'}>{PLAN_STATUS_TEXT[p.status]}</Badge>
-                {p.approvalRequestId ? <Link href={`/governance/approvals/${p.approvalRequestId}`}>The board’s request</Link> : null}
+                <Badge tone={p.status === 'approved' ? 'green' : 'beige'}>{t(`status.${p.status}`)}</Badge>
+                {p.approvalRequestId ? <Link href={`/governance/approvals/${p.approvalRequestId}`}>{t('boardRequest')}</Link> : null}
                 {draft && can('governance.approvals') ? (
                   <Button variant="primary" disabled={!p.lines.length} onClick={() => setRaising(true)}>
-                    Submit to the board
+                    {t('submit')}
                   </Button>
                 ) : null}
               </div>
@@ -80,14 +85,14 @@ export default function CapitalPlanPage() {
           {draft ? (
             <Card>
               <div className="form__row" style={{ padding: 12 }}>
-                <Field label="What" error={fieldError(add.error, 'description')}>
+                <Field label={t('what')} error={fieldError(add.error, 'description')}>
                   {(f) => <Input {...f} maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} />}
                 </Field>
-                <Field label="Amount (EGP)" error={fieldError(add.error, 'amount')}>
+                <Field label={t('amount')} error={fieldError(add.error, 'amount')}>
                   {(f) => <Input {...f} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />}
                 </Field>
                 <Button loading={add.isPending} disabled={!description.trim() || !amount.trim()} onClick={() => add.mutate(undefined)}>
-                  Add a line
+                  {t('addLine')}
                 </Button>
               </div>
               <ErrorAlert error={add.error ?? remove.error} />
@@ -97,20 +102,24 @@ export default function CapitalPlanPage() {
             <DataTable<Line>
               rows={p.lines}
               rowKey={(l) => l.id}
-              empty="No line yet"
+              empty={t('noLine')}
               columns={[
-                { key: 'asset', header: 'Asset', cell: (l) => (l.assetId ? <Link href={`/assets/${l.assetId}`}>{l.assetCode}</Link> : '—') },
-                { key: 'type', header: 'Type', cell: (l) => l.assetTypeKey ?? '—' },
-                { key: 'what', header: 'What', cell: (l) => l.description },
-                { key: 'amount', header: 'Amount (EGP)', cell: (l) => l.amount },
-                { key: 'source', header: 'From', cell: (l) => (l.source === 'computed' ? 'The register' : 'Added') },
+                {
+                  key: 'asset',
+                  header: t('col.asset'),
+                  cell: (l) => (l.assetId ? <Link href={`/assets/${l.assetId}`}>{l.assetCode}</Link> : '—'),
+                },
+                { key: 'type', header: t('col.type'), cell: (l) => (l.assetTypeKey ? label(l.assetTypeKey) : '—') },
+                { key: 'what', header: t('col.what'), cell: (l) => l.description },
+                { key: 'amount', header: t('col.amount'), cell: (l) => fmt.money(l.amount) },
+                { key: 'source', header: t('col.source'), cell: (l) => (l.source === 'computed' ? t('source.computed') : t('source.added')) },
                 {
                   key: 'act',
                   header: '',
                   cell: (l) =>
                     draft ? (
                       <Button size="sm" onClick={() => remove.mutate(l)}>
-                        Remove
+                        {t('remove')}
                       </Button>
                     ) : null,
                 },

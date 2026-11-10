@@ -1,8 +1,23 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardHeader, ConfirmDialog, DataTable, Dialog, Field, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  CardHeader,
+  ConfirmDialog,
+  DataTable,
+  Dialog,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -11,6 +26,8 @@ import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { useNow } from '@/lib/use-now';
 import { fetchers, keys, type Tender } from '@/lib/queries';
+import ar from '@/messages/ar/ops-tenders';
+import en from '@/messages/en/ops-tenders';
 
 type Bid = Tender['bids'][number];
 type Invitation = Tender['invitations'][number];
@@ -20,18 +37,18 @@ const EDITABLE: readonly Tender['status'][] = ['draft', 'open'];
 
 /** A bid link comes back once: shown here until the page is left. */
 function ShownLink({ url, expiresAt, onDismiss }: { url: string; expiresAt: string; onDismiss: () => void }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   return (
     <div className="stack stack--sm">
-      <p className="hint">
-        Send this link now; it is not shown again. It opens until {formatDateTime(expiresAt)}.
-      </p>
-      <Input readOnly value={url} onFocus={(e) => e.currentTarget.select()} aria-label="The bid link" />
+      <p className="hint">{t('linkShown', { when: fmt.dateTime(expiresAt) })}</p>
+      <Input readOnly dir="ltr" value={url} onFocus={(e) => e.currentTarget.select()} aria-label={t('linkLabel')} />
       <span className="row" style={{ gap: 8 }}>
         <Button size="sm" onClick={() => void navigator.clipboard?.writeText(url)}>
-          Copy
+          {t('copy')}
         </Button>
         <Button size="sm" onClick={onDismiss}>
-          Done
+          {t('done')}
         </Button>
       </span>
     </div>
@@ -40,6 +57,9 @@ function ShownLink({ url, expiresAt, onDismiss }: { url: string; expiresAt: stri
 
 /** The deadline, later only, before it passes. */
 function DeadlineDialog({ tender, open, onClose }: { tender: Tender; open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const [at, setAt] = useState('');
   const move = useAction(
@@ -53,7 +73,7 @@ function DeadlineDialog({ tender, open, onClose }: { tender: Tender; open: boole
     {
       invalidate: [keys.tender(tender.id), keys.tendersAll],
       onDone: () => {
-        toast.show('The deadline moved; the invitees see the new one.');
+        toast.show(t('deadlineMoved'));
         setAt('');
         onClose();
       },
@@ -63,19 +83,19 @@ function DeadlineDialog({ tender, open, onClose }: { tender: Tender; open: boole
     <Dialog
       open={open}
       onClose={onClose}
-      title="Move the deadline"
-      description={`Now ${formatDateTime(tender.bidsDueAt)}. Later only, and only before it passes.`}
+      title={t('moveDeadline')}
+      description={t('deadlineNow', { when: fmt.dateTime(tender.bidsDueAt) })}
       onSubmit={() => move.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={move.isPending} disabled={!at}>
-            Move it
+            {t('moveIt')}
           </Button>
         </>
       }
     >
-      <Field label="Bids until" hint="At most a year ahead." error={fieldError(move.error, 'bidsDueAt')}>
+      <Field label={t('bidsUntil')} hint={t('bidsUntilHint')} error={fieldError(move.error, 'bidsDueAt')}>
         {(p) => <Input {...p} type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} />}
       </Field>
       <ErrorAlert error={move.error} />
@@ -85,6 +105,10 @@ function DeadlineDialog({ tender, open, onClose }: { tender: Tender; open: boole
 
 /** The award: the contract is signed with the bid's vendor. */
 function AwardDialog({ tender, bid, onClose }: { tender: Tender; bid: Bid | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { can } = usePermissions();
   const [code, setCode] = useState('');
@@ -119,8 +143,8 @@ function AwardDialog({ tender, bid, onClose }: { tender: Tender; bid: Bid | null
       ),
     {
       invalidate: [keys.tender(tender.id), keys.tendersAll, keys.contractsAll],
-      onDone: (t) => {
-        toast.show(`Awarded: contract ${t.contractCode ?? ''} signed.`);
+      onDone: (x) => {
+        toast.show(t('awarded', { code: x.contractCode ?? '' }));
         close();
       },
     },
@@ -129,48 +153,44 @@ function AwardDialog({ tender, bid, onClose }: { tender: Tender; bid: Bid | null
     <Dialog
       open={bid !== null}
       onClose={close}
-      title={`Award to ${bid?.bidder ?? 'this bid'}`}
-      description={bid ? `${bid.amount ?? '—'} EGP. The contract (${humanize(tender.contractKind)}) is signed with the bid’s vendor.` : undefined}
+      title={bid?.bidder ? t('awardTo', { bidder: bid.bidder }) : t('awardToBid')}
+      description={bid ? t('awardDescription', { amount: fmt.money(bid.amount), kind: label(tender.contractKind) }) : undefined}
       onSubmit={() => award.mutate(undefined)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={award.isPending} disabled={!code.trim() || !startsOn || !endsOn}>
-            Award and sign
+            {t('awardAndSign')}
           </Button>
         </>
       }
     >
-      <Field label="The contract’s code" hint="Unique in the compound: letters, digits, . _ -" error={fieldError(award.error, 'code')}>
-        {(p) => <Input {...p} value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} />}
+      <Field label={t('contractCode')} hint={t('contractCodeHint')} error={fieldError(award.error, 'code')}>
+        {(p) => <Input {...p} dir="ltr" value={code} maxLength={40} onChange={(e) => setCode(e.target.value)} />}
       </Field>
       <div className="form__row">
-        <Field label="Starts on" error={fieldError(award.error, 'startsOn')}>
+        <Field label={t('startsOn')} error={fieldError(award.error, 'startsOn')}>
           {(p) => <Input {...p} type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />}
         </Field>
-        <Field label="Ends on" hint="Its last day." error={fieldError(award.error, 'endsOn')}>
+        <Field label={t('endsOn')} hint={t('endsOnHint')} error={fieldError(award.error, 'endsOn')}>
           {(p) => <Input {...p} type="date" value={endsOn} onChange={(e) => setEndsOn(e.target.value)} />}
         </Field>
       </div>
       {can('governance.approvals') ? (
-        <Field
-          label="The board’s approval"
-          hint="Needed above your limit: an approved major contract of at least the bid’s amount."
-          error={fieldError(award.error, 'approvalRequestId')}
-        >
+        <Field label={t('boardApproval')} hint={t('boardApprovalHint')} error={fieldError(award.error, 'approvalRequestId')}>
           {(p) => (
             <Select {...p} value={approvalRequestId} onChange={(e) => setApprovalRequestId(e.target.value)}>
-              <option value="">None</option>
+              <option value="">{t('none')}</option>
               {(approvals.data?.data ?? []).map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.reference} · {a.cost ?? '—'} EGP
+                  {t('approvalOption', { reference: a.reference, cost: fmt.money(a.cost) })}
                 </option>
               ))}
             </Select>
           )}
         </Field>
       ) : (
-        <p className="hint">Above your limit, the award needs the board’s approved major contract: ask whoever raises board matters.</p>
+        <p className="hint">{t('aboveLimit')}</p>
       )}
       <ErrorAlert error={award.error} />
     </Dialog>
@@ -179,6 +199,7 @@ function AwardDialog({ tender, bid, onClose }: { tender: Tender; bid: Bid | null
 
 /** Documents: read by every invitee; added and removed while it is editable. */
 function Documents({ tender, editable }: { tender: Tender; editable: boolean }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [title, setTitle] = useState('');
   const [removing, setRemoving] = useState<Tender['documents'][number] | null>(null);
@@ -195,7 +216,7 @@ function Documents({ tender, editable }: { tender: Tender; editable: boolean }) 
       invalidate,
       onDone: () => {
         setTitle('');
-        toast.show('Document added: the invitees read it.');
+        toast.show(t('documentAdded'));
       },
     },
   );
@@ -210,15 +231,15 @@ function Documents({ tender, editable }: { tender: Tender; editable: boolean }) 
   );
   return (
     <Card>
-      <CardHeader title="Documents" />
+      <CardHeader title={t('documents')} />
       <DataTable<Tender['documents'][number]>
         rows={tender.documents}
         rowKey={(d) => d.id}
-        empty="No document"
+        empty={t('noDocument')}
         columns={[
           {
             key: 't',
-            header: 'Document',
+            header: t('col.document'),
             cell: (d) =>
               d.fileUrl ? (
                 <a className="table__link" href={d.fileUrl} target="_blank" rel="noopener noreferrer">
@@ -235,7 +256,7 @@ function Documents({ tender, editable }: { tender: Tender; editable: boolean }) 
                   header: '',
                   cell: (d: Tender['documents'][number]) => (
                     <Button size="sm" onClick={() => setRemoving(d)}>
-                      Remove
+                      {t('remove')}
                     </Button>
                   ),
                 },
@@ -245,12 +266,12 @@ function Documents({ tender, editable }: { tender: Tender; editable: boolean }) 
       />
       {editable ? (
         <div className="form__row">
-          <Field label="Its title" hint="Name it first, then choose the file. At most 20 documents." error={fieldError(add.error, 'title')}>
+          <Field label={t('docTitle')} hint={t('docTitleHint')} error={fieldError(add.error, 'title')}>
             {(p) => <Input {...p} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} />}
           </Field>
           <FileUpload
             purpose="tender_document"
-            label="Add a document"
+            label={t('addDocument')}
             disabled={!title.trim() || add.isPending}
             onUploaded={(fileId) => add.mutateAsync(fileId).then(() => undefined)}
           />
@@ -260,9 +281,9 @@ function Documents({ tender, editable }: { tender: Tender; editable: boolean }) 
       <ConfirmDialog
         open={removing !== null}
         onClose={() => setRemoving(null)}
-        title={`Remove “${removing?.title ?? ''}”?`}
-        description="The invitees no longer read it."
-        confirmLabel="Remove"
+        title={t('removeTitle', { title: removing?.title ?? '' })}
+        description={t('removeDescription')}
+        confirmLabel={t('remove')}
         danger
         pending={remove.isPending}
         error={<ErrorAlert error={remove.error} />}
@@ -274,6 +295,8 @@ function Documents({ tender, editable }: { tender: Tender; editable: boolean }) 
 
 /** Who is invited: a registered vendor, or a company by its bid link. */
 function Invitations({ tender, editable }: { tender: Tender; editable: boolean }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { can } = usePermissions();
   const toast = useToast();
   const readsVendors = ['vendors.manage', 'assets.manage', 'finance.budget', 'purchases.request', 'purchases.approve'].some((p) =>
@@ -297,7 +320,7 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
       invalidate,
       onDone: () => {
         setVendorId('');
-        toast.show('Invited: its contractors are told.');
+        toast.show(t('invitedToast'));
       },
     },
   );
@@ -329,7 +352,7 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
       invalidate,
       onDone: (r) => {
         setShown({ url: r.url, expiresAt: r.expiresAt });
-        toast.show('A new link: the one before stopped.');
+        toast.show(t('newLinkToast'));
       },
     },
   );
@@ -344,20 +367,20 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
   );
   return (
     <Card>
-      <CardHeader title="Invited" />
+      <CardHeader title={t('invited')} />
       <DataTable<Invitation>
         rows={tender.invitations}
         rowKey={(i) => i.id}
-        empty="Nobody invited yet"
+        empty={t('noInvitation')}
         columns={[
-          { key: 'n', header: 'Who', cell: (i) => i.name ?? '—' },
-          { key: 'k', header: 'How', cell: (i) => (i.kind === 'link' ? 'Bid link' : 'Registered vendor') },
+          { key: 'n', header: t('col.who'), cell: (i) => i.name ?? '—' },
+          { key: 'k', header: t('col.how'), cell: (i) => (i.kind === 'link' ? t('how.link') : t('how.vendor')) },
           {
             key: 'l',
-            header: 'Link opens until',
-            cell: (i) => (i.kind === 'link' && !i.revokedAt && i.linkExpiresAt ? formatDateTime(i.linkExpiresAt) : '—'),
+            header: t('col.linkUntil'),
+            cell: (i) => (i.kind === 'link' && !i.revokedAt && i.linkExpiresAt ? fmt.dateTime(i.linkExpiresAt) : '—'),
           },
-          { key: 'r', header: 'Revoked', cell: (i) => (i.revokedAt ? formatDateTime(i.revokedAt) : '—') },
+          { key: 'r', header: t('col.revoked'), cell: (i) => (i.revokedAt ? fmt.dateTime(i.revokedAt) : '—') },
           ...(editable
             ? [
                 {
@@ -368,11 +391,11 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
                       <span className="row" style={{ gap: 8 }}>
                         {i.kind === 'link' ? (
                           <Button size="sm" loading={rotate.isPending && rotate.variables === i.id} onClick={() => rotate.mutate(i.id)}>
-                            New link
+                            {t('newLink')}
                           </Button>
                         ) : null}
                         <Button size="sm" onClick={() => setRevoking(i)}>
-                          Revoke
+                          {t('revoke')}
                         </Button>
                       </span>
                     ),
@@ -387,10 +410,10 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
         <>
           {readsVendors ? (
             <div className="form__row">
-              <Field label="A registered vendor" hint="Active vendors; its contractors bid from their portal." error={fieldError(inviteVendor.error, 'vendorId')}>
+              <Field label={t('registeredVendor')} hint={t('registeredVendorHint')} error={fieldError(inviteVendor.error, 'vendorId')}>
                 {(p) => (
                   <Select {...p} value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
-                    <option value="">Choose…</option>
+                    <option value="">{t('choose')}</option>
                     {(vendors.data?.data ?? [])
                       .filter((v) => !invited.has(v.id))
                       .map((v) => (
@@ -402,19 +425,19 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
                 )}
               </Field>
               <Button loading={inviteVendor.isPending} disabled={!vendorId} onClick={() => inviteVendor.mutate(undefined)}>
-                Invite
+                {t('invite')}
               </Button>
             </div>
           ) : null}
           <div className="form__row">
-            <Field label="A company that is not registered" hint="Its bid link is shown once." error={fieldError(inviteLink.error, 'companyName')}>
+            <Field label={t('company')} hint={t('companyHint')} error={fieldError(inviteLink.error, 'companyName')}>
               {(p) => <Input {...p} value={company} maxLength={200} onChange={(e) => setCompany(e.target.value)} />}
             </Field>
-            <Field label="Its contact email (optional)" hint="For your reference; nothing is sent." error={fieldError(inviteLink.error, 'contactEmail')}>
-              {(p) => <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />}
+            <Field label={t('contactEmail')} hint={t('contactEmailHint')} error={fieldError(inviteLink.error, 'contactEmail')}>
+              {(p) => <Input {...p} type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} />}
             </Field>
             <Button loading={inviteLink.isPending} disabled={company.trim().length < 2} onClick={() => inviteLink.mutate(undefined)}>
-              Make a bid link
+              {t('makeLink')}
             </Button>
           </div>
         </>
@@ -422,13 +445,9 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
       <ConfirmDialog
         open={revoking !== null}
         onClose={() => setRevoking(null)}
-        title={`Revoke ${revoking?.name ?? 'this invitation'}?`}
-        description={
-          revoking?.kind === 'link'
-            ? 'Its link opens nothing any more; a bid it sent is withdrawn while bids are taken.'
-            : 'Its contractors no longer see the tender; a bid it sent is withdrawn while bids are taken.'
-        }
-        confirmLabel="Revoke"
+        title={revoking?.name ? t('revokeTitle', { name: revoking.name }) : t('revokeThis')}
+        description={revoking?.kind === 'link' ? t('revokeLink') : t('revokeVendor')}
+        confirmLabel={t('revoke')}
         danger
         pending={revoke.isPending}
         error={<ErrorAlert error={revoke.error} />}
@@ -445,6 +464,8 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
  * and the award, which signs the contract.
  */
 export default function TenderPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const { can } = usePermissions();
@@ -455,65 +476,68 @@ export default function TenderPage() {
   const invalidate = [keys.tender(id), keys.tendersAll];
   const publish = useAction(() => unwrap(api.POST('/api/v1/staff/tenders/{id}/publish', { params: { path: { id } } })), {
     invalidate,
-    onDone: () => toast.show('Published: bids are taken until the deadline.'),
+    onDone: () => toast.show(t('published')),
   });
   const open = useAction(() => unwrap(api.POST('/api/v1/staff/tenders/{id}/opening', { params: { path: { id } } })), {
     invalidate,
-    onDone: (t) =>
-      toast.show(t.status === 'opened' ? 'Opened: the bids are unsealed.' : 'Opening begun: a second person confirms it.'),
+    onDone: (x) => toast.show(x.status === 'opened' ? t('opened') : t('openingBegun')),
   });
-  const t = q.data;
+  const tender = q.data;
   const manage = can('tenders.manage');
-  const editable = t ? manage && EDITABLE.includes(t.status) : false;
-  const takingBids = t ? t.status === 'open' && new Date(t.bidsDueAt).getTime() > now : false;
+  const editable = tender ? manage && EDITABLE.includes(tender.status) : false;
+  const takingBids = tender ? tender.status === 'open' && new Date(tender.bidsDueAt).getTime() > now : false;
   return (
     <QueryState query={q}>
-      {t ? (
+      {tender ? (
         <>
           <PageHeader
-            title={`${t.reference} · ${t.title}`}
-            description={`${humanize(t.status)} · bids until ${formatDateTime(t.bidsDueAt)}${t.contractCode ? ` · contract ${t.contractCode}` : ''}`}
+            title={`${tender.reference} · ${tender.title}`}
+            description={
+              tender.contractCode
+                ? t('summaryContract', { status: t(`status.${tender.status}`), when: fmt.dateTime(tender.bidsDueAt), code: tender.contractCode })
+                : t('summary', { status: t(`status.${tender.status}`), when: fmt.dateTime(tender.bidsDueAt) })
+            }
             actions={
               <>
-                {t.status === 'draft' && manage ? (
+                {tender.status === 'draft' && manage ? (
                   <Button variant="primary" loading={publish.isPending} onClick={() => publish.mutate(undefined)}>
-                    Publish
+                    {t('publish')}
                   </Button>
                 ) : null}
-                {takingBids && manage ? <Button onClick={() => setDeadline(true)}>Move the deadline</Button> : null}
-                {(t.status === 'open' || t.status === 'opening') && can('tenders.open') ? (
+                {takingBids && manage ? <Button onClick={() => setDeadline(true)}>{t('moveDeadline')}</Button> : null}
+                {(tender.status === 'open' || tender.status === 'opening') && can('tenders.open') ? (
                   <Button variant="primary" loading={open.isPending} onClick={() => open.mutate(undefined)}>
-                    {t.status === 'opening' ? 'Confirm the opening' : 'Open the bids'}
+                    {tender.status === 'opening' ? t('confirmOpening') : t('openBids')}
                   </Button>
                 ) : null}
               </>
             }
           />
           <ErrorAlert error={publish.error ?? open.error} />
-          <Documents tender={t} editable={editable} />
-          <Invitations tender={t} editable={editable} />
+          <Documents tender={tender} editable={editable} />
+          <Invitations tender={tender} editable={editable} />
           <Card flush>
-            <CardHeader title="Bids" />
+            <CardHeader title={t('bids')} />
             <DataTable<Bid>
-              rows={t.bids}
+              rows={tender.bids}
               rowKey={(b) => b.id}
-              empty="No bid yet"
+              empty={t('noBid')}
               columns={[
-                { key: 'w', header: 'Bidder', cell: (b) => b.bidder ?? '—' },
-                { key: 't', header: 'Sent', cell: (b) => formatDateTime(b.submittedAt) },
-                { key: 'a', header: 'Amount', cell: (b) => (b.sealed ? 'Sealed' : `${b.amount} EGP`) },
-                { key: 'd', header: 'Days', cell: (b) => (b.sealed || b.durationDays === null ? '—' : String(b.durationDays)) },
-                { key: 'n', header: 'Terms', cell: (b) => (b.sealed ? '—' : (b.note ?? '—')) },
+                { key: 'w', header: t('col.bidder'), cell: (b) => b.bidder ?? '—' },
+                { key: 't', header: t('col.sent'), cell: (b) => fmt.dateTime(b.submittedAt) },
+                { key: 'a', header: t('col.amount'), cell: (b) => (b.sealed ? t('sealed') : fmt.money(b.amount)) },
+                { key: 'd', header: t('col.days'), cell: (b) => (b.sealed || b.durationDays === null ? '—' : fmt.number(b.durationDays)) },
+                { key: 'n', header: t('col.terms'), cell: (b) => (b.sealed ? '—' : (b.note ?? '—')) },
                 {
                   key: 'o',
-                  header: 'Offer and documents',
+                  header: t('col.offer'),
                   // Sealed as the amount: none before the opening (ADR 0088).
                   cell: (b) =>
                     b.offerUrl || b.documents.length ? (
                       <span className="stack stack--sm">
                         {b.offerUrl ? (
                           <a className="table__link" href={b.offerUrl} target="_blank" rel="noopener noreferrer">
-                            The offer
+                            {t('theOffer')}
                           </a>
                         ) : null}
                         {b.documents.map((d) =>
@@ -527,13 +551,13 @@ export default function TenderPage() {
                         )}
                       </span>
                     ) : b.sealed ? (
-                      'Sealed'
+                      t('sealed')
                     ) : (
                       '—'
                     ),
                 },
-                { key: 'x', header: 'Withdrawn', cell: (b) => (b.withdrawnAt ? 'Yes' : '—') },
-                ...(t.status === 'opened' && manage
+                { key: 'x', header: t('col.withdrawn'), cell: (b) => (b.withdrawnAt ? t('yes') : '—') },
+                ...(tender.status === 'opened' && manage
                   ? [
                       {
                         key: 'aw',
@@ -541,7 +565,7 @@ export default function TenderPage() {
                         cell: (b: Bid) =>
                           b.withdrawnAt ? null : (
                             <Button size="sm" variant="primary" onClick={() => setAwarding(b)}>
-                              Award
+                              {t('award')}
                             </Button>
                           ),
                       },
@@ -550,8 +574,8 @@ export default function TenderPage() {
               ]}
             />
           </Card>
-          <DeadlineDialog tender={t} open={deadline} onClose={() => setDeadline(false)} />
-          <AwardDialog tender={t} bid={awarding} onClose={() => setAwarding(null)} />
+          <DeadlineDialog tender={tender} open={deadline} onClose={() => setDeadline(false)} />
+          <AwardDialog tender={tender} bid={awarding} onClose={() => setAwarding(null)} />
         </>
       ) : null}
     </QueryState>

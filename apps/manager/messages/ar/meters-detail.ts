@@ -1,0 +1,43 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/meters-detail.ts';
+
+const ar: Translation<typeof en> = {
+  recorded: 'تم التسجيل.',
+  corrected: 'تم التصحيح.',
+  withdrawn: 'تم السحب.',
+  retired: 'تم إخراج العداد من الخدمة.',
+  title: 'عداد',
+  description: '{kind} بوحدة {unit}، {mode}، ×{multiplier}',
+  descriptionRetired: '{kind} بوحدة {unit}، {mode}، ×{multiplier} — خارج الخدمة',
+  retire: 'إخراج من الخدمة',
+  enterReading: 'أدخل قراءة',
+  readings: 'القراءات',
+  liveOnly: 'السارية فقط',
+  withCorrections: 'مع التصحيحات',
+  empty: 'لا توجد قراءات',
+  'col.day': 'اليوم',
+  'col.reading': 'القراءة',
+  'col.reset': 'إعادة ضبط',
+  'col.by': 'بواسطة',
+  'col.entered': 'وقت الإدخال',
+  correct: 'صحّح',
+  withdraw: 'اسحب',
+  useByMonth: 'الاستهلاك حسب الشهر',
+  useByMonthHint: 'آخر اثني عشر شهرًا، محسوبة من القراءات السارية.',
+  'col.month': 'الشهر',
+  use: 'الاستهلاك ({unit})',
+  cost: 'التكلفة',
+  twoReadings: 'قراءتان تكوّنان فترة: لا شيء للعرض بعد.',
+  enterDescription: 'قراءة سارية واحدة في اليوم. السجل التراكمي يرتفع فقط، إلا إذا أُعيد ضبطه.',
+  record: 'سجّل',
+  day: 'اليوم',
+  reading: 'القراءة',
+  wasReset: 'أُعيد ضبط السجل',
+  correctTitle: 'تصحيح القراءة',
+  correctDescription: 'مرة واحدة: تحل القراءة الجديدة محلها، وتُفحص بدونها.',
+  why: 'السبب',
+  withdrawTitle: 'سحب القراءة',
+  retireTitle: 'إخراج العداد من الخدمة',
+};
+
+export default ar;

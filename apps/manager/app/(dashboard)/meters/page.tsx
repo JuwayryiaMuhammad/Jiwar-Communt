@@ -1,8 +1,9 @@
 'use client';
 
-import { fieldError, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useLocale, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,11 +12,17 @@ import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Meter, type MeterReadingImport } from '@/lib/queries';
+import ar from '@/messages/ar/meters';
+import en from '@/messages/en/meters';
 
 const KINDS = ['electricity', 'water', 'gas', 'fuel', 'run_hours'] as const;
 type Kind = (typeof KINDS)[number] | '';
 
 function NewMeterDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const router = useRouter();
   const areas = useQuery({ queryKey: keys.areas({ active: 'true' }), queryFn: () => fetchers.areas({ active: 'true' }) });
@@ -50,7 +57,7 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.energyAll],
       onDone: (m) => {
-        toast.show(`${m.code} is added.`);
+        toast.show(t('added', { code: m.code }));
         router.push(`/meters/${m.id}`);
       },
     },
@@ -60,14 +67,14 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="New meter"
-      description="A meter keeps its kind, mode, multiplier and place for life."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Add
+            {c('add')}
           </Button>
         </>
       }
@@ -75,15 +82,15 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
       <div className="form">
         <ErrorAlert error={save.error} />
         <div className="form__row">
-          <Field label="Code" error={fieldError(save.error, 'code')}>
-            {(p) => <Input {...p} value={f.code} onChange={set('code')} />}
+          <Field label={t('code')} error={fieldError(save.error, 'code')}>
+            {(p) => <Input {...p} dir="ltr" value={f.code} onChange={set('code')} />}
           </Field>
-          <Field label="Kind" error={fieldError(save.error, 'kind')}>
+          <Field label={t('kind')} error={fieldError(save.error, 'kind')}>
             {(p) => (
               <Select {...p} value={f.kind} onChange={set('kind')}>
                 {KINDS.map((k) => (
                   <option key={k} value={k}>
-                    {humanize(k)}
+                    {label(k)}
                   </option>
                 ))}
               </Select>
@@ -91,45 +98,45 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
           </Field>
         </div>
         <div className="form__row">
-          <Field label="Mode" hint="Cumulative: the register as it stands." error={fieldError(save.error, 'mode')}>
+          <Field label={t('mode')} hint={t('modeHint')} error={fieldError(save.error, 'mode')}>
             {(p) => (
               <Select {...p} value={f.mode} onChange={set('mode')}>
-                <option value="cumulative">Cumulative</option>
-                <option value="interval">Interval</option>
+                <option value="cumulative">{label('cumulative')}</option>
+                <option value="interval">{label('interval')}</option>
               </Select>
             )}
           </Field>
-          <Field label="Multiplier" error={fieldError(save.error, 'multiplier')}>
+          <Field label={t('multiplier')} error={fieldError(save.error, 'multiplier')}>
             {(p) => <Input {...p} value={f.multiplier} onChange={set('multiplier')} />}
           </Field>
         </div>
         <Segmented<'area' | 'unit'>
-          label="Where"
+          label={t('where')}
           value={place}
           onChange={setPlace}
           options={[
-            { value: 'area', label: 'A common area' },
-            { value: 'unit', label: 'A unit' },
+            { value: 'area', label: t('placeArea') },
+            { value: 'unit', label: t('placeUnit') },
           ]}
         />
         {place === 'area' ? (
-          <Field label="Common area" error={fieldError(save.error, 'commonAreaId')}>
+          <Field label={t('commonArea')} error={fieldError(save.error, 'commonAreaId')}>
             {(p) => (
               <Select {...p} value={f.commonAreaId} onChange={set('commonAreaId')}>
-                <option value="">Choose…</option>
+                <option value="">{t('choose')}</option>
                 {(areas.data?.data ?? []).map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.code} · {a.nameEn}
+                    {a.code} · {locale === 'ar' && a.nameAr ? a.nameAr : a.nameEn}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
         ) : (
-          <Field label="Unit" error={fieldError(save.error, 'unitId')}>
+          <Field label={t('unit')} error={fieldError(save.error, 'unitId')}>
             {(p) => (
               <Select {...p} value={f.unitId} onChange={set('unitId')}>
-                <option value="">Choose…</option>
+                <option value="">{t('choose')}</option>
                 {(units.data?.data ?? []).map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.code}
@@ -140,10 +147,10 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
           </Field>
         )}
         <div className="form__row">
-          <Field label="Serial" error={fieldError(save.error, 'serial')}>
+          <Field label={t('serial')} error={fieldError(save.error, 'serial')}>
             {(p) => <Input {...p} value={f.serial} onChange={set('serial')} />}
           </Field>
-          <Field label="Installed on" error={fieldError(save.error, 'installedOn')}>
+          <Field label={t('installedOn')} error={fieldError(save.error, 'installedOn')}>
             {(p) => <Input {...p} type="date" value={f.installedOn} onChange={set('installedOn')} />}
           </Field>
         </div>
@@ -153,6 +160,9 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
 }
 
 function ImportDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [checked, setChecked] = useState<MeterReadingImport | null>(null);
   const check = useAction(
@@ -165,7 +175,7 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
       invalidate: [keys.energyAll],
       onDone: (i) => {
         setChecked(i);
-        if (i.status === 'applied') toast.show(`${i.appliedCount} readings imported.`);
+        if (i.status === 'applied') toast.show(t('imported', { n: i.appliedCount }));
       },
     },
   );
@@ -174,14 +184,14 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="Import readings"
-      description="A CSV with the columns meter, read_on, value and, if the register was reset, reset. Checked whole, then applied once."
+      title={t('importTitle')}
+      description={t('importDescription')}
       footer={
         <>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{c('close')}</Button>
           {checked?.status === 'valid' ? (
             <Button variant="primary" loading={apply.isPending} onClick={() => apply.mutate()}>
-              Apply {checked.rowCount} readings
+              {t('applyReadings', { n: checked.rowCount })}
             </Button>
           ) : null}
         </>
@@ -190,11 +200,11 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
       <div className="form">
         <ErrorAlert error={check.error ?? apply.error} />
         {checked ? null : (
-          <FileUpload purpose="data_import" label="Choose the sheet" disabled={check.isPending} onUploaded={(f) => check.mutateAsync(f).then(() => undefined)} />
+          <FileUpload purpose="data_import" label={t('chooseSheet')} disabled={check.isPending} onUploaded={(f) => check.mutateAsync(f).then(() => undefined)} />
         )}
         {checked ? (
           <p>
-            {humanize(checked.status)} · {checked.rowCount} rows · {checked.errorCount} problems
+            {t('checkResult', { status: label(checked.status), rows: checked.rowCount, problems: checked.errorCount })}
           </p>
         ) : null}
         {checked && checked.errors.length ? (
@@ -202,9 +212,9 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
             rows={checked.errors}
             rowKey={(e) => `${e.line}-${e.field}`}
             columns={[
-              { key: 'l', header: 'Line', cell: (e) => e.line },
-              { key: 'f', header: 'Column', cell: (e) => e.field },
-              { key: 'c', header: 'Problem', cell: (e) => humanize(e.code) },
+              { key: 'l', header: t('col.line'), cell: (e) => e.line },
+              { key: 'f', header: t('col.column'), cell: (e) => e.field },
+              { key: 'c', header: t('col.problem'), cell: (e) => label(e.code) },
             ]}
           />
         ) : null}
@@ -215,6 +225,9 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
 
 /** The compound's meters (ADR 0066). */
 export default function MetersPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const [kind, setKind] = useState<Kind>('');
   const [creating, setCreating] = useState(false);
@@ -224,21 +237,21 @@ export default function MetersPage() {
   if (ready && !can('energy.read'))
     return (
       <>
-        <PageHeader title="Meters" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Meters"
-        description="Electricity, water, gas, fuel and running hours, read by hand, by sheet or by a technician."
+        title={t('title')}
+        description={t('description')}
         actions={
           can('energy.manage') ? (
             <>
-              <Button onClick={() => setImporting(true)}>Import readings</Button>
+              <Button onClick={() => setImporting(true)}>{t('importReadings')}</Button>
               <Button variant="primary" onClick={() => setCreating(true)}>
-                New meter
+                {t('newMeter')}
               </Button>
             </>
           ) : null
@@ -246,10 +259,10 @@ export default function MetersPage() {
       />
       <div className="toolbar">
         <Segmented<Kind>
-          label="Kind"
+          label={t('kind')}
           value={kind}
           onChange={setKind}
-          options={[{ value: '', label: 'All' }, ...KINDS.map((k) => ({ value: k as Kind, label: humanize(k) }))]}
+          options={[{ value: '', label: c('all') }, ...KINDS.map((k) => ({ value: k as Kind, label: label(k) }))]}
         />
       </div>
       <Card flush>
@@ -257,20 +270,20 @@ export default function MetersPage() {
           <DataTable<Meter>
             rows={list.rows}
             rowKey={(m) => m.id}
-            empty="No meter"
+            empty={t('empty')}
             columns={[
               {
                 key: 'c',
-                header: 'Code',
+                header: t('col.code'),
                 cell: (m) => (
                   <Link className="table__link" href={`/meters/${m.id}`}>
                     {m.code}
                   </Link>
                 ),
               },
-              { key: 'k', header: 'Kind', cell: (m) => `${humanize(m.kind)} (${m.unit})` },
-              { key: 'm', header: 'Mode', cell: (m) => humanize(m.mode) },
-              { key: 'w', header: 'Where', cell: (m) => (m.unitId ? 'A unit' : 'A common area') },
+              { key: 'k', header: t('col.kind'), cell: (m) => `${label(m.kind)} (${m.unit})` },
+              { key: 'm', header: t('col.mode'), cell: (m) => label(m.mode) },
+              { key: 'w', header: t('col.where'), cell: (m) => (m.unitId ? t('placeUnit') : t('placeArea')) },
             ]}
           />
           <LoadMore query={list} />

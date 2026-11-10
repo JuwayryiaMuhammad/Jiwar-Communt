@@ -2,20 +2,24 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Alert, Badge, Button, Card, CardBody, CardHeader, ConfirmDialog, Field, Input, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type DispatchSettings } from '@/lib/queries';
+import ar from '@/messages/ar/ms-dispatch';
+import en from '@/messages/en/ms-dispatch';
+import { useNameOf } from './names';
 
 const NUMBERS = [
-  { key: 'weightAssigned', label: 'Assigned', hint: 'A ticket the technician has not started.', min: 0 },
-  { key: 'weightInProgress', label: 'In progress', hint: 'A ticket being worked on.', min: 0 },
-  { key: 'weightOnHold', label: 'On hold', hint: '0: a ticket waiting for parts or the resident takes no time now.', min: 0 },
-  { key: 'multiplierNormal', label: 'Normal multiplier', hint: 'Times the status weight, for a normal-priority ticket.', min: 0.1 },
-  { key: 'multiplierUrgent', label: 'Urgent multiplier', hint: '', min: 0.1 },
-  { key: 'multiplierEmergency', label: 'Emergency multiplier', hint: '', min: 0.1 },
+  { key: 'weightAssigned', hint: true, min: 0 },
+  { key: 'weightInProgress', hint: true, min: 0 },
+  { key: 'weightOnHold', hint: true, min: 0 },
+  { key: 'multiplierNormal', hint: true, min: 0.1 },
+  { key: 'multiplierUrgent', hint: false, min: 0.1 },
+  { key: 'multiplierEmergency', hint: false, min: 0.1 },
 ] as const;
 type NumberKey = (typeof NUMBERS)[number]['key'];
 type Form = Record<NumberKey, string>;
@@ -27,6 +31,9 @@ const toForm = (s: DispatchSettings): Form => Object.fromEntries(NUMBERS.map((n)
  * workload weights are an ordinary form.
  */
 export function Dispatch() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const nameOf = useNameOf();
   const toast = useToast();
   const { can } = usePermissions();
   const settings = useQuery({ queryKey: keys.dispatchSettings, queryFn: fetchers.dispatchSettings });
@@ -53,11 +60,7 @@ export function Dispatch() {
     {
       invalidate: [keys.dispatchSettings, keys.ticketsAll, keys.technicians],
       onDone: (next) => {
-        toast.show(
-          next.autoDispatchEnabled
-            ? 'Automatic dispatch is on. The waiting tickets are being offered now.'
-            : 'Automatic dispatch is off. New tickets wait for a dispatcher.',
-        );
+        toast.show(next.autoDispatchEnabled ? t('turnedOn') : t('turnedOff'));
         setConfirming(false);
       },
     },
@@ -69,56 +72,44 @@ export function Dispatch() {
     invalidate: [keys.dispatchSettings, keys.technicians],
     onDone: (next) => {
       setForm(toForm(next));
-      toast.show('Workload weights saved.');
+      toast.show(t('weightsSaved'));
     },
   });
 
   if (!form || !saved) return <QueryState query={settings}>{null}</QueryState>;
 
   const techs = technicians.data?.data;
-  const available = techs?.filter((t) => t.availability.state === 'available') ?? [];
-  const unskilled = techs?.filter((t) => t.specialties.length === 0) ?? [];
+  const available = techs?.filter((x) => x.availability.state === 'available') ?? [];
+  const unskilled = techs?.filter((x) => x.specialties.length === 0) ?? [];
   const bare = (categories.data?.data ?? []).filter((c) => c.active && c.specialtyIds.length === 0);
   const queue = waiting.data ? (waiting.data.nextCursor ? `${waiting.data.data.length}+` : String(waiting.data.data.length)) : null;
+  const queueCount = waiting.data?.data.length ?? 0;
 
   return (
     <div className="grid grid--2" style={{ alignItems: 'start' }}>
       <Card flush>
-        <CardHeader title="Automatic dispatch" actions={<Badge tone={on ? 'green' : 'beige'}>{on ? 'On' : 'Off'}</Badge>} />
+        <CardHeader title={t('automatic')} actions={<Badge tone={on ? 'green' : 'beige'}>{on ? t('on') : t('off')}</Badge>} />
         <CardBody>
           <div className="stack">
-            <p>
-              {on
-                ? 'A new ticket goes to the least loaded available technician with a specialty its category needs. A ticket nobody qualifies for stays in the queue, and the dispatchers are told.'
-                : 'Every ticket waits in the queue until a dispatcher assigns it. "Auto-assign" on a ticket still tries the engine for that one ticket.'}
-            </p>
+            <p>{on ? t('onBody') : t('offBody')}</p>
             {techs ? (
               <ul className="list">
                 <li className="list__item" style={{ paddingInline: 0 }}>
-                  <span className="list__text">
-                    {available.length} of {techs.length} technician{techs.length === 1 ? '' : 's'} available now
-                  </span>
+                  <span className="list__text">{t('techsAvailable', { available: available.length, total: techs.length })}</span>
                 </li>
                 {unskilled.length ? (
                   <li className="list__item" style={{ paddingInline: 0 }}>
-                    <span className="list__text">
-                      {unskilled.length} technician{unskilled.length === 1 ? ' has' : 's have'} no specialty and will be offered nothing
-                    </span>
+                    <span className="list__text">{t('techsUnskilled', { n: unskilled.length })}</span>
                   </li>
                 ) : null}
                 {bare.length ? (
                   <li className="list__item" style={{ paddingInline: 0 }}>
-                    <span className="list__text">
-                      {bare.length} categor{bare.length === 1 ? 'y has' : 'ies have'} no specialty, so {bare.length === 1 ? 'its' : 'their'} tickets
-                      always wait for a dispatcher: {bare.map((c) => c.nameEn).join(', ')}
-                    </span>
+                    <span className="list__text">{t('categoriesBare', { n: bare.length, names: fmt.list(bare.map(nameOf)) })}</span>
                   </li>
                 ) : null}
                 {queue !== null ? (
                   <li className="list__item" style={{ paddingInline: 0 }}>
-                    <span className="list__text">
-                      {queue} ticket{queue === '1' ? '' : 's'} waiting in the queue
-                    </span>
+                    <span className="list__text">{t('queue', { queue, n: queueCount })}</span>
                   </li>
                 ) : null}
               </ul>
@@ -126,7 +117,7 @@ export function Dispatch() {
             <ErrorAlert error={toggle.error} />
             <span>
               <Button variant={on ? 'secondary' : 'primary'} onClick={() => setConfirming(true)}>
-                {on ? 'Turn off' : 'Turn on'}
+                {on ? t('turnOff') : t('turnOn')}
               </Button>
             </span>
           </div>
@@ -140,16 +131,13 @@ export function Dispatch() {
         }}
       >
         <Card flush>
-          <CardHeader title="Workload weights" />
+          <CardHeader title={t('weights')} />
           <CardBody>
             <div className="form">
-              <p className="t-secondary">
-                A technician's workload is the sum over their open tickets of the status weight times the priority multiplier. Automatic dispatch
-                picks the lowest; the Technicians tab shows it.
-              </p>
+              <p className="t-secondary">{t('weightsHint')}</p>
               <div className="form__row">
                 {NUMBERS.map((n) => (
-                  <Field key={n.key} label={n.label} hint={n.hint || undefined} error={fieldError(save.error, n.key)}>
+                  <Field key={n.key} label={t(`weight.${n.key}`)} hint={n.hint ? t(`weightHint.${n.key}`) : undefined} error={fieldError(save.error, n.key)}>
                     {(p) => (
                       <Input
                         {...p}
@@ -170,10 +158,10 @@ export function Dispatch() {
         <ErrorAlert error={save.error} />
         <span className="row" style={{ justifyContent: 'flex-end' }}>
           <Button disabled={!dirty} onClick={() => setForm(toForm(saved))}>
-            Discard
+            {t('discard')}
           </Button>
           <Button type="submit" variant="primary" disabled={!dirty} loading={save.isPending}>
-            Save weights
+            {t('saveWeights')}
           </Button>
         </span>
       </form>
@@ -183,28 +171,29 @@ export function Dispatch() {
           setConfirming(false);
           toggle.reset();
         }}
-        title={on ? 'Turn automatic dispatch off?' : 'Turn automatic dispatch on?'}
+        title={on ? t('offTitle') : t('onTitle')}
         description={
           on ? (
-            'New tickets will wait in the queue for a dispatcher. Tickets already assigned stay with their technicians.'
+            t('confirmOffBody')
           ) : (
             <>
-              This acts at once: up to 50 of the tickets waiting in the queue
-              {queue !== null ? ` (${queue} now)` : ''} are assigned right away, and every new ticket from now on. Technicians are notified of
-              each one.
-              {techs && available.length === 0 ? ' No technician is available now, so nothing would be assigned yet.' : ''}
+              {t('confirmOnBody', { now: queue !== null ? t('nowSuffix', { queue }) : '' })}
+              {techs && available.length === 0 ? ` ${t('noTechNow')}` : ''}
             </>
           )
         }
-        confirmLabel={on ? 'Turn off' : 'Turn on and assign the queue'}
+        confirmLabel={on ? t('turnOff') : t('turnOnAssign')}
         pending={toggle.isPending}
         error={
           <div className="stack stack--sm">
             {!on && (unskilled.length > 0 || bare.length > 0) ? (
               <Alert tone="warn">
-                Check the specialties first: {unskilled.length ? `${unskilled.length} technician${unskilled.length === 1 ? '' : 's'} without one` : ''}
-                {unskilled.length && bare.length ? ', ' : ''}
-                {bare.length ? `${bare.length} categor${bare.length === 1 ? 'y' : 'ies'} without one` : ''}. Their tickets will keep waiting.
+                {t('checkFirst', {
+                  parts: fmt.list([
+                    ...(unskilled.length ? [t('unskilledPart', { n: unskilled.length })] : []),
+                    ...(bare.length ? [t('barePart', { n: bare.length })] : []),
+                  ]),
+                })}
               </Alert>
             ) : null}
             <ErrorAlert error={toggle.error} />

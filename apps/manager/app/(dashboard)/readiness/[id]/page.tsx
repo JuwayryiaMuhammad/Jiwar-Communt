@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDate, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -15,6 +16,8 @@ import {
   ReasonCodeDialog,
   Select,
   Stat,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery, type QueryKey } from '@tanstack/react-query';
@@ -23,6 +26,8 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ContractDue, type ReadinessItem, type ReadinessProgram } from '@/lib/queries';
+import ar from '@/messages/ar/ops-readiness';
+import en from '@/messages/en/ops-readiness';
 
 const ITEM_KINDS = ['task', 'estimate', 'contract_review', 'inspection_campaign', 'drill'] as const;
 /** What a drill rehearses (ADR 0087). */
@@ -37,6 +42,10 @@ function useOwners() {
 }
 
 function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; due: ContractDue[]; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const owners = useOwners();
   const checklists = useQuery({ queryKey: keys.checklists, queryFn: fetchers.checklists });
@@ -71,7 +80,7 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
     {
       invalidate: [keys.readinessProgram(program.id), keys.readinessItems(program.id), keys.contractsDue(program.id)],
       onDone: () => {
-        toast.show('Item added; its owner is told.');
+        toast.show(t('itemAdded'));
         onClose();
       },
     },
@@ -81,14 +90,14 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
       open
       wide
       onClose={onClose}
-      title="New item"
-      description={`Due by ${formatDate(program.endsOn)}, the program's last day.`}
+      title={t('newItem')}
+      description={t('newItemDescription', { day: fmt.day(program.endsOn) })}
       onSubmit={() => save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending}>
-            Add
+            {t('add')}
           </Button>
         </>
       }
@@ -96,28 +105,28 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
       <div className="form">
         <ErrorAlert error={save.error} />
         <div className="form__row">
-          <Field label="Kind" error={fieldError(save.error, 'kind')}>
+          <Field label={t('kind')} error={fieldError(save.error, 'kind')}>
             {(p) => (
               <Select {...p} value={f.kind} onChange={set('kind')}>
                 {ITEM_KINDS.map((k) => (
                   <option key={k} value={k}>
-                    {humanize(k)}
+                    {label(k)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Due" error={fieldError(save.error, 'dueOn')}>
+          <Field label={t('due')} error={fieldError(save.error, 'dueOn')}>
             {(p) => <Input {...p} type="date" value={f.dueOn} onChange={set('dueOn')} />}
           </Field>
         </div>
-        <Field label="Title" error={fieldError(save.error, 'title')}>
+        <Field label={t('itemTitle')} error={fieldError(save.error, 'title')}>
           {(p) => <Input {...p} value={f.title} onChange={set('title')} />}
         </Field>
-        <Field label="Owner" error={fieldError(save.error, 'ownerId')}>
+        <Field label={t('owner')} error={fieldError(save.error, 'ownerId')}>
           {(p) => (
             <Select {...p} value={f.ownerId} onChange={set('ownerId')}>
-              <option value="">Choose…</option>
+              <option value="">{t('choose')}</option>
               {owners.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.fullName}
@@ -128,23 +137,23 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
         </Field>
         {f.kind === 'estimate' || f.kind === 'task' ? (
           <Field
-            label="Estimate (EGP)"
-            hint={f.kind === 'task' ? 'Optional.' : undefined}
+            label={t('estimate')}
+            hint={f.kind === 'task' ? t('optional') : undefined}
             error={fieldError(save.error, 'estimateAmount')}
           >
             {(p) => <Input {...p} inputMode="decimal" value={f.estimateAmount} onChange={set('estimateAmount')} />}
           </Field>
         ) : null}
         {f.kind === 'contract_review' ? (
-          <Field label="Contract" error={fieldError(save.error, 'contractId')}>
+          <Field label={t('contract')} error={fieldError(save.error, 'contractId')}>
             {(p) => (
               <Select {...p} value={f.contractId} onChange={set('contractId')}>
-                <option value="">Choose…</option>
+                <option value="">{t('choose')}</option>
                 {due
-                  .filter((c) => c.itemId === null)
-                  .map((c) => (
-                    <option key={c.contractId} value={c.contractId}>
-                      {c.code} · ends {formatDate(c.endsOn)}
+                  .filter((x) => x.itemId === null)
+                  .map((x) => (
+                    <option key={x.contractId} value={x.contractId}>
+                      {t('contractOption', { code: x.code, day: fmt.day(x.endsOn) })}
                     </option>
                   ))}
               </Select>
@@ -152,12 +161,12 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
           </Field>
         ) : null}
         {f.kind === 'drill' ? (
-          <Field label="Drill" error={fieldError(save.error, 'drillType')}>
+          <Field label={t('drill')} error={fieldError(save.error, 'drillType')}>
             {(p) => (
               <Select {...p} value={f.drillType} onChange={set('drillType')}>
-                {DRILL_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {humanize(t)}
+                {DRILL_TYPES.map((d) => (
+                  <option key={d} value={d}>
+                    {label(d)}
                   </option>
                 ))}
               </Select>
@@ -165,13 +174,13 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
           </Field>
         ) : null}
         {f.kind === 'inspection_campaign' ? (
-          <Field label="Checklist" error={fieldError(save.error, 'checklistId')}>
+          <Field label={t('checklist')} error={fieldError(save.error, 'checklistId')}>
             {(p) => (
               <Select {...p} value={f.checklistId} onChange={set('checklistId')}>
-                <option value="">Choose…</option>
-                {(checklists.data?.data ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nameEn}
+                <option value="">{t('choose')}</option>
+                {(checklists.data?.data ?? []).map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {fmt.locale === 'ar' ? x.nameAr : x.nameEn}
                   </option>
                 ))}
               </Select>
@@ -185,6 +194,9 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
 
 /** A drill done (ADR 0087): its outcome, how many took part, and its minutes when counted. */
 function DrillDoneDialog({ item, refresh, onClose }: { item: ReadinessItem; refresh: QueryKey[]; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [f, setF] = useState({ outcome: OUTCOMES[0] as (typeof OUTCOMES)[number], participants: '', minutes: '' });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -203,7 +215,7 @@ function DrillDoneDialog({ item, refresh, onClose }: { item: ReadinessItem; refr
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('The drill is recorded.');
+        toast.show(t('drillRecorded'));
         onClose();
       },
     },
@@ -212,35 +224,35 @@ function DrillDoneDialog({ item, refresh, onClose }: { item: ReadinessItem; refr
     <Dialog
       open
       onClose={onClose}
-      title={`Record the drill: ${item.title}`}
+      title={t('drillTitle', { title: item.title })}
       onSubmit={() => f.participants !== '' && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={f.participants === ''}>
-            Record
+            {t('record')}
           </Button>
         </>
       }
     >
       <div className="form">
         <ErrorAlert error={save.error} />
-        <Field label="Outcome" error={fieldError(save.error, 'outcome')}>
+        <Field label={t('outcome')} error={fieldError(save.error, 'outcome')}>
           {(p) => (
             <Select {...p} value={f.outcome} onChange={set('outcome')}>
               {OUTCOMES.map((o) => (
                 <option key={o} value={o}>
-                  {humanize(o)}
+                  {label(o)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         <div className="form__row">
-          <Field label="Took part" error={fieldError(save.error, 'participants')}>
+          <Field label={t('tookPart')} error={fieldError(save.error, 'participants')}>
             {(p) => <Input {...p} inputMode="numeric" value={f.participants} onChange={set('participants')} />}
           </Field>
-          <Field label="Minutes" hint="Optional: an evacuation’s time." error={fieldError(save.error, 'minutes')}>
+          <Field label={t('minutes')} hint={t('minutesHint')} error={fieldError(save.error, 'minutes')}>
             {(p) => <Input {...p} inputMode="numeric" value={f.minutes} onChange={set('minutes')} />}
           </Field>
         </div>
@@ -250,6 +262,10 @@ function DrillDoneDialog({ item, refresh, onClose }: { item: ReadinessItem; refr
 }
 
 function CampaignDialog({ item, onClose }: { item: ReadinessItem; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const technicians = useQuery({ queryKey: keys.technicians, queryFn: fetchers.technicians });
   const areas = useQuery({ queryKey: keys.areas({ active: 'true' }), queryFn: () => fetchers.areas({ active: 'true' }) });
@@ -267,45 +283,46 @@ function CampaignDialog({ item, onClose }: { item: ReadinessItem; onClose: () =>
       ),
     {
       invalidate: [keys.campaign(item.id), keys.readinessItems(item.programId)],
-      onDone: (c) => {
-        toast.show(`${c.spawned.length} inspection(s) scheduled.`);
+      onDone: (x) => {
+        toast.show(t('scheduledToast', { n: x.spawned.length }));
         onClose();
       },
     },
   );
+  const inspections = campaign.data?.inspections ?? [];
   return (
     <Dialog
       open
       wide
       onClose={onClose}
-      title="Inspection campaign"
-      description={`One inspection per area, due ${formatDate(item.dueOn)}. The item is done when every one is submitted or cancelled.`}
+      title={t('campaignTitle')}
+      description={t('campaignDescription', { day: fmt.day(item.dueOn) })}
       onSubmit={() => spawn.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{c('close')}</Button>
           <Button type="submit" variant="primary" loading={spawn.isPending} disabled={!chosen.length}>
-            Schedule
+            {t('schedule')}
           </Button>
         </>
       }
     >
       <div className="form">
         <ErrorAlert error={spawn.error} />
-        <Field label="Inspector" error={fieldError(spawn.error, 'inspectorId')}>
+        <Field label={t('inspector')} error={fieldError(spawn.error, 'inspectorId')}>
           {(p) => (
             <Select {...p} value={inspectorId} onChange={(e) => setInspectorId(e.target.value)}>
-              <option value="">Choose…</option>
-              {(technicians.data?.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.fullName ?? t.id}
+              <option value="">{t('choose')}</option>
+              {(technicians.data?.data ?? []).map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.fullName ?? x.id}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         <fieldset className="form__group">
-          <legend>Areas</legend>
+          <legend>{t('areas')}</legend>
           {(areas.data?.data ?? []).map((a) => (
             <label key={a.id} className="row" style={{ gap: 6 }}>
               <input
@@ -314,14 +331,16 @@ function CampaignDialog({ item, onClose }: { item: ReadinessItem; onClose: () =>
                 checked={held.has(a.id) || chosen.includes(a.id)}
                 onChange={(e) => setChosen(e.target.checked ? [...chosen, a.id] : chosen.filter((x) => x !== a.id))}
               />
-              {a.code} · {a.nameEn}
-              {held.has(a.id) ? ' (scheduled)' : ''}
+              <bdi>{a.code}</bdi> · {locale === 'ar' ? a.nameAr : a.nameEn}
+              {held.has(a.id) ? <> {t('areaScheduled')}</> : null}
             </label>
           ))}
         </fieldset>
         <p className="muted">
-          {(campaign.data?.inspections ?? []).filter((i) => i.status === 'submitted' || i.status === 'cancelled').length} of{' '}
-          {campaign.data?.inspections.length ?? 0} done.
+          {t('campaignDone', {
+            done: fmt.number(inspections.filter((i) => i.status === 'submitted' || i.status === 'cancelled').length),
+            total: fmt.number(inspections.length),
+          })}
         </p>
       </div>
     </Dialog>
@@ -329,6 +348,8 @@ function CampaignDialog({ item, onClose }: { item: ReadinessItem; onClose: () =>
 }
 
 function CopyDialog({ program, onClose }: { program: ReadinessProgram; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const router = useRouter();
   const [startsOn, setStartsOn] = useState(program.startsOn);
@@ -342,13 +363,9 @@ function CopyDialog({ program, onClose }: { program: ReadinessProgram; onClose: 
       ),
     {
       invalidate: [keys.readinessAll],
-      onDone: (c) => {
-        toast.show(
-          c.reassignedItemIds.length
-            ? `Copied; ${c.reassignedItemIds.length} item(s) are now yours, their owner may no longer own one.`
-            : 'Copied.',
-        );
-        router.push(`/readiness/${c.id}`);
+      onDone: (x) => {
+        toast.show(x.reassignedItemIds.length ? t('copiedReassigned', { n: x.reassignedItemIds.length }) : t('copied'));
+        router.push(`/readiness/${x.id}`);
       },
     },
   );
@@ -356,21 +373,21 @@ function CopyDialog({ program, onClose }: { program: ReadinessProgram; onClose: 
     <Dialog
       open
       onClose={onClose}
-      title="Copy to a new start"
-      description="Its end and every item's day move by as many days. Tasks, estimates and campaigns come open again; contract reviews are the copy's to add."
+      title={t('copyTitle')}
+      description={t('copyDescription')}
       onSubmit={() => copy.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={copy.isPending}>
-            Copy
+            {t('copy')}
           </Button>
         </>
       }
     >
       <div className="form">
         <ErrorAlert error={copy.error} />
-        <Field label="New first day" error={fieldError(copy.error, 'startsOn')}>
+        <Field label={t('newFirstDay')} error={fieldError(copy.error, 'startsOn')}>
           {(p) => <Input {...p} type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} />}
         </Field>
       </div>
@@ -380,6 +397,9 @@ function CopyDialog({ program, onClose }: { program: ReadinessProgram; onClose: 
 
 /** One readiness program (ADR 0067): its items, its readiness and the contracts it reviews. */
 export default function ReadinessProgramPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const { id } = useParams<{ id: string }>();
   const { ready, can } = usePermissions();
   const toast = useToast();
@@ -405,7 +425,7 @@ export default function ReadinessProgramPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Done.');
+        toast.show(t('doneToast'));
         setDeciding(null);
       },
     },
@@ -421,40 +441,51 @@ export default function ReadinessProgramPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Called off.');
+        toast.show(t('calledOffToast'));
         setCancelling(null);
       },
     },
   );
   const close = useAction(
     () => unwrap(api.POST('/api/v1/maintenance/readiness/programs/{id}/close', { params: { path: { id } } })),
-    { invalidate: [keys.readinessAll], onDone: () => toast.show('Closed.') },
+    { invalidate: [keys.readinessAll], onDone: () => toast.show(t('closedToast')) },
   );
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Readiness" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   const p = program.data;
   const open = p ? p.closedAt === null : false;
+  const percent = (n: number | null) => (n === null ? '—' : fmt.percent(n / 100));
+  const state = (i: ReadinessItem) => {
+    const s = t(`state.${i.state}`);
+    if (i.decision) return t('stateDecision', { state: s, decision: label(i.decision) });
+    if (i.drillOutcome) return t('stateDrill', { state: s, outcome: label(i.drillOutcome), n: fmt.number(i.drillParticipants ?? 0) });
+    return s;
+  };
   return (
     <>
       <PageHeader
-        title={p?.title ?? 'Program'}
-        description={p ? `${humanize(p.kind)} · ${formatDate(p.startsOn)} – ${formatDate(p.endsOn)}${open ? '' : ' · closed'}` : undefined}
+        title={p?.title ?? t('program')}
+        description={
+          p
+            ? t(open ? 'summary' : 'summaryClosed', { kind: label(p.kind), from: fmt.day(p.startsOn), to: fmt.day(p.endsOn) })
+            : undefined
+        }
         actions={
           p ? (
             <span className="row" style={{ gap: 6 }}>
-              <Button onClick={() => setCopying(true)}>Copy</Button>
+              <Button onClick={() => setCopying(true)}>{t('copy')}</Button>
               {open ? (
                 <>
                   <Button loading={close.isPending} onClick={() => close.mutate()}>
-                    Close
+                    {t('close')}
                   </Button>
                   <Button variant="primary" onClick={() => setAdding(true)}>
-                    New item
+                    {t('newItem')}
                   </Button>
                 </>
               ) : null}
@@ -466,62 +497,53 @@ export default function ReadinessProgramPage() {
       <QueryState query={program}>
         {p ? (
           <div className="row" style={{ gap: 12, marginBottom: 12 }}>
-            <Stat label="Ready" value={p.readiness.percent === null ? '—' : `${p.readiness.percent}%`} />
-            <Stat label="Done" value={p.readiness.done} />
-            <Stat label="Open" value={p.readiness.open} />
-            <Stat label="Called off" value={p.readiness.cancelled} />
-            <Stat label="Budget (EGP)" value={p.readiness.budget} />
+            <Stat label={t('stat.ready')} value={percent(p.readiness.percent)} />
+            <Stat label={t('stat.done')} value={fmt.number(p.readiness.done)} />
+            <Stat label={t('stat.open')} value={fmt.number(p.readiness.open)} />
+            <Stat label={t('stat.calledOff')} value={fmt.number(p.readiness.cancelled)} />
+            <Stat label={t('stat.budget')} value={fmt.money(p.readiness.budget)} />
           </div>
         ) : null}
       </QueryState>
       <Card flush>
-        <CardHeader title="Items" />
+        <CardHeader title={t('items')} />
         <QueryState query={items}>
           <DataTable<ReadinessItem>
             rows={items.data?.data ?? []}
             rowKey={(i) => i.id}
-            empty="No item"
+            empty={t('noItem')}
             columns={[
-              { key: 't', header: 'Item', cell: (i) => i.title },
-              { key: 'k', header: 'Kind', cell: (i) => humanize(i.kind) },
-              { key: 'd', header: 'Due', cell: (i) => formatDate(i.dueOn) },
-              { key: 'e', header: 'Estimate (EGP)', cell: (i) => i.estimateAmount ?? '—' },
-              {
-                key: 's',
-                header: 'State',
-                cell: (i) =>
-                  i.decision
-                    ? `${humanize(i.state)} · ${humanize(i.decision)}`
-                    : i.drillOutcome
-                      ? `${humanize(i.state)} · ${humanize(i.drillOutcome)} · ${i.drillParticipants ?? 0} took part`
-                      : humanize(i.state),
-              },
+              { key: 't', header: t('col.item'), cell: (i) => i.title },
+              { key: 'k', header: t('col.kind'), cell: (i) => label(i.kind) },
+              { key: 'd', header: t('col.due'), cell: (i) => fmt.day(i.dueOn) },
+              { key: 'e', header: t('col.estimate'), cell: (i) => (i.estimateAmount ? fmt.money(i.estimateAmount) : '—') },
+              { key: 's', header: t('col.state'), cell: state },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{t('col.actions')}</span>,
                 className: 'table__actions',
                 cell: (i) =>
                   open && i.state === 'open' ? (
                     <span className="row" style={{ gap: 6 }}>
                       {i.kind === 'inspection_campaign' ? (
                         <Button size="sm" onClick={() => setCampaign(i)}>
-                          Campaign
+                          {t('campaign')}
                         </Button>
                       ) : i.kind === 'contract_review' ? (
                         <Button size="sm" onClick={() => setDeciding(i)}>
-                          Decide
+                          {t('decide')}
                         </Button>
                       ) : i.kind === 'drill' ? (
                         <Button size="sm" onClick={() => setDrill(i)}>
-                          Record
+                          {t('record')}
                         </Button>
                       ) : (
                         <Button size="sm" loading={done.isPending} onClick={() => done.mutate({ itemId: i.id })}>
-                          Done
+                          {t('done')}
                         </Button>
                       )}
                       <Button size="sm" onClick={() => setCancelling(i)}>
-                        Call off
+                        {t('callOff')}
                       </Button>
                     </span>
                   ) : null,
@@ -531,17 +553,17 @@ export default function ReadinessProgramPage() {
         </QueryState>
       </Card>
       <Card flush>
-        <CardHeader title="Contracts ending by the last day" />
+        <CardHeader title={t('contractsDue')} />
         <QueryState query={due}>
           <DataTable<ContractDue>
             rows={due.data?.data ?? []}
-            rowKey={(c) => c.contractId}
-            empty="No contract ends in time"
+            rowKey={(x) => x.contractId}
+            empty={t('noContractDue')}
             columns={[
-              { key: 'c', header: 'Contract', cell: (c) => c.code },
-              { key: 'k', header: 'Kind', cell: (c) => humanize(c.kind) },
-              { key: 'e', header: 'Ends', cell: (c) => formatDate(c.endsOn) },
-              { key: 'r', header: 'Review', cell: (c) => (c.itemId ? 'Planned' : 'Not yet') },
+              { key: 'c', header: t('col.contract'), cell: (x) => x.code },
+              { key: 'k', header: t('col.kind'), cell: (x) => label(x.kind) },
+              { key: 'e', header: t('col.ends'), cell: (x) => fmt.day(x.endsOn) },
+              { key: 'r', header: t('col.review'), cell: (x) => (x.itemId ? t('planned') : t('notYet')) },
             ]}
           />
         </QueryState>
@@ -553,23 +575,23 @@ export default function ReadinessProgramPage() {
       <ReasonCodeDialog
         open={deciding !== null}
         onClose={() => setDeciding(null)}
-        title="What was decided"
+        title={t('decidedTitle')}
         codes={DECISIONS}
-        confirmLabel="Record"
+        confirmLabel={t('record')}
         pending={done.isPending}
         error={<ErrorAlert error={done.error} />}
-        onConfirm={(c) => deciding && done.mutate({ itemId: deciding.id, decision: c as (typeof DECISIONS)[number] })}
+        onConfirm={(code) => deciding && done.mutate({ itemId: deciding.id, decision: code as (typeof DECISIONS)[number] })}
       />
       <ReasonCodeDialog
         open={cancelling !== null}
         onClose={() => setCancelling(null)}
-        title="Call the item off"
+        title={t('callOffTitle')}
         codes={REASON_CODES.readinessItemCancel}
-        confirmLabel="Call off"
+        confirmLabel={t('callOff')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
-        onConfirm={(c) => cancelling && cancel.mutate({ itemId: cancelling.id, reasonCode: c })}
+        onConfirm={(code) => cancelling && cancel.mutate({ itemId: cancelling.id, reasonCode: code })}
       />
     </>
   );

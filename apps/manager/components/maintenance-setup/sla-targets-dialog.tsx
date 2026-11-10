@@ -2,11 +2,17 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type Category } from '@/lib/queries';
+import ar from '@/messages/ar/ms-sla';
+import arCommon from '@/messages/ar/ms-common';
+import en from '@/messages/en/ms-sla';
+import enCommon from '@/messages/en/ms-common';
 import { formatMinutes } from './format';
+import { useNameOf } from './names';
 
 const PRIORITIES = ['emergency', 'urgent', 'normal'] as const;
 type Priority = (typeof PRIORITIES)[number];
@@ -29,6 +35,11 @@ const toForm = (c: Category): Form =>
  * clocks still running; a clock that already ended keeps what it was held to.
  */
 export function SlaTargetsDialog({ category, onClose }: { category: Category; onClose: () => void }) {
+  const t = useT(en, ar);
+  const duration = useT(enCommon, arCommon);
+  const common = useCommonT();
+  const label = useLabel();
+  const nameOf = useNameOf();
   const toast = useToast();
   const [form, setForm] = useState(() => toForm(category));
   const save = useAction(
@@ -50,14 +61,14 @@ export function SlaTargetsDialog({ category, onClose }: { category: Category; on
     {
       invalidate: [keys.categories],
       onDone: () => {
-        toast.show(`SLA targets of ${category.nameEn} are saved.`);
+        toast.show(t('targetsSaved', { name: nameOf(category) }));
         onClose();
       },
     },
   );
   const set = (p: Priority, field: 'responseMinutes' | 'resolutionMinutes', value: string) =>
     setForm((f) => ({ ...f, [p]: { ...f[p], [field]: value } }));
-  const read = (value: string) => (value.trim() === '' ? '' : formatMinutes(Number(value)));
+  const read = (value: string) => (value.trim() === '' ? '' : formatMinutes(Number(value), duration));
   // The one cross-field rule, said before the API has to.
   const inverted = (p: Priority) => Number(form[p].responseMinutes) > Number(form[p].resolutionMinutes);
   const ready = PRIORITIES.every((p) => form[p].responseMinutes.trim() !== '' && form[p].resolutionMinutes.trim() !== '' && !inverted(p));
@@ -67,14 +78,14 @@ export function SlaTargetsDialog({ category, onClose }: { category: Category; on
       open
       wide
       onClose={onClose}
-      title={`SLA targets: ${category.nameEn}`}
-      description="In minutes. Response: from opening to the first visit proposal or the start of the work. Resolution: until the technician reports the work done, without the time spent waiting for the resident or for parts."
+      title={t('targetsTitle', { name: nameOf(category) })}
+      description={t('targetsDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{common('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save targets
+            {t('saveTargets')}
           </Button>
         </>
       }
@@ -83,8 +94,8 @@ export function SlaTargetsDialog({ category, onClose }: { category: Category; on
         {PRIORITIES.map((p) => (
           <div className="form__row" key={p}>
             <Field
-              label={`${p.charAt(0).toUpperCase() + p.slice(1)}: response`}
-              hint={`5 to 10080. ${read(form[p].responseMinutes)}`}
+              label={t('responseLabel', { priority: label(p) })}
+              hint={t('responseHint', { read: read(form[p].responseMinutes) })}
               error={fieldError(save.error, `${p}.responseMinutes`)}
             >
               {(f) => (
@@ -92,11 +103,11 @@ export function SlaTargetsDialog({ category, onClose }: { category: Category; on
               )}
             </Field>
             <Field
-              label={`${p.charAt(0).toUpperCase() + p.slice(1)}: resolution`}
-              hint={`15 to 43200. ${read(form[p].resolutionMinutes)}`}
+              label={t('resolutionLabel', { priority: label(p) })}
+              hint={t('resolutionHint', { read: read(form[p].resolutionMinutes) })}
               error={
                 fieldError(save.error, `${p}.resolutionMinutes`) ??
-                (inverted(p) ? 'At least the response target.' : undefined)
+                (inverted(p) ? t('atLeastResponse') : undefined)
               }
             >
               {(f) => (

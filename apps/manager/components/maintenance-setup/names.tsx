@@ -1,7 +1,10 @@
 'use client';
 
 import { fieldError } from '@jiwar/api';
+import { useLocale, useT } from '@jiwar/i18n';
 import { Field, Input } from '@jiwar/ui';
+import ar from '@/messages/ar/ms-common';
+import en from '@/messages/en/ms-common';
 import { KEY_PATTERN, suggestKey } from './format';
 
 export interface Names {
@@ -34,15 +37,17 @@ export function NameFields({
   withKey: boolean;
   example: string;
 }) {
+  const t = useT(en, ar);
   // The code follows the English name until the manager edits it.
   const following = value.key === suggestKey(value.nameEn);
   return (
     <>
       <div className="form__row">
-        <Field label="Name (English)" error={fieldError(error, 'nameEn')}>
+        <Field label={t('nameEn')} error={fieldError(error, 'nameEn')}>
           {(p) => (
             <Input
               {...p}
+              dir="ltr"
               maxLength={80}
               value={value.nameEn}
               onChange={(e) =>
@@ -55,7 +60,7 @@ export function NameFields({
             />
           )}
         </Field>
-        <Field label="Name (Arabic)" error={fieldError(error, 'nameAr')}>
+        <Field label={t('nameAr')} error={fieldError(error, 'nameAr')}>
           {(p) => (
             <Input {...p} dir="rtl" lang="ar" maxLength={80} value={value.nameAr} onChange={(e) => onChange({ ...value, nameAr: e.target.value })} />
           )}
@@ -63,16 +68,22 @@ export function NameFields({
       </div>
       {withKey ? (
         <Field
-          label="Code"
-          hint={`Lowercase letters, digits and underscores, e.g. ${example}. It can never be changed later.`}
+          label={t('code')}
+          hint={t('codeHint', { example })}
           error={
             fieldError(error, 'key') ??
-            (value.key !== '' && !KEY_PATTERN.test(value.key) ? 'Start with a letter; 2 to 40 lowercase letters, digits or underscores.' : undefined)
+            (value.key !== '' && !KEY_PATTERN.test(value.key) ? t('codeInvalid') : undefined)
           }
         >
-          {(p) => <Input {...p} className="t-mono" maxLength={40} value={value.key} onChange={(e) => onChange({ ...value, key: e.target.value })} />}
+          {(p) => <Input {...p} className="t-mono" dir="ltr" maxLength={40} value={value.key} onChange={(e) => onChange({ ...value, key: e.target.value })} />}
         </Field>
       ) : null}
     </>
   );
+}
+
+/** A record's name in the page's language: the Arabic one in Arabic when it has one. */
+export function useNameOf() {
+  const { locale } = useLocale();
+  return (x: { nameEn: string; nameAr?: string | null }) => (locale === 'ar' && x.nameAr ? x.nameAr : x.nameEn);
 }

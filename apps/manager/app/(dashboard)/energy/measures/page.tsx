@@ -1,18 +1,24 @@
 'use client';
 
-import { fieldError, formatDate, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Stat, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, Stat, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Measure } from '@/lib/queries';
+import ar from '@/messages/ar/energy-measures';
+import en from '@/messages/en/energy-measures';
 
 const KINDS = ['electricity', 'water', 'gas', 'fuel', 'run_hours'] as const;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 function NewMeasureDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [f, setF] = useState({ title: '', kind: 'electricity' as (typeof KINDS)[number], building: '', startsOn: iso(new Date()), cost: '' });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -32,7 +38,7 @@ function NewMeasureDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.measures],
       onDone: () => {
-        toast.show('Measure added.');
+        toast.show(t('added'));
         onClose();
       },
     },
@@ -41,44 +47,44 @@ function NewMeasureDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="New saving measure"
-      description="On a building, or the whole compound when none is named. Its effect is read as the weeks before against the weeks after."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => f.title.trim() && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!f.title.trim()}>
-            Add
+            {c('add')}
           </Button>
         </>
       }
     >
       <div className="form">
         <ErrorAlert error={save.error} />
-        <Field label="What was done" error={fieldError(save.error, 'title')}>
+        <Field label={t('whatWasDone')} error={fieldError(save.error, 'title')}>
           {(p) => <Input {...p} value={f.title} onChange={set('title')} />}
         </Field>
         <div className="form__row">
-          <Field label="Saves" error={fieldError(save.error, 'kind')}>
+          <Field label={t('saves')} error={fieldError(save.error, 'kind')}>
             {(p) => (
               <Select {...p} value={f.kind} onChange={set('kind')}>
                 {KINDS.map((k) => (
                   <option key={k} value={k}>
-                    {humanize(k)}
+                    {label(k)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Building" hint="Leave empty for the compound." error={fieldError(save.error, 'building')}>
+          <Field label={t('building')} hint={t('buildingHint')} error={fieldError(save.error, 'building')}>
             {(p) => <Input {...p} value={f.building} onChange={set('building')} />}
           </Field>
         </div>
         <div className="form__row">
-          <Field label="From" error={fieldError(save.error, 'startsOn')}>
+          <Field label={t('from')} error={fieldError(save.error, 'startsOn')}>
             {(p) => <Input {...p} type="date" value={f.startsOn} onChange={set('startsOn')} />}
           </Field>
-          <Field label="Cost (EGP)" error={fieldError(save.error, 'cost')}>
+          <Field label={t('costEgp')} error={fieldError(save.error, 'cost')}>
             {(p) => <Input {...p} value={f.cost} onChange={set('cost')} />}
           </Field>
         </div>
@@ -88,6 +94,10 @@ function NewMeasureDialog({ onClose }: { onClose: () => void }) {
 }
 
 function EffectDialog({ measure, onClose }: { measure: Measure; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const fmt = useFormat();
   const toast = useToast();
   const { can } = usePermissions();
   const [weeks, setWeeks] = useState(4);
@@ -98,7 +108,7 @@ function EffectDialog({ measure, onClose }: { measure: Measure; onClose: () => v
     {
       invalidate: [keys.measures],
       onDone: () => {
-        toast.show('Ended.');
+        toast.show(t('ended'));
         onClose();
       },
     },
@@ -109,13 +119,17 @@ function EffectDialog({ measure, onClose }: { measure: Measure; onClose: () => v
       open
       onClose={onClose}
       title={measure.title}
-      description={`${humanize(measure.kind)} from ${formatDate(measure.startsOn)}${measure.building ? ` in ${measure.building}` : ''}`}
+      description={
+        measure.building
+          ? t('measureDescriptionIn', { kind: label(measure.kind), date: fmt.day(measure.startsOn), building: measure.building })
+          : t('measureDescription', { kind: label(measure.kind), date: fmt.day(measure.startsOn) })
+      }
       footer={
         <>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{c('close')}</Button>
           {can('energy.manage') && !measure.endedOn ? (
             <Button loading={end.isPending} onClick={() => end.mutate()}>
-              End on {formatDate(endedOn)}
+              {t('endOn', { date: fmt.day(endedOn) })}
             </Button>
           ) : null}
         </>
@@ -124,11 +138,11 @@ function EffectDialog({ measure, onClose }: { measure: Measure; onClose: () => v
       <div className="form">
         <ErrorAlert error={end.error} />
         <div className="form__row">
-          <Field label="Weeks each side" hint="Whole weeks: both sides hold the same days of the week.">
+          <Field label={t('weeks')} hint={t('weeksHint')}>
             {(p) => <Input {...p} type="number" min={1} max={26} value={weeks} onChange={(x) => setWeeks(Number(x.target.value) || 4)} />}
           </Field>
           {can('energy.manage') && !measure.endedOn ? (
-            <Field label="Ended on" error={fieldError(end.error, 'endedOn')}>
+            <Field label={t('endedOn')} error={fieldError(end.error, 'endedOn')}>
               {(p) => <Input {...p} type="date" value={endedOn} onChange={(x) => setEndedOn(x.target.value)} />}
             </Field>
           ) : null}
@@ -136,9 +150,13 @@ function EffectDialog({ measure, onClose }: { measure: Measure; onClose: () => v
         <QueryState query={card}>
           {e ? (
             <div className="grid grid--stats">
-              <Stat label="Before, a day" value={e.before.perDay} hint={`${formatDate(e.before.from)} – ${formatDate(e.before.to)}`} />
-              <Stat label="After, a day" value={e.after?.perDay ?? '—'} hint={e.after ? `${formatDate(e.after.from)} – ${formatDate(e.after.to)}` : 'Not started'} />
-              <Stat label="Change" value={e.changePct === null ? '—' : `${e.changePct} %`} hint={e.complete ? 'Every day counted' : 'Still counting'} />
+              <Stat label={t('beforeADay')} value={e.before.perDay} hint={`${fmt.day(e.before.from)} – ${fmt.day(e.before.to)}`} />
+              <Stat
+                label={t('afterADay')}
+                value={e.after?.perDay ?? '—'}
+                hint={e.after ? `${fmt.day(e.after.from)} – ${fmt.day(e.after.to)}` : t('notStarted')}
+              />
+              <Stat label={t('change')} value={e.changePct === null ? '—' : `${e.changePct} %`} hint={e.complete ? t('everyDay') : t('stillCounting')} />
             </div>
           ) : null}
         </QueryState>
@@ -149,6 +167,9 @@ function EffectDialog({ measure, onClose }: { measure: Measure; onClose: () => v
 
 /** Saving measures (ADR 0066) and the effect each had, read now. */
 export default function MeasuresPage() {
+  const t = useT(en, ar);
+  const label = useLabel();
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState<Measure | null>(null);
@@ -156,19 +177,19 @@ export default function MeasuresPage() {
   if (ready && !can('energy.read'))
     return (
       <>
-        <PageHeader title="Saving measures" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Saving measures"
-        description="What was done to use less, and what it changed."
+        title={t('title')}
+        description={t('description')}
         actions={
           can('energy.manage') ? (
             <Button variant="primary" onClick={() => setCreating(true)}>
-              New measure
+              {t('newMeasure')}
             </Button>
           ) : null
         }
@@ -178,22 +199,22 @@ export default function MeasuresPage() {
           <DataTable<Measure>
             rows={list.rows}
             rowKey={(m) => m.id}
-            empty="No measure"
+            empty={t('empty')}
             columns={[
               {
                 key: 't',
-                header: 'Measure',
+                header: t('col.measure'),
                 cell: (m) => (
                   <Button size="sm" variant="text" onClick={() => setOpen(m)}>
                     {m.title}
                   </Button>
                 ),
               },
-              { key: 'k', header: 'Saves', cell: (m) => humanize(m.kind) },
-              { key: 'w', header: 'Where', cell: (m) => m.building ?? (m.meterId ? 'A meter' : 'The compound') },
-              { key: 's', header: 'From', cell: (m) => formatDate(m.startsOn) },
-              { key: 'e', header: 'Ended', cell: (m) => (m.endedOn ? formatDate(m.endedOn) : '—') },
-              { key: 'c', header: 'Cost', cell: (m) => (m.cost ? `${m.cost} EGP` : '—') },
+              { key: 'k', header: t('col.saves'), cell: (m) => label(m.kind) },
+              { key: 'w', header: t('col.where'), cell: (m) => m.building ?? (m.meterId ? t('aMeter') : t('theCompound')) },
+              { key: 's', header: t('col.from'), cell: (m) => fmt.day(m.startsOn) },
+              { key: 'e', header: t('col.ended'), cell: (m) => (m.endedOn ? fmt.day(m.endedOn) : '—') },
+              { key: 'c', header: t('col.cost'), cell: (m) => (m.cost ? fmt.money(m.cost) : '—') },
             ]}
           />
           <LoadMore query={list} />

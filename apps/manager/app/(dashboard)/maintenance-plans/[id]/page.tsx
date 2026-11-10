@@ -1,21 +1,30 @@
 'use client';
 
-import { formatDate, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, ButtonLink, Card, CardBody, CardHeader, DataTable, Field, Input, PageHeader, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, ButtonLink, Card, CardBody, CardHeader, DataTable, Field, Input, PageHeader, ReasonCodeDialog, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { rateText, seriesText } from '@/components/assets/format';
+import { seriesText } from '@/components/assets/format';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PlanEvent, type PlanOccurrence } from '@/lib/queries';
+import formatAr from '@/messages/ar/assets-format';
+import ar from '@/messages/ar/assets-plans';
+import formatEn from '@/messages/en/assets-format';
+import en from '@/messages/en/assets-plans';
 
 type Open = 'defer' | 'skip' | 'off' | { occurrence: PlanOccurrence } | null;
 
 export default function PlanPage() {
+  const t = useT(en, ar);
+  const tf = useT(formatEn, formatAr);
+  const fmt = useFormat();
+  const label = useLabel();
   const { id } = useParams<{ id: string }>();
   const { can } = usePermissions();
   const toast = useToast();
@@ -36,26 +45,26 @@ export default function PlanPage() {
   };
   const defer = useAction(
     (reasonCode: string) => unwrap(api.POST('/api/v1/maintenance/plans/{id}/defer', { params: { path: { id } }, body: { toDate, reasonCode } })),
-    { ...refresh, onDone: done('The next due date moved.') },
+    { ...refresh, onDone: done(t('moved')) },
   );
   const skip = useAction(
     (reasonCode: string) => unwrap(api.POST('/api/v1/maintenance/plans/{id}/skip', { params: { path: { id } }, body: { reasonCode } })),
-    { ...refresh, onDone: done('Skipped.') },
+    { ...refresh, onDone: done(t('skipped')) },
   );
   const off = useAction(
     (reasonCode: string) => unwrap(api.POST('/api/v1/maintenance/plans/{id}/deactivate', { params: { path: { id } }, body: { reasonCode } })),
-    { ...refresh, onDone: done('The plan is off.') },
+    { ...refresh, onDone: done(t('planOff')) },
   );
   const on = useAction(() => unwrap(api.POST('/api/v1/maintenance/plans/{id}/reactivate', { params: { path: { id } } })), {
     ...refresh,
-    onDone: () => toast.show('The plan is on again.'),
+    onDone: () => toast.show(t('planOnAgain')),
   });
   const deferOne = useAction(
     ({ occurrenceId, reasonCode }: { occurrenceId: string; reasonCode: string }) =>
       unwrap(
         api.POST('/api/v1/maintenance/plan-occurrences/{id}/defer', { params: { path: { id: occurrenceId } }, body: { toDate, reasonCode } }),
       ),
-    { ...refresh, onDone: done('Its due date moved.') },
+    { ...refresh, onDone: done(t('oneMoved')) },
   );
   const p = plan.data;
   const manage = can('assets.manage');
@@ -63,24 +72,35 @@ export default function PlanPage() {
     <>
       <PageHeader
         back={
-          <ButtonLink href="/maintenance-plans" variant="text" size="sm" icon={<ArrowLeft aria-hidden />}>
-            Planned maintenance
+          <ButtonLink href="/maintenance-plans" variant="text" size="sm" icon={<ArrowLeft aria-hidden className="icon-dir" />}>
+            {t('title')}
           </ButtonLink>
         }
-        title={p ? <span className="row" style={{ gap: 12 }}>{p.title}{!p.active ? <Badge tone="beige">Off</Badge> : null}</span> : 'Plan'}
-        description={p ? (p.trigger === 'usage' ? `By usage: every ${p.usageInterval} of ${p.metricKey}` : seriesText(p)) : undefined}
+        title={
+          p ? (
+            <span className="row" style={{ gap: 12 }}>
+              {p.title}
+              {!p.active ? <Badge tone="beige">{t('off')}</Badge> : null}
+            </span>
+          ) : (
+            t('plan')
+          )
+        }
+        description={
+          p ? (p.trigger === 'usage' ? t('byUsage', { interval: p.usageInterval, metric: p.metricKey }) : seriesText(tf, p)) : undefined
+        }
         actions={
           p && manage ? (
             <span className="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              {p.active && p.nextDueOn ? <Button onClick={() => setOpen('defer')}>Move next due</Button> : null}
-              {p.active && p.nextDueOn ? <Button onClick={() => setOpen('skip')}>Skip next</Button> : null}
+              {p.active && p.nextDueOn ? <Button onClick={() => setOpen('defer')}>{t('moveNext')}</Button> : null}
+              {p.active && p.nextDueOn ? <Button onClick={() => setOpen('skip')}>{t('skipNext')}</Button> : null}
               {p.active ? (
                 <Button variant="danger" onClick={() => setOpen('off')}>
-                  Turn off
+                  {t('turnOff')}
                 </Button>
               ) : (
                 <Button loading={on.isPending} onClick={() => on.mutate()}>
-                  Turn on
+                  {t('turnOn')}
                 </Button>
               )}
             </span>
@@ -93,36 +113,36 @@ export default function PlanPage() {
           <div className="grid grid--main-aside">
             <div className="stack">
               <Card flush>
-                <CardHeader title="Due dates" />
+                <CardHeader title={t('dueDates')} />
                 <QueryState query={occurrences}>
                   <DataTable<PlanOccurrence>
                     rows={occurrences.rows}
                     rowKey={(o) => o.id}
-                    empty="None yet"
+                    empty={t('noneYet')}
                     columns={[
-                      { key: 'd', header: 'Due', cell: (o) => formatDate(o.dueOn) },
-                      { key: 's', header: 'Status', cell: (o) => humanize(o.status) },
+                      { key: 'd', header: t('col.due'), cell: (o) => fmt.day(o.dueOn) },
+                      { key: 's', header: t('col.status'), cell: (o) => label(o.status) },
                       {
                         key: 'w',
-                        header: 'Work order',
+                        header: t('col.workOrder'),
                         cell: (o) =>
                           o.ticketId ? (
                             <Link className="table__link" href={`/maintenance/${o.ticketId}`}>
-                              Open
+                              {t('open')}
                             </Link>
                           ) : (
                             '—'
                           ),
                       },
-                      { key: 'o', header: 'On time', cell: (o) => (o.onTime === null ? '—' : o.onTime ? 'Yes' : 'Late') },
+                      { key: 'o', header: t('col.onTime'), cell: (o) => (o.onTime === null ? '—' : o.onTime ? t('yes') : t('late')) },
                       {
                         key: 'x',
-                        header: <span className="visually-hidden">Actions</span>,
+                        header: <span className="visually-hidden">{t('actions')}</span>,
                         className: 'table__actions',
                         cell: (o) =>
                           manage && o.status === 'open' ? (
                             <Button size="sm" onClick={() => setOpen({ occurrence: o })}>
-                              Move
+                              {t('move')}
                             </Button>
                           ) : null,
                       },
@@ -132,18 +152,28 @@ export default function PlanPage() {
                 </QueryState>
               </Card>
               <Card flush>
-                <CardHeader title="History" />
+                <CardHeader title={t('history')} />
                 <QueryState query={events}>
                   <DataTable<PlanEvent>
                     rows={events.rows}
                     rowKey={(e) => e.id}
                     columns={[
-                      { key: 'w', header: 'When', width: 170, cell: (e) => formatDateTime(e.occurredAt) },
+                      { key: 'w', header: t('col.when'), width: 170, cell: (e) => fmt.dateTime(e.occurredAt) },
                       {
                         key: 'k',
-                        header: 'What',
-                        cell: (e) =>
-                          `${humanize(e.kind)}${e.toValue && e.kind !== 'updated' ? ` ${e.toValue}` : ''}${e.reasonCode ? ` (${humanize(e.reasonCode).toLowerCase()})` : ''}`,
+                        header: t('col.what'),
+                        cell: (e) => (
+                          <>
+                            {label(e.kind)}
+                            {e.toValue && e.kind !== 'updated' ? (
+                              <>
+                                {' '}
+                                <bdi>{/^\d{4}-\d{2}-\d{2}$/.test(e.toValue) ? fmt.day(e.toValue) : e.toValue}</bdi>
+                              </>
+                            ) : null}
+                            {e.reasonCode ? ` (${label(e.reasonCode)})` : null}
+                          </>
+                        ),
                       },
                     ]}
                   />
@@ -153,29 +183,27 @@ export default function PlanPage() {
             </div>
             <div className="stack">
               <Card flush>
-                <CardHeader title="Record" />
+                <CardHeader title={t('record')} />
                 <CardBody>
                   <dl className="dl">
-                    <dt>Asset</dt>
+                    <dt>{t('asset')}</dt>
                     <dd>
                       <Link className="table__link" href={`/assets/${p.assetId}`}>
-                        Open the asset
+                        {t('openAsset')}
                       </Link>
                     </dd>
-                    <dt>Next due</dt>
-                    <dd>{p.nextDueOn ? formatDate(p.nextDueOn) : '—'}</dd>
-                    <dt>Opens</dt>
-                    <dd>{p.leadDays} days before</dd>
-                    <dt>On time within</dt>
-                    <dd>{p.graceDays} days after</dd>
-                    <dt>Done</dt>
+                    <dt>{t('nextDue')}</dt>
+                    <dd>{p.nextDueOn ? fmt.day(p.nextDueOn) : '—'}</dd>
+                    <dt>{t('opens')}</dt>
+                    <dd>{t('opensValue', { n: p.leadDays })}</dd>
+                    <dt>{t('onTimeWithin')}</dt>
+                    <dd>{t('graceValue', { n: p.graceDays })}</dd>
+                    <dt>{t('done')}</dt>
+                    <dd>{t('doneValue', { n: fmt.number(p.stats.done), rate: fmt.percent(p.stats.done ? p.stats.onTime / p.stats.done : null, 0) })}</dd>
+                    <dt>{t('openCount')}</dt>
                     <dd>
-                      {p.stats.done} · on time {rateText(p.stats.done ? p.stats.onTime / p.stats.done : null)}
-                    </dd>
-                    <dt>Open</dt>
-                    <dd>
-                      {p.stats.open}
-                      {p.stats.overdue ? <Badge tone="error">{p.stats.overdue} overdue</Badge> : null}
+                      {fmt.number(p.stats.open)}
+                      {p.stats.overdue ? <Badge tone="error">{t('overdue', { n: fmt.number(p.stats.overdue) })}</Badge> : null}
                     </dd>
                   </dl>
                 </CardBody>
@@ -187,9 +215,9 @@ export default function PlanPage() {
       <ReasonCodeDialog
         open={open === 'defer' || (open !== null && typeof open === 'object')}
         onClose={close}
-        title={typeof open === 'object' && open ? 'Move this due date' : 'Move the next due date'}
+        title={typeof open === 'object' && open ? t('moveOneTitle') : t('moveNextTitle')}
         codes={REASON_CODES.planDefer}
-        confirmLabel="Move"
+        confirmLabel={t('move')}
         ready={toDate !== ''}
         pending={defer.isPending || deferOne.isPending}
         error={<ErrorAlert error={defer.error ?? deferOne.error} />}
@@ -197,14 +225,14 @@ export default function PlanPage() {
           typeof open === 'object' && open ? deferOne.mutate({ occurrenceId: open.occurrence.id, reasonCode: c }) : defer.mutate(c)
         }
       >
-        <Field label="To">{(f) => <Input {...f} type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />}</Field>
+        <Field label={t('to')}>{(f) => <Input {...f} type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />}</Field>
       </ReasonCodeDialog>
       <ReasonCodeDialog
         open={open === 'skip'}
         onClose={close}
-        title="Skip the next due date"
+        title={t('skipTitle')}
         codes={REASON_CODES.planSkip}
-        confirmLabel="Skip"
+        confirmLabel={t('skip')}
         pending={skip.isPending}
         error={<ErrorAlert error={skip.error} />}
         onConfirm={(c) => skip.mutate(c)}
@@ -212,10 +240,10 @@ export default function PlanPage() {
       <ReasonCodeDialog
         open={open === 'off'}
         onClose={close}
-        title="Turn the plan off"
-        description="Nothing new comes due; work orders already open stay."
+        title={t('offTitle')}
+        description={t('offDescription')}
         codes={REASON_CODES.planDeactivate}
-        confirmLabel="Turn off"
+        confirmLabel={t('turnOff')}
         danger
         pending={off.isPending}
         error={<ErrorAlert error={off.error} />}

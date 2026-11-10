@@ -2,18 +2,41 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, ButtonLink, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  ButtonLink,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Segmented,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import { useNameOf } from '@/components/maintenance-setup/names';
 import { fetchers, keys, type StockItem } from '@/lib/queries';
+import ar from '@/messages/ar/stock';
+import en from '@/messages/en/stock';
 
 const UNITS = ['piece', 'metre', 'litre', 'kilogram', 'box', 'set', 'pair', 'roll'] as const;
 type Show = 'all' | 'below';
 
 function NewItemDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const router = useRouter();
   const [sku, setSku] = useState('');
@@ -31,7 +54,7 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.stockAll],
       onDone: (i) => {
-        toast.show(`${i.sku} is added.`);
+        toast.show(t('added', { sku: i.sku }));
         router.push(`/stock/${i.id}`);
       },
     },
@@ -41,13 +64,13 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="New item"
+      title={t('newTitle')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Add item
+            {t('addItem')}
           </Button>
         </>
       }
@@ -55,15 +78,15 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
       <div className="form">
         <ErrorAlert error={save.error} />
         <div className="form__row">
-          <Field label="SKU" hint="Unique, e.g. VALVE-15. Never changes." error={fieldError(save.error, 'sku')}>
-            {(p) => <Input {...p} value={sku} onChange={(e) => setSku(e.target.value)} />}
+          <Field label={t('sku')} hint={t('skuHint')} error={fieldError(save.error, 'sku')}>
+            {(p) => <Input {...p} dir="ltr" value={sku} onChange={(e) => setSku(e.target.value)} />}
           </Field>
-          <Field label="Unit" error={fieldError(save.error, 'unit')}>
+          <Field label={t('unit')} error={fieldError(save.error, 'unit')}>
             {(p) => (
               <Select {...p} value={unit} onChange={(e) => setUnit(e.target.value as typeof unit)}>
                 {UNITS.map((u) => (
                   <option key={u} value={u}>
-                    {u}
+                    {label(u)}
                   </option>
                 ))}
               </Select>
@@ -71,14 +94,14 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
           </Field>
         </div>
         <div className="form__row">
-          <Field label="Name (English)" error={fieldError(save.error, 'nameEn')}>
-            {(p) => <Input {...p} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
+          <Field label={t('nameEn')} error={fieldError(save.error, 'nameEn')}>
+            {(p) => <Input {...p} dir="ltr" value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
           </Field>
-          <Field label="Name (Arabic)" error={fieldError(save.error, 'nameAr')}>
+          <Field label={t('nameAr')} error={fieldError(save.error, 'nameAr')}>
             {(p) => <Input {...p} dir="rtl" value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
           </Field>
         </div>
-        <Field label="Reorder level" hint="Who keeps the store is told once stock falls to it." error={fieldError(save.error, 'reorderLevel')}>
+        <Field label={t('reorderLevel')} hint={t('reorderHint')} error={fieldError(save.error, 'reorderLevel')}>
           {(p) => <Input {...p} value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />}
         </Field>
       </div>
@@ -88,6 +111,10 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
 
 /** The maintenance store's items (ADR 0065): what is held, what is reserved, what to reorder. */
 export default function StockPage() {
+  const t = useT(en, ar);
+  const label = useLabel();
+  const f = useFormat();
+  const nameOf = useNameOf();
   const { ready, can } = usePermissions();
   const [show, setShow] = useState<Show>('all');
   const [creating, setCreating] = useState(false);
@@ -96,33 +123,33 @@ export default function StockPage() {
   if (ready && !can('stock.manage'))
     return (
       <>
-        <PageHeader title="Stock" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Stock"
-        description="The maintenance store: items, what each store holds, and the technicians’ part requests."
+        title={t('title')}
+        description={t('description')}
         actions={
           <>
-            <ButtonLink href="/stock/part-requests">Part requests</ButtonLink>
-            <ButtonLink href="/stock/stores">Stores</ButtonLink>
+            <ButtonLink href="/stock/part-requests">{t('partRequests')}</ButtonLink>
+            <ButtonLink href="/stock/stores">{t('stores')}</ButtonLink>
             <Button variant="primary" onClick={() => setCreating(true)}>
-              New item
+              {t('newItem')}
             </Button>
           </>
         }
       />
       <div className="toolbar">
         <Segmented<Show>
-          label="Show"
+          label={t('show')}
           value={show}
           onChange={setShow}
           options={[
-            { value: 'all', label: 'All' },
-            { value: 'below', label: 'To reorder' },
+            { value: 'all', label: t('show.all') },
+            { value: 'below', label: t('show.below') },
           ]}
         />
       </div>
@@ -131,26 +158,26 @@ export default function StockPage() {
           <DataTable<StockItem>
             rows={list.rows}
             rowKey={(i) => i.id}
-            empty="No items yet"
+            empty={t('empty')}
             columns={[
               {
                 key: 's',
-                header: 'SKU',
+                header: t('col.sku'),
                 cell: (i) => (
                   <Link className="table__link" href={`/stock/${i.id}`}>
                     {i.sku}
                   </Link>
                 ),
               },
-              { key: 'n', header: 'Name', cell: (i) => i.nameEn },
-              { key: 'h', header: 'Held', cell: (i) => `${i.onHand} ${i.unit}` },
-              { key: 'r', header: 'Reserved', cell: (i) => i.reserved },
-              { key: 'c', header: 'Average cost', cell: (i) => (i.averageCost ? `${i.averageCost} EGP` : '—') },
+              { key: 'n', header: t('col.name'), cell: (i) => nameOf(i) },
+              { key: 'h', header: t('col.held'), cell: (i) => `${i.onHand} ${label(i.unit)}` },
+              { key: 'r', header: t('col.reserved'), cell: (i) => i.reserved },
+              { key: 'c', header: t('col.cost'), cell: (i) => (i.averageCost ? f.money(i.averageCost) : '—') },
               {
                 key: 'b',
-                header: 'Status',
+                header: t('col.status'),
                 cell: (i) =>
-                  !i.active ? <Badge>Retired</Badge> : i.belowReorderLevel ? <Badge tone="terracotta">Reorder</Badge> : null,
+                  !i.active ? <Badge>{t('retired')}</Badge> : i.belowReorderLevel ? <Badge tone="terracotta">{t('reorder')}</Badge> : null,
               },
             ]}
           />

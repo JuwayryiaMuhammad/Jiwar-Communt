@@ -1,12 +1,19 @@
 'use client';
 
+import { useT } from '@jiwar/i18n';
 import { Alert, Button } from '@jiwar/ui';
 import { useRouter } from 'next/navigation';
 import { PasswordForm } from '@/components/password-form';
 import { bffAuth } from '@/lib/api';
+import appAr from '@/messages/ar/app';
+import authAr from '@/messages/ar/auth';
+import appEn from '@/messages/en/app';
+import authEn from '@/messages/en/auth';
 
 /** Forced after the first sign-in with a bootstrap password. */
 export default function ChangePasswordPage() {
+  const t = useT(authEn, authAr);
+  const app = useT(appEn, appAr);
   const router = useRouter();
   return (
     <div className="auth">
@@ -17,13 +24,13 @@ export default function ChangePasswordPage() {
               J
             </span>
             <h1 className="t-display-md" style={{ marginTop: 16 }}>
-              Set a new password
+              {t('change.title')}
             </h1>
-            <p className="t-secondary">This password was set at setup. Choose your own before you continue.</p>
+            <p className="t-secondary">{t('change.body')}</p>
           </div>
-          <Alert tone="info">Changing it signs out every other platform session.</Alert>
+          <Alert tone="info">{t('change.alert')}</Alert>
           <PasswordForm
-            submitLabel="Save and continue"
+            submitLabel={t('change.submit')}
             onDone={() => {
               router.replace('/');
               router.refresh();
@@ -36,17 +43,17 @@ export default function ChangePasswordPage() {
               router.replace('/login');
             }}
           >
-            Back to sign-in
+            {t('change.back')}
           </Button>
         </div>
       </div>
       <aside className="auth__band">
         <span className="badge badge--green badge--plain" style={{ alignSelf: 'flex-start' }}>
-          Jiwar Platform
+          {app('meta.title')}
         </span>
         <div className="stack" style={{ gap: 16 }}>
-          <h2>One more step.</h2>
-          <p>The setup password stops working once you save a new one.</p>
+          <h2>{t('change.bandTitle')}</h2>
+          <p>{t('change.bandBody')}</p>
         </div>
         <span />
       </aside>

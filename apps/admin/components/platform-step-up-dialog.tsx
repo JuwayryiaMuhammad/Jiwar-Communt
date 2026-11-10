@@ -1,9 +1,12 @@
 'use client';
 
 import { useErrorText, unwrap } from '@jiwar/api';
-import { Button, Dialog, Field, Input } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, useCommonT } from '@jiwar/ui';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/payments';
+import en from '@/messages/en/payments';
 
 const validCode = (code: string) => /^\d{6}$/.test(code.trim());
 
@@ -23,6 +26,8 @@ export function PlatformStepUpDialog({
   onVerified: () => void;
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const [code, setCode] = useState('');
   const errorText = useErrorText();
   const [error, setError] = useState<string | null>(null);
@@ -69,16 +74,16 @@ export function PlatformStepUpDialog({
       onSubmit={() => void verify()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={() => void send()}>Send a new code</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
+          <Button onClick={() => void send()}>{t('stepUp.resend')}</Button>
           <Button type="submit" variant="primary" loading={busy} disabled={!validCode(code)}>
-            Confirm
+            {c('confirm')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Code" hint={sent ? 'Six digits, sent to your email. Valid for a few minutes.' : 'Sending a code to your email…'} error={error ?? undefined}>
+        <Field label={t('stepUp.code')} hint={sent ? t('stepUp.sent') : t('stepUp.sending')} error={error ?? undefined}>
           {(p) => <Input {...p} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} />}
         </Field>
       </div>

@@ -1,4 +1,6 @@
-import type { Tone } from '@jiwar/ui';
+import { useLabel, type Tone } from '@jiwar/ui';
+import codesAr from '@/messages/ar/codes';
+import codesEn from '@/messages/en/codes';
 
 /** Security events worth a second look get a warm tone. */
 const ALERTING = new Set([
@@ -15,7 +17,7 @@ const ALERTING = new Set([
   'account.not_me',
 ]);
 
-/** Event names the backend records (securityEvents.record calls). */
+/** Event names the backend records (SECURITY_EVENTS in src/core/audit/actions.ts). */
 export const SECURITY_EVENTS = [
   'login.succeeded',
   'login.new_device',
@@ -26,6 +28,9 @@ export const SECURITY_EVENTS = [
   'platform.login_succeeded',
   'platform.login_failed',
   'platform.login_locked',
+  'platform.step_up_requested',
+  'platform.step_up_verified',
+  'platform.step_up_failed',
   'session.revoked',
   'session.refresh_reuse_detected',
   'invite.token_invalid',
@@ -35,6 +40,13 @@ export const SECURITY_EVENTS = [
   'step_up.failed',
   'account.phone_reassigned',
   'account.not_me',
+  'payment.webhook_rejected',
+  'payment.order_mismatch',
+  'payment.amount_mismatch',
+  'payment.verification_contradicted',
+  'payment.duplicate_charge',
+  'guard_alarm.webhook_rejected',
+  'gate_call.webhook_rejected',
 ] as const;
 
 export function isAlerting(event: string) {
@@ -53,6 +65,19 @@ export const PLATFORM_ACTIONS = [
   'tenant.created',
   'tenant.status_changed',
   'tenant.manager_added',
+  'tenant.payment_gateway_set',
+  'tenant.payment_gateway_toggled',
   'platform_admin.created',
   'platform_admin.password_changed',
 ] as const;
+
+const CODE_LABELS = { en: codesEn, ar: codesAr };
+
+/**
+ * The words for a security event, a platform action or any other code the
+ * platform API returns, in the page's language: the platform's own codes
+ * first (messages/codes), then the shared words.
+ */
+export function useCodeLabel() {
+  return useLabel(CODE_LABELS);
+}

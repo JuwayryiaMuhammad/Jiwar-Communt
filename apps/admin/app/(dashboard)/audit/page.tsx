@@ -1,15 +1,18 @@
 'use client';
 
-import { formatDateTime, humanize, shortId } from '@jiwar/api';
+import { shortId } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, PageHeader, Select } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, PageHeader, Select, useCommonT } from '@jiwar/ui';
 import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { DateRange, endOfDay, startOfDay } from '@/components/date-range';
 import { useTenantNames } from '@/components/tenant-names';
-import { PLATFORM_ACTIONS } from '@/lib/labels';
+import { PLATFORM_ACTIONS, useCodeLabel } from '@/lib/labels';
 import { keys, listAudit, type AuditEntry } from '@/lib/queries';
+import ar from '@/messages/ar/logs';
+import en from '@/messages/en/logs';
 
 const EMPTY = { action: '', targetTenantId: '', from: '', to: '' };
 
@@ -31,7 +34,7 @@ function Changes({ value }: { value: AuditEntry['changes'] }) {
             : field;
         return (
           <Badge key={field} tone="beige" plain>
-            {text}
+            <bdi dir="ltr">{text}</bdi>
           </Badge>
         );
       })}
@@ -40,6 +43,10 @@ function Changes({ value }: { value: AuditEntry['changes'] }) {
 }
 
 export default function PlatformAuditPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useCodeLabel();
   const [filters, setFilters] = useState(EMPTY);
   const { names, tenants } = useTenantNames();
   const query = {
@@ -53,34 +60,31 @@ export default function PlatformAuditPage() {
 
   return (
     <>
-      <PageHeader
-        title="Audit log"
-        description="Every platform action, append-only. Entries can't be edited or deleted, and they never hold personal data."
-      />
+      <PageHeader title={t('audit.title')} description={t('audit.description')} />
       <div className="toolbar">
-        <Field label="Action">
+        <Field label={t('audit.filter')}>
           {(p) => (
             <Select {...p} value={filters.action} onChange={(e) => setFilters({ ...filters, action: e.target.value })}>
-              <option value="">All actions</option>
+              <option value="">{t('audit.all')}</option>
               {PLATFORM_ACTIONS.map((a) => (
                 <option key={a} value={a}>
-                  {humanize(a)}
+                  {label(a)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Compound">
+        <Field label={t('filter.compound')}>
           {(p) => (
             <Select
               {...p}
               value={filters.targetTenantId}
               onChange={(e) => setFilters({ ...filters, targetTenantId: e.target.value })}
             >
-              <option value="">All compounds</option>
-              {tenants.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+              <option value="">{t('filter.allCompounds')}</option>
+              {tenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.name}
                 </option>
               ))}
             </Select>
@@ -89,7 +93,7 @@ export default function PlatformAuditPage() {
         <DateRange from={filters.from} to={filters.to} onChange={(r) => setFilters({ ...filters, ...r })} />
         {dirty ? (
           <Button variant="text" icon={<RotateCcw aria-hidden />} onClick={() => setFilters(EMPTY)} style={{ height: 40 }}>
-            Reset
+            {t('filter.reset')}
           </Button>
         ) : null}
       </div>
@@ -98,27 +102,27 @@ export default function PlatformAuditPage() {
           <DataTable<AuditEntry>
             rows={audit.rows}
             rowKey={(a) => a.id}
-            empty={dirty ? 'No entry matches these filters' : 'No platform actions yet'}
+            empty={dirty ? t('audit.emptyMatch') : t('audit.empty')}
             columns={[
               {
                 key: 'time',
-                header: 'When',
-                cell: (a) => <span className="t-num" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(a.occurredAt)}</span>,
+                header: t('col.when'),
+                cell: (a) => <span className="t-num" style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(a.occurredAt)}</span>,
               },
-              { key: 'action', header: 'Action', cell: (a) => <span className="table__primary">{humanize(a.action)}</span> },
+              { key: 'action', header: t('audit.col.action'), cell: (a) => <span className="table__primary">{label(a.action)}</span> },
               {
                 key: 'actor',
-                header: 'By',
+                header: c('by'),
                 cell: (a) => (
                   <span title={a.actorId ?? ''}>
-                    {humanize(a.actorType)}
+                    {label(a.actorType)}
                     {a.actorId ? <span className="t-mono t-secondary"> {shortId(a.actorId)}</span> : null}
                   </span>
                 ),
               },
               {
                 key: 'tenant',
-                header: 'Compound',
+                header: t('col.compound'),
                 cell: (a) =>
                   a.targetTenantId ? (
                     <Link className="table__link" href={`/tenants/${a.targetTenantId}`}>
@@ -128,7 +132,7 @@ export default function PlatformAuditPage() {
                     <span className="t-secondary">—</span>
                   ),
               },
-              { key: 'changes', header: 'Changes', cell: (a) => <Changes value={a.changes} /> },
+              { key: 'changes', header: t('audit.col.changes'), cell: (a) => <Changes value={a.changes} /> },
             ]}
           />
           <LoadMore query={audit} />

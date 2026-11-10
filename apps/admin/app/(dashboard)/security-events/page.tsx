@@ -1,30 +1,38 @@
 'use client';
 
-import { formatDateTime, shortId } from '@jiwar/api';
+import { shortId } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, PageHeader, Select } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, PageHeader, Select, useCommonT } from '@jiwar/ui';
 import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { DateRange, endOfDay, startOfDay } from '@/components/date-range';
+import { EventBadge } from '@/components/event-badge';
 import { useTenantNames } from '@/components/tenant-names';
-import { eventTone, SECURITY_EVENTS } from '@/lib/labels';
+import { SECURITY_EVENTS, useCodeLabel } from '@/lib/labels';
 import { keys, listEvents, type SecurityEvent } from '@/lib/queries';
+import ar from '@/messages/ar/logs';
+import en from '@/messages/en/logs';
 
 const EMPTY = { event: '', tenantId: '', from: '', to: '' };
 
 function Metadata({ value }: { value: SecurityEvent['metadata'] }) {
   if (!value || !Object.keys(value).length) return <span className="t-secondary">—</span>;
   return (
-    <span className="t-mono t-secondary">
+    <bdi className="t-mono t-secondary">
       {Object.entries(value)
         .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
         .join(' · ')}
-    </span>
+    </bdi>
   );
 }
 
 export default function SecurityEventsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useCodeLabel();
   const [filters, setFilters] = useState(EMPTY);
   const { names, tenants } = useTenantNames();
   const query = {
@@ -40,30 +48,27 @@ export default function SecurityEventsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Security events"
-        description="Sign-ins, verification codes and sessions across every compound. Identifiers are stored as hashes, never as emails or phones."
-      />
+      <PageHeader title={t('events.title')} description={t('events.description')} />
       <div className="toolbar">
-        <Field label="Event">
+        <Field label={t('events.filter')}>
           {(p) => (
             <Select {...p} value={filters.event} onChange={(e) => setFilters({ ...filters, event: e.target.value })}>
-              <option value="">All events</option>
+              <option value="">{t('events.all')}</option>
               {SECURITY_EVENTS.map((e) => (
                 <option key={e} value={e}>
-                  {e}
+                  {label(e)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Compound">
+        <Field label={t('filter.compound')}>
           {(p) => (
             <Select {...p} value={filters.tenantId} onChange={(e) => setFilters({ ...filters, tenantId: e.target.value })}>
-              <option value="">All compounds</option>
-              {tenants.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+              <option value="">{t('filter.allCompounds')}</option>
+              {tenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.name}
                 </option>
               ))}
             </Select>
@@ -72,7 +77,7 @@ export default function SecurityEventsPage() {
         <DateRange from={filters.from} to={filters.to} onChange={(r) => setFilters({ ...filters, ...r })} />
         {dirty ? (
           <Button variant="text" icon={<RotateCcw aria-hidden />} onClick={() => setFilters(EMPTY)} style={{ height: 40 }}>
-            Reset
+            {t('filter.reset')}
           </Button>
         ) : null}
       </div>
@@ -81,17 +86,21 @@ export default function SecurityEventsPage() {
           <DataTable<SecurityEvent>
             rows={events.rows}
             rowKey={(e) => e.id}
-            empty={dirty ? 'No event matches these filters' : 'No security events yet'}
+            empty={dirty ? t('events.emptyMatch') : t('events.empty')}
             columns={[
               {
                 key: 'time',
-                header: 'When',
-                cell: (e) => <span className="t-num" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(e.occurredAt)}</span>,
+                header: t('col.when'),
+                cell: (e) => <span className="t-num" style={{ whiteSpace: 'nowrap' }}>{fmt.dateTime(e.occurredAt)}</span>,
               },
-              { key: 'event', header: 'Event', cell: (e) => <Badge tone={eventTone(e.event)}>{e.event}</Badge> },
+              {
+                key: 'event',
+                header: t('events.col.event'),
+                cell: (e) => <EventBadge event={e.event} />,
+              },
               {
                 key: 'tenant',
-                header: 'Compound',
+                header: t('col.compound'),
                 cell: (e) =>
                   e.tenantId ? (
                     <Link className="table__link" href={`/tenants/${e.tenantId}`}>
@@ -99,7 +108,7 @@ export default function SecurityEventsPage() {
                     </Link>
                   ) : e.platformAdminId ? (
                     <Badge tone="dark" plain>
-                      Platform
+                      {t('events.platform')}
                     </Badge>
                   ) : (
                     <span className="t-secondary">—</span>
@@ -107,21 +116,21 @@ export default function SecurityEventsPage() {
               },
               {
                 key: 'subject',
-                header: 'Subject',
+                header: t('events.col.subject'),
                 cell: (e) => (
                   <span className="t-mono t-secondary" title={e.accountId ?? e.platformAdminId ?? e.identifierHash ?? ''}>
                     {e.accountId
-                      ? `account ${shortId(e.accountId)}`
+                      ? t('subject.account', { id: shortId(e.accountId) })
                       : e.platformAdminId
-                        ? `admin ${shortId(e.platformAdminId)}`
+                        ? t('subject.admin', { id: shortId(e.platformAdminId) })
                         : e.identifierHash
-                          ? `id# ${shortId(e.identifierHash)}`
+                          ? t('subject.hash', { id: shortId(e.identifierHash) })
                           : '—'}
                   </span>
                 ),
               },
-              { key: 'ip', header: 'IP', cell: (e) => <span className="t-mono">{e.ip ?? '—'}</span> },
-              { key: 'meta', header: 'Details', cell: (e) => <Metadata value={e.metadata} /> },
+              { key: 'ip', header: t('events.col.ip'), cell: (e) => <span className="t-mono">{e.ip ?? '—'}</span> },
+              { key: 'meta', header: c('details'), cell: (e) => <Metadata value={e.metadata} /> },
             ]}
           />
           <LoadMore query={events} />

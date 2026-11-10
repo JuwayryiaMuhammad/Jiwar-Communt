@@ -1,6 +1,6 @@
 'use client';
 
-import { Field, Input } from '@jiwar/ui';
+import { Field, Input, useCommonT } from '@jiwar/ui';
 
 /** `<input type="date">` gives local dates; the API wants ISO instants. */
 export function startOfDay(date: string): string | undefined {
@@ -20,12 +20,13 @@ export function DateRange({
   to: string;
   onChange: (range: { from: string; to: string }) => void;
 }) {
+  const c = useCommonT();
   return (
     <>
-      <Field label="From">
+      <Field label={c('from')}>
         {(p) => <Input {...p} type="date" value={from} max={to || undefined} onChange={(e) => onChange({ from: e.target.value, to })} />}
       </Field>
-      <Field label="To">
+      <Field label={c('to')}>
         {(p) => <Input {...p} type="date" value={to} min={from || undefined} onChange={(e) => onChange({ from, to: e.target.value })} />}
       </Field>
     </>

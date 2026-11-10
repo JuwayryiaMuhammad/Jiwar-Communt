@@ -1,14 +1,21 @@
 'use client';
 
 import { ErrorAlert } from '@jiwar/api/react';
-import { Button, Field, Input } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Field, Input, useCommonT } from '@jiwar/ui';
 import { Building2, ScrollText, ShieldCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { bffAuth } from '@/lib/api';
 import { safeNext } from '@/lib/nav';
+import appAr from '@/messages/ar/app';
+import authAr from '@/messages/ar/auth';
+import appEn from '@/messages/en/app';
+import authEn from '@/messages/en/auth';
 
 function LoginForm() {
+  const t = useT(authEn, authAr);
+  const c = useCommonT();
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState('');
@@ -37,12 +44,12 @@ function LoginForm() {
           J
         </span>
         <h1 className="t-display-md" style={{ marginTop: 16 }}>
-          Platform sign-in
+          {t('login.title')}
         </h1>
-        <p className="t-secondary">For Jiwar platform administrators.</p>
+        <p className="t-secondary">{t('login.subtitle')}</p>
       </div>
       <div className="form">
-        <Field label="Email">
+        <Field label={c('email')}>
           {(p) => (
             <Input
               {...p}
@@ -55,7 +62,7 @@ function LoginForm() {
             />
           )}
         </Field>
-        <Field label="Password">
+        <Field label={t('login.password')}>
           {(p) => (
             <Input
               {...p}
@@ -69,7 +76,7 @@ function LoginForm() {
         </Field>
         <ErrorAlert error={error} />
         <Button type="submit" variant="primary" loading={pending} disabled={!email || !password}>
-          Sign in
+          {t('login.submit')}
         </Button>
       </div>
     </form>
@@ -77,6 +84,8 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const t = useT(authEn, authAr);
+  const app = useT(appEn, appAr);
   return (
     <div className="auth">
       <div className="auth__panel">
@@ -86,21 +95,21 @@ export default function LoginPage() {
       </div>
       <aside className="auth__band">
         <span className="badge badge--green badge--plain" style={{ alignSelf: 'flex-start' }}>
-          Jiwar Platform
+          {app('meta.title')}
         </span>
         <div className="stack" style={{ gap: 16 }}>
-          <h2>Every compound, one console.</h2>
-          <p>Open compounds, appoint their managers, and watch sign-in security across the platform.</p>
+          <h2>{t('login.bandTitle')}</h2>
+          <p>{t('login.bandBody')}</p>
         </div>
         <div className="auth__points">
           <span className="auth__point">
-            <Building2 aria-hidden /> Compounds and their managers
+            <Building2 aria-hidden /> {t('login.point.compounds')}
           </span>
           <span className="auth__point">
-            <ShieldCheck aria-hidden /> Security events across tenants
+            <ShieldCheck aria-hidden /> {t('login.point.events')}
           </span>
           <span className="auth__point">
-            <ScrollText aria-hidden /> Immutable platform audit trail
+            <ScrollText aria-hidden /> {t('login.point.audit')}
           </span>
         </div>
       </aside>

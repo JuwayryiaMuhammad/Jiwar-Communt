@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDate, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -12,6 +13,7 @@ import {
   PageHeader,
   Segmented,
   StatusBadge,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
 import { Plus, Search } from 'lucide-react';
@@ -21,10 +23,15 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { emptyManager, ManagerFields, managerPayload, type NewManager } from '@/components/manager-fields';
 import { api } from '@/lib/api';
 import { keys, listTenants, type Tenant } from '@/lib/queries';
+import ar from '@/messages/ar/tenants';
+import en from '@/messages/en/tenants';
 
-type StatusFilter = 'all' | 'active' | 'suspended';
+const FILTERS = ['all', 'active', 'suspended'] as const;
+type StatusFilter = (typeof FILTERS)[number];
 
 function NewTenantDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const router = useRouter();
   const toast = useToast();
   const [name, setName] = useState('');
@@ -39,7 +46,7 @@ function NewTenantDialog({ open, onClose }: { open: boolean; onClose: () => void
     {
       invalidate: [keys.tenants],
       onDone: (tenant) => {
-        toast.show(`${tenant.name} is open. The manager can sign in with their email.`);
+        toast.show(t('new.opened', { name: tenant.name }));
         close();
         router.push(`/tenants/${tenant.id}`);
       },
@@ -58,23 +65,23 @@ function NewTenantDialog({ open, onClose }: { open: boolean; onClose: () => void
       wide
       open={open}
       onClose={close}
-      title="New compound"
-      description="Opens a compound with its first manager. Default roles are created with it."
+      title={t('newCompound')}
+      description={t('new.description')}
       onSubmit={() => create.mutate(undefined)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending}>
-            Open compound
+            {t('new.submit')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Compound name" error={fieldError(create.error, 'name')}>
+        <Field label={t('new.name')} error={fieldError(create.error, 'name')}>
           {(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} autoFocus />}
         </Field>
-        <p className="form__section">First manager</p>
+        <p className="form__section">{t('new.firstManager')}</p>
         <ManagerFields value={manager} onChange={setManager} error={create.error} prefix="manager." />
         <ErrorAlert error={create.error} />
       </div>
@@ -83,6 +90,9 @@ function NewTenantDialog({ open, onClose }: { open: boolean; onClose: () => void
 }
 
 function TenantsView() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const params = useSearchParams();
   const router = useRouter();
   const [creating, setCreating] = useState(false);
@@ -100,35 +110,35 @@ function TenantsView() {
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (tenants.rows ?? []).filter(
-      (t) => (status === 'all' || t.status === status) && (!q || t.name.toLowerCase().includes(q)),
+      (tenant) => (status === 'all' || tenant.status === status) && (!q || tenant.name.toLowerCase().includes(q)),
     );
   }, [tenants.rows, status, search]);
 
   return (
     <>
       <PageHeader
-        title="Compounds"
-        description="Each compound is a tenant with its own residents, staff and data."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            New compound
+            {t('newCompound')}
           </Button>
         }
       />
       <div className="toolbar">
         <div className="field" style={{ flex: '1 1 240px', maxWidth: 360 }}>
           <label className="visually-hidden" htmlFor="tenant-search">
-            Search compounds
+            {t('searchLabel')}
           </label>
           <div style={{ position: 'relative' }}>
             <Search
               aria-hidden
-              style={{ position: 'absolute', left: 12, top: 12, width: 16, height: 16, color: 'var(--text-secondary)' }}
+              style={{ position: 'absolute', insetInlineStart: 12, top: 12, width: 16, height: 16, color: 'var(--text-secondary)' }}
             />
             <Input
               id="tenant-search"
-              placeholder="Search loaded compounds"
-              style={{ paddingLeft: 36 }}
+              placeholder={t('searchPlaceholder')}
+              style={{ paddingInlineStart: 36 }}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -136,35 +146,35 @@ function TenantsView() {
         </div>
         <div className="spacer" />
         <Segmented<StatusFilter>
-          label="Status"
+          label={c('status')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'all', label: 'All' },
-            { value: 'active', label: 'Active' },
-            { value: 'suspended', label: 'Suspended' },
-          ]}
+          options={FILTERS.map((v) => ({ value: v, label: t(`filter.${v}`) }))}
         />
       </div>
       <Card flush>
         <QueryState query={tenants}>
           <DataTable<Tenant>
             rows={rows}
-            rowKey={(t) => t.id}
-            empty={tenants.rows?.length ? 'No compound matches' : 'No compounds yet'}
+            rowKey={(tenant) => tenant.id}
+            empty={tenants.rows?.length ? t('emptyMatch') : t('empty')}
             columns={[
               {
                 key: 'name',
-                header: 'Compound',
-                cell: (t) => (
-                  <Link className="table__link" href={`/tenants/${t.id}`}>
-                    {t.name}
+                header: t('col.name'),
+                cell: (tenant) => (
+                  <Link className="table__link" href={`/tenants/${tenant.id}`}>
+                    {tenant.name}
                   </Link>
                 ),
               },
-              { key: 'status', header: 'Status', cell: (t) => <StatusBadge status={t.status} /> },
-              { key: 'created', header: 'Opened', cell: (t) => <span className="t-num">{formatDate(t.createdAt)}</span> },
-              { key: 'id', header: 'Tenant id', cell: (t) => <span className="t-mono t-secondary">{t.id}</span> },
+              { key: 'status', header: c('status'), cell: (tenant) => <StatusBadge status={tenant.status} /> },
+              {
+                key: 'created',
+                header: t('col.opened'),
+                cell: (tenant) => <span className="t-num">{fmt.date(tenant.createdAt)}</span>,
+              },
+              { key: 'id', header: t('col.id'), cell: (tenant) => <span className="t-mono t-secondary">{tenant.id}</span> },
             ]}
           />
           <LoadMore query={tenants} />

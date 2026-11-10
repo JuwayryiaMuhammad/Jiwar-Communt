@@ -1,9 +1,9 @@
 'use client';
 
-import { formatDate, formatDateTime, humanize, relativeTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
-  Badge,
   Button,
   ButtonLink,
   Card,
@@ -15,19 +15,25 @@ import {
   EmptyState,
   PageHeader,
   StatusBadge,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Pause, Play, UserPlus } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { EventBadge } from '@/components/event-badge';
 import { emptyManager, ManagerFields, managerPayload, type NewManager } from '@/components/manager-fields';
 import { PaymentGatewayCard } from '@/components/payment-gateway-card';
 import { api } from '@/lib/api';
-import { eventTone } from '@/lib/labels';
+import { useCodeLabel } from '@/lib/labels';
 import { getTenant, keys, listAudit, listEvents, type Manager, type TenantDetail } from '@/lib/queries';
+import ar from '@/messages/ar/tenants';
+import en from '@/messages/en/tenants';
 
 function AddManagerDialog({ tenant, open, onClose }: { tenant: TenantDetail; open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [manager, setManager] = useState<NewManager>(emptyManager);
   const add = useAction(
@@ -41,7 +47,11 @@ function AddManagerDialog({ tenant, open, onClose }: { tenant: TenantDetail; ope
     {
       invalidate: [keys.tenant(tenant.id)],
       onDone: (m) => {
-        toast.show(`${m.fullName ?? 'Manager'} added to ${tenant.name}.`);
+        toast.show(
+          m.fullName
+            ? t('add.done', { name: m.fullName, compound: tenant.name })
+            : t('add.doneUnnamed', { compound: tenant.name }),
+        );
         close();
       },
     },
@@ -56,14 +66,14 @@ function AddManagerDialog({ tenant, open, onClose }: { tenant: TenantDetail; ope
       wide
       open={open}
       onClose={close}
-      title="Add a manager"
-      description={`A manager account in ${tenant.name}. They sign in with a code sent to this email.`}
+      title={t('add.title')}
+      description={t('add.description', { name: tenant.name })}
       onSubmit={() => add.mutate(undefined)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={add.isPending}>
-            Add manager
+            {t('add.submit')}
           </Button>
         </>
       }
@@ -77,6 +87,10 @@ function AddManagerDialog({ tenant, open, onClose }: { tenant: TenantDetail; ope
 }
 
 export default function TenantPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useCodeLabel();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const [adding, setAdding] = useState(false);
@@ -93,8 +107,8 @@ export default function TenantPage() {
     queryFn: () => listEvents({ tenantId: id }, undefined, 8),
   });
 
-  const t = tenant.data;
-  const nextStatus = t?.status === 'active' ? 'suspended' : 'active';
+  const compound = tenant.data;
+  const nextStatus = compound?.status === 'active' ? 'suspended' : 'active';
 
   const setStatus = useAction(
     () =>
@@ -107,7 +121,7 @@ export default function TenantPage() {
     {
       invalidate: [keys.tenants, keys.audit({ targetTenantId: id })],
       onDone: (res) => {
-        toast.show(res.status === 'suspended' ? `${res.name} is suspended.` : `${res.name} is active again.`);
+        toast.show(res.status === 'suspended' ? t('detail.suspended', { name: res.name }) : t('detail.reactivated', { name: res.name }));
         setConfirmStatus(false);
       },
     },
@@ -124,7 +138,9 @@ export default function TenantPage() {
     {
       invalidate: [keys.tenant(id)],
       onDone: (m) => {
-        toast.show(m.status === 'active' ? `${m.fullName} can sign in again.` : `${m.fullName} can no longer sign in.`);
+        toast.show(
+          m.status === 'active' ? t('managers.activated', { name: m.fullName }) : t('managers.deactivated', { name: m.fullName }),
+        );
         setManagerChange(null);
       },
     },
@@ -134,32 +150,32 @@ export default function TenantPage() {
     <>
       <PageHeader
         back={
-          <ButtonLink href="/tenants" variant="text" size="sm" icon={<ArrowLeft aria-hidden />}>
-            Compounds
+          <ButtonLink href="/tenants" variant="text" size="sm" icon={<ArrowLeft aria-hidden className="icon-dir" />}>
+            {t('title')}
           </ButtonLink>
         }
         title={
-          t ? (
+          compound ? (
             <span className="row" style={{ gap: 12 }}>
-              {t.name} <StatusBadge status={t.status} />
+              {compound.name} <StatusBadge status={compound.status} />
             </span>
           ) : (
-            'Compound'
+            t('detail.fallbackTitle')
           )
         }
-        description={t ? `Opened ${formatDate(t.createdAt)}` : undefined}
+        description={compound ? t('detail.opened', { date: fmt.date(compound.createdAt) }) : undefined}
         actions={
-          t ? (
+          compound ? (
             <>
               <Button icon={<UserPlus aria-hidden />} onClick={() => setAdding(true)}>
-                Add manager
+                {t('detail.addManager')}
               </Button>
               <Button
-                variant={t.status === 'active' ? 'dark' : 'primary'}
-                icon={t.status === 'active' ? <Pause aria-hidden /> : <Play aria-hidden />}
+                variant={compound.status === 'active' ? 'dark' : 'primary'}
+                icon={compound.status === 'active' ? <Pause aria-hidden /> : <Play aria-hidden />}
                 onClick={() => setConfirmStatus(true)}
               >
-                {t.status === 'active' ? 'Suspend' : 'Reactivate'}
+                {compound.status === 'active' ? t('detail.suspend') : t('detail.reactivate')}
               </Button>
             </>
           ) : null
@@ -167,43 +183,43 @@ export default function TenantPage() {
       />
 
       <QueryState query={tenant}>
-        {t ? (
+        {compound ? (
           <div className="grid grid--main-aside">
             <div className="stack">
               <Card flush>
-                <CardHeader title="Managers">
-                  <span className="t-secondary">Managers run the compound: residents, staff, gates and roles.</span>
+                <CardHeader title={t('managers.title')}>
+                  <span className="t-secondary">{t('managers.body')}</span>
                 </CardHeader>
                 <DataTable<Manager>
-                  rows={t.managers}
+                  rows={compound.managers}
                   rowKey={(m) => m.id}
-                  empty="No managers"
+                  empty={t('managers.empty')}
                   columns={[
                     {
                       key: 'name',
-                      header: 'Name',
+                      header: c('name'),
                       cell: (m) =>
                         m.erased ? (
-                          <span className="t-secondary">Erased account</span>
+                          <span className="t-secondary">{t('managers.erased')}</span>
                         ) : (
                           <span className="table__primary">{m.fullName}</span>
                         ),
                     },
-                    { key: 'email', header: 'Email', cell: (m) => m.email ?? '—' },
+                    { key: 'email', header: c('email'), cell: (m) => m.email ?? '—' },
                     {
                       key: 'phone',
-                      header: 'Phone',
+                      header: c('phone'),
                       cell: (m) => (m.phone ? <span className="t-num">{m.phone}</span> : <span className="t-secondary">—</span>),
                     },
-                    { key: 'status', header: 'Status', cell: (m) => <StatusBadge status={m.erased ? 'erased' : m.status} /> },
+                    { key: 'status', header: c('status'), cell: (m) => <StatusBadge status={m.erased ? 'erased' : m.status} /> },
                     {
                       key: 'actions',
-                      header: <span className="visually-hidden">Actions</span>,
+                      header: <span className="visually-hidden">{c('actions')}</span>,
                       className: 'table__actions',
                       cell: (m) =>
                         m.erased || (m.status !== 'active' && m.status !== 'inactive') ? null : (
                           <Button size="sm" onClick={() => setManagerChange(m)}>
-                            {m.status === 'active' ? 'Deactivate' : 'Activate'}
+                            {m.status === 'active' ? t('managers.deactivate') : t('managers.activate')}
                           </Button>
                         ),
                     },
@@ -211,71 +227,69 @@ export default function TenantPage() {
                 />
               </Card>
 
-              <PaymentGatewayCard tenantId={t.id} />
+              <PaymentGatewayCard tenantId={compound.id} />
 
               <Card flush>
-                <CardHeader title="Security events in this compound" />
+                <CardHeader title={t('events.title')} />
                 <QueryState query={events} rows={3}>
                   {events.data?.data.length ? (
                     <ul className="list">
                       {events.data.data.map((e) => (
                         <li key={e.id} className="list__item">
-                          <Badge tone={eventTone(e.event)}>{e.event}</Badge>
+                          <EventBadge event={e.event} />
                           <div className="list__text">
-                            <div className="list__meta">{e.ip ?? 'No IP'}</div>
+                            <div className="list__meta">{e.ip ? <bdi>{e.ip}</bdi> : t('events.noIp')}</div>
                           </div>
-                          <span className="list__meta" title={formatDateTime(e.occurredAt)}>
-                            {relativeTime(e.occurredAt)}
+                          <span className="list__meta" title={fmt.dateTime(e.occurredAt)}>
+                            {fmt.relative(e.occurredAt)}
                           </span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <EmptyState title="No events" />
+                    <EmptyState title={t('events.empty')} />
                   )}
                 </QueryState>
               </Card>
             </div>
 
             <div className="stack">
-              <Card tone={t.status === 'active' ? 'green' : 'beige'}>
+              <Card tone={compound.status === 'active' ? 'green' : 'beige'}>
                 <div className="stack stack--sm">
-                  <span className="t-caption t-secondary">Status</span>
-                  <span className="t-title-md">{t.status === 'active' ? 'Open for sign-in' : 'Suspended'}</span>
+                  <span className="t-caption t-secondary">{c('status')}</span>
+                  <span className="t-title-md">{compound.status === 'active' ? t('state.open') : t('state.suspended')}</span>
                   <p className="t-secondary">
-                    {t.status === 'active'
-                      ? 'Residents, staff and managers can sign in.'
-                      : 'Nobody in this compound can sign in or use the API until it is reactivated.'}
+                    {compound.status === 'active' ? t('state.openBody') : t('state.suspendedBody')}
                   </p>
                 </div>
               </Card>
               <Card>
                 <dl className="dl">
-                  <dt>Tenant id</dt>
-                  <dd className="t-mono">{t.id}</dd>
-                  <dt>Opened</dt>
-                  <dd>{formatDateTime(t.createdAt)}</dd>
-                  <dt>Managers</dt>
-                  <dd>{t.managers.filter((m) => m.status === 'active').length} active</dd>
+                  <dt>{t('col.id')}</dt>
+                  <dd className="t-mono">{compound.id}</dd>
+                  <dt>{t('col.opened')}</dt>
+                  <dd>{fmt.dateTime(compound.createdAt)}</dd>
+                  <dt>{t('facts.managers')}</dt>
+                  <dd>{t('facts.activeManagers', { n: compound.managers.filter((m) => m.status === 'active').length })}</dd>
                 </dl>
               </Card>
               <Card flush>
-                <CardHeader title="History" />
+                <CardHeader title={t('history.title')} />
                 <QueryState query={audit} rows={3}>
                   {audit.data?.data.length ? (
                     <ul className="list">
                       {audit.data.data.map((a) => (
                         <li key={a.id} className="list__item">
                           <div className="list__text">
-                            <div className="list__title">{humanize(a.action)}</div>
-                            <div className="list__meta">{formatDateTime(a.occurredAt)}</div>
+                            <div className="list__title">{label(a.action)}</div>
+                            <div className="list__meta">{fmt.dateTime(a.occurredAt)}</div>
                           </div>
                         </li>
                       ))}
                     </ul>
                   ) : (
                     <CardBody>
-                      <span className="t-secondary">No platform actions yet.</span>
+                      <span className="t-secondary">{t('history.empty')}</span>
                     </CardBody>
                   )}
                 </QueryState>
@@ -285,22 +299,22 @@ export default function TenantPage() {
         ) : null}
       </QueryState>
 
-      {t ? (
+      {compound ? (
         <>
-          <AddManagerDialog tenant={t} open={adding} onClose={() => setAdding(false)} />
+          <AddManagerDialog tenant={compound} open={adding} onClose={() => setAdding(false)} />
           <ConfirmDialog
             open={confirmStatus}
             onClose={() => {
               setConfirmStatus(false);
               setStatus.reset();
             }}
-            title={nextStatus === 'suspended' ? `Suspend ${t.name}?` : `Reactivate ${t.name}?`}
-            description={
+            title={
               nextStatus === 'suspended'
-                ? 'Everyone in the compound is signed out on their next request and cannot sign in until you reactivate it. No data is deleted.'
-                : 'Residents, staff and managers can sign in again.'
+                ? t('confirm.suspendTitle', { name: compound.name })
+                : t('confirm.reactivateTitle', { name: compound.name })
             }
-            confirmLabel={nextStatus === 'suspended' ? 'Suspend compound' : 'Reactivate'}
+            description={nextStatus === 'suspended' ? t('confirm.suspendBody') : t('confirm.reactivateBody')}
+            confirmLabel={nextStatus === 'suspended' ? t('confirm.suspendLabel') : t('detail.reactivate')}
             danger={nextStatus === 'suspended'}
             pending={setStatus.isPending}
             error={<ErrorAlert error={setStatus.error} />}
@@ -312,13 +326,13 @@ export default function TenantPage() {
               setManagerChange(null);
               setManagerStatus.reset();
             }}
-            title={managerChange?.status === 'active' ? `Deactivate ${managerChange.fullName}?` : `Activate ${managerChange?.fullName}?`}
-            description={
+            title={
               managerChange?.status === 'active'
-                ? 'They are signed out and cannot sign in. The compound keeps its other managers.'
-                : 'They can sign in again with a code sent to their email.'
+                ? t('confirm.deactivateTitle', { name: managerChange.fullName })
+                : t('confirm.activateTitle', { name: managerChange?.fullName })
             }
-            confirmLabel={managerChange?.status === 'active' ? 'Deactivate' : 'Activate'}
+            description={managerChange?.status === 'active' ? t('confirm.deactivateBody') : t('confirm.activateBody')}
+            confirmLabel={managerChange?.status === 'active' ? t('managers.deactivate') : t('managers.activate')}
             danger={managerChange?.status === 'active'}
             pending={setManagerStatus.isPending}
             error={<ErrorAlert error={setManagerStatus.error} />}

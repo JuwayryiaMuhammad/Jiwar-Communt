@@ -1,9 +1,12 @@
 'use client';
 
 import { ErrorAlert, fieldError } from '@jiwar/api/react';
-import { Button, Field, Input } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Field, Input, useCommonT } from '@jiwar/ui';
 import { useState } from 'react';
 import { bffAuth } from '@/lib/api';
+import ar from '@/messages/ar/auth';
+import en from '@/messages/en/auth';
 
 const MIN_LENGTH = 12;
 
@@ -12,6 +15,8 @@ const MIN_LENGTH = 12;
  * and returns a fresh one; the BFF swaps the cookies.
  */
 export function PasswordForm({ onDone, submitLabel }: { onDone: () => void; submitLabel: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -21,6 +26,7 @@ export function PasswordForm({ onDone, submitLabel }: { onDone: () => void; subm
 
   const tooShort = next.length > 0 && next.length < MIN_LENGTH;
   const mismatch = confirm.length > 0 && confirm !== next;
+  const minLength = t('form.minLength', { n: MIN_LENGTH });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +50,7 @@ export function PasswordForm({ onDone, submitLabel }: { onDone: () => void; subm
 
   return (
     <form className="form" onSubmit={submit} noValidate>
-      <Field label="Current password" error={touched && !current ? 'Required.' : undefined}>
+      <Field label={t('form.current')} error={touched && !current ? c('required') : undefined}>
         {(p) => (
           <Input
             {...p}
@@ -56,13 +62,9 @@ export function PasswordForm({ onDone, submitLabel }: { onDone: () => void; subm
         )}
       </Field>
       <Field
-        label="New password"
-        hint={`At least ${MIN_LENGTH} characters.`}
-        error={
-          (touched || tooShort) && next.length < MIN_LENGTH
-            ? `At least ${MIN_LENGTH} characters.`
-            : fieldError(error, 'newPassword')
-        }
+        label={t('form.new')}
+        hint={minLength}
+        error={(touched || tooShort) && next.length < MIN_LENGTH ? minLength : fieldError(error, 'newPassword')}
       >
         {(p) => (
           <Input
@@ -74,7 +76,7 @@ export function PasswordForm({ onDone, submitLabel }: { onDone: () => void; subm
           />
         )}
       </Field>
-      <Field label="Repeat new password" error={mismatch || (touched && confirm !== next) ? 'Does not match.' : undefined}>
+      <Field label={t('form.repeat')} error={mismatch || (touched && confirm !== next) ? t('form.mismatch') : undefined}>
         {(p) => (
           <Input
             {...p}

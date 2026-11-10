@@ -14,13 +14,14 @@ import {
   PageHeader,
   Select,
   StatusBadge,
-  Textarea,
   useCommonT,
   useToast,
 } from '@jiwar/ui';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { inLocale } from '@/components/governance/logic';
+import { languagesReady, textOrNull } from '@/components/community/logic';
+import { NO_TEXT, TextFields, type TwoTexts } from '@/components/community/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BoardPublication } from '@/lib/queries';
@@ -34,8 +35,7 @@ function Publish({ onClose }: { onClose: () => void }) {
   const [key] = useState(() => crypto.randomUUID());
   const [kind, setKind] = useState<'decision' | 'minutes'>('decision');
   const [decidedOn, setDecidedOn] = useState(() => new Date().toLocaleDateString('en-CA'));
-  const [titleEn, setTitleEn] = useState('');
-  const [bodyEn, setBodyEn] = useState('');
+  const [text, setText] = useState<TwoTexts>(NO_TEXT);
   const [pdf, setPdf] = useState<string | null>(null);
   const publish = useAction(
     () =>
@@ -45,8 +45,10 @@ function Publish({ onClose }: { onClose: () => void }) {
           body: {
             kind,
             decidedOn,
-            titleEn: titleEn.trim(),
-            bodyEn: bodyEn.trim(),
+            titleEn: textOrNull(text.titleEn),
+            bodyEn: textOrNull(text.bodyEn),
+            titleAr: textOrNull(text.titleAr),
+            bodyAr: textOrNull(text.bodyAr),
             ...(pdf ? { attachmentFileId: pdf } : {}),
           },
         }),
@@ -71,7 +73,7 @@ function Publish({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <Button onClick={onClose}>{c('cancel')}</Button>
-          <Button type="submit" variant="primary" loading={publish.isPending} disabled={!titleEn.trim() || !bodyEn.trim()}>
+          <Button type="submit" variant="primary" loading={publish.isPending} disabled={!languagesReady([text.titleEn, text.bodyEn], [text.titleAr, text.bodyAr])}>
             {t('publish')}
           </Button>
         </>
@@ -91,12 +93,7 @@ function Publish({ onClose }: { onClose: () => void }) {
             {(p) => <Input {...p} type="date" value={decidedOn} onChange={(e) => setDecidedOn(e.target.value)} />}
           </Field>
         </div>
-        <Field label={t('titleLabel')} error={err('titleEn')}>
-          {(p) => <Input {...p} maxLength={150} value={titleEn} onChange={(e) => setTitleEn(e.target.value)} />}
-        </Field>
-        <Field label={t('text')} error={err('bodyEn')}>
-          {(p) => <Textarea {...p} rows={6} maxLength={5000} value={bodyEn} onChange={(e) => setBodyEn(e.target.value)} />}
-        </Field>
+        <TextFields value={text} onChange={setText} error={publish.error} titleLabel={t('titleLabel')} bodyLabel={t('text')} titleMax={150} bodyMax={5000} />
         {pdf ? <p className="t-secondary">{t('pdfAttached')}</p> : null}
         <FileUpload purpose="community_attachment" label={t('attachPdf')} onUploaded={setPdf} disabled={pdf !== null} />
         {err('attachmentFileId') ? <p className="t-error">{err('attachmentFileId')}</p> : null}

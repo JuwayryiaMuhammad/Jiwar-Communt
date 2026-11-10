@@ -16,13 +16,14 @@ import {
   Segmented,
   Select,
   StatusBadge,
-  Textarea,
   useCommonT,
   useToast,
 } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { codeText, inLocale, turnoutText } from '@/components/governance/logic';
+import { languagesReady, textOrNull } from '@/components/community/logic';
+import { NO_TEXT, TextFields, type TwoTexts } from '@/components/community/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GovernanceContestStatus, type StaffGovernancePoll } from '@/lib/queries';
@@ -40,9 +41,15 @@ function NewPoll({ onClose }: { onClose: () => void }) {
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
   const [kind, setKind] = useState<'yes_no' | 'choice'>('yes_no');
-  const [titleEn, setTitleEn] = useState('');
-  const [bodyEn, setBodyEn] = useState('');
-  const [options, setOptions] = useState(['', '']);
+  const [text, setText] = useState<TwoTexts>(NO_TEXT);
+  const [options, setOptions] = useState<{ en: string; ar: string }[]>([
+    { en: '', ar: '' },
+    { en: '', ar: '' },
+  ]);
+  const { locale } = useLocale();
+  // An answer is written in the languages the question is written in, no other.
+  const written = { en: text.titleEn.trim() !== '', ar: text.titleAr.trim() !== '' };
+  const languages = (locale === 'ar' ? (['ar', 'en'] as const) : (['en', 'ar'] as const)).filter((l) => written[l]);
   const [secret, setSecret] = useState(true);
   const [quorumPct, setQuorum] = useState(50);
   const [thresholdPct, setThreshold] = useState(50);
@@ -55,13 +62,20 @@ function NewPoll({ onClose }: { onClose: () => void }) {
           params: { header: { 'Idempotency-Key': key } },
           body: {
             kind,
-            titleEn: titleEn.trim(),
-            bodyEn: bodyEn.trim(),
+            titleEn: textOrNull(text.titleEn),
+            bodyEn: textOrNull(text.bodyEn),
+            titleAr: textOrNull(text.titleAr),
+            bodyAr: textOrNull(text.bodyAr),
             secret,
             weighting: 'unit',
             quorumPct,
             thresholdPct,
-            ...(kind === 'choice' ? { options: options.map((labelEn) => ({ labelEn: labelEn.trim() })) } : {}),
+            ...(kind === 'choice' ? {
+                  options: options.map((o) => ({
+                    ...(written.en ? { labelEn: o.en.trim() } : {}),
+                    ...(written.ar ? { labelAr: o.ar.trim() } : {}),
+                  })),
+                } : {}),
             ...(opensAt ? { opensAt: new Date(opensAt).toISOString() } : {}),
             closesAt: new Date(closesAt).toISOString(),
           },
@@ -87,19 +101,14 @@ function NewPoll({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <Button onClick={onClose}>{c('cancel')}</Button>
-          <Button type="submit" variant="primary" loading={create.isPending} disabled={!titleEn.trim() || !bodyEn.trim() || !closesAt}>
+          <Button type="submit" variant="primary" loading={create.isPending} disabled={!languagesReady([text.titleEn, text.bodyEn], [text.titleAr, text.bodyAr]) || !closesAt}>
             {t('putIt')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label={t('question')} error={err('titleEn')}>
-          {(p) => <Input {...p} maxLength={200} value={titleEn} onChange={(e) => setTitleEn(e.target.value)} />}
-        </Field>
-        <Field label={t('about')} error={err('bodyEn')}>
-          {(p) => <Textarea {...p} rows={4} maxLength={4000} value={bodyEn} onChange={(e) => setBodyEn(e.target.value)} />}
-        </Field>
+        <TextFields value={text} onChange={setText} error={create.error} titleLabel={t('question')} bodyLabel={t('about')} titleMax={200} bodyMax={4000} />
         <Field label={t('answers')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as 'yes_no' | 'choice')}>
@@ -109,21 +118,30 @@ function NewPoll({ onClose }: { onClose: () => void }) {
           )}
         </Field>
         {kind === 'choice'
-          ? options.map((o, i) => (
-              <Field key={i} label={t('optionN', { n: i + 1 })} error={err(`options.${i}.labelEn`)}>
-                {(p) => (
-                  <Input
-                    {...p}
-                    maxLength={200}
-                    value={o}
-                    onChange={(e) => setOptions(options.map((x, j) => (j === i ? e.target.value : x)))}
-                  />
-                )}
-              </Field>
-            ))
+          ? options.map((o, i) =>
+              languages.map((l) => (
+                <Field
+                  key={`${i}-${l}`}
+                  label={t(l === 'ar' ? 'optionNAr' : 'optionNEn', { n: i + 1 })}
+                  error={err(`options.${i}.label${l === 'ar' ? 'Ar' : 'En'}`)}
+                >
+                  {(p) => (
+                    <Input
+                      {...p}
+                      dir={l === 'ar' ? 'rtl' : 'ltr'}
+                      lang={l}
+                      maxLength={200}
+                      value={o[l]}
+                      onChange={(e) => setOptions(options.map((x, j) => (j === i ? { ...x, [l]: e.target.value } : x)))}
+                    />
+                  )}
+                </Field>
+              )),
+            )
           : null}
+        {kind === 'choice' && languages.length === 0 ? <p className="t-secondary">{t('optionsNeedQuestion')}</p> : null}
         {kind === 'choice' && options.length < 10 ? (
-          <Button variant="text" onClick={() => setOptions([...options, ''])}>
+          <Button variant="text" onClick={() => setOptions([...options, { en: '', ar: '' }])}>
             {t('addOption')}
           </Button>
         ) : null}

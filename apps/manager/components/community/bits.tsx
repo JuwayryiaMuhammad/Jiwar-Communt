@@ -1,7 +1,7 @@
 'use client';
 
 import { fieldError, unwrap } from '@jiwar/api';
-import { useT } from '@jiwar/i18n';
+import { useLocale, useT } from '@jiwar/i18n';
 import { Button, ButtonLink, CardHeader, Checkbox, Field, Input, Select, Textarea, useCommonT } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, X } from 'lucide-react';
@@ -116,7 +116,9 @@ export function TextFields({
   const title = titleLabel ?? t('text.title');
   const body = bodyLabel ?? t('text.body');
   const set = (patch: Partial<TwoTexts>) => onChange({ ...value, ...patch });
-  return (
+  // The page's own language first.
+  const arabicFirst = useLocale().locale === 'ar';
+  const english = (
     <>
       <Field label={t('text.inEnglish', { label: title })} error={fieldError(error, `${titleKey}En`)}>
         {(p) => <Input {...p} dir="ltr" lang="en" maxLength={titleMax} value={value.titleEn} onChange={(e) => set({ titleEn: e.target.value })} />}
@@ -126,6 +128,10 @@ export function TextFields({
           <Textarea {...p} dir="ltr" lang="en" rows={4} maxLength={bodyMax} value={value.bodyEn} onChange={(e) => set({ bodyEn: e.target.value })} />
         )}
       </Field>
+    </>
+  );
+  const arabic = (
+    <>
       <Field label={t('text.inArabic', { label: title })} error={fieldError(error, `${titleKey}Ar`)}>
         {(p) => <Input {...p} dir="rtl" lang="ar" maxLength={titleMax} value={value.titleAr} onChange={(e) => set({ titleAr: e.target.value })} />}
       </Field>
@@ -134,6 +140,12 @@ export function TextFields({
           <Textarea {...p} dir="rtl" lang="ar" rows={4} maxLength={bodyMax} value={value.bodyAr} onChange={(e) => set({ bodyAr: e.target.value })} />
         )}
       </Field>
+    </>
+  );
+  return (
+    <>
+      {arabicFirst ? arabic : english}
+      {arabicFirst ? english : arabic}
     </>
   );
 }

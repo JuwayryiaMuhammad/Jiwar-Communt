@@ -14,13 +14,14 @@ import {
   PageHeader,
   Segmented,
   StatusBadge,
-  Textarea,
   useCommonT,
   useToast,
 } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { inLocale, turnoutText } from '@/components/governance/logic';
+import { languagesReady, textOrNull } from '@/components/community/logic';
+import { NO_TEXT, TextFields, type TwoTexts } from '@/components/community/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GovernanceElectionPhase, type StaffGovernanceElection } from '@/lib/queries';
@@ -38,8 +39,7 @@ function NewElection({ onClose }: { onClose: () => void }) {
   const c = useCommonT();
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
-  const [titleEn, setTitleEn] = useState('');
-  const [bodyEn, setBodyEn] = useState('');
+  const [text, setText] = useState<TwoTexts>(NO_TEXT);
   const [seats, setSeats] = useState(5);
   const [termMonths, setTerm] = useState(24);
   const [nominationsOpenAt, setNomOpen] = useState('');
@@ -52,8 +52,10 @@ function NewElection({ onClose }: { onClose: () => void }) {
         api.POST('/api/v1/governance/elections', {
           params: { header: { 'Idempotency-Key': key } },
           body: {
-            titleEn: titleEn.trim(),
-            bodyEn: bodyEn.trim(),
+            titleEn: textOrNull(text.titleEn),
+            bodyEn: textOrNull(text.bodyEn),
+            titleAr: textOrNull(text.titleAr),
+            bodyAr: textOrNull(text.bodyAr),
             seats,
             termMonths,
             ...(nominationsOpenAt ? { nominationsOpenAt: iso(nominationsOpenAt) } : {}),
@@ -72,7 +74,7 @@ function NewElection({ onClose }: { onClose: () => void }) {
     },
   );
   const err = (f: string) => fieldError(create.error, f);
-  const ok = titleEn.trim() && bodyEn.trim() && nominationsCloseAt && votingOpensAt && votingClosesAt;
+  const ok = languagesReady([text.titleEn, text.bodyEn], [text.titleAr, text.bodyAr]) && nominationsCloseAt && votingOpensAt && votingClosesAt;
   return (
     <Dialog
       open
@@ -91,12 +93,7 @@ function NewElection({ onClose }: { onClose: () => void }) {
       }
     >
       <div className="form">
-        <Field label={t('titleLabel')} error={err('titleEn')}>
-          {(p) => <Input {...p} maxLength={200} value={titleEn} onChange={(e) => setTitleEn(e.target.value)} />}
-        </Field>
-        <Field label={t('toOwners')} error={err('bodyEn')}>
-          {(p) => <Textarea {...p} rows={3} maxLength={4000} value={bodyEn} onChange={(e) => setBodyEn(e.target.value)} />}
-        </Field>
+        <TextFields value={text} onChange={setText} error={create.error} titleLabel={t('titleLabel')} bodyLabel={t('toOwners')} titleMax={200} bodyMax={4000} />
         <div className="row" style={{ gap: 16 }}>
           <Field label={t('seats')} error={err('seats')}>
             {(p) => <Input {...p} type="number" min={3} max={15} value={seats} onChange={(e) => setSeats(Number(e.target.value))} />}

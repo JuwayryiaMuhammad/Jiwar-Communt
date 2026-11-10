@@ -8,5 +8,6 @@ export default {
   'col.kind': 'Kind',
   'col.state': 'State',
   vendorPaper: '{vendor} · {kind} paper',
+  staffCertificate: '{holder} · {kind} certificate',
   truncated: 'More than 1000 entries: ask for fewer days.',
 } as const;

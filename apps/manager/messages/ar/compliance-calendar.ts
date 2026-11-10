@@ -10,6 +10,7 @@ const ar: Translation<typeof en> = {
   'col.kind': 'النوع',
   'col.state': 'الحالة',
   vendorPaper: '{vendor} · ورقة {kind}',
+  staffCertificate: '{holder} · شهادة {kind}',
   truncated: 'أكثر من 1000 بند: اطلب عددًا أقل من الأيام.',
 };
 

@@ -62,6 +62,10 @@ export default function ComplianceCalendarPage() {
                     <Link className="table__link" href={`/vendors/${e.vendorId}`}>
                       {t('vendorPaper', { vendor: e.vendorName ?? '', kind: label(e.kind) })}
                     </Link>
+                  ) : e.source === 'staff_certificate' ? (
+                    <Link className="table__link" href="/field-team?tab=certificates">
+                      {e.title?.trim() || t('staffCertificate', { holder: e.holderName ?? '—', kind: label(e.kind) })}
+                    </Link>
                   ) : (
                     '—'
                   ),

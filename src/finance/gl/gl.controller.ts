@@ -33,6 +33,7 @@ import { GlLedgerService } from './gl-ledger.service';
 import {
   GlAsOfQueryDto,
   GlCloseMonthDto,
+  GlCloseYearDto,
   GlCreateAccountDto,
   GlEntriesQueryDto,
   GlLedgerQueryDto,
@@ -41,6 +42,7 @@ import {
   GlRejectEntryDto,
   GlRenameAccountDto,
   GlReopenMonthDto,
+  GlReopenYearDto,
   GlReverseEntryDto,
 } from './gl.dto';
 import {
@@ -55,7 +57,9 @@ import {
   GlPeriodView,
   GlReconciliationView,
   GlTrialBalanceView,
+  GlYearView,
 } from './gl.views';
+import { GlYearsService } from './gl-years.service';
 
 /**
  * The general ledger (ADR 0092): double entry, beside ADR 0048's computed
@@ -70,6 +74,7 @@ export class GlController {
   constructor(
     private readonly ledger: GlLedgerService,
     private readonly entries: GlEntriesService,
+    private readonly years_: GlYearsService,
   ) {}
 
   // --------------------------------------------------------------------------
@@ -419,6 +424,58 @@ export class GlController {
   ): Promise<ListResponse<GlPeriodView>> {
     return bounded(await this.entries.reopen(dto.month, dto.reasonCode), (x) =>
       GlPeriodView.from(x),
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // The fiscal years (ADR 0093)
+  // --------------------------------------------------------------------------
+
+  @Get('years')
+  @NoStore()
+  @RequirePermissions('finance.ledger')
+  @ApiOperation({
+    summary: 'The fiscal years, newest first',
+    description:
+      'From the first entry’s year to this one, on the compound’s start month (ADR 0055): open or closed, whether it may be closed now, and its months still open.',
+  })
+  @ApiOkResponse({ type: ListOf(GlYearView) })
+  async years(): Promise<ListResponse<GlYearView>> {
+    return bounded(await this.years_.years(), (x) => GlYearView.from(x));
+  }
+
+  @Post('years/close')
+  @NoStore()
+  @RequirePermissions('finance.ledger_write')
+  @ApiOperation({
+    summary: 'Close a fiscal year',
+    description:
+      'Once every month of it is closed (GL_YEAR_MONTHS_OPEN {months}) and every earlier year with entries is (GL_YEAR_PREVIOUS_OPEN {startsOn}): one closing entry, dated its last day, zeroes each revenue and expense account into accumulated surplus, and the year is locked (GL_YEAR_CLOSED). Audited.',
+  })
+  @ApiCreatedResponse({ type: ListOf(GlYearView) })
+  async closeYear(
+    @Body() dto: GlCloseYearDto,
+  ): Promise<ListResponse<GlYearView>> {
+    return bounded(await this.years_.close(dto.startsOn), (x) =>
+      GlYearView.from(x),
+    );
+  }
+
+  @Post('years/reopen')
+  @NoStore()
+  @RequirePermissions('finance.ledger_reopen')
+  @ApiOperation({
+    summary: 'Reopen a closed fiscal year',
+    description:
+      'The manager’s alone, with a `glPeriodReopen` reason, the latest closed year first (GL_YEAR_LATER_CLOSED): its closing entry is reversed on the same day. Its months stay closed until one is reopened. Audited.',
+  })
+  @ApiCreatedResponse({ type: ListOf(GlYearView) })
+  async reopenYear(
+    @Body() dto: GlReopenYearDto,
+  ): Promise<ListResponse<GlYearView>> {
+    return bounded(
+      await this.years_.reopen(dto.startsOn, dto.reasonCode),
+      (x) => GlYearView.from(x),
     );
   }
 }

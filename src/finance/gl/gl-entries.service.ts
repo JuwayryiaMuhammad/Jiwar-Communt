@@ -705,6 +705,33 @@ export class GlEntriesService {
             'That month is open',
             { params: { month: m.slice(0, 7) } },
           );
+        // A closed fiscal year keeps its months closed, and a declared
+        // month its VAT (ADR 0093; the database refuses both too).
+        const year = await tx.glYearClose.findFirst({
+          where: {
+            reopenedAt: null,
+            startsOn: { lte: asDate(m) },
+            endsOn: { gte: asDate(m) },
+          },
+          select: { startsOn: true },
+        });
+        if (year)
+          throw appError.conflict(
+            ErrorCode.GL_YEAR_CLOSED,
+            'Its fiscal year is closed: reopen the year first',
+            { params: { startsOn: fromDate(year.startsOn) } },
+          );
+        if (
+          await tx.financeVatDeclaration.findFirst({
+            where: { month: asDate(m) },
+            select: { id: true },
+          })
+        )
+          throw appError.conflict(
+            ErrorCode.TAX_MONTH_DECLARED,
+            'That month’s VAT is declared',
+            { params: { month: m.slice(0, 7) } },
+          );
         await tx.glPeriod.update({
           where: {
             tenantId_month: { tenantId: this.ctx.txTenantId, month: asDate(m) },
@@ -727,8 +754,7 @@ export class GlEntriesService {
 
   /** Closes, reopens and approvals of the compound take turns. */
   private async lockMonths(tx: TenantTxClient): Promise<void> {
-    await tx.$executeRaw`
-      SELECT pg_advisory_xact_lock(hashtext('gl-periods'), hashtext(${this.ctx.txTenantId}))`;
+    await lockLedgerMonths(tx, this.ctx.txTenantId);
   }
 
   private async isClosed(
@@ -747,6 +773,19 @@ export class GlEntriesService {
       SELECT MIN(posted_on) AS first FROM gl_entries`;
     return first ? fromDate(first) : null;
   }
+}
+
+/**
+ * The compound's months lock (a two-key advisory lock): closing and
+ * reopening months, approving a manual entry, declaring a month's VAT and
+ * closing or reopening a fiscal year take turns on it.
+ */
+export async function lockLedgerMonths(
+  tx: TenantTxClient,
+  tenantId: string,
+): Promise<void> {
+  await tx.$executeRaw`
+    SELECT pg_advisory_xact_lock(hashtext('gl-periods'), hashtext(${tenantId}))`;
 }
 
 interface ParsedLine {

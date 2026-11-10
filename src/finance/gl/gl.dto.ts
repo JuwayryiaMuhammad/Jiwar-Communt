@@ -254,3 +254,33 @@ export class GlReopenMonthDto {
   @IsString()
   reasonCode?: string;
 }
+
+export class GlCloseYearDto {
+  @ApiProperty({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2026-01-01',
+    description:
+      'The fiscal year’s first day, on the compound’s start month (INVALID_VALUE otherwise).',
+  })
+  @IsString()
+  @IsLocalDate()
+  startsOn: string;
+}
+
+export class GlReopenYearDto {
+  @ApiProperty({
+    type: String,
+    pattern: LOCAL_DATE.source,
+    example: '2026-01-01',
+    description: 'The closed fiscal year’s first day.',
+  })
+  @IsString()
+  @IsLocalDate()
+  startsOn: string;
+
+  @ApiProperty({ type: String, description: 'A `glPeriodReopen` code.' })
+  @IsOptional()
+  @IsString()
+  reasonCode?: string;
+}

@@ -164,6 +164,20 @@ export class PayoutView {
   @money() gross: string;
   @money('Held back at the contract’s retention share.') retentionHeld: string;
   @money('Of the contract’s advances.') advanceSetOff: string;
+  @money(
+    'Tax withheld (ADR 0093), deducted from what was paid: at withholdingRate on withholdingBase.',
+  )
+  withholding: string;
+  @ApiProperty({ type: String, example: '3.00' }) withholdingRate: string;
+  @money('The invoice’s subtotal it was withheld on; 0.00 when none.')
+  withholdingBase: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    enum: ['supplies', 'services', 'professional'],
+    description: 'The category it withheld by; null when nothing was.',
+  })
+  withholdingCategory: string | null;
   @money('What was paid.') net: string;
   @ApiProperty({ enum: PAYOUT_METHODS, enumName: 'PayoutMethod' })
   method: string;
@@ -185,6 +199,10 @@ export class PayoutView {
       gross: show(p.gross),
       retentionHeld: show(p.retentionHeld),
       advanceSetOff: show(p.advanceSetOff),
+      withholding: show(p.withholding),
+      withholdingRate: show(p.withholdingRate),
+      withholdingBase: show(p.withholdingBase),
+      withholdingCategory: p.withholdingCategory,
       net: show(p.net),
       method: p.method,
       reference: p.reference,
@@ -227,6 +245,17 @@ export class VendorInvoiceView {
   @money() subtotal: string;
   @money() tax: string;
   @money() total: string;
+  @money(
+    'Of its tax, what the compound recovers as input VAT (ADR 0093), set at its approval: its tax while registered for VAT and its line’s category is marked recoverable, else 0.00 (the tax stays part of the cost).',
+  )
+  vatRecoverable: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    enum: ['supplies', 'services', 'professional', 'exempt'],
+    description: 'What its payout withholds by (ADR 0093); null: its vendor’s.',
+  })
+  withholdingCategory: string | null;
   @ApiProperty({ type: String, nullable: true }) note: string | null;
   @ApiProperty({ enum: INVOICE_STATUSES, enumName: 'VendorInvoiceStatus' })
   status: string;
@@ -269,6 +298,8 @@ export class VendorInvoiceView {
       subtotal: show(i.subtotal),
       tax: show(i.tax),
       total: show(i.total),
+      vatRecoverable: show(i.vatRecoverable),
+      withholdingCategory: i.withholdingCategory,
       note: i.note,
       status: i.status,
       rejectReason: i.rejectReason,

@@ -25,6 +25,7 @@ import { asDate, dbNow } from '../db-clock';
 import { CURRENCY, money, show, ZERO } from '../money';
 import { FinanceNotices } from '../notices/finance-notices';
 import { supersedeLive } from '../online/supersede';
+import { splitVat } from '../tax/tax-rules';
 import { allocateUnit } from '../payments/allocation';
 import {
   balancesOf,
@@ -235,6 +236,9 @@ export class InstalmentsService implements OnModuleInit {
       },
     });
     const originalNumber = formatNumber('invoice', invoice.number);
+    // The VAT the credit note took back is carried by the instalments,
+    // each its share at the invoice's rate (ADR 0093).
+    const shares = splitVat(amounts, money(note.vat));
     const rows = dto.instalments.map((inst, i) => ({
       batchId: newId(),
       invoiceId: newId(),
@@ -242,6 +246,8 @@ export class InstalmentsService implements OnModuleInit {
       position: i + 1,
       dueOn: inst.dueOn,
       amount: amounts[i],
+      vat: shares[i].vat,
+      net: shares[i].net,
     }));
     // Each instalment comes from its own one-unit batch (every invoice
     // comes from a batch), carrying its own due date.
@@ -267,6 +273,8 @@ export class InstalmentsService implements OnModuleInit {
         unitId: invoice.unitId,
         kind: invoice.kind,
         total: r.amount,
+        vat: r.vat,
+        vatRate: r.vat.gt(ZERO) ? invoice.vatRate : ZERO,
         currency: CURRENCY,
         issuedOn: asDate(today),
         dueOn: asDate(r.dueOn),
@@ -283,7 +291,8 @@ export class InstalmentsService implements OnModuleInit {
         position: 1,
         descriptionEn: `Instalment ${r.position} of ${count} — ${originalNumber}`,
         descriptionAr: `القسط ${r.position} من ${count} — ${originalNumber}`,
-        amount: r.amount,
+        amount: r.net,
+        vat: r.vat,
       })),
     });
     // The plan announces itself once: its instalments' `issued` notices
@@ -408,8 +417,14 @@ export class InstalmentsService implements OnModuleInit {
       await tx.creditNote.createMany({ data: notes });
       const original = await tx.invoice.findUniqueOrThrow({
         where: { id: plan.invoiceId },
-        select: { kind: true },
+        select: { kind: true, vatRate: true },
       });
+      // The remainder carries the VAT its credit notes took back (ADR 0093).
+      const taken = await tx.creditNote.aggregate({
+        where: { id: { in: notes.map((n) => n.id) } },
+        _sum: { vat: true },
+      });
+      const remainderVat = money(taken._sum.vat ?? 0);
       const batchId = newId();
       const planNumber = formatNumber('instalment_plan', plan.number);
       const [unit] = await this.community.unitsFor(tx, {
@@ -426,9 +441,11 @@ export class InstalmentsService implements OnModuleInit {
           {
             descriptionEn: `Remainder of instalment plan ${planNumber}`,
             descriptionAr: `المتبقي من خطة التقسيط ${planNumber}`,
-            amount: remainder,
+            amount: remainder.sub(remainderVat),
+            vat: remainderVat,
           },
         ],
+        vatRate: remainderVat.gt(ZERO) ? original.vatRate : ZERO,
         createdById: this.ctx.accountId,
       });
       const remainderInvoice = await tx.invoice.findFirstOrThrow({

@@ -50,6 +50,13 @@ import {
   type TaxCode,
 } from './payable-rules';
 import { VendorInvoiceView } from './views/payables.views';
+import {
+  categoryByTrades,
+  withholdingOf,
+  type WithholdingCategory,
+} from '../tax/tax-rules';
+import { taxSettingsIn, withholdingRates } from '../tax/tax-settings';
+import { issueCertificate } from '../tax/withholding-certificates';
 
 export const VENDOR_INVOICE_RESOURCE = 'finance_vendor_invoice';
 export const VENDOR_PAYOUT_RESOURCE = 'finance_vendor_payout';
@@ -68,6 +75,8 @@ export interface NewVendorInvoice {
   invoiceFileId: string;
   lines: { description: string; amount: string; taxCode?: TaxCode }[];
   note?: string;
+  /** What its payout withholds by (ADR 0093); null: its vendor's. */
+  withholdingCategory?: WithholdingCategory;
 }
 
 /**
@@ -391,6 +400,7 @@ export class VendorInvoicesService implements OnModuleInit {
           note,
           recordedById: this.ctx.accountId,
           recordedAt: now,
+          withholdingCategory: input.withholdingCategory ?? null,
         },
       });
       await tx.financeVendorInvoiceLine.createMany({
@@ -426,6 +436,7 @@ export class VendorInvoicesService implements OnModuleInit {
             total: show(subtotal.add(tax)),
             lines: lines.length,
             note,
+            withholdingCategory: input.withholdingCategory ?? null,
           },
           'vendor_invoice.recorded',
         ),
@@ -661,6 +672,25 @@ export class VendorInvoicesService implements OnModuleInit {
       const retention = money(
         retentionOf(gross, contract?.retentionPct ?? null),
       );
+      // Withholding tax (ADR 0093): on the invoice's subtotal, at its
+      // category's rate (the invoice's, else its vendor's), while on.
+      const vendor = await tx.vendor.findUniqueOrThrow({
+        where: { id: invoice.vendorId },
+        select: { name: true, categories: true, withholdingCategory: true },
+      });
+      const tax = await taxSettingsIn(tx);
+      const withheld = tax
+        ? withholdingOf({
+            enabled: tax.withholdingEnabled,
+            category: (invoice.withholdingCategory ??
+              vendor.withholdingCategory ??
+              categoryByTrades(vendor.categories)) as WithholdingCategory,
+            base: invoice.subtotal,
+            rates: withholdingRates(tax),
+            threshold: tax.withholdingThreshold,
+          })
+        : null;
+      const withholding = withheld?.amount ?? ZERO;
       const setOff = money(input.advanceSetOff ?? 0);
       if (setOff.gt(0)) {
         if (!contract)
@@ -674,16 +704,17 @@ export class VendorInvoicesService implements OnModuleInit {
             'More than the contract’s advances have open',
             { params: { open: show(open) } },
           );
-        if (setOff.gt(gross.sub(retention)))
+        const most = gross.sub(retention).sub(withholding);
+        if (setOff.gt(most))
           throw invalid([
             {
               field: 'advanceSetOff',
               code: FieldErrorCode.INVALID_VALUE,
-              params: { max: show(gross.sub(retention)) },
+              params: { max: show(most) },
             },
           ]);
       }
-      const net = gross.sub(retention).sub(setOff);
+      const net = gross.sub(retention).sub(setOff).sub(withholding);
       // The treasury's account (ADR 0085): after the lines, before the
       // counters.
       const cashAccountId = await this.cashAccounts.payoutAccount(tx, {
@@ -696,10 +727,6 @@ export class VendorInvoicesService implements OnModuleInit {
       await this.idempotency.claim(tx, {
         type: VENDOR_PAYOUT_RESOURCE,
         id: payoutId,
-      });
-      const vendor = await tx.vendor.findUniqueOrThrow({
-        where: { id: invoice.vendorId },
-        select: { name: true },
       });
       const expenseNumber = await takeNumbers(
         tx,
@@ -768,8 +795,24 @@ export class VendorInvoicesService implements OnModuleInit {
           paidById: this.ctx.accountId,
           cashAccountId,
           createdAt: now,
+          withholding: show(withholding),
+          withholdingRate: withheld?.rate ?? ZERO,
+          withholdingBase: show(withheld?.base ?? ZERO),
+          withholdingCategory: withheld?.category ?? null,
         },
       });
+      // Its certificate, with it (WHT-, after the payout's number).
+      if (withheld?.category)
+        await issueCertificate(tx, this.audit, {
+          tenantId: this.ctx.txTenantId,
+          payoutId,
+          vendorId: invoice.vendorId,
+          category: withheld.category,
+          rate: withheld.rate,
+          base: withheld.base,
+          amount: withheld.amount,
+          paidOn: input.paidOn,
+        });
       if (cashAccountId)
         await this.cashAccounts.payoutMovement(tx, {
           payoutId,
@@ -797,6 +840,7 @@ export class VendorInvoicesService implements OnModuleInit {
           gross: show(gross),
           retentionHeld: show(retention),
           advanceSetOff: show(setOff),
+          withholding: show(withholding),
           net: show(net),
           method: input.method,
           cashAccountId,

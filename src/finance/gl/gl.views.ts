@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { show } from '../money';
 import { StaffRefView } from '../payments/views/payment.views';
 import type { GlManualEntryRead, GlPeriodRead } from './gl-entries.service';
+import type { GlYearRead } from './gl-years.service';
 import type {
   GlAccountRead,
   GlBalanceSheet,
@@ -254,8 +255,18 @@ export class GlBalanceSheetView {
   @ApiProperty({ type: [GlStatementRowView] })
   liabilities: GlStatementRowView[];
   @ApiProperty({ type: [GlStatementRowView] }) equity: GlStatementRowView[];
-  @amount('Revenue less expenses up to the day, not closed into equity.')
+  @amount(
+    'Revenue less expenses up to the day that no closed fiscal year took into accumulated surplus: currentYearResult and priorYearsResult.',
+  )
   surplus: string;
+  @day('The first day of the fiscal year the day is in (ADR 0093).')
+  fiscalYearStartsOn: string;
+  @amount(
+    'The fiscal year’s result to the day, apart from accumulated surplus (its own closing entry left out).',
+  )
+  currentYearResult: string;
+  @amount('Earlier fiscal years’ results not yet closed.')
+  priorYearsResult: string;
   @amount() totalAssets: string;
   @amount() totalLiabilities: string;
   @amount('Equity with the surplus.') totalEquity: string;
@@ -272,6 +283,9 @@ export class GlBalanceSheetView {
       liabilities: b.liabilities.map((x) => GlStatementRowView.from(x)),
       equity: b.equity.map((x) => GlStatementRowView.from(x)),
       surplus: show(b.surplus),
+      fiscalYearStartsOn: b.fiscalYearStartsOn,
+      currentYearResult: show(b.currentYearResult),
+      priorYearsResult: show(b.priorYearsResult),
       totalAssets: show(b.totalAssets),
       totalLiabilities: show(b.totalLiabilities),
       totalEquity: show(b.totalEquity),
@@ -410,5 +424,58 @@ export class GlPeriodView {
 
   static from(p: GlPeriodRead): GlPeriodView {
     return { ...p, month: p.month.slice(0, 7) };
+  }
+}
+
+/** A fiscal year (ADR 0093): open, or closed into accumulated surplus. */
+export class GlYearView {
+  @day('Its first day (ADR 0055’s start month).') startsOn: string;
+  @day() endsOn: string;
+  @ApiProperty({ enum: ['open', 'closed'] }) status: string;
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'It may be closed now: open, its last month closed, every month of it closed and every earlier year with entries closed.',
+  })
+  closable: boolean;
+  @ApiProperty({
+    type: [String],
+    example: ['2026-12'],
+    description: 'Its months not closed yet (YYYY-MM).',
+  })
+  openMonths: string[];
+  @uuid(true, 'The live close, if closed.') closeId: string | null;
+  @amount('Closed: its revenue.') revenue: string | null;
+  @amount('Closed: its expenses.') expenses: string | null;
+  @amount('Closed: revenue less expenses, into accumulated surplus.')
+  result: string | null;
+  @uuid(true, 'Its closing entry; none when nothing was to close.')
+  entryId: string | null;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  closedAt: Date | null;
+  @ApiProperty({ type: StaffRefView, nullable: true })
+  closedBy: StaffRefView | null;
+  @ApiProperty({
+    type: Number,
+    description: 'How many times it was closed and reopened.',
+  })
+  reopenings: number;
+
+  static from(y: GlYearRead): GlYearView {
+    return {
+      startsOn: y.startsOn,
+      endsOn: y.endsOn,
+      status: y.status,
+      closable: y.closable,
+      openMonths: y.openMonths.map((m) => m.slice(0, 7)),
+      closeId: y.close?.id ?? null,
+      revenue: y.close ? show(y.close.revenue) : null,
+      expenses: y.close ? show(y.close.expenses) : null,
+      result: y.close ? show(y.close.result) : null,
+      entryId: y.close?.entryId ?? null,
+      closedAt: y.close?.closedAt ?? null,
+      closedBy: y.close?.closedBy ?? null,
+      reopenings: y.reopenings,
+    };
   }
 }

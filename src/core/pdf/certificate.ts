@@ -35,9 +35,12 @@ export interface CertificateContent {
   /** One sentence each, what the certificate states. */
   statementEn: string;
   statementAr: string;
-  /** Where and with what code anyone can check it. */
-  verifyUrl: string;
-  verifyCode: string;
+  /**
+   * Where and with what code anyone can check it; a record with no public
+   * page (a withholding certificate, ADR 0093) has none, and no such line.
+   */
+  verifyUrl?: string;
+  verifyCode?: string;
 }
 
 const LEFT = 50;
@@ -111,6 +114,7 @@ function drawV2(page: PdfPage, c: CertificateContent): void {
     dir: 'rtl',
     align: 'right',
   });
+  if (!c.verifyUrl || !c.verifyCode) return;
   y += 16;
   y = page.paragraph(
     `Verify at ${c.verifyUrl} with the code ${c.verifyCode}.`,

@@ -138,6 +138,11 @@ import { GlController } from './gl/gl.controller';
 import { GlEntriesService } from './gl/gl-entries.service';
 import { GlLedgerService } from './gl/gl-ledger.service';
 import { GlSections } from './gl/gl-sections';
+import { GlYearsService } from './gl/gl-years.service';
+import { TaxController } from './tax/tax.controller';
+import { TaxSections } from './tax/tax-sections';
+import { TaxSettingsService } from './tax/tax-settings.service';
+import { TaxService } from './tax/tax.service';
 
 /**
  * Finance (ADR 0046, 0048, 0055): invoices per unit, recurring billing,
@@ -217,6 +222,8 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     CashFlowController,
     // The general ledger (ADR 0092).
     GlController,
+    // Taxes and the year-end close (ADR 0093).
+    TaxController,
   ],
   providers: [
     FinanceCompensationCredits,
@@ -264,6 +271,10 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     GlLedgerService,
     GlEntriesService,
     GlSections,
+    GlYearsService,
+    TaxSettingsService,
+    TaxService,
+    TaxSections,
     DisputeBoardAppeals,
     FinanceOverview,
     FinanceDashboardSection,

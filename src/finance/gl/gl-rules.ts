@@ -43,6 +43,11 @@ export const GL_SOURCES = [
   'vehicle_fine_payment',
   'violation_payment',
   'manual',
+  // Taxes and the year-end close (ADR 0093).
+  'vat_declaration',
+  'tax_payment',
+  'year_close',
+  'year_reopen',
 ] as const;
 export type GlSource = (typeof GL_SOURCES)[number];
 

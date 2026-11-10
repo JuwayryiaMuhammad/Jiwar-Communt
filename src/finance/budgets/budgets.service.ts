@@ -155,7 +155,9 @@ export class BudgetsService implements OnModuleInit {
       if (before.fiscalYearStartMonth === month) return month;
       // Any budget, a draft too: its days were taken from the month, and
       // two budgets' years must never straddle.
-      if (await tx.financeBudget.count())
+      // A closed fiscal year fixes it too (ADR 0093): its days are the
+      // close's.
+      if ((await tx.financeBudget.count()) || (await tx.glYearClose.count()))
         throw appError.conflict(
           ErrorCode.FISCAL_YEAR_LOCKED,
           'A budget exists: the fiscal year stays',

@@ -24,6 +24,7 @@ import { formatNumber, takeNumbers } from '../counters';
 import { asDate, fromDate, localToday } from '../db-clock';
 import { CURRENCY, MAX_AMOUNT, money, show, ZERO } from '../money';
 import { isStaffKind } from './invoice-kinds';
+import { withVat, type InvoiceLineInput } from '../tax/tax-settings';
 import { ChargeSettler } from '../charges/charge-settler';
 import { FinanceNotices } from '../notices/finance-notices';
 import { supersedeLive } from '../online/supersede';
@@ -206,17 +207,30 @@ export class InvoicesService implements OnModuleInit {
       kind: Invoice['kind'];
       issuedOn: LocalDate;
       dueOn: LocalDate;
-      lines: {
-        descriptionEn: string;
-        descriptionAr: string;
-        amount: Prisma.Decimal;
-      }[];
+      /** Net of VAT; a line that names its VAT keeps it (at `vatRate`). */
+      lines: InvoiceLineInput[];
+      vatRate?: Prisma.Decimal;
       createdById: string | null;
       plan?: { id: string; period: { start: LocalDate; end: LocalDate } };
     },
   ): Promise<InvoiceBatchView> {
     const tenantId = this.ctx.txTenantId;
-    const total = input.lines.reduce((sum, l) => sum.add(l.amount), ZERO);
+    // VAT (ADR 0093): while the compound is registered and the kind taxable.
+    const taxed = await withVat(
+      tx,
+      input.kind,
+      input.lines,
+      input.vatRate ? { rate: input.vatRate } : undefined,
+    );
+    const total = taxed.total;
+    if (total.gt(MAX_AMOUNT))
+      throw invalid([
+        {
+          field: 'lines',
+          code: FieldErrorCode.INVOICE_TOTAL_TOO_LARGE,
+          params: { max: show(MAX_AMOUNT) },
+        },
+      ]);
     const first = await takeNumbers(
       tx,
       tenantId,
@@ -259,6 +273,8 @@ export class InvoicesService implements OnModuleInit {
       unitId: u.id,
       kind: input.kind,
       total,
+      vat: taxed.vat,
+      vatRate: taxed.rate,
       currency: CURRENCY,
       issuedOn: asDate(input.issuedOn),
       dueOn: asDate(input.dueOn),
@@ -270,7 +286,7 @@ export class InvoicesService implements OnModuleInit {
     await tx.invoice.createMany({ data: invoices });
     await tx.invoiceLine.createMany({
       data: invoices.flatMap((inv) =>
-        input.lines.map((l, i) => ({
+        taxed.lines.map((l, i) => ({
           id: newId(),
           tenantId,
           invoiceId: inv.id,
@@ -278,6 +294,7 @@ export class InvoicesService implements OnModuleInit {
           descriptionEn: l.descriptionEn,
           descriptionAr: l.descriptionAr,
           amount: l.amount,
+          vat: l.vat,
         })),
       ),
     });
@@ -641,6 +658,7 @@ export class InvoicesService implements OnModuleInit {
         descriptionEn: l.descriptionEn,
         descriptionAr: l.descriptionAr,
         amount: show(l.amount),
+        vat: show(l.vat),
       })),
       creditNotes: await creditNoteViews(tx, notes),
       allocations: allocations.map((a) => ({
@@ -697,6 +715,9 @@ export function invoiceView(
     unitCode,
     kind: i.kind,
     total: show(i.total),
+    net: show(money(i.total).sub(i.vat)),
+    vat: show(i.vat),
+    vatRate: show(i.vatRate),
     currency: i.currency,
     credited: show(b.credited),
     paid: show(b.paid),
@@ -713,6 +734,7 @@ export function creditNoteView(n: {
   number: number;
   invoiceId: string;
   amount: Prisma.Decimal;
+  vat: Prisma.Decimal;
   reasonCode: string;
   compensationReason: string | null;
   createdAt: Date;
@@ -723,6 +745,7 @@ export function creditNoteView(n: {
     number: formatNumber('credit_note', n.number),
     invoiceId: n.invoiceId,
     amount: show(n.amount),
+    vat: show(n.vat),
     released: show(n.released),
     reasonCode: n.reasonCode,
     compensationReason: n.compensationReason,
@@ -738,6 +761,7 @@ export async function creditNoteViews(
     number: number;
     invoiceId: string;
     amount: Prisma.Decimal;
+    vat: Prisma.Decimal;
     reasonCode: string;
     compensationReason: string | null;
     createdAt: Date;

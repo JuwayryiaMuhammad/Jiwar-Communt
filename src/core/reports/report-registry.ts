@@ -30,6 +30,9 @@ export const REPORT_KEYS = [
   'gl_income_statement',
   'gl_balance_sheet',
   'gl_general_ledger',
+  // Taxes (ADR 0093).
+  'tax_vat',
+  'tax_withholding',
 ] as const;
 export type ReportKey = (typeof REPORT_KEYS)[number];
 

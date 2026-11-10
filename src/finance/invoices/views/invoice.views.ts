@@ -9,8 +9,13 @@ export class InvoiceLineView {
   descriptionEn: string;
   @ApiProperty({ type: String })
   descriptionAr: string;
-  @ApiProperty({ type: String, description: 'EGP, two decimals.' })
+  @ApiProperty({ type: String, description: 'EGP, two decimals, net of VAT.' })
   amount: string;
+  @ApiProperty({
+    type: String,
+    description: 'Its VAT (ADR 0093): 0.00 when untaxed.',
+  })
+  vat: string;
 }
 
 export class CreditNoteView {
@@ -22,6 +27,11 @@ export class CreditNoteView {
   invoiceId: string;
   @ApiProperty({ type: String })
   amount: string;
+  @ApiProperty({
+    type: String,
+    description: 'The share of the invoice’s VAT it takes back (ADR 0093).',
+  })
+  vat: string;
   @ApiProperty({
     type: String,
     description:
@@ -57,8 +67,24 @@ export class InvoiceView {
   unitCode: string;
   @ApiProperty({ enum: InvoiceKind, enumName: 'InvoiceKind' })
   kind: InvoiceKind;
-  @ApiProperty({ type: String, description: 'EGP, two decimals.' })
+  @ApiProperty({
+    type: String,
+    description: 'EGP, two decimals: what the unit owes, net and VAT.',
+  })
   total: string;
+  @ApiProperty({ type: String, description: 'The total less its VAT.' })
+  net: string;
+  @ApiProperty({
+    type: String,
+    description:
+      'Its VAT (ADR 0093): 0.00 when the compound is not registered or the kind is not taxable.',
+  })
+  vat: string;
+  @ApiProperty({
+    type: String,
+    description: 'The VAT rate in percent; 0.00 when untaxed.',
+  })
+  vatRate: string;
   @ApiProperty({ type: String, enum: ['EGP'] })
   currency: string;
   @ApiProperty({ type: String, description: 'Taken off by credit notes.' })

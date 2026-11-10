@@ -168,6 +168,10 @@ export class GlSections implements OnModuleInit {
               JOIN gl_accounts a ON a.tenant_id = l.tenant_id AND a.id = l.account_id
              WHERE a.type IN ('revenue', 'expense')
                AND l.posted_on BETWEEN ${q.period.from}::date AND ${q.period.to}::date
+               -- A closed year still reads its own (ADR 0093).
+               AND NOT EXISTS (SELECT 1 FROM gl_entries e
+                                WHERE e.tenant_id = l.tenant_id AND e.id = l.entry_id
+                                  AND e.source IN ('year_close', 'year_reopen'))
              GROUP BY 1 ORDER BY 1
              LIMIT ${REPORT_MAX_ROWS + 1}`;
           return {
@@ -216,7 +220,21 @@ export class GlSections implements OnModuleInit {
           r.type,
           show(r.amount),
         ]);
-        rows.push(['surplus', 'Surplus to date', 'equity', show(b.surplus)]);
+        // The fiscal year's result apart from accumulated surplus, and
+        // what earlier years not yet closed left (ADR 0093).
+        rows.push([
+          'current_year',
+          'Current year’s result',
+          'equity',
+          show(b.currentYearResult),
+        ]);
+        if (!b.priorYearsResult.isZero())
+          rows.push([
+            'prior_years',
+            'Earlier years not yet closed',
+            'equity',
+            show(b.priorYearsResult),
+          ]);
         return { rows: rows.slice(0, REPORT_MAX_ROWS + 1) };
       },
     });

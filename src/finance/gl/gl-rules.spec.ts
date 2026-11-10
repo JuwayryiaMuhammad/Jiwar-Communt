@@ -88,8 +88,10 @@ describe('the general ledger’s rules (ADR 0092)', () => {
   it('the last CHECKs name every inbox type and every counter, in their order', () => {
     const last = migration('20270615090400_gl_checks').replace(/\s+/g, ' ');
     expect(last.split(`"type" IN (${quoted(INBOX_TYPES)}))`)).toHaveLength(3);
+    // The counters are stated last by ADR 0093's (20270617090200).
+    const taxes = migration('20270617090200_tax_checks').replace(/\s+/g, ' ');
     const counters =
-      /"finance_counters_kind" CHECK \("kind" IN \(([^)]*)\)\)/.exec(last)![1];
+      /"finance_counters_kind" CHECK \("kind" IN \(([^)]*)\)\)/.exec(taxes)![1];
     expect(counters.split(', ').sort()).toEqual(
       COUNTER_ORDER.map((k) => `'${k}'`).sort(),
     );
@@ -97,9 +99,10 @@ describe('the general ledger’s rules (ADR 0092)', () => {
 
   it('the CHECKs repeat the sources and the reason codes', () => {
     const tables = migration('20270615090000_gl_tables');
-    expect(tables.replace(/\s+/g, ' ')).toContain(
-      `"source" IN (${quoted(GL_SOURCES)})`.replace(/\s+/g, ' '),
-    );
+    // The sources are stated last by ADR 0093's (20270617090200).
+    expect(
+      migration('20270617090200_tax_checks').replace(/\s+/g, ' '),
+    ).toContain(`"source" IN (${quoted(GL_SOURCES)})`.replace(/\s+/g, ' '));
     expect(tables).toContain(
       `"reject_reason" IN (${quoted(REASON_CODES.glEntryReject)})`,
     );

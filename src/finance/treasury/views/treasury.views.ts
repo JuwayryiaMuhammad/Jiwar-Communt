@@ -17,6 +17,8 @@ export const MOVEMENT_KINDS = [
   'reversal',
   // A vendor's payout (ADR 0089): its net, out.
   'payout',
+  // A tax paid to the tax authority (ADR 0093): its amount, out.
+  'tax_payment',
 ] as const;
 
 /**
@@ -87,6 +89,13 @@ export class CashMovementView {
     description: 'The vendor’s payout it paid (ADR 0089).',
   })
   payoutId: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    description: 'The tax it paid (ADR 0093).',
+  })
+  taxPaymentId: string | null;
   @ApiProperty({ type: StaffRefView })
   recordedBy: StaffRefView;
   @ApiProperty({ type: String, format: 'date-time' })

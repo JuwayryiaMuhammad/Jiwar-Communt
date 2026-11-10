@@ -26,6 +26,7 @@ import { FREE_SQL } from '../payments/allocation';
 import type { CsvDownload } from '../reports/reports.service';
 import { checkPeriod } from '../reports/ledger.service';
 import { TreasuryCommon } from '../treasury/treasury-common';
+import { fiscalYearAround } from '../tax/tax-rules';
 import {
   GL_CODE,
   normalBalance,
@@ -137,8 +138,18 @@ export interface GlBalanceSheet {
   assets: GlStatementRow[];
   liabilities: GlStatementRow[];
   equity: GlStatementRow[];
-  /** Revenue less expenses up to the day: the equity no entry closed yet. */
+  /**
+   * Revenue less expenses up to the day that no closed year took into
+   * accumulated surplus: the current fiscal year's result and what earlier
+   * years not yet closed left.
+   */
   surplus: Money;
+  /** The fiscal year the day is in (ADR 0093). */
+  fiscalYearStartsOn: LocalDate;
+  /** Its result to the day, apart from accumulated surplus. */
+  currentYearResult: Money;
+  /** Earlier fiscal years' results not yet closed into accumulated surplus. */
+  priorYearsResult: Money;
   totalAssets: Money;
   totalLiabilities: Money;
   totalEquity: Money;
@@ -231,6 +242,8 @@ export class GlLedgerService {
   async accountsIn(
     tx: TenantTxClient,
     day: LocalDate,
+    /** A fiscal year's first day: its own closing entries are left out (ADR 0093). */
+    closesFrom?: LocalDate,
   ): Promise<GlAccountRead[]> {
     await this.ensureChart(tx);
     const rows = await tx.$queryRaw<AccountRow[]>`
@@ -240,6 +253,14 @@ export class GlLedgerService {
         FROM gl_accounts a
         LEFT JOIN (SELECT l.account_id, SUM(l.debit) AS debit, SUM(l.credit) AS credit
                      FROM gl_lines l WHERE l.posted_on <= ${day}::date
+                     ${
+                       closesFrom
+                         ? Prisma.sql`AND NOT (l.posted_on >= ${closesFrom}::date AND EXISTS (
+                             SELECT 1 FROM gl_entries e
+                              WHERE e.tenant_id = l.tenant_id AND e.id = l.entry_id
+                                AND e.source IN ('year_close', 'year_reopen')))`
+                         : Prisma.empty
+                     }
                     GROUP BY l.account_id) s ON s.account_id = a.id
        ORDER BY a.code`;
     const nodes = rows.map((r) => ({
@@ -642,7 +663,13 @@ export class GlLedgerService {
     tx: TenantTxClient,
     day: LocalDate,
   ): Promise<GlBalanceSheet> {
-    const accounts = await this.accountsIn(tx, day);
+    // The day's fiscal year: its own close (dated its last day) is left
+    // out, so its result shows apart from accumulated surplus (ADR 0093).
+    const settings = await tx.financeSettings.findFirst({
+      select: { fiscalYearStartMonth: true },
+    });
+    const year = fiscalYearAround(day, settings?.fiscalYearStartMonth ?? 1);
+    const accounts = await this.accountsIn(tx, day, year.startsOn);
     const own = (types: GlAccountType[]) =>
       accounts
         .filter((a) => types.includes(a.type) && a.postable)
@@ -657,12 +684,23 @@ export class GlLedgerService {
     const totalAssets = sum(assets);
     const totalLiabilities = sum(liabilities);
     const totalEquity = sum(equity).add(surplus);
+    const current = await this.periodRows(tx, year.startsOn, day, [
+      'revenue',
+      'expense',
+    ]);
+    const currentYearResult = current.reduce(
+      (s, r) => (r.type === 'revenue' ? s.add(r.amount) : s.sub(r.amount)),
+      ZERO,
+    );
     return {
       asOf: day,
       assets,
       liabilities,
       equity,
       surplus,
+      fiscalYearStartsOn: year.startsOn,
+      currentYearResult,
+      priorYearsResult: surplus.sub(currentYearResult),
       totalAssets,
       totalLiabilities,
       totalEquity,
@@ -670,7 +708,12 @@ export class GlLedgerService {
     };
   }
 
-  /** Each postable account of the types with lines in the period, by code. */
+  /**
+   * Each postable account of the types with lines in the period, by code.
+   * A fiscal year's closing entry and its reversal are left out (ADR 0093):
+   * a closed year's income statement still reads its own revenue and
+   * expenses.
+   */
   async periodRows(
     tx: TenantTxClient,
     from: LocalDate,
@@ -685,6 +728,9 @@ export class GlLedgerService {
         JOIN gl_accounts a ON a.tenant_id = l.tenant_id AND a.id = l.account_id
        WHERE l.posted_on BETWEEN ${from}::date AND ${to}::date
          AND a.type = ANY(${types}::text[])
+         AND NOT EXISTS (SELECT 1 FROM gl_entries e
+                          WHERE e.tenant_id = l.tenant_id AND e.id = l.entry_id
+                            AND e.source IN ('year_close', 'year_reopen'))
        GROUP BY a.id
        ORDER BY a.code`;
     return rows.map((r) =>

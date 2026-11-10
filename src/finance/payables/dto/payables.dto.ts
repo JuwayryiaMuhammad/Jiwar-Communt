@@ -21,6 +21,10 @@ import { LARGE_AMOUNT } from '../../../core/common/amounts';
 import { PageQueryDto } from '../../../core/common/http/list';
 import { withParams } from '../../../core/common/validation/validation-errors';
 import {
+  WITHHOLDING_CATEGORIES,
+  type WithholdingCategory,
+} from '../../tax/tax-rules';
+import {
   IsLocalDate,
   LOCAL_DATE,
 } from '../../../core/common/validation/local-date';
@@ -318,6 +322,19 @@ export class RecordVendorInvoiceDto {
   @IsString()
   @Length(1, L.note, withParams({ min: 1, max: L.note }))
   note?: string;
+
+  @ApiPropertyOptional({
+    enum: WITHHOLDING_CATEGORIES,
+    enumName: 'WithholdingCategory',
+    description:
+      'What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt.',
+  })
+  @IsOptional()
+  @IsIn(
+    WITHHOLDING_CATEGORIES,
+    withParams({ allowed: [...WITHHOLDING_CATEGORIES] }),
+  )
+  withholdingCategory?: WithholdingCategory;
 }
 
 export class ApproveVendorInvoiceDto {

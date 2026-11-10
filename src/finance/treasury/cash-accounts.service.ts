@@ -52,6 +52,7 @@ export interface NewMovement {
   reversesId?: string;
   reasonCode?: string;
   payoutId?: string;
+  taxPaymentId?: string;
 }
 
 /** Each account's balance: the sum of its movements. */
@@ -443,6 +444,25 @@ export class CashAccountsService implements OnModuleInit {
     });
   }
 
+  /** A tax payment's movement: its amount, out, on the account `payoutAccount` locked. */
+  async taxPaymentMovement(
+    tx: TenantTxClient,
+    p: {
+      taxPaymentId: string;
+      accountId: string;
+      amount: Prisma.Decimal;
+      paidOn: LocalDate;
+    },
+  ): Promise<void> {
+    await this.insertMovement(tx, {
+      accountId: p.accountId,
+      kind: 'tax_payment',
+      amount: p.amount.neg(),
+      onDay: p.paidOn,
+      taxPaymentId: p.taxPaymentId,
+    });
+  }
+
   /**
    * Writes a movement on an account the caller locked. Shared with
    * custody, the cheques and the statements.
@@ -451,8 +471,13 @@ export class CashAccountsService implements OnModuleInit {
     tx: TenantTxClient,
     m: NewMovement & { id?: string },
   ): Promise<FinanceCashMovement> {
-    // A payout is bounded by its invoice's limit, not the register's.
-    if (m.kind !== 'payout' && m.amount.abs().gt(MAX_SIGNED))
+    // A payout is bounded by its invoice's limit, a tax paid by its
+    // declaration's or quarter's, not the register's.
+    if (
+      m.kind !== 'payout' &&
+      m.kind !== 'tax_payment' &&
+      m.amount.abs().gt(MAX_SIGNED)
+    )
       throw invalid([{ field: 'amount', code: FieldErrorCode.INVALID_VALUE }]);
     return tx.financeCashMovement.create({
       data: {
@@ -469,6 +494,7 @@ export class CashAccountsService implements OnModuleInit {
         reversesId: m.reversesId ?? null,
         reasonCode: m.reasonCode ?? null,
         payoutId: m.payoutId ?? null,
+        taxPaymentId: m.taxPaymentId ?? null,
         recordedById: this.ctx.accountId,
       },
     });
@@ -511,6 +537,7 @@ export class CashAccountsService implements OnModuleInit {
       reversesId: m.reversesId,
       reasonCode: m.reasonCode,
       payoutId: m.payoutId,
+      taxPaymentId: m.taxPaymentId,
       recordedBy: ref(m.recordedById),
       createdAt: m.createdAt,
     }));

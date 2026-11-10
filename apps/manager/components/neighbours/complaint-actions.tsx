@@ -2,10 +2,13 @@
 
 import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, ReasonCodeDialog, Textarea, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, ReasonCodeDialog, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type ComplaintDetail } from '@/lib/queries';
+import ar from '@/messages/ar/neighbours-complaint';
+import en from '@/messages/en/neighbours-complaint';
 import { actionsFor, unitText } from './logic';
 
 type Open = 'notice' | 'resolve' | 'dismiss' | null;
@@ -17,6 +20,8 @@ type Open = 'notice' | 'resolve' | 'dismiss' | null;
  * refreshes the page's data and the inbox.
  */
 export function ComplaintActions({ complaint }: { complaint: ComplaintDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [open, setOpen] = useState<Open>(null);
   const [notice, setNotice] = useState('');
@@ -36,23 +41,23 @@ export function ComplaintActions({ complaint }: { complaint: ComplaintDetail }) 
 
   const review = useAction(() => unwrap(api.POST('/api/v1/neighbours/complaints/{id}/review', { params: path })), {
     ...refresh,
-    onDone: () => toast.show(`${complaint.number} is under review. The complainant was told.`),
+    onDone: () => toast.show(t('toast.review', { number: complaint.number })),
   });
   const mediate = useAction(() => unwrap(api.POST('/api/v1/neighbours/complaints/{id}/mediation', { params: path })), {
     ...refresh,
-    onDone: () => toast.show(`${complaint.number} is in mediation. The complainant was told.`),
+    onDone: () => toast.show(t('toast.mediate', { number: complaint.number })),
   });
   const sendNotice = useAction(
     () => unwrap(api.POST('/api/v1/neighbours/complaints/{id}/notice', { params: path, body: { body: notice.trim() } })),
-    { ...refresh, onDone: done(`The notice went to unit ${complaint.targetUnit.code}.`) },
+    { ...refresh, onDone: done(t('toast.notice', { unit: complaint.targetUnit.code })) },
   );
   const resolve = useAction(
     (reasonCode: string) => unwrap(api.POST('/api/v1/neighbours/complaints/{id}/resolve', { params: path, body: { reasonCode } })),
-    { ...refresh, onDone: done(`${complaint.number} is resolved.`) },
+    { ...refresh, onDone: done(t('toast.resolved', { number: complaint.number })) },
   );
   const dismiss = useAction(
     (reasonCode: string) => unwrap(api.POST('/api/v1/neighbours/complaints/{id}/dismiss', { params: path, body: { reasonCode } })),
-    { ...refresh, onDone: done(`${complaint.number} is dismissed.`) },
+    { ...refresh, onDone: done(t('toast.dismissed', { number: complaint.number })) },
   );
 
   if (!may.review && !may.notice && !may.mediate && !may.resolve && !may.dismiss) return null;
@@ -62,23 +67,23 @@ export function ComplaintActions({ complaint }: { complaint: ComplaintDetail }) 
       <span className="row" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         {may.review ? (
           <Button variant="primary" loading={review.isPending} onClick={() => review.mutate()}>
-            Take under review
+            {t('review')}
           </Button>
         ) : null}
         {may.notice ? (
           <Button variant="primary" onClick={() => setOpen('notice')}>
-            Send notice
+            {t('sendNotice')}
           </Button>
         ) : null}
         {may.mediate ? (
           <Button loading={mediate.isPending} onClick={() => mediate.mutate()}>
-            Start mediation
+            {t('mediate')}
           </Button>
         ) : null}
-        {may.resolve ? <Button onClick={() => setOpen('resolve')}>Resolve…</Button> : null}
+        {may.resolve ? <Button onClick={() => setOpen('resolve')}>{t('resolve')}</Button> : null}
         {may.dismiss ? (
           <Button variant="danger" onClick={() => setOpen('dismiss')}>
-            Dismiss…
+            {t('dismiss')}
           </Button>
         ) : null}
       </span>
@@ -88,22 +93,22 @@ export function ComplaintActions({ complaint }: { complaint: ComplaintDetail }) 
         open={open === 'notice'}
         onClose={close}
         wide
-        title={`Send a notice to unit ${unitText(complaint.targetUnit)}`}
-        description="A complaint has one notice. It goes to the people answering for the household living in the unit, or to its owners when nobody lives there. They never learn who complained, and never read the complaint."
+        title={t('notice.title', { unit: unitText(complaint.targetUnit) })}
+        description={t('notice.description')}
         onSubmit={() => notice.trim() && sendNotice.mutate()}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={sendNotice.isPending} disabled={!notice.trim()}>
-              Send notice
+              {t('sendNotice')}
             </Button>
           </>
         }
       >
         <div className="form">
           <Field
-            label="The management’s words to the unit"
-            hint="The only text of the matter the unit ever reads. Write it in your own words: do not name the complainant, their unit, or quote what they wrote. It cannot be changed or sent again."
+            label={t('notice.label')}
+            hint={t('notice.hint')}
             error={fieldError(sendNotice.error, 'body')}
           >
             {(p) => <Textarea {...p} rows={6} maxLength={2000} value={notice} onChange={(e) => setNotice(e.target.value)} />}
@@ -115,11 +120,11 @@ export function ComplaintActions({ complaint }: { complaint: ComplaintDetail }) 
       <ReasonCodeDialog
         open={open === 'resolve'}
         onClose={close}
-        title={`Resolve ${complaint.number}?`}
-        description="The complainant is told it was resolved. Nothing more is written to either side afterwards; staff notes stay possible."
+        title={t('resolve.title', { number: complaint.number })}
+        description={t('resolve.description')}
         codes={REASON_CODES.neighbourComplaintResolve}
-        codeLabel="How it ended"
-        confirmLabel="Resolve complaint"
+        codeLabel={t('resolve.codeLabel')}
+        confirmLabel={t('resolve.confirm')}
         pending={resolve.isPending}
         error={<ErrorAlert error={resolve.error} />}
         onConfirm={(code) => resolve.mutate(code)}
@@ -127,10 +132,10 @@ export function ComplaintActions({ complaint }: { complaint: ComplaintDetail }) 
       <ReasonCodeDialog
         open={open === 'dismiss'}
         onClose={close}
-        title={`Dismiss ${complaint.number}?`}
-        description="The complainant is told it was dismissed. “Unfounded” is counted in this author’s pattern and in the unit’s history."
+        title={t('dismiss.title', { number: complaint.number })}
+        description={t('dismiss.description')}
         codes={REASON_CODES.neighbourComplaintDismiss}
-        confirmLabel="Dismiss complaint"
+        confirmLabel={t('dismiss.confirm')}
         danger
         pending={dismiss.isPending}
         error={<ErrorAlert error={dismiss.error} />}

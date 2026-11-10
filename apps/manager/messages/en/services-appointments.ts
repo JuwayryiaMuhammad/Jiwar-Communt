@@ -1,0 +1,20 @@
+/** Appointments with the management (ADR 0039): app/(dashboard)/appointments. */
+export default {
+  title: 'Appointments',
+  description: 'Meetings residents booked with the management, from the office hours. Confirming or proposing a slot counts as the response to the request.',
+  shown: 'Appointments shown',
+  'view.upcoming': 'Upcoming',
+  'view.to_confirm': 'To confirm',
+  'view.all': 'All',
+  holding: 'Holding a slot',
+  anyStatus: 'Any status',
+  emptyToConfirm: 'No slot is waiting for a confirmation',
+  emptyAny: 'No appointment matches',
+  emptyHint: 'Residents book from the office hours set in Requests setup.',
+  'col.when': 'When',
+  'col.how': 'How',
+  'col.resident': 'Resident',
+  'col.request': 'Request',
+  'pickedBy.staff': 'Picked by the management',
+  'pickedBy.resident': 'Picked by the resident',
+} as const;

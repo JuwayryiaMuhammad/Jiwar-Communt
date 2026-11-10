@@ -1,48 +1,25 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Alert, Badge, Button, Card, CardHeader, Textarea, type Tone } from '@jiwar/ui';
 import { X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { keys, type ComplaintMessage } from '@/lib/queries';
-import { Evidence, personName } from './bits';
+import ar from '@/messages/ar/neighbours-complaint';
+import en from '@/messages/en/neighbours-complaint';
+import { Evidence } from './bits';
 import { threadState, type Thread } from './logic';
+import { useWho } from './who';
+import { threadWhy } from './words';
 
 const MAX_ATTACHMENTS = 5;
 
-/** How each thread names itself, so nobody writes in the wrong one. */
-const COPY: Record<Thread, { title: string; badge: string; tone: Tone; other: string; label: string; send: string; empty: string }> = {
-  complainant: {
-    title: 'With the complainant',
-    badge: 'Complainant only',
-    tone: 'green',
-    other: 'resident (complainant)',
-    label: 'Message to the complainant',
-    send: 'Send to the complainant',
-    empty: 'Nothing was written to the complainant yet.',
-  },
-  target: {
-    title: 'With the unit complained about',
-    badge: 'Unit only',
-    tone: 'terracotta',
-    other: 'resident (the unit)',
-    label: 'Message to the unit complained about',
-    send: 'Send to the unit',
-    empty: 'The unit has its notice and has not answered.',
-  },
-  internal: {
-    title: 'Internal notes',
-    badge: 'Staff only',
-    tone: 'dark',
-    other: 'resident',
-    label: 'Internal note',
-    send: 'Add note',
-    empty: 'No note yet.',
-  },
-};
+/** How each thread names itself, so nobody writes in the wrong one: its colour here, its words in the catalog (`<thread>.title`…). */
+const TONE: Record<Thread, Tone> = { complainant: 'green', target: 'terracotta', internal: 'dark' };
 
 // One literal path per thread: the three never share a call.
 function read(thread: Thread, id: string, cursor: string | undefined) {
@@ -86,7 +63,11 @@ export function ComplaintThread({
   never: string;
   lead?: ReactNode;
 }) {
-  const copy = COPY[thread];
+  const t = useT(en, ar);
+  const f = useFormat();
+  const who = useWho();
+  const tone = TONE[thread];
+  const why = threadWhy(thread, status, hasNotice);
   const state = threadState(thread, status, hasNotice);
   // The unit's thread does not exist before its notice: nothing to read yet.
   const exists = thread !== 'target' || hasNotice;
@@ -115,10 +96,8 @@ export function ComplaintThread({
 
   return (
     <Card flush>
-      <CardHeader title={copy.title} actions={<Badge tone={copy.tone}>{copy.badge}</Badge>}>
-        <span className="t-secondary">
-          Read by {to}. {never}
-        </span>
+      <CardHeader title={t(`${thread}.title`)} actions={<Badge tone={tone}>{t(`${thread}.badge`)}</Badge>}>
+        <span className="t-secondary">{t('readBy', { to, never })}</span>
       </CardHeader>
       {lead}
       {exists ? (
@@ -131,16 +110,16 @@ export function ComplaintThread({
                   className={`thread__msg${thread === 'internal' ? ' thread__msg--internal' : m.senderSide === 'staff' ? ' thread__msg--staff' : ''}`}
                 >
                   <span className="thread__meta">
-                    {personName(m.sender)} · {m.senderSide === 'staff' ? 'management' : copy.other} · {formatDateTime(m.createdAt)}
+                    {who.person(m.sender)} · {m.senderSide === 'staff' ? t('management') : t(`${thread}.other`)} · {f.dateTime(m.createdAt)}
                   </span>
-                  {m.erased ? <p className="thread__body t-secondary">Message removed</p> : <p className="thread__body">{m.body}</p>}
-                  <Evidence items={m.attachments} alt="Evidence" />
+                  {m.erased ? <p className="thread__body t-secondary">{t('removed')}</p> : <p className="thread__body">{m.body}</p>}
+                  <Evidence items={m.attachments} alt={t('evidence')} />
                 </div>
               ))}
             </div>
           ) : (
             <p className="t-secondary" style={{ padding: 16 }}>
-              {copy.empty}
+              {t(`${thread}.empty`)}
             </p>
           )}
           <LoadMore query={list} />
@@ -156,27 +135,27 @@ export function ComplaintThread({
           }}
         >
           <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-            <Badge tone={copy.tone}>{copy.badge}</Badge>
-            <strong>To: {to}</strong>
+            <Badge tone={tone}>{t(`${thread}.badge`)}</Badge>
+            <strong>{t('to', { to })}</strong>
           </span>
           <Textarea
-            aria-label={copy.label}
+            aria-label={t(`${thread}.label`)}
             rows={3}
             maxLength={4000}
-            placeholder={thread === 'internal' ? 'A note for staff only…' : `Write to ${to}…`}
+            placeholder={thread === 'internal' ? t('placeholder.internal') : t('placeholder.write', { to })}
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
           <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
             <FileUpload
               purpose="complaint_evidence"
-              label={fileIds.length ? `Attach another (${fileIds.length} of ${MAX_ATTACHMENTS})` : 'Attach a file'}
+              label={fileIds.length ? t('attachAnother', { count: fileIds.length, max: MAX_ATTACHMENTS }) : t('attach')}
               disabled={fileIds.length >= MAX_ATTACHMENTS}
               onUploaded={(id) => setFileIds((ids) => [...ids, id])}
             />
             {fileIds.length ? (
               <Button type="button" size="sm" variant="text" icon={<X aria-hidden />} onClick={() => setFileIds([])}>
-                Remove attachments
+                {t('removeAttachments')}
               </Button>
             ) : null}
           </span>
@@ -184,14 +163,14 @@ export function ComplaintThread({
             <span className="t-secondary">{never}</span>
             <span className="spacer" />
             <Button type="submit" variant={thread === 'internal' ? 'dark' : 'primary'} loading={send.isPending} disabled={!body.trim()}>
-              {copy.send}
+              {t(`${thread}.send`)}
             </Button>
           </span>
           <ErrorAlert error={send.error} />
         </form>
       ) : (
         <div style={{ padding: 16, borderTop: exists ? '1px solid var(--hairline-soft)' : undefined }}>
-          <Alert>{state.why}</Alert>
+          <Alert>{why ? t(`why.${why}`) : null}</Alert>
         </div>
       )}
     </Card>

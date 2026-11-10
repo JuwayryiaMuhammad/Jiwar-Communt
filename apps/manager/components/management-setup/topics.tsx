@@ -2,13 +2,17 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useLocale, useT, type Translate } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, Input, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { NameFields, namesReady, NO_NAMES, type Names } from '@/components/maintenance-setup/names';
 import { api } from '@/lib/api';
+import { localName } from '@/components/management-requests/logic';
 import { fetchers, keys, type RequestTopic } from '@/lib/queries';
+import ar from '@/messages/ar/services-mgmt-setup';
+import en from '@/messages/en/services-mgmt-setup';
 
 const HOURS = { min: 1, max: 720 };
 const validHours = (value: string) => {
@@ -16,13 +20,17 @@ const validHours = (value: string) => {
   return Number.isInteger(n) && n >= HOURS.min && n <= HOURS.max;
 };
 
-/** "48 hours (2 days)". */
-export function targetText(hours: number): string {
+/** "48 hours (2 days)", in the page's language. */
+export function targetText(t: Translate<typeof en>, hours: number): string {
   const days = hours / 24;
-  return `${hours} hour${hours === 1 ? '' : 's'}${hours >= 24 && Number.isInteger(days) ? ` (${days} day${days === 1 ? '' : 's'})` : ''}`;
+  const text = t('target.hours', { n: hours });
+  return hours >= 24 && Number.isInteger(days) ? t('target.both', { hours: text, days: t('target.days', { n: days }) }) : text;
 }
 
 function TopicDialog({ topic, open, onClose }: { topic: RequestTopic | null; open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const { locale } = useLocale();
   const toast = useToast();
   const [names, setNames] = useState<Names>(topic ? { key: topic.key, nameEn: topic.nameEn, nameAr: topic.nameAr } : NO_NAMES);
   const [hours, setHours] = useState(topic ? String(topic.targetResponseHours) : '48');
@@ -53,7 +61,7 @@ function TopicDialog({ topic, open, onClose }: { topic: RequestTopic | null; ope
     {
       invalidate: [keys.requestTopics, keys.requestTopicOptions],
       onDone: (saved) => {
-        toast.show(`${saved.nameEn} is saved.`);
+        toast.show(t('topicSaved', { name: localName(locale, saved) }));
         onClose();
       },
     },
@@ -64,14 +72,14 @@ function TopicDialog({ topic, open, onClose }: { topic: RequestTopic | null; ope
     <Dialog
       open={open}
       onClose={onClose}
-      title={topic ? `Edit ${topic.nameEn}` : 'New topic'}
-      description="What residents pick when they write to the management. The target is how long the management gives itself to respond."
+      title={topic ? t('editTopic', { name: localName(locale, topic) }) : t('newTopic')}
+      description={t('topicDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
@@ -79,21 +87,21 @@ function TopicDialog({ topic, open, onClose }: { topic: RequestTopic | null; ope
       <div className="form">
         <NameFields value={names} onChange={setNames} error={save.error} withKey={!topic} example="parking" />
         <Field
-          label="Response target, in hours"
-          hint="A request with no response by then is overdue and escalated once. A change applies to requests opened or reopened from now on."
-          error={fieldError(save.error, 'targetResponseHours') ?? (hours !== '' && !validHours(hours) ? `A whole number from ${HOURS.min} to ${HOURS.max}.` : undefined)}
+          label={t('targetLabel')}
+          hint={t('targetHint')}
+          error={fieldError(save.error, 'targetResponseHours') ?? (hours !== '' && !validHours(hours) ? t('wholeNumber', { min: HOURS.min, max: HOURS.max }) : undefined)}
         >
           {(p) => <Input {...p} type="number" min={HOURS.min} max={HOURS.max} step={1} value={hours} onChange={(e) => setHours(e.target.value)} />}
         </Field>
         {topic ? (
           <Field
-            label="Answered by"
-            hint="A request of this topic waits for the handlers of this role (or every handler when it has none). Residents see the role, never a person."
+            label={t('answeredBy')}
+            hint={t('answeredByHint')}
             error={fieldError(save.error, 'ownerRoleId')}
           >
             {(p) => (
               <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
-                <option value="">Every handler</option>
+                <option value="">{t('everyHandler')}</option>
                 {(roles.data?.data ?? [])
                   .filter((r) => r.kind === 'staff' || r.kind === 'manager')
                   .map((r) => (
@@ -107,7 +115,7 @@ function TopicDialog({ topic, open, onClose }: { topic: RequestTopic | null; ope
         ) : null}
         {topic ? (
           <Checkbox
-            label="Offered to residents (unticked: retired, kept on the requests that used it)"
+            label={t('offered')}
             checked={active}
             onChange={(e) => setActive(e.target.checked)}
           />
@@ -122,6 +130,8 @@ type Open = { topic: RequestTopic | null } | null;
 
 /** The compound's request topics and their response targets (ADR 0039). */
 export function Topics() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const topics = useQuery({ queryKey: keys.requestTopics, queryFn: fetchers.requestTopics });
   const [open, setOpen] = useState<Open>(null);
 
@@ -130,44 +140,46 @@ export function Topics() {
       <div className="toolbar">
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setOpen({ topic: null })}>
-          New topic
+          {t('newTopic')}
         </Button>
       </div>
       <Card flush>
         <QueryState query={topics}>
           <DataTable<RequestTopic>
             rows={topics.data?.data}
-            rowKey={(t) => t.id}
-            empty="No topic yet"
-            emptyHint="Residents cannot write to the management until there is one."
+            rowKey={(row) => row.id}
+            empty={t('topicsEmpty')}
+            emptyHint={t('topicsEmptyHint')}
             columns={[
               {
                 key: 'name',
-                header: 'Topic',
-                cell: (t) => (
+                header: t('col.topic'),
+                cell: (row) => (
                   <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                    <span className="table__primary">{t.nameEn}</span>
-                    <span className="t-secondary" dir="rtl" lang="ar">
-                      {t.nameAr}
+                    <span className="table__primary" dir="ltr" lang="en">
+                      {row.nameEn}
                     </span>
-                    {!t.active ? <Badge tone="beige">Retired</Badge> : null}
+                    <span className="t-secondary" dir="rtl" lang="ar">
+                      {row.nameAr}
+                    </span>
+                    {!row.active ? <Badge tone="beige">{t('retired')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'key', header: 'Code', cell: (t) => <span className="t-mono">{t.key}</span> },
-              { key: 'target', header: 'Response target', cell: (t) => targetText(t.targetResponseHours) },
+              { key: 'key', header: t('col.code'), cell: (row) => <span className="t-mono">{row.key}</span> },
+              { key: 'target', header: t('col.target'), cell: (row) => targetText(t, row.targetResponseHours) },
               {
                 key: 'owner',
-                header: 'Answered by',
-                cell: (t) => (t.owner ? (t.owner.roleName ?? t.owner.roleKey) : 'Every handler'),
+                header: t('answeredBy'),
+                cell: (row) => (row.owner ? (row.owner.roleName ?? row.owner.roleKey) : t('everyHandler')),
               },
               {
                 key: 'actions',
                 header: '',
                 className: 'table__actions',
-                cell: (t) => (
-                  <Button size="sm" onClick={() => setOpen({ topic: t })}>
-                    Edit
+                cell: (row) => (
+                  <Button size="sm" onClick={() => setOpen({ topic: row })}>
+                    {c('edit')}
                   </Button>
                 ),
               },

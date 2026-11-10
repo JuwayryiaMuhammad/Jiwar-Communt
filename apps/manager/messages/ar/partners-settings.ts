@@ -1,0 +1,41 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/partners-settings.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'إعدادات الشركاء',
+  description: 'مدة اعتبار الشريك جديدًا، وبداية «مفتوح لوقت متأخر»، وحدود الساكنين ومهلهم، ومدة صلاحية روابط المكاتب.',
+  settings: 'الإعدادات',
+  saved: 'حُفظت إعدادات الشركاء.',
+  'newDays.label': 'مدة اعتباره جديدًا، بالأيام',
+  'newDays.hint': 'يظهر الشريك «جديدًا» هذه المدة بعد إدراجه.',
+  'lateFromMinute.label': 'بداية «مفتوح لوقت متأخر»، بدقائق اليوم',
+  'lateFromMinute.hint': '1320 تعني الساعة 22:00.',
+  'maxLiveRequests.label': 'الطلبات المفتوحة لكل ساكن',
+  'maxLiveRequests.hint': 'المنتظرة أو المقترح موعدها أو المقبولة في الوقت نفسه.',
+  'ratingDays.label': 'مهلة التقييم، بالأيام',
+  'ratingDays.hint': 'بعد انتهاء الطلب.',
+  'complaintDays.label': 'مهلة الشكوى، بالأيام',
+  'complaintDays.hint': 'بعد انتهاء الطلب.',
+  'deskLinkDays.label': 'مدة عمل روابط المكاتب، بالأيام',
+  'deskLinkDays.hint': 'بعدها تنشئ الإدارة رابطًا جديدًا.',
+  range: '{hint} من {min} إلى {max}.',
+  rangeError: 'عدد صحيح من {min} إلى {max}.',
+  subcategories: 'الفئات الفرعية',
+  none: 'لا يوجد',
+  'col.category': 'الفئة',
+  'col.name': 'الاسم',
+  'col.key': 'المفتاح',
+  retire: 'أوقف',
+  restore: 'أعد التفعيل',
+  restored: 'أُعيد تفعيلها.',
+  retired: 'أُوقفت: لا تُعرض لأي طلب جديد.',
+  'new.title': 'فئة فرعية جديدة',
+  'new.description': 'مفتاحها وفئتها لا يتغيران، أما اسماها فيمكن تغييرهما.',
+  'new.added': 'أُضيفت الفئة الفرعية.',
+  key: 'المفتاح',
+  keyHint: 'حروف إنجليزية صغيرة وأرقام و_، مثل window_cleaning.',
+  nameEn: 'الاسم بالإنجليزية',
+  nameAr: 'الاسم بالعربية',
+};
+
+export default ar;

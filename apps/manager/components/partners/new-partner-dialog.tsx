@@ -2,12 +2,17 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useLocale, useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type PartnerCategory } from '@/lib/queries';
-import { CATEGORIES, CATEGORY_TEXT, looksLikePhone } from './logic';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-edit';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-edit';
+import { CATEGORIES, looksLikePhone, word } from './logic';
 
 /**
  * A new partner (ADR 0060): its names, its business phone — the one
@@ -15,6 +20,10 @@ import { CATEGORIES, CATEGORY_TEXT, looksLikePhone } from './logic';
  * hours, prices, area and desk link are set on its page.
  */
 export function NewPartnerDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const c = useCommonT();
+  const { locale } = useLocale();
   const toast = useToast();
   const router = useRouter();
   const [nameEn, setNameEn] = useState('');
@@ -31,7 +40,7 @@ export function NewPartnerDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.partnersAll],
       onDone: (created) => {
-        toast.show(`${created.nameEn} is listed. Set its hours and desk link next.`);
+        toast.show(t('new.listed', { name: locale === 'ar' ? created.nameAr : created.nameEn }));
         router.push(`/partners/${created.id}`);
       },
     },
@@ -41,34 +50,34 @@ export function NewPartnerDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="New partner"
-      description="Residents see its names, what it does, its prices, hours and business phone. Never a person’s own number."
+      title={t('new.title')}
+      description={t('new.description')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            List
+            {t('new.submit')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Name in English" error={fieldError(save.error, 'nameEn')}>
+        <Field label={t('nameEn')} error={fieldError(save.error, 'nameEn')}>
           {(p) => <Input {...p} maxLength={80} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
         </Field>
-        <Field label="Name in Arabic" error={fieldError(save.error, 'nameAr')}>
+        <Field label={t('nameAr')} error={fieldError(save.error, 'nameAr')}>
           {(p) => <Input {...p} dir="rtl" maxLength={80} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
         </Field>
-        <Field label="Business phone" hint="E.164 or a local number." error={fieldError(save.error, 'businessPhone')}>
-          {(p) => <Input {...p} inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
+        <Field label={t('businessPhone')} hint={t('businessPhone.hintNew')} error={fieldError(save.error, 'businessPhone')}>
+          {(p) => <Input {...p} className="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
         </Field>
-        <Field label="Category">
+        <Field label={t('category')}>
           {(p) => (
             <Select {...p} value={category} onChange={(e) => setCategory(e.target.value as PartnerCategory)}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_TEXT[c]}
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {word(codes, 'category', cat)}
                 </option>
               ))}
             </Select>

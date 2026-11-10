@@ -1,18 +1,27 @@
 'use client';
 
-import { formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, ButtonLink, Card, Dialog, Field, ForbiddenState, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Button, ButtonLink, Card, Dialog, Field, ForbiddenState, PageHeader, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Back } from '@/components/facilities/bits';
-import { COMPENSATION_TEXT, compensationsFor, OUTCOME_TEXT } from '@/components/partners/logic';
+import { localName } from '@/components/management-requests/logic';
+import { compensationsFor, OUTCOMES, word } from '@/components/partners/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PartnerComplaint } from '@/lib/queries';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-complaints';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-complaints';
 
 function Decide({ complaint, onClose }: { complaint: PartnerComplaint; onClose: () => void }) {
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const c = useCommonT();
   const toast = useToast();
   const [outcome, setOutcome] = useState<'upheld' | 'not_upheld'>('upheld');
   const [compensation, setCompensation] = useState('none');
@@ -27,7 +36,7 @@ function Decide({ complaint, onClose }: { complaint: PartnerComplaint; onClose: 
     {
       invalidate: [keys.partnersAll],
       onDone: () => {
-        toast.show('Decided. The resident was told.');
+        toast.show(t('decide.done'));
         onClose();
       },
     },
@@ -37,20 +46,20 @@ function Decide({ complaint, onClose }: { complaint: PartnerComplaint; onClose: 
     <Dialog
       open
       onClose={onClose}
-      title="Decide this complaint"
-      description="Once. A credit note is issued in Finance by its own page: nothing is paid here."
+      title={t('decide.title')}
+      description={t('decide.description')}
       onSubmit={() => decide.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={decide.isPending}>
-            Decide
+            {t('decide')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Outcome">
+        <Field label={t('outcome')}>
           {(p) => (
             <Select
               {...p}
@@ -61,20 +70,20 @@ function Decide({ complaint, onClose }: { complaint: PartnerComplaint; onClose: 
                 if (!compensationsFor(next).includes(compensation)) setCompensation('none');
               }}
             >
-              {Object.entries(OUTCOME_TEXT).map(([value, label]) => (
+              {OUTCOMES.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {word(codes, 'outcome', value)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="What the management arranges">
+        <Field label={t('arrangement')}>
           {(p) => (
             <Select {...p} value={compensation} onChange={(e) => setCompensation(e.target.value)}>
               {choices.map((value) => (
                 <option key={value} value={value}>
-                  {COMPENSATION_TEXT[value]}
+                  {word(codes, 'compensation', value)}
                 </option>
               ))}
             </Select>
@@ -89,6 +98,12 @@ function Decide({ complaint, onClose }: { complaint: PartnerComplaint; onClose: 
 /** One complaint against a partner (ADR 0060). */
 export default function PartnerComplaintPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('partners.manage');
   const complaint = useQuery({ queryKey: keys.partnerComplaint(id), queryFn: () => fetchers.partnerComplaint(id), enabled: allowed });
@@ -96,25 +111,25 @@ export default function PartnerComplaintPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={<Back href="/partners/complaints" label="Partner complaints" />} title="Complaint" />
+        <PageHeader back={<Back href="/partners/complaints" label={t('title')} />} title={t('complaint')} />
         <ForbiddenState />
       </>
     );
-  const c = complaint.data;
+  const cm = complaint.data;
   return (
     <>
       <PageHeader
-        back={<Back href="/partners/complaints" label="Partner complaints" />}
-        title={c ? `${c.managementRequestNumber} · ${c.partner.nameEn}` : 'Complaint'}
+        back={<Back href="/partners/complaints" label={t('title')} />}
+        title={cm ? `${cm.managementRequestNumber} · ${localName(locale, cm.partner)}` : t('complaint')}
         actions={
-          c ? (
+          cm ? (
             <>
               {can('requests.handle') ? (
-                <ButtonLink href={`/management-requests/${c.managementRequestId}`}>Open the conversation</ButtonLink>
+                <ButtonLink href={`/management-requests/${cm.managementRequestId}`}>{t('openConversation')}</ButtonLink>
               ) : null}
-              {c.outcome ? null : (
+              {cm.outcome ? null : (
                 <Button variant="primary" onClick={() => setDeciding(true)}>
-                  Decide
+                  {t('decide')}
                 </Button>
               )}
             </>
@@ -122,31 +137,31 @@ export default function PartnerComplaintPage() {
         }
       />
       <QueryState query={complaint}>
-        {c ? (
+        {cm ? (
           <Card>
             <dl className="dl">
-              <dt>Request</dt>
-              <dd className="t-mono">{c.requestNumber}</dd>
-              <dt>Reason</dt>
-              <dd>{humanize(c.reason)}</dd>
-              <dt>Asks</dt>
+              <dt>{t('request')}</dt>
+              <dd className="t-mono ltr">{cm.requestNumber}</dd>
+              <dt>{c('reason')}</dt>
+              <dd>{label(cm.reason)}</dd>
+              <dt>{t('col.asks')}</dt>
               <dd>
-                {humanize(c.compensationAsk)}
-                {c.requestedAmount ? ` · ${c.requestedAmount} EGP` : ''}
+                {label(cm.compensationAsk)}
+                {cm.requestedAmount ? ` · ${f.money(cm.requestedAmount)}` : ''}
               </dd>
-              <dt>Made</dt>
-              <dd>{formatDateTime(c.createdAt)}</dd>
-              <dt>Decision</dt>
+              <dt>{t('col.made')}</dt>
+              <dd>{f.dateTime(cm.createdAt)}</dd>
+              <dt>{t('col.decision')}</dt>
               <dd>
-                {c.outcome
-                  ? `${OUTCOME_TEXT[c.outcome]} · ${COMPENSATION_TEXT[c.compensation ?? 'none']} · ${c.decidedAt ? formatDateTime(c.decidedAt) : ''}`
-                  : 'Not decided yet'}
+                {cm.outcome
+                  ? `${word(codes, 'outcome', cm.outcome)} · ${word(codes, 'compensation', cm.compensation ?? 'none')} · ${cm.decidedAt ? f.dateTime(cm.decidedAt) : ''}`
+                  : t('notDecided')}
               </dd>
             </dl>
           </Card>
         ) : null}
       </QueryState>
-      {deciding && c ? <Decide complaint={c} onClose={() => setDeciding(false)} /> : null}
+      {deciding && cm ? <Decide complaint={cm} onClose={() => setDeciding(false)} /> : null}
     </>
   );
 }

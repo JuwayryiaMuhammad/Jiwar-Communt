@@ -2,11 +2,14 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Textarea, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/services-message-templates';
+import en from '@/messages/en/services-message-templates';
 
 type Kind = 'announcement' | 'reply';
 interface Template {
@@ -29,6 +32,8 @@ const PATHS = {
  * Nothing points back at a template: it is changed and deleted freely.
  */
 export default function MessageTemplatesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const { can } = usePermissions();
   const toast = useToast();
   const mayAnnounce = can('community.publish');
@@ -43,49 +48,46 @@ export default function MessageTemplatesPage() {
   });
   const save = useAction(
     () => {
-      const t = editing!;
+      const tpl = editing!;
       const body =
         kind === 'announcement'
-          ? { name: t.name, titleEn: t.titleEn || null, bodyEn: t.bodyEn || null }
-          : { name: t.name, bodyEn: t.bodyEn || null, bodyAr: t.bodyAr || null };
-      return t.id
-        ? unwrap(api.PATCH(`${PATHS[kind]}/{id}` as never, { params: { path: { id: t.id } }, body } as never))
+          ? { name: tpl.name, titleEn: tpl.titleEn || null, bodyEn: tpl.bodyEn || null }
+          : { name: tpl.name, bodyEn: tpl.bodyEn || null, bodyAr: tpl.bodyAr || null };
+      return tpl.id
+        ? unwrap(api.PATCH(`${PATHS[kind]}/{id}` as never, { params: { path: { id: tpl.id } }, body } as never))
         : unwrap(api.POST(PATHS[kind] as never, { body } as never));
     },
     {
       invalidate: [key],
       onDone: () => {
-        toast.show('The template is saved.');
+        toast.show(t('saved'));
         setEditing(null);
       },
     },
   );
   const remove = useAction((id: string) => unwrap(api.DELETE(`${PATHS[kind]}/{id}` as never, { params: { path: { id } } } as never)), {
     invalidate: [key],
-    onDone: () => toast.show('The template is deleted.'),
+    onDone: () => toast.show(t('deleted')),
   });
   if (!mayAnnounce && !mayReply) return <ForbiddenState />;
   return (
     <>
       <PageHeader
-        title="Message templates"
-        description="Words the office writes often, kept once. Announcement templates start a new draft; reply templates are picked when answering a request."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setEditing({})}>
-            New template
+            {t('newTemplate')}
           </Button>
         }
       />
       {mayAnnounce && mayReply ? (
         <div className="toolbar">
           <Segmented<Kind>
-            label="Templates shown"
+            label={t('shown')}
             value={kind}
             onChange={setKind}
-            options={[
-              { value: 'announcement', label: 'Announcements' },
-              { value: 'reply', label: 'Replies' },
-            ]}
+            options={(['announcement', 'reply'] as const).map((value) => ({ value, label: t(`kind.${value}`) }))}
           />
         </div>
       ) : null}
@@ -93,18 +95,18 @@ export default function MessageTemplatesPage() {
         <QueryState query={list}>
           <DataTable
             rows={list.data?.data ?? []}
-            rowKey={(t) => t.id}
+            rowKey={(row) => row.id}
             columns={[
-              { key: 'name', header: 'Name', cell: (t) => t.name },
-              { key: 'words', header: 'Words', cell: (t) => (t.bodyEn ?? t.bodyAr ?? '').slice(0, 80) },
+              { key: 'name', header: t('col.name'), cell: (row) => row.name },
+              { key: 'words', header: t('col.words'), cell: (row) => (row.bodyEn ?? row.bodyAr ?? '').slice(0, 80) },
               {
                 key: 'actions',
                 header: '',
-                cell: (t) => (
+                cell: (row) => (
                   <span className="row">
-                    <Button onClick={() => setEditing(t)}>Edit</Button>
-                    <Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate(t.id)}>
-                      Delete
+                    <Button onClick={() => setEditing(row)}>{c('edit')}</Button>
+                    <Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate(row.id)}>
+                      {c('delete')}
                     </Button>
                   </span>
                 ),
@@ -116,31 +118,31 @@ export default function MessageTemplatesPage() {
       <Dialog
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing?.id ? 'Edit the template' : 'New template'}
+        title={editing?.id ? t('editTitle') : t('newTemplate')}
         onSubmit={() => editing?.name && save.mutate()}
         footer={
           <>
-            <Button onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={() => setEditing(null)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={save.isPending} disabled={!editing?.name}>
-              Save
+              {c('save')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="Name" hint="The compound’s own, once.">
+          <Field label={t('name')} hint={t('nameHint')}>
             {(p) => <Input {...p} maxLength={80} value={editing?.name ?? ''} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />}
           </Field>
           {kind === 'announcement' ? (
-            <Field label="Title (English)">
-              {(p) => <Input {...p} maxLength={150} value={editing?.titleEn ?? ''} onChange={(e) => setEditing({ ...editing, titleEn: e.target.value })} />}
+            <Field label={t('titleEn')}>
+              {(p) => <Input {...p} maxLength={150} dir="ltr" lang="en" value={editing?.titleEn ?? ''} onChange={(e) => setEditing({ ...editing, titleEn: e.target.value })} />}
             </Field>
           ) : null}
-          <Field label="Words (English)">
-            {(p) => <Textarea {...p} rows={4} value={editing?.bodyEn ?? ''} onChange={(e) => setEditing({ ...editing, bodyEn: e.target.value })} />}
+          <Field label={t('wordsEn')}>
+            {(p) => <Textarea {...p} rows={4} dir="ltr" lang="en" value={editing?.bodyEn ?? ''} onChange={(e) => setEditing({ ...editing, bodyEn: e.target.value })} />}
           </Field>
           {kind === 'reply' ? (
-            <Field label="Words (Arabic)">
+            <Field label={t('wordsAr')}>
               {(p) => <Textarea {...p} rows={4} dir="rtl" value={editing?.bodyAr ?? ''} onChange={(e) => setEditing({ ...editing, bodyAr: e.target.value })} />}
             </Field>
           ) : null}

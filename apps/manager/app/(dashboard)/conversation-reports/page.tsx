@@ -1,14 +1,16 @@
 'use client';
 
-import { formatDateTime, humanize, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge, useLabel } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { personName } from '@/components/neighbours/bits';
-import { excerpt, KIND_TEXT, SIDE_TEXT } from '@/components/neighbours/logic';
+import { excerpt } from '@/components/neighbours/logic';
+import { useWho } from '@/components/neighbours/who';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ConversationReport } from '@/lib/queries';
+import ar from '@/messages/ar/conv-reports';
+import en from '@/messages/en/conv-reports';
 
 type Status = ConversationReport['status'];
 
@@ -18,6 +20,12 @@ type Status = ConversationReport['status'];
  * case, and only while the case is open.
  */
 export default function ConversationReportsPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
+  const who = useWho();
+  const kindText = (kind: string) => (kind === 'lost' || kind === 'found' || kind === 'lend' || kind === 'borrow' ? t(`kind.${kind}`) : label(kind));
+  const sideText = (side: string) => (side === 'author' || side === 'responder' ? t(`side.${side}`) : label(side));
   const { can, ready } = usePermissions();
   const [status, setStatus] = useState<Status>('open');
   const allowed = can('neighbours.handle');
@@ -31,17 +39,17 @@ export default function ConversationReportsPage() {
   return (
     <>
       <PageHeader
-        title="Conversation reports"
-        description="Conversations about a post that one of the two residents reported. A conversation is read here only while its case is open; closing the case seals it again."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
         <Segmented<Status>
-          label="Cases shown"
+          label={t('casesShown')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'open', label: 'Open' },
-            { value: 'closed', label: 'Closed' },
+            { value: 'open', label: label('open') },
+            { value: 'closed', label: label('closed') },
           ]}
         />
       </div>
@@ -50,47 +58,47 @@ export default function ConversationReportsPage() {
           <DataTable<ConversationReport>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty={status === 'open' ? 'No reported conversation is waiting' : 'No case was closed'}
+            empty={status === 'open' ? t('emptyOpen') : t('emptyClosed')}
             columns={[
               {
                 key: 'reason',
-                header: 'Reported for',
+                header: t('reportedFor'),
                 cell: (r) => (
                   <Link className="table__link" href={`/conversation-reports/${r.id}`}>
-                    {humanize(r.reasonCode)}
+                    {label(r.reasonCode)}
                   </Link>
                 ),
               },
               {
                 key: 'reporter',
-                header: 'Reported by',
+                header: t('reportedBy'),
                 cell: (r) => (
                   <span className="stack stack--sm">
-                    {personName(r.reporter)}
-                    <span className="t-secondary">{SIDE_TEXT[r.reporterSide] ?? r.reporterSide}</span>
+                    {who.person(r.reporter)}
+                    <span className="t-secondary">{sideText(r.reporterSide)}</span>
                   </span>
                 ),
               },
               {
                 key: 'about',
-                header: 'About',
+                header: t('about'),
                 cell: (r) => {
                   const other = r.reporterSide === 'author' ? r.responder : r.author;
                   return (
                     <span className="stack stack--sm">
-                      {personName(other.account)}
-                      {other.unitCode ? <span className="t-secondary">Unit {other.unitCode}</span> : null}
+                      {who.person(other.account)}
+                      {other.unitCode ? <span className="t-secondary">{t('unitCode', { code: other.unitCode })}</span> : null}
                     </span>
                   );
                 },
               },
               {
                 key: 'post',
-                header: 'Post',
+                header: t('post'),
                 cell: (r) => (
                   <span className="row" style={{ gap: 8 }}>
                     {/* A board post, or a market listing (ADR 0071). */}
-                    <Badge plain>{r.post ? (KIND_TEXT[r.post.kind] ?? r.post.kind) : `Listing · ${r.listing?.kind ?? ''}`}</Badge>
+                    <Badge plain>{r.post ? kindText(r.post.kind) : t('listing', { kind: r.listing?.kind ? kindText(r.listing.kind) : '' })}</Badge>
                     <span className="t-secondary" style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {excerpt(r.post ? r.post.body : (r.listing?.title ?? null), 60)}
                     </span>
@@ -99,22 +107,22 @@ export default function ConversationReportsPage() {
               },
               {
                 key: 'status',
-                header: 'Case',
+                header: t('case'),
                 cell: (r) => (
                   <span className="stack stack--sm">
                     <StatusBadge status={r.status} />
-                    {r.outcome ? <span className="t-secondary">{humanize(r.outcome)}</span> : null}
+                    {r.outcome ? <span className="t-secondary">{label(r.outcome)}</span> : null}
                   </span>
                 ),
               },
               {
                 key: 'at',
-                header: status === 'open' ? 'Reported' : 'Closed',
+                header: status === 'open' ? t('reported') : t('closed'),
                 cell: (r) => {
                   const at = status === 'open' ? r.createdAt : (r.closedAt ?? r.createdAt);
                   return (
-                    <span title={formatDateTime(at)} style={{ whiteSpace: 'nowrap' }}>
-                      {relativeTime(at)}
+                    <span title={f.dateTime(at)} style={{ whiteSpace: 'nowrap' }}>
+                      {f.relative(at)}
                     </span>
                   );
                 },

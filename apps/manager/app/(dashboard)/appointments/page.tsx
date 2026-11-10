@@ -1,14 +1,19 @@
 'use client';
 
-import { humanize } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge } from '@jiwar/ui';
+import { useLocale, useT } from '@jiwar/i18n';
+import { Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge, useCommonT, useLabel } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { MODE_TEXT, personName, slotText } from '@/components/management-requests/bits';
+import { usePersonName, useSlotText } from '@/components/management-requests/bits';
+import { localName } from '@/components/management-requests/logic';
 import { AppointmentActions } from '@/components/management-requests/request-appointment';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type AppointmentFilters, type AppointmentItem, type AppointmentStatus } from '@/lib/queries';
+import ar from '@/messages/ar/services-appointments';
+import requestsAr from '@/messages/ar/services-mgmt-requests';
+import en from '@/messages/en/services-appointments';
+import requestsEn from '@/messages/en/services-mgmt-requests';
 
 const VIEWS = ['upcoming', 'to_confirm', 'all'] as const;
 type View = (typeof VIEWS)[number];
@@ -20,6 +25,13 @@ const STATUSES: AppointmentStatus[] = ['requested', 'proposed', 'confirmed', 'ca
  * answered; a slot is confirmed, countered or cancelled from its row.
  */
 export default function AppointmentsPage() {
+  const t = useT(en, ar);
+  const tr = useT(requestsEn, requestsAr);
+  const c = useCommonT();
+  const label = useLabel();
+  const { locale } = useLocale();
+  const personName = usePersonName();
+  const slotText = useSlotText();
   const { can, ready } = usePermissions();
   const [view, setView] = useState<View>('upcoming');
   const [status, setStatus] = useState<AppointmentStatus | ''>('');
@@ -43,21 +55,17 @@ export default function AppointmentsPage() {
   return (
     <>
       <PageHeader
-        title="Appointments"
-        description="Meetings residents booked with the management, from the office hours. Confirming or proposing a slot counts as the response to the request."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Appointments shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'upcoming', label: 'Upcoming' },
-            { value: 'to_confirm', label: 'To confirm' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
-        <Field label="Status">
+        <Field label={c('status')}>
           {(p) => (
             <Select
               {...p}
@@ -65,10 +73,10 @@ export default function AppointmentsPage() {
               disabled={view === 'to_confirm'}
               onChange={(e) => setStatus(e.target.value as AppointmentStatus | '')}
             >
-              <option value="">{view === 'upcoming' ? 'Holding a slot' : 'Any status'}</option>
+              <option value="">{view === 'upcoming' ? t('holding') : t('anyStatus')}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
@@ -80,49 +88,45 @@ export default function AppointmentsPage() {
           <DataTable<AppointmentItem>
             rows={list.rows}
             rowKey={(a) => a.id}
-            empty={view === 'to_confirm' ? 'No slot is waiting for a confirmation' : 'No appointment matches'}
-            emptyHint={view === 'upcoming' ? 'Residents book from the office hours set in Requests setup.' : undefined}
+            empty={view === 'to_confirm' ? t('emptyToConfirm') : t('emptyAny')}
+            emptyHint={view === 'upcoming' ? t('emptyHint') : undefined}
             columns={[
               {
                 key: 'when',
-                header: 'When',
+                header: t('col.when'),
                 cell: (a) => <span style={{ whiteSpace: 'nowrap' }}>{slotText(a.startsAt, a.endsAt)}</span>,
               },
-              { key: 'mode', header: 'How', cell: (a) => MODE_TEXT[a.mode] },
+              { key: 'mode', header: t('col.how'), cell: (a) => tr(`mode.${a.mode}`) },
               {
                 key: 'resident',
-                header: 'Resident',
+                header: t('col.resident'),
                 cell: (a) => (
                   <span className="stack stack--sm">
                     {personName(a.request.author)}
-                    {a.request.unit ? <span className="t-secondary">Unit {a.request.unit.code}</span> : null}
+                    {a.request.unit ? <span className="t-secondary">{tr('unitCode', { code: a.request.unit.code })}</span> : null}
                   </span>
                 ),
               },
               {
                 key: 'request',
-                header: 'Request',
+                header: t('col.request'),
                 cell: (a) => (
                   <span className="stack stack--sm">
                     <Link className="table__link t-mono" href={`/management-requests/${a.request.id}`}>
                       {a.request.number}
                     </Link>
-                    <span className="t-secondary">{a.request.topic.nameEn}</span>
+                    <span className="t-secondary">{localName(locale, a.request.topic)}</span>
                   </span>
                 ),
               },
               {
                 key: 'status',
-                header: 'Status',
+                header: c('status'),
                 cell: (a) => (
                   <span className="stack stack--sm">
                     <StatusBadge status={a.status} />
                     <span className="t-secondary">
-                      {a.status === 'cancelled'
-                        ? humanize(a.cancelReason)
-                        : a.proposedBy === 'staff'
-                          ? 'Picked by the management'
-                          : 'Picked by the resident'}
+                      {a.status === 'cancelled' ? label(a.cancelReason) : t(`pickedBy.${a.proposedBy}`)}
                     </span>
                   </span>
                 ),

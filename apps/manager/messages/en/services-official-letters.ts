@@ -1,0 +1,30 @@
+/** Official letters (ADR 0080): app/(dashboard)/official-letters. */
+export default {
+  title: 'Official letters',
+  description:
+    'Residence confirmations, no-objection letters and letters to whom it may concern. Each prints a code anyone can check on the public page; the check tells only whether it stands, who issued it and when.',
+  issueLetter: 'Issue a letter',
+  issuedToast: '{number} is issued. Its subject was told.',
+  revokedToast: '{number} is revoked. Its check now says so.',
+  'col.number': 'Number',
+  'col.kind': 'Kind',
+  'col.unit': 'Unit',
+  'col.for': 'For',
+  'col.issued': 'Issued',
+  erased: 'Erased',
+  pdf: 'PDF',
+  revoke: 'Revoke',
+  issueDescription:
+    'For an owner or a tenant holding a place in the unit now. Its words come from its kind; the name, the capacity and since when are printed as they are today.',
+  issue: 'Issue',
+  kind: 'Kind',
+  unitId: 'Unit id',
+  accountId: 'Resident account id',
+  addressee: 'To',
+  addresseeHint: 'Optional: whom the letter is addressed to.',
+  subject: 'About',
+  subjectRequired: 'Required: what there is no objection to.',
+  optional: 'Optional.',
+  revokeTitle: 'Revoke {number}?',
+  revokeDescription: 'Once only. Its public check says it no longer stands.',
+} as const;

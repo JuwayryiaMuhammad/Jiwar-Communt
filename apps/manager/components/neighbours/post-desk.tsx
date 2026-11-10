@@ -1,18 +1,39 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, ConfirmDialog, DataTable, Dialog, Field, Input, ReasonCodeDialog, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  ConfirmDialog,
+  DataTable,
+  Dialog,
+  Field,
+  Input,
+  ReasonCodeDialog,
+  Select,
+  StatusBadge,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type NeighbourClaim, type NeighbourPost } from '@/lib/queries';
-import { personName, PersonLink } from './bits';
+import ar from '@/messages/ar/neighbours-posts';
+import en from '@/messages/en/neighbours-posts';
+import { PersonLink } from './bits';
 import { handoverBody, isAccountId, postActionsFor, type HandoverTo } from './logic';
+import { useWho } from './who';
 
 /** Taking a post off its board, with a reason its author is told. */
 export function RemovePost({ post }: { post: NeighbourPost }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const remove = useAction(
@@ -20,7 +41,7 @@ export function RemovePost({ post }: { post: NeighbourPost }) {
     {
       invalidate: [keys.neighbourPostsAll],
       onDone: () => {
-        toast.show('The post was taken off its board.');
+        toast.show(t('remove.done'));
         setOpen(false);
       },
     },
@@ -33,19 +54,15 @@ export function RemovePost({ post }: { post: NeighbourPost }) {
   return (
     <>
       <Button variant="danger" onClick={() => setOpen(true)}>
-        Remove post
+        {t('remove.button')}
       </Button>
       <ReasonCodeDialog
         open={open}
         onClose={close}
-        title="Remove this post?"
-        description={
-          post.authorSide === 'staff'
-            ? 'It leaves its board for everyone. Claims still waiting on it are declined.'
-            : 'It leaves its board for everyone, and its author is told that the management removed it. Claims still waiting on it are declined.'
-        }
+        title={t('remove.title')}
+        description={post.authorSide === 'staff' ? t('remove.descriptionStaff') : t('remove.description')}
         codes={REASON_CODES.neighbourPostRemove}
-        confirmLabel="Remove post"
+        confirmLabel={t('remove.button')}
         danger
         pending={remove.isPending}
         error={<ErrorAlert error={remove.error} />}
@@ -63,6 +80,10 @@ export function RemovePost({ post }: { post: NeighbourPost }) {
  * or family account (RECIPIENT_NOT_ELIGIBLE).
  */
 function WalkInDialog({ onClose, onPick, pending, error }: { onClose: () => void; onPick: (accountId: string) => void; pending: boolean; error: unknown }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const who = useWho();
   const { can } = usePermissions();
   const mayList = can('residents.read');
   const [accountId, setAccountId] = useState('');
@@ -77,28 +98,28 @@ function WalkInDialog({ onClose, onPick, pending, error }: { onClose: () => void
     <Dialog
       open
       onClose={onClose}
-      title="Hand over to someone else"
-      description="For a resident who came to the office without a claim. The handover is recorded in their name, closes the post, and declines every claim still waiting."
+      title={t('walkIn.title')}
+      description={t('walkIn.description')}
       onSubmit={() => ready && onPick(typed)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={pending} disabled={!ready}>
-            Record handover
+            {t('walkIn.submit')}
           </Button>
         </>
       }
     >
       <div className="form">
         {mayList ? (
-          <Field label="Resident" hint="From the first 100 residents. Not listed: paste their account ID below.">
+          <Field label={t('walkIn.resident')} hint={t('walkIn.residentHint')}>
             {(p) => (
               <Select {...p} value={list.some((r) => r.id === typed) ? typed : ''} onChange={(e) => setAccountId(e.target.value)}>
-                <option value="">{residents.isPending ? 'Loading…' : 'Select…'}</option>
+                <option value="">{residents.isPending ? c('state.loading') : c('select')}</option>
                 {list.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.fullName ?? 'Unnamed account'}
-                    {r.units?.length ? ` · ${r.units.map((u) => u.unitCode).join(', ')}` : ''}
+                    {who.person(r)}
+                    {r.units?.length ? ` · ${f.list(r.units.map((u) => u.unitCode))}` : ''}
                   </option>
                 ))}
               </Select>
@@ -106,11 +127,11 @@ function WalkInDialog({ onClose, onPick, pending, error }: { onClose: () => void
           </Field>
         ) : null}
         <Field
-          label="Resident’s account ID"
-          hint="The long id at the end of the resident’s page address, e.g. 0b1f6f0e-3c1d-4a52-9d57-0c7d5a3f9b11. An active resident or family account of this compound."
-          error={fieldError(error, 'recipientAccountId') ?? (typed !== '' && !ready ? 'Not an account ID.' : undefined)}
+          label={t('walkIn.accountId')}
+          hint={t('walkIn.accountIdHint')}
+          error={fieldError(error, 'recipientAccountId') ?? (typed !== '' && !ready ? t('walkIn.notAnId') : undefined)}
         >
-          {(p) => <Input {...p} className="t-mono" spellCheck={false} autoComplete="off" value={accountId} onChange={(e) => setAccountId(e.target.value)} />}
+          {(p) => <Input {...p} className="t-mono ltr" spellCheck={false} autoComplete="off" value={accountId} onChange={(e) => setAccountId(e.target.value)} />}
         </Field>
         <ErrorAlert error={error} />
       </div>
@@ -127,6 +148,11 @@ type Open = { decline: NeighbourClaim } | { handTo: NeighbourClaim } | 'walk-in'
  * was waiting. Shown for found items only: nothing else is held or claimed.
  */
 export function Claims({ post }: { post: NeighbourPost }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const who = useWho();
   const toast = useToast();
   const may = postActionsFor(post);
   const [open, setOpen] = useState<Open>(null);
@@ -139,7 +165,7 @@ export function Claims({ post }: { post: NeighbourPost }) {
     {
       ...refresh,
       onDone: () => {
-        toast.show('The claim was declined. Its claimant was told.');
+        toast.show(t('claims.declined'));
         setOpen(null);
       },
     },
@@ -147,13 +173,13 @@ export function Claims({ post }: { post: NeighbourPost }) {
   const handOver = useAction(
     async (to: HandoverTo) => {
       const body = handoverBody(to);
-      if (!body) throw new Error('Nobody to hand it to.');
+      if (!body) throw new Error(t('walkIn.noOne'));
       return unwrap(api.POST('/api/v1/neighbours/posts/{id}/handover', { params: { path: { id: post.id } }, body }));
     },
     {
       ...refresh,
       onDone: () => {
-        toast.show('The handover is recorded. The post is closed.');
+        toast.show(t('claims.handed'));
         setOpen(null);
       },
     },
@@ -172,47 +198,47 @@ export function Claims({ post }: { post: NeighbourPost }) {
     <>
       <Card flush>
         <CardHeader
-          title="Claims"
+          title={t('claims.title')}
           actions={
             may.handOver ? (
               <Button size="sm" onClick={() => setOpen('walk-in')}>
-                Hand over to someone else
+                {t('walkIn.title')}
               </Button>
             ) : undefined
           }
         >
-          <span className="t-secondary">Residents who say the item is theirs. Check with each what only its owner would know.</span>
+          <span className="t-secondary">{t('claims.hint')}</span>
         </CardHeader>
         <QueryState query={claims} rows={2}>
           <DataTable<NeighbourClaim>
             rows={claims.data?.data}
-            rowKey={(c) => c.id}
-            empty="Nobody has claimed it"
+            rowKey={(cl) => cl.id}
+            empty={t('claims.empty')}
             columns={[
               {
                 key: 'claimant',
-                header: 'Claimant',
-                cell: (c) => (
+                header: t('claims.claimant'),
+                cell: (cl) => (
                   <span className="stack stack--sm">
                     <span className="table__primary">
-                      <PersonLink person={c.claimant} />
+                      <PersonLink person={cl.claimant} />
                     </span>
-                    <span className="t-secondary">{formatDateTime(c.createdAt)}</span>
+                    <span className="t-secondary">{f.dateTime(cl.createdAt)}</span>
                   </span>
                 ),
               },
               {
                 key: 'note',
-                header: 'What they told the staff',
-                cell: (c) => (c.note ? <span style={{ whiteSpace: 'pre-wrap' }}>{c.note}</span> : <span className="t-secondary">—</span>),
+                header: t('claims.told'),
+                cell: (cl) => (cl.note ? <span style={{ whiteSpace: 'pre-wrap' }}>{cl.note}</span> : <span className="t-secondary">—</span>),
               },
               {
                 key: 'status',
-                header: 'Status',
-                cell: (c) => (
+                header: c('status'),
+                cell: (cl) => (
                   <span className="stack stack--sm">
-                    <StatusBadge status={c.status} />
-                    {c.declineReason ? <span className="t-secondary">{humanize(c.declineReason)}</span> : null}
+                    <StatusBadge status={cl.status} />
+                    {cl.declineReason ? <span className="t-secondary">{label(cl.declineReason)}</span> : null}
                   </span>
                 ),
               },
@@ -220,14 +246,14 @@ export function Claims({ post }: { post: NeighbourPost }) {
                 key: 'actions',
                 header: '',
                 className: 'table__actions',
-                cell: (c) =>
-                  c.status === 'pending' && may.decide ? (
+                cell: (cl) =>
+                  cl.status === 'pending' && may.decide ? (
                     <span className="row" style={{ gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                      <Button size="sm" variant="primary" onClick={() => setOpen({ handTo: c })}>
-                        Hand over to this claimant
+                      <Button size="sm" variant="primary" onClick={() => setOpen({ handTo: cl })}>
+                        {t('claims.handTo')}
                       </Button>
-                      <Button size="sm" onClick={() => setOpen({ decline: c })}>
-                        Decline
+                      <Button size="sm" onClick={() => setOpen({ decline: cl })}>
+                        {c('decline')}
                       </Button>
                     </span>
                   ) : null,
@@ -240,10 +266,10 @@ export function Claims({ post }: { post: NeighbourPost }) {
       <ReasonCodeDialog
         open={declining !== null}
         onClose={close}
-        title={declining ? `Decline ${personName(declining.claimant)}’s claim?` : 'Decline the claim?'}
-        description="The claimant is told the claim was declined. The item stays at the office and on the board."
+        title={declining ? t('decline.title', { name: who.person(declining.claimant) }) : t('decline.titleNone')}
+        description={t('decline.description')}
         codes={REASON_CODES.neighbourClaimDecline}
-        confirmLabel="Decline claim"
+        confirmLabel={t('decline.confirm')}
         danger
         pending={decline.isPending}
         error={<ErrorAlert error={decline.error} />}
@@ -252,9 +278,9 @@ export function Claims({ post }: { post: NeighbourPost }) {
       <ConfirmDialog
         open={handingTo !== null}
         onClose={close}
-        title={handingTo ? `Hand the item to ${personName(handingTo.claimant)}?` : 'Hand the item over?'}
-        description="Recorded once: to whom, by whom and when. The post closes, and every other claim still waiting is declined and its claimant told."
-        confirmLabel="Record handover"
+        title={handingTo ? t('handTo.title', { name: who.person(handingTo.claimant) }) : t('handTo.titleNone')}
+        description={t('handTo.description')}
+        confirmLabel={t('handTo.confirm')}
         pending={handOver.isPending}
         error={<ErrorAlert error={handOver.error} />}
         onConfirm={() => handingTo && handOver.mutate({ claimId: handingTo.id })}
@@ -268,23 +294,26 @@ export function Claims({ post }: { post: NeighbourPost }) {
 
 /** To whom the item went, by whom and when. */
 export function Handover({ post }: { post: NeighbourPost }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const who = useWho();
   const h = post.handover;
   if (!h) return null;
   return (
     <Card flush>
-      <CardHeader title="Handed over" />
+      <CardHeader title={t('handover.title')} />
       <CardBody>
         <dl className="dl">
-          <dt>To</dt>
+          <dt>{t('handover.to')}</dt>
           <dd>
             <PersonLink person={h.recipient} />
           </dd>
-          <dt>How</dt>
-          <dd>{h.claimId ? 'On their claim' : 'Came to the office without a claim'}</dd>
-          <dt>By</dt>
-          <dd>{personName(h.handedBy)}</dd>
-          <dt>When</dt>
-          <dd>{formatDateTime(h.handedAt)}</dd>
+          <dt>{t('handover.how')}</dt>
+          <dd>{h.claimId ? t('handover.onClaim') : t('handover.walkIn')}</dd>
+          <dt>{t('handover.by')}</dt>
+          <dd>{who.person(h.handedBy)}</dd>
+          <dt>{t('handover.when')}</dt>
+          <dd>{f.dateTime(h.handedAt)}</dd>
         </dl>
       </CardBody>
     </Card>

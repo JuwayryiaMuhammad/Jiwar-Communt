@@ -2,13 +2,16 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Segmented, Textarea } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Segmented, Textarea, useCommonT } from '@jiwar/ui';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
-import { postProblems } from './logic';
+import ar from '@/messages/ar/neighbours-posts';
+import en from '@/messages/en/neighbours-posts';
+import { postProblemCodes } from './words';
 
 const MAX_PHOTOS = 3;
 type Kind = 'lost' | 'found';
@@ -26,6 +29,8 @@ function today(): string {
  * management's, and a found item is claimed and handed over at the office.
  */
 export function NewPostDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (post: { id: string }) => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const [form, setForm] = useState(EMPTY);
   const [photoIds, setPhotoIds] = useState<string[]>([]);
   // One key for this form: a retry after a lost answer replays the first, it
@@ -66,8 +71,13 @@ export function NewPostDialog({ open, onClose, onCreated }: { open: boolean; onC
     create.reset();
     onClose();
   };
-  const problems = postProblems(form, today());
-  const ready = Object.keys(problems).length === 0;
+  const codes = postProblemCodes(form, today());
+  const ready = Object.keys(codes).length === 0;
+  const problems = {
+    body: codes.body ? t(`problem.${codes.body}`) : undefined,
+    place: codes.place ? t(`problem.${codes.place}`) : undefined,
+    occurredOn: codes.occurredOn ? t(`problem.${codes.occurredOn}`) : undefined,
+  };
   const err = (field: string) => fieldError(create.error, field);
 
   return (
@@ -75,49 +85,49 @@ export function NewPostDialog({ open, onClose, onCreated }: { open: boolean; onC
       open={open}
       onClose={close}
       wide
-      title="Post a lost or found item"
-      description="Posted as the management, on the lost-and-found board every resident reads. A found item is kept at the office until someone claims it."
+      title={t('new.title')}
+      description={t('new.description')}
       onSubmit={() => ready && create.mutate()}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={create.isPending} disabled={!ready}>
-            Post
+            {t('new.submit')}
           </Button>
         </>
       }
     >
       <div className="form">
         <Segmented<Kind>
-          label="Kind"
+          label={t('new.kind')}
           value={form.kind}
           onChange={(kind) => set('kind', kind)}
           options={[
-            { value: 'found', label: 'Found: it is at the office' },
-            { value: 'lost', label: 'Lost: someone is looking for it' },
+            { value: 'found', label: t('new.found') },
+            { value: 'lost', label: t('new.lost') },
           ]}
         />
-        <Field label="What it is" hint="A few words. Leave out what only its owner would know: that is how a claim is checked." error={err('body') ?? (form.body !== '' ? problems.body : undefined)}>
+        <Field label={t('new.what')} hint={t('new.whatHint')} error={err('body') ?? (form.body !== '' ? problems.body : undefined)}>
           {(p) => <Textarea {...p} rows={3} maxLength={500} value={form.body} onChange={(e) => set('body', e.target.value)} />}
         </Field>
         <div className="form__row">
-          <Field label={form.kind === 'found' ? 'Where it was found' : 'Where it was lost'} hint="Optional." error={err('place') ?? problems.place}>
+          <Field label={form.kind === 'found' ? t('new.whereFound') : t('new.whereLost')} hint={t('new.optional')} error={err('place') ?? problems.place}>
             {(p) => <Input {...p} maxLength={120} value={form.place} onChange={(e) => set('place', e.target.value)} />}
           </Field>
-          <Field label="The day" hint="Optional; not in the future." error={err('occurredOn') ?? problems.occurredOn}>
+          <Field label={t('new.day')} hint={t('new.dayHint')} error={err('occurredOn') ?? problems.occurredOn}>
             {(p) => <Input {...p} type="date" max={today()} value={form.occurredOn} onChange={(e) => set('occurredOn', e.target.value)} />}
           </Field>
         </div>
         <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
           <FileUpload
             purpose="neighbour_post_photo"
-            label={photoIds.length ? `Add another photo (${photoIds.length} of ${MAX_PHOTOS})` : 'Add a photo'}
+            label={photoIds.length ? t('new.addAnotherPhoto', { count: photoIds.length, max: MAX_PHOTOS }) : t('new.addPhoto')}
             disabled={photoIds.length >= MAX_PHOTOS}
             onUploaded={(id) => setPhotoIds((ids) => [...ids, id])}
           />
           {photoIds.length ? (
             <Button type="button" size="sm" variant="text" icon={<X aria-hidden />} onClick={() => setPhotoIds([])}>
-              Remove photos
+              {t('new.removePhotos')}
             </Button>
           ) : null}
         </span>

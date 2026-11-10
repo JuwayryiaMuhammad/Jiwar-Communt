@@ -1,42 +1,45 @@
 'use client';
 
-import { formatDate, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Badge, Button, Checkbox, Dialog, Field, Input, ReasonDialog, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT, type Format, type Translate } from '@jiwar/i18n';
+import { Alert, Badge, Button, Checkbox, Dialog, Field, Input, ReasonDialog, StatusBadge, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { WorkerActions } from '@/components/workers/worker-actions';
 import { WorkerWages } from '@/components/workers/worker-wages';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
+import ar from '@/messages/ar/shell-components';
+import en from '@/messages/en/shell-components';
 
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-export function scheduleText(schedule: Schema<'WorkerScheduleDto'>): string {
-  const days = [...schedule.days].sort().map((d) => DAYS[d] ?? '?').join(', ');
-  const windows = schedule.windows.map((w) => `${w.from}–${w.to}`).join(', ');
-  return `${days || 'No days'} · ${windows || 'all day'}`;
+/** A worker's days and hours: `Sun, Mon and Tue · 08:00–14:00`. */
+export function scheduleText(t: Translate<typeof en>, fmt: Format, schedule: Schema<'WorkerScheduleDto'>): string {
+  const days = [...schedule.days].sort().map((d) => fmt.weekday(d, 'short'));
+  const windows = schedule.windows.map((w) => `${w.from}–${w.to}`);
+  return t('schedule', { days: days.length ? fmt.list(days) : t('noDays'), windows: windows.length ? fmt.list(windows) : t('allDay') });
 }
 
 /** The 8-digit code and card come back once, at approval or reissue. */
 export function AccessCodeDialog({
   code,
   onClose,
-  title = 'Worker approved',
+  title,
 }: {
   code: Schema<'AccessCodeView'> | null;
   onClose: () => void;
   title?: string;
 }) {
+  const t = useT(en, ar);
   return (
     <Dialog
       open={code !== null}
       onClose={onClose}
-      title={title}
-      description="The access code is shown once. Give it to the resident who registered the worker."
+      title={title ?? t('workerApproved')}
+      description={t('accessCodeDescription')}
       footer={
         <Button variant="primary" onClick={onClose}>
-          Done
+          {t('done')}
         </Button>
       }
     >
@@ -45,7 +48,7 @@ export function AccessCodeDialog({
           {code.accessCode}
         </div>
       ) : (
-        <Alert tone="info">No new code was issued: the worker keeps their current one.</Alert>
+        <Alert tone="info">{t('noNewCode')}</Alert>
       )}
     </Dialog>
   );
@@ -56,6 +59,10 @@ export function AccessCodeDialog({
  * (a passport worker's birth date is attested once) or reject.
  */
 export function EngagementReview({ id, onClose }: { id: string | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [confirmBirth, setConfirmBirth] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -95,7 +102,7 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
         if (v.decision === 'approve') {
           setIssued(result as Schema<'AccessCodeView'>);
         } else {
-          toast.show('Worker rejected. The resident is told why.');
+          toast.show(t('rejected'));
           setRejecting(false);
           close();
         }
@@ -116,23 +123,23 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
         wide
         open={id !== null && issued === null && reissued === null && !rejecting}
         onClose={close}
-        title={d ? d.worker.fullName : 'Worker'}
-        description={d ? `${humanize(d.capacity)} · unit ${d.unitCode}` : undefined}
+        title={d ? d.worker.fullName : t('worker')}
+        description={d ? t('reviewDescription', { capacity: label(d.capacity), unit: d.unitCode }) : undefined}
         footer={
           d?.status === 'pending_review' ? (
             <>
-              <Button onClick={() => setRejecting(true)}>Reject</Button>
+              <Button onClick={() => setRejecting(true)}>{c('reject')}</Button>
               <Button
                 variant="primary"
                 loading={review.isPending}
                 disabled={needsBirthConfirmation && !confirmBirth}
                 onClick={() => review.mutate({ decision: 'approve' })}
               >
-                Approve
+                {c('approve')}
               </Button>
             </>
           ) : (
-            <Button onClick={close}>Close</Button>
+            <Button onClick={close}>{c('close')}</Button>
           )
         }
       >
@@ -144,59 +151,61 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
                   // eslint-disable-next-line @next/next/no-img-element -- short-lived presigned URL
                   <img
                     src={d.worker.photo.url}
-                    alt={`Photo of ${d.worker.fullName}`}
+                    alt={t('photoOf', { name: d.worker.fullName })}
                     width={96}
                     height={96}
                     style={{ borderRadius: 12, objectFit: 'cover', flex: 'none' }}
                   />
                 ) : (
                   <span className="avatar" style={{ width: 96, height: 96, borderRadius: 12, fontSize: 13 }}>
-                    No photo
+                    {t('noPhoto')}
                   </span>
                 )}
                 <dl className="dl" style={{ flex: 1 }}>
-                  <dt>Status</dt>
+                  <dt>{c('status')}</dt>
                   <dd>
                     <span className="row">
                       <StatusBadge status={d.status} />
-                      {d.worker.banned ? <Badge tone="error">Banned</Badge> : null}
+                      {d.worker.banned ? <Badge tone="error">{t('banned')}</Badge> : null}
                     </span>
                   </dd>
-                  <dt>Document</dt>
+                  <dt>{t('document')}</dt>
                   <dd>
-                    {humanize(d.worker.idDocumentType)} <span className="t-mono">{d.worker.idDocumentNumberMasked}</span>
+                    {label(d.worker.idDocumentType)} <bdi className="t-mono">{d.worker.idDocumentNumberMasked}</bdi>
                   </dd>
-                  <dt>Nationality</dt>
+                  <dt>{t('nationality')}</dt>
                   <dd>{d.worker.nationality}</dd>
-                  <dt>Birth date</dt>
+                  <dt>{t('birthDate')}</dt>
                   <dd>
-                    {formatDate(d.worker.birthDate)}{' '}
-                    {d.worker.birthDateVerifiedAt ? <Badge tone="green" plain>Verified</Badge> : null}
+                    {fmt.day(d.worker.birthDate)}{' '}
+                    {d.worker.birthDateVerifiedAt ? <Badge tone="green" plain>{t('verified')}</Badge> : null}
                   </dd>
-                  <dt>Phone</dt>
-                  <dd className="t-num">{d.worker.phone}</dd>
-                  <dt>Schedule</dt>
-                  <dd>{scheduleText(d.schedule)}</dd>
-                  <dt>Requested by</dt>
-                  <dd>{d.requestedBy.erased ? 'Erased account' : d.requestedBy.fullName}</dd>
-                  <dt>Valid until</dt>
-                  <dd>{formatDate(d.validUntil)}</dd>
+                  <dt>{c('phone')}</dt>
+                  <dd className="t-num">
+                    <bdi>{d.worker.phone}</bdi>
+                  </dd>
+                  <dt>{t('scheduleLabel')}</dt>
+                  <dd>{scheduleText(t, fmt, d.schedule)}</dd>
+                  <dt>{t('requestedBy')}</dt>
+                  <dd>{d.requestedBy.erased ? t('erased') : d.requestedBy.fullName}</dd>
+                  <dt>{t('validUntil')}</dt>
+                  <dd>{fmt.date(d.validUntil)}</dd>
                 </dl>
               </div>
               {needsBirthConfirmation && d.status === 'pending_review' ? (
                 <Alert tone="warn">
                   <div className="form">
                     <Field
-                      label="Birth date on the passport, if it differs"
-                      hint={`Registered as ${formatDate(d.worker.birthDate)}. Leave empty when that is what the passport says.`}
+                      label={t('birthCorrection')}
+                      hint={t('birthCorrectionHint', { day: fmt.day(d.worker.birthDate) })}
                     >
                       {(p) => <Input {...p} type="date" value={correction} onChange={(e) => setCorrection(e.target.value)} />}
                     </Field>
                     <Checkbox
                       label={
                         correction
-                          ? `I checked the passport: the worker was born on ${formatDate(correction)} and is 18 or older.`
-                          : 'I checked the passport: the birth date above is correct and the worker is 18 or older.'
+                          ? t('birthCheckedNew', { day: fmt.day(correction) })
+                          : t('birthChecked')
                       }
                       checked={confirmBirth}
                       onChange={(e) => setConfirmBirth(e.target.checked)}
@@ -217,21 +226,21 @@ export function EngagementReview({ id, onClose }: { id: string | null; onClose: 
           setRejecting(false);
           review.reset();
         }}
-        title={`Reject ${d?.worker.fullName ?? 'this worker'}?`}
-        description="The resident who registered the worker is told why."
+        title={d ? t('rejectTitle', { name: d.worker.fullName }) : t('rejectThis')}
+        description={t('rejectDescription')}
         codes={REASON_CODES.workerReject}
-        confirmLabel="Reject"
+        confirmLabel={c('reject')}
         danger
         pending={review.isPending}
         error={<ErrorAlert error={review.error} />}
         onConfirm={(reason) => review.mutate({ decision: 'reject', ...reason })}
       />
-      <AccessCodeDialog code={reissued} title="New access code" onClose={() => setReissued(null)} />
+      <AccessCodeDialog code={reissued} title={t('newAccessCode')} onClose={() => setReissued(null)} />
       <AccessCodeDialog
         code={issued}
         onClose={() => {
           setIssued(null);
-          toast.show('Worker approved.');
+          toast.show(t('approved'));
           close();
         }}
       />

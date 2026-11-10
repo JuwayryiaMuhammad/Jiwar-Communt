@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Alert,
   Button,
@@ -14,6 +15,8 @@ import {
   PageHeader,
   ReasonCodeDialog,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -21,14 +24,21 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Back } from '@/components/facilities/bits';
 import { fromLocalInput } from '@/components/facilities/logic';
-import { PRICE_UNIT_TEXT, REQUEST_STATUS_TEXT, relayActions, requestTitle } from '@/components/partners/logic';
+import { localName } from '@/components/management-requests/logic';
+import { relayActions, requestTitle, word } from '@/components/partners/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PartnerRequest } from '@/lib/queries';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-requests';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-requests';
 
 type Answer = { kind: 'accept'; staffCount: number } | { kind: 'propose'; startsAt: string; endsAt: string; staffCount: number };
 
 function AnswerDialog({ request, kind, onClose }: { request: PartnerRequest; kind: Answer['kind']; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [staffCount, setStaffCount] = useState('1');
   const [startsAt, setStartsAt] = useState('');
@@ -53,7 +63,7 @@ function AnswerDialog({ request, kind, onClose }: { request: PartnerRequest; kin
     {
       invalidate: [keys.partnersAll],
       onDone: () => {
-        toast.show(kind === 'accept' ? 'Accepted for the partner. The resident was told.' : 'Proposed for the partner. The resident accepts or declines.');
+        toast.show(kind === 'accept' ? t('accept.done') : t('propose.done'));
         onClose();
       },
     },
@@ -64,18 +74,18 @@ function AnswerDialog({ request, kind, onClose }: { request: PartnerRequest; kin
     <Dialog
       open
       onClose={onClose}
-      title={kind === 'accept' ? 'Accept for the partner' : 'Propose another time'}
+      title={kind === 'accept' ? t('accept.title') : t('propose.title')}
       description={
         kind === 'accept'
-          ? 'As the partner told you. When the request asked for it, its staff get a gate pass for the window, in the resident’s name.'
-          : 'From 15 minutes to 14 days ahead, 30 minutes to 8 hours long.'
+          ? t('accept.description')
+          : t('propose.description')
       }
       onSubmit={() => ready && send.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={send.isPending} disabled={!ready}>
-            {kind === 'accept' ? 'Accept' : 'Propose'}
+            {kind === 'accept' ? t('accept') : t('propose.submit')}
           </Button>
         </>
       }
@@ -83,15 +93,15 @@ function AnswerDialog({ request, kind, onClose }: { request: PartnerRequest; kin
       <div className="form">
         {kind === 'propose' ? (
           <>
-            <Field label="From" error={fieldError(send.error, 'windowStartsAt')}>
+            <Field label={c('from')} error={fieldError(send.error, 'windowStartsAt')}>
               {(p) => <Input {...p} type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />}
             </Field>
-            <Field label="To" error={fieldError(send.error, 'windowEndsAt')}>
+            <Field label={c('to')} error={fieldError(send.error, 'windowEndsAt')}>
               {(p) => <Input {...p} type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />}
             </Field>
           </>
         ) : null}
-        <Field label="How many of its staff come" hint="1 to 5: the gate lets in as many." error={fieldError(send.error, 'staffCount')}>
+        <Field label={t('staffCount')} hint={t('staffCountHint')} error={fieldError(send.error, 'staffCount')}>
           {(p) => <Input {...p} type="number" min={1} max={5} value={staffCount} onChange={(e) => setStaffCount(e.target.value)} />}
         </Field>
         <ErrorAlert error={send.error} />
@@ -103,6 +113,12 @@ function AnswerDialog({ request, kind, onClose }: { request: PartnerRequest; kin
 /** One request to a partner (ADR 0060), as its partner sees it, and the relay's answers. */
 export default function PartnerRequestPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('partners.manage');
@@ -123,7 +139,7 @@ export default function PartnerRequestPage() {
     {
       invalidate: [keys.partnersAll],
       onDone: (r) => {
-        toast.show(`${REQUEST_STATUS_TEXT[r.status] ?? r.status}. The resident was told where that applies.`);
+        toast.show(t('answered', { status: word(codes, 'status', r.status) }));
         setDeclining(false);
         setCancelling(false);
         setFinishing(false);
@@ -133,7 +149,7 @@ export default function PartnerRequestPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={<Back href="/partners/requests" label="Partner requests" />} title="Request" />
+        <PageHeader back={<Back href="/partners/requests" label={t('title')} />} title={t('request')} />
         <ForbiddenState />
       </>
     );
@@ -142,27 +158,27 @@ export default function PartnerRequestPage() {
   return (
     <>
       <PageHeader
-        back={<Back href="/partners/requests" label="Partner requests" />}
-        title={r ? requestTitle(r) : 'Request'}
-        description={r ? `${r.partner.nameEn} · ${r.partner.businessPhone}` : undefined}
+        back={<Back href="/partners/requests" label={t('title')} />}
+        title={r ? requestTitle(codes, r, locale) : t('request')}
+        description={r ? <>{localName(locale, r.partner)} · <span className="ltr">{r.partner.businessPhone}</span></> : undefined}
         actions={
           actions ? (
             <>
               {actions.decline ? (
                 <Button variant="danger" onClick={() => setDeclining(true)}>
-                  Decline
+                  {t('decline')}
                 </Button>
               ) : null}
               {actions.cancel ? (
                 <Button variant="danger" onClick={() => setCancelling(true)}>
-                  Cancel
+                  {t('cancel')}
                 </Button>
               ) : null}
-              {actions.propose ? <Button onClick={() => setAnswering('propose')}>Propose a time</Button> : null}
-              {actions.done ? <Button onClick={() => setFinishing(true)}>Mark done</Button> : null}
+              {actions.propose ? <Button onClick={() => setAnswering('propose')}>{t('propose')}</Button> : null}
+              {actions.done ? <Button onClick={() => setFinishing(true)}>{t('markDone')}</Button> : null}
               {actions.accept ? (
                 <Button variant="primary" onClick={() => setAnswering('accept')}>
-                  Accept
+                  {t('accept')}
                 </Button>
               ) : null}
             </>
@@ -173,43 +189,49 @@ export default function PartnerRequestPage() {
         {r ? (
           <div className="stack">
             {r.consentWithdrawn ? (
-              <Alert tone="warn">The resident withdrew the category’s consent: nothing of them is shown and the request takes no answer.</Alert>
+              <Alert tone="warn">{t('withdrawn')}</Alert>
             ) : null}
             <Card>
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{c('status')}</dt>
                 <dd>
                   <StatusBadge status={r.status} />
-                  {r.closeReason ? ` · ${humanize(r.closeReason)}` : ''}
+                  {r.closeReason ? ` · ${label(r.closeReason)}` : ''}
                 </dd>
-                <dt>Unit</dt>
-                <dd className="t-mono">{r.unitCode ?? '—'}</dd>
-                <dt>Resident</dt>
+                <dt>{c('unit')}</dt>
+                <dd className="t-mono ltr">{r.unitCode ?? '—'}</dd>
+                <dt>{c('resident')}</dt>
                 <dd>{r.firstName ?? '—'}</dd>
-                <dt>Asked for</dt>
+                <dt>{t('askedFor')}</dt>
                 <dd>
-                  {formatDateTime(r.askedStartsAt)} – {formatDateTime(r.askedEndsAt)}
+                  {f.dateTime(r.askedStartsAt)} – {f.dateTime(r.askedEndsAt)}
                 </dd>
                 {r.proposedStartsAt ? (
                   <>
-                    <dt>Proposed</dt>
+                    <dt>{t('proposed')}</dt>
                     <dd>
-                      {formatDateTime(r.proposedStartsAt)} – {r.proposedEndsAt ? formatDateTime(r.proposedEndsAt) : ''}
+                      {f.dateTime(r.proposedStartsAt)} – {r.proposedEndsAt ? f.dateTime(r.proposedEndsAt) : ''}
                     </dd>
                   </>
                 ) : null}
                 {r.agreedStartsAt ? (
                   <>
-                    <dt>Agreed</dt>
+                    <dt>{t('agreed')}</dt>
                     <dd>
-                      {formatDateTime(r.agreedStartsAt)} – {r.agreedEndsAt ? formatDateTime(r.agreedEndsAt) : ''} · {r.staffCount} coming
+                      {f.dateTime(r.agreedStartsAt)} – {r.agreedEndsAt ? f.dateTime(r.agreedEndsAt) : ''} · {t('coming', { count: f.number(r.staffCount) })}
                     </dd>
                   </>
                 ) : null}
-                <dt>Note</dt>
+                <dt>{c('note')}</dt>
                 <dd>{r.note ?? '—'}</dd>
-                <dt>Gate pass</dt>
-                <dd>{r.gatePass ? (r.pass ? `Code ${r.pass.code ?? '—'} · until ${formatDateTime(r.pass.validUntil)}` : 'On acceptance') : 'Not asked'}</dd>
+                <dt>{t('gatePass')}</dt>
+                <dd>
+                  {r.gatePass
+                    ? r.pass
+                      ? t('gatePass.code', { code: r.pass.code ?? '—', date: f.dateTime(r.pass.validUntil) })
+                      : t('gatePass.onAcceptance')
+                    : t('gatePass.notAsked')}
+                </dd>
               </dl>
             </Card>
             {r.items.length ? (
@@ -217,7 +239,7 @@ export default function PartnerRequestPage() {
                 <ul>
                   {r.items.map((i, n) => (
                     <li key={n}>
-                      {i.quantity} × {i.nameEn} — {i.price} EGP ({PRICE_UNIT_TEXT[i.unit] ?? i.unit})
+                      {f.number(i.quantity)} × {localName(locale, i)} — {f.money(i.price)} ({word(codes, 'unit', i.unit)})
                     </li>
                   ))}
                 </ul>
@@ -231,10 +253,10 @@ export default function PartnerRequestPage() {
       <ReasonCodeDialog
         open={declining}
         onClose={() => setDeclining(false)}
-        title="Decline for the partner?"
-        description="The resident is told the reason."
+        title={t('declineDialog.title')}
+        description={t('declineDialog.description')}
         codes={REASON_CODES.partnerRequestDecline}
-        confirmLabel="Decline"
+        confirmLabel={t('decline')}
         danger
         pending={act.isPending}
         error={<ErrorAlert error={act.error} />}
@@ -243,10 +265,10 @@ export default function PartnerRequestPage() {
       <ReasonCodeDialog
         open={cancelling}
         onClose={() => setCancelling(false)}
-        title="Cancel for the partner?"
-        description="The resident is told the reason; the gate pass stops working."
+        title={t('cancelDialog.title')}
+        description={t('cancelDialog.description')}
         codes={REASON_CODES.partnerRequestPartnerCancel}
-        confirmLabel="Cancel the request"
+        confirmLabel={t('cancelDialog.confirm')}
         danger
         pending={act.isPending}
         error={<ErrorAlert error={act.error} />}
@@ -255,9 +277,9 @@ export default function PartnerRequestPage() {
       <ConfirmDialog
         open={finishing}
         onClose={() => setFinishing(false)}
-        title="Mark it done for the partner?"
-        description="The resident is told and may rate it."
-        confirmLabel="Mark done"
+        title={t('doneDialog.title')}
+        description={t('doneDialog.description')}
+        confirmLabel={t('markDone')}
         pending={act.isPending}
         error={<ErrorAlert error={act.error} />}
         onConfirm={() => act.mutate({ action: 'done' })}

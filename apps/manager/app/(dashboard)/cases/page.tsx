@@ -1,18 +1,24 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Card, DataTable, Field, ForbiddenState, PageHeader, Select } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Card, DataTable, Field, ForbiddenState, PageHeader, Select, useCommonT, useLabel } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type MaintenanceCase } from '@/lib/queries';
+import ar from '@/messages/ar/cases';
+import en from '@/messages/en/cases';
 
 /**
  * Community cases (ADR 0081): one problem many households of a building
  * report, opened by itself at the compound’s threshold.
  */
 export default function CasesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('tickets.dispatch');
   const [status, setStatus] = useState<MaintenanceCase['status'] | ''>('open');
@@ -20,24 +26,24 @@ export default function CasesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Community cases" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Community cases"
-        description="A case opens when a building’s residents report one kind of fault often enough within the window (Maintenance setup → SLA → Analytics). Its tickets keep their own course."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
-        <Field label="Status">
+        <Field label={c('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as MaintenanceCase['status'] | '')}>
-              <option value="">Any status</option>
+              <option value="">{t('anyStatus')}</option>
               {(['open', 'resolved', 'dismissed'] as const).map((x) => (
                 <option key={x} value={x}>
-                  {humanize(x)}
+                  {label(x)}
                 </option>
               ))}
             </Select>
@@ -49,23 +55,23 @@ export default function CasesPage() {
           <DataTable<MaintenanceCase>
             rows={list.rows}
             rowKey={(c) => c.id}
-            empty="No case"
+            empty={t('empty')}
             columns={[
               {
                 key: 'opened',
-                header: 'Opened',
+                header: t('opened'),
                 width: 170,
                 cell: (c) => (
                   <Link className="table__link" href={`/cases/${c.id}`}>
-                    {formatDateTime(c.openedAt)}
+                    {f.dateTime(c.openedAt)}
                   </Link>
                 ),
               },
-              { key: 'building', header: 'Building', cell: (c) => c.buildingName ?? '—' },
-              { key: 'category', header: 'Category', cell: (c) => humanize(c.categoryKey) },
-              { key: 'tickets', header: 'Tickets', cell: (c) => c.ticketCount },
-              { key: 'order', header: 'Work order', cell: (c) => c.workOrder?.number ?? '—' },
-              { key: 'status', header: 'Status', cell: (c) => <Badge>{humanize(c.status)}</Badge> },
+              { key: 'building', header: c('building'), cell: (c) => c.buildingName ?? '—' },
+              { key: 'category', header: t('category'), cell: (x) => label(x.categoryKey) },
+              { key: 'tickets', header: t('tickets'), cell: (x) => f.number(x.ticketCount) },
+              { key: 'order', header: t('workOrder'), cell: (c) => c.workOrder?.number ?? '—' },
+              { key: 'status', header: c('status'), cell: (x) => <Badge>{label(x.status)}</Badge> },
             ]}
           />
           <LoadMore query={list} />

@@ -1,22 +1,39 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, ConfirmDialog, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  ConfirmDialog,
+  ForbiddenState,
+  PageHeader,
+  ReasonCodeDialog,
+  Segmented,
+  StatusBadge,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Back } from '@/components/facilities/bits';
+import { localName } from '@/components/management-requests/logic';
 import { DeskLinkCard } from '@/components/partners/desk-link-card';
 import { DetailsForm } from '@/components/partners/details-form';
 import { HoursEditor } from '@/components/partners/hours-editor';
-import { CATEGORY_TEXT, ratingText } from '@/components/partners/logic';
+import { ratingText, word } from '@/components/partners/logic';
 import { PricesEditor } from '@/components/partners/prices-editor';
 import { ServicesEditor } from '@/components/partners/services-editor';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-list';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-list';
 
 const TABS = ['details', 'services', 'hours', 'prices', 'desk'] as const;
 type Tab = (typeof TABS)[number];
@@ -24,6 +41,11 @@ type Tab = (typeof TABS)[number];
 /** One partner (ADR 0060): who it is, what it does, its hours, prices and desk link, and its standing. */
 export default function PartnerPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('partners.manage');
@@ -37,7 +59,7 @@ export default function PartnerPage() {
       invalidate: [keys.partnersAll],
       onDone: () => {
         setSuspending(false);
-        toast.show('Suspended. Its live requests were cancelled; those who asked or follow it were told, with alternatives.');
+        toast.show(t('suspended'));
       },
     },
   );
@@ -45,13 +67,13 @@ export default function PartnerPage() {
     invalidate: [keys.partnersAll],
     onDone: () => {
       setReinstating(false);
-      toast.show('Reinstated. It takes requests again.');
+      toast.show(t('reinstated'));
     },
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={<Back href="/partners" label="Partners" />} title="Partner" />
+        <PageHeader back={<Back href="/partners" label={t('title')} />} title={t('partner')} />
         <ForbiddenState />
       </>
     );
@@ -59,22 +81,26 @@ export default function PartnerPage() {
   return (
     <>
       <PageHeader
-        back={<Back href="/partners" label="Partners" />}
-        title={p?.nameEn ?? 'Partner'}
+        back={<Back href="/partners" label={t('title')} />}
+        title={p ? localName(locale, p) : t('partner')}
         description={
           p
-            ? `${[...new Set(p.services.map((s) => CATEGORY_TEXT[s.category] ?? s.category))].join(', ')} · ${ratingText(p.rating)} · listed ${formatDateTime(p.listedAt)}`
+            ? t('summary', {
+                categories: f.list([...new Set(p.services.map((s) => word(codes, 'category', s.category)))]),
+                rating: ratingText(codes, p.rating),
+                date: f.dateTime(p.listedAt),
+              })
             : undefined
         }
         actions={
           p ? (
             p.status === 'active' ? (
               <Button variant="danger" onClick={() => setSuspending(true)}>
-                Suspend
+                {t('suspend')}
               </Button>
             ) : (
               <Button variant="primary" onClick={() => setReinstating(true)}>
-                Reinstate
+                {t('reinstate')}
               </Button>
             )
           ) : null
@@ -88,21 +114,21 @@ export default function PartnerPage() {
                 <span className="row" style={{ gap: 8 }}>
                   <StatusBadge status="suspended" />
                   <span>
-                    {humanize(p.suspendedReason ?? '')} · {p.suspendedAt ? formatDateTime(p.suspendedAt) : ''}
+                    {label(p.suspendedReason)} · {p.suspendedAt ? f.dateTime(p.suspendedAt) : ''}
                   </span>
                 </span>
               </Card>
             ) : null}
             <Segmented<Tab>
-              label="Section"
+              label={t('section')}
               value={tab}
               onChange={setTab}
               options={[
-                { value: 'details', label: 'Details' },
-                { value: 'services', label: 'Services' },
-                { value: 'hours', label: 'Hours' },
-                { value: 'prices', label: 'Prices' },
-                { value: 'desk', label: 'Desk link' },
+                { value: 'details', label: t('tab.details') },
+                { value: 'services', label: t('tab.services') },
+                { value: 'hours', label: t('tab.hours') },
+                { value: 'prices', label: t('tab.prices') },
+                { value: 'desk', label: t('tab.desk') },
               ]}
             />
             {tab === 'details' ? <DetailsForm key={p.updatedAt} partner={p} /> : null}
@@ -116,10 +142,10 @@ export default function PartnerPage() {
       <ReasonCodeDialog
         open={suspending}
         onClose={() => setSuspending(false)}
-        title="Suspend this partner?"
-        description="Its live requests are cancelled and its desk closes. Those who asked it or keep it as a favourite are told, never why, and offered alternatives."
+        title={t('suspendTitle')}
+        description={t('suspendDescription')}
         codes={REASON_CODES.partnerSuspend}
-        confirmLabel="Suspend"
+        confirmLabel={t('suspend')}
         danger
         pending={suspend.isPending}
         error={<ErrorAlert error={suspend.error} />}
@@ -128,9 +154,9 @@ export default function PartnerPage() {
       <ConfirmDialog
         open={reinstating}
         onClose={() => setReinstating(false)}
-        title="Reinstate this partner?"
-        description="It takes requests again; its desk link works again if it has not expired. Nobody is told."
-        confirmLabel="Reinstate"
+        title={t('reinstateTitle')}
+        description={t('reinstateDescription')}
+        confirmLabel={t('reinstate')}
         pending={reinstate.isPending}
         error={<ErrorAlert error={reinstate.error} />}
         onConfirm={() => reinstate.mutate()}

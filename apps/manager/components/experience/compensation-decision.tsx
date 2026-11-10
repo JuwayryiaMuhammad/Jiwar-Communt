@@ -2,11 +2,14 @@
 
 import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Button, Dialog, Field, Input, ReasonCodeDialog, useToast } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type Compensation } from '@/lib/queries';
+import ar from '@/messages/ar/experience-cases';
+import en from '@/messages/en/experience-cases';
 
 /**
  * The manager's decision on a compensation (ADR 0082), once. A credit names
@@ -15,6 +18,8 @@ import { keys, type Compensation } from '@/lib/queries';
  * approved, raised as a `compensation_above_limit` request beforehand.
  */
 export function CompensationDecision({ compensation: x, unitId }: { compensation: Compensation; unitId: string }) {
+  const t = useT(en, ar);
+  const f = useFormat();
   const toast = useToast();
   const [open, setOpen] = useState<'approve' | 'reject' | null>(null);
   const [invoiceId, setInvoiceId] = useState('');
@@ -36,7 +41,7 @@ export function CompensationDecision({ compensation: x, unitId }: { compensation
     {
       ...refresh,
       onDone: () => {
-        toast.show(x.kind === 'credit' ? 'Approved: the credit note is issued and the unit told.' : 'Approved.');
+        toast.show(x.kind === 'credit' ? t('decision.approvedCredit') : t('decision.approved'));
         setOpen(null);
       },
     },
@@ -47,7 +52,7 @@ export function CompensationDecision({ compensation: x, unitId }: { compensation
     {
       ...refresh,
       onDone: () => {
-        toast.show('Rejected.');
+        toast.show(t('decision.rejected'));
         setOpen(null);
       },
     },
@@ -58,39 +63,35 @@ export function CompensationDecision({ compensation: x, unitId }: { compensation
     <>
       <span className="row" style={{ gap: 6 }}>
         <Button size="sm" onClick={() => setOpen('approve')}>
-          {board ? 'Approve with the board’s' : 'Approve'}
+          {board ? t('decision.approveBoard') : t('decision.approve')}
         </Button>
         <Button size="sm" onClick={() => setOpen('reject')}>
-          Reject
+          {t('decision.reject')}
         </Button>
       </span>
       <Dialog
         open={open === 'approve'}
         onClose={() => setOpen(null)}
-        title="Approve the compensation"
-        description={
-          board
-            ? `Above the board’s limit (${x.authority?.threshold} EGP): name what the board approved for it. Raise it first from the board’s approvals (type: compensation above limit).`
-            : 'Within your limit.'
-        }
+        title={t('decision.title')}
+        description={board ? t('decision.aboveLimit', { threshold: f.money(x.authority?.threshold) }) : t('decision.withinLimit')}
         onSubmit={(e) => {
           e.preventDefault();
           approve.mutate();
         }}
         footer={
           <Button type="submit" variant="primary" loading={approve.isPending}>
-            Approve
+            {t('decision.approve')}
           </Button>
         }
       >
         <div className="stack">
           {x.kind === 'credit' ? (
-            <Field label="The unit’s invoice" hint={<Link href={`/units/${unitId}`}>Find it on the unit’s statement</Link>}>
-              {(p) => <Input {...p} value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} placeholder="Invoice id" />}
+            <Field label={t('decision.invoice')} hint={<Link href={`/units/${unitId}`}>{t('decision.invoiceLink')}</Link>}>
+              {(p) => <Input {...p} value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} placeholder={t('decision.invoiceId')} />}
             </Field>
           ) : null}
           {board ? (
-            <Field label="The board’s authorization" hint={<Link href="/governance">The board’s approvals</Link>}>
+            <Field label={t('decision.authorization')} hint={<Link href="/governance">{t('decision.authorizationLink')}</Link>}>
               {(p) => <Input {...p} value={authorizationId} onChange={(e) => setAuthorizationId(e.target.value)} />}
             </Field>
           ) : null}
@@ -100,9 +101,9 @@ export function CompensationDecision({ compensation: x, unitId }: { compensation
       <ReasonCodeDialog
         open={open === 'reject'}
         onClose={() => setOpen(null)}
-        title="Reject the compensation?"
+        title={t('decision.rejectTitle')}
         codes={REASON_CODES.compensationReject}
-        confirmLabel="Reject"
+        confirmLabel={t('decision.reject')}
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}
         onConfirm={(code) => reject.mutate(code)}

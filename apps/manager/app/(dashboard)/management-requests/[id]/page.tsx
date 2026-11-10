@@ -1,28 +1,37 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Badge, ButtonLink, Card, CardBody, CardHeader, PageHeader, StatusBadge } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, ButtonLink, Card, CardBody, CardHeader, PageHeader, StatusBadge, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { personName, ResponseBadges, TYPE_TEXT } from '@/components/management-requests/bits';
+import { ResponseBadges, usePersonName } from '@/components/management-requests/bits';
+import { localName } from '@/components/management-requests/logic';
 import { RequestActions } from '@/components/management-requests/request-actions';
 import { RequestDesk } from '@/components/office-queue/request-desk';
 import { RequestAppointment } from '@/components/management-requests/request-appointment';
 import { RequestThread } from '@/components/management-requests/request-thread';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ManagementRequestDetail } from '@/lib/queries';
+import ar from '@/messages/ar/services-mgmt-requests';
+import en from '@/messages/en/services-mgmt-requests';
 
 function Details({ request }: { request: ManagementRequestDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
+  const personName = usePersonName();
   const { can } = usePermissions();
   return (
     <Card flush>
-      <CardHeader title="Request" />
+      <CardHeader title={t('request')} />
       <CardBody>
         <dl className="dl">
-          <dt>Resident</dt>
+          <dt>{t('resident')}</dt>
           <dd>
             {can('residents.read') && !request.author.erased ? (
               <Link className="table__link" href={`/residents/${request.author.id}`}>
@@ -32,29 +41,29 @@ function Details({ request }: { request: ManagementRequestDetail }) {
               personName(request.author)
             )}
           </dd>
-          <dt>Unit</dt>
-          <dd>{request.unit ? request.unit.code : <span className="t-secondary">Not about a unit</span>}</dd>
-          <dt>Topic</dt>
-          <dd>{request.topic.nameEn}</dd>
-          <dt>Type</dt>
-          <dd>{TYPE_TEXT[request.type]}</dd>
-          <dt>Assignee</dt>
-          <dd>{request.assignee ? personName(request.assignee) : <span className="t-secondary">Unassigned</span>}</dd>
-          <dt>Opened</dt>
-          <dd>{formatDateTime(request.createdAt)}</dd>
+          <dt>{c('unit')}</dt>
+          <dd>{request.unit ? request.unit.code : <span className="t-secondary">{t('notAboutUnit')}</span>}</dd>
+          <dt>{t('topic')}</dt>
+          <dd>{localName(locale, request.topic)}</dd>
+          <dt>{t('type')}</dt>
+          <dd>{t(`type.${request.type}`)}</dd>
+          <dt>{t('assignee')}</dt>
+          <dd>{request.assignee ? personName(request.assignee) : <span className="t-secondary">{t('unassigned')}</span>}</dd>
+          <dt>{t('openedAt')}</dt>
+          <dd>{fmt.dateTime(request.createdAt)}</dd>
           {request.openedBy ? (
             <>
-              <dt>Opened by</dt>
+              <dt>{t('openedBy')}</dt>
               <dd>
-                {personName(request.openedBy)} · {humanize(request.onBehalfReason)}
+                {personName(request.openedBy)} · {label(request.onBehalfReason)}
               </dd>
             </>
           ) : null}
           {request.closedAt ? (
             <>
-              <dt>Closed</dt>
+              <dt>{t('closedAt')}</dt>
               <dd>
-                {formatDateTime(request.closedAt)} · {humanize(request.closeReason)}
+                {fmt.dateTime(request.closedAt)} · {label(request.closeReason)}
               </dd>
             </>
           ) : null}
@@ -66,41 +75,43 @@ function Details({ request }: { request: ManagementRequestDetail }) {
 
 /** The response clock of the cycle, and the history of escalations. */
 function Response({ request }: { request: ManagementRequestDetail }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   return (
     <Card flush>
-      <CardHeader title="Response" />
+      <CardHeader title={t('response')} />
       <CardBody>
         <dl className="dl">
-          <dt>Now</dt>
+          <dt>{t('now')}</dt>
           <dd>
             <ResponseBadges request={request} />
           </dd>
-          <dt>Due</dt>
-          <dd>{formatDateTime(request.responseDueAt)}</dd>
-          <dt>First response</dt>
-          <dd>{request.firstResponseAt ? formatDateTime(request.firstResponseAt) : <span className="t-secondary">Not yet</span>}</dd>
+          <dt>{t('due')}</dt>
+          <dd>{fmt.dateTime(request.responseDueAt)}</dd>
+          <dt>{t('firstResponse')}</dt>
+          <dd>{request.firstResponseAt ? fmt.dateTime(request.firstResponseAt) : <span className="t-secondary">{t('notYet')}</span>}</dd>
           {request.answeredAt ? (
             <>
-              <dt>Answered</dt>
-              <dd>{formatDateTime(request.answeredAt)}</dd>
+              <dt>{t('answeredAt')}</dt>
+              <dd>{fmt.dateTime(request.answeredAt)}</dd>
             </>
           ) : null}
           {request.cycle > 1 ? (
             <>
-              <dt>Cycle</dt>
-              <dd>{request.cycle} (reopened by the resident)</dd>
+              <dt>{t('cycle')}</dt>
+              <dd>{t('cycleReopened', { n: request.cycle })}</dd>
             </>
           ) : null}
         </dl>
         {request.escalations.length ? (
-          <ul className="list" style={{ marginTop: 12 }}>
+          <ul className="list" style={{ marginBlockStart: 12 }}>
             {request.escalations.map((e) => (
               <li key={e.cycle} className="list__item">
                 <span className="list__text">
-                  Escalated {formatDateTime(e.escalatedAt)}
+                  {t('escalatedOn', { when: fmt.dateTime(e.escalatedAt) })}
                   <span className="list__meta">
-                    Was due {formatDateTime(e.dueAt)}
-                    {request.cycle > 1 ? ` · cycle ${e.cycle}` : ''}
+                    {t('wasDue', { when: fmt.dateTime(e.dueAt) })}
+                    {request.cycle > 1 ? ` · ${t('cycleN', { n: e.cycle })}` : ''}
                   </span>
                 </span>
               </li>
@@ -114,6 +125,8 @@ function Response({ request }: { request: ManagementRequestDetail }) {
 
 /** The resident's rating: read with `requests.manage` only, on its own route. */
 function Rating({ requestId }: { requestId: string }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const rating = useQuery({
     queryKey: keys.managementRequestPart(requestId, 'rating'),
     queryFn: () => fetchers.requestRating(requestId),
@@ -121,20 +134,19 @@ function Rating({ requestId }: { requestId: string }) {
   const r = rating.data?.rating;
   return (
     <Card flush>
-      <CardHeader title="Resident's rating" />
+      <CardHeader title={t('rating')} />
       <CardBody>
         <QueryState query={rating} rows={1}>
           {r ? (
             <>
-              <span className="row" style={{ gap: 4 }} title={`${r.rating} of 5`}>
+              <span className="row" style={{ gap: 4 }} title={t('ratingOf', { n: r.rating })}>
                 <Star size={14} aria-hidden />
-                <span className="t-num">{r.rating}</span>
-                <span className="t-secondary">of 5 · {formatDateTime(r.createdAt)}</span>
+                <span className="t-secondary">{t('ratingOf', { n: r.rating })} · {fmt.dateTime(r.createdAt)}</span>
               </span>
               {r.comment ? <p style={{ margin: '6px 0 0', whiteSpace: 'pre-wrap' }}>{r.comment}</p> : null}
             </>
           ) : (
-            <p className="t-secondary">Not rated yet.</p>
+            <p className="t-secondary">{t('notRated')}</p>
           )}
         </QueryState>
       </CardBody>
@@ -143,6 +155,9 @@ function Rating({ requestId }: { requestId: string }) {
 }
 
 export default function ManagementRequestPage() {
+  const t = useT(en, ar);
+  const { locale } = useLocale();
+  const personName = usePersonName();
   const { id } = useParams<{ id: string }>();
   const { can } = usePermissions();
   const request = useQuery({
@@ -156,8 +171,8 @@ export default function ManagementRequestPage() {
     <>
       <PageHeader
         back={
-          <ButtonLink href="/management-requests" variant="text" size="sm" icon={<ArrowLeft aria-hidden />}>
-            Management requests
+          <ButtonLink href="/management-requests" variant="text" size="sm" icon={<ArrowLeft aria-hidden className="icon-dir" />}>
+            {t('title')}
           </ButtonLink>
         }
         title={
@@ -165,14 +180,14 @@ export default function ManagementRequestPage() {
             <span className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
               {r.number}
               <StatusBadge status={r.status} />
-              {r.overdue ? <Badge tone="error">Overdue</Badge> : null}
-              {r.escalatedAt ? <Badge tone="terracotta">Escalated</Badge> : null}
+              {r.overdue ? <Badge tone="error">{t('overdue')}</Badge> : null}
+              {r.escalatedAt ? <Badge tone="terracotta">{t('escalated')}</Badge> : null}
             </span>
           ) : (
-            'Request'
+            t('request')
           )
         }
-        description={r ? `${TYPE_TEXT[r.type]} · ${r.topic.nameEn} · ${personName(r.author)}` : undefined}
+        description={r ? `${t(`type.${r.type}`)} · ${localName(locale, r.topic)} · ${personName(r.author)}` : undefined}
         actions={
           r ? (
             <>

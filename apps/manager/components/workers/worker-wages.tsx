@@ -1,32 +1,25 @@
 'use client';
 
-import { ApiError, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ApiError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Alert, Button, DataTable, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { useFormat, useT, type Format } from '@jiwar/i18n';
+import { Alert, Button, DataTable, ReasonCodeDialog, useCommonT, useToast } from '@jiwar/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { keys } from '@/lib/queries';
+import ar from '@/messages/ar/workers';
+import en from '@/messages/en/workers';
 
 type Engagement = Schema<'EngagementDetailView'>;
 type Payment = Schema<'WagePaymentView'>;
 type ObligationKind = Schema<'WageObligationKind'>;
 
-const amountFormat = new Intl.NumberFormat('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const monthFormat = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-
 /** "3200.00" → "3,200.00": the compound's currency, which the API does not name. */
-export function wageText(amount: string | null | undefined): string {
+export function wageText(f: Format, amount: string | null | undefined): string {
   if (amount === null || amount === undefined) return '—';
-  const n = Number(amount);
-  return Number.isFinite(n) ? amountFormat.format(n) : amount;
-}
-
-/** "2026-09" → "September 2026". */
-export function periodText(period: string): string {
-  const d = new Date(`${period}-01T00:00:00Z`);
-  return Number.isNaN(d.getTime()) ? period : monthFormat.format(d);
+  return Number.isFinite(Number(amount)) ? f.number(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : amount;
 }
 
 /**
@@ -36,6 +29,9 @@ export function periodText(period: string): string {
  * leaves open (ADR 0022), which a recorded payment never does.
  */
 export function WorkerWages({ engagement }: { engagement: Engagement }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const { me, can } = usePermissions();
   // Which open obligation is being closed: each kind closes alone, with its own reasons.
@@ -57,7 +53,7 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
       // Closing it may unblock the employer's deletion request.
       invalidate: [keys.engagement(engagement.id), keys.erasures],
       onDone: () => {
-        toast.show('Wage obligation closed.');
+        toast.show(t('obligationClosed'));
         setClosing(null);
       },
     },
@@ -73,24 +69,18 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
   const open = engagement.openWageObligations;
   return (
     <div className="stack stack--sm" style={{ borderTop: '1px solid var(--hairline-soft)', paddingTop: 16 }}>
-      <strong>Wage</strong>
+      <strong>{t('wage')}</strong>
       <p>
         {engagement.monthlyWage === null ? (
-          <span className="t-secondary">The household has not set a monthly wage.</span>
+          <span className="t-secondary">{t('noWage')}</span>
         ) : (
-          <>
-            <span className="t-num">{wageText(engagement.monthlyWage)}</span> per month, as the household set it.
-          </>
+          t('perMonth', { wage: wageText(f, engagement.monthlyWage) })
         )}
       </p>
       {open.includes('settle_before_close') ? (
         <Alert tone="warn">
           <div className="stack stack--sm">
-            <span>
-              A wage obligation is open: this registration ended and nobody has confirmed the worker was paid. The worker&apos;s file stays
-              open, and the employer&apos;s account cannot be deleted, until management closes it. A payment the household records does not
-              close it.
-            </span>
+            <span>{t('settleOpen')}</span>
             {isManager && can('workers.review') ? (
               <span>
                 <Button
@@ -100,7 +90,7 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
                     setClosing('settle_before_close');
                   }}
                 >
-                  Close wage obligation…
+                  {t('closeObligation')}
                 </Button>
               </span>
             ) : null}
@@ -110,10 +100,7 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
       {open.includes('pay_in_full') ? (
         <Alert tone="warn">
           <div className="stack stack--sm">
-            <span>
-              The worker is owed their wages in full after an underage report. The employer&apos;s account cannot be deleted until
-              management closes this obligation. Closing the compliance case does not close it.
-            </span>
+            <span>{t('payInFullOpen')}</span>
             {isManager && can('workers.review') ? (
               <span>
                 <Button
@@ -123,7 +110,7 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
                     setClosing('pay_in_full');
                   }}
                 >
-                  Close the wages owed in full…
+                  {t('closeOwedInFull')}
                 </Button>
               </span>
             ) : null}
@@ -135,12 +122,12 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
           <DataTable<Payment>
             rows={payments.rows}
             rowKey={(p) => p.id}
-            empty="The household has recorded no wage payment"
+            empty={t('noPayments')}
             columns={[
-              { key: 'period', header: 'Month', cell: (p) => periodText(p.period) },
-              { key: 'amount', header: 'Amount', cell: (p) => <span className="t-num">{wageText(p.amount)}</span> },
-              { key: 'at', header: 'Recorded', cell: (p) => formatDateTime(p.paidAt) },
-              { key: 'by', header: 'By', cell: (p) => (p.paidBy.erased ? 'Erased account' : p.paidBy.fullName) },
+              { key: 'period', header: t('month'), cell: (p) => f.month(p.period) },
+              { key: 'amount', header: c('amount'), cell: (p) => <span className="t-num">{wageText(f, p.amount)}</span> },
+              { key: 'at', header: t('recorded'), cell: (p) => f.dateTime(p.paidAt) },
+              { key: 'by', header: c('by'), cell: (p) => (p.paidBy.erased ? c('erasedAccount') : p.paidBy.fullName) },
             ]}
           />
           <LoadMore query={payments} />
@@ -151,17 +138,17 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
         onClose={() => setClosing(null)}
         title={
           closing === 'pay_in_full'
-            ? `Close the wages owed in full to ${engagement.worker.fullName}?`
-            : `Close the wage obligation of ${engagement.worker.fullName}?`
+            ? t('closePayInFullTitle', { name: engagement.worker.fullName })
+            : t('closeSettleTitle', { name: engagement.worker.fullName })
         }
         description={
           closing === 'pay_in_full'
-            ? 'Close it once the worker has been paid in full, or the matter is with the authorities. It is recorded with your name and cannot be reopened.'
-            : 'Close it once you know nothing is owed to the worker for this registration. It is recorded with your name and cannot be reopened.'
+            ? t('closePayInFullDescription')
+            : t('closeSettleDescription')
         }
         codes={closing === 'pay_in_full' ? REASON_CODES.wageObligationPayInFull : REASON_CODES.wageObligationSettle}
-        codeLabel="How you know"
-        confirmLabel="Close obligation"
+        codeLabel={t('howYouKnow')}
+        confirmLabel={t('closeObligationConfirm')}
         pending={settle.isPending}
         error={<ErrorAlert error={settle.error} />}
         onConfirm={(reasonCode) => closing && settle.mutate({ kind: closing, reasonCode })}

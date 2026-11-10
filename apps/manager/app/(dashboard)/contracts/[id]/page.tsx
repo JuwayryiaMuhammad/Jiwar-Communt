@@ -1,8 +1,9 @@
 'use client';
 
-import { formatDate, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, ForbiddenState, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, ForbiddenState, PageHeader, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -11,10 +12,17 @@ import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/contracts';
+import en from '@/messages/en/contracts';
 
 /** One maintenance contract (ADR 0065): its terms, the assets it covers, its papers. */
 export default function ContractPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const cm = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const toast = useToast();
   const contract = useQuery({ queryKey: keys.contract(id), queryFn: () => fetchers.contract(id), enabled: can('assets.manage') });
@@ -32,7 +40,7 @@ export default function ContractPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Saved.');
+        toast.show(cm('saved'));
         setAdding('');
       },
     },
@@ -43,20 +51,20 @@ export default function ContractPage() {
     {
       invalidate: refresh,
       onDone: () => {
-        toast.show('Terminated.');
+        toast.show(t('terminated'));
         setTerminating(false);
       },
     },
   );
   const addDoc = useAction(
     (fileId: string) =>
-      unwrap(api.POST('/api/v1/maintenance/documents', { body: { contractId: id, fileId, kind: 'certificate', title: 'Contract' } })),
-    { invalidate: [keys.documents({ contractId: id })], onDone: () => toast.show('Added.') },
+      unwrap(api.POST('/api/v1/maintenance/documents', { body: { contractId: id, fileId, kind: 'certificate', title: t('paperTitle') } })),
+    { invalidate: [keys.documents({ contractId: id })], onDone: () => toast.show(t('added')) },
   );
   if (ready && !can('assets.manage'))
     return (
       <>
-        <PageHeader title="Contract" />
+        <PageHeader title={t('contract')} />
         <ForbiddenState />
       </>
     );
@@ -66,11 +74,11 @@ export default function ContractPage() {
   return (
     <>
       <PageHeader
-        title={c ? c.code : 'Contract'}
-        description={c ? `${humanize(c.kind)} · ${c.vendorName} · ${formatDate(c.startsOn)} – ${formatDate(c.endsOn)} · ${humanize(c.status)}` : undefined}
+        title={c ? c.code : t('contract')}
+        description={c ? `${label(c.kind)} · ${c.vendorName} · ${f.day(c.startsOn)} – ${f.day(c.endsOn)} · ${label(c.status)}` : undefined}
         actions={
           c && c.status !== 'terminated' ? (
-            <Button onClick={() => setTerminating(true)}>Terminate</Button>
+            <Button onClick={() => setTerminating(true)}>{t('terminate')}</Button>
           ) : undefined
         }
       />
@@ -79,38 +87,38 @@ export default function ContractPage() {
         {c ? (
           <div className="grid grid--main-aside">
             <Card flush>
-              <CardHeader title="Covered assets" />
+              <CardHeader title={t('coveredAssets')} />
               <CardBody>
                 {c.assetIds.length ? (
                   c.assetIds.map((a) => (
                     <p key={a}>
                       <Link className="table__link" href={`/assets/${a}`}>
-                        {byId.get(a)?.code ?? 'Asset'}
+                        {byId.get(a)?.code ?? t('asset')}
                       </Link>{' '}
                       {c.status !== 'terminated' ? (
                         <Button size="sm" onClick={() => setAssets.mutate(c.assetIds.filter((x) => x !== a))}>
-                          Remove
+                          {cm('remove')}
                         </Button>
                       ) : null}
                     </p>
                   ))
                 ) : (
-                  <p className="text-muted">None yet.</p>
+                  <p className="text-muted">{t('noAssets')}</p>
                 )}
                 {c.status !== 'terminated' ? (
                   <div className="row">
-                    <Select aria-label="Asset to add" value={adding} onChange={(e) => setAdding(e.target.value)}>
-                      <option value="">Add an asset…</option>
+                    <Select aria-label={t('assetToAdd')} value={adding} onChange={(e) => setAdding(e.target.value)}>
+                      <option value="">{t('addAnAsset')}</option>
                       {(assets.data?.data ?? [])
                         .filter((a) => !covered.has(a.id))
                         .map((a) => (
                           <option key={a.id} value={a.id}>
-                            {a.code} · {a.nameEn}
+                            <span className="ltr">{a.code}</span> · {locale === 'ar' ? a.nameAr : a.nameEn}
                           </option>
                         ))}
                     </Select>
                     <Button size="sm" disabled={!adding} loading={setAssets.isPending} onClick={() => setAssets.mutate([...c.assetIds, adding])}>
-                      Add
+                      {cm('add')}
                     </Button>
                   </div>
                 ) : null}
@@ -118,20 +126,20 @@ export default function ContractPage() {
             </Card>
             <div className="stack">
               <Card flush>
-                <CardHeader title="Terms" />
+                <CardHeader title={t('terms')} />
                 <CardBody>
                   <dl className="dl">
-                    <dt>Vendor’s phone</dt>
-                    <dd>{c.vendorPhone ?? '—'}</dd>
-                    <dt>A year</dt>
-                    <dd>{c.annualValue ? `${c.annualValue} EGP` : '—'}</dd>
-                    <dt>Announced</dt>
-                    <dd>{c.noticeDays} days before its end</dd>
+                    <dt>{t('vendorPhone')}</dt>
+                    <dd className="ltr">{c.vendorPhone ?? '—'}</dd>
+                    <dt>{t('aYear')}</dt>
+                    <dd>{c.annualValue ? f.money(c.annualValue) : '—'}</dd>
+                    <dt>{t('announced')}</dt>
+                    <dd>{t('daysBefore', { days: c.noticeDays })}</dd>
                     {c.terminatedAt ? (
                       <>
-                        <dt>Terminated</dt>
+                        <dt>{label('terminated')}</dt>
                         <dd>
-                          {formatDateTime(c.terminatedAt)} · {humanize(c.terminationReason ?? '')}
+                          {f.dateTime(c.terminatedAt)} · {label(c.terminationReason)}
                         </dd>
                       </>
                     ) : null}
@@ -139,12 +147,12 @@ export default function ContractPage() {
                 </CardBody>
               </Card>
               <Card flush>
-                <CardHeader title="Papers" />
+                <CardHeader title={t('papers')} />
                 <CardBody>
                   {(docs.data?.data ?? []).map((d) => (
                     <p key={d.id}>{d.url ? <a href={d.url}>{d.title}</a> : d.title}</p>
                   ))}
-                  <FileUpload purpose="asset_document" label="Add a scan" onUploaded={(fileId) => addDoc.mutate(fileId)} />
+                  <FileUpload purpose="asset_document" label={t('addScan')} onUploaded={(fileId) => addDoc.mutate(fileId)} />
                 </CardBody>
               </Card>
             </div>
@@ -154,10 +162,10 @@ export default function ContractPage() {
       <ReasonCodeDialog
         open={terminating}
         onClose={() => setTerminating(false)}
-        title="Terminate the contract"
-        description="It ends now, for good."
+        title={t('terminateTitle')}
+        description={t('terminateDescription')}
         codes={REASON_CODES.contractTerminate}
-        confirmLabel="Terminate"
+        confirmLabel={t('terminate')}
         danger
         pending={terminate.isPending}
         error={<ErrorAlert error={terminate.error} />}

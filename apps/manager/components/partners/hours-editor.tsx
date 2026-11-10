@@ -2,12 +2,15 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Alert, Button, Card, CardBody, CardHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Button, Card, CardBody, CardHeader, Select, useCommonT, useToast } from '@jiwar/ui';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { clock, halfHours, sameWindows, sortWindows, WEEKDAYS, windowProblems, type Window } from '@/components/management-requests/logic';
+import { clock, halfHours, sameWindows, sortWindows, windowProblemCodes, type Window } from '@/components/management-requests/logic';
 import { api } from '@/lib/api';
 import { keys, type StaffPartner } from '@/lib/queries';
+import ar from '@/messages/ar/partners-edit';
+import en from '@/messages/en/partners-edit';
 
 /** Half hours, plus the saved value when it is off the grid. */
 const options = (end: boolean, saved: number) => [...new Set([...halfHours(end), saved])].sort((a, b) => a - b);
@@ -21,6 +24,9 @@ const ORDER = [6, 0, 1, 2, 3, 4, 5];
  * tonight" read them.
  */
 export function HoursEditor({ partner }: { partner: StaffPartner }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [windows, setWindows] = useState<Window[]>(partner.hours);
   const save = useAction(
@@ -35,11 +41,11 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
       invalidate: [keys.partnersAll],
       onDone: (next) => {
         setWindows(next.hours);
-        toast.show('Hours saved.');
+        toast.show(t('hours.saved'));
       },
     },
   );
-  const problems = windowProblems(windows);
+  const problems = windowProblemCodes(windows);
   const invalid = Object.keys(problems).length > 0;
   const dirty = !sameWindows(windows, partner.hours);
   const update = (index: number, patch: Partial<Window>) => setWindows(windows.map((w, i) => (i === index ? { ...w, ...patch } : w)));
@@ -50,7 +56,7 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
   };
   const allDay = () => setWindows(ORDER.map((weekday) => ({ weekday, startMinute: 0, endMinute: 1440 })));
   const error = (index: number) =>
-    problems[index] ?? fieldError(save.error, `windows.${index}.startMinute`) ?? fieldError(save.error, `windows.${index}.endMinute`);
+    (problems[index] ? t(`problem.${problems[index]}`) : undefined) ?? fieldError(save.error, `windows.${index}.startMinute`) ?? fieldError(save.error, `windows.${index}.endMinute`);
 
   return (
     <form
@@ -62,10 +68,10 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
     >
       <Card flush>
         <CardHeader
-          title="Hours"
+          title={t('hours.title')}
           actions={
             <Button type="button" size="sm" onClick={allDay}>
-              Open all day, every day
+              {t('hours.allDay')}
             </Button>
           }
         />
@@ -75,18 +81,18 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
               const day = windows.map((w, index) => ({ w, index })).filter((x) => x.w.weekday === weekday);
               return (
                 <div key={weekday} className="row" style={{ alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-                  <strong style={{ width: 96, paddingTop: 8 }}>{WEEKDAYS[weekday]}</strong>
+                  <strong style={{ width: 96, paddingTop: 8 }}>{f.weekday(weekday)}</strong>
                   <div className="stack stack--sm" style={{ flex: 1, minWidth: 260 }}>
                     {day.length === 0 ? (
                       <span className="t-secondary" style={{ paddingTop: 8 }}>
-                        Closed
+                        {t('hours.closed')}
                       </span>
                     ) : null}
                     {day.map(({ w, index }) => (
                       <div key={index} className="stack stack--sm">
                         <span className="row" style={{ gap: 8 }}>
                           <Select
-                            aria-label={`${WEEKDAYS[weekday]} from`}
+                            aria-label={t('hours.from', { day: f.weekday(weekday) })}
                             value={w.startMinute}
                             onChange={(e) => update(index, { startMinute: Number(e.target.value) })}
                           >
@@ -96,9 +102,9 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
                               </option>
                             ))}
                           </Select>
-                          <span className="t-secondary">to</span>
+                          <span className="t-secondary">{t('hours.until')}</span>
                           <Select
-                            aria-label={`${WEEKDAYS[weekday]} to`}
+                            aria-label={t('hours.to', { day: f.weekday(weekday) })}
                             value={w.endMinute}
                             onChange={(e) => update(index, { endMinute: Number(e.target.value) })}
                           >
@@ -114,7 +120,7 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
                             variant="text"
                             iconOnly
                             icon={<Trash2 aria-hidden />}
-                            aria-label={`Remove ${WEEKDAYS[weekday]} ${clock(w.startMinute)}–${clock(w.endMinute)}`}
+                            aria-label={t('hours.remove', { day: f.weekday(weekday), from: clock(w.startMinute), to: clock(w.endMinute) })}
                             onClick={() => setWindows(windows.filter((_, i) => i !== index))}
                           />
                         </span>
@@ -123,7 +129,7 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
                     ))}
                   </div>
                   <Button type="button" size="sm" icon={<Plus aria-hidden />} disabled={day.length >= 4} onClick={() => add(weekday)}>
-                    Add
+                    {c('add')}
                   </Button>
                 </div>
               );
@@ -131,15 +137,15 @@ export function HoursEditor({ partner }: { partner: StaffPartner }) {
           </div>
         </CardBody>
       </Card>
-      {windows.length === 0 ? <Alert tone="warn">With no hours, the partner is never shown as open.</Alert> : null}
+      {windows.length === 0 ? <Alert tone="warn">{t('hours.none')}</Alert> : null}
       <ErrorAlert error={save.error} />
       <span className="row">
         <span className="spacer" />
         <Button type="button" disabled={!dirty} onClick={() => setWindows(partner.hours)}>
-          Discard
+          {t('discard')}
         </Button>
         <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || invalid}>
-          Save hours
+          {t('hours.save')}
         </Button>
       </span>
     </form>

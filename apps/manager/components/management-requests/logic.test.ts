@@ -5,13 +5,19 @@ import {
   appointmentActionsFor,
   clock,
   describeWindows,
+  describeWindowsWith,
+  emptyKey,
   filtersFor,
   halfHours,
+  localName,
   sameWindows,
   slotsPerWeek,
   sortWindows,
+  windowProblemCodes,
   windowProblems,
 } from './logic.ts';
+import ar from '../../messages/ar/services-mgmt-requests.ts';
+import en from '../../messages/en/services-mgmt-requests.ts';
 
 const none = { status: '', type: '', topicId: '', assignee: '' };
 const w = (weekday: number, startMinute: number, endMinute: number) => ({ weekday, startMinute, endMinute });
@@ -50,12 +56,27 @@ test('actions follow the status: a closed request takes a note and nothing else'
 });
 
 test('an appointment: confirm only the resident’s pick, cancel only a live one, propose while the request is open', () => {
-  assert.deepEqual(appointmentActionsFor('open', 'requested'), { confirm: true, propose: true, cancel: true, proposeLabel: 'Propose another slot' });
+  assert.deepEqual(appointmentActionsFor('open', 'requested'), { confirm: true, propose: true, cancel: true, proposeLabel: 'proposeAnother' });
   assert.equal(appointmentActionsFor('open', 'proposed').confirm, false);
   assert.equal(appointmentActionsFor('open', 'confirmed').cancel, true);
-  assert.deepEqual(appointmentActionsFor('in_progress', 'cancelled'), { confirm: false, propose: true, cancel: false, proposeLabel: 'Propose a slot' });
-  assert.deepEqual(appointmentActionsFor('answered', null), { confirm: false, propose: true, cancel: false, proposeLabel: 'Propose a slot' });
-  assert.deepEqual(appointmentActionsFor('closed', 'cancelled'), { confirm: false, propose: false, cancel: false, proposeLabel: 'Propose a slot' });
+  assert.deepEqual(appointmentActionsFor('in_progress', 'cancelled'), { confirm: false, propose: true, cancel: false, proposeLabel: 'propose' });
+  assert.deepEqual(appointmentActionsFor('answered', null), { confirm: false, propose: true, cancel: false, proposeLabel: 'propose' });
+  assert.deepEqual(appointmentActionsFor('closed', 'cancelled'), { confirm: false, propose: false, cancel: false, proposeLabel: 'propose' });
+  assert.equal(en[appointmentActionsFor('open', 'requested').proposeLabel], 'Propose another slot');
+  assert.equal(ar[appointmentActionsFor('open', null).proposeLabel], 'اقترح فترة');
+});
+
+test('each view has its own empty text', () => {
+  assert.equal(en[emptyKey('mine')], 'No request is assigned to you');
+  assert.equal(en[emptyKey('open')], 'No request matches');
+  assert.equal(emptyKey('all'), 'empty.any');
+  assert.equal(ar[emptyKey('overdue')], 'لا يوجد طلب متأخر');
+});
+
+test('a name the compound wrote in both languages reads in the page’s', () => {
+  assert.equal(localName('ar', { nameEn: 'Parking', nameAr: 'المواقف' }), 'المواقف');
+  assert.equal(localName('en', { nameEn: 'Parking', nameAr: 'المواقف' }), 'Parking');
+  assert.equal(localName('ar', { nameEn: 'Parking', nameAr: '' }), 'Parking');
 });
 
 test('minutes read as a clock, and the selects offer half hours', () => {
@@ -71,6 +92,7 @@ test('windows of a day may touch and never overlap; a window ends after it start
   assert.deepEqual(windowProblems([w(1, 540, 720), w(1, 720, 1020), w(2, 540, 1020)]), {});
   assert.deepEqual(windowProblems([w(1, 540, 720), w(1, 700, 900)]), { 1: 'Overlaps another window of the same day.' });
   assert.deepEqual(windowProblems([w(1, 600, 600), w(1, 540, 1020)]), { 0: 'Ends after it starts.' });
+  assert.deepEqual(windowProblemCodes([w(1, 540, 720), w(1, 700, 900), w(2, 600, 600)]), { 1: 'overlap', 2: 'order' });
 });
 
 test('windows sort by day then start, and two sets are the same whatever their order', () => {
@@ -88,6 +110,11 @@ test('a week reads in words, and counts its slots', () => {
   const week = [0, 1, 2, 3, 4, 6].map((d) => w(d, 540, 1020));
   assert.deepEqual(describeWindows([w(1, 840, 960), w(1, 540, 720), w(6, 600, 660)]), ['Monday 09:00–12:00, 14:00–16:00', 'Saturday 10:00–11:00']);
   assert.equal(describeWindows(week).length, 6);
+  const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  assert.deepEqual(
+    describeWindowsWith([w(1, 840, 960), w(1, 540, 720)], (d) => days[d]!, (r) => r.join(' و')),
+    ['الاثنين 09:00–12:00 و14:00–16:00'],
+  );
   assert.equal(slotsPerWeek(week, 30), 96);
   assert.equal(slotsPerWeek(week, 45), 60);
   assert.equal(slotsPerWeek([w(1, 540, 560)], 30), 0);

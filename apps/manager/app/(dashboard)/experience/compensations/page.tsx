@@ -1,13 +1,15 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Card, DataTable, Field, ForbiddenState, PageHeader, Select } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Card, DataTable, Field, ForbiddenState, PageHeader, Select, useCommonT, useLabel } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { CompensationDecision } from '@/components/experience/compensation-decision';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Compensation } from '@/lib/queries';
+import ar from '@/messages/ar/experience-cases';
+import en from '@/messages/en/experience-cases';
 
 type Status = 'proposed' | 'approved' | 'rejected' | '';
 
@@ -16,31 +18,35 @@ type Status = 'proposed' | 'approved' | 'rejected' | '';
  * manager, or the board above its binding limit), decided here once.
  */
 export default function CompensationsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('experience.manage');
   const [status, setStatus] = useState<Status>('proposed');
-  const list = useCursorList(keys.compensations({ status }), (c) => fetchers.compensations({ status }, c), { enabled: allowed });
+  const list = useCursorList(keys.compensations({ status }), (cursor) => fetchers.compensations({ status }, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Compensations" />
+        <PageHeader title={t('compensationsTitle')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Compensations"
-        description="Proposed on a case and decided once by the manager. A credit goes through finance; above the board’s binding limit it waits for the board."
+        title={t('compensationsTitle')}
+        description={t('compensationsDescription')}
       />
       <div className="toolbar">
-        <Field label="Status">
+        <Field label={c('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as Status)}>
-              <option value="">Any status</option>
-              <option value="proposed">Waiting</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="">{t('anyStatus')}</option>
+              <option value="proposed">{t('status.proposed')}</option>
+              <option value="approved">{t('status.approved')}</option>
+              <option value="rejected">{t('status.rejected')}</option>
             </Select>
           )}
         </Field>
@@ -50,21 +56,21 @@ export default function CompensationsPage() {
           <DataTable<Compensation>
             rows={list.rows}
             rowKey={(x) => x.id}
-            empty="No compensation matches"
+            empty={t('compensationsEmpty')}
             columns={[
-              { key: 'at', header: 'Proposed', width: 170, cell: (x) => formatDateTime(x.proposedAt) },
+              { key: 'at', header: t('proposed'), width: 170, cell: (x) => f.dateTime(x.proposedAt) },
               {
                 key: 'case',
-                header: 'Case',
+                header: t('case'),
                 cell: (x) => (
                   <Link className="table__link" href={`/experience/cases/${x.caseId}`}>
-                    Open case
+                    {t('openCaseLink')}
                   </Link>
                 ),
               },
-              { key: 'kind', header: 'Kind', cell: (x) => `${humanize(x.kind)}${x.amount ? ` · ${x.amount} EGP` : ''}` },
-              { key: 'who', header: 'Decides', cell: (x) => (x.authority ? humanize(x.authority.decider) : '—') },
-              { key: 'status', header: 'Status', cell: (x) => <Badge>{humanize(x.rejectReason ?? x.status)}</Badge> },
+              { key: 'kind', header: c('kind'), cell: (x) => `${label(x.kind)}${x.amount ? ` · ${f.money(x.amount)}` : ''}` },
+              { key: 'who', header: t('decides'), cell: (x) => (x.authority ? label(x.authority.decider) : '—') },
+              { key: 'status', header: c('status'), cell: (x) => <Badge>{label(x.rejectReason ?? x.status)}</Badge> },
               { key: 'decide', header: '', cell: (x) => (can('experience.compensate') ? <CompensationDecision compensation={x} unitId={x.unitId} /> : null) },
             ]}
           />

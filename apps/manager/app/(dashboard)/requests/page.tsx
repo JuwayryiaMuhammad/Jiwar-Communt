@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap, type Schema } from '@jiwar/api';
+import { REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import {
   Alert,
@@ -16,8 +16,11 @@ import {
   ReasonDialog,
   Segmented,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useT, type Translate } from '@jiwar/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Link2, Plus } from 'lucide-react';
 import { Suspense, useState } from 'react';
@@ -25,21 +28,32 @@ import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { fetchers, keys, type PendingMember, type Registration, type RegistrationLink } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/requests';
+import en from '@/messages/en/requests';
 
 const TABS = ['registrations', 'household', 'links'] as const;
 type Tab = (typeof TABS)[number];
 
-const CONFLICT_TEXT: Record<string, string> = {
-  unit_not_found: 'Unit code not found',
-  unit_has_primary: 'Unit already has a primary resident',
-  unit_has_residing_occupants: 'Others already live in the unit',
-  phone_in_use: 'Phone in use',
-  email_in_use: 'Email in use',
-  same_person_existing_account: 'Already has an account',
-  duplicate_pending_for_unit: 'Another request for this unit',
-};
+const CONFLICTS = [
+  'unit_not_found',
+  'unit_has_primary',
+  'unit_has_residing_occupants',
+  'phone_in_use',
+  'email_in_use',
+  'same_person_existing_account',
+  'duplicate_pending_for_unit',
+] as const;
+const CORRECTIONS = ['document_unreadable', 'document_missing', 'document_mismatch', 'details_mismatch'] as const;
+type T = Translate<typeof en>;
+type Label = (code: string) => string;
+const among = <V extends string>(list: readonly V[], value: string): value is V => (list as readonly string[]).includes(value);
+const conflictText = (t: T, label: Label, code: string) => (among(CONFLICTS, code) ? t(`conflict.${code}`) : label(code));
+const correctionText = (t: T, label: Label, code: string) => (among(CORRECTIONS, code) ? t(`correction.${code}`) : label(code));
 
 function ApproveRegistration({ registration, onClose }: { registration: Registration | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [unitId, setUnitId] = useState('');
   const [link, setLink] = useState(false);
@@ -56,7 +70,7 @@ function ApproveRegistration({ registration, onClose }: { registration: Registra
     {
       invalidate: [keys.registrations, keys.residents, keys.units],
       onDone: (_, r) => {
-        toast.show(`${r.fullName} is now a resident.`);
+        toast.show(t('approved', { name: r.fullName }));
         close();
       },
     },
@@ -71,18 +85,18 @@ function ApproveRegistration({ registration, onClose }: { registration: Registra
     <Dialog
       open={registration !== null}
       onClose={close}
-      title={`Approve ${registration?.fullName ?? ''}?`}
+      title={t('approveTitle', { name: registration?.fullName ?? '' })}
       description={
         registration
-          ? `Creates their account and a ${registration.occupancyType} occupancy in unit ${registration.unitCode}.`
+          ? t('approveDescription', { type: label(registration.occupancyType), unit: registration.unitCode })
           : undefined
       }
       onSubmit={() => registration && approve.mutate(registration)}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={approve.isPending} disabled={needsUnit && !unitId}>
-            Approve
+            {t('approve')}
           </Button>
         </>
       }
@@ -90,17 +104,17 @@ function ApproveRegistration({ registration, onClose }: { registration: Registra
       <div className="form">
         {registration?.conflicts.length ? (
           <Alert tone="warn">
-            {registration.conflicts.map((c) => CONFLICT_TEXT[c] ?? humanize(c)).join(' · ')}
+            {registration.conflicts.map((x) => conflictText(t, label, x)).join(' · ')}
           </Alert>
         ) : null}
         {needsUnit ? (
-          <Field label="Unit" hint={`They typed “${registration?.unitCode}”, which matches no unit.`}>
+          <Field label={c('unit')} hint={t('unitHint', { code: registration?.unitCode ?? '' })}>
             {(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}
           </Field>
         ) : null}
         {existing ? (
           <Checkbox
-            label="Link the occupancy to their existing account instead of creating a new one"
+            label={t('linkExisting')}
             checked={link}
             onChange={(e) => setLink(e.target.checked)}
           />
@@ -114,14 +128,11 @@ function ApproveRegistration({ registration, onClose }: { registration: Registra
 /** Opens a presigned document in a new tab (no-store routes). */
 const openUrl = (r: { url: string }) => window.open(r.url, '_blank', 'noopener');
 
-const CORRECTION_TEXT: Record<string, string> = {
-  document_unreadable: 'A document cannot be read',
-  document_missing: 'A proof of their place in the unit is missing',
-  document_mismatch: 'A document does not match the unit or their details',
-  details_mismatch: 'Their details do not match the documents',
-};
-
 function Registrations() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const list = useCursorList(keys.registrations, (c) => fetchers.registrations(c));
   // Sent back for a correction (ADR 0062): waiting for the registrant.
@@ -143,7 +154,7 @@ function Registrations() {
     {
       invalidate: [keys.registrations],
       onDone: (_, r) => {
-        toast.show(`${r.fullName} was emailed what to correct, with a new link.`);
+        toast.show(t('askedToCorrect', { name: r.fullName }));
         setCorrecting(null);
         setCodes([]);
       },
@@ -160,7 +171,7 @@ function Registrations() {
     {
       invalidate: [keys.registrations],
       onDone: (_, v) => {
-        toast.show(`${v.r.fullName}'s request was rejected and they were emailed.`);
+        toast.show(t('rejectedRegistration', { name: v.r.fullName }));
         setRejecting(null);
       },
     },
@@ -171,81 +182,80 @@ function Registrations() {
         <DataTable<Registration>
           rows={list.rows}
           rowKey={(r) => r.id}
-          empty="No registration is waiting"
-          emptyHint="People who sign up through a registration link appear here."
+          empty={t('noRegistration')}
+          emptyHint={t('noRegistrationHint')}
           columns={[
             {
               key: 'name',
-              header: 'Person',
+              header: t('person'),
               cell: (r) => (
                 <div>
                   <div className="table__primary">{r.fullName}</div>
                   <div className="list__meta">
-                    {r.email} · <span className="t-num">{r.phone}</span>
+                    <span className="ltr">{r.email}</span> · <span className="t-num ltr">{r.phone}</span>
                   </div>
                 </div>
               ),
             },
             {
               key: 'unit',
-              header: 'Unit',
+              header: c('unit'),
               cell: (r) => (
                 <div>
                   <div className="table__primary">{r.unitCode}</div>
                   <div className="list__meta">
-                    {humanize(r.occupancyType)}
-                    {r.resides ? ', lives there' : ', does not live there'}
+                    {t(r.resides ? 'residesYes' : 'residesNo', { type: label(r.occupancyType) })}
                   </div>
                 </div>
               ),
             },
             {
               key: 'conflicts',
-              header: 'Checks',
+              header: t('checks'),
               cell: (r) =>
                 r.conflicts.length ? (
                   <span className="chip-list">
-                    {r.conflicts.map((c) => (
-                      <Badge key={c} tone="terracotta">
-                        {CONFLICT_TEXT[c] ?? humanize(c)}
+                    {r.conflicts.map((x) => (
+                      <Badge key={x} tone="terracotta">
+                        {conflictText(t, label, x)}
                       </Badge>
                     ))}
                   </span>
                 ) : (
-                  <Badge tone="green">No conflicts</Badge>
+                  <Badge tone="green">{t('noConflicts')}</Badge>
                 ),
             },
             {
               key: 'documents',
-              header: 'Proof',
+              header: t('proof'),
               cell: (r) =>
                 r.documents.length ? (
                   <span className="chip-list">
                     {r.documents.map((d) => (
                       <Button key={d.id} size="sm" variant="text" disabled={!d.ready} onClick={() => openDocument.mutate({ r, documentId: d.id })}>
-                        {humanize(d.kind)}
+                        {label(d.kind)}
                       </Button>
                     ))}
                   </span>
                 ) : (
-                  <span className="t-secondary">None yet</span>
+                  <span className="t-secondary">{t('noneYet')}</span>
                 ),
             },
-            { key: 'when', header: 'Requested', cell: (r) => <span title={formatDateTime(r.createdAt)}>{relativeTime(r.createdAt)}</span> },
+            { key: 'when', header: t('requested'), cell: (r) => <span title={f.dateTime(r.createdAt)}>{f.relative(r.createdAt)}</span> },
             {
               key: 'actions',
-              header: <span className="visually-hidden">Actions</span>,
+              header: <span className="visually-hidden">{c('actions')}</span>,
               className: 'table__actions',
               cell: (r) => (
                 <span className="row" style={{ justifyContent: 'flex-end' }}>
                   <Button size="sm" onClick={() => setRejecting(r)}>
-                    Reject
+                    {t('reject')}
                   </Button>
                   <Button size="sm" onClick={() => setCorrecting(r)}>
-                    Ask to correct
+                    {t('askToCorrect')}
                   </Button>
                   <Button size="sm" variant="primary" onClick={() => setApproving(r)}>
-                    Approve
+                    {t('approve')}
                   </Button>
                 </span>
               ),
@@ -257,11 +267,15 @@ function Registrations() {
       <ErrorAlert error={openDocument.error} />
       {waiting.data?.data.length ? (
         <div style={{ padding: 16 }}>
-          <h3 className="t-h3">Waiting for the registrant</h3>
+          <h3 className="t-h3">{t('waitingFor')}</h3>
           <ul>
             {waiting.data.data.map((r) => (
               <li key={r.id}>
-                {r.fullName}, unit {r.unitCode}: {r.correctionCodes.map((c) => CORRECTION_TEXT[c] ?? humanize(c)).join('; ')}
+                {t('waitingLine', {
+                  name: r.fullName,
+                  unit: r.unitCode,
+                  what: r.correctionCodes.map((x) => correctionText(t, label, x)).join(t('listSeparator')),
+                })}
               </li>
             ))}
           </ul>
@@ -270,25 +284,25 @@ function Registrations() {
       <Dialog
         open={correcting !== null}
         onClose={() => setCorrecting(null)}
-        title={`Ask ${correcting?.fullName ?? ''} to correct`}
-        description="They are emailed what to correct and a new link to fix it; the request waits for them, and expires 30 days after if they do not."
+        title={t('correctTitle', { name: correcting?.fullName ?? '' })}
+        description={t('correctDescription')}
         onSubmit={(e) => {
           e.preventDefault();
           if (correcting) correct.mutate(correcting);
         }}
         footer={
           <Button variant="primary" type="submit" loading={correct.isPending} disabled={!codes.length}>
-            Send
+            {c('send')}
           </Button>
         }
       >
         <ErrorAlert error={correct.error} />
-        {REASON_CODES.registrationCorrection.map((c) => (
+        {REASON_CODES.registrationCorrection.map((code) => (
           <Checkbox
-            key={c}
-            label={CORRECTION_TEXT[c] ?? humanize(c)}
-            checked={codes.includes(c)}
-            onChange={(e) => setCodes(e.target.checked ? [...codes, c] : codes.filter((x) => x !== c))}
+            key={code}
+            label={correctionText(t, label, code)}
+            checked={codes.includes(code)}
+            onChange={(e) => setCodes(e.target.checked ? [...codes, code] : codes.filter((x) => x !== code))}
           />
         ))}
       </Dialog>
@@ -299,10 +313,10 @@ function Registrations() {
           setRejecting(null);
           reject.reset();
         }}
-        title={`Reject ${rejecting?.fullName ?? ''}?`}
-        description="They are emailed the message below. Their data is removed."
+        title={t('rejectTitle', { name: rejecting?.fullName ?? '' })}
+        description={t('rejectDescription')}
         codes={REASON_CODES.registrationReject}
-        confirmLabel="Reject"
+        confirmLabel={t('reject')}
         danger
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}
@@ -313,6 +327,10 @@ function Registrations() {
 }
 
 function Household() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const list = useCursorList(keys.household, (c) => fetchers.household(c));
   const [rejecting, setRejecting] = useState<PendingMember | null>(null);
@@ -326,7 +344,7 @@ function Household() {
       unwrap(api.POST('/api/v1/household/members/{id}/approve', { params: { path: { id: m.memberId } } })),
     {
       invalidate: [keys.household],
-      onDone: (_, m) => toast.show(`${m.fullName ?? 'Member'} joined unit ${m.unitCode}.`),
+      onDone: (_, m) => toast.show(t('joined', { name: m.fullName ?? t('member'), unit: m.unitCode })),
     },
   );
   const reject = useAction(
@@ -340,7 +358,7 @@ function Household() {
     {
       invalidate: [keys.household],
       onDone: () => {
-        toast.show('Request rejected.');
+        toast.show(t('rejectedMember'));
         setRejecting(null);
       },
     },
@@ -356,41 +374,41 @@ function Household() {
         <DataTable<PendingMember>
           rows={list.rows}
           rowKey={(m) => m.memberId}
-          empty="No household request is waiting"
-          emptyHint="When the compound requires approval, family members added by residents wait here."
+          empty={t('noHousehold')}
+          emptyHint={t('noHouseholdHint')}
           columns={[
             {
               key: 'name',
-              header: 'Member',
-              cell: (m) => <span className="table__primary">{m.fullName ?? 'Invited member'}</span>,
+              header: t('member'),
+              cell: (m) => <span className="table__primary">{m.fullName ?? t('invitedMember')}</span>,
             },
-            { key: 'relation', header: 'Relation', cell: (m) => humanize(m.relation) },
+            { key: 'relation', header: t('relation'), cell: (m) => label(m.relation) },
             {
               key: 'proof',
-              header: 'Proof of kinship',
+              header: t('kinshipProof'),
               cell: (m) =>
                 m.kinshipDocuments.length ? (
                   <span className="chip-list">
                     {m.kinshipDocuments.map((d) => (
                       <Button key={d.id} size="sm" variant="text" onClick={() => openKinship.mutate({ m, documentId: d.id })}>
-                        {humanize(d.kind)}
+                        {label(d.kind)}
                       </Button>
                     ))}
                   </span>
                 ) : (
-                  <span className="t-secondary">None</span>
+                  <span className="t-secondary">{t('none')}</span>
                 ),
             },
-            { key: 'unit', header: 'Unit', cell: (m) => m.unitCode },
-            { key: 'when', header: 'Requested', cell: (m) => <span title={formatDateTime(m.requestedAt)}>{relativeTime(m.requestedAt)}</span> },
+            { key: 'unit', header: c('unit'), cell: (m) => m.unitCode },
+            { key: 'when', header: t('requested'), cell: (m) => <span title={f.dateTime(m.requestedAt)}>{f.relative(m.requestedAt)}</span> },
             {
               key: 'actions',
-              header: <span className="visually-hidden">Actions</span>,
+              header: <span className="visually-hidden">{c('actions')}</span>,
               className: 'table__actions',
               cell: (m) => (
                 <span className="row" style={{ justifyContent: 'flex-end' }}>
                   <Button size="sm" onClick={() => setRejecting(m)}>
-                    Reject
+                    {t('reject')}
                   </Button>
                   <Button
                     size="sm"
@@ -398,7 +416,7 @@ function Household() {
                     loading={approve.isPending && approve.variables?.memberId === m.memberId}
                     onClick={() => approve.mutate(m)}
                   >
-                    Approve
+                    {t('approve')}
                   </Button>
                 </span>
               ),
@@ -413,10 +431,10 @@ function Household() {
           setRejecting(null);
           reject.reset();
         }}
-        title="Reject this household member?"
-        description={rejecting ? `Unit ${rejecting.unitCode}. The unit's primary resident is told.` : undefined}
+        title={t('rejectMemberTitle')}
+        description={rejecting ? t('rejectMemberDescription', { unit: rejecting.unitCode }) : undefined}
         codes={REASON_CODES.memberRejection}
-        confirmLabel="Reject"
+        confirmLabel={t('reject')}
         danger
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}
@@ -427,6 +445,9 @@ function Household() {
 }
 
 function Links() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const list = useCursorList(keys.registrationLinks, (c) => fetchers.registrationLinks(c));
   const [created, setCreated] = useState<string | null>(null);
@@ -441,7 +462,7 @@ function Links() {
     {
       invalidate: [keys.registrationLinks],
       onDone: () => {
-        toast.show('Link revoked. It stops working immediately.');
+        toast.show(t('linkRevoked'));
         setRevoking(null);
       },
     },
@@ -450,10 +471,10 @@ function Links() {
     <>
       <div className="row">
         <p className="t-secondary" style={{ flex: 1 }}>
-          A link lets people ask to register as residents. With no live link, self-registration is off.
+          {t('linksNote')}
         </p>
         <Button variant="primary" icon={<Plus aria-hidden />} loading={create.isPending} onClick={() => create.mutate(undefined)}>
-          New link
+          {t('newLink')}
         </Button>
       </div>
       <ErrorAlert error={create.error} />
@@ -462,29 +483,29 @@ function Links() {
           <DataTable<RegistrationLink>
             rows={list.rows}
             rowKey={(l) => l.id}
-            empty="No registration links"
+            empty={t('noLinks')}
             columns={[
               {
                 key: 'id',
-                header: 'Link',
+                header: t('link'),
                 cell: (l) => (
                   <span className="row">
                     <Link2 size={16} aria-hidden />
-                    <span className="t-mono">{l.id.slice(0, 8)}</span>
+                    <span className="t-mono ltr">{l.id.slice(0, 8)}</span>
                   </span>
                 ),
               },
-              { key: 'status', header: 'Status', cell: (l) => <StatusBadge status={l.revokedAt ? 'revoked' : 'active'} /> },
-              { key: 'created', header: 'Created', cell: (l) => formatDateTime(l.createdAt) },
-              { key: 'revoked', header: 'Revoked', cell: (l) => (l.revokedAt ? formatDateTime(l.revokedAt) : '—') },
+              { key: 'status', header: c('status'), cell: (l) => <StatusBadge status={l.revokedAt ? 'revoked' : 'active'} /> },
+              { key: 'created', header: c('created'), cell: (l) => f.dateTime(l.createdAt) },
+              { key: 'revoked', header: t('revokedAt'), cell: (l) => (l.revokedAt ? f.dateTime(l.revokedAt) : '—') },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (l) =>
                   l.revokedAt ? null : (
                     <Button size="sm" onClick={() => setRevoking(l)}>
-                      Revoke
+                      {t('revoke')}
                     </Button>
                   ),
               },
@@ -496,20 +517,20 @@ function Links() {
       <Dialog
         open={created !== null}
         onClose={() => setCreated(null)}
-        title="Registration link created"
-        description="This token is shown once. Only its hash is stored."
+        title={t('linkCreated')}
+        description={t('linkCreatedNote')}
         footer={
           <>
             <Button
               icon={<Copy aria-hidden />}
               onClick={() => {
-                if (created) void navigator.clipboard.writeText(created).then(() => toast.show('Copied.'));
+                if (created) void navigator.clipboard.writeText(created).then(() => toast.show(t('copied')));
               }}
             >
-              Copy
+              {t('copy')}
             </Button>
             <Button variant="primary" onClick={() => setCreated(null)}>
-              Done
+              {c('done')}
             </Button>
           </>
         }
@@ -522,9 +543,9 @@ function Links() {
           setRevoking(null);
           revoke.reset();
         }}
-        title="Revoke this link?"
-        description="Anyone holding it can no longer start a registration. Requests already sent stay in the queue."
-        confirmLabel="Revoke"
+        title={t('revokeTitle')}
+        description={t('revokeDescription')}
+        confirmLabel={t('revoke')}
         danger
         pending={revoke.isPending}
         error={<ErrorAlert error={revoke.error} />}
@@ -535,21 +556,22 @@ function Links() {
 }
 
 function RequestsView() {
+  const t = useT(en, ar);
   const [tab, setTab] = useTab(TABS, 'registrations');
   return (
     <>
       <PageHeader
-        title="Requests"
-        description="People waiting to join the compound or a household."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Segmented<Tab>
-            label="Request type"
+            label={t('requestType')}
             value={tab}
             onChange={setTab}
             options={[
-              { value: 'registrations', label: 'Registrations' },
-              { value: 'household', label: 'Household' },
-              { value: 'links', label: 'Links' },
+              { value: 'registrations', label: t('tab.registrations') },
+              { value: 'household', label: t('tab.household') },
+              { value: 'links', label: t('tab.links') },
             ]}
           />
         }

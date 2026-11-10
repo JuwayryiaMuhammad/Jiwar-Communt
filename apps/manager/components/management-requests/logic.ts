@@ -47,18 +47,16 @@ export function filtersFor(view: View, picked: Picked): InboxFilters {
   };
 }
 
-export function emptyText(view: View): string {
+/** The catalog key of the inbox's empty text for a view. */
+export function emptyKey(view: View): `empty.${'mine' | 'unassigned' | 'overdue' | 'escalated' | 'any'}` {
   switch (view) {
     case 'mine':
-      return 'No request is assigned to you';
     case 'unassigned':
-      return 'No request is waiting in the queue';
     case 'overdue':
-      return 'No request is overdue';
     case 'escalated':
-      return 'No request was escalated';
+      return `empty.${view}`;
     default:
-      return 'No request matches';
+      return 'empty.any';
   }
 }
 
@@ -89,8 +87,8 @@ export function appointmentActionsFor(requestStatus: string, appointmentStatus: 
     /** Another slot instead of the resident's, or a slot when there is none. */
     propose: open,
     cancel: open && live,
-    /** How the propose button reads. */
-    proposeLabel: live ? 'Propose another slot' : 'Propose a slot',
+    /** How the propose button reads: a key of the requests catalog. */
+    proposeLabel: live ? ('proposeAnother' as const) : ('propose' as const),
   };
 }
 
@@ -117,24 +115,39 @@ export function halfHours(end = false): number[] {
   return end ? all.slice(1) : all.slice(0, 48);
 }
 
+/** What is wrong with a window: it ends before it starts, or overlaps another of its day. */
+export type WindowProblem = 'order' | 'overlap';
+
 /**
  * What is wrong with a set of windows, by position — the API's own two
  * rules (office-hours-rules.ts): a window ends after it starts, and two
  * windows of one day may touch but not overlap.
  */
-export function windowProblems(windows: readonly Window[]): Record<number, string> {
-  const problems: Record<number, string> = {};
+export function windowProblemCodes(windows: readonly Window[]): Record<number, WindowProblem> {
+  const problems: Record<number, WindowProblem> = {};
   windows.forEach((w, i) => {
     if (w.endMinute <= w.startMinute) {
-      problems[i] = 'Ends after it starts.';
+      problems[i] = 'order';
       return;
     }
     const clash = windows.some(
       (o, j) =>
         j < i && o.weekday === w.weekday && o.endMinute > o.startMinute && o.startMinute < w.endMinute && w.startMinute < o.endMinute,
     );
-    if (clash) problems[i] = 'Overlaps another window of the same day.';
+    if (clash) problems[i] = 'overlap';
   });
+  return problems;
+}
+
+const PROBLEM_TEXT: Record<WindowProblem, string> = {
+  order: 'Ends after it starts.',
+  overlap: 'Overlaps another window of the same day.',
+};
+
+/** `windowProblemCodes` in English words (the facilities' pages still read these). */
+export function windowProblems(windows: readonly Window[]): Record<number, string> {
+  const problems: Record<number, string> = {};
+  for (const [i, code] of Object.entries(windowProblemCodes(windows))) problems[Number(i)] = PROBLEM_TEXT[code];
   return problems;
 }
 
@@ -148,16 +161,34 @@ export function sameWindows(a: readonly Window[], b: readonly Window[]): boolean
   return key(a) === key(b);
 }
 
-/** "Sat–Thu 09:00–17:00"-style lines, one per weekday that is open. */
-export function describeWindows(windows: readonly Window[]): string[] {
-  return WEEKDAYS.flatMap((name, weekday) => {
+/**
+ * "Monday 09:00–12:00, 14:00–16:00"-style lines, one per weekday that is
+ * open, the day named by `dayName` (0 = Sunday) and its ranges joined by
+ * `join` (the page's list format).
+ */
+export function describeWindowsWith(
+  windows: readonly Window[],
+  dayName: (weekday: number) => string,
+  join: (ranges: string[]) => string = (ranges) => ranges.join(', '),
+): string[] {
+  return WEEKDAYS.flatMap((_, weekday) => {
     const day = sortWindows(windows.filter((w) => w.weekday === weekday));
-    return day.length ? [`${name} ${day.map((w) => `${clock(w.startMinute)}–${clock(w.endMinute)}`).join(', ')}`] : [];
+    return day.length ? [`${dayName(weekday)} ${join(day.map((w) => `${clock(w.startMinute)}–${clock(w.endMinute)}`))}`] : [];
   });
+}
+
+/** `describeWindowsWith` in English (the facilities' pages still read these). */
+export function describeWindows(windows: readonly Window[]): string[] {
+  return describeWindowsWith(windows, (weekday) => WEEKDAYS[weekday] ?? '');
 }
 
 /** How many slots a week of these windows gives, at this slot length. */
 export function slotsPerWeek(windows: readonly Window[], slotMinutes: number): number {
   if (!(slotMinutes > 0)) return 0;
   return windows.reduce((n, w) => n + Math.max(0, Math.floor((w.endMinute - w.startMinute) / slotMinutes)), 0);
+}
+
+/** A name the compound wrote in both languages, in the page's: the Arabic one when there is one. */
+export function localName(locale: string, x: { nameEn: string; nameAr?: string | null }): string {
+  return locale === 'ar' && x.nameAr ? x.nameAr : x.nameEn;
 }

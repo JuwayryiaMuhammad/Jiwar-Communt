@@ -1,32 +1,41 @@
 'use client';
 
-import { ApiError, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { ApiError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Alert, Badge, Button, Card, CardBody, CardHeader, ForbiddenState, PageHeader, ReasonCodeDialog, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Badge, Button, Card, CardBody, CardHeader, ForbiddenState, PageHeader, ReasonCodeDialog, StatusBadge, useLabel, useToast } from '@jiwar/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import { Back, personName, PersonLink } from '@/components/neighbours/bits';
-import { isSealed, KIND_TEXT, SEALED_TEXT, SIDE_TEXT } from '@/components/neighbours/logic';
+import { Back, PersonLink } from '@/components/neighbours/bits';
+import { isSealed } from '@/components/neighbours/logic';
+import { useWho } from '@/components/neighbours/who';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ConversationReport, type ReportedMessage } from '@/lib/queries';
+import ar from '@/messages/ar/conv-reports';
+import en from '@/messages/en/conv-reports';
 
 type Party = ConversationReport['author'];
 
 function PartyLine({ label, party, reported }: { label: string; party: Party; reported: boolean }) {
+  const t = useT(en, ar);
   return (
     <>
       <dt>{label}</dt>
       <dd>
         <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
           <PersonLink person={party.account} />
-          {reported ? <Badge tone="terracotta">Reported</Badge> : <Badge plain>Reporter</Badge>}
+          {reported ? <Badge tone="terracotta">{t('partyReported')}</Badge> : <Badge plain>{t('partyReporter')}</Badge>}
         </span>
         <span className="t-secondary">
-          {party.unitCode ? `Unit ${party.unitCode}${party.building ? ` · ${party.building}` : ''}` : 'No unit now'}
+          {party.unitCode
+            ? party.building
+              ? t('unitIn', { code: party.unitCode, building: party.building })
+              : t('unitCode', { code: party.unitCode })
+            : t('noUnitNow')}
         </span>
       </dd>
     </>
@@ -39,6 +48,10 @@ function PartyLine({ label, party, reported }: { label: string; party: Party; re
  * as what it is — the conversation sealed again — and never as an error.
  */
 function Conversation({ report }: { report: ConversationReport }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const who = useWho();
+  const sideText = (side: string) => (side === 'author' || side === 'responder' ? t(`side.${side}`) : side);
   const open = report.status === 'open';
   const list = useCursorList<ReportedMessage>(
     keys.conversationReportMessages(report.id),
@@ -49,13 +62,13 @@ function Conversation({ report }: { report: ConversationReport }) {
 
   return (
     <Card flush>
-      <CardHeader title="The conversation">
-        <span className="t-secondary">Between the two residents, about the post. Shown to the staff for this case only.</span>
+      <CardHeader title={t('conversation')}>
+        <span className="t-secondary">{t('conversationNote')}</span>
       </CardHeader>
       {isSealed(report.status, code) ? (
         <div className="state">
           <Lock aria-hidden />
-          <p className="state__title">{SEALED_TEXT}</p>
+          <p className="state__title">{t('sealed')}</p>
         </div>
       ) : (
         <QueryState query={list} rows={3}>
@@ -64,15 +77,15 @@ function Conversation({ report }: { report: ConversationReport }) {
               {list.rows.map((m) => (
                 <div key={m.id} className={`thread__msg${m.side === 'author' ? ' thread__msg--staff' : ''}`}>
                   <span className="thread__meta">
-                    {personName(m.sender)} · {SIDE_TEXT[m.side] ?? m.side} · {formatDateTime(m.createdAt)}
+                    {who.person(m.sender)} · {sideText(m.side)} · {f.dateTime(m.createdAt)}
                   </span>
-                  {m.erased ? <p className="thread__body t-secondary">Message removed</p> : <p className="thread__body">{m.body}</p>}
+                  {m.erased ? <p className="thread__body t-secondary">{t('messageRemoved')}</p> : <p className="thread__body">{m.body}</p>}
                 </div>
               ))}
             </div>
           ) : (
             <p className="t-secondary" style={{ padding: 16 }}>
-              Nothing was written in it.
+              {t('nothingWritten')}
             </p>
           )}
           <LoadMore query={list} />
@@ -83,6 +96,7 @@ function Conversation({ report }: { report: ConversationReport }) {
 }
 
 function CloseCase({ report }: { report: ConversationReport }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -94,7 +108,7 @@ function CloseCase({ report }: { report: ConversationReport }) {
       onDone: () => {
         // Sealed: what was read of it does not stay in this browser either.
         client.removeQueries({ queryKey: keys.conversationReportMessages(report.id) });
-        toast.show('The case is closed. The conversation is sealed again.');
+        toast.show(t('caseClosedToast'));
         setOpen(false);
       },
     },
@@ -107,23 +121,22 @@ function CloseCase({ report }: { report: ConversationReport }) {
   return (
     <>
       <Button variant="primary" onClick={() => setOpen(true)}>
-        Close case
+        {t('closeCase')}
       </Button>
       <ReasonCodeDialog
         open={open}
         onClose={close}
-        title="Close this case?"
-        description="The reporter is told the report was looked at, and nothing of what was decided. The conversation can no longer be read here afterwards."
+        title={t('closeTitle')}
+        description={t('closeDescription')}
         codes={REASON_CODES.neighbourReportOutcome}
-        codeLabel="What was done"
-        confirmLabel="Close case"
+        codeLabel={t('whatWasDone')}
+        confirmLabel={t('closeCase')}
         pending={closeCase.isPending}
         error={<ErrorAlert error={closeCase.error} />}
         onConfirm={(code) => closeCase.mutate(code)}
       >
         <Alert tone="warn">
-          “Post removed” takes the post off its board at once, and its author is told that the management removed it. “Warned” and “No action” only
-          record what you did: the dashboard sends no warning itself.
+          {t('closeWarning')}
         </Alert>
       </ReasonCodeDialog>
     </>
@@ -132,6 +145,11 @@ function CloseCase({ report }: { report: ConversationReport }) {
 
 export default function ConversationReportPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
+  const who = useWho();
+  const kindText = (kind: string) => (kind === 'lost' || kind === 'found' || kind === 'lend' || kind === 'borrow' ? t(`kind.${kind}`) : label(kind));
   const { can, ready } = usePermissions();
   const allowed = can('neighbours.handle');
   const report = useQuery({
@@ -141,12 +159,12 @@ export default function ConversationReportPage() {
     enabled: allowed,
   });
   const r = report.data;
-  const back = <Back href="/conversation-reports" label="Conversation reports" />;
+  const back = <Back href="/conversation-reports" label={t('title')} />;
 
   if (ready && !allowed) {
     return (
       <>
-        <PageHeader back={back} title="Reported conversation" />
+        <PageHeader back={back} title={t('reportedConversation')} />
         <ForbiddenState />
       </>
     );
@@ -159,14 +177,16 @@ export default function ConversationReportPage() {
         title={
           r ? (
             <span className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-              Reported conversation
+              {t('reportedConversation')}
               <StatusBadge status={r.status} />
             </span>
           ) : (
-            'Reported conversation'
+            t('reportedConversation')
           )
         }
-        description={r ? `${humanize(r.reasonCode)} · reported by ${personName(r.reporter)} on ${formatDateTime(r.createdAt)}` : undefined}
+        description={
+          r ? `${label(r.reasonCode)} · ${t('reportedAnd', { name: who.person(r.reporter), when: f.dateTime(r.createdAt) })}` : undefined
+        }
         actions={r ? <CloseCase report={r} /> : undefined}
       />
       <QueryState query={report}>
@@ -177,23 +197,23 @@ export default function ConversationReportPage() {
             </div>
             <div className="stack">
               <Card flush>
-                <CardHeader title="The report" />
+                <CardHeader title={t('theReport')} />
                 <CardBody>
                   <dl className="dl">
-                    <dt>Reason</dt>
-                    <dd>{humanize(r.reasonCode)}</dd>
-                    <dt>What the reporter said</dt>
-                    <dd>{r.note ? <span style={{ whiteSpace: 'pre-wrap' }}>{r.note}</span> : <span className="t-secondary">Nothing more</span>}</dd>
-                    <dt>Reported</dt>
-                    <dd>{formatDateTime(r.createdAt)}</dd>
+                    <dt>{t('reason')}</dt>
+                    <dd>{label(r.reasonCode)}</dd>
+                    <dt>{t('reporterSaid')}</dt>
+                    <dd>{r.note ? <span style={{ whiteSpace: 'pre-wrap' }}>{r.note}</span> : <span className="t-secondary">{t('nothingMore')}</span>}</dd>
+                    <dt>{t('reported')}</dt>
+                    <dd>{f.dateTime(r.createdAt)}</dd>
                     {r.status === 'closed' ? (
                       <>
-                        <dt>Outcome</dt>
-                        <dd>{humanize(r.outcome)}</dd>
-                        <dt>Closed</dt>
+                        <dt>{t('outcome')}</dt>
+                        <dd>{label(r.outcome)}</dd>
+                        <dt>{t('closed')}</dt>
                         <dd>
-                          {formatDateTime(r.closedAt)}
-                          {r.closedBy ? ` · ${personName(r.closedBy)}` : ''}
+                          {f.dateTime(r.closedAt)}
+                          {r.closedBy ? ` · ${who.person(r.closedBy)}` : ''}
                         </dd>
                       </>
                     ) : null}
@@ -201,30 +221,30 @@ export default function ConversationReportPage() {
                 </CardBody>
               </Card>
               <Card flush>
-                <CardHeader title="The two residents" />
+                <CardHeader title={t('twoResidents')} />
                 <CardBody>
                   <dl className="dl">
-                    <PartyLine label={r.post ? 'Post author' : 'Seller'} party={r.author} reported={r.reporterSide !== 'author'} />
-                    <PartyLine label="Responder" party={r.responder} reported={r.reporterSide !== 'responder'} />
+                    <PartyLine label={r.post ? t('postAuthor') : t('seller')} party={r.author} reported={r.reporterSide !== 'author'} />
+                    <PartyLine label={t('responder')} party={r.responder} reported={r.reporterSide !== 'responder'} />
                   </dl>
                 </CardBody>
               </Card>
               {r.post ? (
                 <Card flush>
                   <CardHeader
-                    title="The post"
+                    title={t('thePost')}
                     actions={
                       <span className="row" style={{ gap: 8 }}>
-                        <Badge plain>{KIND_TEXT[r.post.kind] ?? r.post.kind}</Badge>
+                        <Badge plain>{kindText(r.post.kind)}</Badge>
                         <StatusBadge status={r.post.state} />
                       </span>
                     }
                   />
                   <CardBody>
-                    {r.post.body === null ? <p className="t-secondary">Text removed.</p> : <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{r.post.body}</p>}
+                    {r.post.body === null ? <p className="t-secondary">{t('textRemoved')}</p> : <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{r.post.body}</p>}
                     <p style={{ margin: '8px 0 0' }}>
                       <Link className="table__link" href={`/lost-found/${r.post.id}`}>
-                        Open the post
+                        {t('openPost')}
                       </Link>
                     </p>
                   </CardBody>
@@ -233,19 +253,19 @@ export default function ConversationReportPage() {
                 // A listing's conversation (ADR 0071): closing it `post_removed` takes the listing off the market.
                 <Card flush>
                   <CardHeader
-                    title="The listing"
+                    title={t('theListing')}
                     actions={
                       <span className="row" style={{ gap: 8 }}>
-                        <Badge plain>{r.listing.kind}</Badge>
+                        <Badge plain>{kindText(r.listing.kind)}</Badge>
                         <StatusBadge status={r.listing.state} />
                       </span>
                     }
                   />
                   <CardBody>
-                    {r.listing.title === null ? <p className="t-secondary">Text removed.</p> : <p style={{ margin: 0 }}>{r.listing.title}</p>}
+                    {r.listing.title === null ? <p className="t-secondary">{t('textRemoved')}</p> : <p style={{ margin: 0 }}>{r.listing.title}</p>}
                     <p style={{ margin: '8px 0 0' }}>
                       <Link className="table__link" href="/market">
-                        Open the market
+                        {t('openMarket')}
                       </Link>
                     </p>
                   </CardBody>

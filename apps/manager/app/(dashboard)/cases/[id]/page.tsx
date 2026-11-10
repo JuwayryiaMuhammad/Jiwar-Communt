@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import {
   Badge,
@@ -15,8 +15,11 @@ import {
   PageHeader,
   ReasonCodeDialog,
   Select,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -25,6 +28,8 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type MaintenanceCaseDetail } from '@/lib/queries';
+import ar from '@/messages/ar/cases';
+import en from '@/messages/en/cases';
 
 type CaseTicket = MaintenanceCaseDetail['tickets'][number];
 
@@ -34,6 +39,11 @@ type CaseTicket = MaintenanceCaseDetail['tickets'][number];
  */
 export default function CasePage() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const cm = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { can } = usePermissions();
   const toast = useToast();
   const detail = useQuery({ queryKey: keys.case(id), queryFn: () => fetchers.case(id) });
@@ -55,7 +65,7 @@ export default function CasePage() {
     {
       ...refresh,
       onDone: (x) => {
-        toast.show(x.status === 'resolved' ? 'Resolved. Its reporters are told.' : 'Dismissed.');
+        toast.show(x.status === 'resolved' ? t('resolved') : t('dismissed'));
         setClosing(null);
       },
     },
@@ -67,28 +77,28 @@ export default function CasePage() {
           body: { commonAreaId: areaId, categoryId: c!.categoryId, caseId: id, description: words },
         }),
       ),
-    { ...refresh, onDone: () => toast.show('The case’s work order is open.') },
+    { ...refresh, onDone: () => toast.show(t('workOrderOpened')) },
   );
   return (
     <>
       <PageHeader
         back={
-          <ButtonLink href="/cases" variant="text" size="sm" icon={<ArrowLeft aria-hidden />}>
-            Community cases
+          <ButtonLink href="/cases" variant="text" size="sm" icon={<ArrowLeft aria-hidden className="icon-dir" />}>
+            {t('title')}
           </ButtonLink>
         }
-        title={c ? `${humanize(c.categoryKey)} · ${c.buildingName ?? 'a deleted building'}` : 'Case'}
-        description={c ? `Opened ${formatDateTime(c.openedAt)}${c.automatic ? ' by itself, at the threshold' : ''}` : undefined}
+        title={c ? `${label(c.categoryKey)} · ${c.buildingName ?? t('deletedBuilding')}` : t('case')}
+        description={c ? t(c.automatic ? 'openedAuto' : 'openedOn', { when: f.dateTime(c.openedAt) }) : undefined}
         actions={
           c && c.status === 'open' ? (
             <span className="row" style={{ gap: 6 }}>
               <Button variant="primary" onClick={() => setClosing('resolve')}>
-                Resolve
+                {t('resolve')}
               </Button>
-              <Button onClick={() => setClosing('dismiss')}>Dismiss</Button>
+              <Button onClick={() => setClosing('dismiss')}>{t('dismiss')}</Button>
             </span>
           ) : c ? (
-            <Badge>{humanize(c.status)}</Badge>
+            <Badge>{label(c.status)}</Badge>
           ) : undefined
         }
       />
@@ -96,63 +106,63 @@ export default function CasePage() {
         {c ? (
           <div className="stack">
             <Card flush>
-              <CardHeader title="Work order" />
+              <CardHeader title={t('workOrder')} />
               <CardBody>
                 {c.workOrder ? (
                   <Link className="table__link" href={`/maintenance/${c.workOrder.id}`}>
-                    {c.workOrder.number} · {humanize(c.workOrder.status)}
+                    {c.workOrder.number} · {label(c.workOrder.status)}
                   </Link>
                 ) : c.status === 'open' ? (
                   <div className="stack">
-                    <p className="t-secondary">One work order answers the whole case, on the common area where the fault is.</p>
+                    <p className="t-secondary">{t('workOrderHint')}</p>
                     <div className="form__row">
-                      <Field label="Common area">
+                      <Field label={t('commonArea')}>
                         {(p) => (
                           <Select {...p} value={areaId} onChange={(e) => setAreaId(e.target.value)}>
-                            <option value="">Choose…</option>
+                            <option value="">{cm('select')}</option>
                             {(areas.rows ?? []).map((x) => (
                               <option key={x.id} value={x.id}>
-                                {x.code} · {x.nameEn}
+                                <span className="ltr">{x.code}</span> · {locale === 'ar' ? x.nameAr : x.nameEn}
                               </option>
                             ))}
                           </Select>
                         )}
                       </Field>
-                      <Field label="What is to be done">
+                      <Field label={t('whatToDo')}>
                         {(p) => <Input {...p} value={words} onChange={(e) => setWords(e.target.value)} />}
                       </Field>
                     </div>
                     <span>
                       <Button loading={order.isPending} disabled={!areaId || !words.trim()} onClick={() => order.mutate()}>
-                        Open the work order
+                        {t('openWorkOrder')}
                       </Button>
                     </span>
                     <ErrorAlert error={order.error} />
                   </div>
                 ) : (
-                  <p className="t-secondary">None.</p>
+                  <p className="t-secondary">{t('noWorkOrder')}</p>
                 )}
               </CardBody>
             </Card>
             <Card flush>
-              <CardHeader title={`Tickets (${c.ticketCount})`} />
+              <CardHeader title={t('ticketsCount', { count: f.number(c.ticketCount) })} />
               <DataTable<CaseTicket>
                 rows={c.tickets}
-                rowKey={(t) => t.id}
-                empty="No ticket you may see"
+                rowKey={(x) => x.id}
+                empty={t('noTicket')}
                 columns={[
                   {
                     key: 'number',
-                    header: 'Ticket',
-                    cell: (t) => (
-                      <Link className="table__link" href={`/maintenance/${t.id}`}>
-                        {t.number}
+                    header: t('ticket'),
+                    cell: (x) => (
+                      <Link className="table__link" href={`/maintenance/${x.id}`}>
+                        {x.number}
                       </Link>
                     ),
                   },
-                  { key: 'unit', header: 'Unit', cell: (t) => t.unitCode ?? '—' },
-                  { key: 'status', header: 'Status', cell: (t) => humanize(t.status) },
-                  { key: 'joined', header: 'Joined', cell: (t) => formatDateTime(t.linkedAt) },
+                  { key: 'unit', header: cm('unit'), cell: (x) => x.unitCode ?? '—' },
+                  { key: 'status', header: cm('status'), cell: (x) => label(x.status) },
+                  { key: 'joined', header: t('joined'), cell: (x) => f.dateTime(x.linkedAt) },
                 ]}
               />
             </Card>
@@ -162,14 +172,14 @@ export default function CasePage() {
       <ReasonCodeDialog
         open={closing !== null}
         onClose={() => setClosing(null)}
-        title={closing === 'resolve' ? 'Resolve this case?' : 'Dismiss this case?'}
+        title={closing === 'resolve' ? t('resolveTitle') : t('dismissTitle')}
         description={
           closing === 'resolve'
-            ? 'Each resident who reported one of its tickets is told. The tickets keep their own course.'
-            : 'Nobody is told. Its tickets stay in it and do not count towards a new case.'
+            ? t('resolveDescription')
+            : t('dismissDescription')
         }
         codes={closing === 'resolve' ? REASON_CODES.maintenanceCaseResolve : REASON_CODES.maintenanceCaseDismiss}
-        confirmLabel={closing === 'resolve' ? 'Resolve' : 'Dismiss'}
+        confirmLabel={closing === 'resolve' ? t('resolve') : t('dismiss')}
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
         onConfirm={(code) => closing && close.mutate({ verb: closing, code })}

@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDate, formatDateTime, humanize, REASON_CODES, relativeTime, shortId, unwrap } from '@jiwar/api';
+import { REASON_CODES, shortId, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import {
   Badge,
@@ -14,8 +14,11 @@ import {
   Segmented,
   Select,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Suspense, useState } from 'react';
 import { AccessCodeDialog, EngagementReview } from '@/components/engagement-review';
 import { wageText } from '@/components/workers/worker-wages';
@@ -29,6 +32,8 @@ import {
   type EngagementStatus,
 } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/workers';
+import en from '@/messages/en/workers';
 import type { Schema } from '@jiwar/api';
 
 const TABS = ['review', 'all', 'compliance', 'incidents'] as const;
@@ -47,6 +52,10 @@ function EngagementTable({
   empty: string;
   emptyHint?: string;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   return (
     <DataTable<Engagement>
       rows={rows}
@@ -56,35 +65,35 @@ function EngagementTable({
       columns={[
         {
           key: 'name',
-          header: 'Worker',
+          header: t('worker'),
           cell: (e) => (
             <Button variant="text" className="table__link" onClick={() => onOpen(e)}>
               {e.workerName}
             </Button>
           ),
         },
-        { key: 'capacity', header: 'Capacity', cell: (e) => humanize(e.capacity) },
-        { key: 'unit', header: 'Unit', cell: (e) => e.unitCode },
+        { key: 'capacity', header: t('capacity'), cell: (e) => label(e.capacity) },
+        { key: 'unit', header: c('unit'), cell: (e) => e.unitCode },
         {
           key: 'doc',
-          header: 'Document',
+          header: t('document'),
           cell: (e) => (
             <span className="row">
-              {humanize(e.idDocumentType)}
+              {label(e.idDocumentType)}
               {e.idDocumentType === 'passport' && !e.birthDateVerified ? (
-                <Badge tone="terracotta">Birth date to confirm</Badge>
+                <Badge tone="terracotta">{t('birthToConfirm')}</Badge>
               ) : null}
             </span>
           ),
         },
-        { key: 'wage', header: 'Monthly wage', cell: (e) => <span className="t-num">{wageText(e.monthlyWage)}</span> },
-        { key: 'status', header: 'Status', cell: (e) => <StatusBadge status={e.status} /> },
-        { key: 'when', header: 'Registered', cell: (e) => <span title={formatDateTime(e.createdAt)}>{relativeTime(e.createdAt)}</span> },
+        { key: 'wage', header: t('monthlyWage'), cell: (e) => <span className="t-num">{wageText(f, e.monthlyWage)}</span> },
+        { key: 'status', header: c('status'), cell: (e) => <StatusBadge status={e.status} /> },
+        { key: 'when', header: t('registered'), cell: (e) => <span title={f.dateTime(e.createdAt)}>{f.relative(e.createdAt)}</span> },
         ...(actions
           ? [
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: actions,
               },
@@ -96,6 +105,7 @@ function EngagementTable({
 }
 
 function ReviewQueue() {
+  const t = useT(en, ar);
   const [open, setOpen] = useState<string | null>(null);
   const list = useCursorList(keys.engagements('pending_review'), (c) => fetchers.engagements('pending_review', c));
   return (
@@ -104,11 +114,11 @@ function ReviewQueue() {
         <EngagementTable
           rows={list.rows}
           onOpen={(e) => setOpen(e.id)}
-          empty="No worker is waiting for review"
-          emptyHint="Residents register domestic workers; each one needs a manager's approval before their code works."
+          empty={t('reviewEmpty')}
+          emptyHint={t('reviewEmptyHint')}
           actions={(e) => (
             <Button size="sm" variant="primary" onClick={() => setOpen(e.id)}>
-              Review
+              {t('review')}
             </Button>
           )}
         />
@@ -122,6 +132,9 @@ function ReviewQueue() {
 type Pending = { kind: 'suspend' | 'end'; e: Engagement } | null;
 
 function AllEngagements() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [status, setStatus] = useState<EngagementStatus | ''>('active');
   const [open, setOpen] = useState<string | null>(null);
@@ -140,7 +153,7 @@ function AllEngagements() {
     {
       invalidate: [keys.engagementsAll],
       onDone: (_, v) => {
-        toast.show(v.kind === 'suspend' ? `${v.e.workerName} is suspended; their code stops working.` : `${v.e.workerName}'s engagement ended.`);
+        toast.show(v.kind === 'suspend' ? t('suspendedToast', { name: v.e.workerName }) : t('endedToast', { name: v.e.workerName }));
         setPending(null);
       },
     },
@@ -153,13 +166,13 @@ function AllEngagements() {
   return (
     <>
       <div className="toolbar">
-        <Field label="Status">
+        <Field label={c('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as EngagementStatus | '')}>
-              <option value="">All statuses</option>
+              <option value="">{t('allStatuses')}</option>
               {(['pending_review', 'active', 'suspended', 'ended', 'rejected'] as const).map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
@@ -172,22 +185,22 @@ function AllEngagements() {
           <EngagementTable
             rows={list.rows}
             onOpen={(e) => setOpen(e.id)}
-            empty="No worker with this status"
+            empty={t('allEmpty')}
             actions={(e) => (
               <span className="row" style={{ justifyContent: 'flex-end' }}>
                 {e.status === 'active' ? (
                   <Button size="sm" onClick={() => setPending({ kind: 'suspend', e })}>
-                    Suspend
+                    {t('suspend')}
                   </Button>
                 ) : null}
                 {e.status === 'suspended' ? (
                   <Button size="sm" loading={resume.isPending && resume.variables?.id === e.id} onClick={() => resume.mutate(e)}>
-                    Resume
+                    {t('resume')}
                   </Button>
                 ) : null}
                 {e.status === 'active' || e.status === 'suspended' ? (
                   <Button size="sm" onClick={() => setPending({ kind: 'end', e })}>
-                    End
+                    {t('end')}
                   </Button>
                 ) : null}
               </span>
@@ -203,14 +216,18 @@ function AllEngagements() {
           setPending(null);
           act.reset();
         }}
-        title={pending?.kind === 'suspend' ? `Suspend ${pending.e.workerName}?` : `End ${pending?.e.workerName ?? ''}'s engagement?`}
+        title={
+          pending?.kind === 'suspend'
+            ? t('suspendTitle', { name: pending.e.workerName })
+            : t('endTitle', { name: pending?.e.workerName ?? '' })
+        }
         description={
           pending?.kind === 'suspend'
-            ? 'Their code stops working until a manager resumes it. The worker and the unit are told.'
-            : 'The code stops working for good. A new engagement needs a new registration.'
+            ? t('suspendDescription')
+            : t('endDescription')
         }
         codes={pending?.kind === 'suspend' ? REASON_CODES.workerSuspend : REASON_CODES.workerEnd}
-        confirmLabel={pending?.kind === 'suspend' ? 'Suspend' : 'End engagement'}
+        confirmLabel={pending?.kind === 'suspend' ? t('suspend') : t('endConfirm')}
         danger
         pending={act.isPending}
         error={<ErrorAlert error={act.error} />}
@@ -220,7 +237,7 @@ function AllEngagements() {
         code={issued}
         onClose={() => {
           setIssued(null);
-          toast.show('Worker resumed.');
+          toast.show(t('resumed'));
         }}
       />
     </>
@@ -228,6 +245,10 @@ function AllEngagements() {
 }
 
 function Compliance() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [status, setStatus] = useState<'open' | 'closed'>('open');
   const [closing, setClosing] = useState<ComplianceCase | null>(null);
@@ -243,7 +264,7 @@ function Compliance() {
     {
       invalidate: [['compliance-cases'], keys.engagementsAll],
       onDone: () => {
-        toast.show('Case closed.');
+        toast.show(t('caseClosed'));
         setClosing(null);
       },
     },
@@ -252,12 +273,12 @@ function Compliance() {
     <>
       <div className="toolbar">
         <Segmented
-          label="Case status"
+          label={t('caseStatus')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'open', label: 'Open' },
-            { value: 'closed', label: 'Closed' },
+            { value: 'open', label: label('open') },
+            { value: 'closed', label: label('closed') },
           ]}
         />
       </div>
@@ -265,23 +286,23 @@ function Compliance() {
         <QueryState query={list}>
           <DataTable<ComplianceCase>
             rows={list.rows}
-            rowKey={(c) => c.id}
-            empty={status === 'open' ? 'No open compliance case' : 'No closed case'}
-            emptyHint="A case opens when a worker may be under 18: at review, after a birth date correction, or from a report."
+            rowKey={(x) => x.id}
+            empty={status === 'open' ? t('complianceOpenEmpty') : t('complianceClosedEmpty')}
+            emptyHint={t('complianceHint')}
             columns={[
-              { key: 'kind', header: 'Case', cell: (c) => <Badge tone="terracotta">{humanize(c.kind)}</Badge> },
-              { key: 'worker', header: 'Worker', cell: (c) => <span className="t-mono">{shortId(c.workerId)}</span> },
-              { key: 'source', header: 'Raised by', cell: (c) => humanize(c.source) },
-              { key: 'opened', header: 'Opened', cell: (c) => formatDateTime(c.openedAt) },
-              { key: 'closed', header: 'Closed', cell: (c) => formatDate(c.closedAt) },
+              { key: 'kind', header: t('case'), cell: (x) => <Badge tone="terracotta">{label(x.kind)}</Badge> },
+              { key: 'worker', header: t('worker'), cell: (x) => <span className="t-mono ltr">{shortId(x.workerId)}</span> },
+              { key: 'source', header: t('raisedBy'), cell: (x) => label(x.source) },
+              { key: 'opened', header: t('opened'), cell: (x) => f.dateTime(x.openedAt) },
+              { key: 'closed', header: t('closed'), cell: (x) => f.date(x.closedAt) },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
-                cell: (c) =>
-                  c.status === 'open' ? (
-                    <Button size="sm" onClick={() => setClosing(c)}>
-                      Close case
+                cell: (x) =>
+                  x.status === 'open' ? (
+                    <Button size="sm" onClick={() => setClosing(x)}>
+                      {t('closeCase')}
                     </Button>
                   ) : null,
               },
@@ -296,10 +317,10 @@ function Compliance() {
           setClosing(null);
           close.reset();
         }}
-        title="Close this compliance case?"
+        title={t('closeCaseTitle')}
         codes={REASON_CODES.complianceClose}
-        textLabel="Note"
-        confirmLabel="Close case"
+        textLabel={t('note')}
+        confirmLabel={t('closeCase')}
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
         onConfirm={(reason) => closing && close.mutate({ c: closing, ...reason })}
@@ -309,6 +330,10 @@ function Compliance() {
 }
 
 function Incidents() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [status, setStatus] = useState<'open' | 'closed'>('open');
   const [closing, setClosing] = useState<CardIncident | null>(null);
@@ -318,7 +343,7 @@ function Incidents() {
     {
       invalidate: [['card-incidents']],
       onDone: () => {
-        toast.show('Incident closed.');
+        toast.show(t('incidentClosed'));
         setClosing(null);
       },
     },
@@ -327,12 +352,12 @@ function Incidents() {
     <>
       <div className="toolbar">
         <Segmented
-          label="Incident status"
+          label={t('incidentStatus')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'open', label: 'Open' },
-            { value: 'closed', label: 'Closed' },
+            { value: 'open', label: label('open') },
+            { value: 'closed', label: label('closed') },
           ]}
         />
       </div>
@@ -341,21 +366,21 @@ function Incidents() {
           <DataTable<CardIncident>
             rows={list.rows}
             rowKey={(i) => i.id}
-            empty={status === 'open' ? 'No open card incident' : 'No closed incident'}
-            emptyHint="Lost or confiscated worker cards, reported by residents or management."
+            empty={status === 'open' ? t('incidentOpenEmpty') : t('incidentClosedEmpty')}
+            emptyHint={t('incidentHint')}
             columns={[
-              { key: 'type', header: 'Incident', cell: (i) => <Badge tone={i.type === 'confiscated' ? 'error' : 'terracotta'}>{humanize(i.type)}</Badge> },
-              { key: 'worker', header: 'Worker', cell: (i) => <span className="t-mono">{shortId(i.workerId)}</span> },
-              { key: 'via', header: 'Reported by', cell: (i) => humanize(i.reportedVia) },
-              { key: 'when', header: 'Reported', cell: (i) => formatDateTime(i.reportedAt) },
+              { key: 'type', header: t('incident'), cell: (i) => <Badge tone={i.type === 'confiscated' ? 'error' : 'terracotta'}>{label(i.type)}</Badge> },
+              { key: 'worker', header: t('worker'), cell: (i) => <span className="t-mono ltr">{shortId(i.workerId)}</span> },
+              { key: 'via', header: t('reportedBy'), cell: (i) => label(i.reportedVia) },
+              { key: 'when', header: t('reported'), cell: (i) => f.dateTime(i.reportedAt) },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (i) =>
                   i.status === 'open' ? (
                     <Button size="sm" onClick={() => setClosing(i)}>
-                      Close
+                      {t('close')}
                     </Button>
                   ) : null,
               },
@@ -370,9 +395,9 @@ function Incidents() {
           setClosing(null);
           close.reset();
         }}
-        title="Close this incident?"
-        description="Do this once the card is recovered or replaced."
-        confirmLabel="Close incident"
+        title={t('closeIncidentTitle')}
+        description={t('closeIncidentDescription')}
+        confirmLabel={t('closeIncident')}
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
         onConfirm={() => closing && close.mutate(closing)}
@@ -382,22 +407,23 @@ function Incidents() {
 }
 
 function WorkersView() {
+  const t = useT(en, ar);
   const [tab, setTab] = useTab(TABS, 'review');
   return (
     <>
       <PageHeader
-        title="Workers"
-        description="Domestic workers registered by residents: review, suspend, and follow up on cases."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Segmented<Tab>
-            label="Workers"
+            label={t('tabsLabel')}
             value={tab}
             onChange={setTab}
             options={[
-              { value: 'review', label: 'To review' },
-              { value: 'all', label: 'Engagements' },
-              { value: 'compliance', label: 'Compliance' },
-              { value: 'incidents', label: 'Card incidents' },
+              { value: 'review', label: t('tab.review') },
+              { value: 'all', label: t('tab.all') },
+              { value: 'compliance', label: t('tab.compliance') },
+              { value: 'incidents', label: t('tab.incidents') },
             ]}
           />
         }

@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  ErrorText,
-  formatDateTime,
-  REASON_CODES,
-  unwrap,
-  type Schema,
-} from '@jiwar/api';
+import { ErrorText, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { QueryState, useAction } from '@jiwar/api/react';
 import {
   Button,
@@ -14,12 +8,16 @@ import {
   DataTable,
   PageHeader,
   ReasonCodeDialog,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/contracts';
+import en from '@/messages/en/contracts';
 
 type Renewal = Schema<'StaffRenewalView'>;
 const KEY = ['contract-renewals'] as const;
@@ -30,6 +28,9 @@ const KEY = ['contract-renewals'] as const;
  * a reason the tenant sees.
  */
 export default function ContractRenewalsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [declining, setDeclining] = useState<Renewal | null>(null);
   const list = useQuery({
@@ -48,7 +49,7 @@ export default function ContractRenewalsPage() {
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Declined. The tenant is told.');
+        toast.show(t('declinedToast'));
         setDeclining(null);
       },
     },
@@ -56,45 +57,45 @@ export default function ContractRenewalsPage() {
   return (
     <>
       <PageHeader
-        title="Lease renewal requests"
-        description="Renew by recording the next lease on the unit's papers, with this request's id; or decline with a reason."
+        title={t('renewalsTitle')}
+        description={t('renewalsDescription')}
       />
       <Card flush>
         <QueryState query={list}>
           <DataTable<Renewal>
             rows={list.data}
             rowKey={(r) => r.id}
-            empty="No renewal request is open"
-            emptyHint="A tenant asks from the app, until the lease ends."
+            empty={t('renewalsEmpty')}
+            emptyHint={t('renewalsEmptyHint')}
             columns={[
               {
                 key: 'unit',
-                header: 'Unit',
+                header: c('unit'),
                 cell: (r) => (
                   <Link
                     className="table__link"
                     href={`/units/${r.unitId}/papers`}
                   >
-                    The unit’s papers
+                    {t('unitPapers')}
                   </Link>
                 ),
               },
               {
                 key: 'id',
-                header: 'Request',
-                cell: (r) => <span className="t-mono">{r.id}</span>,
+                header: t('request'),
+                cell: (r) => <span className="t-mono ltr">{r.id}</span>,
               },
               {
                 key: 'when',
-                header: 'Asked',
-                cell: (r) => formatDateTime(r.createdAt),
+                header: t('asked'),
+                cell: (r) => f.dateTime(r.createdAt),
               },
               {
                 key: 'act',
                 header: '',
                 cell: (r) => (
                   <Button size="sm" onClick={() => setDeclining(r)}>
-                    Decline
+                    {t('decline')}
                   </Button>
                 ),
               },
@@ -105,10 +106,10 @@ export default function ContractRenewalsPage() {
       <ReasonCodeDialog
         open={declining !== null}
         onClose={() => setDeclining(null)}
-        title="Decline the renewal"
-        description="The tenant sees the reason and plans the move out."
+        title={t('declineTitle')}
+        description={t('declineDescription')}
         codes={REASON_CODES.contractRenewalDecline}
-        confirmLabel="Decline"
+        confirmLabel={t('decline')}
         danger
         pending={decline.isPending}
         error={decline.error ? <ErrorText error={decline.error} /> : undefined}

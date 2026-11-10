@@ -1,21 +1,34 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, Dialog, Field, ReasonCodeDialog, Segmented, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Dialog,
+  Field,
+  ReasonCodeDialog,
+  Segmented,
+  StatusBadge,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type Appointment, type AppointmentMode } from '@/lib/queries';
-import { MODE_TEXT, SlotPicker, slotText } from './bits';
+import ar from '@/messages/ar/services-mgmt-requests';
+import en from '@/messages/en/services-mgmt-requests';
+import { SlotPicker, useSlotText } from './bits';
 import { appointmentActionsFor } from './logic';
 
 type Open = 'propose' | 'cancel' | null;
 
-const WAITS: Record<string, string> = {
-  requested: 'The resident picked this slot. Confirm it, or propose another.',
-  proposed: 'Proposed by the management: waiting for the resident to accept or pick another.',
-  confirmed: 'Agreed by both sides.',
-};
+const WAITS = ['requested', 'proposed', 'confirmed'] as const;
+const waits = (status: string): status is (typeof WAITS)[number] => (WAITS as readonly string[]).includes(status);
 
 /**
  * An appointment request's slot and what staff may do with it: confirm the
@@ -37,6 +50,8 @@ export function AppointmentActions({
   /** Buttons only, for a table row. */
   compact?: boolean;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [open, setOpen] = useState<Open>(null);
   const [startsAt, setStartsAt] = useState('');
@@ -54,7 +69,7 @@ export function AppointmentActions({
   };
   const confirm = useAction(() => unwrap(api.POST('/api/v1/management/requests/{id}/appointment/confirm', { params: path })), {
     ...refresh,
-    onDone: () => toast.show(`The appointment of ${number} is confirmed.`),
+    onDone: () => toast.show(t('confirmedToast', { number })),
   });
   const propose = useAction(
     () =>
@@ -67,7 +82,7 @@ export function AppointmentActions({
     {
       ...refresh,
       onDone: () => {
-        toast.show('The slot was proposed to the resident.');
+        toast.show(t('proposedToast'));
         setIdempotencyKey(crypto.randomUUID());
         close();
       },
@@ -79,7 +94,7 @@ export function AppointmentActions({
     {
       ...refresh,
       onDone: () => {
-        toast.show('The appointment is cancelled.');
+        toast.show(t('apptCancelledToast'));
         close();
       },
     },
@@ -91,17 +106,17 @@ export function AppointmentActions({
       <span className="row" style={{ gap: 8, flexWrap: 'wrap', justifyContent: compact ? 'flex-end' : undefined }}>
         {may.confirm ? (
           <Button size="sm" variant="primary" loading={confirm.isPending} onClick={() => confirm.mutate()}>
-            Confirm
+            {c('confirm')}
           </Button>
         ) : null}
         {may.propose ? (
           <Button size="sm" onClick={() => setOpen('propose')}>
-            {may.proposeLabel}
+            {t(may.proposeLabel)}
           </Button>
         ) : null}
         {may.cancel ? (
           <Button size="sm" variant="danger" onClick={() => setOpen('cancel')}>
-            Cancel
+            {c('cancel')}
           </Button>
         ) : null}
       </span>
@@ -110,29 +125,29 @@ export function AppointmentActions({
       <Dialog
         open={open === 'propose'}
         onClose={close}
-        title={`${may.proposeLabel} for ${number}`}
-        description="The resident is told, and accepts it or picks another slot. Until then the slot is held."
+        title={t(may.proposeLabel === 'proposeAnother' ? 'proposeAnotherTitle' : 'proposeTitle', { number })}
+        description={t('proposeDescription')}
         onSubmit={() => startsAt && propose.mutate()}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={propose.isPending} disabled={!startsAt}>
-              Propose
+              {t('proposeSubmit')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="Slot" hint="From the office hours, in your time zone.">
+          <Field label={t('slot')} hint={t('proposeSlotHint')}>
             {(p) => <SlotPicker {...p} enabled={open === 'propose'} value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />}
           </Field>
           <Segmented<AppointmentMode>
-            label="How"
+            label={t('how')}
             value={mode}
             onChange={setMode}
             options={[
-              { value: 'in_person', label: MODE_TEXT.in_person },
-              { value: 'phone', label: MODE_TEXT.phone },
+              { value: 'in_person', label: t('mode.in_person') },
+              { value: 'phone', label: t('mode.phone') },
             ]}
           />
           <ErrorAlert error={propose.error} />
@@ -142,10 +157,10 @@ export function AppointmentActions({
       <ReasonCodeDialog
         open={open === 'cancel'}
         onClose={close}
-        title={`Cancel the appointment of ${number}?`}
-        description="The resident is told and the slot is free again. The request itself stays open."
+        title={t('cancelApptTitle', { number })}
+        description={t('cancelApptDescription')}
         codes={REASON_CODES.managementAppointmentCancelByStaff}
-        confirmLabel="Cancel appointment"
+        confirmLabel={t('cancelAppt')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
@@ -167,44 +182,49 @@ export function RequestAppointment({
   requestStatus: string;
   appointment: Appointment | null;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const slotText = useSlotText();
   return (
     <Card flush>
-      <CardHeader title="Appointment" />
+      <CardHeader title={t('appointment')} />
       <CardBody>
         {appointment ? (
           <dl className="dl">
-            <dt>When</dt>
+            <dt>{t('when')}</dt>
             <dd>{slotText(appointment.startsAt, appointment.endsAt)}</dd>
-            <dt>How</dt>
-            <dd>{MODE_TEXT[appointment.mode]}</dd>
-            <dt>Status</dt>
+            <dt>{t('how')}</dt>
+            <dd>{t(`mode.${appointment.mode}`)}</dd>
+            <dt>{c('status')}</dt>
             <dd>
               <StatusBadge status={appointment.status} />
             </dd>
-            <dt>Picked by</dt>
-            <dd>{appointment.proposedBy === 'staff' ? 'The management' : 'The resident'}</dd>
+            <dt>{t('pickedBy')}</dt>
+            <dd>{t(`pickedBy.${appointment.proposedBy}`)}</dd>
             {appointment.confirmedAt ? (
               <>
-                <dt>Confirmed</dt>
-                <dd>{formatDateTime(appointment.confirmedAt)}</dd>
+                <dt>{t('confirmedAt')}</dt>
+                <dd>{fmt.dateTime(appointment.confirmedAt)}</dd>
               </>
             ) : null}
             {appointment.cancelReason ? (
               <>
-                <dt>Cancelled</dt>
+                <dt>{t('cancelledAt')}</dt>
                 <dd>
-                  {humanize(appointment.cancelReason)}
-                  {appointment.cancelledBy ? ` · by ${appointment.cancelledBy === 'staff' ? 'the management' : `the ${appointment.cancelledBy}`}` : ''}
+                  {label(appointment.cancelReason)}
+                  {appointment.cancelledBy ? ` · ${t(`cancelledBy.${appointment.cancelledBy}`)}` : ''}
                 </dd>
               </>
             ) : null}
           </dl>
         ) : (
-          <p className="t-secondary">No appointment yet.</p>
+          <p className="t-secondary">{t('noAppointment')}</p>
         )}
-        {appointment && WAITS[appointment.status] ? (
+        {appointment && waits(appointment.status) ? (
           <p className="t-secondary" style={{ margin: '12px 0' }}>
-            {WAITS[appointment.status]}
+            {t(`wait.${appointment.status}`)}
           </p>
         ) : null}
         <AppointmentActions requestId={requestId} number={number} requestStatus={requestStatus} appointment={appointment} />

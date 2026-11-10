@@ -1,52 +1,55 @@
 'use client';
 
-import { formatDateTime, humanize } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Badge, ButtonLink, Card, CardBody, CardHeader, ForbiddenState, PageHeader, Segmented, StatusBadge } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, ButtonLink, Card, CardBody, CardHeader, ForbiddenState, PageHeader, Segmented, StatusBadge, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { Back, personName, PersonLink } from '@/components/neighbours/bits';
+import { Back, PersonLink } from '@/components/neighbours/bits';
 import { ComplaintActions } from '@/components/neighbours/complaint-actions';
 import { ComplaintThread } from '@/components/neighbours/complaint-thread';
-import { unitText } from '@/components/neighbours/logic';
+import { useWho } from '@/components/neighbours/who';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ComplaintDetail } from '@/lib/queries';
+import ar from '@/messages/ar/complaints';
+import en from '@/messages/en/complaints';
 import { useTab } from '@/lib/use-tab';
 
 const TABS = ['complainant', 'unit', 'notes'] as const;
 type Tab = (typeof TABS)[number];
 
-const RECIPIENT_TEXT: Record<string, string> = {
-  household: 'The people answering for the household living in the unit',
-  owners: 'The unit’s owners: nobody lived there',
-};
-
 function Details({ complaint }: { complaint: ComplaintDetail }) {
+  const t = useT(en, ar);
+  const cm = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
+  const who = useWho();
   return (
     <Card flush>
-      <CardHeader title="Complaint" />
+      <CardHeader title={t('complaint')} />
       <CardBody>
         <dl className="dl">
-          <dt>Category</dt>
-          <dd>{complaint.category.nameEn}</dd>
-          <dt>Complainant</dt>
+          <dt>{cm('category')}</dt>
+          <dd>{locale === 'ar' ? complaint.category.nameAr : complaint.category.nameEn}</dd>
+          <dt>{t('complainant')}</dt>
           <dd>
             <PersonLink person={complaint.author} />
           </dd>
-          <dt>From unit</dt>
-          <dd>{complaint.authorUnit ? unitText(complaint.authorUnit) : <span className="t-secondary">No unit now</span>}</dd>
-          <dt>Against unit</dt>
-          <dd>{unitText(complaint.targetUnit)}</dd>
-          <dt>Filed</dt>
-          <dd>{formatDateTime(complaint.createdAt)}</dd>
-          <dt>Last activity</dt>
-          <dd>{formatDateTime(complaint.lastActivityAt)}</dd>
+          <dt>{t('fromUnit')}</dt>
+          <dd>{complaint.authorUnit ? who.unit(complaint.authorUnit) : <span className="t-secondary">{t('noUnitNow')}</span>}</dd>
+          <dt>{t('againstUnit')}</dt>
+          <dd>{who.unit(complaint.targetUnit)}</dd>
+          <dt>{t('filed')}</dt>
+          <dd>{f.dateTime(complaint.createdAt)}</dd>
+          <dt>{t('lastActivity')}</dt>
+          <dd>{f.dateTime(complaint.lastActivityAt)}</dd>
           {complaint.closedAt ? (
             <>
-              <dt>Closed</dt>
+              <dt>{t('closed')}</dt>
               <dd>
-                {formatDateTime(complaint.closedAt)} · {humanize(complaint.closeReason)}
+                {f.dateTime(complaint.closedAt)} · {label(complaint.closeReason)}
               </dd>
             </>
           ) : null}
@@ -58,30 +61,33 @@ function Details({ complaint }: { complaint: ComplaintDetail }) {
 
 /** What there has been against the same unit, this complaint included. */
 function AgainstUnit({ complaint }: { complaint: ComplaintDetail }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const who = useWho();
   const h = complaint.unitHistory;
   return (
     <Card flush>
       <CardHeader
-        title="Against this unit"
+        title={t('againstUnitCard')}
         actions={
           <ButtonLink size="sm" href={`/complaints?unit=${complaint.targetUnit.id}`}>
-            See them
+            {t('seeThem')}
           </ButtonLink>
         }
       >
-        <span className="t-secondary">Unit {unitText(complaint.targetUnit)}, this complaint included.</span>
+        <span className="t-secondary">{t('unitThisIncluded', { unit: who.unit(complaint.targetUnit) })}</span>
       </CardHeader>
       <CardBody>
         <dl className="dl">
-          <dt>In all</dt>
-          <dd className="t-num">{h.total}</dd>
-          <dt>Open</dt>
-          <dd className="t-num">{h.open}</dd>
-          <dt>Resolved</dt>
-          <dd className="t-num">{h.resolved}</dd>
-          <dt>Dismissed</dt>
+          <dt>{t('inAll')}</dt>
+          <dd className="t-num">{f.number(h.total)}</dd>
+          <dt>{t('open')}</dt>
+          <dd className="t-num">{f.number(h.open)}</dd>
+          <dt>{t('resolved')}</dt>
+          <dd className="t-num">{f.number(h.resolved)}</dd>
+          <dt>{t('dismissed')}</dt>
           <dd className="t-num">
-            {h.dismissed} <span className="t-secondary">({h.unfounded} as unfounded)</span>
+            {f.number(h.dismissed)} <span className="t-secondary">{t('asUnfounded', { count: f.number(h.unfounded) })}</span>
           </dd>
         </dl>
       </CardBody>
@@ -91,29 +97,32 @@ function AgainstUnit({ complaint }: { complaint: ComplaintDetail }) {
 
 /** What this complainant has filed before: a pattern, read before deciding. */
 function AuthorPattern({ complaint }: { complaint: ComplaintDetail }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const who = useWho();
   const p = complaint.authorPattern;
   return (
     <Card flush>
       <CardHeader
-        title="This author"
+        title={t('thisAuthor')}
         actions={
           <ButtonLink size="sm" href={`/complaints?author=${complaint.author.id}`}>
-            See them
+            {t('seeThem')}
           </ButtonLink>
         }
       >
-        <span className="t-secondary">Every complaint {personName(complaint.author)} filed, this one included.</span>
+        <span className="t-secondary">{t('everyComplaintBy', { name: who.person(complaint.author) })}</span>
       </CardHeader>
       <CardBody>
         <dl className="dl">
-          <dt>Filed in all</dt>
-          <dd className="t-num">{p.total}</dd>
-          <dt>Open</dt>
-          <dd className="t-num">{p.open}</dd>
-          <dt>Dismissed as unfounded</dt>
-          <dd className="t-num">{p.dismissedUnfounded}</dd>
-          <dt>Against this same unit</dt>
-          <dd className="t-num">{p.againstSameUnit}</dd>
+          <dt>{t('filedInAll')}</dt>
+          <dd className="t-num">{f.number(p.total)}</dd>
+          <dt>{t('open')}</dt>
+          <dd className="t-num">{f.number(p.open)}</dd>
+          <dt>{t('dismissedUnfounded')}</dt>
+          <dd className="t-num">{f.number(p.dismissedUnfounded)}</dd>
+          <dt>{t('againstSameUnit')}</dt>
+          <dd className="t-num">{f.number(p.againstSameUnit)}</dd>
         </dl>
       </CardBody>
     </Card>
@@ -121,19 +130,23 @@ function AuthorPattern({ complaint }: { complaint: ComplaintDetail }) {
 }
 
 function History({ complaint }: { complaint: ComplaintDetail }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
+  const who = useWho();
   return (
     <Card flush>
-      <CardHeader title="History" />
+      <CardHeader title={t('history')} />
       <ul className="list">
         {complaint.history.map((step, i) => (
           <li key={`${step.at}-${i}`} className="list__item">
             <span className="list__text">
               <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                {step.from === null ? 'Filed' : <StatusBadge status={step.to} />}
-                {step.reasonCode ? <span className="t-secondary">{humanize(step.reasonCode)}</span> : null}
+                {step.from === null ? t('historyFiled') : <StatusBadge status={step.to} />}
+                {step.reasonCode ? <span className="t-secondary">{label(step.reasonCode)}</span> : null}
               </span>
               <span className="list__meta">
-                {personName(step.actor)} · {step.actorSide === 'staff' ? 'management' : 'resident'} · {formatDateTime(step.at)}
+                {who.person(step.actor)} · {step.actorSide === 'staff' ? t('sideStaff') : t('sideResident')} · {f.dateTime(step.at)}
               </span>
             </span>
           </li>
@@ -145,22 +158,26 @@ function History({ complaint }: { complaint: ComplaintDetail }) {
 
 /** The one notice the unit was sent: its words, who got them, and when. */
 function Notice({ complaint }: { complaint: ComplaintDetail }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
+  const who = useWho();
   const notice = complaint.notice;
   if (!notice) return null;
   return (
     <div style={{ padding: 16, borderBottom: '1px solid var(--hairline-soft)' }}>
       <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-        <Badge tone="terracotta">The notice</Badge>
+        <Badge tone="terracotta">{t('noticeBadge')}</Badge>
         <span className="t-secondary">
-          Sent {formatDateTime(notice.sentAt)} by {personName(notice.sentBy)}
+          {t('noticeSent', { when: f.dateTime(notice.sentAt), name: who.person(notice.sentBy) })}
         </span>
       </span>
       <p style={{ margin: '8px 0', whiteSpace: 'pre-wrap' }}>{notice.body}</p>
       <dl className="dl">
-        <dt>Sent to</dt>
-        <dd>{notice.recipients.length ? notice.recipients.map(personName).join(', ') : <span className="t-secondary">Nobody is left of them</span>}</dd>
-        <dt>As</dt>
-        <dd>{RECIPIENT_TEXT[notice.recipientKind] ?? humanize(notice.recipientKind)}</dd>
+        <dt>{t('sentTo')}</dt>
+        <dd>{notice.recipients.length ? f.list(notice.recipients.map(who.person)) : <span className="t-secondary">{t('nobodyLeft')}</span>}</dd>
+        <dt>{t('noticeAs')}</dt>
+        <dd>{notice.recipientKind === 'household' || notice.recipientKind === 'owners' ? t(`recipient.${notice.recipientKind}`) : label(notice.recipientKind)}</dd>
       </dl>
     </div>
   );
@@ -168,6 +185,9 @@ function Notice({ complaint }: { complaint: ComplaintDetail }) {
 
 function ComplaintView() {
   const { id } = useParams<{ id: string }>();
+  const t = useT(en, ar);
+  const { locale } = useLocale();
+  const who = useWho();
   const { can, ready } = usePermissions();
   const [tab, setTab] = useTab(TABS, 'complainant');
   const allowed = can('neighbours.handle');
@@ -182,20 +202,20 @@ function ComplaintView() {
   if (ready && !allowed) {
     return (
       <>
-        <PageHeader back={<Back href="/complaints" label="Complaints" />} title="Complaint" />
+        <PageHeader back={<Back href="/complaints" label={t('title')} />} title={t('complaintTitle')} />
         <ForbiddenState />
       </>
     );
   }
 
   const hasNotice = c ? c.notice !== null : false;
-  const complainant = c ? `the complainant, ${personName(c.author)}` : '';
-  const unit = c ? `unit ${unitText(c.targetUnit)}` : '';
+  const complainant = c ? t('theComplainant', { name: who.person(c.author) }) : '';
+  const unit = c ? t('theUnit', { unit: who.unit(c.targetUnit) }) : '';
 
   return (
     <>
       <PageHeader
-        back={<Back href="/complaints" label="Complaints" />}
+        back={<Back href="/complaints" label={t('title')} />}
         title={
           c ? (
             <span className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
@@ -203,10 +223,18 @@ function ComplaintView() {
               <StatusBadge status={c.status} />
             </span>
           ) : (
-            'Complaint'
+            t('complaintTitle')
           )
         }
-        description={c ? `${c.category.nameEn} · against unit ${unitText(c.targetUnit)} · by ${personName(c.author)}` : undefined}
+        description={
+          c
+            ? t('detailDescription', {
+                category: locale === 'ar' ? c.category.nameAr : c.category.nameEn,
+                unit: who.unit(c.targetUnit),
+                name: who.person(c.author),
+              })
+            : undefined
+        }
         actions={c ? <ComplaintActions complaint={c} /> : undefined}
       />
       <QueryState query={complaint}>
@@ -215,13 +243,13 @@ function ComplaintView() {
             <div className="stack">
               <div className="toolbar" style={{ overflowX: 'auto', marginBottom: 0 }}>
                 <Segmented<Tab>
-                  label="Thread"
+                  label={t('thread')}
                   value={tab}
                   onChange={setTab}
                   options={[
-                    { value: 'complainant', label: 'Complainant' },
-                    { value: 'unit', label: hasNotice ? 'Unit' : 'Unit (no notice yet)' },
-                    { value: 'notes', label: 'Internal notes' },
+                    { value: 'complainant', label: t('complainant') },
+                    { value: 'unit', label: hasNotice ? t('tabUnit') : t('tabUnitNoNotice') },
+                    { value: 'notes', label: t('tabNotes') },
                   ]}
                 />
               </div>
@@ -233,7 +261,7 @@ function ComplaintView() {
                   status={c.status}
                   hasNotice={hasNotice}
                   to={complainant}
-                  never="The unit complained about never sees this thread."
+                  never={t('neverUnit')}
                 />
               </div>
               <div hidden={tab !== 'unit'}>
@@ -242,8 +270,8 @@ function ComplaintView() {
                   thread="target"
                   status={c.status}
                   hasNotice={hasNotice}
-                  to={`${unit}: whoever was sent its notice`}
-                  never="The complainant never sees this thread. Do not name them here."
+                  to={unit}
+                  never={t('neverComplainant')}
                   lead={<Notice complaint={c} />}
                 />
               </div>
@@ -253,8 +281,8 @@ function ComplaintView() {
                   thread="internal"
                   status={c.status}
                   hasNotice={hasNotice}
-                  to="the staff who handle complaints"
-                  never="Neither the complainant nor the unit ever sees a note."
+                  to={t('theStaff')}
+                  never={t('neverNote')}
                 />
               </div>
             </div>

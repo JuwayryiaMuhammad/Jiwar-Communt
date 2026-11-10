@@ -2,13 +2,16 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Alert, Button, Card, CardBody, CardHeader, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { clock, halfHours, sameWindows, slotsPerWeek, sortWindows, WEEKDAYS, windowProblems, type Window } from '@/components/management-requests/logic';
+import { clock, halfHours, sameWindows, slotsPerWeek, sortWindows, windowProblemCodes, type Window } from '@/components/management-requests/logic';
 import { api } from '@/lib/api';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/services-mgmt-setup';
+import en from '@/messages/en/services-mgmt-setup';
 
 /** Half hours, plus the saved value when it is off the grid. */
 const options = (end: boolean, saved: number) => [...new Set([...halfHours(end), saved])].sort((a, b) => a - b);
@@ -22,6 +25,8 @@ const ORDER = [6, 0, 1, 2, 3, 4, 5];
  * keep their time whatever the hours become.
  */
 export function OfficeHours() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const toast = useToast();
   const hours = useQuery({ queryKey: keys.officeHours, queryFn: fetchers.officeHours });
   const settings = useQuery({ queryKey: keys.requestSettings, queryFn: fetchers.requestSettings });
@@ -35,12 +40,12 @@ export function OfficeHours() {
     invalidate: [keys.officeHours, keys.managementAll],
     onDone: (next) => {
       setWindows(next.windows);
-      toast.show('Office hours saved.');
+      toast.show(t('hoursSaved'));
     },
   });
 
   if (!windows || !hours.data) return <QueryState query={hours}>{null}</QueryState>;
-  const problems = windowProblems(windows);
+  const problems = windowProblemCodes(windows);
   const invalid = Object.keys(problems).length > 0;
   const dirty = !sameWindows(windows, hours.data.windows);
   const update = (index: number, patch: Partial<Window>) => setWindows(windows.map((w, i) => (i === index ? { ...w, ...patch } : w)));
@@ -61,25 +66,26 @@ export function OfficeHours() {
       }}
     >
       <Card flush>
-        <CardHeader title="Weekly office hours" />
+        <CardHeader title={t('weekly')} />
         <CardBody>
           <div className="stack">
             {ORDER.map((weekday) => {
               const day = windows.map((w, index) => ({ w, index })).filter((x) => x.w.weekday === weekday);
+              const dayName = fmt.weekday(weekday, 'long');
               return (
                 <div key={weekday} className="row" style={{ alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-                  <strong style={{ width: 96, paddingTop: 8 }}>{WEEKDAYS[weekday]}</strong>
+                  <strong style={{ width: 96, paddingBlockStart: 8 }}>{dayName}</strong>
                   <div className="stack stack--sm" style={{ flex: 1, minWidth: 260 }}>
                     {day.length === 0 ? (
-                      <span className="t-secondary" style={{ paddingTop: 8 }}>
-                        Closed
+                      <span className="t-secondary" style={{ paddingBlockStart: 8 }}>
+                        {t('closed')}
                       </span>
                     ) : null}
                     {day.map(({ w, index }) => (
                       <div key={index} className="stack stack--sm">
                         <span className="row" style={{ gap: 8 }}>
                           <Select
-                            aria-label={`${WEEKDAYS[weekday]} from`}
+                            aria-label={t('fromLabel', { day: dayName })}
                             value={w.startMinute}
                             onChange={(e) => update(index, { startMinute: Number(e.target.value) })}
                           >
@@ -89,9 +95,9 @@ export function OfficeHours() {
                               </option>
                             ))}
                           </Select>
-                          <span className="t-secondary">to</span>
+                          <span className="t-secondary">{t('to')}</span>
                           <Select
-                            aria-label={`${WEEKDAYS[weekday]} to`}
+                            aria-label={t('toLabel', { day: dayName })}
                             value={w.endMinute}
                             onChange={(e) => update(index, { endMinute: Number(e.target.value) })}
                           >
@@ -107,13 +113,13 @@ export function OfficeHours() {
                             variant="text"
                             iconOnly
                             icon={<Trash2 aria-hidden />}
-                            aria-label={`Remove ${WEEKDAYS[weekday]} ${clock(w.startMinute)}–${clock(w.endMinute)}`}
+                            aria-label={t('removeWindow', { day: dayName, from: clock(w.startMinute), to: clock(w.endMinute) })}
                             onClick={() => setWindows(windows.filter((_, i) => i !== index))}
                           />
                         </span>
                         {problems[index] || fieldError(save.error, `windows.${index}.startMinute`) || fieldError(save.error, `windows.${index}.endMinute`) ? (
                           <span className="field__error">
-                            {problems[index] ??
+                            {(problems[index] ? t(`problem.${problems[index]}`) : undefined) ??
                               fieldError(save.error, `windows.${index}.startMinute`) ??
                               fieldError(save.error, `windows.${index}.endMinute`)}
                           </span>
@@ -122,7 +128,7 @@ export function OfficeHours() {
                     ))}
                   </div>
                   <Button type="button" size="sm" icon={<Plus aria-hidden />} disabled={day.length >= 4} onClick={() => add(weekday)}>
-                    Add hours
+                    {t('addHours')}
                   </Button>
                 </div>
               );
@@ -131,21 +137,18 @@ export function OfficeHours() {
         </CardBody>
       </Card>
       {windows.length === 0 ? (
-        <Alert tone="warn">With no office hours, residents are offered no appointment slot.</Alert>
+        <Alert tone="warn">{t('noHours')}</Alert>
       ) : slotMinutes ? (
-        <p className="t-secondary">
-          {slotsPerWeek(windows, slotMinutes)} slots of {slotMinutes} minutes a week, in the compound&apos;s local time. The slot length and how many
-          appointments one slot takes are under Rules.
-        </p>
+        <p className="t-secondary">{t('slotsLine', { n: slotsPerWeek(windows, slotMinutes), minutes: slotMinutes })}</p>
       ) : null}
       <ErrorAlert error={save.error} />
       <span className="row">
         <span className="spacer" />
         <Button type="button" disabled={!dirty} onClick={() => setWindows(hours.data.windows)}>
-          Discard
+          {t('discard')}
         </Button>
         <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || invalid}>
-          Save office hours
+          {t('saveHours')}
         </Button>
       </span>
     </form>

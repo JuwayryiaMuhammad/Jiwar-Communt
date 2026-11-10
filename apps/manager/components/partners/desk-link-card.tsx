@@ -1,11 +1,14 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Alert, Button, Card, CardBody, CardHeader, ConfirmDialog, Dialog, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Button, Card, CardBody, CardHeader, ConfirmDialog, Dialog, useCommonT, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type StaffPartner } from '@/lib/queries';
+import ar from '@/messages/ar/partners-list';
+import en from '@/messages/en/partners-list';
 import { daysLeft } from './logic';
 
 /**
@@ -17,6 +20,9 @@ import { daysLeft } from './logic';
  * relayed by the management.
  */
 export function DeskLinkCard({ partner }: { partner: StaffPartner }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [issued, setIssued] = useState<{ link: string; expiresAt: string } | null>(null);
   const [revoking, setRevoking] = useState(false);
@@ -28,23 +34,23 @@ export function DeskLinkCard({ partner }: { partner: StaffPartner }) {
     invalidate: [keys.partnersAll],
     onDone: () => {
       setRevoking(false);
-      toast.show('The desk link stopped working. The management relays this partner’s requests.');
+      toast.show(t('desk.revoked'));
     },
   });
   const live = partner.deskLink;
   return (
     <Card>
       <CardHeader
-        title="Desk link"
+        title={t('desk.title')}
         actions={
           <>
             {live ? (
               <Button variant="danger" onClick={() => setRevoking(true)}>
-                Revoke
+                {t('desk.revoke')}
               </Button>
             ) : null}
             <Button variant="primary" loading={issue.isPending} disabled={partner.status !== 'active'} onClick={() => issue.mutate()}>
-              {live ? 'Make a new link' : 'Make a link'}
+              {live ? t('desk.makeNew') : t('desk.make')}
             </Button>
           </>
         }
@@ -52,48 +58,48 @@ export function DeskLinkCard({ partner }: { partner: StaffPartner }) {
       <CardBody>
         {live ? (
           <p>
-            Live since {formatDateTime(live.createdAt)}. It stops on {formatDateTime(live.expiresAt)} ({daysLeft(live.expiresAt)} days left).
+            {t('desk.live', { since: f.dateTime(live.createdAt), until: f.dateTime(live.expiresAt), days: daysLeft(live.expiresAt) })}
           </p>
         ) : (
-          <p className="t-secondary">No live link: the management relays this partner’s requests from Partner requests.</p>
+          <p className="t-secondary">{t('desk.none')}</p>
         )}
-        {partner.status !== 'active' ? <Alert tone="warn">A suspended partner’s desk is closed.</Alert> : null}
+        {partner.status !== 'active' ? <Alert tone="warn">{t('desk.suspended')}</Alert> : null}
         <ErrorAlert error={issue.error} />
       </CardBody>
       {issued ? (
         <Dialog
           open
           onClose={() => setIssued(null)}
-          title="The partner’s desk link"
-          description="Shown once: copy it now and give it to the partner. The link before stopped working."
+          title={t('desk.issuedTitle')}
+          description={t('desk.issuedDescription')}
           footer={
             <>
               <Button
                 onClick={() => {
                   void navigator.clipboard?.writeText(issued.link);
-                  toast.show('Copied.');
+                  toast.show(t('desk.copied'));
                 }}
               >
-                Copy
+                {t('desk.copy')}
               </Button>
               <Button variant="primary" onClick={() => setIssued(null)}>
-                Done
+                {c('done')}
               </Button>
             </>
           }
         >
-          <p className="t-mono" style={{ wordBreak: 'break-all' }}>
+          <p className="t-mono ltr" style={{ wordBreak: 'break-all' }}>
             {issued.link}
           </p>
-          <p className="t-secondary">It works until {formatDateTime(issued.expiresAt)}.</p>
+          <p className="t-secondary">{t('desk.works', { date: f.dateTime(issued.expiresAt) })}</p>
         </Dialog>
       ) : null}
       <ConfirmDialog
         open={revoking}
         onClose={() => setRevoking(false)}
-        title="Revoke the desk link?"
-        description="It stops working at once. Make a new one to give the partner its desk again."
-        confirmLabel="Revoke"
+        title={t('desk.revokeTitle')}
+        description={t('desk.revokeDescription')}
+        confirmLabel={t('desk.revoke')}
         danger
         pending={revoke.isPending}
         onConfirm={() => revoke.mutate()}

@@ -1,0 +1,52 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/partners-list.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'الشركاء',
+  description: 'شركاء الخدمات الذين يبحث عنهم الساكنون ويطلبون منهم: ما يقدّمونه وأسعارهم ومواعيدهم. لا يُدفع شيء عبر جوار.',
+  newPartner: 'شريك جديد',
+  empty: 'لا يوجد شريك مُدرج بعد',
+  'col.partner': 'الشريك',
+  'col.categories': 'الفئات',
+  'col.rating': 'التقييم',
+  'col.desk': 'رابط المكتب',
+  'col.status': 'الحالة',
+  'col.listed': 'تاريخ الإدراج',
+  deskUntil: 'حتى {date}',
+  deskRelayed: 'تتولاه الإدارة',
+  partner: 'شريك',
+  summary: '{categories} · {rating} · أُدرج {date}',
+  suspend: 'أوقف',
+  reinstate: 'أعد التفعيل',
+  suspended: 'أُوقف الشريك. أُلغيت طلباته الجارية، وأُبلغ من طلب منه أو يتابعه مع اقتراح بدائل.',
+  reinstated: 'أُعيد تفعيل الشريك. يستقبل الطلبات من جديد.',
+  section: 'القسم',
+  'tab.details': 'البيانات',
+  'tab.services': 'الخدمات',
+  'tab.hours': 'المواعيد',
+  'tab.prices': 'الأسعار',
+  'tab.desk': 'رابط المكتب',
+  suspendTitle: 'إيقاف هذا الشريك؟',
+  suspendDescription:
+    'تُلغى طلباته الجارية ويُغلق مكتبه. يُبلَّغ من طلب منه أو أضافه إلى المفضلة، دون ذكر السبب، ويُقترح عليه بدائل.',
+  reinstateTitle: 'إعادة تفعيل هذا الشريك؟',
+  reinstateDescription: 'يستقبل الطلبات من جديد، ويعمل رابط مكتبه إن لم تنتهِ مدته. لا يُبلَّغ أحد.',
+  'desk.title': 'رابط المكتب',
+  'desk.revoke': 'إلغاء الرابط',
+  'desk.makeNew': 'إنشاء رابط جديد',
+  'desk.make': 'إنشاء رابط',
+  'desk.live':
+    'يعمل منذ {since}. ينتهي في {until} (باقٍ {days, plural, =0 {أقل من يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}).',
+  'desk.none': 'لا يوجد رابط يعمل: تتولى الإدارة طلبات هذا الشريك من صفحة طلبات الشركاء.',
+  'desk.suspended': 'مكتب الشريك الموقوف مغلق.',
+  'desk.issuedTitle': 'رابط مكتب الشريك',
+  'desk.issuedDescription': 'يظهر مرة واحدة: انسخه الآن وأعطه للشريك. توقف الرابط السابق عن العمل.',
+  'desk.copy': 'انسخ',
+  'desk.copied': 'تم النسخ.',
+  'desk.works': 'يعمل حتى {date}.',
+  'desk.revokeTitle': 'إلغاء رابط المكتب؟',
+  'desk.revokeDescription': 'يتوقف عن العمل فورًا. أنشئ رابطًا جديدًا لتعيد للشريك مكتبه.',
+  'desk.revoked': 'توقف رابط المكتب عن العمل. تتولى الإدارة طلبات هذا الشريك.',
+};
+
+export default ar;

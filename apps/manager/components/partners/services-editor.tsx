@@ -2,12 +2,17 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useLocale, useT } from '@jiwar/i18n';
 import { Button, Card, CardBody, CardHeader, Checkbox, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type PartnerCategory, type StaffPartner } from '@/lib/queries';
-import { CATEGORIES, CATEGORY_TEXT } from './logic';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-edit';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-edit';
+import { CATEGORIES, word } from './logic';
 
 /** `home_services` for a whole category, `home_services:<id>` for a sub-category. */
 const code = (category: string, subcategoryId: string | null) => (subcategoryId ? `${category}:${subcategoryId}` : category);
@@ -22,6 +27,9 @@ export function servicesOf(partner: StaffPartner): string[] {
  * keep what they asked.
  */
 export function ServicesEditor({ partner }: { partner: StaffPartner }) {
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const { locale } = useLocale();
   const toast = useToast();
   const subs = useQuery({ queryKey: keys.partnerSubcategories, queryFn: fetchers.partnerSubcategories });
   const [picked, setPicked] = useState<string[]>(servicesOf(partner));
@@ -42,7 +50,7 @@ export function ServicesEditor({ partner }: { partner: StaffPartner }) {
       invalidate: [keys.partnersAll],
       onDone: (next) => {
         setPicked(servicesOf(next));
-        toast.show('Services saved.');
+        toast.show(t('services.saved'));
       },
     },
   );
@@ -57,7 +65,7 @@ export function ServicesEditor({ partner }: { partner: StaffPartner }) {
       }}
     >
       <Card flush>
-        <CardHeader title="Services" />
+        <CardHeader title={t('services.title')} />
         <CardBody>
           <QueryState query={subs}>
             <div className="stack">
@@ -66,7 +74,7 @@ export function ServicesEditor({ partner }: { partner: StaffPartner }) {
                 return (
                   <div key={category} className="stack stack--sm">
                     <Checkbox
-                      label={`${CATEGORY_TEXT[category]} — the whole category`}
+                      label={t('services.wholeCategory', { category: word(codes, 'category', category) })}
                       checked={picked.includes(category)}
                       onChange={() => toggle(category)}
                     />
@@ -74,7 +82,7 @@ export function ServicesEditor({ partner }: { partner: StaffPartner }) {
                       {mine.map((s) => (
                         <Checkbox
                           key={s.id}
-                          label={s.active ? s.nameEn : `${s.nameEn} (retired)`}
+                          label={s.active ? (locale === 'ar' ? s.nameAr : s.nameEn) : t('services.retired', { name: locale === 'ar' ? s.nameAr : s.nameEn })}
                           checked={picked.includes(code(category, s.id))}
                           onChange={() => toggle(code(category, s.id))}
                         />
@@ -91,10 +99,10 @@ export function ServicesEditor({ partner }: { partner: StaffPartner }) {
       <span className="row">
         <span className="spacer" />
         <Button type="button" disabled={!dirty} onClick={() => setPicked(servicesOf(partner))}>
-          Discard
+          {t('discard')}
         </Button>
         <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || picked.length === 0}>
-          Save services
+          {t('services.save')}
         </Button>
       </span>
     </form>

@@ -1,0 +1,75 @@
+/** The lost-and-found board's desk (ADR 0042): components/neighbours (bits, new post, claims and handover). */
+export default {
+  // Attachments.
+  attachment: 'Attachment',
+  gone: 'File no longer available',
+  pdf: 'Document (PDF)',
+  // A new post.
+  'new.title': 'Post a lost or found item',
+  'new.description':
+    'Posted as the management, on the lost-and-found board every resident reads. A found item is kept at the office until someone claims it.',
+  'new.submit': 'Post',
+  'new.kind': 'Kind',
+  'new.found': 'Found: it is at the office',
+  'new.lost': 'Lost: someone is looking for it',
+  'new.what': 'What it is',
+  'new.whatHint': 'A few words. Leave out what only its owner would know: that is how a claim is checked.',
+  'new.whereFound': 'Where it was found',
+  'new.whereLost': 'Where it was lost',
+  'new.optional': 'Optional.',
+  'new.day': 'The day',
+  'new.dayHint': 'Optional; not in the future.',
+  'new.addPhoto': 'Add a photo',
+  'new.addAnotherPhoto': 'Add another photo ({count} of {max})',
+  'new.removePhotos': 'Remove photos',
+  'problem.required': 'Required.',
+  'problem.maxBody': 'At most 500 characters.',
+  'problem.maxPlace': 'At most 120 characters.',
+  'problem.dayFormat': 'A day, as YYYY-MM-DD.',
+  'problem.future': 'Not in the future.',
+  // Taking a post down.
+  'remove.done': 'The post was taken off its board.',
+  'remove.button': 'Remove post',
+  'remove.title': 'Remove this post?',
+  'remove.descriptionStaff': 'It leaves its board for everyone. Claims still waiting on it are declined.',
+  'remove.description':
+    'It leaves its board for everyone, and its author is told that the management removed it. Claims still waiting on it are declined.',
+  // A resident who came without a claim.
+  'walkIn.title': 'Hand over to someone else',
+  'walkIn.description':
+    'For a resident who came to the office without a claim. The handover is recorded in their name, closes the post, and declines every claim still waiting.',
+  'walkIn.submit': 'Record handover',
+  'walkIn.resident': 'Resident',
+  'walkIn.residentHint': 'From the first 100 residents. Not listed: paste their account ID below.',
+  'walkIn.accountId': 'Resident’s account ID',
+  'walkIn.accountIdHint':
+    'The long id at the end of the resident’s page address, e.g. 0b1f6f0e-3c1d-4a52-9d57-0c7d5a3f9b11. An active resident or family account of this compound.',
+  'walkIn.notAnId': 'Not an account ID.',
+  'walkIn.noOne': 'Nobody to hand it to.',
+  // Claims.
+  'claims.title': 'Claims',
+  'claims.hint': 'Residents who say the item is theirs. Check with each what only its owner would know.',
+  'claims.empty': 'Nobody has claimed it',
+  'claims.claimant': 'Claimant',
+  'claims.told': 'What they told the staff',
+  'claims.handTo': 'Hand over to this claimant',
+  'claims.declined': 'The claim was declined. Its claimant was told.',
+  'claims.handed': 'The handover is recorded. The post is closed.',
+  'decline.title': 'Decline {name}’s claim?',
+  'decline.titleNone': 'Decline the claim?',
+  'decline.description': 'The claimant is told the claim was declined. The item stays at the office and on the board.',
+  'decline.confirm': 'Decline claim',
+  'handTo.title': 'Hand the item to {name}?',
+  'handTo.titleNone': 'Hand the item over?',
+  'handTo.description':
+    'Recorded once: to whom, by whom and when. The post closes, and every other claim still waiting is declined and its claimant told.',
+  'handTo.confirm': 'Record handover',
+  // The handover.
+  'handover.title': 'Handed over',
+  'handover.to': 'To',
+  'handover.how': 'How',
+  'handover.onClaim': 'On their claim',
+  'handover.walkIn': 'Came to the office without a claim',
+  'handover.by': 'By',
+  'handover.when': 'When',
+} as const;

@@ -1,13 +1,16 @@
 'use client';
 
-import { REASON_CODES, humanize, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Select, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ServicePromise } from '@/lib/queries';
+import ar from '@/messages/ar/experience-setup';
+import en from '@/messages/en/experience-setup';
 
 const METRICS = ['ticket_resolution_hours', 'request_response_hours', 'ticket_rating', 'request_rating', 'partner_rating'] as const;
 type Metric = (typeof METRICS)[number] | '';
@@ -18,6 +21,10 @@ type Metric = (typeof METRICS)[number] | '';
  * the service promises register.
  */
 export default function ExperienceSetupPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('experience.manage');
   const toast = useToast();
@@ -33,12 +40,12 @@ export default function ExperienceSetupPage() {
   const saveRule = useAction(
     (item: { code: 'repeated_low_ratings' | 'reopened_tickets' | 'repeated_complaints'; count: number | null; days: number }) =>
       unwrap(api.PATCH('/api/v1/staff/experience/settings', { body: { items: [item] } })),
-    { ...refresh, onDone: () => toast.show('The rule is saved.') },
+    { ...refresh, onDone: () => toast.show(t('setup.ruleSaved')) },
   );
   const saveCompensation = useAction(
     (item: { failureCode: string; kind: 'credit' | 'apology' | 'redo' | 'priority' | null; amount?: string }) =>
       unwrap(api.PUT('/api/v1/staff/experience/compensation-rules', { body: { items: [item] } })),
-    { ...refresh, onDone: () => toast.show('The recommendation is saved.') },
+    { ...refresh, onDone: () => toast.show(t('setup.recommendationSaved')) },
   );
   const addPromise = useAction(
     () =>
@@ -60,7 +67,7 @@ export default function ExperienceSetupPage() {
     {
       ...refresh,
       onDone: () => {
-        toast.show('The promise is in the register.');
+        toast.show(t('setup.promiseAdded'));
         setTitleEn('');
         setTitleAr('');
       },
@@ -74,29 +81,29 @@ export default function ExperienceSetupPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Experience setup" />
+        <PageHeader title={t('setup.title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Experience setup" description="The signals’ rules, the compensation recommended per failure, and what the compound promises." />
-      <h2 className="t-title-md">Signal rules</h2>
+      <PageHeader title={t('setup.title')} description={t('setup.description')} />
+      <h2 className="t-title-md">{t('setup.rules')}</h2>
       <Card flush>
         <QueryState query={settings}>
           <DataTable
             rows={settings.data?.rules ?? []}
             rowKey={(r) => r.code}
             columns={[
-              { key: 'rule', header: 'Rule', cell: (r) => humanize(r.code) },
-              { key: 'count', header: 'Events', cell: (r) => (r.count === null ? <Badge>Off</Badge> : r.count) },
-              { key: 'days', header: 'Within days', cell: (r) => r.days },
+              { key: 'rule', header: t('setup.rule'), cell: (r) => label(r.code) },
+              { key: 'count', header: t('setup.events'), cell: (r) => (r.count === null ? <Badge>{t('setup.off')}</Badge> : f.number(r.count)) },
+              { key: 'days', header: t('setup.withinDays'), cell: (r) => f.number(r.days) },
               {
                 key: 'toggle',
                 header: '',
                 cell: (r) => (
                   <Button size="sm" onClick={() => saveRule.mutate({ code: r.code, count: r.count === null ? 2 : null, days: r.days })}>
-                    {r.count === null ? 'Turn on' : 'Turn off'}
+                    {r.count === null ? t('setup.turnOn') : t('setup.turnOff')}
                   </Button>
                 ),
               },
@@ -106,7 +113,7 @@ export default function ExperienceSetupPage() {
         <ErrorAlert error={saveRule.error} />
       </Card>
       <h2 className="t-title-md" style={{ margin: '24px 0 8px' }}>
-        Recommended compensation
+        {t('setup.recommended')}
       </h2>
       <Card flush>
         <QueryState query={rules}>
@@ -114,13 +121,13 @@ export default function ExperienceSetupPage() {
             rows={[...REASON_CODES.creditNoteCompensation]}
             rowKey={(code) => code}
             columns={[
-              { key: 'failure', header: 'What failed', cell: (code) => humanize(code) },
+              { key: 'failure', header: t('setup.failed'), cell: (code) => label(code) },
               {
                 key: 'kind',
-                header: 'Recommended',
+                header: t('setup.recommendation'),
                 cell: (code) => {
                   const r = rules.data?.data.find((x) => x.failureCode === code);
-                  return r ? `${humanize(r.kind)}${r.amount ? ` · ${r.amount} EGP` : ''}` : '—';
+                  return r ? `${label(r.kind)}${r.amount ? ` · ${f.money(r.amount)}` : ''}` : '—';
                 },
               },
               {
@@ -128,22 +135,22 @@ export default function ExperienceSetupPage() {
                 header: '',
                 cell: (code) => (
                   <Select
-                    aria-label={`Recommendation for ${code}`}
+                    aria-label={t('setup.recommendationFor', { what: label(code) })}
                     value=""
                     onChange={(e) => {
                       const kind = e.target.value as 'credit' | 'apology' | 'redo' | 'priority' | 'none';
                       if (kind === 'credit') {
-                        const amount = window.prompt('Amount in EGP');
+                        const amount = window.prompt(t('setup.amountPrompt'));
                         if (amount) saveCompensation.mutate({ failureCode: code, kind, amount });
                       } else saveCompensation.mutate({ failureCode: code, kind: kind === 'none' ? null : kind });
                     }}
                   >
-                    <option value="">Change…</option>
-                    <option value="credit">Credit</option>
-                    <option value="apology">Apology</option>
-                    <option value="redo">Redo the service</option>
-                    <option value="priority">Priority next time</option>
-                    <option value="none">No recommendation</option>
+                    <option value="">{t('setup.change')}</option>
+                    <option value="credit">{t('setup.credit')}</option>
+                    <option value="apology">{t('setup.apology')}</option>
+                    <option value="redo">{t('setup.redo')}</option>
+                    <option value="priority">{t('setup.priority')}</option>
+                    <option value="none">{t('setup.none')}</option>
                   </Select>
                 ),
               },
@@ -153,25 +160,27 @@ export default function ExperienceSetupPage() {
         <ErrorAlert error={saveCompensation.error} />
       </Card>
       <h2 className="t-title-md" style={{ margin: '24px 0 8px' }}>
-        Service promises
+        {t('setup.promises')}
       </h2>
       <Card flush>
         <QueryState query={promises}>
           <DataTable<ServicePromise>
             rows={promises.data?.data ?? []}
             rowKey={(p) => p.id}
-            empty="No promise yet"
+            empty={t('setup.noPromises')}
             columns={[
-              { key: 'title', header: 'Promise', cell: (p) => p.titleEn },
+              { key: 'title', header: t('setup.promise'), cell: (p) => (locale === 'ar' ? p.titleAr : p.titleEn) },
               {
                 key: 'target',
-                header: 'Target',
+                header: t('setup.target'),
                 cell: (p) =>
                   p.metric
-                    ? `${humanize(p.metric)} · ${p.target}${p.targetShare ? ` for ${p.targetShare}%` : ''}`
-                    : 'Not measured',
+                    ? p.targetShare
+                      ? t('setup.targetShare', { metric: label(p.metric), target: f.number(p.target), share: f.percent(p.targetShare / 100, 0) })
+                      : t('setup.targetLine', { metric: label(p.metric), target: f.number(p.target) })
+                    : t('reports.notMeasured'),
               },
-              { key: 'active', header: '', cell: (p) => <Button size="sm" onClick={() => retire.mutate(p)}>{p.active ? 'Retire' : 'Restore'}</Button> },
+              { key: 'active', header: '', cell: (p) => <Button size="sm" onClick={() => retire.mutate(p)}>{p.active ? t('setup.retire') : t('setup.restore')}</Button> },
             ]}
           />
         </QueryState>
@@ -184,30 +193,30 @@ export default function ExperienceSetupPage() {
           addPromise.mutate();
         }}
       >
-        <Field label="Promise (English)">{(p) => <Input {...p} value={titleEn} maxLength={200} onChange={(e) => setTitleEn(e.target.value)} />}</Field>
-        <Field label="Promise (Arabic)">{(p) => <Input {...p} dir="rtl" value={titleAr} maxLength={200} onChange={(e) => setTitleAr(e.target.value)} />}</Field>
-        <Field label="Measured by">
+        <Field label={t('setup.promiseEn')}>{(p) => <Input {...p} value={titleEn} maxLength={200} onChange={(e) => setTitleEn(e.target.value)} />}</Field>
+        <Field label={t('setup.promiseAr')}>{(p) => <Input {...p} dir="rtl" value={titleAr} maxLength={200} onChange={(e) => setTitleAr(e.target.value)} />}</Field>
+        <Field label={t('setup.measuredBy')}>
           {(p) => (
             <Select {...p} value={metric} onChange={(e) => setMetric(e.target.value as Metric)}>
-              <option value="">Not measured</option>
+              <option value="">{t('reports.notMeasured')}</option>
               {METRICS.map((m) => (
                 <option key={m} value={m}>
-                  {humanize(m)}
+                  {label(m)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         {metric ? (
-          <Field label={metric.endsWith('_hours') ? 'Hours' : 'Average at least'}>
+          <Field label={metric.endsWith('_hours') ? t('setup.hours') : t('setup.averageAtLeast')}>
             {(p) => <Input {...p} inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} />}
           </Field>
         ) : null}
         {metric.endsWith('_hours') ? (
-          <Field label="For % of them">{(p) => <Input {...p} inputMode="numeric" value={share} onChange={(e) => setShare(e.target.value)} />}</Field>
+          <Field label={t('setup.forShare')}>{(p) => <Input {...p} inputMode="numeric" value={share} onChange={(e) => setShare(e.target.value)} />}</Field>
         ) : null}
         <Button type="submit" variant="primary" loading={addPromise.isPending} disabled={!titleEn || !titleAr}>
-          Add
+          {t('setup.add')}
         </Button>
       </form>
       <ErrorAlert error={addPromise.error ?? retire.error} />

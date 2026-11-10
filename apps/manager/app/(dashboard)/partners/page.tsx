@@ -1,19 +1,28 @@
 'use client';
 
-import { formatDateTime } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import { Button, Card, DataTable, ForbiddenState, PageHeader, StatusBadge } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { CATEGORY_TEXT, ratingText } from '@/components/partners/logic';
+import { localName } from '@/components/management-requests/logic';
+import { ratingText, word } from '@/components/partners/logic';
 import { NewPartnerDialog } from '@/components/partners/new-partner-dialog';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StaffPartner } from '@/lib/queries';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-list';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-list';
 
 /** The compound's service partners (ADR 0060). */
 export default function PartnersPage() {
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const f = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('partners.manage');
   const partners = useQuery({ queryKey: keys.partners, queryFn: fetchers.partners, enabled: allowed });
@@ -21,18 +30,18 @@ export default function PartnersPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Partners" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Partners"
-        description="The service partners residents find and ask: what they do, their prices and hours. Nothing is paid through Jiwar."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-            New partner
+            {t('newPartner')}
           </Button>
         }
       />
@@ -41,26 +50,30 @@ export default function PartnersPage() {
           <DataTable<StaffPartner>
             rows={partners.data?.data ?? []}
             rowKey={(p) => p.id}
-            empty="No partner listed yet"
+            empty={t('empty')}
             columns={[
               {
                 key: 'n',
-                header: 'Partner',
+                header: t('col.partner'),
                 cell: (p) => (
                   <Link className="table__link" href={`/partners/${p.id}`}>
-                    {p.nameEn}
+                    {localName(locale, p)}
                   </Link>
                 ),
               },
               {
                 key: 'c',
-                header: 'Categories',
-                cell: (p) => [...new Set(p.services.map((s) => CATEGORY_TEXT[s.category] ?? s.category))].join(', '),
+                header: t('col.categories'),
+                cell: (p) => f.list([...new Set(p.services.map((s) => word(codes, 'category', s.category)))]),
               },
-              { key: 'r', header: 'Rating', cell: (p) => ratingText(p.rating) },
-              { key: 'd', header: 'Desk link', cell: (p) => (p.deskLink ? `Until ${formatDateTime(p.deskLink.expiresAt)}` : 'Relayed') },
-              { key: 's', header: 'Status', cell: (p) => <StatusBadge status={p.status} /> },
-              { key: 'l', header: 'Listed', cell: (p) => formatDateTime(p.listedAt) },
+              { key: 'r', header: t('col.rating'), cell: (p) => ratingText(codes, p.rating) },
+              {
+                key: 'd',
+                header: t('col.desk'),
+                cell: (p) => (p.deskLink ? t('deskUntil', { date: f.dateTime(p.deskLink.expiresAt) }) : t('deskRelayed')),
+              },
+              { key: 's', header: t('col.status'), cell: (p) => <StatusBadge status={p.status} /> },
+              { key: 'l', header: t('col.listed'), cell: (p) => f.dateTime(p.listedAt) },
             ]}
           />
         </QueryState>

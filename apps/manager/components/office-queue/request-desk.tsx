@@ -2,13 +2,17 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Select, Textarea, useToast } from '@jiwar/ui';
+import { useLocale, useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Select, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import { localName } from '@/components/management-requests/logic';
 import { keys, type ManagementRequestDetail } from '@/lib/queries';
+import ar from '@/messages/ar/services-office-queue';
+import en from '@/messages/en/services-office-queue';
 
 type Open = 'topic' | 'convert' | null;
 
@@ -19,6 +23,9 @@ type Open = 'topic' | 'convert' | null;
  * closes for good; the resident is told the ticket's number.
  */
 export function RequestDesk({ request }: { request: ManagementRequestDetail }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const { locale } = useLocale();
   const toast = useToast();
   const router = useRouter();
   const { can } = usePermissions();
@@ -31,19 +38,19 @@ export function RequestDesk({ request }: { request: ManagementRequestDetail }) {
   const path = { params: { path: { id: request.id } } };
   const topics = useQuery({
     queryKey: ['management', 'topics'],
-    queryFn: () => unwrap(api.GET('/api/v1/management/request-topics', {})) as Promise<{ data: { id: string; key: string; nameEn: string; active: boolean }[] }>,
+    queryFn: () => unwrap(api.GET('/api/v1/management/request-topics', {})) as Promise<{ data: { id: string; key: string; nameEn: string; nameAr: string; active: boolean }[] }>,
     enabled: open === 'topic',
   });
   const categories = useQuery({
     queryKey: ['maintenance', 'categories'],
-    queryFn: () => unwrap(api.GET('/api/v1/maintenance/categories', {})) as Promise<{ data: { id: string; nameEn: string; active: boolean }[] }>,
+    queryFn: () => unwrap(api.GET('/api/v1/maintenance/categories', {})) as Promise<{ data: { id: string; nameEn: string; nameAr: string; active: boolean }[] }>,
     enabled: open === 'convert',
   });
   const close = () => setOpen(null);
   const move = useAction(() => unwrap(api.POST('/api/v1/management/requests/{id}/topic', { ...path, body: { topicId } })), {
     invalidate: [keys.managementAll],
     onDone: () => {
-      toast.show(`${request.number} is under its new topic.`);
+      toast.show(t('movedToast', { number: request.number }));
       close();
     },
   });
@@ -62,9 +69,9 @@ export function RequestDesk({ request }: { request: ManagementRequestDetail }) {
       ) as Promise<{ id: string; number: string }>,
     {
       invalidate: [keys.managementAll],
-      onDone: (t: { id: string; number: string }) => {
-        toast.show(`${request.number} became ${t.number}. The resident was told.`);
-        router.push(`/maintenance/${t.id}`);
+      onDone: (ticket: { id: string; number: string }) => {
+        toast.show(t('convertedToast', { number: request.number, ticket: ticket.number }));
+        router.push(`/maintenance/${ticket.id}`);
       },
     },
   );
@@ -72,33 +79,33 @@ export function RequestDesk({ request }: { request: ManagementRequestDetail }) {
   if (!live || request.about) return null;
   return (
     <>
-      <Button onClick={() => setOpen('topic')}>Change topic</Button>
-      {can('tickets.dispatch') ? <Button onClick={() => setOpen('convert')}>Turn into a ticket</Button> : null}
+      <Button onClick={() => setOpen('topic')}>{t('changeTopic')}</Button>
+      {can('tickets.dispatch') ? <Button onClick={() => setOpen('convert')}>{t('convert')}</Button> : null}
 
       <Dialog
         open={open === 'topic'}
         onClose={close}
-        title={`Another topic for ${request.number}`}
-        description="Its response time follows the new topic’s target from the start of this cycle. The new topic’s handlers are told when nobody holds it."
+        title={t('topicTitle', { number: request.number })}
+        description={t('topicDescription')}
         onSubmit={() => topicId && move.mutate()}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={move.isPending} disabled={!topicId}>
-              Move
+              {t('move')}
             </Button>
           </>
         }
       >
-        <Field label="Topic">
+        <Field label={t('topic')}>
           {(p) => (
             <Select {...p} value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-              <option value="">Choose…</option>
+              <option value="">{t('choose')}</option>
               {(topics.data?.data ?? [])
-                .filter((t) => t.active && t.id !== request.topic.id && t.key !== 'release_request')
-                .map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nameEn}
+                .filter((topic) => topic.active && topic.id !== request.topic.id && topic.key !== 'release_request')
+                .map((topic) => (
+                  <option key={topic.id} value={topic.id}>
+                    {localName(locale, topic)}
                   </option>
                 ))}
             </Select>
@@ -110,47 +117,47 @@ export function RequestDesk({ request }: { request: ManagementRequestDetail }) {
       <Dialog
         open={open === 'convert'}
         onClose={close}
-        title={`Turn ${request.number} into a ticket`}
-        description="The request closes for good and the work goes on in the ticket. The resident is told its number."
+        title={t('convertTitle', { number: request.number })}
+        description={t('convertDescription')}
         onSubmit={() => categoryId && description.trim() && convert.mutate()}
         footer={
           <>
-            <Button onClick={close}>Cancel</Button>
+            <Button onClick={close}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={convert.isPending} disabled={!categoryId || !description.trim() || (target === 'work_order' && !commonAreaId)}>
-              Open the ticket
+              {t('openTicket')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="Ticket">
+          <Field label={t('ticket')}>
             {(p) => (
               <Select {...p} value={target} onChange={(e) => setTarget(e.target.value as 'ticket' | 'work_order')}>
-                {request.unit ? <option value="ticket">The resident’s ticket in {request.unit.code}</option> : null}
-                <option value="work_order">A work order on a common area</option>
+                {request.unit ? <option value="ticket">{t('residentTicket', { unit: request.unit.code })}</option> : null}
+                <option value="work_order">{t('workOrder')}</option>
               </Select>
             )}
           </Field>
           {target === 'work_order' ? (
-            <Field label="Common area id" hint="The common area the fault is in.">
+            <Field label={t('commonArea')} hint={t('commonAreaHint')}>
               {(p) => <Input {...p} value={commonAreaId} onChange={(e) => setCommonAreaId(e.target.value)} />}
             </Field>
           ) : null}
-          <Field label="Category">
+          <Field label={t('category')}>
             {(p) => (
               <Select {...p} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                <option value="">Choose…</option>
+                <option value="">{t('choose')}</option>
                 {(categories.data?.data ?? [])
-                  .filter((c) => c.active)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nameEn}
+                  .filter((category) => category.active)
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {localName(locale, category)}
                     </option>
                   ))}
               </Select>
             )}
           </Field>
-          <Field label="What is to be done">
+          <Field label={t('whatToDo')}>
             {(p) => <Textarea {...p} rows={3} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />}
           </Field>
           <ErrorAlert error={convert.error} />

@@ -1,13 +1,15 @@
 'use client';
 
-import { humanize } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Card, DataTable, Field, ForbiddenState, Input, PageHeader } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Card, DataTable, Field, ForbiddenState, Input, PageHeader, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ComplaintsMap } from '@/lib/queries';
+import ar from '@/messages/ar/complaints-map';
+import en from '@/messages/en/complaints-map';
 
 type Building = ComplaintsMap['buildings'][number];
 type Area = ComplaintsMap['areas'][number];
@@ -20,6 +22,10 @@ const at = (lat: number | null, lng: number | null) => (lat === null || lng === 
  * opens the ticket list filtered by it.
  */
 export default function ComplaintsMapPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('tickets.dispatch');
   const [to, setTo] = useState(iso(new Date()));
@@ -28,7 +34,7 @@ export default function ComplaintsMapPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Complaints map" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -36,23 +42,23 @@ export default function ComplaintsMapPage() {
   return (
     <>
       <PageHeader
-        title="Complaints map"
-        description="The tickets of each building’s units and of each common area over the period, cancelled ones left out. No unit, ticket or person is shown here."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="form__row" style={{ marginBottom: 12 }}>
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={c('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={c('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
       </div>
       <QueryState query={map}>
         <Card flush>
           <DataTable<Building>
             rows={map.data?.buildings ?? []}
             rowKey={(b) => b.buildingId}
-            empty="No building in the register"
+            empty={t('emptyBuildings')}
             columns={[
               {
                 key: 'name',
-                header: 'Building',
+                header: c('building'),
                 cell: (b) => (
                   <Link className="table__link" href={`/maintenance?buildingId=${b.buildingId}`}>
                     {b.name}
@@ -61,7 +67,7 @@ export default function ComplaintsMapPage() {
               },
               {
                 key: 'bubble',
-                header: 'Tickets',
+                header: t('tickets'),
                 cell: (b) => (
                   <span className="row" style={{ gap: 8, alignItems: 'center' }}>
                     <span
@@ -74,33 +80,33 @@ export default function ComplaintsMapPage() {
                         height: 8 + 24 * (b.total / most),
                       }}
                     />
-                    {b.total}
+                    {f.number(b.total)}
                   </span>
                 ),
               },
-              { key: 'open', header: 'Open', cell: (b) => b.open },
-              { key: 'residents', header: 'From residents', cell: (b) => b.residents },
+              { key: 'open', header: t('open'), cell: (b) => f.number(b.open) },
+              { key: 'residents', header: t('fromResidents'), cell: (b) => f.number(b.residents) },
               {
                 key: 'categories',
-                header: 'Most',
-                cell: (b) => b.categories.map((c) => `${humanize(c.categoryKey)} ${c.count}`).join(' · ') || '—',
+                header: t('most'),
+                cell: (b) => b.categories.map((x) => `${label(x.categoryKey)} ${f.number(x.count)}`).join(' · ') || '—',
               },
-              { key: 'at', header: 'Position', cell: (b) => at(b.latitude, b.longitude) },
+              { key: 'at', header: t('position'), cell: (b) => <span className="ltr">{at(b.latitude, b.longitude)}</span> },
             ]}
           />
         </Card>
-        <PageHeader title="Common areas" description="Their own tickets and their assets’." />
+        <PageHeader title={t('areasTitle')} description={t('areasDescription')} />
         <Card flush>
           <DataTable<Area>
             rows={map.data?.areas ?? []}
             rowKey={(x) => x.commonAreaId}
-            empty="No common area had a ticket in this period"
+            empty={t('emptyAreas')}
             columns={[
-              { key: 'code', header: 'Area', cell: (x) => x.code },
-              { key: 'kind', header: 'Kind', cell: (x) => humanize(x.kind) },
-              { key: 'total', header: 'Tickets', cell: (x) => x.total },
-              { key: 'open', header: 'Open', cell: (x) => x.open },
-              { key: 'at', header: 'Position', cell: (x) => at(x.latitude, x.longitude) },
+              { key: 'code', header: t('area'), cell: (x) => <span className="ltr">{x.code}</span> },
+              { key: 'kind', header: c('kind'), cell: (x) => label(x.kind) },
+              { key: 'total', header: t('tickets'), cell: (x) => f.number(x.total) },
+              { key: 'open', header: t('open'), cell: (x) => f.number(x.open) },
+              { key: 'at', header: t('position'), cell: (x) => <span className="ltr">{at(x.latitude, x.longitude)}</span> },
             ]}
           />
         </Card>

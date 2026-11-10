@@ -1,18 +1,20 @@
 'use client';
 
-import { formatDateTime, humanize, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Alert, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Alert, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
-import { personName } from '@/components/neighbours/bits';
-import { emptyText, filtersFor, unitText, VIEW_TEXT, VIEWS, type View } from '@/components/neighbours/logic';
+import { filtersFor, VIEWS, type View } from '@/components/neighbours/logic';
+import { useWho } from '@/components/neighbours/who';
 import { UnitPicker } from '@/components/unit-picker';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Complaint, type ComplaintFilters } from '@/lib/queries';
+import ar from '@/messages/ar/complaints';
+import en from '@/messages/en/complaints';
 
 /**
  * Complaints between units (ADR 0042), by last activity. A view narrows by
@@ -22,6 +24,12 @@ import { fetchers, keys, type Complaint, type ComplaintFilters } from '@/lib/que
  * is full.
  */
 function Inbox() {
+  const t = useT(en, ar);
+  const cm = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
+  const who = useWho();
   const { can, ready } = usePermissions();
   const router = useRouter();
   const pathname = usePathname();
@@ -61,26 +69,26 @@ function Inbox() {
   return (
     <>
       <PageHeader
-        title="Complaints"
-        description="What residents report about another unit. The unit complained about never learns who complained: it reads only the management’s notice."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
-        <Segmented<View> label="Complaints shown" value={view} onChange={setView} options={VIEWS.map((value) => ({ value, label: VIEW_TEXT[value] }))} />
-        <Field label="Category">
+        <Segmented<View> label={t('viewsLabel')} value={view} onChange={setView} options={VIEWS.map((value) => ({ value, label: t(`view.${value}`) }))} />
+        <Field label={cm('category')}>
           {(p) => (
             <Select {...p} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              <option value="">Any category</option>
+              <option value="">{t('anyCategory')}</option>
               {(categories.data?.data ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.nameEn}
+                  {locale === 'ar' ? c.nameAr : c.nameEn}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         {can('units.read') ? (
-          <Field label="Against unit">
-            {(p) => <UnitPicker {...p} placeholder="Any unit" style={{ maxWidth: 220 }} value={targetUnitId} onChange={(e) => pickUnit(e.target.value)} />}
+          <Field label={t('againstUnit')}>
+            {(p) => <UnitPicker {...p} placeholder={t('anyUnit')} style={{ maxWidth: 220 }} value={targetUnitId} onChange={(e) => pickUnit(e.target.value)} />}
           </Field>
         ) : null}
       </div>
@@ -90,13 +98,19 @@ function Inbox() {
             <Alert>
               <span className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
                 <span>
-                  Against unit <strong>{h ? unitText(h.unit) : '…'}</strong>
+                  {t('againstUnit')} <strong>{h ? who.unit(h.unit) : '…'}</strong>
                   {h
-                    ? `: ${h.history.total} in all · ${h.history.open} open · ${h.history.resolved} resolved · ${h.history.dismissed} dismissed (${h.history.unfounded} as unfounded)`
+                    ? t('againstHistory', {
+                        total: f.number(h.history.total),
+                        open: f.number(h.history.open),
+                        resolved: f.number(h.history.resolved),
+                        dismissed: f.number(h.history.dismissed),
+                        unfounded: f.number(h.history.unfounded),
+                      })
                     : ''}
                 </span>
                 <Button size="sm" variant="text" icon={<X aria-hidden />} onClick={() => pickUnit('')}>
-                  Any unit
+                  {t('anyUnit')}
                 </Button>
               </span>
             </Alert>
@@ -105,7 +119,7 @@ function Inbox() {
             <Alert>
               <span className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
                 <span>
-                  Filed by <strong>{author ? personName(author) : 'one complainant'}</strong>
+                  {t('filedBy')} <strong>{author ? who.person(author) : t('oneComplainant')}</strong>
                 </span>
                 <Button
                   size="sm"
@@ -116,7 +130,7 @@ function Inbox() {
                     drop();
                   }}
                 >
-                  Anyone
+                  {t('anyone')}
                 </Button>
               </span>
             </Alert>
@@ -128,50 +142,50 @@ function Inbox() {
           <DataTable<Complaint>
             rows={list.rows}
             rowKey={(c) => c.id}
-            empty={emptyText(view)}
+            empty={t(`empty.${view}`)}
             columns={[
               {
                 key: 'number',
-                header: 'Complaint',
+                header: t('complaint'),
                 cell: (c) => (
                   <Link className="table__link t-mono" style={{ whiteSpace: 'nowrap' }} href={`/complaints/${c.id}`}>
                     {c.number}
                   </Link>
                 ),
               },
-              { key: 'category', header: 'Category', cell: (c) => c.category.nameEn },
-              { key: 'author', header: 'Complainant', cell: (c) => personName(c.author) },
+              { key: 'category', header: cm('category'), cell: (c) => (locale === 'ar' ? c.category.nameAr : c.category.nameEn) },
+              { key: 'author', header: t('complainant'), cell: (c) => who.person(c.author) },
               {
                 key: 'from',
-                header: 'From unit',
-                cell: (c) => (c.authorUnit ? unitText(c.authorUnit) : <span className="t-secondary">—</span>),
+                header: t('fromUnit'),
+                cell: (c) => (c.authorUnit ? who.unit(c.authorUnit) : <span className="t-secondary">—</span>),
               },
-              { key: 'against', header: 'Against unit', cell: (c) => <span className="table__primary">{unitText(c.targetUnit)}</span> },
+              { key: 'against', header: t('againstUnit'), cell: (c) => <span className="table__primary">{who.unit(c.targetUnit)}</span> },
               {
                 key: 'tally',
-                header: 'Against this unit',
+                header: t('againstThisUnit'),
                 cell: (c) => (
-                  <span className="t-num" title="Complaints against the same unit, this one included" style={{ whiteSpace: 'nowrap' }}>
-                    {c.againstUnit.open} open <span className="t-secondary">of {c.againstUnit.total}</span>
+                  <span className="t-num" title={t('tallyTitle')} style={{ whiteSpace: 'nowrap' }}>
+                    {t('tallyOpen', { count: f.number(c.againstUnit.open) })} <span className="t-secondary">{t('tallyOf', { count: f.number(c.againstUnit.total) })}</span>
                   </span>
                 ),
               },
               {
                 key: 'status',
-                header: 'Status',
+                header: cm('status'),
                 cell: (c) => (
                   <span className="stack stack--sm">
                     <StatusBadge status={c.status} />
-                    {c.closeReason ? <span className="t-secondary">{humanize(c.closeReason)}</span> : null}
+                    {c.closeReason ? <span className="t-secondary">{label(c.closeReason)}</span> : null}
                   </span>
                 ),
               },
               {
                 key: 'activity',
-                header: 'Last activity',
+                header: t('lastActivity'),
                 cell: (c) => (
-                  <span title={formatDateTime(c.lastActivityAt)} style={{ whiteSpace: 'nowrap' }}>
-                    {relativeTime(c.lastActivityAt)}
+                  <span title={f.dateTime(c.lastActivityAt)} style={{ whiteSpace: 'nowrap' }}>
+                    {f.relative(c.lastActivityAt)}
                   </span>
                 ),
               },

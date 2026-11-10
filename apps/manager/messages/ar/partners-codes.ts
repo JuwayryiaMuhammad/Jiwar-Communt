@@ -1,0 +1,43 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/partners-codes.ts';
+
+const ar: Translation<typeof en> = {
+  'category.gas_water': 'غاز ومياه',
+  'category.pharmacy': 'صيدلية',
+  'category.grocery': 'بقالة',
+  'category.home_services': 'خدمات منزلية',
+  'category.laundry': 'مغسلة وتنظيف سجاد',
+  'category.gardening': 'تنسيق حدائق',
+  'category.beauty_at_home': 'حلاقة وتجميل في المنزل',
+  'category.repair': 'إصلاحات',
+  'category.pets': 'حيوانات أليفة',
+  'category.events': 'تجهيز مناسبات',
+  'category.moving_storage': 'نقل وتخزين',
+  'category.car_services': 'خدمات السيارات',
+  'category.elderly_care': 'رعاية كبار السن',
+  'unit.fixed': 'سعر ثابت',
+  'unit.per_visit': 'للزيارة',
+  'unit.visit_fee': 'رسوم الزيارة',
+  'unit.per_hour': 'للساعة',
+  'unit.per_item': 'للقطعة',
+  'unit.per_kg': 'للكيلو',
+  'unit.per_sqm': 'للمتر المربع',
+  'status.pending': 'في انتظار الشريك',
+  'status.proposed': 'اقترح الشريك موعدًا آخر',
+  'status.accepted': 'مقبول',
+  'status.declined': 'مرفوض',
+  'status.cancelled': 'ملغى',
+  'status.expired': 'انتهت مهلته',
+  'status.done': 'تم',
+  'status.partner_no_show': 'لم يحضر الشريك',
+  'status.lapsed': 'سقط الطلب',
+  'outcome.upheld': 'مؤيَّدة',
+  'outcome.not_upheld': 'غير مؤيَّدة',
+  'compensation.none': 'لا شيء',
+  'compensation.redo': 'يعيد الشريك التنفيذ',
+  'compensation.partner_refund': 'يردّ الشريك المبلغ',
+  'compensation.credit_note': 'إشعار دائن (يصدر من المالية)',
+  ratingNone: 'لا تقييمات',
+};
+
+export default ar;

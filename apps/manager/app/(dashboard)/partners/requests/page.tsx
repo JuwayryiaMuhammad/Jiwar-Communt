@@ -1,14 +1,19 @@
 'use client';
 
-import { formatDateTime, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Card, DataTable, ForbiddenState, PageHeader, Segmented, Select, StatusBadge } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Card, DataTable, ForbiddenState, PageHeader, Segmented, Select, StatusBadge, useCommonT } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
+import { localName } from '@/components/management-requests/logic';
 import { requestTitle } from '@/components/partners/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PartnerRequest, type PartnerRequestFilters } from '@/lib/queries';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-requests';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-requests';
 
 type View = 'pending' | 'proposed' | 'accepted' | 'all';
 
@@ -19,6 +24,11 @@ type View = 'pending' | 'proposed' | 'accepted' | 'all';
  * consent holds.
  */
 export default function PartnerRequestsPage() {
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('partners.manage');
   const [view, setView] = useState<View>('pending');
@@ -29,33 +39,33 @@ export default function PartnerRequestsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Partner requests" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Partner requests"
-        description="What residents asked the partners. Answer for a partner who phones or has no desk link."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Requests shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
           options={[
-            { value: 'pending', label: 'Waiting' },
-            { value: 'proposed', label: 'Proposed' },
-            { value: 'accepted', label: 'Accepted' },
-            { value: 'all', label: 'All' },
+            { value: 'pending', label: t('view.pending') },
+            { value: 'proposed', label: t('view.proposed') },
+            { value: 'accepted', label: t('view.accepted') },
+            { value: 'all', label: c('all') },
           ]}
         />
-        <Select aria-label="Partner" value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
-          <option value="">Every partner</option>
+        <Select aria-label={t('partner')} value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
+          <option value="">{t('everyPartner')}</option>
           {(partners.data?.data ?? []).map((p) => (
             <option key={p.id} value={p.id}>
-              {p.nameEn}
+              {localName(locale, p)}
             </option>
           ))}
         </Select>
@@ -65,22 +75,22 @@ export default function PartnerRequestsPage() {
           <DataTable<PartnerRequest>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty="No request"
+            empty={t('empty')}
             columns={[
               {
                 key: 'n',
-                header: 'Request',
+                header: t('col.request'),
                 cell: (r) => (
                   <Link className="table__link" href={`/partners/requests/${r.id}`}>
-                    {requestTitle(r)}
+                    {requestTitle(codes, r, locale)}
                   </Link>
                 ),
               },
-              { key: 'p', header: 'Partner', cell: (r) => r.partner.nameEn },
-              { key: 'u', header: 'Unit', cell: (r) => (r.consentWithdrawn ? '—' : <span className="t-mono">{r.unitCode}</span>) },
-              { key: 'w', header: 'Asked for', cell: (r) => formatDateTime(r.agreedStartsAt ?? r.askedStartsAt) },
-              { key: 's', header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
-              { key: 'c', header: 'Asked', cell: (r) => <span title={formatDateTime(r.createdAt)}>{relativeTime(r.createdAt)}</span> },
+              { key: 'p', header: t('col.partner'), cell: (r) => localName(locale, r.partner) },
+              { key: 'u', header: c('unit'), cell: (r) => (r.consentWithdrawn ? '—' : <span className="t-mono ltr">{r.unitCode}</span>) },
+              { key: 'w', header: t('col.askedFor'), cell: (r) => f.dateTime(r.agreedStartsAt ?? r.askedStartsAt) },
+              { key: 's', header: c('status'), cell: (r) => <StatusBadge status={r.status} /> },
+              { key: 'c', header: t('col.asked'), cell: (r) => <span title={f.dateTime(r.createdAt)}>{f.relative(r.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

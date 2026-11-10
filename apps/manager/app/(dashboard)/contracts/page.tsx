@@ -1,19 +1,25 @@
 'use client';
 
-import { fieldError, formatDate, humanize, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type MaintenanceContract } from '@/lib/queries';
+import ar from '@/messages/ar/contracts';
+import en from '@/messages/en/contracts';
 
 const KINDS = ['amc', 'service', 'warranty_extension', 'cleaning', 'security', 'landscaping', 'pest_control', 'supply', 'other'] as const;
 type Status = MaintenanceContract['status'] | '';
 
 function NewContractDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const router = useRouter();
   const [f, setF] = useState({ code: '', kind: 'amc' as (typeof KINDS)[number], vendorName: '', vendorPhone: '', startsOn: '', endsOn: '', annualValue: '', noticeDays: '30' });
@@ -36,9 +42,9 @@ function NewContractDialog({ onClose }: { onClose: () => void }) {
       ),
     {
       invalidate: [keys.contractsAll],
-      onDone: (c) => {
-        toast.show(`${c.code} is recorded.`);
-        router.push(`/contracts/${c.id}`);
+      onDone: (x) => {
+        toast.show(t('recorded', { code: x.code }));
+        router.push(`/contracts/${x.id}`);
       },
     },
   );
@@ -48,13 +54,13 @@ function NewContractDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="New contract"
+      title={t('newContract')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Record
+            {t('record')}
           </Button>
         </>
       }
@@ -62,15 +68,15 @@ function NewContractDialog({ onClose }: { onClose: () => void }) {
       <div className="form">
         <ErrorAlert error={save.error} />
         <div className="form__row">
-          <Field label="Reference" hint="Unique, e.g. AMC-LIFTS-2026." error={fieldError(save.error, 'code')}>
-            {(p) => <Input {...p} value={f.code} onChange={set('code')} />}
+          <Field label={t('reference')} hint={t('referenceHint')} error={fieldError(save.error, 'code')}>
+            {(p) => <Input {...p} className="ltr" value={f.code} onChange={set('code')} />}
           </Field>
-          <Field label="Kind" error={fieldError(save.error, 'kind')}>
+          <Field label={c('kind')} error={fieldError(save.error, 'kind')}>
             {(p) => (
               <Select {...p} value={f.kind} onChange={set('kind')}>
                 {KINDS.map((k) => (
                   <option key={k} value={k}>
-                    {humanize(k)}
+                    {label(k)}
                   </option>
                 ))}
               </Select>
@@ -78,26 +84,26 @@ function NewContractDialog({ onClose }: { onClose: () => void }) {
           </Field>
         </div>
         <div className="form__row">
-          <Field label="Vendor" error={fieldError(save.error, 'vendorName')}>
+          <Field label={t('vendor')} error={fieldError(save.error, 'vendorName')}>
             {(p) => <Input {...p} value={f.vendorName} onChange={set('vendorName')} />}
           </Field>
-          <Field label="Vendor’s phone" error={fieldError(save.error, 'vendorPhone')}>
-            {(p) => <Input {...p} value={f.vendorPhone} onChange={set('vendorPhone')} />}
+          <Field label={t('vendorPhone')} error={fieldError(save.error, 'vendorPhone')}>
+            {(p) => <Input {...p} className="ltr" value={f.vendorPhone} onChange={set('vendorPhone')} />}
           </Field>
         </div>
         <div className="form__row">
-          <Field label="Starts on" error={fieldError(save.error, 'startsOn')}>
+          <Field label={t('startsOn')} error={fieldError(save.error, 'startsOn')}>
             {(p) => <Input {...p} type="date" value={f.startsOn} onChange={set('startsOn')} />}
           </Field>
-          <Field label="Ends on" hint="Its last day." error={fieldError(save.error, 'endsOn')}>
+          <Field label={t('endsOn')} hint={t('endsOnHint')} error={fieldError(save.error, 'endsOn')}>
             {(p) => <Input {...p} type="date" value={f.endsOn} onChange={set('endsOn')} />}
           </Field>
         </div>
         <div className="form__row">
-          <Field label="Yearly value (EGP)" error={fieldError(save.error, 'annualValue')}>
+          <Field label={t('yearlyValue')} error={fieldError(save.error, 'annualValue')}>
             {(p) => <Input {...p} value={f.annualValue} onChange={set('annualValue')} />}
           </Field>
-          <Field label="Notice days" hint="How long before its end we are told." error={fieldError(save.error, 'noticeDays')}>
+          <Field label={t('noticeDays')} hint={t('noticeDaysHint')} error={fieldError(save.error, 'noticeDays')}>
             {(p) => <Input {...p} type="number" min={0} max={180} value={f.noticeDays} onChange={set('noticeDays')} />}
           </Field>
         </div>
@@ -108,6 +114,10 @@ function NewContractDialog({ onClose }: { onClose: () => void }) {
 
 /** The compound's maintenance contracts (ADR 0065), by end date. */
 export default function ContractsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const [status, setStatus] = useState<Status>('active');
   const [creating, setCreating] = useState(false);
@@ -116,32 +126,32 @@ export default function ContractsPage() {
   if (ready && !can('assets.manage'))
     return (
       <>
-        <PageHeader title="Contracts" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Contracts"
-        description="The compound’s contracts with its vendors: what they cover, their terms and until when."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
-            New contract
+            {t('newContract')}
           </Button>
         }
       />
       <div className="toolbar">
         <Segmented<Status>
-          label="Status"
+          label={c('status')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'active', label: 'Active' },
-            { value: 'upcoming', label: 'Upcoming' },
-            { value: 'ended', label: 'Ended' },
-            { value: 'terminated', label: 'Terminated' },
-            { value: '', label: 'All' },
+            { value: 'active', label: label('active') },
+            { value: 'upcoming', label: label('upcoming') },
+            { value: 'ended', label: label('ended') },
+            { value: 'terminated', label: label('terminated') },
+            { value: '', label: c('all') },
           ]}
         />
       </div>
@@ -149,23 +159,23 @@ export default function ContractsPage() {
         <QueryState query={list}>
           <DataTable<MaintenanceContract>
             rows={list.rows}
-            rowKey={(c) => c.id}
-            empty="No contract"
+            rowKey={(x) => x.id}
+            empty={t('empty')}
             columns={[
               {
                 key: 'c',
-                header: 'Reference',
-                cell: (c) => (
-                  <Link className="table__link" href={`/contracts/${c.id}`}>
-                    {c.code}
+                header: t('reference'),
+                cell: (x) => (
+                  <Link className="table__link" href={`/contracts/${x.id}`}>
+                    {x.code}
                   </Link>
                 ),
               },
-              { key: 'k', header: 'Kind', cell: (c) => humanize(c.kind) },
-              { key: 'v', header: 'Vendor', cell: (c) => c.vendorName },
-              { key: 'e', header: 'Ends', cell: (c) => formatDate(c.endsOn) },
-              { key: 'a', header: 'Assets', cell: (c) => c.assetIds.length },
-              { key: 'y', header: 'A year', cell: (c) => (c.annualValue ? `${c.annualValue} EGP` : '—') },
+              { key: 'k', header: c('kind'), cell: (x) => label(x.kind) },
+              { key: 'v', header: t('vendor'), cell: (x) => x.vendorName },
+              { key: 'e', header: t('ends'), cell: (x) => f.day(x.endsOn) },
+              { key: 'a', header: t('assets'), cell: (x) => f.number(x.assetIds.length) },
+              { key: 'y', header: t('aYear'), cell: (x) => (x.annualValue ? f.money(x.annualValue) : '—') },
             ]}
           />
           <LoadMore query={list} />

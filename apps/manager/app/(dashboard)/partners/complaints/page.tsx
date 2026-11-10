@@ -1,13 +1,18 @@
 'use client';
 
-import { formatDateTime, humanize, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Card, DataTable, ForbiddenState, PageHeader, Segmented } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Card, DataTable, ForbiddenState, PageHeader, Segmented, useCommonT, useLabel } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { OUTCOME_TEXT } from '@/components/partners/logic';
+import { localName } from '@/components/management-requests/logic';
+import { word } from '@/components/partners/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PartnerComplaint } from '@/lib/queries';
+import arCodes from '@/messages/ar/partners-codes';
+import ar from '@/messages/ar/partners-complaints';
+import enCodes from '@/messages/en/partners-codes';
+import en from '@/messages/en/partners-complaints';
 
 type View = 'false' | 'true' | '';
 
@@ -16,6 +21,12 @@ type View = 'false' | 'true' | '';
  * "Partner services": its conversation is there; the decision is here.
  */
 export default function PartnerComplaintsPage() {
+  const t = useT(en, ar);
+  const codes = useT(enCodes, arCodes);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('partners.manage');
   const [view, setView] = useState<View>('false');
@@ -23,25 +34,25 @@ export default function PartnerComplaintsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Partner complaints" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Partner complaints"
-        description="What residents complained of about a partner, and the compensation they asked. Nothing is paid through Jiwar: a credit note is issued in Finance."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Complaints shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
           options={[
-            { value: 'false', label: 'To decide' },
-            { value: 'true', label: 'Decided' },
-            { value: '', label: 'All' },
+            { value: 'false', label: t('view.toDecide') },
+            { value: 'true', label: t('view.decided') },
+            { value: '', label: c('all') },
           ]}
         />
       </div>
@@ -49,23 +60,23 @@ export default function PartnerComplaintsPage() {
         <QueryState query={list}>
           <DataTable<PartnerComplaint>
             rows={list.rows}
-            rowKey={(c) => c.id}
-            empty={view === 'false' ? 'Nothing to decide' : 'No complaint'}
+            rowKey={(cm) => cm.id}
+            empty={view === 'false' ? t('emptyToDecide') : t('empty')}
             columns={[
               {
                 key: 'n',
-                header: 'Complaint',
-                cell: (c) => (
-                  <Link className="table__link" href={`/partners/complaints/${c.id}`}>
-                    {c.managementRequestNumber} · {c.requestNumber}
+                header: t('col.complaint'),
+                cell: (cm) => (
+                  <Link className="table__link" href={`/partners/complaints/${cm.id}`}>
+                    <span className="ltr">{cm.managementRequestNumber}</span> · <span className="ltr">{cm.requestNumber}</span>
                   </Link>
                 ),
               },
-              { key: 'p', header: 'Partner', cell: (c) => c.partner.nameEn },
-              { key: 'r', header: 'Reason', cell: (c) => humanize(c.reason) },
-              { key: 'a', header: 'Asks', cell: (c) => `${humanize(c.compensationAsk)}${c.requestedAmount ? ` · ${c.requestedAmount} EGP` : ''}` },
-              { key: 'o', header: 'Decision', cell: (c) => (c.outcome ? OUTCOME_TEXT[c.outcome] : '—') },
-              { key: 't', header: 'Made', cell: (c) => <span title={formatDateTime(c.createdAt)}>{relativeTime(c.createdAt)}</span> },
+              { key: 'p', header: t('col.partner'), cell: (cm) => localName(locale, cm.partner) },
+              { key: 'r', header: c('reason'), cell: (cm) => label(cm.reason) },
+              { key: 'a', header: t('col.asks'), cell: (cm) => `${label(cm.compensationAsk)}${cm.requestedAmount ? ` · ${f.money(cm.requestedAmount)}` : ''}` },
+              { key: 'o', header: t('col.decision'), cell: (cm) => (cm.outcome ? word(codes, 'outcome', cm.outcome) : '—') },
+              { key: 't', header: t('col.made'), cell: (cm) => <span title={f.dateTime(cm.createdAt)}>{f.relative(cm.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

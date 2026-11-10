@@ -1,14 +1,32 @@
 'use client';
 
-import { REASON_CODES, formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, ButtonLink, Card, DataTable, Dialog, Field, ForbiddenState, PageHeader, Select, Textarea, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  ButtonLink,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  PageHeader,
+  Select,
+  Textarea,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ExperienceCase, type ExperienceSignal } from '@/lib/queries';
+import ar from '@/messages/ar/experience-cases';
+import en from '@/messages/en/experience-cases';
 
 type Status = 'open' | 'closed' | '';
 type Kind = 'follow_up' | 'recovery' | '';
@@ -20,6 +38,11 @@ type Kind = 'follow_up' | 'recovery' | '';
  * thresholds). A case is worked on its own page.
  */
 export default function ExperiencePage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const kindOf = (k: string) => (k === 'recovery' ? t('kind.recovery') : k === 'follow_up' ? t('kind.follow_up') : label(k));
   const { ready, can } = usePermissions();
   const allowed = can('experience.manage');
   const toast = useToast();
@@ -30,10 +53,10 @@ export default function ExperiencePage() {
   const [newKind, setNewKind] = useState<'follow_up' | 'recovery'>('recovery');
   const [failureCode, setFailureCode] = useState('');
   const [note, setNote] = useState('');
-  const cases = useCursorList(keys.experienceCases({ status, kind }), (c) => fetchers.experienceCases({ status, kind }, c), {
+  const cases = useCursorList(keys.experienceCases({ status, kind }), (cursor) => fetchers.experienceCases({ status, kind }, cursor), {
     enabled: allowed,
   });
-  const signals = useCursorList(keys.experienceSignals({}), (c) => fetchers.experienceSignals({}, c), { enabled: allowed });
+  const signals = useCursorList(keys.experienceSignals({}), (cursor) => fetchers.experienceSignals({}, cursor), { enabled: allowed });
   const open = useAction(
     () =>
       unwrap(
@@ -43,8 +66,8 @@ export default function ExperiencePage() {
       ),
     {
       invalidate: [keys.experienceAll],
-      onDone: (c) => {
-        toast.show(`${c.number} is open.`);
+      onDone: (opened) => {
+        toast.show(t('open.done', { number: opened.number }));
         setOpening(false);
         setUnitId('');
         setNote('');
@@ -54,41 +77,41 @@ export default function ExperiencePage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Resident experience" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Resident experience"
-        description="Follow-up and recovery cases, one open per unit, and the signals the rules raised. Due times are the inbox’s for each kind."
+        title={t('title')}
+        description={t('description')}
         actions={
           <span className="row" style={{ gap: 6 }}>
-            <ButtonLink href="/experience/reports">Reports</ButtonLink>
-            <ButtonLink href="/experience/setup">Setup</ButtonLink>
+            <ButtonLink href="/experience/reports">{t('reports')}</ButtonLink>
+            <ButtonLink href="/experience/setup">{t('setup')}</ButtonLink>
             <Button variant="primary" onClick={() => setOpening(true)}>
-              Open a case
+              {t('openCase')}
             </Button>
           </span>
         }
       />
       <div className="toolbar">
-        <Field label="Status">
+        <Field label={c('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as Status)}>
-              <option value="">Any status</option>
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
+              <option value="">{t('anyStatus')}</option>
+              <option value="open">{label('open')}</option>
+              <option value="closed">{label('closed')}</option>
             </Select>
           )}
         </Field>
-        <Field label="Kind">
+        <Field label={c('kind')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
-              <option value="">Any kind</option>
-              <option value="follow_up">Follow-up</option>
-              <option value="recovery">Recovery</option>
+              <option value="">{t('anyKind')}</option>
+              <option value="follow_up">{t('kind.follow_up')}</option>
+              <option value="recovery">{t('kind.recovery')}</option>
             </Select>
           )}
         </Field>
@@ -97,49 +120,49 @@ export default function ExperiencePage() {
         <QueryState query={cases}>
           <DataTable<ExperienceCase>
             rows={cases.rows}
-            rowKey={(c) => c.id}
-            empty="No case matches"
+            rowKey={(x) => x.id}
+            empty={t('empty')}
             columns={[
               {
                 key: 'number',
-                header: 'Case',
-                cell: (c) => (
-                  <Link className="table__link" href={`/experience/cases/${c.id}`}>
-                    {c.number}
+                header: t('case'),
+                cell: (x) => (
+                  <Link className="table__link" href={`/experience/cases/${x.id}`}>
+                    {x.number}
                   </Link>
                 ),
               },
-              { key: 'unit', header: 'Unit', cell: (c) => `${c.unitCode ?? '—'}${c.building ? ` · ${c.building}` : ''}` },
-              { key: 'kind', header: 'Kind', cell: (c) => humanize(c.kind) },
-              { key: 'origin', header: 'Opened by', cell: (c) => (c.origin === 'signal' ? 'A signal' : 'The staff') },
-              { key: 'due', header: 'Due', width: 170, cell: (c) => (c.dueAt ? formatDateTime(c.dueAt) : '—') },
-              { key: 'status', header: 'Status', cell: (c) => <Badge>{humanize(c.outcome ?? c.status)}</Badge> },
+              { key: 'unit', header: c('unit'), cell: (x) => `${x.unitCode ?? '—'}${x.building ? ` · ${x.building}` : ''}` },
+              { key: 'kind', header: c('kind'), cell: (x) => kindOf(x.kind) },
+              { key: 'origin', header: t('openedBy'), cell: (x) => (x.origin === 'signal' ? t('origin.signal') : t('origin.staff')) },
+              { key: 'due', header: t('due'), width: 170, cell: (x) => (x.dueAt ? f.dateTime(x.dueAt) : '—') },
+              { key: 'status', header: c('status'), cell: (x) => <Badge>{label(x.outcome ?? x.status)}</Badge> },
             ]}
           />
           <LoadMore query={cases} />
         </QueryState>
       </Card>
       <h2 className="t-title-md" style={{ margin: '24px 0 8px' }}>
-        Signals
+        {t('signals')}
       </h2>
       <Card flush>
         <QueryState query={signals}>
           <DataTable<ExperienceSignal>
             rows={signals.rows}
             rowKey={(s) => s.id}
-            empty="No signal yet"
+            empty={t('emptySignals')}
             columns={[
-              { key: 'at', header: 'Detected', width: 170, cell: (s) => formatDateTime(s.detectedAt) },
-              { key: 'unit', header: 'Unit', cell: (s) => s.unitCode ?? '—' },
-              { key: 'rule', header: 'Rule', cell: (s) => humanize(s.code) },
-              { key: 'count', header: 'Events', cell: (s) => `${s.count} in ${s.windowDays} days` },
+              { key: 'at', header: t('detected'), width: 170, cell: (s) => f.dateTime(s.detectedAt) },
+              { key: 'unit', header: c('unit'), cell: (s) => s.unitCode ?? '—' },
+              { key: 'rule', header: t('rule'), cell: (s) => label(s.code) },
+              { key: 'count', header: t('events'), cell: (s) => t('eventsIn', { count: f.number(s.count), days: s.windowDays }) },
               {
                 key: 'case',
-                header: 'Case',
+                header: t('case'),
                 cell: (s) =>
                   s.caseId ? (
                     <Link className="table__link" href={`/experience/cases/${s.caseId}`}>
-                      Open case
+                      {t('openCaseLink')}
                     </Link>
                   ) : (
                     '—'
@@ -153,41 +176,41 @@ export default function ExperiencePage() {
       <Dialog
         open={opening}
         onClose={() => setOpening(false)}
-        title="Open a case"
-        description="One open case per unit: a unit with one is refused and its case named."
+        title={t('open.title')}
+        description={t('open.description')}
         onSubmit={(e) => {
           e.preventDefault();
           open.mutate();
         }}
         footer={
           <Button type="submit" variant="primary" loading={open.isPending} disabled={!unitId}>
-            Open
+            {t('open.submit')}
           </Button>
         }
       >
         <div className="stack">
-          <Field label="Unit">{(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}</Field>
-          <Field label="Kind">
+          <Field label={c('unit')}>{(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}</Field>
+          <Field label={c('kind')}>
             {(p) => (
               <Select {...p} value={newKind} onChange={(e) => setNewKind(e.target.value as 'follow_up' | 'recovery')}>
-                <option value="recovery">Recovery (a service failed)</option>
-                <option value="follow_up">Follow-up (before they complain)</option>
+                <option value="recovery">{t('open.recovery')}</option>
+                <option value="follow_up">{t('open.followUp')}</option>
               </Select>
             )}
           </Field>
-          <Field label="What failed">
+          <Field label={t('whatFailed')}>
             {(p) => (
               <Select {...p} value={failureCode} onChange={(e) => setFailureCode(e.target.value)}>
-                <option value="">Not said</option>
-                {REASON_CODES.creditNoteCompensation.map((c) => (
-                  <option key={c} value={c}>
-                    {humanize(c)}
+                <option value="">{t('notSaid')}</option>
+                {REASON_CODES.creditNoteCompensation.map((code) => (
+                  <option key={code} value={code}>
+                    {label(code)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Note" hint="For the staff only; never in the audit trail.">
+          <Field label={c('note')} hint={t('noteHint')}>
             {(p) => <Textarea {...p} value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} />}
           </Field>
           <ErrorAlert error={open.error} />

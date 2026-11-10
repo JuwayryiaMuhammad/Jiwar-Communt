@@ -1,15 +1,15 @@
 'use client';
 
-import { formatDateTime, humanize, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Field, ForbiddenState, PageHeader, Segmented, Select, StatusBadge, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { HandlerPicker, personName, ResponseBadges, TYPE_TEXT } from '@/components/management-requests/bits';
-import { emptyText, filtersFor, type View } from '@/components/management-requests/logic';
+import { HandlerPicker, ResponseBadges, usePersonName } from '@/components/management-requests/bits';
+import { emptyKey, filtersFor, localName, VIEWS, type View } from '@/components/management-requests/logic';
 import { NewRequestDialog } from '@/components/management-requests/new-request-dialog';
 import { usePermissions } from '@/lib/permissions';
 import {
@@ -20,6 +20,8 @@ import {
   type ManagementRequestStatus,
   type ManagementRequestType,
 } from '@/lib/queries';
+import ar from '@/messages/ar/services-mgmt-requests';
+import en from '@/messages/en/services-mgmt-requests';
 
 const STATUSES: ManagementRequestStatus[] = ['open', 'in_progress', 'answered', 'closed'];
 const TYPES: ManagementRequestType[] = ['question', 'general', 'appointment'];
@@ -30,6 +32,12 @@ const TYPES: ManagementRequestType[] = ['question', 'general', 'appointment'];
  * rest. Every filter is applied by the API, so each page is full.
  */
 export default function ManagementRequestsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
+  const personName = usePersonName();
   const toast = useToast();
   const router = useRouter();
   const { can, ready } = usePermissions();
@@ -54,64 +62,57 @@ export default function ManagementRequestsPage() {
   return (
     <>
       <PageHeader
-        title="Management requests"
-        description="What residents ask the management: questions, general matters and appointments. Each one is private to the resident who wrote it."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Requests shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'open', label: 'Open' },
-            { value: 'mine', label: 'Assigned to me' },
-            { value: 'unassigned', label: 'Unassigned' },
-            { value: 'overdue', label: 'Overdue' },
-            { value: 'escalated', label: 'Escalated' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
-        <Field label="Status">
+        <Field label={c('status')}>
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as ManagementRequestStatus | '')}>
-              <option value="">Any status</option>
+              <option value="">{t('anyStatus')}</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {humanize(s)}
+                  {label(s)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Topic">
+        <Field label={t('topic')}>
           {(p) => (
             <Select {...p} value={topicId} onChange={(e) => setTopicId(e.target.value)}>
-              <option value="">Any topic</option>
-              {(topics.data?.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nameEn}
+              <option value="">{t('anyTopic')}</option>
+              {(topics.data?.data ?? []).map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {localName(locale, topic)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Type">
+        <Field label={t('type')}>
           {(p) => (
             <Select {...p} value={type} onChange={(e) => setType(e.target.value as ManagementRequestType | '')}>
-              <option value="">Any type</option>
-              {TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {TYPE_TEXT[t]}
+              <option value="">{t('anyType')}</option>
+              {TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {t(`type.${type}`)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Assignee">
+        <Field label={t('assignee')}>
           {(p) => (
             <HandlerPicker
               {...p}
-              placeholder="Anyone"
+              placeholder={t('anyone')}
               style={{ maxWidth: 220 }}
               value={ownsAssignee ? '' : assignee}
               disabled={ownsAssignee}
@@ -122,7 +123,7 @@ export default function ManagementRequestsPage() {
         <span className="spacer" />
         {can('residents.read', 'units.read') ? (
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            New request
+            {t('newRequest')}
           </Button>
         ) : null}
       </div>
@@ -131,19 +132,19 @@ export default function ManagementRequestsPage() {
           <DataTable<ManagementRequest>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty={emptyText(view)}
+            empty={t(emptyKey(view))}
             columns={[
               {
                 key: 'number',
-                header: 'Request',
+                header: t('col.request'),
                 cell: (r) => (
                   <span className="stack stack--sm">
                     <span className="row">
                       <Link className="table__link t-mono" style={{ whiteSpace: 'nowrap' }} href={`/management-requests/${r.id}`}>
                         {r.number}
                       </Link>
-                      {r.type !== 'general' ? <Badge plain>{TYPE_TEXT[r.type]}</Badge> : null}
-                      {r.openedBy ? <Badge plain>On behalf</Badge> : null}
+                      {r.type !== 'general' ? <Badge plain>{t(`type.${r.type}`)}</Badge> : null}
+                      {r.openedBy ? <Badge plain>{t('onBehalf')}</Badge> : null}
                     </span>
                     {r.preview ? (
                       <span className="t-secondary" style={{ maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -155,28 +156,28 @@ export default function ManagementRequestsPage() {
               },
               {
                 key: 'author',
-                header: 'Resident',
+                header: t('col.resident'),
                 cell: (r) => (
                   <span className="stack stack--sm">
                     {personName(r.author)}
-                    {r.unit ? <span className="t-secondary">Unit {r.unit.code}</span> : null}
+                    {r.unit ? <span className="t-secondary">{t('unitCode', { code: r.unit.code })}</span> : null}
                   </span>
                 ),
               },
-              { key: 'topic', header: 'Topic', cell: (r) => r.topic.nameEn },
-              { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
+              { key: 'topic', header: t('topic'), cell: (r) => localName(locale, r.topic) },
+              { key: 'status', header: c('status'), cell: (r) => <StatusBadge status={r.status} /> },
               {
                 key: 'assignee',
-                header: 'Assignee',
-                cell: (r) => (r.assignee ? personName(r.assignee) : <span className="t-secondary">Unassigned</span>),
+                header: t('assignee'),
+                cell: (r) => (r.assignee ? personName(r.assignee) : <span className="t-secondary">{t('unassigned')}</span>),
               },
-              { key: 'response', header: 'Response', cell: (r) => <ResponseBadges request={r} /> },
+              { key: 'response', header: t('col.response'), cell: (r) => <ResponseBadges request={r} /> },
               {
                 key: 'activity',
-                header: 'Last activity',
+                header: t('col.activity'),
                 cell: (r) => (
-                  <span title={formatDateTime(r.lastActivityAt)} style={{ whiteSpace: 'nowrap' }}>
-                    {relativeTime(r.lastActivityAt)}
+                  <span title={fmt.dateTime(r.lastActivityAt)} style={{ whiteSpace: 'nowrap' }}>
+                    {fmt.relative(r.lastActivityAt)}
                   </span>
                 ),
               },
@@ -190,7 +191,7 @@ export default function ManagementRequestsPage() {
         onClose={() => setCreating(false)}
         onCreated={(request) => {
           setCreating(false);
-          toast.show(`Request ${request.number} is open.`);
+          toast.show(t('opened', { number: request.number }));
           router.push(`/management-requests/${request.id}`);
         }}
       />

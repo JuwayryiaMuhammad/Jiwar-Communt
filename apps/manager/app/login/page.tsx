@@ -3,7 +3,7 @@
 import { ApiError } from '@jiwar/api';
 import { ErrorAlert } from '@jiwar/api/react';
 import { useT } from '@jiwar/i18n';
-import { Alert, Button, Field, Input, useLabel } from '@jiwar/ui';
+import { Alert, Button, Field, Input, LanguageSwitcher, useLabel } from '@jiwar/ui';
 import { Building2, ChevronRight, DoorOpen, ShieldCheck, Users } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
@@ -237,6 +237,9 @@ export default function LoginPage() {
   return (
     <div className="auth">
       <div className="auth__panel">
+        <div className="auth__lang">
+          <LanguageSwitcher variant="text" />
+        </div>
         <Suspense>
           <LoginFlow />
         </Suspense>

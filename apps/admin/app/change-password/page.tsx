@@ -1,7 +1,7 @@
 'use client';
 
 import { useT } from '@jiwar/i18n';
-import { Alert, Button } from '@jiwar/ui';
+import { Alert, Button, LanguageSwitcher } from '@jiwar/ui';
 import { useRouter } from 'next/navigation';
 import { PasswordForm } from '@/components/password-form';
 import { bffAuth } from '@/lib/api';
@@ -18,6 +18,9 @@ export default function ChangePasswordPage() {
   return (
     <div className="auth">
       <div className="auth__panel">
+        <div className="auth__lang">
+          <LanguageSwitcher variant="text" />
+        </div>
         <div className="auth__form">
           <div className="stack stack--sm">
             <span className="sidebar__mark" aria-hidden>

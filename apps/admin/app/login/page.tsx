@@ -2,7 +2,7 @@
 
 import { ErrorAlert } from '@jiwar/api/react';
 import { useT } from '@jiwar/i18n';
-import { Button, Field, Input, useCommonT } from '@jiwar/ui';
+import { Button, Field, Input, LanguageSwitcher, useCommonT } from '@jiwar/ui';
 import { Building2, ScrollText, ShieldCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
@@ -89,6 +89,9 @@ export default function LoginPage() {
   return (
     <div className="auth">
       <div className="auth__panel">
+        <div className="auth__lang">
+          <LanguageSwitcher variant="text" />
+        </div>
         <Suspense>
           <LoginForm />
         </Suspense>

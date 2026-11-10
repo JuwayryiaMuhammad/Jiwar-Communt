@@ -1555,3 +1555,15 @@ a.sidebar__user[aria-current='page'] {
   direction: ltr;
   unicode-bidi: isolate;
 }
+
+/* The language switch on the sign-in pages: at the end corner, whatever the direction. */
+.auth {
+  position: relative;
+}
+
+.auth__lang {
+  position: absolute;
+  inset-block-start: var(--space-md);
+  inset-inline-end: var(--space-md);
+  z-index: 1;
+}

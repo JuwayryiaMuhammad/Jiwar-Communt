@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from './button';
-import { useCommonT } from './i18n';
+import { LanguageSwitcher, useCommonT } from './i18n';
 
 export interface NavItem {
   href: string;
@@ -154,7 +154,10 @@ export function AppShell({
               </>
             ) : null}
           </div>
-          <div className="topbar__end">{topbarEnd}</div>
+          <div className="topbar__end">
+            {topbarEnd}
+            <LanguageSwitcher variant="text" />
+          </div>
         </header>
         <main className="content">{children}</main>
       </div>

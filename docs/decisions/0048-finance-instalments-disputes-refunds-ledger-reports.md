@@ -200,3 +200,6 @@ Other consequences:
 
 ## Update (Phase M3-5, ADR 0092)
 - **The computed journal stays** as it is (`GET /staff/finance/ledger`, the units' side, not double-entry). The double-entry ledger lives beside it (ADR 0092): refunds and their reversals, releases, reversals (the payment and what it still paid) post their balanced entries; per unit, receivables less unit credit is this journal's debits less credits. "Double-entry accounts" (Not built) are ADR 0092's.
+
+## Update (Phase M3-6, ADR 0093)
+- An instalment plan's credit note and its remainder carry the VAT the note took back, each instalment its share at the invoice's rate and the last the rest; the units' computed journal still reads totals (net plus VAT).

@@ -9988,7 +9988,8 @@
           "statement_payment",
           "adjustment",
           "reversal",
-          "payout"
+          "payout",
+          "tax_payment"
         ],
         "type": "string"
       },
@@ -10057,6 +10058,12 @@
             "nullable": true,
             "type": "string"
           },
+          "taxPaymentId": {
+            "description": "The tax it paid (ADR 0093).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "transferId": {
             "format": "uuid",
             "nullable": true,
@@ -10076,6 +10083,7 @@
           "reversesId",
           "reasonCode",
           "payoutId",
+          "taxPaymentId",
           "recordedBy",
           "createdAt"
         ],
@@ -22970,6 +22978,10 @@
           "released": {
             "description": "What it gave back of paid money to the unit’s credit: the part beyond what the invoice still owed (ADR 0048).",
             "type": "string"
+          },
+          "vat": {
+            "description": "The share of the invoice’s VAT it takes back (ADR 0093).",
+            "type": "string"
           }
         },
         "required": [
@@ -22977,6 +22989,7 @@
           "number",
           "invoiceId",
           "amount",
+          "vat",
           "released",
           "reasonCode",
           "compensationReason",
@@ -33997,11 +34010,21 @@
             "description": "Assets equal liabilities and equity.",
             "type": "boolean"
           },
+          "currentYearResult": {
+            "description": "The fiscal year’s result to the day, apart from accumulated surplus (its own closing entry left out).",
+            "example": "1250.00",
+            "type": "string"
+          },
           "equity": {
             "items": {
               "$ref": "#/components/schemas/GlStatementRowView"
             },
             "type": "array"
+          },
+          "fiscalYearStartsOn": {
+            "description": "The first day of the fiscal year the day is in (ADR 0093).",
+            "format": "date",
+            "type": "string"
           },
           "liabilities": {
             "items": {
@@ -34009,8 +34032,13 @@
             },
             "type": "array"
           },
+          "priorYearsResult": {
+            "description": "Earlier fiscal years’ results not yet closed.",
+            "example": "1250.00",
+            "type": "string"
+          },
           "surplus": {
-            "description": "Revenue less expenses up to the day, not closed into equity.",
+            "description": "Revenue less expenses up to the day that no closed fiscal year took into accumulated surplus: currentYearResult and priorYearsResult.",
             "example": "1250.00",
             "type": "string"
           },
@@ -34034,6 +34062,9 @@
           "liabilities",
           "equity",
           "surplus",
+          "fiscalYearStartsOn",
+          "currentYearResult",
+          "priorYearsResult",
           "totalAssets",
           "totalLiabilities",
           "totalEquity",
@@ -34112,6 +34143,20 @@
         },
         "required": [
           "month"
+        ],
+        "type": "object"
+      },
+      "GlCloseYearDto": {
+        "properties": {
+          "startsOn": {
+            "description": "The fiscal year’s first day, on the compound’s start month (INVALID_VALUE otherwise).",
+            "example": "2026-01-01",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsOn"
         ],
         "type": "object"
       },
@@ -34270,7 +34315,11 @@
               "club_payment",
               "vehicle_fine_payment",
               "violation_payment",
-              "manual"
+              "manual",
+              "vat_declaration",
+              "tax_payment",
+              "year_close",
+              "year_reopen"
             ],
             "type": "string"
           },
@@ -34424,7 +34473,11 @@
               "club_payment",
               "vehicle_fine_payment",
               "violation_payment",
-              "manual"
+              "manual",
+              "vat_declaration",
+              "tax_payment",
+              "year_close",
+              "year_reopen"
             ],
             "type": "string"
           },
@@ -34917,6 +34970,25 @@
         ],
         "type": "object"
       },
+      "GlReopenYearDto": {
+        "properties": {
+          "reasonCode": {
+            "description": "A `glPeriodReopen` code.",
+            "type": "string"
+          },
+          "startsOn": {
+            "description": "The closed fiscal year’s first day.",
+            "example": "2026-01-01",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsOn",
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "GlReverseEntryDto": {
         "properties": {
           "memo": {
@@ -35019,6 +35091,120 @@
           "debit",
           "credit",
           "balanced"
+        ],
+        "type": "object"
+      },
+      "GlYearView": {
+        "properties": {
+          "closable": {
+            "description": "It may be closed now: open, its last month closed, every month of it closed and every earlier year with entries closed.",
+            "type": "boolean"
+          },
+          "closeId": {
+            "description": "The live close, if closed.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "endsOn": {
+            "format": "date",
+            "type": "string"
+          },
+          "entryId": {
+            "description": "Its closing entry; none when nothing was to close.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "expenses": {
+            "description": "Closed: its expenses.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "openMonths": {
+            "description": "Its months not closed yet (YYYY-MM).",
+            "example": [
+              "2026-12"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reopenings": {
+            "description": "How many times it was closed and reopened.",
+            "type": "number"
+          },
+          "result": {
+            "description": "Closed: revenue less expenses, into accumulated surplus.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "revenue": {
+            "description": "Closed: its revenue.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "startsOn": {
+            "description": "Its first day (ADR 0055’s start month).",
+            "format": "date",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "startsOn",
+          "endsOn",
+          "status",
+          "closable",
+          "openMonths",
+          "closeId",
+          "revenue",
+          "expenses",
+          "result",
+          "entryId",
+          "closedAt",
+          "closedBy",
+          "reopenings"
+        ],
+        "type": "object"
+      },
+      "GlYearViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/GlYearView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -41028,6 +41214,10 @@
               }
             ]
           },
+          "net": {
+            "description": "The total less its VAT.",
+            "type": "string"
+          },
           "number": {
             "example": "INV-000123",
             "type": "string"
@@ -41056,7 +41246,7 @@
             "type": "string"
           },
           "total": {
-            "description": "EGP, two decimals.",
+            "description": "EGP, two decimals: what the unit owes, net and VAT.",
             "type": "string"
           },
           "unitCode": {
@@ -41064,6 +41254,14 @@
           },
           "unitId": {
             "format": "uuid",
+            "type": "string"
+          },
+          "vat": {
+            "description": "Its VAT (ADR 0093): 0.00 when the compound is not registered or the kind is not taxable.",
+            "type": "string"
+          },
+          "vatRate": {
+            "description": "The VAT rate in percent; 0.00 when untaxed.",
             "type": "string"
           }
         },
@@ -41074,6 +41272,9 @@
           "unitCode",
           "kind",
           "total",
+          "net",
+          "vat",
+          "vatRate",
           "currency",
           "credited",
           "paid",
@@ -41555,6 +41756,10 @@
             },
             "type": "array"
           },
+          "net": {
+            "description": "The total less its VAT.",
+            "type": "string"
+          },
           "number": {
             "example": "INV-000123",
             "type": "string"
@@ -41602,7 +41807,7 @@
             "type": "string"
           },
           "total": {
-            "description": "EGP, two decimals.",
+            "description": "EGP, two decimals: what the unit owes, net and VAT.",
             "type": "string"
           },
           "unitCode": {
@@ -41610,6 +41815,14 @@
           },
           "unitId": {
             "format": "uuid",
+            "type": "string"
+          },
+          "vat": {
+            "description": "Its VAT (ADR 0093): 0.00 when the compound is not registered or the kind is not taxable.",
+            "type": "string"
+          },
+          "vatRate": {
+            "description": "The VAT rate in percent; 0.00 when untaxed.",
             "type": "string"
           }
         },
@@ -41620,6 +41833,9 @@
           "unitCode",
           "kind",
           "total",
+          "net",
+          "vat",
+          "vatRate",
           "currency",
           "credited",
           "paid",
@@ -41750,7 +41966,7 @@
       "InvoiceLineView": {
         "properties": {
           "amount": {
-            "description": "EGP, two decimals.",
+            "description": "EGP, two decimals, net of VAT.",
             "type": "string"
           },
           "descriptionAr": {
@@ -41761,13 +41977,18 @@
           },
           "position": {
             "type": "number"
+          },
+          "vat": {
+            "description": "Its VAT (ADR 0093): 0.00 when untaxed.",
+            "type": "string"
           }
         },
         "required": [
           "position",
           "descriptionEn",
           "descriptionAr",
-          "amount"
+          "amount",
+          "vat"
         ],
         "type": "object"
       },
@@ -41914,6 +42135,10 @@
               }
             ]
           },
+          "net": {
+            "description": "The total less its VAT.",
+            "type": "string"
+          },
           "number": {
             "example": "INV-000123",
             "type": "string"
@@ -41938,7 +42163,7 @@
             "type": "string"
           },
           "total": {
-            "description": "EGP, two decimals.",
+            "description": "EGP, two decimals: what the unit owes, net and VAT.",
             "type": "string"
           },
           "unitCode": {
@@ -41946,6 +42171,14 @@
           },
           "unitId": {
             "format": "uuid",
+            "type": "string"
+          },
+          "vat": {
+            "description": "Its VAT (ADR 0093): 0.00 when the compound is not registered or the kind is not taxable.",
+            "type": "string"
+          },
+          "vatRate": {
+            "description": "The VAT rate in percent; 0.00 when untaxed.",
             "type": "string"
           }
         },
@@ -41956,6 +42189,9 @@
           "unitCode",
           "kind",
           "total",
+          "net",
+          "vat",
+          "vatRate",
           "currency",
           "credited",
           "paid",
@@ -54067,6 +54303,30 @@
             "description": "Held back at the contract’s retention share.",
             "example": "1200.00",
             "type": "string"
+          },
+          "withholding": {
+            "description": "Tax withheld (ADR 0093), deducted from what was paid: at withholdingRate on withholdingBase.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "withholdingBase": {
+            "description": "The invoice’s subtotal it was withheld on; 0.00 when none.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "withholdingCategory": {
+            "description": "The category it withheld by; null when nothing was.",
+            "enum": [
+              "supplies",
+              "services",
+              "professional"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "withholdingRate": {
+            "example": "3.00",
+            "type": "string"
           }
         },
         "required": [
@@ -54077,6 +54337,10 @@
           "gross",
           "retentionHeld",
           "advanceSetOff",
+          "withholding",
+          "withholdingRate",
+          "withholdingBase",
+          "withholdingCategory",
           "net",
           "method",
           "reference",
@@ -59982,6 +60246,14 @@
             "maxLength": 60,
             "minLength": 1,
             "type": "string"
+          },
+          "withholdingCategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WithholdingCategory"
+              }
+            ],
+            "description": "What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt."
           }
         },
         "required": [
@@ -62004,7 +62276,9 @@
           "gl_trial_balance",
           "gl_income_statement",
           "gl_balance_sheet",
-          "gl_general_ledger"
+          "gl_general_ledger",
+          "tax_vat",
+          "tax_withholding"
         ],
         "type": "string"
       },
@@ -80179,6 +80453,432 @@
         ],
         "type": "string"
       },
+      "TaxPaymentDto": {
+        "properties": {
+          "amount": {
+            "description": "At most what is still due (TAX_PAYMENT_EXCEEDED {open}).",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "cashAccountId": {
+            "description": "The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque. CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "declarationId": {
+            "description": "VAT: the declaration it pays (required); refused otherwise.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxPaymentKind"
+              }
+            ]
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutMethod"
+              }
+            ]
+          },
+          "paidOn": {
+            "description": "The day it was paid: not ahead, at most 31 days back.",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "quarter": {
+            "description": "Withholding: the calendar quarter it pays (required), not ahead; refused otherwise.",
+            "example": "2026-Q3",
+            "pattern": "^\\d{4}-Q[1-4]$",
+            "type": "string"
+          },
+          "reference": {
+            "description": "The tax authority’s receipt or the transfer’s reference.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "amount",
+          "paidOn",
+          "method",
+          "cashAccountId"
+        ],
+        "type": "object"
+      },
+      "TaxPaymentKind": {
+        "enum": [
+          "vat",
+          "withholding"
+        ],
+        "type": "string"
+      },
+      "TaxPaymentView": {
+        "properties": {
+          "amount": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "cashAccountId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "declarationId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxPaymentKind"
+              }
+            ]
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PayoutMethod"
+              }
+            ]
+          },
+          "month": {
+            "example": "2026-10",
+            "nullable": true,
+            "type": "string"
+          },
+          "number": {
+            "example": "TXP-000001",
+            "type": "string"
+          },
+          "paidBy": {
+            "$ref": "#/components/schemas/StaffRefView"
+          },
+          "paidOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "quarter": {
+            "example": "2026-Q3",
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "kind",
+          "declarationId",
+          "month",
+          "quarter",
+          "amount",
+          "paidOn",
+          "method",
+          "reference",
+          "cashAccountId",
+          "paidBy",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "TaxPaymentViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TaxPaymentView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TaxSettingsDto": {
+        "properties": {
+          "professionalRate": {
+            "description": "Professional fees, in percent (0–100).",
+            "example": "5.00",
+            "pattern": "^\\d{1,3}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "recoverableCategories": {
+            "description": "The budget categories whose input VAT is recovered while registered; none by default (the VAT stays part of the cost).",
+            "items": {
+              "enum": [
+                "security",
+                "cleaning",
+                "landscaping",
+                "maintenance",
+                "utilities",
+                "staff",
+                "insurance",
+                "administration",
+                "reserve_fund",
+                "other"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "servicesRate": {
+            "description": "Services and contracting, in percent (0–100).",
+            "example": "3.00",
+            "pattern": "^\\d{1,3}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "suppliesRate": {
+            "description": "Supplies, in percent (0–100).",
+            "example": "1.00",
+            "pattern": "^\\d{1,3}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "taxableKinds": {
+            "description": "The invoice kinds that carry VAT; none by default.",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceKind"
+            },
+            "type": "array"
+          },
+          "vatNumber": {
+            "description": "The tax registration number: required while registered (FIELD_REQUIRED).",
+            "maxLength": 30,
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
+          "vatRate": {
+            "description": "In percent, above 0 and at most 100 (INVALID_VALUE).",
+            "example": "14.00",
+            "pattern": "^\\d{1,3}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "vatRegistered": {
+            "description": "Registered for VAT: invoices of the taxable kinds carry VAT from now on, and the VAT vendors charge on the recoverable categories is recovered. Turned on the first time, VAT starts that day.",
+            "type": "boolean"
+          },
+          "withholdingEnabled": {
+            "description": "Withhold tax from vendors’ payouts; off by default.",
+            "type": "boolean"
+          },
+          "withholdingThreshold": {
+            "description": "An invoice whose subtotal is below it withholds nothing (EGP, from 0).",
+            "example": "300.00",
+            "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaxSettingsView": {
+        "properties": {
+          "recoverableCategories": {
+            "items": {
+              "enum": [
+                "security",
+                "cleaning",
+                "landscaping",
+                "maintenance",
+                "utilities",
+                "staff",
+                "insurance",
+                "administration",
+                "reserve_fund",
+                "other"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "taxableKinds": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceKind"
+            },
+            "type": "array"
+          },
+          "vatNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "vatRate": {
+            "example": "14.00",
+            "type": "string"
+          },
+          "vatRegistered": {
+            "type": "boolean"
+          },
+          "vatSince": {
+            "description": "The day VAT was first turned on: VAT starts there.",
+            "format": "date",
+            "nullable": true,
+            "type": "string"
+          },
+          "withholdingEnabled": {
+            "type": "boolean"
+          },
+          "withholdingRates": {
+            "$ref": "#/components/schemas/TaxWithholdingRatesView"
+          },
+          "withholdingThreshold": {
+            "description": "An invoice whose subtotal is below it withholds nothing.",
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vatRegistered",
+          "vatNumber",
+          "vatRate",
+          "vatSince",
+          "taxableKinds",
+          "recoverableCategories",
+          "withholdingEnabled",
+          "withholdingRates",
+          "withholdingThreshold"
+        ],
+        "type": "object"
+      },
+      "TaxVendorDto": {
+        "properties": {
+          "withholdingCategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WithholdingCategory"
+              }
+            ],
+            "description": "What its payouts withhold by; null: by its trades (professional, then supplies alone, else services).",
+            "nullable": true
+          }
+        },
+        "required": [
+          "withholdingCategory"
+        ],
+        "type": "object"
+      },
+      "TaxVendorView": {
+        "properties": {
+          "categories": {
+            "description": "Its trades (ADR 0077).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "effectiveCategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WithholdingCategory"
+              }
+            ],
+            "description": "What its payouts withhold by."
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "taxNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "withholdingCategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WithholdingCategory"
+              }
+            ],
+            "description": "Set for it; null: by its trades.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "name",
+          "taxNumber",
+          "categories",
+          "withholdingCategory",
+          "effectiveCategory",
+          "status"
+        ],
+        "type": "object"
+      },
+      "TaxVendorViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TaxVendorView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TaxWithholdingRatesView": {
+        "properties": {
+          "professional": {
+            "example": "5.00",
+            "type": "string"
+          },
+          "services": {
+            "example": "3.00",
+            "type": "string"
+          },
+          "supplies": {
+            "example": "1.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "supplies",
+          "services",
+          "professional"
+        ],
+        "type": "object"
+      },
       "TechnicianAttendanceView": {
         "properties": {
           "absent": {
@@ -87380,6 +88080,141 @@
         ],
         "type": "object"
       },
+      "VatDeclareDto": {
+        "properties": {
+          "month": {
+            "description": "The month: closed in the ledger (TAX_MONTH_NOT_CLOSED), the next to declare (TAX_MONTH_OUT_OF_ORDER {next}), once (TAX_MONTH_DECLARED).",
+            "example": "2026-10",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month"
+        ],
+        "type": "object"
+      },
+      "VatMonthView": {
+        "properties": {
+          "carriedIn": {
+            "description": "What the month before carried forward.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "carriedOut": {
+            "description": "Carried forward to the next month.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "declarationId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "declaredAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "declaredBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "inputVat": {
+            "description": "VAT recovered on vendors’ invoices approved, less those called off.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "ledgerClosed": {
+            "type": "boolean"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "netDue": {
+            "description": "Due: output less input and what was carried in.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "open": {
+            "description": "Still to pay.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "outputVat": {
+            "description": "VAT on invoices less what credit notes took back.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "paid": {
+            "description": "Paid of it.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "status": {
+            "description": "open: the ledger has not closed it; ready: closed, not declared; declared: its figures locked.",
+            "enum": [
+              "open",
+              "ready",
+              "declared"
+            ],
+            "type": "string"
+          },
+          "taxablePurchases": {
+            "description": "Expense net of the VAT recovered on vendors’ invoices.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "taxableSales": {
+            "description": "Revenue net of VAT on the taxed invoices less credit notes.",
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "status",
+          "ledgerClosed",
+          "taxableSales",
+          "outputVat",
+          "taxablePurchases",
+          "inputVat",
+          "carriedIn",
+          "netDue",
+          "carriedOut",
+          "declarationId",
+          "declaredAt",
+          "declaredBy",
+          "paid",
+          "open"
+        ],
+        "type": "object"
+      },
+      "VatMonthViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VatMonthView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "VehicleCountedView": {
         "properties": {
           "counted": {
@@ -88063,12 +88898,28 @@
             "example": "1200.00",
             "type": "string"
           },
+          "vatRecoverable": {
+            "description": "Of its tax, what the compound recovers as input VAT (ADR 0093), set at its approval: its tax while registered for VAT and its line’s category is marked recoverable, else 0.00 (the tax stays part of the cost).",
+            "example": "1200.00",
+            "type": "string"
+          },
           "vendorId": {
             "format": "uuid",
             "nullable": false,
             "type": "string"
           },
           "vendorNumber": {
+            "type": "string"
+          },
+          "withholdingCategory": {
+            "description": "What its payout withholds by (ADR 0093); null: its vendor’s.",
+            "enum": [
+              "supplies",
+              "services",
+              "professional",
+              "exempt"
+            ],
+            "nullable": true,
             "type": "string"
           }
         },
@@ -88088,6 +88939,8 @@
           "subtotal",
           "tax",
           "total",
+          "vatRecoverable",
+          "withholdingCategory",
           "note",
           "status",
           "rejectReason",
@@ -90097,6 +90950,184 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "WithholdingCategory": {
+        "description": "What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt.",
+        "enum": [
+          "supplies",
+          "services",
+          "professional",
+          "exempt"
+        ],
+        "type": "string"
+      },
+      "WithholdingCertificateView": {
+        "properties": {
+          "amount": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "base": {
+            "description": "The invoice’s subtotal it was withheld on.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "supplies",
+              "services",
+              "professional"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "number": {
+            "example": "WHT-000001",
+            "type": "string"
+          },
+          "paidOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "payoutId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "payoutNumber": {
+            "example": "VP-000001",
+            "type": "string"
+          },
+          "quarter": {
+            "example": "2026-Q3",
+            "type": "string"
+          },
+          "rate": {
+            "example": "3.00",
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "vendorName": {
+            "description": "Its legal name, else its name.",
+            "type": "string"
+          },
+          "vendorTaxNumber": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "payoutId",
+          "payoutNumber",
+          "vendorId",
+          "vendorName",
+          "vendorTaxNumber",
+          "category",
+          "rate",
+          "base",
+          "amount",
+          "paidOn",
+          "quarter",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "WithholdingCertificateViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WithholdingCertificateView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "WithholdingQuarterView": {
+        "properties": {
+          "certificates": {
+            "type": "number"
+          },
+          "endsOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "open": {
+            "description": "Withheld, not yet paid.",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "paid": {
+            "example": "1250.00",
+            "type": "string"
+          },
+          "quarter": {
+            "example": "2026-Q3",
+            "type": "string"
+          },
+          "startsOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "withheld": {
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quarter",
+          "startsOn",
+          "endsOn",
+          "certificates",
+          "withheld",
+          "paid",
+          "open"
+        ],
+        "type": "object"
+      },
+      "WithholdingQuarterViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WithholdingQuarterView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -143767,7 +144798,11 @@
                 "club_payment",
                 "vehicle_fine_payment",
                 "violation_payment",
-                "manual"
+                "manual",
+                "vat_declaration",
+                "tax_payment",
+                "year_close",
+                "year_reopen"
               ],
               "type": "string"
             }
@@ -144427,6 +145462,116 @@
           }
         ],
         "summary": "The trial balance on a day",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/years": {
+      "get": {
+        "description": "From the first entry’s year to this one, on the compound’s start month (ADR 0055): open or closed, whether it may be closed now, and its months still open.",
+        "operationId": "GlController_years",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlYearViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The fiscal years, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/years/close": {
+      "post": {
+        "description": "Once every month of it is closed (GL_YEAR_MONTHS_OPEN {months}) and every earlier year with entries is (GL_YEAR_PREVIOUS_OPEN {startsOn}): one closing entry, dated its last day, zeroes each revenue and expense account into accumulated surplus, and the year is locked (GL_YEAR_CLOSED). Audited.",
+        "operationId": "GlController_closeYear",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlCloseYearDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlYearViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close a fiscal year",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/gl/years/reopen": {
+      "post": {
+        "description": "The manager’s alone, with a `glPeriodReopen` reason, the latest closed year first (GL_YEAR_LATER_CLOSED): its closing entry is reversed on the same day. Its months stay closed until one is reopened. Audited.",
+        "operationId": "GlController_reopenYear",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlReopenYearDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlYearViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reopen a closed fiscal year",
         "tags": [
           "finance"
         ],
@@ -145962,6 +147107,513 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/payments": {
+      "get": {
+        "operationId": "TaxController_payments",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TaxPaymentKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxPaymentViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The taxes paid, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "VAT against a declaration, withholding against a calendar quarter, at most what is still due (TAX_PAYMENT_EXCEEDED {open}), from a treasury account of the method’s kind (a `tax_payment` movement); it posts against VAT payable or withholding payable. Audited.",
+        "operationId": "TaxController_pay",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxPaymentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxPaymentView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Pay VAT or withholding to the tax authority",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/settings": {
+      "get": {
+        "operationId": "TaxController_getSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The compound’s tax settings",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "VAT registered or not (off by default; its number required while on), its rate (14 %), the taxable invoice kinds and the categories whose input VAT is recovered (none by default); withholding on or off (off), its rates (supplies 1 %, services 3 %, professional fees 5 %) and its threshold (300 EGP). A change applies from the next event; nothing is reposted. Audited.",
+        "operationId": "TaxController_setSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the compound’s tax settings",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/vat/declarations": {
+      "post": {
+        "description": "A month the ledger closed (TAX_MONTH_NOT_CLOSED), the next one (TAX_MONTH_OUT_OF_ORDER {next}), once (TAX_MONTH_DECLARED): its figures are locked, the input set off against the output, due or carried forward. The month is not reopened after. Audited.",
+        "operationId": "TaxController_declare",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VatDeclareDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatMonthView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Declare a month’s VAT",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/vat/months": {
+      "get": {
+        "description": "From the month VAT began to this one (at most 36): from the ledger by its entries’ days, or as declared.",
+        "operationId": "TaxController_vatMonths",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatMonthViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The months’ VAT, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/vendors": {
+      "get": {
+        "operationId": "TaxController_vendors",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxVendorViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The vendors and what their payouts withhold by, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/vendors/{id}": {
+      "put": {
+        "description": "Its payouts from now withhold by it, unless an invoice names its own; null: by its trades. Audited.",
+        "operationId": "TaxController_setVendor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxVendorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxVendorView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a vendor’s withholding category",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/withholding/certificates": {
+      "get": {
+        "operationId": "TaxController_certificates",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "quarter",
+            "required": false,
+            "schema": {
+              "example": "2026-Q3",
+              "pattern": "^\\d{4}-Q[1-4]$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vendorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithholdingCertificateViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The withholding certificates, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/withholding/certificates/{id}": {
+      "get": {
+        "operationId": "TaxController_certificate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithholdingCertificateView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A withholding certificate",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/withholding/certificates/{id}/pdf": {
+      "get": {
+        "operationId": "TaxController_certificatePdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A withholding certificate as a PDF, for its vendor",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/tax/withholding/quarters": {
+      "get": {
+        "operationId": "TaxController_quarters",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WithholdingQuarterViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The calendar quarters’ tax withheld and paid, newest first",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

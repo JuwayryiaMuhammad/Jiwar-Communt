@@ -51,3 +51,8 @@ Three of this module's contract classes shared a name with older ones, and Swagg
 - `InvoiceLineDto` → `VendorInvoiceLineDto` (the lines of `POST /staff/finance/vendor-invoices`);
 - `PeriodQueryDto` → `PaymentScheduleQueryDto` (`GET /staff/finance/payment-schedule`);
 - `EntriesQueryDto` → `FinanceEntriesQueryDto` (`GET /staff/finance/reports/entries/export`).
+
+## Taxes (ADR 0093)
+
+- A vendor invoice's tax (its lines' `taxCode`) is input VAT: at its approval `vatRecoverable` is set — its tax while the compound is registered for VAT and the line's category is marked recoverable, else `0.00` (the tax stays part of the cost). `withholdingCategory` (`supplies | services | professional | exempt`, null: its vendor's) may be named when recording it.
+- A payout, while withholding is on, deducts the tax withheld from what it pays: `payout.withholding`, `withholdingRate`, `withholdingBase`, `withholdingCategory`; `net` is after it; its certificate (`WHT-`) is written with it. See [taxes.md](taxes.md).

@@ -489,3 +489,13 @@ The full notes are in [`notes/general-ledger.md`](notes/general-ledger.md).
 - **The reads.** `GET …/gl/accounts/{id}/ledger[/export]`, `…/trial-balance`, `…/income-statement`, `…/balance-sheet`, `…/entries[/{id}]`, `…/journal/export`, `…/reconciliation`; reports `gl_trial_balance`, `gl_income_statement`, `gl_balance_sheet`, `gl_general_ledger`.
 - **Manual entries.** `/staff/finance/gl/manual-entries[/{id}[/approve|reject|withdraw]]`, `POST …/gl/entries/{id}/reverse`; inbox type `gl_manual_entry`; notices `gl_manual_entry.submitted|decided`.
 - **Months.** `GET …/gl/periods`, `POST …/periods/close {month}`, `POST …/periods/reopen {month, reasonCode}` (`finance.ledger_reopen`).
+
+### Taxes and the year-end close (ADR 0093)
+
+The full notes are in [`notes/taxes.md`](notes/taxes.md).
+
+- **Settings.** `GET|PATCH /staff/finance/tax/settings`; `GET /staff/finance/tax/vendors`, `PUT …/vendors/{id}` (a vendor's withholding category).
+- **VAT.** `GET …/tax/vat/months`, `POST …/tax/vat/declarations {month}`; invoices carry `net`, `vat`, `vatRate`; report `tax_vat`.
+- **Withholding.** `GET …/tax/withholding/quarters`, `…/certificates[/{id}[/pdf]]`; report `tax_withholding`.
+- **Paid.** `GET|POST …/tax/payments`.
+- **Fiscal years.** `GET …/gl/years`, `POST …/gl/years/close {startsOn}`, `POST …/gl/years/reopen {startsOn, reasonCode}` (`finance.ledger_reopen`).

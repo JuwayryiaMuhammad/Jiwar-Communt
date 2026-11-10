@@ -29,3 +29,7 @@
 - `POST /staff/compound-exports` (`compound.export`, never a deputy's): a fresh step-up first (`403 STEP_UP_REQUIRED`); one at a time (`409 COMPOUND_EXPORT_ACTIVE`), one a day (`429 COMPOUND_EXPORT_RATE_LIMITED {retryAfter}`), five tries an hour (`429 RATE_LIMITED`).
 - `GET /staff/compound-exports` — the latest ten: `status` pending|building|ready|expired|failed, `tables`, `rows`. `GET …/{id}/download` — `{url, expiresAt}`, no-store, while ready (7 days). `compound_export.ready` tells who asked, with no link.
 - The archive: `README.json` (each file's columns) and one CSV per table of `EXPORT_TABLES` (`src/core/reports/export-tables.ts`). No person's data: no name, phone, email, ID, account id, free text, occupancy, unit dues, household meter or a ticket's unit.
+
+## Taxes (ADR 0093)
+
+- `tax_vat` (`groupBy=month|source`) and `tax_withholding` (`groupBy=vendor|category|month`), to holders of `finance.ledger`; the same views, exports, comparisons and schedules. See [taxes.md](taxes.md).

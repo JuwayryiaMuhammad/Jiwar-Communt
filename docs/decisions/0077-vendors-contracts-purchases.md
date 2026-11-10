@@ -73,3 +73,6 @@ The manager audit (2026-11-01) found no vendor entity: a vendor was free text on
 
 ## Update (Phase M3-4, ADR 0091)
 - Maintenance's payable sources (ADR 0089's bridge) gain two reads without a lock, for the cash flow forecast: the unpaid payments of the contracts not terminated up to a day, and a contract's retention share, end day and termination. The schedule is unchanged.
+
+## Update (Phase M3-6, ADR 0093)
+- A vendor carries a withholding category (`supplies`, `services`, `professional`, `exempt`; null: by its trades) beside its tax number, which a withholding certificate prints. It is set with `PUT /staff/finance/tax/vendors/{id}` (`finance.ledger_write`, audited).

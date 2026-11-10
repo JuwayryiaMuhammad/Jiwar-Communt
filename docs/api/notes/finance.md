@@ -172,3 +172,7 @@ Labels are the app's: translate the codes.
 | `DISPUTE_ALREADY_OPEN` (409) | The invoice has an open dispute already. |
 | `DISPUTE_LIMIT_REACHED` (409) | Disputed `params.max` times already. |
 | `INVOICE_NOT_FOUND`, `PAYMENT_NOT_FOUND`, `PAYMENT_SESSION_NOT_FOUND`, `INSTALMENT_PLAN_NOT_FOUND`, `DISPUTE_NOT_FOUND` (404) | Unknown, or not yours to see. |
+
+## VAT on invoices (ADR 0093)
+
+- While the compound is registered for VAT and the invoice's kind is taxable, an invoice carries its VAT: `InvoiceView.net`, `vat`, `vatRate`; each line's `amount` is its net and has its `vat`; a credit note has the `vat` it took back. `total` is still what the unit owes. `0.00` everywhere when untaxed. See [taxes.md](taxes.md).

@@ -128,3 +128,6 @@ Each money table has a trigger that posts its row's entry in the same transactio
 - The gateway's settlement matched to its online payments; cash refunds out of a cash box (ADR 0085 deviation 6).
 - VAT input and output accounts with the tax codes (ADR 0089).
 - A per-unit and per-vendor sub-ledger read from the lines' unit and vendor.
+
+## Update (Phase M3-6, ADR 0093)
+- The year-end close (assumption 9, "No year-end close") is built: a fiscal year is closed by one entry into accumulated surplus and reopened by the manager; the balance sheet shows the year's result apart from accumulated surplus. Assumption 6 ("vendors' tax is part of the cost") holds only while the compound is not registered for VAT or the category is not recoverable. The chart gains three control accounts (1500 VAT recoverable, 2700 VAT payable, 2800 withholding tax payable); the entries' sources gain `vat_declaration`, `tax_payment`, `year_close` and `year_reopen`. "Open": the year-end entry and the VAT accounts are done.

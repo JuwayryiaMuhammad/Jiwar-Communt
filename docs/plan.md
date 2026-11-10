@@ -28,6 +28,7 @@ What landed, the owner's standing decisions, and what is left. It replaces the l
 | M3-4 | 0091 | Cash flow and liquidity |
 | M3-5 | 0092 | The general ledger |
 | i18n | 0013 | The dashboards and the public pages in Arabic and English, Arabic by default, right to left, switchable (the owner's decision of 2026-11-10): `packages/i18n`, see `apps/README.md` |
+| M3-6 | 0093 | Taxes and the year-end close |
 
 ## The owner's standing decisions
 
@@ -35,6 +36,7 @@ What landed, the owner's standing decisions, and what is left. It replaces the l
 - A compound never moves between companies.
 - A resident never changes their unit's type or area.
 - The ledger was built, double-entry (ADR 0092).
+- Taxes were built: VAT, withholding and the fiscal year-end close, with the rates and rules as the compound's settings (ADR 0093).
 
 ## Left
 
@@ -51,7 +53,7 @@ Still open:
 - the reinforcement call's zone, the technicians' locations on a map (0090);
 - starting a conversation with a resident (0080);
 - the compensation credit's invoice and authorization pickers (0082);
-- the ledger: a top-level account, code changes, a year-end entry (0092);
+- the ledger: a top-level account, code changes (0092);
 - pickers and counts past the first 100 rows (0072); the rest of `apps/README.md` "Known limits".
 
 ### Waiting on the owner
@@ -65,7 +67,7 @@ Still open:
 
 ### Finance deferred
 
-VAT and its declaration (0089, 0092); withholding tax (0089); year-end close (0092); purchase orders with three-way match (0077, 0088, 0089); bank integration (0085); matching online payments to the bank (0085, 0091, 0092); sub-ledgers (0092).
+filing taxes with the authority, other taxes (0093); purchase orders with three-way match (0077, 0088, 0089); bank integration (0085); matching online payments to the bank (0085, 0091, 0092); sub-ledgers (0092).
 
 ### Each domain's open items
 
@@ -121,3 +123,4 @@ From the ADRs' "Open" sections; the ADR has the detail.
 - 0090 — The location consent's text and version; certificates per ticket category.
 - 0091 — Forecast against actual; a run rate for unscheduled spending; scenarios.
 - 0092 — Budgets against the ledger's expense accounts; cash refunds out of a cash box.
+- 0093 — Filing with the tax authority; a taxable flag per fee item; a VAT credit refunded; other taxes.

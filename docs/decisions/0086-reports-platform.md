@@ -101,3 +101,6 @@ The manager audit of 2026-11-01 (finance slice 05: "تقارير مقارنة ب
 
 ## Update (Phase M3-5, ADR 0092)
 - Four reports of the general ledger (`finance.ledger`, now among `REPORT_READERS`): `gl_trial_balance`, `gl_income_statement`, `gl_balance_sheet` and `gl_general_ledger`. The GL-format export is the journal's CSV (`GET /staff/finance/gl/journal/export`).
+
+## Update (Phase M3-6, ADR 0093)
+- Two reports for `finance.ledger`: `tax_vat` (the declaration's figures by month or by source) and `tax_withholding` (the certificates by vendor, category or month), PDF, workbook and CSV, compared and scheduled.

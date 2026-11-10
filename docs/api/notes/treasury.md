@@ -21,7 +21,7 @@ Conventions, as everywhere in API v0: every path is under `/api/v1`, lists are `
 | `POST /staff/finance/cash-accounts/{id}/retire`       | at a zero balance, no cheque pending: else `409 CASH_ACCOUNT_NOT_EMPTY {balance, pendingCheques}`                                                                                           |
 | `POST /staff/finance/cash-accounts/{id}/adjustments`  | `{ amount (signed), reasonCode (cashAdjust), onDay }`                                                                                                                                       |
 | `POST /staff/finance/cash-transfers`                  | `{ fromAccountId, toAccountId, amount, onDay }` → `CashTransferView { id, legs }`                                                                                                           |
-| `GET /staff/finance/cash-movements?accountId&from&to` | `CashMovementView`: kind (`opening`, `handin`, `recovery`, `transfer`, `cheque`, `statement_payment`, `adjustment`, `reversal`, `payout`), signed amount, day, source ids (`payoutId`), who |
+| `GET /staff/finance/cash-movements?accountId&from&to` | `CashMovementView`: kind (`opening`, `handin`, `recovery`, `transfer`, `cheque`, `statement_payment`, `adjustment`, `reversal`, `payout`, `tax_payment`), signed amount, day, source ids (`payoutId`, `taxPaymentId`), who |
 
 A cash box never goes below zero (`409 CASH_ACCOUNT_INSUFFICIENT {balance}`); a retired account takes nothing (`CASH_ACCOUNT_RETIRED`); a hand-in needs a cash box and a deposit or a statement a bank (`409 CASH_ACCOUNT_WRONG_KIND {kind}`, the kind needed). A movement's day is today or up to 31 days back.
 

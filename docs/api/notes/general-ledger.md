@@ -6,7 +6,8 @@ What was built for the general ledger (ADR 0092):
 - the trial balance, the income statement and the balance sheet, also on the reports platform;
 - the journal, its CSV for an outside accounting system, and the reconciliation with the registers;
 - manual journal entries approved by a second person, and their reversal;
-- months closed and reopened.
+- months closed and reopened;
+- fiscal years closed into accumulated surplus and reopened (ADR 0093, with the taxes: see [taxes.md](taxes.md)).
 
 The design decisions are in [ADR 0092](../../decisions/0092-general-ledger.md). The contract is `docs/api/openapi.v0.json` (regenerated), with the Postman collection.
 

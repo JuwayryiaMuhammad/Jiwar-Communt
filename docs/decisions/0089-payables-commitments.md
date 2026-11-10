@@ -111,3 +111,6 @@ The caller → the contract, then its payment or the purchase request (update, m
 
 ## Update (Phase M3-5, ADR 0092)
 - "M3-5 posts from the entries" is done, by the rows themselves (triggers): an invoice approved posts its line's category against payables (the vendor named), one called off after it the reverse; a payout pays payables (or an advance, or the retention held) out of its account, holding back retention and setting off advances. The entries export stays as it is. Guarantees post nothing.
+
+## Update (Phase M3-6, ADR 0093)
+- "No VAT return yet" is answered: a vendor invoice's tax is recorded as input VAT and, while the compound is registered and the line's category is marked recoverable, is recovered at the approval (VAT recoverable) instead of part of the cost; a payout withholds tax from what it pays while withholding is on (a vendor invoice's payout only), with a certificate. The invoice may name its withholding category.

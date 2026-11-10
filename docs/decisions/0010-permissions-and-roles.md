@@ -57,3 +57,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase M3-5, ADR 0092)
 - New permissions: `finance.ledger` (staff, manager: the manager and the accountant by default) reads the general ledger — the chart, an account's ledger, the trial balance, the income statement, the balance sheet, the journal and its export, the reconciliation; `finance.ledger_write` (the same) keeps the chart, writes manual journal entries and approves another's (never its own) and closes months; `finance.ledger_reopen` (manager only; the manager) reopens a closed month. All `finance.*`, never a deputy's (ADR 0073).
+
+## Update (Phase M3-6, ADR 0093)
+- Taxes and the fiscal year-end close add no permission: reading the tax settings, the VAT months, the withholding quarters and certificates, the taxes paid and the fiscal years is `finance.ledger`; keeping the settings and the vendors' withholding categories, declaring a month, paying a tax and closing a year is `finance.ledger_write`; reopening a closed year is `finance.ledger_reopen`, the manager's alone, as for a month.

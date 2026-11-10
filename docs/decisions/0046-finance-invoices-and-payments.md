@@ -126,3 +126,6 @@ Category `finance`, none critical, **no params** (never an amount, a number, a u
 
 ## Update (Phase M3-5, ADR 0092)
 - The double-entry ledger posts from these rows, each in its own transaction (a trigger on the table): an invoice debits receivables and credits its kind's revenue; a credit note the reverse; a payment debits where its money is by its method (office cash, a cheque, a bank transfer, the gateway) and credits the unit's credit; an allocation moves that credit onto its invoice. Every line of receivables and unit credit names its unit.
+
+## Update (Phase M3-6, ADR 0093)
+- An invoice carries its VAT while the compound is registered and its kind is taxable (`vat`, at `vatRate`; each line's `amount` is its net and carries its `vat`); `total` is still what the unit owes. A credit note carries the share of the VAT it takes back (set by the database). The invoice credits its kind's revenue with the net and VAT payable with the VAT. Nothing before VAT began was changed.

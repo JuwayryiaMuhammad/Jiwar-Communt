@@ -17205,6 +17205,104 @@
           }
         },
         {
+          "name": "The fiscal years, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "years"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/years"
+            }
+          }
+        },
+        {
+          "name": "Close a fiscal year",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"startsOn\": \"2026-01-01\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `startsOn` | string | yes | The fiscal year’s first day, on the compound’s start month (INVALID_VALUE otherwise). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "years",
+                "close"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/years/close"
+            }
+          }
+        },
+        {
+          "name": "Reopen a closed fiscal year",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"startsOn\": \"2026-01-01\",\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A `glPeriodReopen` code. |\n| `startsOn` | string | yes | The closed fiscal year’s first day. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "gl",
+                "years",
+                "reopen"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/gl/years/reopen"
+            }
+          }
+        },
+        {
           "name": "List the late-payment notices with their delivery and read proofs",
           "request": {
             "description": "**Responses:** 200",
@@ -18316,6 +18414,421 @@
           }
         },
         {
+          "name": "The taxes paid, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "payments"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "kind",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/payments"
+            }
+          }
+        },
+        {
+          "name": "Pay VAT or withholding to the tax authority",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"kind\": \"vat\",\n  \"amount\": \"\",\n  \"paidOn\": \"\",\n  \"method\": \"bank_transfer\",\n  \"cashAccountId\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string | yes | At most what is still due (TAX_PAYMENT_EXCEEDED {open}). |\n| `cashAccountId` | string (uuid) | yes | The bank or cash account it is paid from (ADR 0085): a cash box for cash, a bank account for a transfer or a cheque. CASH_ACCOUNT_WRONG_KIND, CASH_ACCOUNT_RETIRED, CASH_ACCOUNT_INSUFFICIENT. |\n| `declarationId` | string (uuid) |  | VAT: the declaration it pays (required); refused otherwise. |\n| `kind` | `vat` \\| `withholding` | yes |  |\n| `method` | `bank_transfer` \\| `cheque` \\| `cash` | yes |  |\n| `paidOn` | string | yes | The day it was paid: not ahead, at most 31 days back. |\n| `quarter` | string |  | Withholding: the calendar quarter it pays (required), not ahead; refused otherwise. |\n| `reference` | string |  | The tax authority’s receipt or the transfer’s reference. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "payments"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/payments"
+            }
+          }
+        },
+        {
+          "name": "The compound’s tax settings",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/settings"
+            }
+          }
+        },
+        {
+          "name": "Change the compound’s tax settings",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"professionalRate\": \"5.00\",\n  \"recoverableCategories\": [],\n  \"servicesRate\": \"3.00\",\n  \"suppliesRate\": \"1.00\",\n  \"taxableKinds\": [],\n  \"vatNumber\": \"\",\n  \"vatRate\": \"14.00\",\n  \"vatRegistered\": false,\n  \"withholdingEnabled\": false,\n  \"withholdingThreshold\": \"300.00\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `professionalRate` | string |  | Professional fees, in percent (0–100). |\n| `recoverableCategories` | `security` \\| `cleaning` \\| `landscaping` \\| `maintenance` \\| `utilities` \\| `staff` \\| `insurance` \\| `administration` \\| `reserve_fund` \\| `other`[] |  | The budget categories whose input VAT is recovered while registered; none by default (the VAT stays part of the cost). |\n| `servicesRate` | string |  | Services and contracting, in percent (0–100). |\n| `suppliesRate` | string |  | Supplies, in percent (0–100). |\n| `taxableKinds` | `service_charge` \\| `maintenance` \\| `other` \\| `facility` \\| `club` \\| `fine` \\| `damage`[] |  | The invoice kinds that carry VAT; none by default. |\n| `vatNumber` | string |  | The tax registration number: required while registered (FIELD_REQUIRED). |\n| `vatRate` | string |  | In percent, above 0 and at most 100 (INVALID_VALUE). |\n| `vatRegistered` | boolean |  | Registered for VAT: invoices of the taxable kinds carry VAT from now on, and the VAT vendors charge on the recoverable categories is recovered. Turned on the first time, VAT starts that day. |\n| `withholdingEnabled` | boolean |  | Withhold tax from vendors’ payouts; off by default. |\n| `withholdingThreshold` | string |  | An invoice whose subtotal is below it withholds nothing (EGP, from 0). |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/settings"
+            }
+          }
+        },
+        {
+          "name": "Declare a month’s VAT",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"month\": \"2026-10\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `month` | string | yes | The month: closed in the ledger (TAX_MONTH_NOT_CLOSED), the next to declare (TAX_MONTH_OUT_OF_ORDER {next}), once (TAX_MONTH_DECLARED). |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "vat",
+                "declarations"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/vat/declarations"
+            }
+          }
+        },
+        {
+          "name": "The months’ VAT, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "vat",
+                "months"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/vat/months"
+            }
+          }
+        },
+        {
+          "name": "The vendors and what their payouts withhold by, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "vendors"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/vendors"
+            }
+          }
+        },
+        {
+          "name": "Set a vendor’s withholding category",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"withholdingCategory\": \"supplies\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `withholdingCategory` | `supplies` \\| `services` \\| `professional` \\| `exempt` | yes | What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PUT",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "vendors",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/vendors/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The withholding certificates, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "withholding",
+                "certificates"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "quarter",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "vendorId",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/withholding/certificates"
+            }
+          }
+        },
+        {
+          "name": "A withholding certificate",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "withholding",
+                "certificates",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/withholding/certificates/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A withholding certificate as a PDF, for its vendor",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "withholding",
+                "certificates",
+                ":id",
+                "pdf"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/withholding/certificates/:id/pdf",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The calendar quarters’ tax withheld and paid, newest first",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "tax",
+                "withholding",
+                "quarters"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/tax/withholding/quarters"
+            }
+          }
+        },
+        {
           "name": "Past what share of its plan a month asks for a reason",
           "request": {
             "description": "**Responses:** 200",
@@ -18488,7 +19001,7 @@
               },
               "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"description\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  | The line it is paid from; by default its contract’s or purchase’s. |\n| `contractId` | string (uuid) |  | One of its contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of the contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes | When it is to be paid, not before its date. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice`. |\n| `issuedOn` | string | yes | The invoice’s date, not ahead. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseRequestId` | string (uuid) |  | A purchase request it fulfilled. |\n| `vendorId` | string (uuid) |  | The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs). |\n| `vendorNumber` | string | yes | The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  | The line it is paid from; by default its contract’s or purchase’s. |\n| `contractId` | string (uuid) |  | One of its contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of the contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes | When it is to be paid, not before its date. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice`. |\n| `issuedOn` | string | yes | The invoice’s date, not ahead. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseRequestId` | string (uuid) |  | A purchase request it fulfilled. |\n| `vendorId` | string (uuid) |  | The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs). |\n| `vendorNumber` | string | yes | The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). |\n| `withholdingCategory` | `supplies` \\| `services` \\| `professional` \\| `exempt` |  | What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -58851,7 +59364,7 @@
               },
               "raw": "{\n  \"reportKey\": \"maintenance_spend\",\n  \"cadence\": \"daily\",\n  \"format\": \"pdf\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` \\| `cash_flow` \\| `gl_trial_balance` \\| `gl_income_statement` \\| `gl_balance_sheet` \\| `gl_general_ledger` | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` \\| `cash_flow` \\| `gl_trial_balance` \\| `gl_income_statement` \\| `gl_balance_sheet` \\| `gl_general_ledger` \\| `tax_vat` \\| `tax_withholding` | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

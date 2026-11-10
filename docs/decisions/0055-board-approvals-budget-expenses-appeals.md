@@ -283,3 +283,6 @@ Category `governance`, none critical. The params are codes only.
 
 ## Update (Phase M3-5, ADR 0092)
 - A manual expense posts its line's category against "expenses paid outside the treasury" (no account is recorded for it), its void the reverse; a payout's expense posts nothing of its own (the vendor's invoice posted it at its approval, ADR 0089).
+
+## Update (Phase M3-6, ADR 0093)
+- The fiscal year's first month, fixed once a budget was submitted, is fixed once a fiscal year was closed in the ledger too (`FISCAL_YEAR_LOCKED`): the close's days are its own. The fiscal year is the general ledger's year-end close's as well.

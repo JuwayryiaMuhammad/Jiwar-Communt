@@ -1,0 +1,41 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/safety-parking-reports.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'بلاغات المواقف',
+  description: 'الأقدم أولًا. لا يعرف المُبلِّغ إلا أن بلاغه عولج.',
+  shown: 'البلاغات المعروضة',
+  'view.open': 'مفتوحة',
+  'view.converted': 'صدرت عنها غرامة',
+  'view.closed': 'مغلقة',
+  'view.all': 'الكل',
+  emptyOpen: 'لا توجد بلاغات في الانتظار',
+  emptyMatch: 'لا يوجد بلاغ مطابق',
+  'col.report': 'البلاغ',
+  'col.plate': 'اللوحة',
+  'col.where': 'المكان',
+  'col.matches': 'المطابقات',
+  'col.status': 'الحالة',
+  'col.reported': 'تاريخ البلاغ',
+  noMatch: 'لا توجد مركبة مسجلة',
+  report: 'بلاغ موقف',
+  close: 'أغلق',
+  issueFine: 'أصدر غرامة',
+  done: 'تم',
+  status: 'الحالة',
+  reportedBy: 'المُبلِّغ',
+  erased: 'حساب محذوف',
+  matches: 'المطابقات',
+  note: 'ملاحظة',
+  openPhoto: 'افتح الصورة',
+  reporterPrivate: 'هوية المُبلِّغ تبقى عندك: الغرامة الصادرة من هنا لا تحمل شيئًا من هذا البلاغ، ولا حتى صورته.',
+  closed: 'تم الإغلاق.',
+  fined: 'صدرت الغرامة وأُبلغت الوحدة، ولن تعرف من أبلغ.',
+  closeTitle: 'إغلاق {reference}؟',
+  closeDescription: 'يرى المُبلِّغ أن البلاغ أُغلق، ولا يرى السبب.',
+  fineTitle: 'غرامة من {reference}',
+  fineDescription: 'تصدر كأي غرامة: ترى الوحدة الغرامة، لا البلاغ.',
+  fineConfirm: 'أصدر',
+};
+
+export default ar;

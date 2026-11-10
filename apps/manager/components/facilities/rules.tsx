@@ -2,11 +2,14 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
+import { useT } from '@jiwar/i18n';
 import { Button, Card, CardBody, CardHeader, Checkbox, Field, Input, Select, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys, type CapacityUnit, type Facility, type FacilityRules } from '@/lib/queries';
-import { inRange, minutesText, numberChanges, peakProblem, RULE_FIELDS, RULE_RANGES, type RuleField } from './logic';
+import ar from '@/messages/ar/places-facilities';
+import en from '@/messages/en/places-facilities';
+import { inRange, minutesText, numberChanges, peakAboveWeekly, RULE_FIELDS, RULE_RANGES, type RuleField } from './logic';
 
 type Form = Record<RuleField, string> & {
   capacityUnit: CapacityUnit;
@@ -23,25 +26,15 @@ const toForm = (r: FacilityRules): Form => ({
   childOccasions: r.childOccasions,
 });
 
-const COPY: Record<RuleField, { label: string; hint: string }> = {
-  slotMinutes: { label: 'Slot length, minutes', hint: 'The opening hours are cut into slots this long.' },
-  capacity: { label: 'Capacity of a slot', hint: 'In bookings, or in people (each booker and their guests).' },
-  maxDaysAhead: { label: 'Days ahead', hint: 'How many local days ahead a slot may be booked.' },
-  minMinutesBefore: { label: 'Notice, minutes', hint: 'A booking starts at least this long after it is made.' },
-  cancelCutoffMinutes: { label: 'Cancellation cutoff, minutes', hint: 'Residents cancel a confirmed booking at least this long before it starts. The staff may cancel any time.' },
-  maxGuests: { label: 'Guests per booking', hint: 'Beside the booker. A number only: guests are never named.' },
-  weeklyQuota: { label: 'Bookings per unit in any 7 days', hint: 'Pending, confirmed and no-shows count; cancelled and rejected ones do not.' },
-  peakQuota: { label: 'Peak-time bookings per unit in any 7 days', hint: 'At most the weekly quota.' },
-};
-
 /**
  * How a bookable facility is booked (ADR 0044). Only what changed is sent.
  * Bookings already made keep their slot whatever the rules become.
  */
 export function Rules({ facility, rules }: { facility: Facility; rules: FacilityRules }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [form, setForm] = useState<Form>(toForm(rules));
-  const invalid = RULE_FIELDS.some((k) => !inRange(RULE_RANGES[k], form[k])) || peakProblem(form.weeklyQuota, form.peakQuota) !== undefined;
+  const invalid = RULE_FIELDS.some((k) => !inRange(RULE_RANGES[k], form[k])) || peakAboveWeekly(form.weeklyQuota, form.peakQuota);
   const changes = {
     ...(invalid ? {} : numberChanges(form, rules, RULE_FIELDS)),
     ...(form.capacityUnit !== rules.capacityUnit ? { capacityUnit: form.capacityUnit } : {}),
@@ -54,24 +47,26 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
     invalidate: [keys.facilitiesAll],
     onDone: (next) => {
       if (next.rules) setForm(toForm(next.rules));
-      toast.show('Rules saved.');
+      toast.show(t('rulesSaved'));
     },
   });
 
   const field = (key: RuleField) => {
     const { min, max } = RULE_RANGES[key];
     const local = inRange(RULE_RANGES[key], form[key])
-      ? key === 'peakQuota'
-        ? peakProblem(form.weeklyQuota, form.peakQuota)
+      ? key === 'peakQuota' && peakAboveWeekly(form.weeklyQuota, form.peakQuota)
+        ? t('peakAboveWeekly')
         : undefined
-      : `A whole number from ${min} to ${max}.`;
+      : t('wholeRange', { min, max });
     const value = Number(form[key]);
     const hint =
-      (key === 'minMinutesBefore' || key === 'cancelCutoffMinutes') && inRange(RULE_RANGES[key], form[key])
-        ? `${COPY[key].hint} Now: ${minutesText(value)}.`
-        : COPY[key].hint;
+      key === 'minMinutesBefore' || key === 'cancelCutoffMinutes'
+        ? inRange(RULE_RANGES[key], form[key])
+          ? t(`rule.${key}.hintNow`, { now: minutesText(value, t) })
+          : t(`rule.${key}.hint`)
+        : t(`rule.${key}.hint`);
     return (
-      <Field label={COPY[key].label} hint={hint} error={fieldError(save.error, key) ?? local}>
+      <Field label={t(`rule.${key}`)} hint={hint} error={fieldError(save.error, key) ?? local}>
         {(p) => <Input {...p} type="number" min={min} max={max} step={1} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />}
       </Field>
     );
@@ -87,16 +82,16 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
       }}
     >
       <Card flush>
-        <CardHeader title="Slots" />
+        <CardHeader title={t('card.slots')} />
         <CardBody>
           <div className="form">
             {field('slotMinutes')}
             {field('capacity')}
-            <Field label="Capacity counts" hint="A court takes bookings; a hall takes people.">
+            <Field label={t('capacityCounts')} hint={t('capacityCountsHint')}>
               {(p) => (
                 <Select {...p} value={form.capacityUnit} onChange={(e) => setForm({ ...form, capacityUnit: e.target.value as CapacityUnit })}>
-                  <option value="bookings">Bookings</option>
-                  <option value="people">People</option>
+                  <option value="bookings">{t('capacityUnit.bookings')}</option>
+                  <option value="people">{t('capacityUnit.people')}</option>
                 </Select>
               )}
             </Field>
@@ -105,7 +100,7 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
         </CardBody>
       </Card>
       <Card flush>
-        <CardHeader title="When" />
+        <CardHeader title={t('card.when')} />
         <CardBody>
           <div className="form">
             {field('maxDaysAhead')}
@@ -115,7 +110,7 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
         </CardBody>
       </Card>
       <Card flush>
-        <CardHeader title="Fairness" />
+        <CardHeader title={t('card.fairness')} />
         <CardBody>
           <div className="form">
             {field('weeklyQuota')}
@@ -124,21 +119,21 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
         </CardBody>
       </Card>
       <Card flush>
-        <CardHeader title="Who" />
+        <CardHeader title={t('card.who')} />
         <CardBody>
           <div className="form">
             <Checkbox
-              label="Bookings wait for the management’s approval (they hold their place meanwhile)"
+              label={t('requiresApproval')}
               checked={form.requiresApproval}
               onChange={(e) => setForm({ ...form, requiresApproval: e.target.checked })}
             />
             <Checkbox
-              label="For club members only: the unit’s membership must be active and cover the booker"
+              label={t('requiresMembership')}
               checked={form.requiresMembership}
               onChange={(e) => setForm({ ...form, requiresMembership: e.target.checked })}
             />
             <Checkbox
-              label="A booking may name one of the unit’s children as its occasion (a birthday space). The staff see only that there is one, never who."
+              label={t('childOccasions')}
               checked={form.childOccasions}
               onChange={(e) => setForm({ ...form, childOccasions: e.target.checked })}
             />
@@ -150,10 +145,10 @@ export function Rules({ facility, rules }: { facility: Facility; rules: Facility
         <span className="row">
           <span className="spacer" />
           <Button type="button" disabled={!dirty} onClick={() => setForm(toForm(rules))}>
-            Discard
+            {t('discard')}
           </Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || invalid}>
-            Save rules
+            {t('saveRules')}
           </Button>
         </span>
       </div>

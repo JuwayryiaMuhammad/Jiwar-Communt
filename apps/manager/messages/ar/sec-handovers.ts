@@ -1,0 +1,42 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/sec-handovers.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'تسليم الورديات',
+  description: 'ما سلّمه كل حارس في نهاية ورديته، وقائمة المراجعة التي يضع عليها علامة.',
+  'tab.handovers': 'التسليمات',
+  'tab.checklist': 'قائمة المراجعة',
+  itemSaved: 'تم حفظ البند.',
+  itemAdded: 'تمت إضافة البند، ويضع الحراس علامة عليه عند نهاية ورديتهم القادمة.',
+  editItem: 'تعديل البند',
+  newItem: 'بند جديد في قائمة المراجعة',
+  itemDescription: 'يضع الحارس علامة على كل بند فعّال عند إنهاء ورديته. يحتفظ التسليم بالنص الذي وُضعت علامته عليه.',
+  addItem: 'إضافة بند',
+  item: 'البند',
+  order: 'الترتيب',
+  orderHint: 'الأقل أولًا (0–1000).',
+  askedAgain: 'عاد البند إلى القائمة.',
+  retired: 'تم إيقاف البند.',
+  checklistNote: 'حتى 30 بندًا فعّالًا كحد أقصى. لا يُسأل الحراس عن البنود الموقوفة، ولا يُحذف أي بند.',
+  newItemButton: 'بند جديد',
+  emptyChecklist: 'لا توجد قائمة مراجعة: ينهي الحراس ورديتهم بالملاحظات فقط',
+  retire: 'إيقاف',
+  restore: 'إعادة تفعيل',
+  detailTitle: 'تسليم · {post}',
+  by: 'بواسطة',
+  checklist: 'قائمة المراجعة',
+  tasksCarried: 'المهام المنقولة',
+  acknowledged: 'تم الإقرار',
+  notYet: 'ليس بعد',
+  systemEnded: 'أنهاه النظام (الموقع خرج من الخدمة أو غادر الحارس)',
+  handedOver: 'سلّمه الحارس',
+  shown: 'التسليمات المعروضة',
+  waiting: 'في الانتظار',
+  emptyHandovers: 'لا يوجد تسليم في هذه الفترة',
+  'col.when': 'الوقت',
+  'col.post': 'الموقع',
+  'col.by': 'بواسطة',
+  'col.kind': 'النوع',
+};
+
+export default ar;

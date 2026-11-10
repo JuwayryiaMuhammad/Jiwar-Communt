@@ -1,37 +1,80 @@
 /**
- * The guards' duty pages (ADR 0050): plain helpers, no imports, so the
- * tests run them as they are.
+ * The guards' duty pages (ADR 0050): plain helpers. They import only the
+ * layer's core and their catalog, by relative path, so the tests run them
+ * as they are.
  */
+import { createFormat, translator, type Locale } from '@jiwar/i18n/core';
+import ar from '../../messages/ar/guard-common.ts';
+import en from '../../messages/en/guard-common.ts';
 
+/** The English short weekdays, 0 = Sunday. A page shows `fmt.weekday(n, 'short')`. */
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
+/** The guards' shared words in a language, for the helpers here and in ops-logic. */
+export const guardWords = (locale: Locale) => translator(locale, en, ar);
+
+/** The separator of a short list of words or times: `, ` or `، `. */
+export const listSep = (locale: Locale) => (locale === 'ar' ? '، ' : ', ');
+
+type PostLike = { gateName?: string | null; zone?: { nameEn: string; nameAr?: string | null } | null } | null | undefined;
+
 /** A gate's name or a zone's English name. */
-export function postName(post: { gateName?: string | null; zone?: { nameEn: string } | null } | null | undefined): string {
-  if (!post) return '—';
-  return post.gateName ?? post.zone?.nameEn ?? '—';
+export function postName(post: PostLike): string {
+  return postNameIn(post, 'en');
 }
 
+/** A gate's name, or a zone's name in the page's language. */
+export function postNameIn(post: PostLike, locale: Locale): string {
+  if (!post) return '—';
+  return post.gateName ?? (locale === 'ar' ? post.zone?.nameAr || post.zone?.nameEn : post.zone?.nameEn) ?? '—';
+}
+
+/** A checkpoint's, a route's or a place's name in the page's language. */
+export function nameIn(x: { nameEn: string; nameAr?: string | null } | null | undefined, locale: Locale): string {
+  if (!x) return '—';
+  return (locale === 'ar' ? x.nameAr || x.nameEn : x.nameEn) || '—';
+}
+
+type PersonLike = { fullName?: string | null; erased?: boolean } | null | undefined;
+
 /** A person as an AccountRefView carries them. */
-export function personName(ref: { fullName?: string | null; erased?: boolean } | null | undefined): string {
+export function personName(ref: PersonLike): string {
+  return personNameIn(ref, 'en');
+}
+
+/** A person, or the erased shape in the page's language. */
+export function personNameIn(ref: PersonLike, locale: Locale): string {
   if (!ref) return '—';
-  if (ref.erased) return 'An erased account';
+  if (ref.erased) return guardWords(locale)('erased');
   return ref.fullName ?? '—';
 }
 
 /** "Sun, Thu 22:00–06:00 (overnight)". */
-export function scheduleText(s: { days: number[]; windows: { from: string; to: string }[] }): string {
-  const days = [...s.days].sort((a, b) => a - b).map((d) => WEEKDAYS[d] ?? '?').join(', ');
-  const windows = s.windows.map((w) => `${w.from}–${w.to}${w.to <= w.from ? ' (overnight)' : ''}`).join(', ');
+export function scheduleText(s: { days: number[]; windows: { from: string; to: string }[] }, locale: Locale = 'en'): string {
+  const t = guardWords(locale);
+  const fmt = createFormat(locale);
+  const sep = listSep(locale);
+  const days = [...s.days]
+    .sort((a, b) => a - b)
+    .map((d) => (d >= 0 && d <= 6 ? fmt.weekday(d, 'short') : '?'))
+    .join(sep);
+  const windows = s.windows
+    .map((w) => {
+      const window = `${w.from}–${w.to}`;
+      return w.to <= w.from ? t('overnight', { window }) : window;
+    })
+    .join(sep);
   return `${days} ${windows}`.trim();
 }
 
 /** "1 h 30 min", "45 min", "0 min". */
-export function minutesText(minutes: number | null | undefined): string {
+export function minutesText(minutes: number | null | undefined, locale: Locale = 'en'): string {
   if (minutes === null || minutes === undefined) return '—';
+  const t = guardWords(locale);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (!h) return `${m} min`;
-  return m ? `${h} h ${m} min` : `${h} h`;
+  if (!h) return t('minutes', { m });
+  return m ? t('hoursMinutes', { h, m }) : t('hours', { h });
 }
 
 /** A local `YYYY-MM-DD` moved by `n` days. */

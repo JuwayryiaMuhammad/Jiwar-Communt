@@ -2,13 +2,23 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardBody, CardHeader, Checkbox, Field, ForbiddenState, Input, PageHeader, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, CardBody, CardHeader, Checkbox, Field, ForbiddenState, Input, PageHeader, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { GATE_SETTINGS, settingsChanges, settingsErrors, settingsForm, type GateSettingsForm } from '@/components/security/exceptions-logic';
+import {
+  GATE_SETTINGS,
+  gateSettingLabel,
+  settingsChanges,
+  settingsErrors,
+  settingsForm,
+  type GateSettingsForm,
+} from '@/components/security/exceptions-logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/sec-gate-settings';
+import en from '@/messages/en/sec-gate-settings';
 
 /**
  * Face checks (ADR 0068): advisory searches of a guard's photo against the
@@ -17,6 +27,7 @@ import { fetchers, keys } from '@/lib/queries';
  * Law 151/2020); off, every template at the vendor is removed.
  */
 function FaceChecks({ on }: { on: boolean }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [posted, setPosted] = useState(false);
   const save = useAction(
@@ -25,30 +36,21 @@ function FaceChecks({ on }: { on: boolean }) {
       invalidate: [keys.gateSettings],
       onDone: () => {
         setPosted(false);
-        toast.show(on ? 'Face checks are off: the vendor’s templates are being removed.' : 'Face checks are on: the blocklist’s faces are being enrolled.');
+        toast.show(on ? t('faceOffDone') : t('faceOnDone'));
       },
     },
   );
   return (
     <Card>
-      <CardHeader title="Face checks" actions={<Badge tone={on ? 'green' : 'beige'}>{on ? 'On' : 'Off'}</Badge>} />
+      <CardHeader title={t('faceChecks')} actions={<Badge tone={on ? 'green' : 'beige'}>{on ? t('on') : t('off')}</Badge>} />
       <CardBody>
         <div className="form">
-          <p className="t-secondary">
-            A guard’s photo of someone at the gate is searched against the faces of the live blocklist entries. A possible match is the guard’s to judge and
-            the keepers’ to hear of: nobody is refused by a face alone, and the vendor’s score is never shown.
-          </p>
-          {on ? null : (
-            <Checkbox
-              label="A visible notice that faces are checked is posted at every gate"
-              checked={posted}
-              onChange={(e) => setPosted(e.target.checked)}
-            />
-          )}
+          <p className="t-secondary">{t('faceExplain')}</p>
+          {on ? null : <Checkbox label={t('noticePosted')} checked={posted} onChange={(e) => setPosted(e.target.checked)} />}
           <ErrorAlert error={save.error} />
           <div>
             <Button variant={on ? 'danger' : 'primary'} loading={save.isPending} disabled={!on && !posted} onClick={() => save.mutate(undefined)}>
-              {on ? 'Turn face checks off' : 'Turn face checks on'}
+              {on ? t('turnOff') : t('turnOn')}
             </Button>
           </div>
         </div>
@@ -65,6 +67,10 @@ function FaceChecks({ on }: { on: boolean }) {
  * sent; what was decided under the old values keeps them.
  */
 export default function GateSettingsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('gate.manage');
@@ -75,13 +81,13 @@ export default function GateSettingsPage() {
   }, [settings.data]);
   const save = useAction((body: ReturnType<typeof settingsChanges>) => unwrap(api.PATCH('/api/v1/staff/gate/settings', { body })), {
     invalidate: [keys.gateSettings],
-    onDone: () => toast.show('Saved. What was asked before keeps its own times.'),
+    onDone: () => toast.show(t('saved')),
   });
 
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Gate settings" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -91,7 +97,7 @@ export default function GateSettingsPage() {
   const ok = form !== null && wrong.length === 0 && Object.keys(changes).length > 0;
   return (
     <>
-      <PageHeader title="Gate settings" description="Field exceptions, visits, patrols, recordings, calls, how busy a gate reads and face checks at the gate." />
+      <PageHeader title={t('title')} description={t('description')} />
       <QueryState query={settings}>
         {form ? (
           <Card>
@@ -105,8 +111,10 @@ export default function GateSettingsPage() {
               {GATE_SETTINGS.map((s) => (
                 <Field
                   key={s.name}
-                  label={`${s.label} (${s.min}–${s.max}${'nullable' in s ? '; empty: off' : ''})`}
-                  error={fieldError(save.error, s.name) ?? (wrong.includes(s.name) ? `A whole number from ${s.min} to ${s.max}.` : undefined)}
+                  label={`${gateSettingLabel(s.name, locale)} (${
+                    'nullable' in s ? t('rangeOff', { min: f.number(s.min), max: f.number(s.max) }) : `${f.number(s.min)}–${f.number(s.max)}`
+                  })`}
+                  error={fieldError(save.error, s.name) ?? (wrong.includes(s.name) ? t('wholeNumber', { min: f.number(s.min), max: f.number(s.max) }) : undefined)}
                 >
                   {(p) => (
                     <Input
@@ -121,7 +129,7 @@ export default function GateSettingsPage() {
               <ErrorAlert error={save.error} />
               <div>
                 <Button type="submit" variant="primary" loading={save.isPending} disabled={!ok}>
-                  Save
+                  {c('save')}
                 </Button>
               </div>
             </form>

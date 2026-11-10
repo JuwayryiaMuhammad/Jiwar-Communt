@@ -1,17 +1,20 @@
 'use client';
 
-import { formatDateTime, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { deviceState, notCarriedText } from '@/components/security/offline-logic';
+import { deviceStateIn, notCarriedTextIn } from '@/components/security/offline-logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GateDevice, type GateDeviceFilter } from '@/lib/queries';
 import { useNow } from '@/lib/use-now';
+import ar from '@/messages/ar/sec-gate-devices';
+import en from '@/messages/en/sec-gate-devices';
 
 /** The compound's own alert minutes, when the reader may see the settings; else the default. */
 function useAlertMinutes(enabled: boolean): number {
@@ -21,6 +24,7 @@ function useAlertMinutes(enabled: boolean): number {
 
 /** Revoke, once, with a reason: it downloads nothing more; what it uploads is quarantined. */
 function Revoke({ d, onClose }: { d: GateDevice; onClose: () => void }) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const revoke = useAction(
@@ -34,7 +38,7 @@ function Revoke({ d, onClose }: { d: GateDevice; onClose: () => void }) {
     {
       invalidate: [keys.gateDevicesAll],
       onDone: () => {
-        toast.show('Revoked: it downloads nothing more, and what it uploads waits for you in Offline flags.');
+        toast.show(t('revoked'));
         onClose();
       },
     },
@@ -43,14 +47,10 @@ function Revoke({ d, onClose }: { d: GateDevice; onClose: () => void }) {
     <ReasonCodeDialog
       open
       onClose={onClose}
-      title={`Revoke ${d.label ?? 'this device'}?`}
-      description={
-        d.pendingCount
-          ? `It said it still holds ${d.pendingCount} action${d.pendingCount === 1 ? '' : 's'}: whatever it uploads after this is quarantined for you to accept or reject.`
-          : 'Whatever it uploads after this is quarantined for you to accept or reject.'
-      }
+      title={t('revokeTitle', { label: d.label ?? t('thisDevice') })}
+      description={d.pendingCount ? t('revokeDescriptionPending', { n: d.pendingCount }) : t('revokeDescription')}
       codes={REASON_CODES.gateDeviceRevoke}
-      confirmLabel="Revoke"
+      confirmLabel={t('revoke')}
       danger
       pending={revoke.isPending}
       error={<ErrorAlert error={revoke.error} />}
@@ -60,58 +60,68 @@ function Revoke({ d, onClose }: { d: GateDevice; onClose: () => void }) {
 }
 
 function DeviceDetail({ id, onClose, onRevoke }: { id: string; onClose: () => void; onRevoke: (d: GateDevice) => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const detail = useQuery({ queryKey: keys.gateDevice(id), queryFn: () => fetchers.gateDevice(id), refetchInterval: 30_000 });
   const d = detail.data;
+  const notCarried = d ? notCarriedTextIn(d.notCarried, locale) : null;
   return (
     <Dialog
       open
       wide
       onClose={onClose}
-      title={d?.label ?? 'Gate device'}
+      title={d?.label ?? t('detailTitle')}
       footer={
         <>
           {d && d.status === 'active' ? (
-            <Button variant="danger" onClick={() => onRevoke(d)}>Revoke</Button>
+            <Button variant="danger" onClick={() => onRevoke(d)}>
+              {t('revoke')}
+            </Button>
           ) : null}
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={onClose}>{c('close')}</Button>
         </>
       }
     >
       <QueryState query={detail} rows={6}>
         {d ? (
           <dl className="dl">
-            <dt>Enrolled</dt>
-            <dd>{d.enrolledBy.fullName ?? 'An erased account'} · {formatDateTime(d.enrolledAt)}</dd>
-            <dt>Last seen</dt>
-            <dd>{d.lastSeenAt ? formatDateTime(d.lastSeenAt) : '—'}</dd>
-            <dt>Last upload</dt>
-            <dd>{d.lastUploadAt ? formatDateTime(d.lastUploadAt) : '—'}</dd>
-            <dt>Bundle</dt>
+            <dt>{t('enrolled')}</dt>
             <dd>
-              {d.bundleVersion ? `No. ${d.bundleVersion}, until ${formatDateTime(d.bundleValidUntil)}` : 'None yet'}
-              {d.onShift ? ' · on shift' : ''}
+              {d.enrolledBy.fullName ?? t('erasedAccount')} · {f.dateTime(d.enrolledAt)}
             </dd>
-            <dt>Actions</dt>
+            <dt>{t('col.lastSeen')}</dt>
+            <dd>{d.lastSeenAt ? f.dateTime(d.lastSeenAt) : '—'}</dd>
+            <dt>{t('lastUpload')}</dt>
+            <dd>{d.lastUploadAt ? f.dateTime(d.lastUploadAt) : '—'}</dd>
+            <dt>{t('bundle')}</dt>
             <dd>
-              Received through {d.ackedSeq} of {d.maxSeq}
-              {d.missingActions ? ` · ${d.missingActions} missing` : ''}
-              {d.pendingCount !== null ? ` · ${d.pendingCount} still on the device` : ''}
+              {d.bundleVersion ? t('bundleValue', { version: d.bundleVersion, until: f.dateTime(d.bundleValidUntil) }) : t('bundleNone')}
+              {d.onShift ? t('onShiftSuffix') : ''}
             </dd>
-            <dt>Flags</dt>
+            <dt>{t('actionsLabel')}</dt>
             <dd>
-              {d.openFlags ? <Link href={`/security/offline-flags?device=${d.id}`}>{d.openFlags} to look at</Link> : 'None open'}
+              {t('received', { acked: f.number(d.ackedSeq), max: f.number(d.maxSeq) })}
+              {d.missingActions ? t('missing', { n: f.number(d.missingActions) }) : ''}
+              {d.pendingCount !== null ? t('stillOnDevice', { n: f.number(d.pendingCount) }) : ''}
             </dd>
-            {notCarriedText(d.notCarried) ? (
+            <dt>{t('flags')}</dt>
+            <dd>
+              {d.openFlags ? <Link href={`/security/offline-flags?device=${d.id}`}>{t('flagsToLook', { n: f.number(d.openFlags) })}</Link> : t('flagsNone')}
+            </dd>
+            {notCarried ? (
               <>
-                <dt>Not offline</dt>
-                <dd>{notCarriedText(d.notCarried)}</dd>
+                <dt>{t('notOffline')}</dt>
+                <dd>{notCarried}</dd>
               </>
             ) : null}
             {d.revokedAt ? (
               <>
-                <dt>Revoked</dt>
+                <dt>{t('revokedLabel')}</dt>
                 <dd>
-                  {d.revokedBy?.fullName ?? '—'} · {formatDateTime(d.revokedAt)} · {d.revokeReasonCode}
+                  {d.revokedBy?.fullName ?? '—'} · {f.dateTime(d.revokedAt)} · {label(d.revokeReasonCode)}
                 </dd>
               </>
             ) : null}
@@ -129,6 +139,10 @@ function DeviceDetail({ id, onClose, onRevoke }: { id: string; onClose: () => vo
  * — and revokes one it does not recognise or that was lost.
  */
 export default function GateDevicesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('gate_devices.manage');
   const params = useSearchParams();
@@ -137,7 +151,7 @@ export default function GateDevicesPage() {
   const [revoking, setRevoking] = useState<GateDevice | null>(null);
   const now = useNow(30_000);
   const alertMinutes = useAlertMinutes(allowed && can('gate.manage'));
-  const list = useCursorList(keys.gateDevices(status), (c) => fetchers.gateDevices(status, c), {
+  const list = useCursorList(keys.gateDevices(status), (cursor) => fetchers.gateDevices(status, cursor), {
     enabled: allowed,
     refetchInterval: 60_000,
   });
@@ -145,26 +159,23 @@ export default function GateDevicesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Gate devices" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
 
   return (
     <>
-      <PageHeader
-        title="Gate devices"
-        description="The phones the gate works on without network. See that each syncs; revoke one that was lost or that you do not recognise."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<GateDeviceFilter>
-          label="Devices shown"
+          label={t('shown')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'active', label: 'Active' },
-            { value: 'revoked', label: 'Revoked' },
-            { value: 'all', label: 'All' },
+            { value: 'active', label: t('filter.active') },
+            { value: 'revoked', label: t('filter.revoked') },
+            { value: 'all', label: c('all') },
           ]}
         />
       </div>
@@ -173,34 +184,40 @@ export default function GateDevicesPage() {
           <DataTable<GateDevice>
             rows={list.rows}
             rowKey={(d) => d.id}
-            empty="No gate device"
+            empty={t('empty')}
             columns={[
               {
                 key: 'device',
-                header: 'Device',
+                header: t('col.device'),
                 cell: (d) => (
                   <Button variant="text" className="table__link" onClick={() => setOpen(d.id)}>
-                    {d.label ?? `Device ${d.id.slice(-6)}`}
+                    {d.label ?? t('deviceFallback', { id: d.id.slice(-6) })}
                   </Button>
                 ),
               },
               {
                 key: 'state',
-                header: 'Now',
+                header: t('col.now'),
                 cell: (d) => {
-                  const s = deviceState(d, now, alertMinutes);
+                  const s = deviceStateIn(d, now, alertMinutes, locale);
                   return <Badge tone={s.tone}>{s.text}</Badge>;
                 },
               },
-              { key: 'seen', header: 'Last seen', cell: (d) => (d.lastSeenAt ? <span title={formatDateTime(d.lastSeenAt)}>{relativeTime(d.lastSeenAt)}</span> : '—') },
-              { key: 'pending', header: 'On the device', cell: (d) => (d.pendingCount ?? '—').toString() },
-              { key: 'enrolled', header: 'Enrolled by', cell: (d) => d.enrolledBy.fullName ?? 'An erased account' },
+              {
+                key: 'seen',
+                header: t('col.lastSeen'),
+                cell: (d) => (d.lastSeenAt ? <span title={f.dateTime(d.lastSeenAt)}>{f.relative(d.lastSeenAt)}</span> : '—'),
+              },
+              { key: 'pending', header: t('col.onDevice'), cell: (d) => (d.pendingCount === null ? '—' : f.number(d.pendingCount)) },
+              { key: 'enrolled', header: t('col.enrolledBy'), cell: (d) => d.enrolledBy.fullName ?? t('erasedAccount') },
               {
                 key: 'revoke',
                 header: '',
                 cell: (d) =>
                   d.status === 'active' ? (
-                    <Button size="sm" variant="danger" onClick={() => setRevoking(d)}>Revoke</Button>
+                    <Button size="sm" variant="danger" onClick={() => setRevoking(d)}>
+                      {t('revoke')}
+                    </Button>
                   ) : null,
               },
             ]}

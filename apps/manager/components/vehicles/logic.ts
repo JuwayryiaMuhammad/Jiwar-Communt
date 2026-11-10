@@ -10,13 +10,18 @@ export function validSticker(value: string): boolean {
   return /^[A-Za-z0-9-]{1,20}$/.test(value.trim());
 }
 
-/** What the API refuses as PERMIT_DATE_OUT_OF_RANGE, said before it is sent. */
-export function permitDateProblem(day: string, today: string, notBefore?: string): string | undefined {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return 'Pick a day.';
+/**
+ * What the API refuses as PERMIT_DATE_OUT_OF_RANGE, said before it is sent:
+ * the problem's code, which the page words (`date.<code>` in its catalog).
+ */
+export type PermitDateProblem = 'pick_day' | 'not_before_current' | 'after_today' | 'too_far';
+
+export function permitDateProblem(day: string, today: string, notBefore?: string): PermitDateProblem | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return 'pick_day';
   const min = addDays(today, 1);
   const floor = notBefore && notBefore > min ? notBefore : min;
-  if (day < floor) return notBefore && notBefore >= min ? 'Not before the current last day.' : 'After today.';
-  if (day > addDays(today, 731)) return 'At most two years ahead.';
+  if (day < floor) return notBefore && notBefore >= min ? 'not_before_current' : 'after_today';
+  if (day > addDays(today, 731)) return 'too_far';
   return undefined;
 }
 
@@ -71,8 +76,15 @@ export function fineActions(status: string, can: { issue: boolean; billing: bool
   return out;
 }
 
-/** "Unit A-12" lines from the matches of a report, or a word when none. */
-export function matchesText(matches: readonly { unitCode: string; permitStatus: string }[]): string {
-  if (!matches.length) return 'No registered vehicle';
-  return matches.map((m) => `${m.unitCode} (${m.permitStatus.replace(/_/g, ' ')})`).join(', ');
+/**
+ * "A-12 (Active)" for each match of a report, listed in the page's language,
+ * or the page's word when none. The words come from the page: `none` from
+ * its catalog, `status` from `useLabel`, `list` from `fmt.list`.
+ */
+export function matchesText(
+  matches: readonly { unitCode: string; permitStatus: string }[],
+  words: { none: string; status: (code: string) => string; list: (items: readonly string[]) => string },
+): string {
+  if (!matches.length) return words.none;
+  return words.list(matches.map((m) => `${m.unitCode} (${words.status(m.permitStatus)})`));
 }

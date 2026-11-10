@@ -1,17 +1,22 @@
 /**
- * The patrol pages (ADR 0052): plain helpers, no imports, so the tests run
- * them as they are.
+ * The patrol pages (ADR 0052): plain helpers. They import only the layer's
+ * core and the guards' catalog (through the security helpers), so the tests
+ * run them as they are.
  */
+import { createFormat, type Locale } from '@jiwar/i18n/core';
+import { guardWords, listSep } from '../security/logic.ts';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** "Mon, Wed at 08:00, 22:00"; "Unscheduled" without one. */
-export function patrolScheduleText(s: { days: number[]; times: string[] } | null | undefined): string {
-  if (!s) return 'Unscheduled';
-  const days = [...s.days].sort((a, b) => a - b).map((d) => WEEKDAYS[d] ?? '?');
-  const every = days.length === 7 ? 'Every day' : days.join(', ');
-  return `${every} at ${[...s.times].sort().join(', ')}`;
+export function patrolScheduleText(s: { days: number[]; times: string[] } | null | undefined, locale: Locale = 'en'): string {
+  const t = guardWords(locale);
+  if (!s) return t('unscheduled');
+  const fmt = createFormat(locale);
+  const sep = listSep(locale);
+  const days = [...s.days].sort((a, b) => a - b).map((d) => (d >= 0 && d <= 6 ? fmt.weekday(d, 'short') : '?'));
+  const every = days.length === 7 ? t('everyDay') : days.join(sep);
+  return t('patrolSchedule', { days: every, times: [...s.times].sort().join(sep) });
 }
 
 /**

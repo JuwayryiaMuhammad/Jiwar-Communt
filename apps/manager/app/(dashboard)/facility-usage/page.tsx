@@ -1,19 +1,26 @@
 'use client';
 
 import { ErrorAlert, QueryState } from '@jiwar/api/react';
-import { Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, useCommonT } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useLocalName } from '@/components/facilities/bits';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type FacilityUsageReport } from '@/lib/queries';
+import ar from '@/messages/ar/fac-bans';
+import en from '@/messages/en/fac-bans';
 
 type Row = FacilityUsageReport['facilities'][number];
 const iso = (d: Date) => d.toISOString().slice(0, 10);
-const pct = (n: number | null) => (n === null ? '—' : `${n}%`);
 
 /** How the bookable facilities are used (ADR 0067), for who sets them up or works the bookings. */
 export default function FacilityUsagePage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const localName = useLocalName();
   const { ready, can } = usePermissions();
   const allowed = can('facilities.manage') || can('bookings.handle');
   const [to, setTo] = useState(iso(new Date()));
@@ -24,47 +31,49 @@ export default function FacilityUsagePage() {
     enabled: allowed,
   });
   const [csvError, setCsvError] = useState<unknown>(null);
+  // The report gives whole percentages: 42 is 42%.
+  const pct = (n: number | null) => (n === null ? '—' : f.percent(n / 100, 0));
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Facility use" />
+        <PageHeader title={t('usage.title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Facility use"
-        description="Bookings by status, booked time over the time each facility was open (minus closures), no-shows and the peak share."
+        title={t('usage.title')}
+        description={t('usage.description')}
         actions={
           <Button
             onClick={() =>
               download('/api/v1/staff/facility-usage/export', { from, to }, `facility-usage-${from}-${to}.csv`).catch(setCsvError)
             }
           >
-            Export CSV
+            {t('usage.export')}
           </Button>
         }
       />
       <ErrorAlert error={csvError} />
       <div className="form__row" style={{ marginBottom: 12 }}>
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={c('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={c('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
       </div>
       <Card flush>
         <QueryState query={report}>
           <DataTable<Row>
             rows={report.data?.facilities ?? []}
             rowKey={(r) => r.facilityId}
-            empty="No bookable facility"
+            empty={t('usage.empty')}
             columns={[
-              { key: 'n', header: 'Facility', cell: (r) => r.nameEn },
-              { key: 'c', header: 'Confirmed', cell: (r) => r.bookings.confirmed },
-              { key: 'x', header: 'Cancelled', cell: (r) => r.bookings.cancelled },
-              { key: 'ns', header: 'No-shows', cell: (r) => `${r.noShows} (${pct(r.noShowRate)})` },
-              { key: 'u', header: 'Use', cell: (r) => pct(r.use) },
-              { key: 'o', header: 'Open hours', cell: (r) => Math.round(r.openMinutes / 60) },
-              { key: 'p', header: 'At peak', cell: (r) => pct(r.peakShare) },
+              { key: 'n', header: t('col.facility'), cell: (r) => localName(r) },
+              { key: 'c', header: t('usage.confirmed'), cell: (r) => f.number(r.bookings.confirmed) },
+              { key: 'x', header: t('usage.cancelled'), cell: (r) => f.number(r.bookings.cancelled) },
+              { key: 'ns', header: t('usage.noShows'), cell: (r) => `${f.number(r.noShows)} (${pct(r.noShowRate)})` },
+              { key: 'u', header: t('usage.use'), cell: (r) => pct(r.use) },
+              { key: 'o', header: t('usage.openHours'), cell: (r) => f.number(Math.round(r.openMinutes / 60)) },
+              { key: 'p', header: t('usage.atPeak'), cell: (r) => pct(r.peakShare) },
             ]}
           />
         </QueryState>

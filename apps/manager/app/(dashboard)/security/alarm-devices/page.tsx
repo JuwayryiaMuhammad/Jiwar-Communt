@@ -1,26 +1,40 @@
 'use client';
 
-import { fieldError, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, ReasonCodeDialog, Segmented, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  ReasonCodeDialog,
+  Segmented,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/sec-alarm-devices';
+import en from '@/messages/en/sec-alarm-devices';
 
 type Device = Schema<'AlarmDeviceView'>;
 type Status = 'active' | 'retired' | 'all';
 const KEY = ['security', 'alarm-devices'] as const;
-const STATUSES: { value: Status; label: string }[] = [
-  { value: 'active', label: 'In service' },
-  { value: 'retired', label: 'Retired' },
-  { value: 'all', label: 'All' },
-];
-const label = (code: string) => code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, ' ');
 
 /** A wearable registered, or renamed: the vendor’s id and a label. */
 function DeviceDialog({ device, onClose }: { device?: Device; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [deviceRef, setDeviceRef] = useState('');
   const [name, setName] = useState(device?.label ?? '');
@@ -32,7 +46,7 @@ function DeviceDialog({ device, onClose }: { device?: Device; onClose: () => voi
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show(device ? 'Renamed.' : 'Registered: a guard on shift may pair it now.');
+        toast.show(device ? t('renamed') : t('registered'));
         onClose();
       },
     },
@@ -42,25 +56,25 @@ function DeviceDialog({ device, onClose }: { device?: Device; onClose: () => voi
     <Dialog
       open
       onClose={onClose}
-      title={device ? `Rename ${device.label}` : 'Register a guard-down wearable'}
-      description={device ? undefined : 'By the vendor’s own id for it. A guard pairs it for their shift; its fall, stillness or panic raises their SOS.'}
+      title={device ? t('renameTitle', { label: device.label }) : t('registerTitle')}
+      description={device ? undefined : t('registerDescription')}
       onSubmit={() => ok && save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ok}>
-            {device ? 'Rename' : 'Register'}
+            {device ? t('rename') : t('register')}
           </Button>
         </>
       }
     >
       <div className="form">
         {device ? null : (
-          <Field label="The vendor’s device id" error={fieldError(save.error, 'deviceRef')}>
+          <Field label={t('deviceId')} error={fieldError(save.error, 'deviceRef')}>
             {(p) => <Input {...p} maxLength={120} value={deviceRef} onChange={(e) => setDeviceRef(e.target.value)} />}
           </Field>
         )}
-        <Field label="Label" hint="What the guards call it: a colour, a number." error={fieldError(save.error, 'label')}>
+        <Field label={t('label')} hint={t('labelHint')} error={fieldError(save.error, 'label')}>
           {(p) => <Input {...p} maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -76,10 +90,19 @@ function DeviceDialog({ device, onClose }: { device?: Device; onClose: () => voi
  * control room hears of it.
  */
 export default function AlarmDevicesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('gate_devices.manage');
   const [status, setStatus] = useState<Status>('active');
+  const statuses: { value: Status; label: string }[] = [
+    { value: 'active', label: t('status.active') },
+    { value: 'retired', label: t('status.retired') },
+    { value: 'all', label: c('all') },
+  ];
   const list = useQuery({
     queryKey: [...KEY, status],
     queryFn: () => unwrap(api.GET('/api/v1/staff/gate/alarm-devices', { params: { query: { status } } })),
@@ -94,7 +117,7 @@ export default function AlarmDevicesPage() {
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Retired: its pairing ended.');
+        toast.show(t('retired'));
         setRetiring(null);
       },
     },
@@ -102,42 +125,47 @@ export default function AlarmDevicesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Alarm wearables" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Alarm wearables"
-        description="The guard-down devices the guards wear on shift."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-            Register
+            {t('register')}
           </Button>
         }
       />
       <div className="stack">
-        <Segmented label="Status" value={status} onChange={setStatus} options={STATUSES} />
+        <Segmented label={c('status')} value={status} onChange={setStatus} options={statuses} />
         <Card flush>
           <QueryState query={list}>
             <DataTable<Device>
               rows={list.data?.data}
               rowKey={(d) => d.id}
-              empty="No wearables"
+              empty={t('empty')}
               columns={[
-                { key: 'l', header: 'Label', cell: (d) => d.label },
-                { key: 'r', header: 'Vendor id', cell: (d) => <span className="t-mono">{d.deviceRef}</span> },
+                { key: 'l', header: t('col.label'), cell: (d) => d.label },
+                { key: 'r', header: t('col.vendorId'), cell: (d) => <span className="t-mono ltr">{d.deviceRef}</span> },
                 {
                   key: 'p',
-                  header: 'Worn by',
-                  cell: (d) => (d.pairing ? `${d.pairing.guard.fullName ?? 'A guard'} since ${formatDateTime(d.pairing.pairedAt)}` : '—'),
+                  header: t('col.wornBy'),
+                  cell: (d) =>
+                    d.pairing ? t('wornSince', { guard: d.pairing.guard.fullName ?? t('aGuard'), since: f.dateTime(d.pairing.pairedAt) }) : '—',
                 },
                 {
                   key: 's',
-                  header: 'Status',
+                  header: c('status'),
                   cell: (d) =>
-                    d.status === 'retired' ? <Badge tone="beige">Retired{d.retireReason ? `: ${label(d.retireReason)}` : ''}</Badge> : <Badge tone="green">In service</Badge>,
+                    d.status === 'retired' ? (
+                      <Badge tone="beige">{d.retireReason ? t('retiredBadgeWithReason', { reason: label(d.retireReason) }) : t('retiredBadge')}</Badge>
+                    ) : (
+                      <Badge tone="green">{t('inService')}</Badge>
+                    ),
                 },
                 {
                   key: 'a',
@@ -147,10 +175,10 @@ export default function AlarmDevicesPage() {
                     d.status === 'active' ? (
                       <span className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
                         <Button size="sm" onClick={() => setRenaming(d)}>
-                          Rename
+                          {t('rename')}
                         </Button>
                         <Button size="sm" onClick={() => setRetiring(d)}>
-                          Retire
+                          {t('retire')}
                         </Button>
                       </span>
                     ) : null,
@@ -168,10 +196,10 @@ export default function AlarmDevicesPage() {
           setRetiring(null);
           retire.reset();
         }}
-        title={retiring ? `Retire ${retiring.label}?` : ''}
-        description="Its pairing ends now. An alarm from it later reaches the control room only."
+        title={retiring ? t('retireTitle', { label: retiring.label }) : ''}
+        description={t('retireDescription')}
         codes={REASON_CODES.alarmDeviceRetire}
-        confirmLabel="Retire"
+        confirmLabel={t('retire')}
         danger
         pending={retire.isPending}
         error={<ErrorAlert error={retire.error} />}

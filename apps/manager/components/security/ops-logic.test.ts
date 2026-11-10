@@ -1,18 +1,42 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { blocklistReady, blocklistSubject, dayStart, hoursText, incidentActions, lockdownBanner, lockdownScope, violationActions } from './ops-logic.ts';
+import { stripIsolates } from '@jiwar/i18n/core';
+import {
+  blocklistReady,
+  blocklistSubject,
+  blocklistSubjectIn,
+  dayStart,
+  hoursText,
+  hoursTextIn,
+  incidentActions,
+  lockdownBanner,
+  lockdownBannerIn,
+  lockdownScope,
+  lockdownScopeIn,
+  violationActions,
+} from './ops-logic.ts';
 
 test('a lockdown reads as its scope; the banner lists every live one', () => {
   assert.equal(lockdownScope({ scope: 'all', gate: null }), 'Every gate');
   assert.equal(lockdownScope({ scope: 'gate', gate: { name: 'North' } }), 'North');
   assert.equal(lockdownBanner([]), null);
-  assert.equal(
-    lockdownBanner([
-      { scope: 'gate', gate: { name: 'North' } },
-      { scope: 'all', gate: null },
-    ]),
-    'Lockdown in force: Every gate, North',
-  );
+  const live = [
+    { scope: 'gate', gate: { name: 'North' } },
+    { scope: 'all', gate: null },
+  ];
+  assert.equal(stripIsolates(lockdownBanner(live) ?? ''), 'Lockdown in force: Every gate, North');
+  // In Arabic.
+  assert.equal(lockdownScopeIn({ scope: 'all', gate: null }, 'ar'), 'كل البوابات');
+  assert.equal(lockdownScopeIn({ scope: 'gate', gate: null }, 'ar'), 'بوابة');
+  assert.equal(lockdownBannerIn([], 'ar'), null);
+  assert.equal(stripIsolates(lockdownBannerIn(live, 'ar') ?? ''), 'الإغلاق الأمني سارٍ: كل البوابات، North');
+});
+
+test('in Arabic: a purged person and hours', () => {
+  assert.equal(blocklistSubjectIn({ subject: 'person', fullName: null }, 'ar'), 'شخص (حُذفت بياناته)');
+  assert.equal(blocklistSubjectIn({ subject: 'plate', plate: 'ABC 123' }, 'ar'), 'ABC 123');
+  assert.equal(hoursTextIn(null, 'ar'), '—');
+  assert.equal(stripIsolates(hoursTextIn(2.5, 'ar')), '2.5 س');
 });
 
 test('a blocklist entry is its plate or its person; a person needs a name and an ID', () => {

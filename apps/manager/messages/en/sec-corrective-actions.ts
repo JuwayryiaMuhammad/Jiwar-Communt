@@ -1,0 +1,22 @@
+/** An incident's corrective actions (ADR 0087): components/security/corrective-actions. */
+export default {
+  title: 'Corrective actions',
+  added: 'Action added; its owner is told.',
+  markedDone: 'Marked done.',
+  calledOff: 'Called off.',
+  empty: 'No corrective action',
+  'col.action': 'Action',
+  'col.owner': 'Owner',
+  'col.due': 'Due',
+  'col.state': 'State',
+  erased: 'Erased',
+  dueOverdue: '{date} · overdue',
+  done: 'Done',
+  callOff: 'Call off',
+  whatMustBeDone: 'What must be done',
+  owner: 'Owner',
+  choose: 'Choose…',
+  due: 'Due',
+  addAction: 'Add action',
+  callOffTitle: 'Call the action off',
+} as const;

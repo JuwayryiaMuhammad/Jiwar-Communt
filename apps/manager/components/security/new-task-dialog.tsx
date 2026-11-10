@@ -2,13 +2,16 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Segmented, Textarea, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Segmented, Textarea, useCommonT, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { instantOf, postBody } from '@/components/security/logic';
 import { GuardPicker, PostPicker } from '@/components/security/pickers';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { keys, type GuardTaskKind } from '@/lib/queries';
+import ar from '@/messages/ar/sec-new-task';
+import en from '@/messages/en/sec-new-task';
 
 /**
  * A new guard task (ADR 0050), for one guard or for whoever is on shift at
@@ -25,6 +28,8 @@ export function NewTaskDialog({
   request?: { id: string; unitId: string; unitCode: string };
   round?: { id: string; unitId: string; unitCode: string };
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const request = asked ?? round;
   const [kind, setKind] = useState<GuardTaskKind>(request ? 'closed_unit_inspection' : 'custom');
@@ -56,7 +61,7 @@ export function NewTaskDialog({
     {
       invalidate: [keys.guardTasksAll, ['inspection-requests'], ['closed-units']],
       onDone: () => {
-        toast.show('Task given. The guard, or the guards on shift there, are told.');
+        toast.show(t('given'));
         onClose();
       },
     },
@@ -67,65 +72,63 @@ export function NewTaskDialog({
       open
       wide
       onClose={onClose}
-      title="New task"
-      description="For one guard, or for whoever is on shift at a gate or a zone."
+      title={t('title')}
+      description={t('description')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Give task
+            {t('giveTask')}
           </Button>
         </>
       }
     >
       <div className="form">
         {request ? (
-          <p className="t-secondary">
-            Inspection of {request.unitCode}, {round ? 'its round due.' : 'as its owner asked.'}
-          </p>
+          <p className="t-secondary">{t(round ? 'inspectionDue' : 'inspectionAsked', { unit: request.unitCode })}</p>
         ) : (
           <Segmented<GuardTaskKind>
-            label="Kind"
+            label={c('kind')}
             value={kind}
             onChange={setKind}
             options={[
-              { value: 'custom', label: 'A task' },
-              { value: 'closed_unit_inspection', label: 'Closed unit inspection' },
+              { value: 'custom', label: t('kind.custom') },
+              { value: 'closed_unit_inspection', label: t('kind.closed_unit_inspection') },
             ]}
           />
         )}
         {request ? null : kind === 'custom' ? (
-          <Field label="Title" error={fieldError(save.error, 'title')}>
+          <Field label={t('titleLabel')} error={fieldError(save.error, 'title')}>
             {(p) => <Input {...p} maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} />}
           </Field>
         ) : (
-          <Field label="Unit" hint="In closed mode: the household turned it on." error={fieldError(save.error, 'unitId')}>
+          <Field label={c('unit')} hint={t('unitHint')} error={fieldError(save.error, 'unitId')}>
             {(p) => <UnitPicker {...p} value={unitId} onChange={(e) => setUnitId(e.target.value)} />}
           </Field>
         )}
-        <Field label="Details" error={fieldError(save.error, 'details')}>
+        <Field label={t('details')} error={fieldError(save.error, 'details')}>
           {(p) => <Textarea {...p} rows={3} maxLength={2000} value={details} onChange={(e) => setDetails(e.target.value)} />}
         </Field>
         <Segmented<'guard' | 'post'>
-          label="For"
+          label={t('forLabel')}
           value={to}
           onChange={setTo}
           options={[
-            { value: 'post', label: 'A gate or zone' },
-            { value: 'guard', label: 'One guard' },
+            { value: 'post', label: t('gateOrZone') },
+            { value: 'guard', label: t('oneGuard') },
           ]}
         />
         {to === 'guard' ? (
-          <Field label="Guard" error={fieldError(save.error, 'guardId')}>
+          <Field label={t('guard')} error={fieldError(save.error, 'guardId')}>
             {(p) => <GuardPicker {...p} value={guardId} onChange={(e) => setGuardId(e.target.value)} />}
           </Field>
         ) : (
-          <Field label="Post" error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
+          <Field label={t('post')} error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
             {(p) => <PostPicker {...p} value={post} onChange={(e) => setPost(e.target.value)} />}
           </Field>
         )}
-        <Field label="Due" hint="Optional." error={fieldError(save.error, 'dueAt')}>
+        <Field label={t('due')} hint={c('optional')} error={fieldError(save.error, 'dueAt')}>
           {(p) => <Input {...p} type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />

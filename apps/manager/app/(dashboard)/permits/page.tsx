@@ -1,19 +1,24 @@
 'use client';
 
-import { formatDateTime, relativeTime } from '@jiwar/api';
 import { LoadMore, QueryState, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Card, DataTable, ForbiddenState, PageHeader, Segmented, StatusBadge } from '@jiwar/ui';
 import Link from 'next/link';
 import { useState } from 'react';
-import { PERMIT_KIND_TEXT, periodText } from '@/components/permits/logic';
+import { PERMIT_KINDS, periodText } from '@/components/permits/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PermitFilters, type PermitKind, type StaffPermit } from '@/lib/queries';
+import ar from '@/messages/ar/places-permits';
+import en from '@/messages/en/places-permits';
 
-type View = 'pending' | 'live' | 'all';
+const VIEWS = ['pending', 'live', 'all'] as const;
+type View = (typeof VIEWS)[number];
 type Kind = PermitKind | 'any';
 
 /** The units' permits (ADR 0049): the queue to decide, and what is in force now. */
 export default function PermitsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('permits.manage');
   const [view, setView] = useState<View>('pending');
@@ -27,38 +32,25 @@ export default function PermitsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Permits" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Permits"
-        description="Works by a contractor, furniture moves, materials going out and private events. Events of 20 guests or fewer are approved at once; the rest wait here."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<View>
-          label="Permits shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'pending', label: 'To decide' },
-            { value: 'live', label: 'In force now' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
         <Segmented<Kind>
-          label="Kind"
+          label={t('kind')}
           value={kind}
           onChange={setKind}
-          options={[
-            { value: 'any', label: 'Any kind' },
-            { value: 'works', label: PERMIT_KIND_TEXT.works },
-            { value: 'move', label: PERMIT_KIND_TEXT.move },
-            { value: 'material_exit', label: PERMIT_KIND_TEXT.material_exit },
-            { value: 'event', label: PERMIT_KIND_TEXT.event },
-          ]}
+          options={[{ value: 'any', label: t('kind.any') }, ...PERMIT_KINDS.map((k) => ({ value: k, label: t(`kind.${k}`) }))]}
         />
       </div>
       <Card flush>
@@ -66,23 +58,23 @@ export default function PermitsPage() {
           <DataTable<StaffPermit>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty={view === 'pending' ? 'Nothing to decide' : 'No permit'}
+            empty={view === 'pending' ? t('emptyPending') : t('empty')}
             columns={[
               {
                 key: 'r',
-                header: 'Permit',
+                header: t('col.permit'),
                 cell: (p) => (
                   <Link className="table__link t-mono" href={`/permits/${p.id}`}>
                     {p.reference}
                   </Link>
                 ),
               },
-              { key: 'k', header: 'Kind', cell: (p) => PERMIT_KIND_TEXT[p.kind] },
-              { key: 'u', header: 'Unit', cell: (p) => <span className="t-mono">{p.unitCode}</span> },
-              { key: 'w', header: 'When', cell: (p) => periodText(p, formatDateTime) },
-              { key: 'b', header: 'Asked by', cell: (p) => p.requestedBy.fullName ?? '—' },
-              { key: 's', header: 'Status', cell: (p) => <StatusBadge status={p.status} /> },
-              { key: 'c', header: 'Asked', cell: (p) => <span title={formatDateTime(p.createdAt)}>{relativeTime(p.createdAt)}</span> },
+              { key: 'k', header: t('col.kind'), cell: (p) => t(`kind.${p.kind}`) },
+              { key: 'u', header: t('col.unit'), cell: (p) => <span className="t-mono">{p.unitCode}</span> },
+              { key: 'w', header: t('col.when'), cell: (p) => periodText(p, fmt, t) },
+              { key: 'b', header: t('col.askedBy'), cell: (p) => p.requestedBy.fullName ?? '—' },
+              { key: 's', header: t('col.status'), cell: (p) => <StatusBadge status={p.status} /> },
+              { key: 'c', header: t('col.asked'), cell: (p) => <span title={fmt.dateTime(p.createdAt)}>{fmt.relative(p.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

@@ -2,24 +2,23 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, Field, Input, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, Field, Input, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { fetchers, keys, type FacilitySettings } from '@/lib/queries';
+import ar from '@/messages/ar/places-facilities';
+import en from '@/messages/en/places-facilities';
 import { inRange, numberChanges, SETTING_FIELDS, SETTING_RANGES, type SettingField } from './logic';
 
 type Form = Record<SettingField, string>;
 const toForm = (s: FacilitySettings): Form => Object.fromEntries(SETTING_FIELDS.map((k) => [k, String(s[k])])) as Form;
 
-const COPY: Record<SettingField, { label: string; hint: string }> = {
-  noShowThreshold: { label: 'No-shows that suspend a unit', hint: 'Counted over the window, since the unit’s last suspension began.' },
-  noShowWindowDays: { label: 'Window, days', hint: 'How far back the no-shows are counted.' },
-  suspensionDays: { label: 'Suspension, days', hint: 'How long the unit cannot make a new booking. What it holds stays.' },
-};
-
 /** The compound's no-show rules (ADR 0044). A change applies to the next no-show. */
 export function NoShowRules() {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const settings = useQuery({ queryKey: keys.facilitySettings, queryFn: fetchers.facilitySettings });
   const [form, setForm] = useState<Form | null>(null);
@@ -35,7 +34,7 @@ export function NoShowRules() {
     invalidate: [keys.facilitySettings],
     onDone: (next) => {
       setForm(toForm(next));
-      toast.show('No-show rules saved.');
+      toast.show(t('noShow.saved'));
     },
   });
   if (!form || !saved) return <QueryState query={settings}>{null}</QueryState>;
@@ -50,7 +49,7 @@ export function NoShowRules() {
       }}
     >
       <Card flush>
-        <CardHeader title="No-shows" />
+        <CardHeader title={t('noShow.title')} />
         <CardBody>
           <div className="form">
             {SETTING_FIELDS.map((key) => {
@@ -58,9 +57,9 @@ export function NoShowRules() {
               return (
                 <Field
                   key={key}
-                  label={COPY[key].label}
-                  hint={`${COPY[key].hint} From ${min} to ${max}.`}
-                  error={fieldError(save.error, key) ?? (inRange(SETTING_RANGES[key], form[key]) ? undefined : `A whole number from ${min} to ${max}.`)}
+                  label={t(`noShow.${key}`)}
+                  hint={t(`noShow.${key}.hint`, { min, max })}
+                  error={fieldError(save.error, key) ?? (inRange(SETTING_RANGES[key], form[key]) ? undefined : t('wholeRange', { min, max }))}
                 >
                   {(p) => <Input {...p} type="number" min={min} max={max} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />}
                 </Field>
@@ -73,7 +72,7 @@ export function NoShowRules() {
       <span className="row">
         <span className="spacer" />
         <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || invalid}>
-          Save
+          {c('save')}
         </Button>
       </span>
     </form>

@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -16,34 +17,29 @@ import {
   ReasonCodeDialog,
   Segmented,
   StatusBadge,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { DateRange } from '@/components/date-range';
-import {
-  addDays,
-  instantOf,
-  minutesText,
-  personName,
-  postBody,
-  postName,
-  scheduleFrom,
-  scheduleText,
-  today,
-  WEEKDAYS,
-} from '@/components/security/logic';
+import { addDays, instantOf, minutesText, personNameIn, postBody, postNameIn, scheduleFrom, scheduleText, today } from '@/components/security/logic';
 import { GuardPicker, PostPicker } from '@/components/security/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GuardAttendance, type RosterSlot, type RosterTemplate } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/sec-roster';
+import en from '@/messages/en/sec-roster';
 
 const TABS = ['slots', 'templates', 'attendance'] as const;
 type Tab = (typeof TABS)[number];
+const WEEK = [0, 1, 2, 3, 4, 5, 6] as const;
 
 function SlotDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [guardId, setGuardId] = useState('');
   const [post, setPost] = useState('');
@@ -62,7 +58,7 @@ function SlotDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.rosterAll],
       onDone: () => {
-        toast.show('Slot added.');
+        toast.show(t('slotAdded'));
         onClose();
       },
     },
@@ -71,29 +67,29 @@ function SlotDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="New slot"
-      description="One shift of one guard, a day at most. It never overlaps the guard’s other slots or templates."
+      title={t('newSlot')}
+      description={t('newSlotDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!guardId || !target || !startsAt || !endsAt}>
-            Add slot
+            {t('addSlot')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Guard" error={fieldError(save.error, 'guardId')}>
+        <Field label={t('guard')} error={fieldError(save.error, 'guardId')}>
           {(p) => <GuardPicker {...p} value={guardId} onChange={(e) => setGuardId(e.target.value)} />}
         </Field>
-        <Field label="Post" error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
+        <Field label={t('post')} error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
           {(p) => <PostPicker {...p} value={post} onChange={(e) => setPost(e.target.value)} />}
         </Field>
-        <Field label="Starts" error={fieldError(save.error, 'startsAt')}>
+        <Field label={t('starts')} error={fieldError(save.error, 'startsAt')}>
           {(p) => <Input {...p} type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />}
         </Field>
-        <Field label="Ends" error={fieldError(save.error, 'endsAt')}>
+        <Field label={t('ends')} error={fieldError(save.error, 'endsAt')}>
           {(p) => <Input {...p} type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -103,14 +99,18 @@ function SlotDialog({ onClose }: { onClose: () => void }) {
 }
 
 function Slots() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const [range, setRange] = useState({ from: today(), to: addDays(today(), 6) });
   const [guardId, setGuardId] = useState('');
   const [post, setPost] = useState('');
   const [adding, setAdding] = useState(false);
   const [cancelling, setCancelling] = useState<RosterSlot | null>(null);
-  const f = { ...range, guardId: guardId || undefined, ...(postBody(post) ?? {}) };
-  const slots = useQuery({ queryKey: keys.rosterSlots(f), queryFn: () => fetchers.rosterSlots(f) });
+  const filters = { ...range, guardId: guardId || undefined, ...(postBody(post) ?? {}) };
+  const slots = useQuery({ queryKey: keys.rosterSlots(filters), queryFn: () => fetchers.rosterSlots(filters) });
   const cancel = useAction(
     (reasonCode: string) =>
       unwrap(
@@ -122,7 +122,7 @@ function Slots() {
     {
       invalidate: [keys.rosterAll],
       onDone: () => {
-        toast.show('Slot cancelled.');
+        toast.show(t('slotCancelled'));
         setCancelling(null);
       },
     },
@@ -131,10 +131,12 @@ function Slots() {
     <div className="stack">
       <div className="toolbar">
         <DateRange from={range.from} to={range.to} onChange={(r) => setRange(r)} />
-        <Field label="Guard">{(p) => <GuardPicker {...p} placeholder="All guards" value={guardId} onChange={(e) => setGuardId(e.target.value)} />}</Field>
-        <Field label="Post">{(p) => <PostPicker {...p} placeholder="All posts" value={post} onChange={(e) => setPost(e.target.value)} />}</Field>
+        <Field label={t('guard')}>
+          {(p) => <GuardPicker {...p} placeholder={t('allGuards')} value={guardId} onChange={(e) => setGuardId(e.target.value)} />}
+        </Field>
+        <Field label={t('post')}>{(p) => <PostPicker {...p} placeholder={t('allPosts')} value={post} onChange={(e) => setPost(e.target.value)} />}</Field>
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-          New slot
+          {t('newSlot')}
         </Button>
       </div>
       <Card flush>
@@ -142,33 +144,33 @@ function Slots() {
           <DataTable<RosterSlot>
             rows={slots.data?.data}
             rowKey={(s) => s.id}
-            empty="No slot in this period"
+            empty={t('emptySlots')}
             columns={[
-              { key: 'when', header: 'When', cell: (s) => `${formatDateTime(s.startsAt)} – ${formatDateTime(s.endsAt)}` },
-              { key: 'guard', header: 'Guard', cell: (s) => personName(s.guard) },
-              { key: 'post', header: 'Post', cell: (s) => postName(s.post) },
+              { key: 'when', header: t('col.when'), cell: (s) => `${f.dateTime(s.startsAt)} – ${f.dateTime(s.endsAt)}` },
+              { key: 'guard', header: t('guard'), cell: (s) => personNameIn(s.guard, locale) },
+              { key: 'post', header: t('post'), cell: (s) => postNameIn(s.post, locale) },
               {
                 key: 'status',
-                header: 'Status',
+                header: c('status'),
                 cell: (s) => (
                   <span className="row">
                     <StatusBadge status={s.status} />
-                    {s.shift ? <Badge tone="green">Opened</Badge> : null}
-                    {s.late ? <Badge tone="terracotta">Late {s.lateMinutes} min</Badge> : null}
-                    {s.absentAt ? <Badge tone="error">Absent</Badge> : null}
-                    {s.swappedAt ? <Badge tone="beige">Swapped</Badge> : null}
+                    {s.shift ? <Badge tone="green">{t('opened')}</Badge> : null}
+                    {s.late ? <Badge tone="terracotta">{t('lateBy', { time: minutesText(s.lateMinutes, locale) })}</Badge> : null}
+                    {s.absentAt ? <Badge tone="error">{t('absent')}</Badge> : null}
+                    {s.swappedAt ? <Badge tone="beige">{t('swapped')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'source', header: 'From', cell: (s) => (s.templateId ? 'Template' : 'Single') },
+              { key: 'source', header: t('col.from'), cell: (s) => (s.templateId ? t('fromTemplate') : t('fromSingle')) },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (s) =>
                   s.status === 'scheduled' && !s.shift ? (
                     <Button size="sm" onClick={() => setCancelling(s)}>
-                      Cancel
+                      {c('cancel')}
                     </Button>
                   ) : null,
               },
@@ -180,10 +182,10 @@ function Slots() {
       <ReasonCodeDialog
         open={cancelling !== null}
         onClose={() => setCancelling(null)}
-        title="Cancel this slot?"
-        description="A swap waiting on it is cancelled too; both guards are told."
+        title={t('cancelSlotTitle')}
+        description={t('cancelSlotDescription')}
         codes={REASON_CODES.guardSlotCancel}
-        confirmLabel="Cancel slot"
+        confirmLabel={t('cancelSlot')}
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
         onConfirm={(reasonCode) => cancel.mutate(reasonCode)}
@@ -193,6 +195,9 @@ function Slots() {
 }
 
 function TemplateDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [guardId, setGuardId] = useState('');
   const [post, setPost] = useState('');
@@ -221,7 +226,7 @@ function TemplateDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.rosterAll],
       onDone: () => {
-        toast.show('Template added: its slots are made 28 days ahead.');
+        toast.show(t('templateAdded'));
         onClose();
       },
     },
@@ -231,47 +236,47 @@ function TemplateDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="New weekly roster"
-      description="A guard at a post on the same weekdays every week. A window ending before it starts runs into the next day."
+      title={t('newTemplate')}
+      description={t('newTemplateDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!guardId || !target || !schedule || !effectiveFrom}>
-            Add roster
+            {t('addTemplate')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Guard" error={fieldError(save.error, 'guardId')}>
+        <Field label={t('guard')} error={fieldError(save.error, 'guardId')}>
           {(p) => <GuardPicker {...p} value={guardId} onChange={(e) => setGuardId(e.target.value)} />}
         </Field>
-        <Field label="Post" error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
+        <Field label={t('post')} error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
           {(p) => <PostPicker {...p} value={post} onChange={(e) => setPost(e.target.value)} />}
         </Field>
         <fieldset className="field">
-          <legend className="field__label">Weekdays</legend>
+          <legend className="field__label">{t('weekdays')}</legend>
           <div className="row">
-            {WEEKDAYS.map((d, i) => (
+            {WEEK.map((d) => (
               <Checkbox
                 key={d}
-                label={d}
-                checked={days.includes(i)}
-                onChange={(e) => setDays(e.target.checked ? [...days, i] : days.filter((x) => x !== i))}
+                label={f.weekday(d, 'short')}
+                checked={days.includes(d)}
+                onChange={(e) => setDays(e.target.checked ? [...days, d] : days.filter((x) => x !== d))}
               />
             ))}
           </div>
         </fieldset>
         <div className="row">
-          <Field label="From">{(p) => <Input {...p} type="time" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-          <Field label="To">{(p) => <Input {...p} type="time" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+          <Field label={c('from')}>{(p) => <Input {...p} type="time" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+          <Field label={c('to')}>{(p) => <Input {...p} type="time" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
         </div>
         <div className="row">
-          <Field label="First day" error={fieldError(save.error, 'effectiveFrom')}>
+          <Field label={t('firstDay')} error={fieldError(save.error, 'effectiveFrom')}>
             {(p) => <Input {...p} type="date" min={today()} value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} />}
           </Field>
-          <Field label="Last day" hint="Empty: no end." error={fieldError(save.error, 'effectiveUntil')}>
+          <Field label={t('lastDay')} hint={t('lastDayHint')} error={fieldError(save.error, 'effectiveUntil')}>
             {(p) => <Input {...p} type="date" min={effectiveFrom} value={effectiveUntil} onChange={(e) => setEffectiveUntil(e.target.value)} />}
           </Field>
         </div>
@@ -282,6 +287,10 @@ function TemplateDialog({ onClose }: { onClose: () => void }) {
 }
 
 function Templates() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const [state, setState] = useState<'live' | 'ended' | ''>('live');
   const [adding, setAdding] = useState(false);
@@ -292,7 +301,7 @@ function Templates() {
     {
       invalidate: [keys.rosterAll],
       onDone: () => {
-        toast.show('Ended: its slots to come are cancelled.');
+        toast.show(t('templateEnded'));
         setEnding(null);
       },
     },
@@ -301,39 +310,43 @@ function Templates() {
     <div className="stack">
       <div className="toolbar">
         <Segmented<'live' | 'ended' | ''>
-          label="Templates shown"
+          label={t('templatesShown')}
           value={state}
           onChange={setState}
           options={[
-            { value: 'live', label: 'Live' },
-            { value: 'ended', label: 'Ended' },
-            { value: '', label: 'All' },
+            { value: 'live', label: t('state.live') },
+            { value: 'ended', label: t('state.ended') },
+            { value: '', label: c('all') },
           ]}
         />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-          New weekly roster
+          {t('newTemplate')}
         </Button>
       </div>
       <Card flush>
         <QueryState query={list}>
           <DataTable<RosterTemplate>
             rows={list.data?.data}
-            rowKey={(t) => t.id}
-            empty="No template"
+            rowKey={(x) => x.id}
+            empty={t('emptyTemplates')}
             columns={[
-              { key: 'guard', header: 'Guard', cell: (t) => personName(t.guard) },
-              { key: 'post', header: 'Post', cell: (t) => postName(t.post) },
-              { key: 'schedule', header: 'Every week', cell: (t) => scheduleText(t.schedule) },
-              { key: 'days', header: 'From', cell: (t) => `${t.effectiveFrom}${t.effectiveUntil ? ` to ${t.effectiveUntil}` : ''}` },
-              { key: 'state', header: 'State', cell: (t) => <StatusBadge status={t.endedAt ? 'ended' : 'active'} /> },
+              { key: 'guard', header: t('guard'), cell: (x) => personNameIn(x.guard, locale) },
+              { key: 'post', header: t('post'), cell: (x) => postNameIn(x.post, locale) },
+              { key: 'schedule', header: t('col.everyWeek'), cell: (x) => scheduleText(x.schedule, locale) },
+              {
+                key: 'days',
+                header: t('col.from'),
+                cell: (x) => (x.effectiveUntil ? t('periodTo', { from: f.day(x.effectiveFrom), to: f.day(x.effectiveUntil) }) : f.day(x.effectiveFrom)),
+              },
+              { key: 'state', header: t('col.state'), cell: (x) => <StatusBadge status={x.endedAt ? 'ended' : 'active'} /> },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
-                cell: (t) =>
-                  t.endedAt ? null : (
-                    <Button size="sm" onClick={() => setEnding(t)}>
-                      End
+                cell: (x) =>
+                  x.endedAt ? null : (
+                    <Button size="sm" onClick={() => setEnding(x)}>
+                      {t('end')}
                     </Button>
                   ),
               },
@@ -345,13 +358,13 @@ function Templates() {
       <Dialog
         open={ending !== null}
         onClose={() => setEnding(null)}
-        title="End this weekly roster?"
-        description="Its slots to come that nobody opened and no swap gave away are cancelled."
+        title={t('endTitle')}
+        description={t('endDescription')}
         footer={
           <>
-            <Button onClick={() => setEnding(null)}>Keep it</Button>
+            <Button onClick={() => setEnding(null)}>{t('keepIt')}</Button>
             <Button variant="primary" loading={end.isPending} onClick={() => end.mutate(undefined)}>
-              End
+              {t('end')}
             </Button>
           </>
         }
@@ -363,6 +376,9 @@ function Templates() {
 }
 
 function Attendance() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const { locale } = useLocale();
   const [range, setRange] = useState({ from: addDays(today(), -6), to: today() });
   const report = useQuery({ queryKey: keys.attendance(range), queryFn: () => fetchers.attendance(range) });
   return (
@@ -370,22 +386,34 @@ function Attendance() {
       <div className="toolbar">
         <DateRange from={range.from} to={range.to} onChange={(r) => setRange(r)} />
       </div>
-      <p className="t-secondary">Recorded only: no payroll. Late is more than ten minutes; absent is not opened an hour after the start (or after the slot was made, if later).</p>
+      <p className="t-secondary">{t('attendanceNote')}</p>
       <Card flush>
         <QueryState query={report}>
           <DataTable<GuardAttendance>
             rows={report.data?.data}
             rowKey={(a) => a.guard.id}
-            empty="Nobody was scheduled or on shift"
+            empty={t('emptyAttendance')}
             columns={[
-              { key: 'guard', header: 'Guard', cell: (a) => personName(a.guard) },
-              { key: 'slots', header: 'Slots', cell: (a) => <span className="t-num">{a.filled} / {a.slots}</span> },
-              { key: 'late', header: 'Late', cell: (a) => <span className="t-num">{a.late}</span> },
-              { key: 'absent', header: 'Absent', cell: (a) => <span className="t-num">{a.absent}</span> },
-              { key: 'scheduled', header: 'Scheduled', cell: (a) => minutesText(a.scheduledMinutes) },
-              { key: 'worked', header: 'Worked', cell: (a) => minutesText(a.workedMinutes) },
-              { key: 'overtime', header: 'Overtime', cell: (a) => minutesText(a.overtimeMinutes) },
-              { key: 'unscheduled', header: 'Unscheduled', cell: (a) => `${a.unscheduledShifts} · ${minutesText(a.unscheduledMinutes)}` },
+              { key: 'guard', header: t('guard'), cell: (a) => personNameIn(a.guard, locale) },
+              {
+                key: 'slots',
+                header: t('att.slots'),
+                cell: (a) => (
+                  <span className="t-num">
+                    {f.number(a.filled)} / {f.number(a.slots)}
+                  </span>
+                ),
+              },
+              { key: 'late', header: t('att.late'), cell: (a) => <span className="t-num">{f.number(a.late)}</span> },
+              { key: 'absent', header: t('att.absent'), cell: (a) => <span className="t-num">{f.number(a.absent)}</span> },
+              { key: 'scheduled', header: t('att.scheduled'), cell: (a) => minutesText(a.scheduledMinutes, locale) },
+              { key: 'worked', header: t('att.worked'), cell: (a) => minutesText(a.workedMinutes, locale) },
+              { key: 'overtime', header: t('att.overtime'), cell: (a) => minutesText(a.overtimeMinutes, locale) },
+              {
+                key: 'unscheduled',
+                header: t('att.unscheduled'),
+                cell: (a) => `${f.number(a.unscheduledShifts)} · ${minutesText(a.unscheduledMinutes, locale)}`,
+              },
             ]}
           />
         </QueryState>
@@ -395,27 +423,28 @@ function Attendance() {
 }
 
 function RosterView() {
+  const t = useT(en, ar);
   const { ready, can } = usePermissions();
   const [tab, setTab] = useTab(TABS, 'slots');
   if (ready && !can('guard_roster.manage'))
     return (
       <>
-        <PageHeader title="Guard roster" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Guard roster" description="Who works which gate or zone, when; and how it went." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar" style={{ overflowX: 'auto' }}>
         <Segmented<Tab>
-          label="Roster"
+          label={t('title')}
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'slots', label: 'Slots' },
-            { value: 'templates', label: 'Weekly rosters' },
-            { value: 'attendance', label: 'Attendance' },
+            { value: 'slots', label: t('tab.slots') },
+            { value: 'templates', label: t('tab.templates') },
+            { value: 'attendance', label: t('tab.attendance') },
           ]}
         />
       </div>

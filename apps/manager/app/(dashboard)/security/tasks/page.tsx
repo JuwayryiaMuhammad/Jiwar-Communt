@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -13,22 +14,30 @@ import {
   ReasonCodeDialog,
   Segmented,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { personName, postName } from '@/components/security/logic';
+import { personNameIn, postNameIn } from '@/components/security/logic';
 import { NewTaskDialog } from '@/components/security/new-task-dialog';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GuardTask, type GuardTaskStatus } from '@/lib/queries';
+import ar from '@/messages/ar/sec-tasks';
+import en from '@/messages/en/sec-tasks';
 
 const VIEWS = ['open', 'in_progress', 'done', 'cancelled', 'all'] as const;
 type View = (typeof VIEWS)[number];
 
-
 function TaskDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const task = useQuery({ queryKey: keys.guardTask(id), queryFn: () => fetchers.guardTask(id) });
   const [cancelling, setCancelling] = useState(false);
@@ -43,63 +52,63 @@ function TaskDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.guardTasksAll],
       onDone: () => {
-        toast.show('Task cancelled.');
+        toast.show(t('cancelled'));
         setCancelling(false);
       },
     },
   );
-  const t = task.data;
-  const live = t?.status === 'open' || t?.status === 'in_progress';
+  const k = task.data;
+  const live = k?.status === 'open' || k?.status === 'in_progress';
   return (
     <>
       <Dialog
         open={!cancelling}
         wide
         onClose={onClose}
-        title={t ? (t.title ?? `Inspect unit ${t.unit?.unitCode ?? ''}`) : 'Task'}
+        title={k ? (k.title ?? t('inspectUnit', { code: k.unit?.unitCode ?? '' })) : t('detailTitle')}
         footer={
           <>
-            {live ? <Button onClick={() => setCancelling(true)}>Cancel task</Button> : null}
-            <Button onClick={onClose}>Done</Button>
+            {live ? <Button onClick={() => setCancelling(true)}>{t('cancelTask')}</Button> : null}
+            <Button onClick={onClose}>{c('close')}</Button>
           </>
         }
       >
         <QueryState query={task} rows={4}>
-          {t ? (
+          {k ? (
             <dl className="dl">
-              <dt>Status</dt>
+              <dt>{c('status')}</dt>
               <dd>
-                <StatusBadge status={t.status} />
-                {t.outcome ? <span className="t-secondary"> · {humanize(t.outcome)}</span> : null}
-                {t.cancelReason ? <span className="t-secondary"> · {humanize(t.cancelReason)}</span> : null}
+                <StatusBadge status={k.status} />
+                {k.outcome ? <span className="t-secondary"> · {label(k.outcome)}</span> : null}
+                {k.cancelReason ? <span className="t-secondary"> · {label(k.cancelReason)}</span> : null}
               </dd>
-              <dt>For</dt>
-              <dd>{t.assignee ? personName(t.assignee) : postName(t.post)}</dd>
-              {t.details ? (
+              <dt>{t('forLabel')}</dt>
+              <dd>{k.assignee ? personNameIn(k.assignee, locale) : postNameIn(k.post, locale)}</dd>
+              {k.details ? (
                 <>
-                  <dt>Details</dt>
-                  <dd>{t.details}</dd>
+                  <dt>{c('details')}</dt>
+                  <dd>{k.details}</dd>
                 </>
               ) : null}
-              <dt>Taken by</dt>
-              <dd>{t.takenBy ? `${personName(t.takenBy)} · ${t.takenAt ? formatDateTime(t.takenAt) : ''}` : '—'}</dd>
-              {t.resultNote ? (
+              <dt>{t('takenBy')}</dt>
+              <dd>{k.takenBy ? `${personNameIn(k.takenBy, locale)} · ${k.takenAt ? f.dateTime(k.takenAt) : ''}` : '—'}</dd>
+              {k.resultNote ? (
                 <>
-                  <dt>Guard’s note</dt>
-                  <dd>{t.resultNote}</dd>
+                  <dt>{t('guardNote')}</dt>
+                  <dd>{k.resultNote}</dd>
                 </>
               ) : null}
-              <dt>Given by</dt>
+              <dt>{t('givenBy')}</dt>
               <dd>
-                {personName(t.createdBy)} · {formatDateTime(t.createdAt)}
+                {personNameIn(k.createdBy, locale)} · {f.dateTime(k.createdAt)}
               </dd>
-              {t.photos.length ? (
+              {k.photos.length ? (
                 <>
-                  <dt>Photos</dt>
+                  <dt>{t('photos')}</dt>
                   <dd className="row">
-                    {t.photos.map((p, i) => (
+                    {k.photos.map((p, i) => (
                       <a key={p.url} className="btn btn--secondary btn--sm" href={p.url} target="_blank" rel="noreferrer">
-                        Photo {i + 1}
+                        {t('photo', { n: f.number(i + 1) })}
                       </a>
                     ))}
                   </dd>
@@ -112,9 +121,9 @@ function TaskDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={cancelling}
         onClose={() => setCancelling(false)}
-        title="Cancel this task?"
+        title={t('cancelTitle')}
         codes={REASON_CODES.guardTaskCancel}
-        confirmLabel="Cancel task"
+        confirmLabel={t('cancelTask')}
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
         onConfirm={(reasonCode) => cancel.mutate(reasonCode)}
@@ -125,69 +134,73 @@ function TaskDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
 /** Work for the guards (ADR 0050): closed-unit inspections and tasks of the management's words. */
 export default function GuardTasksPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('guard_tasks.manage');
   const [view, setView] = useState<View>('open');
   const [adding, setAdding] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const status: GuardTaskStatus | '' = view === 'all' ? '' : view;
-  const list = useCursorList(keys.guardTasks({ status }), (c) => fetchers.guardTasks({ status }, c), { enabled: allowed });
+  const list = useCursorList(keys.guardTasks({ status }), (cursor) => fetchers.guardTasks({ status }, cursor), { enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Guard tasks" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Guard tasks" description="A task left open at a shift’s end moves to the shift’s post for the next guard." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<View>
-          label="Tasks shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
           options={[
-            { value: 'open', label: 'Open' },
-            { value: 'in_progress', label: 'In progress' },
-            { value: 'done', label: 'Done' },
-            { value: 'cancelled', label: 'Cancelled' },
-            { value: 'all', label: 'All' },
+            { value: 'open', label: t('view.open') },
+            { value: 'in_progress', label: t('view.in_progress') },
+            { value: 'done', label: t('view.done') },
+            { value: 'cancelled', label: t('view.cancelled') },
+            { value: 'all', label: c('all') },
           ]}
         />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-          New task
+          {t('newTask')}
         </Button>
       </div>
       <Card flush>
         <QueryState query={list}>
           <DataTable<GuardTask>
             rows={list.rows}
-            rowKey={(t) => t.id}
-            empty="No task"
+            rowKey={(k) => k.id}
+            empty={t('empty')}
             columns={[
               {
                 key: 'task',
-                header: 'Task',
-                cell: (t) => (
-                  <Button variant="text" className="table__link" onClick={() => setOpen(t.id)}>
-                    {t.title ?? `Inspect unit ${t.unit?.unitCode ?? ''}`}
+                header: t('col.task'),
+                cell: (k) => (
+                  <Button variant="text" className="table__link" onClick={() => setOpen(k.id)}>
+                    {k.title ?? t('inspectUnit', { code: k.unit?.unitCode ?? '' })}
                   </Button>
                 ),
               },
-              { key: 'for', header: 'For', cell: (t) => (t.assignee ? personName(t.assignee) : postName(t.post)) },
+              { key: 'for', header: t('col.for'), cell: (k) => (k.assignee ? personNameIn(k.assignee, locale) : postNameIn(k.post, locale)) },
               {
                 key: 'status',
-                header: 'Status',
-                cell: (t) => (
+                header: c('status'),
+                cell: (k) => (
                   <span className="row">
-                    <StatusBadge status={t.status} />
-                    {t.carried ? <Badge tone="beige">Carried</Badge> : null}
+                    <StatusBadge status={k.status} />
+                    {k.carried ? <Badge tone="beige">{t('carried')}</Badge> : null}
                   </span>
                 ),
               },
-              { key: 'due', header: 'Due', cell: (t) => (t.dueAt ? formatDateTime(t.dueAt) : '—') },
-              { key: 'when', header: 'Given', cell: (t) => <span title={formatDateTime(t.createdAt)}>{relativeTime(t.createdAt)}</span> },
+              { key: 'due', header: t('col.due'), cell: (k) => (k.dueAt ? f.dateTime(k.dueAt) : '—') },
+              { key: 'when', header: t('col.given'), cell: (k) => <span title={f.dateTime(k.createdAt)}>{f.relative(k.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />
@@ -198,4 +211,3 @@ export default function GuardTasksPage() {
     </>
   );
 }
-

@@ -1,14 +1,15 @@
 'use client';
 
-import { humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BookingSuspension } from '@/lib/queries';
-
-const day = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+import ar from '@/messages/ar/fac-bookings';
+import en from '@/messages/en/fac-bookings';
 
 /**
  * Units suspended from booking after no-shows (ADR 0044). While a
@@ -16,6 +17,10 @@ const day = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', y
  * stays. A handler may lift one, with a reason code.
  */
 export default function BookingSuspensionsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('bookings.handle');
@@ -28,7 +33,7 @@ export default function BookingSuspensionsPage() {
     {
       invalidate: [keys.suspensionsAll],
       onDone: () => {
-        toast.show('Lifted. The unit may book again.');
+        toast.show(t('lifted'));
         setLifting(null);
       },
     },
@@ -37,15 +42,15 @@ export default function BookingSuspensionsPage() {
 
   return (
     <>
-      <PageHeader title="Suspensions" description="Units suspended from booking after too many no-shows. The rules are under Facilities → No-show rules." />
+      <PageHeader title={t('suspensions.title')} description={t('suspensions.description')} />
       <div className="toolbar">
         <Segmented<'true' | 'false'>
-          label="Suspensions shown"
+          label={t('suspensions.shown')}
           value={inForce}
           onChange={setInForce}
           options={[
-            { value: 'true', label: 'In force' },
-            { value: 'false', label: 'All' },
+            { value: 'true', label: t('suspensions.inForce') },
+            { value: 'false', label: c('all') },
           ]}
         />
       </div>
@@ -54,22 +59,22 @@ export default function BookingSuspensionsPage() {
           <DataTable<BookingSuspension>
             rows={list.rows}
             rowKey={(s) => s.id}
-            empty={inForce === 'true' ? 'No unit is suspended' : 'No suspension yet'}
+            empty={inForce === 'true' ? t('suspensions.emptyInForce') : t('suspensions.empty')}
             columns={[
-              { key: 'unit', header: 'Unit', cell: (s) => <span className="t-mono">{s.unitCode}</span> },
-              { key: 'since', header: 'Since', cell: (s) => day.format(new Date(s.startsAt)) },
-              { key: 'until', header: 'Until', cell: (s) => day.format(new Date(s.endsAt)) },
-              { key: 'count', header: 'No-shows', cell: (s) => s.noShowCount },
+              { key: 'unit', header: c('unit'), cell: (s) => <span className="t-mono">{s.unitCode}</span> },
+              { key: 'since', header: t('col.since'), cell: (s) => f.dateTime(s.startsAt) },
+              { key: 'until', header: t('col.until'), cell: (s) => f.dateTime(s.endsAt) },
+              { key: 'count', header: t('col.noShows'), cell: (s) => s.noShowCount },
               {
                 key: 'state',
-                header: 'State',
+                header: c('status'),
                 cell: (s) =>
                   s.liftedAt ? (
-                    <Badge tone="beige">Lifted · {humanize(s.liftReasonCode)}</Badge>
+                    <Badge tone="beige">{t('state.lifted', { reason: label(s.liftReasonCode) })}</Badge>
                   ) : new Date(s.endsAt) <= new Date() ? (
-                    <Badge tone="beige">Over</Badge>
+                    <Badge tone="beige">{t('state.over')}</Badge>
                   ) : (
-                    <Badge tone="error">In force</Badge>
+                    <Badge tone="error">{t('state.inForce')}</Badge>
                   ),
               },
               {
@@ -79,7 +84,7 @@ export default function BookingSuspensionsPage() {
                 cell: (s) =>
                   !s.liftedAt && new Date(s.endsAt) > new Date() ? (
                     <Button size="sm" onClick={() => setLifting(s)}>
-                      Lift
+                      {t('lift')}
                     </Button>
                   ) : null,
               },
@@ -91,10 +96,10 @@ export default function BookingSuspensionsPage() {
       <ReasonCodeDialog
         open={lifting !== null}
         onClose={() => setLifting(null)}
-        title={`Lift the suspension of unit ${lifting?.unitCode ?? ''}?`}
-        description="The unit may book again at once."
+        title={t('liftTitle', { unit: lifting?.unitCode ?? '' })}
+        description={t('liftDescription')}
         codes={REASON_CODES.bookingSuspensionLift}
-        confirmLabel="Lift"
+        confirmLabel={t('lift')}
         pending={lift.isPending}
         error={<ErrorAlert error={lift.error} />}
         onConfirm={(reasonCode) => lifting && lift.mutate({ id: lifting.id, reasonCode })}

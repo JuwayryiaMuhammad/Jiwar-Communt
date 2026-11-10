@@ -1,8 +1,73 @@
 /**
  * The gate offline (ADR 0057), as the API holds its rules: what each flag
  * says, how a device stands, what a quarantined batch holds. Plain
- * TypeScript with no imports, so the tests run it as is.
+ * TypeScript importing only the layer's core and its catalog, by relative
+ * path, so the tests run it as is.
+ *
+ * The `…In(…, locale)` helpers give the words in the page's language (a
+ * code's words through the page's `label`, from `useLabel()`); the English
+ * ones are kept for the pages not moved yet.
  */
+import { createFormat, translator, type Locale } from '@jiwar/i18n/core';
+import ar from '../../messages/ar/guard-offline.ts';
+import en from '../../messages/en/guard-offline.ts';
+
+const words = (locale: Locale) => translator(locale, en, ar);
+const spaced = (code: string) => code.replace(/_/g, ' ');
+type Label = (code: string) => string;
+
+/** A flag's words in the page's language, with what its codes and numbers add. */
+export function flagTextIn(f: { kind: string; params: Record<string, unknown> }, locale: Locale, label: Label = spaced): string {
+  const t = words(locale);
+  const key = `flag.${f.kind}`;
+  const base = key in en ? t(key as keyof typeof en) : label(f.kind);
+  const p = f.params ?? {};
+  const extra: string[] = [];
+  if (typeof p.reason === 'string' && p.reason !== f.kind) extra.push(label(p.reason));
+  if (typeof p.code === 'string') extra.push(label(p.code.toLowerCase()));
+  if (typeof p.skewSeconds === 'number') extra.push(t(p.skewSeconds < 0 ? 'skewEarly' : 'skewLate', { s: Math.abs(p.skewSeconds) }));
+  if (typeof p.offsetSeconds === 'number')
+    extra.push(t(p.offsetSeconds < 0 ? 'clockBehind' : 'clockAhead', { s: Math.abs(p.offsetSeconds) }));
+  if (typeof p.matches === 'number') extra.push(t('matching', { n: p.matches }));
+  return extra.length ? `${base} (${extra.join(locale === 'ar' ? '، ' : ', ')})` : base;
+}
+
+/** How a device stands (as `deviceState`), its words in the page's language. */
+export function deviceStateIn(
+  d: DeviceHealth,
+  now: number,
+  alertMinutes: number,
+  locale: Locale,
+): { tone: 'error' | 'terracotta' | 'green' | 'beige'; text: string } {
+  const t = words(locale);
+  if (d.status === 'revoked') return { tone: 'beige', text: t('device.revoked') };
+  const seen = d.lastSeenAt ? Date.parse(d.lastSeenAt) : NaN;
+  const quietMinutes = Number.isNaN(seen) ? null : Math.floor((now - seen) / 60_000);
+  if (d.onShift && quietMinutes !== null && quietMinutes >= alertMinutes) return { tone: 'error', text: t('device.quiet', { n: quietMinutes }) };
+  if (d.missingActions > 0) return { tone: 'error', text: t('device.missing', { n: d.missingActions }) };
+  if (d.openFlags > 0) return { tone: 'terracotta', text: t('device.flags', { n: d.openFlags }) };
+  return d.onShift ? { tone: 'green', text: t('device.onShift') } : { tone: 'beige', text: t('device.offShift') };
+}
+
+/** What the device's last bundle could not carry, in the page's language; null when everything was. */
+export function notCarriedTextIn(n: { passes: number; workers: number }, locale: Locale): string | null {
+  const t = words(locale);
+  const parts: string[] = [];
+  if (n.passes > 0) parts.push(t('notCarried.passes', { n: n.passes }));
+  if (n.workers > 0) parts.push(t('notCarried.workers', { n: n.workers }));
+  return parts.length ? t('notCarried', { what: createFormat(locale).list(parts) }) : null;
+}
+
+/** What a quarantined batch holds, in the page's language. */
+export function batchSummaryIn(actions: { type: string; status: string }[], locale: Locale, label: Label = spaced): string {
+  const fmt = createFormat(locale);
+  const counts = new Map<string, number>();
+  for (const a of actions) if (a.status === 'quarantined') counts.set(a.type, (counts.get(a.type) ?? 0) + 1);
+  return [...counts]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, n]) => (locale === 'ar' ? `${label(type)}: ${fmt.number(n)}` : `${fmt.number(n)} ${label(type)}`))
+    .join(locale === 'ar' ? '، ' : ', ');
+}
 
 /** What each flag the server raised at sync means, in a few words. */
 export const FLAG_TEXT: Record<string, string> = {

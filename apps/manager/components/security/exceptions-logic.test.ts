@@ -4,12 +4,27 @@ import {
   countdown,
   entryState,
   exceptionState,
+  EXCEPTION_KINDS,
+  exceptionKindText,
   exceptionSubject,
+  exceptionSubjectIn,
+  GATE_SETTINGS,
+  gateSettingLabel,
   secondsLeft,
   settingsChanges,
   settingsErrors,
   settingsForm,
 } from './exceptions-logic.ts';
+
+test('in either language: the English constants’ words, and Arabic', () => {
+  for (const [kind, text] of Object.entries(EXCEPTION_KINDS)) assert.equal(exceptionKindText(kind, 'en'), text);
+  for (const s of GATE_SETTINGS) assert.equal(gateSettingLabel(s.name, 'en'), s.label);
+  assert.equal(exceptionKindText('visitor_without_pass', 'ar'), 'زائر بلا تصريح زيارة');
+  assert.equal(exceptionKindText('something_new', 'ar'), 'something_new');
+  assert.equal(gateSettingLabel('audioMaxSeconds', 'ar'), 'أطول تسجيل صوتي، بالثواني');
+  assert.equal(exceptionSubjectIn({ kind: 'unregistered_vehicle', vehiclePlate: null }, 'ar'), 'مركبة (حُذفت بياناتها)');
+  assert.equal(exceptionSubjectIn({ kind: 'visitor_without_pass', visitorName: 'Omar Said' }, 'ar'), 'Omar Said');
+});
 
 const T0 = Date.parse('2026-11-05T08:00:00.000Z');
 const at = (seconds: number) => new Date(T0 + seconds * 1000).toISOString();

@@ -1,0 +1,20 @@
+/** Closed units (ADR 0083): app/(dashboard)/security/closed-units. */
+export default {
+  title: 'Closed units',
+  description: 'Units their owners closed, the longest closed first. A round falls due every few days; schedule it as an inspection.',
+  empty: 'No closed unit',
+  emptyHint: 'An owner closes a unit from the app while away.',
+  'col.unit': 'Unit',
+  'col.since': 'Closed since',
+  'col.last': 'Last inspection',
+  'col.request': 'Owner’s request',
+  'col.proxies': 'Proxies',
+  'col.round': 'Round',
+  noneYet: 'None yet',
+  requestStatus: '{reference} ({status})',
+  dueSince: 'Due since {date}',
+  scheduled: 'Scheduled',
+  next: 'Next {date}',
+  schedule: 'Schedule',
+  emergencyEntry: 'Emergency entry',
+} as const;

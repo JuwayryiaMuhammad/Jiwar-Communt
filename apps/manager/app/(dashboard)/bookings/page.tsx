@@ -1,19 +1,25 @@
 'use client';
 
 import { QueryState } from '@jiwar/api/react';
+import { useT } from '@jiwar/i18n';
 import { Button, Field, ForbiddenState, Input, PageHeader, Select } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { DayGrid } from '@/components/facilities/day-grid';
+import { useLocalName } from '@/components/facilities/bits';
 import { shiftDay } from '@/components/facilities/logic';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/fac-bookings';
+import en from '@/messages/en/fac-bookings';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
 function BookingsView() {
+  const t = useT(en, ar);
+  const localName = useLocalName();
   const { ready, can } = usePermissions();
   const allowed = can('bookings.handle');
   const params = useSearchParams();
@@ -37,39 +43,38 @@ function BookingsView() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Bookings" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Bookings"
-        description="A facility’s day: each slot, how full it is, and who booked it. Approve, reject, cancel, or mark a no-show from the booking."
+        title={t('title')}
+        description={t('description')}
       />
       <div className="toolbar" style={{ flexWrap: 'wrap' }}>
-        <Field label="Facility">
+        <Field label={t('facility')}>
           {(p) => (
             <Select {...p} value={facilityId} onChange={(e) => go({ facility: e.target.value })}>
               {bookable.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.nameEn}
-                  {f.active ? '' : ' (retired)'}
+                  {f.active ? localName(f) : t('retiredName', { name: localName(f) })}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         <span className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
-          <Button iconOnly variant="text" aria-label="Previous day" icon={<ChevronLeft aria-hidden />} onClick={() => go({ date: shiftDay(date, -1) })} />
-          <Field label="Day">{(p) => <Input {...p} type="date" value={date} onChange={(e) => e.target.value && go({ date: e.target.value })} />}</Field>
-          <Button iconOnly variant="text" aria-label="Next day" icon={<ChevronRight aria-hidden />} onClick={() => go({ date: shiftDay(date, 1) })} />
-          <Button onClick={() => go({ date: today() })}>Today</Button>
+          <Button iconOnly variant="text" aria-label={t('previousDay')} icon={<ChevronLeft aria-hidden className="icon-dir" />} onClick={() => go({ date: shiftDay(date, -1) })} />
+          <Field label={t('day')}>{(p) => <Input {...p} type="date" value={date} onChange={(e) => e.target.value && go({ date: e.target.value })} />}</Field>
+          <Button iconOnly variant="text" aria-label={t('nextDay')} icon={<ChevronRight aria-hidden className="icon-dir" />} onClick={() => go({ date: shiftDay(date, 1) })} />
+          <Button onClick={() => go({ date: today() })}>{t('today')}</Button>
         </span>
       </div>
       {facilityId === '' ? (
         <QueryState query={facilities}>
-          <p className="t-secondary">No bookable facility yet.</p>
+          <p className="t-secondary">{t('noBookable')}</p>
         </QueryState>
       ) : (
         <QueryState query={day}>{day.data ? <DayGrid day={day.data} /> : null}</QueryState>

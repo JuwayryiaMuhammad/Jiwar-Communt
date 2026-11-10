@@ -1,20 +1,39 @@
 'use client';
 
-import { formatDateTime, relativeTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, StatusBadge, Textarea, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Segmented,
+  StatusBadge,
+  Textarea,
+  useCommonT,
+  useToast,
+} from '@jiwar/ui';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { personName, postName } from '@/components/security/logic';
+import { nameIn, personNameIn, postNameIn } from '@/components/security/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type FoundItem, type FoundItemStatus } from '@/lib/queries';
+import ar from '@/messages/ar/sec-found-items';
+import en from '@/messages/en/sec-found-items';
 
 const VIEWS = ['at_gate', 'with_management', 'claimed', 'all'] as const;
 type View = (typeof VIEWS)[number];
 
 function RegisterDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
@@ -30,7 +49,7 @@ function RegisterDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.foundItemsAll],
       onDone: () => {
-        toast.show('Registered at the office.');
+        toast.show(t('registered'));
         onClose();
       },
     },
@@ -39,23 +58,23 @@ function RegisterDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Register a found item"
-      description="At the office. Guards register what they find at the gate from the app."
+      title={t('registerTitle')}
+      description={t('registerDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!description.trim()}>
-            Register
+            {t('register')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="What" error={fieldError(save.error, 'description')}>
+        <Field label={t('what')} error={fieldError(save.error, 'description')}>
           {(p) => <Textarea {...p} rows={3} maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} />}
         </Field>
-        <Field label="Where it was found" error={fieldError(save.error, 'location')}>
+        <Field label={t('whereFound')} error={fieldError(save.error, 'location')}>
           {(p) => <Input {...p} maxLength={120} value={location} onChange={(e) => setLocation(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -65,6 +84,8 @@ function RegisterDialog({ onClose }: { onClose: () => void }) {
 }
 
 function ClaimDialog({ item, onClose }: { item: FoundItem; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [unitCode, setUnitCode] = useState('');
   const [name, setName] = useState('');
@@ -84,7 +105,7 @@ function ClaimDialog({ item, onClose }: { item: FoundItem; onClose: () => void }
     {
       invalidate: [keys.foundItemsAll],
       onDone: () => {
-        toast.show('Claimed.');
+        toast.show(t('claimed'));
         onClose();
       },
     },
@@ -93,26 +114,26 @@ function ClaimDialog({ item, onClose }: { item: FoundItem; onClose: () => void }
     <Dialog
       open
       onClose={onClose}
-      title="Record the owner’s claim"
-      description="A unit and/or a name as told. The name is kept 30 days, as a visitor’s."
+      title={t('claimTitle')}
+      description={t('claimDescription')}
       onSubmit={() => claim.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={claim.isPending} disabled={!unitCode.trim() && !name.trim()}>
-            Record claim
+            {t('recordClaim')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Unit code" error={fieldError(claim.error, 'unitCode')}>
+        <Field label={t('unitCode')} error={fieldError(claim.error, 'unitCode')}>
           {(p) => <Input {...p} maxLength={40} value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
         </Field>
-        <Field label="Name" error={fieldError(claim.error, 'name')}>
+        <Field label={c('name')} error={fieldError(claim.error, 'name')}>
           {(p) => <Input {...p} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />}
         </Field>
-        <Field label="Note" error={fieldError(claim.error, 'note')}>
+        <Field label={c('note')} error={fieldError(claim.error, 'note')}>
           {(p) => <Input {...p} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />}
         </Field>
         <ErrorAlert error={claim.error} />
@@ -126,6 +147,10 @@ function ClaimDialog({ item, onClose }: { item: FoundItem; onClose: () => void }
  * was handed. The residents' board is the neighbours' lost and found.
  */
 export default function FoundItemsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('found_items.manage');
@@ -136,40 +161,41 @@ export default function FoundItemsPage() {
   const list = useCursorList(keys.foundItems(status), (c) => fetchers.foundItems(status, c), { enabled: allowed });
   const receive = useAction(
     (i: FoundItem) => unwrap(api.POST('/api/v1/staff/security/found-items/{id}/receive', { params: { path: { id: i.id } } })),
-    { invalidate: [keys.foundItemsAll], onDone: () => toast.show('Received from the gate.') },
+    { invalidate: [keys.foundItemsAll], onDone: () => toast.show(t('received')) },
   );
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Found at the gate" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Found at the gate"
+        title={t('title')}
         description={
           <>
-            What security registered. To show residents an item, post it on the{' '}
-            {can('neighbours.handle') ? <Link href="/lost-found">lost and found board</Link> : 'lost and found board'}.
+            {t('descriptionBefore')}
+            {can('neighbours.handle') ? <Link href="/lost-found">{t('board')}</Link> : t('board')}
+            {'.'}
           </>
         }
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Items shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
           options={[
-            { value: 'at_gate', label: 'At the gate' },
-            { value: 'with_management', label: 'At the office' },
-            { value: 'claimed', label: 'Claimed' },
-            { value: 'all', label: 'All' },
+            { value: 'at_gate', label: t('view.at_gate') },
+            { value: 'with_management', label: t('view.with_management') },
+            { value: 'claimed', label: t('view.claimed') },
+            { value: 'all', label: c('all') },
           ]}
         />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setRegistering(true)}>
-          Register
+          {t('register')}
         </Button>
       </div>
       <ErrorAlert error={receive.error} />
@@ -178,15 +204,23 @@ export default function FoundItemsPage() {
           <DataTable<FoundItem>
             rows={list.rows}
             rowKey={(i) => i.id}
-            empty="Nothing here"
+            empty={t('empty')}
             columns={[
-              { key: 'what', header: 'What', cell: (i) => <span className="table__primary">{i.description}</span> },
-              { key: 'where', header: 'Where', cell: (i) => [i.place?.nameEn, i.location].filter(Boolean).join(' · ') || '—' },
-              { key: 'found', header: 'Found', cell: (i) => <span title={formatDateTime(i.foundAt)}>{relativeTime(i.foundAt)}</span> },
-              { key: 'by', header: 'Registered by', cell: (i) => `${personName(i.registeredBy)}${i.registeredAt ? ` · ${postName(i.registeredAt)}` : ''}` },
+              { key: 'what', header: t('col.what'), cell: (i) => <span className="table__primary">{i.description}</span> },
+              {
+                key: 'where',
+                header: t('col.where'),
+                cell: (i) => [i.place ? nameIn(i.place, locale) : null, i.location].filter(Boolean).join(' · ') || '—',
+              },
+              { key: 'found', header: t('col.found'), cell: (i) => <span title={f.dateTime(i.foundAt)}>{f.relative(i.foundAt)}</span> },
+              {
+                key: 'by',
+                header: t('col.by'),
+                cell: (i) => `${personNameIn(i.registeredBy, locale)}${i.registeredAt ? ` · ${postNameIn(i.registeredAt, locale)}` : ''}`,
+              },
               {
                 key: 'status',
-                header: 'Status',
+                header: c('status'),
                 cell: (i) => (
                   <span className="row">
                     <StatusBadge status={i.status} />
@@ -196,18 +230,18 @@ export default function FoundItemsPage() {
               },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (i) =>
                   i.status === 'claimed' ? null : (
                     <span className="row" style={{ justifyContent: 'flex-end' }}>
                       {i.status === 'at_gate' ? (
                         <Button size="sm" loading={receive.isPending && receive.variables?.id === i.id} onClick={() => receive.mutate(i)}>
-                          Received
+                          {t('receivedButton')}
                         </Button>
                       ) : null}
                       <Button size="sm" onClick={() => setClaiming(i)}>
-                        Claimed
+                        {t('claimedButton')}
                       </Button>
                     </span>
                   ),

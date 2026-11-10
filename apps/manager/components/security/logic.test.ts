@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addDays, minutesText, personName, postBody, postName, scheduleFrom, scheduleText } from './logic.ts';
+import { stripIsolates } from '@jiwar/i18n/core';
+import { addDays, minutesText, nameIn, personName, personNameIn, postBody, postName, postNameIn, scheduleFrom, scheduleText } from './logic.ts';
 
 test('a post is named by its gate, else its zone', () => {
   assert.equal(postName({ gateName: 'North', zone: null }), 'North');
@@ -15,14 +16,14 @@ test('a person, or the erased shape', () => {
 });
 
 test('a schedule in words, an overnight window said so', () => {
-  assert.equal(scheduleText({ days: [4, 0], windows: [{ from: '22:00', to: '06:00' }] }), 'Sun, Thu 22:00–06:00 (overnight)');
-  assert.equal(scheduleText({ days: [1], windows: [{ from: '06:00', to: '14:00' }] }), 'Mon 06:00–14:00');
+  assert.equal(stripIsolates(scheduleText({ days: [4, 0], windows: [{ from: '22:00', to: '06:00' }] })), 'Sun, Thu 22:00–06:00 (overnight)');
+  assert.equal(stripIsolates(scheduleText({ days: [1], windows: [{ from: '06:00', to: '14:00' }] })), 'Mon 06:00–14:00');
 });
 
 test('minutes in hours and minutes', () => {
-  assert.equal(minutesText(90), '1 h 30 min');
-  assert.equal(minutesText(45), '45 min');
-  assert.equal(minutesText(120), '2 h');
+  assert.equal(stripIsolates(minutesText(90)), '1 h 30 min');
+  assert.equal(stripIsolates(minutesText(45)), '45 min');
+  assert.equal(stripIsolates(minutesText(120)), '2 h');
   assert.equal(minutesText(null), '—');
 });
 
@@ -43,4 +44,19 @@ test('a post picker value becomes the body’s gate or zone', () => {
   assert.deepEqual(postBody('zone:def'), { zoneId: 'def' });
   assert.equal(postBody(''), null);
   assert.equal(postBody('other:x'), null);
+});
+
+test('in Arabic: a zone by its Arabic name, the erased shape, weekdays and units in Arabic', () => {
+  const zone = { gateName: null, zone: { nameEn: 'Clubhouse', nameAr: 'النادي' } };
+  assert.equal(postNameIn(zone, 'ar'), 'النادي');
+  assert.equal(postNameIn(zone, 'en'), 'Clubhouse');
+  assert.equal(postNameIn({ gateName: 'North', zone: null }, 'ar'), 'North');
+  assert.equal(nameIn({ nameEn: 'Pool', nameAr: 'المسبح' }, 'ar'), 'المسبح');
+  assert.equal(nameIn({ nameEn: 'Pool', nameAr: '' }, 'ar'), 'Pool');
+  assert.equal(personNameIn({ erased: true }, 'ar'), 'حساب محذوف');
+  assert.equal(
+    stripIsolates(scheduleText({ days: [4, 0], windows: [{ from: '22:00', to: '06:00' }] }, 'ar')),
+    'الأحد، الخميس 22:00–06:00 (يمتد لليوم التالي)',
+  );
+  assert.equal(stripIsolates(minutesText(90, 'ar')), '1 س 30 د');
 });

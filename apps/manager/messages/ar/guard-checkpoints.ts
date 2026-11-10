@@ -1,0 +1,48 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/guard-checkpoints.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'نقاط التفتيش',
+  description: 'ما تمسحه الدورية: رمز QR، أو شريحة NFC تحمل النص نفسه. نقطة التفتيش المستبعدة تحتفظ بعمليات مسحها.',
+  shown: 'نقاط التفتيش المعروضة',
+  'view.active': 'في الخدمة',
+  'view.retired': 'مستبعدة',
+  'view.all': 'الكل',
+  add: 'أضف نقطة تفتيش',
+  empty: 'لا توجد نقاط تفتيش',
+  'col.checkpoint': 'نقطة التفتيش',
+  'col.post': 'الموقع',
+  'col.position': 'الإحداثيات',
+  'col.routes': 'المسارات',
+  'col.qr': 'طباعة رمز QR',
+  position: '{lat}، {lng} · {radius} م',
+  edit: 'تعديل',
+  newQr: 'رمز QR جديد',
+  retire: 'استبعاد',
+  qrTitle: 'رمز QR لنقطة {name}',
+  qrDescription:
+    'يظهر مرة واحدة: لا يُحفظ إلا بصمته. اطبعه الآن؛ يمكن إصدار رمز جديد لاحقًا، وعندها يتوقف القديم عن المسح. اكتب النص نفسه على شريحة NFC الخاصة بنقطة التفتيش.',
+  print: 'اطبع',
+  done: 'تم',
+  editTitle: 'تعديل {name}',
+  newTitle: 'نقطة تفتيش جديدة',
+  editDescription: 'موقعها لا يتغير أبدًا.',
+  newDescription: 'عند بوابة أو منطقة. يظهر رمز QR الخاص بها مرة واحدة، عند إنشائها.',
+  saved: 'تم حفظ نقطة التفتيش.',
+  post: 'الموقع',
+  nameEn: 'الاسم (بالإنجليزية)',
+  nameAr: 'الاسم (بالعربية)',
+  latitude: 'خط العرض',
+  latitudeHint: 'اختياري، مع خط الطول.',
+  longitude: 'خط الطول',
+  radius: 'نصف القطر (م)',
+  radiusHint: '30 افتراضيًا؛ ويُنبَّه على أي مسح أبعد من ذلك.',
+  positionInvalid: 'خط عرض وخط طول معًا، ضمن النطاق؛ ونصف قطر من 5 إلى 500 متر.',
+  reissueTitle: 'رمز QR جديد لنقطة {name}؟',
+  reissueDescription: 'يتوقف الرمز المطبوع عن المسح فورًا: استبدله في مكانه.',
+  reissueConfirm: 'أصدر رمز QR جديدًا',
+  retireTitle: 'استبعاد {name}؟',
+  retireDescription: 'نهائيًا: لن تُمسح بعد الآن. تبقى عمليات مسحها. يجب إخراجها أولًا من أي مسار في الخدمة.',
+};
+
+export default ar;

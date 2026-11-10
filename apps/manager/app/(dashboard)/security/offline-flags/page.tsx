@@ -1,12 +1,27 @@
 'use client';
 
-import { formatDateTime, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, ConfirmDialog, DataTable, Dialog, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT, type Format, type Locale, type Translate } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  Card,
+  ConfirmDialog,
+  DataTable,
+  Dialog,
+  ForbiddenState,
+  PageHeader,
+  ReasonCodeDialog,
+  Segmented,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { batchSummary, classTone, flagText, type FlagClass } from '@/components/security/offline-logic';
+import { listSep } from '@/components/security/logic';
+import { classTone, type FlagClass } from '@/components/security/offline-logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import {
@@ -18,11 +33,46 @@ import {
   type OfflineFlagClass,
   type OfflineFlagFilter,
 } from '@/lib/queries';
+import ar from '@/messages/ar/safety-offline-flags';
+import en from '@/messages/en/safety-offline-flags';
 
 type Tab = 'flags' | 'batches';
+const TABS = ['flags', 'batches'] as const satisfies readonly Tab[];
+const FLAG_VIEWS = ['open', 'reviewed', 'cleared', 'all'] as const satisfies readonly OfflineFlagFilter[];
+const CLASSES = ['any', 'security', 'manager', 'info'] as const satisfies readonly (OfflineFlagClass | 'any')[];
+const BATCH_VIEWS = ['pending', 'reviewed', 'all'] as const satisfies readonly OfflineBatchFilter[];
+type Label = (code: string | null | undefined) => string;
+
+/** A flag's words, with what its codes and numbers add (offline-logic's flagText, in the page's language). */
+function flagWords(f: { kind: string; params: Record<string, unknown> }, t: Translate<typeof en>, label: Label, locale: Locale): string {
+  const key = `flag.${f.kind}`;
+  const base = key in en ? t(key as keyof typeof en) : label(f.kind);
+  const p = f.params ?? {};
+  const extra: string[] = [];
+  if (typeof p.reason === 'string' && p.reason !== f.kind) extra.push(label(p.reason));
+  if (typeof p.code === 'string') extra.push(label(p.code.toLowerCase()));
+  if (typeof p.skewSeconds === 'number') extra.push(t('extra.skew', { s: Math.abs(p.skewSeconds), side: p.skewSeconds < 0 ? 'early' : 'late' }));
+  if (typeof p.offsetSeconds === 'number')
+    extra.push(t('extra.offset', { s: Math.abs(p.offsetSeconds), side: p.offsetSeconds < 0 ? 'behind' : 'ahead' }));
+  if (typeof p.matches === 'number') extra.push(t('extra.matches', { n: p.matches }));
+  return extra.length ? `${base} (${extra.join(listSep(locale))})` : base;
+}
+
+/** What a quarantined batch holds, by what each action says it was (offline-logic's batchSummary, in the page's language). */
+function batchWords(actions: { type: string; status: string }[], label: Label, fmt: Format): string {
+  const counts = new Map<string, number>();
+  for (const a of actions) if (a.status === 'quarantined') counts.set(a.type, (counts.get(a.type) ?? 0) + 1);
+  return [...counts]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, n]) => `${fmt.number(n)} × ${label(type)}`)
+    .join(listSep(fmt.locale));
+}
 
 /** Reviewed once, with a code: what the management made of it. */
 function Review({ f, onClose }: { f: OfflineFlag; onClose: () => void }) {
+  const t = useT(en, ar);
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const review = useAction(
@@ -36,7 +86,7 @@ function Review({ f, onClose }: { f: OfflineFlag; onClose: () => void }) {
     {
       invalidate: [keys.offlineAll],
       onDone: () => {
-        toast.show('Reviewed.');
+        toast.show(t('reviewed'));
         onClose();
       },
     },
@@ -45,10 +95,10 @@ function Review({ f, onClose }: { f: OfflineFlag; onClose: () => void }) {
     <ReasonCodeDialog
       open
       onClose={onClose}
-      title="Review this flag"
-      description={flagText(f)}
+      title={t('reviewTitle')}
+      description={flagWords(f, t, label, locale)}
       codes={REASON_CODES.offlineFlagReview}
-      confirmLabel="Review"
+      confirmLabel={t('review')}
       pending={review.isPending}
       error={<ErrorAlert error={review.error} />}
       onConfirm={(reviewCode) => review.mutate(reviewCode as (typeof REASON_CODES.offlineFlagReview)[number])}
@@ -58,6 +108,9 @@ function Review({ f, onClose }: { f: OfflineFlag; onClose: () => void }) {
 
 /** A revoked device's batch, decided once: accept records it as at its receipt; reject keeps it rejected. */
 function Decide({ b, decision, onClose }: { b: OfflineBatch; decision: 'accept' | 'reject'; onClose: () => void }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const decide = useAction(
@@ -71,7 +124,7 @@ function Decide({ b, decision, onClose }: { b: OfflineBatch; decision: 'accept' 
     {
       invalidate: [keys.offlineAll],
       onDone: () => {
-        toast.show(decision === 'accept' ? 'Accepted: each action was recorded as it happened, flagged where needed.' : 'Rejected: nothing of it was recorded.');
+        toast.show(decision === 'accept' ? t('acceptedToast') : t('rejectedToast'));
         onClose();
       },
     },
@@ -80,13 +133,9 @@ function Decide({ b, decision, onClose }: { b: OfflineBatch; decision: 'accept' 
     <ConfirmDialog
       open
       onClose={onClose}
-      title={decision === 'accept' ? 'Accept what the revoked device recorded?' : 'Reject what the revoked device recorded?'}
-      description={`${batchSummary(b.actions)}, uploaded ${formatDateTime(b.receivedAt)}. ${
-        decision === 'accept'
-          ? 'Each is recorded at its own time, as the gate would have, and flagged where the server knows better.'
-          : 'Each stays rejected; nothing is recorded.'
-      }`}
-      confirmLabel={decision === 'accept' ? 'Accept' : 'Reject'}
+      title={decision === 'accept' ? t('acceptTitle') : t('rejectTitle')}
+      description={t('decideDescription', { summary: batchWords(b.actions, label, fmt), when: fmt.dateTime(b.receivedAt), decision })}
+      confirmLabel={decision === 'accept' ? t('accept') : t('reject')}
       danger={decision === 'reject'}
       pending={decide.isPending}
       error={<ErrorAlert error={decide.error} />}
@@ -96,6 +145,9 @@ function Decide({ b, decision, onClose }: { b: OfflineBatch; decision: 'accept' 
 }
 
 function BatchDetail({ id, onClose, onDecide }: { id: string; onClose: () => void; onDecide: (b: OfflineBatch, d: 'accept' | 'reject') => void }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const detail = useQuery({ queryKey: keys.offlineBatch(id), queryFn: () => fetchers.offlineBatch(id) });
   const b = detail.data;
   return (
@@ -103,16 +155,20 @@ function BatchDetail({ id, onClose, onDecide }: { id: string; onClose: () => voi
       open
       wide
       onClose={onClose}
-      title="Uploaded batch"
+      title={t('batchTitle')}
       footer={
         <>
           {b?.pendingReview ? (
             <>
-              <Button variant="danger" onClick={() => onDecide(b, 'reject')}>Reject</Button>
-              <Button variant="primary" onClick={() => onDecide(b, 'accept')}>Accept</Button>
+              <Button variant="danger" onClick={() => onDecide(b, 'reject')}>
+                {t('reject')}
+              </Button>
+              <Button variant="primary" onClick={() => onDecide(b, 'accept')}>
+                {t('accept')}
+              </Button>
             </>
           ) : null}
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={onClose}>{t('done')}</Button>
         </>
       }
     >
@@ -120,26 +176,30 @@ function BatchDetail({ id, onClose, onDecide }: { id: string; onClose: () => voi
         {b ? (
           <>
             <dl className="dl">
-              <dt>Uploaded</dt>
-              <dd>{b.uploadedBy.fullName ?? 'An erased account'} · {formatDateTime(b.receivedAt)}</dd>
-              <dt>As</dt>
-              <dd>{b.status === 'quarantined' ? 'From a revoked device: quarantined' : 'Accepted'}</dd>
+              <dt>{t('uploaded')}</dt>
+              <dd>
+                {b.uploadedBy.fullName ?? t('erased')} · {fmt.dateTime(b.receivedAt)}
+              </dd>
+              <dt>{t('as')}</dt>
+              <dd>{b.status === 'quarantined' ? t('fromRevoked') : t('accepted')}</dd>
               {b.reviewedAt ? (
                 <>
-                  <dt>Decided</dt>
-                  <dd>{b.reviewDecision} · {b.reviewedBy?.fullName ?? '—'} · {formatDateTime(b.reviewedAt)}</dd>
+                  <dt>{t('decided')}</dt>
+                  <dd>
+                    {label(b.reviewDecision)} · {b.reviewedBy?.fullName ?? '—'} · {fmt.dateTime(b.reviewedAt)}
+                  </dd>
                 </>
               ) : null}
             </dl>
             <DataTable<OfflineBatch['actions'][number]>
               rows={b.actions}
               rowKey={(a) => a.clientId}
-              empty="No action"
+              empty={t('noAction')}
               columns={[
-                { key: 'seq', header: 'No.', cell: (a) => a.seq.toString() },
-                { key: 'type', header: 'What', cell: (a) => a.type.replace(/_/g, ' ') + (a.direction ? ` (${a.direction})` : '') },
-                { key: 'when', header: 'When (device)', cell: (a) => formatDateTime(a.deviceTime) },
-                { key: 'status', header: 'Now', cell: (a) => (a.reason ? `${a.status}: ${a.reason.replace(/_/g, ' ')}` : a.status) },
+                { key: 'seq', header: t('col.seq'), cell: (a) => fmt.number(a.seq) },
+                { key: 'type', header: t('col.what'), cell: (a) => label(a.type) + (a.direction ? ` (${label(a.direction)})` : '') },
+                { key: 'when', header: t('col.whenDevice'), cell: (a) => fmt.dateTime(a.deviceTime) },
+                { key: 'status', header: t('col.now'), cell: (a) => (a.reason ? `${label(a.status)}: ${label(a.reason)}` : label(a.status)) },
               ]}
             />
           </>
@@ -158,6 +218,10 @@ function BatchDetail({ id, onClose, onDecide }: { id: string; onClose: () => voi
  * the rest.
  */
 export default function OfflineFlagsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('gate_devices.manage');
   const params = useSearchParams();
@@ -180,66 +244,42 @@ export default function OfflineFlagsPage() {
   const batches = useCursorList(keys.offlineBatches(batchStatus), (c) => fetchers.offlineBatches(batchStatus, c), {
     enabled: allowed && tab === 'batches',
   });
+  const classWord = (c: string) => (c === 'security' || c === 'manager' || c === 'info' ? t(`class.${c}`) : label(c));
 
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Offline flags" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
 
   return (
     <>
-      <PageHeader
-        title="Offline flags"
-        description="What the server knew better when a gate device synced what it recorded offline, and what a revoked device uploaded."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Segmented<Tab>
-          label="Show"
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'flags', label: 'Flags' },
-            { value: 'batches', label: 'Uploaded batches' },
-          ]}
-        />
+        <Segmented<Tab> label={t('show')} value={tab} onChange={setTab} options={TABS.map((v) => ({ value: v, label: t(`tab.${v}`) }))} />
         {tab === 'flags' ? (
           <>
             <Segmented<OfflineFlagFilter>
-              label="Flags shown"
+              label={t('flagsShown')}
               value={status}
               onChange={setStatus}
-              options={[
-                { value: 'open', label: 'To look at' },
-                { value: 'reviewed', label: 'Reviewed' },
-                { value: 'cleared', label: 'Cleared' },
-                { value: 'all', label: 'All' },
-              ]}
+              options={FLAG_VIEWS.map((v) => ({ value: v, label: t(`flags.${v}`) }))}
             />
             <Segmented<OfflineFlagClass | 'any'>
-              label="Kind"
+              label={t('kind')}
               value={klass}
               onChange={setKlass}
-              options={[
-                { value: 'any', label: 'Any' },
-                { value: 'security', label: 'Security' },
-                { value: 'manager', label: 'Management' },
-                { value: 'info', label: 'For the record' },
-              ]}
+              options={CLASSES.map((v) => ({ value: v, label: t(`class.${v}`) }))}
             />
           </>
         ) : (
           <Segmented<OfflineBatchFilter>
-            label="Batches shown"
+            label={t('batchesShown')}
             value={batchStatus}
             onChange={setBatchStatus}
-            options={[
-              { value: 'pending', label: 'Quarantined, to decide' },
-              { value: 'reviewed', label: 'Decided' },
-              { value: 'all', label: 'All' },
-            ]}
+            options={BATCH_VIEWS.map((v) => ({ value: v, label: t(`batches.${v}`) }))}
           />
         )}
       </div>
@@ -249,30 +289,34 @@ export default function OfflineFlagsPage() {
             <DataTable<OfflineFlag>
               rows={flags.rows}
               rowKey={(f) => f.id}
-              empty={status === 'open' ? 'Nothing to look at' : 'No flag'}
+              empty={status === 'open' ? t('emptyOpen') : t('emptyFlags')}
               columns={[
                 {
                   key: 'what',
-                  header: 'What',
+                  header: t('col.what'),
                   cell: (f) => (
                     <span className="row">
-                      <Badge tone={classTone(f.class as FlagClass)}>{f.class}</Badge>
-                      {flagText(f)}
+                      <Badge tone={classTone(f.class as FlagClass)}>{classWord(f.class)}</Badge>
+                      {flagWords(f, t, label, locale)}
                     </span>
                   ),
                 },
-                { key: 'when', header: 'When (device)', cell: (f) => (f.occurredAt ? formatDateTime(f.occurredAt) : '—') },
-                { key: 'synced', header: 'Synced', cell: (f) => <span title={formatDateTime(f.createdAt)}>{relativeTime(f.createdAt)}</span> },
+                { key: 'when', header: t('col.whenDevice'), cell: (f) => (f.occurredAt ? fmt.dateTime(f.occurredAt) : '—') },
+                { key: 'synced', header: t('col.synced'), cell: (f) => <span title={fmt.dateTime(f.createdAt)}>{fmt.relative(f.createdAt)}</span> },
                 {
                   key: 'batch',
                   header: '',
                   cell: (f) => (
                     <span className="row">
-                      <Button size="sm" variant="text" onClick={() => setBatch(f.batchId)}>Batch</Button>
+                      <Button size="sm" variant="text" onClick={() => setBatch(f.batchId)}>
+                        {t('batch')}
+                      </Button>
                       {f.status === 'open' ? (
-                        <Button size="sm" variant="primary" onClick={() => setReviewing(f)}>Review</Button>
+                        <Button size="sm" variant="primary" onClick={() => setReviewing(f)}>
+                          {t('review')}
+                        </Button>
                       ) : (
-                        <Badge tone="beige">{f.status}</Badge>
+                        <Badge tone="beige">{label(f.status)}</Badge>
                       )}
                     </span>
                   ),
@@ -288,28 +332,37 @@ export default function OfflineFlagsPage() {
             <DataTable<OfflineBatch>
               rows={batches.rows}
               rowKey={(b) => b.id}
-              empty={batchStatus === 'pending' ? 'Nothing waits for a decision' : 'No batch'}
+              empty={batchStatus === 'pending' ? t('emptyPending') : t('emptyBatches')}
               columns={[
                 {
                   key: 'what',
-                  header: 'What',
+                  header: t('col.what'),
                   cell: (b) => (
                     <Button variant="text" className="table__link" onClick={() => setBatch(b.id)}>
-                      {b.actionCount} action{b.actionCount === 1 ? '' : 's'}
+                      {t('actions', { n: b.actionCount })}
                     </Button>
                   ),
                 },
-                { key: 'as', header: 'As', cell: (b) => (b.pendingReview ? <Badge tone="error">Quarantined</Badge> : b.reviewDecision ?? 'Accepted') },
-                { key: 'by', header: 'Uploaded by', cell: (b) => b.uploadedBy.fullName ?? 'An erased account' },
-                { key: 'when', header: 'Received', cell: (b) => <span title={formatDateTime(b.receivedAt)}>{relativeTime(b.receivedAt)}</span> },
+                {
+                  key: 'as',
+                  header: t('col.as'),
+                  cell: (b) =>
+                    b.pendingReview ? <Badge tone="error">{t('quarantined')}</Badge> : b.reviewDecision ? label(b.reviewDecision) : t('accepted'),
+                },
+                { key: 'by', header: t('col.uploadedBy'), cell: (b) => b.uploadedBy.fullName ?? t('erased') },
+                { key: 'when', header: t('col.received'), cell: (b) => <span title={fmt.dateTime(b.receivedAt)}>{fmt.relative(b.receivedAt)}</span> },
                 {
                   key: 'decide',
                   header: '',
                   cell: (b) =>
                     b.pendingReview ? (
                       <span className="row">
-                        <Button size="sm" variant="primary" onClick={() => setDeciding({ b, decision: 'accept' })}>Accept</Button>
-                        <Button size="sm" variant="danger" onClick={() => setDeciding({ b, decision: 'reject' })}>Reject</Button>
+                        <Button size="sm" variant="primary" onClick={() => setDeciding({ b, decision: 'accept' })}>
+                          {t('accept')}
+                        </Button>
+                        <Button size="sm" variant="danger" onClick={() => setDeciding({ b, decision: 'reject' })}>
+                          {t('reject')}
+                        </Button>
                       </span>
                     ) : null,
                 },

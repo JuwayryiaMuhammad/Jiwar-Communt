@@ -1,13 +1,17 @@
 'use client';
 
-import { fieldError, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, Input, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, Dialog, Field, Input, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { slotText } from '@/components/management-requests/bits';
+import { useSlotText } from '@/components/management-requests/bits';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Facility, type FacilityClosure } from '@/lib/queries';
+import ar from '@/messages/ar/places-facilities';
+import en from '@/messages/en/places-facilities';
+import { useLocalName } from './bits';
 import { fromLocalInput } from './logic';
 
 type ClosurePreview = {
@@ -25,6 +29,12 @@ type ClosurePreview = {
  * again.
  */
 function NewClosureDialog({ facility, onClose }: { facility: Facility; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const slotText = useSlotText();
+  const localName = useLocalName();
   const toast = useToast();
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
@@ -51,11 +61,11 @@ function NewClosureDialog({ facility, onClose }: { facility: Facility; onClose: 
       ),
     {
       invalidate: [keys.facilitiesAll, keys.bookingsAll],
-      onDone: (c) => {
+      onDone: (closure) => {
         toast.show(
-          c.cancelledBookings
-            ? `${facility.nameEn} is closed. ${c.cancelledBookings} booking${c.cancelledBookings === 1 ? ' was' : 's were'} cancelled and the bookers told.`
-            : `${facility.nameEn} is closed. No booking was affected.`,
+          closure.cancelledBookings
+            ? t('closed', { name: localName(facility), count: closure.cancelledBookings })
+            : t('closedNone', { name: localName(facility) }),
         );
         onClose();
       },
@@ -72,47 +82,47 @@ function NewClosureDialog({ facility, onClose }: { facility: Facility; onClose: 
     <Dialog
       open
       onClose={onClose}
-      title={`Close ${facility.nameEn}`}
-      description="Preview first: every booking that holds a place in this time and has not started is cancelled and its booker told; a fee is credited — an unpaid invoice cancelled, a paid one to the unit’s credit. A booking under way is left as it is."
+      title={t('closeTitle', { name: localName(facility) })}
+      description={t('closeDescription')}
       onSubmit={() => (ready ? save.mutate() : window && look.mutate())}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           {seen ? (
             <>
               {/* The bookings may have changed meanwhile (FACILITY_CLOSURE_PREVIEW_STALE). */}
               <Button loading={look.isPending} onClick={() => look.mutate()}>
-                Preview again
+                {t('previewAgain')}
               </Button>
               <Button type="submit" variant="danger" loading={save.isPending} disabled={!ready}>
-                Close the facility
+                {t('closeFacility')}
               </Button>
             </>
           ) : (
             <Button type="submit" variant="primary" loading={look.isPending} disabled={!window}>
-              Preview
+              {t('preview')}
             </Button>
           )}
         </>
       }
     >
       <div className="form">
-        <Field label="From" error={fieldError(save.error ?? look.error, 'startsAt')}>
+        <Field label={c('from')} error={fieldError(save.error ?? look.error, 'startsAt')}>
           {(p) => <Input {...p} type="datetime-local" value={startsAt} onChange={(e) => edit(setStartsAt)(e.target.value)} />}
         </Field>
         <Field
-          label="Until"
-          error={fieldError(save.error ?? look.error, 'endsAt') ?? (from && to && to <= from ? 'After the start.' : undefined)}
+          label={t('until')}
+          error={fieldError(save.error ?? look.error, 'endsAt') ?? (from && to && to <= from ? t('afterStart') : undefined)}
         >
           {(p) => <Input {...p} type="datetime-local" value={endsAt} onChange={(e) => edit(setEndsAt)(e.target.value)} />}
         </Field>
-        <Field label="Reason" error={fieldError(save.error, 'reasonCode')}>
+        <Field label={c('reason')} error={fieldError(save.error, 'reasonCode')}>
           {(p) => (
             <Select {...p} value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>
-              <option value="">Select…</option>
-              {REASON_CODES.facilityClosure.map((c) => (
-                <option key={c} value={c}>
-                  {humanize(c)}
+              <option value="">{c('select')}</option>
+              {REASON_CODES.facilityClosure.map((code) => (
+                <option key={code} value={code}>
+                  {label(code)}
                 </option>
               ))}
             </Select>
@@ -123,18 +133,20 @@ function NewClosureDialog({ facility, onClose }: { facility: Facility; onClose: 
             <DataTable<ClosurePreview['bookings'][number]>
               rows={seen.bookings}
               rowKey={(b) => b.id}
-              empty="No booking is affected"
-              emptyHint="Nothing is cancelled or credited."
+              empty={t('noneAffected')}
+              emptyHint={t('noneAffectedHint')}
               columns={[
-                { key: 'when', header: 'When', cell: (b) => <span style={{ whiteSpace: 'nowrap' }}>{slotText(b.startsAt, b.endsAt)}</span> },
-                { key: 'unit', header: 'Unit', cell: (b) => b.unitCode },
+                { key: 'when', header: t('col.when'), cell: (b) => <span style={{ whiteSpace: 'nowrap' }}>{slotText(b.startsAt, b.endsAt)}</span> },
+                { key: 'unit', header: t('col.unit'), cell: (b) => b.unitCode },
                 {
                   key: 'fee',
-                  header: 'Fee',
+                  header: t('col.fee'),
                   cell: (b) =>
                     b.charge ? (
                       <Badge tone={b.charge.outcome === 'unit_credit' ? 'terracotta' : 'beige'}>
-                        {b.charge.amount} · {b.charge.outcome === 'unit_credit' ? 'to the unit’s credit' : 'invoice credited'}
+                        {b.charge.outcome === 'unit_credit'
+                          ? t('fee.unitCredit', { amount: f.money(b.charge.amount) })
+                          : t('fee.invoiceCredited', { amount: f.money(b.charge.amount) })}
                       </Badge>
                     ) : (
                       '—'
@@ -143,7 +155,7 @@ function NewClosureDialog({ facility, onClose }: { facility: Facility; onClose: 
               ]}
             />
             <p className="muted" style={{ padding: '0 1rem 1rem' }}>
-              Invoices credited: {seen.invoicesCredited} · Back to the units’ credit: {seen.unitCredit}
+              {t('totals', { invoices: f.money(seen.invoicesCredited), credit: f.money(seen.unitCredit) })}
             </p>
           </Card>
         ) : null}
@@ -158,6 +170,9 @@ function NewClosureDialog({ facility, onClose }: { facility: Facility; onClose: 
  * time to bookings again; what it cancelled stays cancelled.
  */
 export function Closures({ facility, canManage }: { facility: Facility; canManage: boolean }) {
+  const t = useT(en, ar);
+  const label = useLabel();
+  const slotText = useSlotText();
   const toast = useToast();
   const [creating, setCreating] = useState(false);
   const [lifting, setLifting] = useState<FacilityClosure | null>(null);
@@ -168,7 +183,7 @@ export function Closures({ facility, canManage }: { facility: Facility; canManag
     {
       invalidate: [keys.facilitiesAll],
       onDone: () => {
-        toast.show('The closure is lifted.');
+        toast.show(t('lifted'));
         setLifting(null);
       },
     },
@@ -180,7 +195,7 @@ export function Closures({ facility, canManage }: { facility: Facility; canManag
         <div className="toolbar">
           <span className="spacer" />
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            Close for a time
+            {t('closeForTime')}
           </Button>
         </div>
       ) : null}
@@ -189,21 +204,21 @@ export function Closures({ facility, canManage }: { facility: Facility; canManag
           <DataTable<FacilityClosure>
             rows={list.rows}
             rowKey={(c) => c.id}
-            empty="No closure"
-            emptyHint="A closure cancels the bookings it covers and tells their bookers."
+            empty={t('noClosure')}
+            emptyHint={t('noClosureHint')}
             columns={[
-              { key: 'when', header: 'When', cell: (c) => <span style={{ whiteSpace: 'nowrap' }}>{slotText(c.startsAt, c.endsAt)}</span> },
-              { key: 'reason', header: 'Reason', cell: (c) => humanize(c.reasonCode) },
+              { key: 'when', header: t('col.when'), cell: (c) => <span style={{ whiteSpace: 'nowrap' }}>{slotText(c.startsAt, c.endsAt)}</span> },
+              { key: 'reason', header: t('col.reason'), cell: (c) => label(c.reasonCode) },
               {
                 key: 'state',
-                header: 'State',
+                header: t('col.state'),
                 cell: (c) =>
                   c.liftedAt ? (
-                    <Badge tone="beige">Lifted · {humanize(c.liftReasonCode)}</Badge>
+                    <Badge tone="beige">{t('state.lifted', { reason: label(c.liftReasonCode) })}</Badge>
                   ) : new Date(c.endsAt) <= new Date() ? (
-                    <Badge tone="beige">Over</Badge>
+                    <Badge tone="beige">{t('state.over')}</Badge>
                   ) : (
-                    <Badge tone="terracotta">In force</Badge>
+                    <Badge tone="terracotta">{t('state.inForce')}</Badge>
                   ),
               },
               {
@@ -213,7 +228,7 @@ export function Closures({ facility, canManage }: { facility: Facility; canManag
                 cell: (c) =>
                   canManage && !c.liftedAt && new Date(c.endsAt) > new Date() ? (
                     <Button size="sm" onClick={() => setLifting(c)}>
-                      Lift
+                      {t('lift')}
                     </Button>
                   ) : null,
               },
@@ -226,10 +241,10 @@ export function Closures({ facility, canManage }: { facility: Facility; canManag
       <ReasonCodeDialog
         open={lifting !== null}
         onClose={() => setLifting(null)}
-        title="Lift the closure?"
-        description="Its time is open to bookings again. What it cancelled stays cancelled."
+        title={t('liftTitle')}
+        description={t('liftDescription')}
         codes={REASON_CODES.facilityClosureLift}
-        confirmLabel="Lift"
+        confirmLabel={t('lift')}
         pending={lift.isPending}
         error={<ErrorAlert error={lift.error} />}
         onConfirm={(reasonCode) => lifting && lift.mutate({ id: lifting.id, reasonCode })}

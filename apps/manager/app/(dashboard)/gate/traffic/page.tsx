@@ -1,12 +1,15 @@
 'use client';
 
 import { ErrorAlert, QueryState } from '@jiwar/api/react';
-import { Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Select, Stat } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Field, ForbiddenState, Input, PageHeader, Select, Stat, useCommonT } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type TrafficReport } from '@/lib/queries';
+import ar from '@/messages/ar/gate-reports';
+import en from '@/messages/en/gate-reports';
 
 type Row = TrafficReport['rows'][number];
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -17,6 +20,9 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
  * resident vehicles counted. Counts only: never a name, a unit or a plate.
  */
 export default function GateTrafficPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('gate.read');
   const [to, setTo] = useState(iso(new Date()));
@@ -28,16 +34,16 @@ export default function GateTrafficPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Gate traffic" />
+        <PageHeader title={t('traffic.title')} />
         <ForbiddenState />
       </>
     );
-  const t = report.data?.totals;
+  const totals = report.data?.totals;
   return (
     <>
       <PageHeader
-        title="Gate traffic"
-        description="Who came in, day by day and gate by gate: visitors by how they came, service vehicles by kind, resident vehicles in and out. 31 days at most."
+        title={t('traffic.title')}
+        description={t('traffic.description')}
         actions={
           <Button
             onClick={() =>
@@ -46,18 +52,18 @@ export default function GateTrafficPage() {
               )
             }
           >
-            Export CSV
+            {t('exportCsv')}
           </Button>
         }
       />
       <ErrorAlert error={csvError} />
       <div className="form__row" style={{ marginBottom: 12 }}>
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
-        <Field label="Gate">
+        <Field label={c('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={c('to')}>{(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={t('col.gate')}>
           {(p) => (
             <Select {...p} value={gateId} onChange={(e) => setGateId(e.target.value)}>
-              <option value="">Every gate</option>
+              <option value="">{t('everyGate')}</option>
               {(gates.data?.data ?? []).map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -68,35 +74,47 @@ export default function GateTrafficPage() {
         </Field>
       </div>
       <QueryState query={report}>
-        {t ? (
+        {totals ? (
           <div className="grid grid--stats">
-            <Stat label="Visitors" value={t.visitors.visitorPass + t.visitors.gateRequest + t.visitors.fieldException} hint={`${t.visitors.visitorPass} by pass · ${t.visitors.gateRequest} asked at the gate · ${t.visitors.fieldException} by exception`} />
             <Stat
-              label="Service vehicles"
-              value={t.serviceVehicles.tanker + t.serviceVehicles.waste + t.serviceVehicles.delivery + t.serviceVehicles.other}
-              hint={`${t.serviceVehicles.tanker} tankers · ${t.serviceVehicles.waste} waste · ${t.serviceVehicles.delivery} deliveries`}
+              label={t('visitors')}
+              value={f.number(totals.visitors.visitorPass + totals.visitors.gateRequest + totals.visitors.fieldException)}
+              hint={t('visitorsHint', {
+                pass: f.number(totals.visitors.visitorPass),
+                request: f.number(totals.visitors.gateRequest),
+                exception: f.number(totals.visitors.fieldException),
+              })}
             />
-            <Stat label="Resident vehicles" value={t.residentVehicles.in} hint={`${t.residentVehicles.out} out`} />
+            <Stat
+              label={t('serviceVehicles')}
+              value={f.number(totals.serviceVehicles.tanker + totals.serviceVehicles.waste + totals.serviceVehicles.delivery + totals.serviceVehicles.other)}
+              hint={t('serviceHint', {
+                tanker: totals.serviceVehicles.tanker,
+                waste: f.number(totals.serviceVehicles.waste),
+                delivery: totals.serviceVehicles.delivery,
+              })}
+            />
+            <Stat label={t('residentVehicles')} value={f.number(totals.residentVehicles.in)} hint={t('residentHint', { out: f.number(totals.residentVehicles.out) })} />
           </div>
         ) : null}
         <Card flush>
           <DataTable<Row>
             rows={report.data?.rows ?? []}
             rowKey={(r) => `${r.date}:${r.gate.id}`}
-            empty="No gate in this period"
+            empty={t('traffic.empty')}
             columns={[
-              { key: 'date', header: 'Day', width: 120, cell: (r) => r.date },
-              { key: 'gate', header: 'Gate', cell: (r) => r.gate.name },
-              { key: 'pass', header: 'By pass', cell: (r) => r.visitors.visitorPass },
-              { key: 'request', header: 'Asked at the gate', cell: (r) => r.visitors.gateRequest },
-              { key: 'exception', header: 'By exception', cell: (r) => r.visitors.fieldException },
+              { key: 'date', header: t('col.day'), width: 120, cell: (r) => f.day(r.date) },
+              { key: 'gate', header: t('col.gate'), cell: (r) => r.gate.name },
+              { key: 'pass', header: t('col.byPass'), cell: (r) => f.number(r.visitors.visitorPass) },
+              { key: 'request', header: t('col.askedAtGate'), cell: (r) => f.number(r.visitors.gateRequest) },
+              { key: 'exception', header: t('col.byException'), cell: (r) => f.number(r.visitors.fieldException) },
               {
                 key: 'service',
-                header: 'Service vehicles',
-                cell: (r) => r.serviceVehicles.tanker + r.serviceVehicles.waste + r.serviceVehicles.delivery + r.serviceVehicles.other,
+                header: t('serviceVehicles'),
+                cell: (r) => f.number(r.serviceVehicles.tanker + r.serviceVehicles.waste + r.serviceVehicles.delivery + r.serviceVehicles.other),
               },
-              { key: 'in', header: 'Residents in', cell: (r) => r.residentVehicles.in },
-              { key: 'out', header: 'Residents out', cell: (r) => r.residentVehicles.out },
+              { key: 'in', header: t('col.residentsIn'), cell: (r) => f.number(r.residentVehicles.in) },
+              { key: 'out', header: t('col.residentsOut'), cell: (r) => f.number(r.residentVehicles.out) },
             ]}
           />
         </Card>

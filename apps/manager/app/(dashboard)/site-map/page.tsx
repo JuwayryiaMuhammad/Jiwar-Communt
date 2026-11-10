@@ -2,13 +2,17 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useT } from '@jiwar/i18n';
 import { Alert, Button, Card, ForbiddenState, PageHeader, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { useLocalName } from '@/components/facilities/bits';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/fac-places';
+import en from '@/messages/en/fac-places';
 
 type Kind = 'building' | 'gate' | 'facility';
 type Point = { kind: Kind; refId: string; x: number; y: number };
@@ -29,6 +33,8 @@ function fractionOf(e: {
  * its buildings, gates and facilities, placed by a click. Saved whole.
  */
 export default function SiteMapPage() {
+  const t = useT(en, ar);
+  const localName = useLocalName();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('spaces.manage');
@@ -43,16 +49,16 @@ export default function SiteMapPage() {
   }, [map.data]);
   const setImage = useAction(
     (fileId: string) => unwrap(api.PUT('/api/v1/staff/site-map/image', { body: { fileId } })),
-    { invalidate: [keys.siteMap], onDone: () => toast.show('The site map’s image is set. Its points stay where they were.') },
+    { invalidate: [keys.siteMap], onDone: () => toast.show(t('map.imageSet')) },
   );
   const save = useAction(() => unwrap(api.PUT('/api/v1/staff/site-map/points', { body: { points } })), {
     invalidate: [keys.siteMap],
-    onDone: () => toast.show('The points are saved.'),
+    onDone: () => toast.show(t('map.saved')),
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Site map" />
+        <PageHeader title={t('map.title')} />
         <ForbiddenState />
       </>
     );
@@ -61,39 +67,39 @@ export default function SiteMapPage() {
     ...(gates.data?.data ?? []).map((g) => ({ key: `gate:${g.id}`, kind: 'gate' as const, id: g.id, name: g.name })),
     ...(facilities.data?.data ?? [])
       .filter((f) => f.active)
-      .map((f) => ({ key: `facility:${f.id}`, kind: 'facility' as const, id: f.id, name: f.nameEn })),
+      .map((f) => ({ key: `facility:${f.id}`, kind: 'facility' as const, id: f.id, name: localName(f) })),
   ];
   const nameOf = (p: Point) => places.find((x) => x.key === `${p.kind}:${p.refId}`)?.name ?? p.refId;
   return (
     <>
       <PageHeader
-        title="Site map"
-        description="One image of the compound, with its buildings, gates and facilities on it. Residents see it with the active places."
+        title={t('map.title')}
+        description={t('map.description')}
       />
       <QueryState query={map}>
         <Card>
           <div className="stack">
-            <FileUpload purpose="site_map" label={map.data?.image ? 'Replace the image' : 'Upload the image'} disabled={setImage.isPending} onUploaded={(id) => setImage.mutateAsync(id).then(() => undefined)} />
+            <FileUpload purpose="site_map" label={map.data?.image ? t('map.replaceImage') : t('map.uploadImage')} disabled={setImage.isPending} onUploaded={(id) => setImage.mutateAsync(id).then(() => undefined)} />
             {map.data?.image ? (
               <>
                 <div className="row" style={{ gap: 8 }}>
-                  <Select value={placing} onChange={(e) => setPlacing(e.target.value)} aria-label="Place to put on the map">
-                    <option value="">Pick a place, then click the map…</option>
+                  <Select value={placing} onChange={(e) => setPlacing(e.target.value)} aria-label={t('map.placeAria')}>
+                    <option value="">{t('map.pickPlace')}</option>
                     {places.map((p) => (
                       <option key={p.key} value={p.key}>
-                        {p.kind}: {p.name}
+                        {`${t(`map.kind.${p.kind}`)}: ${p.name}`}
                       </option>
                     ))}
                   </Select>
                   <Button variant="primary" loading={save.isPending} onClick={() => save.mutate()}>
-                    Save the points
+                    {t('map.savePoints')}
                   </Button>
                 </div>
                 <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={map.data.image.url}
-                    alt="The compound’s site map"
+                    alt={t('map.alt')}
                     style={{ maxWidth: '100%', display: 'block', cursor: placing ? 'crosshair' : 'default' }}
                     onClick={(e) => {
                       const place = places.find((p) => p.key === placing);
@@ -106,7 +112,7 @@ export default function SiteMapPage() {
                     <button
                       type="button"
                       key={`${p.kind}:${p.refId}`}
-                      title={`${nameOf(p)} — remove`}
+                      title={t('map.removePoint', { name: nameOf(p) })}
                       onClick={() => setPoints(points.filter((q) => q !== p))}
                       style={{
                         position: 'absolute',
@@ -125,7 +131,7 @@ export default function SiteMapPage() {
                 {fieldError(save.error, 'points') ? <Alert tone="error">{fieldError(save.error, 'points')}</Alert> : null}
               </>
             ) : (
-              <p className="muted">Upload the image first; then put the places on it.</p>
+              <p className="muted">{t('map.uploadFirst')}</p>
             )}
             <ErrorAlert error={setImage.error} />
           </div>

@@ -1,12 +1,15 @@
 'use client';
 
-import { ErrorText, formatDate, formatDateTime, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { ErrorText, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, PageHeader, ReasonCodeDialog, Segmented, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, PageHeader, ReasonCodeDialog, Segmented, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { NewTaskDialog } from '@/components/security/new-task-dialog';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/sec-inspection-requests';
+import en from '@/messages/en/sec-inspection-requests';
 
 type Request = Schema<'StaffInspectionRequestView'>;
 const VIEWS = ['open', 'scheduled', 'done', 'cancelled'] as const;
@@ -19,6 +22,10 @@ const KEY = ['inspection-requests'] as const;
  * closes the request and the owner reads the report in the app.
  */
 export default function InspectionRequestsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [view, setView] = useState<View>('open');
   const [scheduling, setScheduling] = useState<Request | null>(null);
@@ -40,34 +47,26 @@ export default function InspectionRequestsPage() {
     {
       invalidate: [KEY],
       onDone: () => {
-        toast.show('Cancelled.');
+        toast.show(t('cancelled'));
         setCancelling(null);
       },
     },
   );
   return (
     <>
-      <PageHeader
-        title="Inspection requests"
-        description="Closed units their owners ask the guards to visit. Schedule one as an inspection task."
-      />
-      <Segmented<View>
-        label="Show"
-        value={view}
-        onChange={setView}
-        options={VIEWS.map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) }))}
-      />
+      <PageHeader title={t('title')} description={t('description')} />
+      <Segmented<View> label={t('show')} value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: label(v) }))} />
       <Card flush>
         <QueryState query={list}>
           <DataTable<Request>
             rows={list.data}
             rowKey={(r) => r.id}
-            empty="No request here"
-            emptyHint="An owner asks from the app while the unit is closed."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
-              { key: 'unit', header: 'Unit', cell: (r) => <strong>{r.unitCode}</strong> },
-              { key: 'day', header: 'Preferred day', cell: (r) => formatDate(r.preferredOn) },
-              { key: 'asked', header: 'Asked', cell: (r) => formatDateTime(r.createdAt) },
+              { key: 'unit', header: t('col.unit'), cell: (r) => <strong>{r.unitCode}</strong> },
+              { key: 'day', header: t('col.day'), cell: (r) => f.day(r.preferredOn) },
+              { key: 'asked', header: t('col.asked'), cell: (r) => f.dateTime(r.createdAt) },
               {
                 key: 'act',
                 header: '',
@@ -75,14 +74,14 @@ export default function InspectionRequestsPage() {
                   r.status === 'open' ? (
                     <span style={{ display: 'flex', gap: 8 }}>
                       <Button size="sm" variant="primary" onClick={() => setScheduling(r)}>
-                        Schedule
+                        {t('schedule')}
                       </Button>
                       <Button size="sm" onClick={() => setCancelling(r)}>
-                        Cancel
+                        {c('cancel')}
                       </Button>
                     </span>
                   ) : (
-                    <span className="t-secondary">{r.status}</span>
+                    <span className="t-secondary">{label(r.status)}</span>
                   ),
               },
             ]}
@@ -98,10 +97,10 @@ export default function InspectionRequestsPage() {
       <ReasonCodeDialog
         open={cancelling !== null}
         onClose={() => setCancelling(null)}
-        title="Cancel the request"
-        description="The owner sees the reason. A scheduled one is cancelled with its task."
+        title={t('cancelTitle')}
+        description={t('cancelDescription')}
         codes={REASON_CODES.inspectionRequestCancel}
-        confirmLabel="Cancel the request"
+        confirmLabel={t('cancelTitle')}
         danger
         pending={cancel.isPending}
         error={cancel.error ? <ErrorText error={cancel.error} /> : undefined}

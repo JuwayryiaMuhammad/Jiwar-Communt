@@ -1,39 +1,70 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, ConfirmDialog, DataTable, Dialog, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  Card,
+  ConfirmDialog,
+  DataTable,
+  Dialog,
+  ForbiddenState,
+  PageHeader,
+  ReasonCodeDialog,
+  Segmented,
+  StatusBadge,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { countdown, entryState, EXCEPTION_KINDS, exceptionState, exceptionSubject, secondsLeft } from '@/components/security/exceptions-logic';
+import { countdown, entryState, exceptionKindText, exceptionState, exceptionSubjectIn, secondsLeft } from '@/components/security/exceptions-logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type FieldException, type FieldExceptionFilter } from '@/lib/queries';
 import { useNow } from '@/lib/use-now';
+import ar from '@/messages/ar/sec-field-exceptions';
+import en from '@/messages/en/sec-field-exceptions';
 
 /** How long is left to answer, ticking; or where it stands. */
 function TimeLeft({ e, now }: { e: FieldException; now: number }) {
+  const t = useT(en, ar);
   const state = exceptionState(e, now);
   if (state === 'answerable') {
     const left = secondsLeft(e.answerBy, now);
     return (
       <Badge tone={left <= 60 ? 'error' : 'beige'}>
-        <span className="t-num">{countdown(left)}</span> left
+        {t('timeLeft', { time: countdown(left) })}
       </Badge>
     );
   }
-  if (state === 'lapsed') return <Badge tone="error">Expired</Badge>;
+  if (state === 'lapsed') return <Badge tone="error">{t('expired')}</Badge>;
   const entry = entryState(e, now);
   if (entry === 'open' && e.entryUntil)
     return (
       <span className="row">
         <StatusBadge status="approved" />
-        <span className="t-muted">entry for {countdown(secondsLeft(e.entryUntil, now))}</span>
+        <span className="t-muted">{t('entryFor', { time: countdown(secondsLeft(e.entryUntil, now)) })}</span>
       </span>
     );
-  if (entry === 'used') return <span className="row"><StatusBadge status="approved" /><span className="t-muted">came in</span></span>;
-  if (entry === 'unused') return <span className="row"><StatusBadge status="approved" /><span className="t-muted">not used</span></span>;
+  if (entry === 'used')
+    return (
+      <span className="row">
+        <StatusBadge status="approved" />
+        <span className="t-muted">{t('cameIn')}</span>
+      </span>
+    );
+  if (entry === 'unused')
+    return (
+      <span className="row">
+        <StatusBadge status="approved" />
+        <span className="t-muted">{t('notUsed')}</span>
+      </span>
+    );
   return <StatusBadge status={e.status} />;
 }
 
@@ -43,6 +74,7 @@ function TimeLeft({ e, now }: { e: FieldException; now: number }) {
  * answer.
  */
 function useDecide(e: FieldException, onDone: () => void) {
+  const t = useT(en, ar);
   const toast = useToast();
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   return useAction(
@@ -56,7 +88,7 @@ function useDecide(e: FieldException, onDone: () => void) {
     {
       invalidate: [keys.fieldExceptionsAll],
       onDone: (x) => {
-        toast.show(x.status === 'approved' ? 'Approved: the guard may let them in once, at their gate.' : 'Rejected: the guard is told.');
+        toast.show(x.status === 'approved' ? t('approved') : t('rejected'));
         onDone();
       },
     },
@@ -64,14 +96,16 @@ function useDecide(e: FieldException, onDone: () => void) {
 }
 
 function Approve({ e, onClose }: { e: FieldException; onClose: () => void }) {
+  const t = useT(en, ar);
+  const { locale } = useLocale();
   const decide = useDecide(e, onClose);
   return (
     <ConfirmDialog
       open
       onClose={onClose}
-      title={`Let ${exceptionSubject(e)} in?`}
-      description={`Once, at ${e.gateName}, within the gate’s entry window. A lockdown or a ban still refuses them.`}
-      confirmLabel="Approve"
+      title={t('approveTitle', { who: exceptionSubjectIn(e, locale) })}
+      description={t('approveDescription', { gate: e.gateName })}
+      confirmLabel={t('approve')}
       pending={decide.isPending}
       error={<ErrorAlert error={decide.error} />}
       onConfirm={() => decide.mutate({ decision: 'approve' })}
@@ -80,15 +114,17 @@ function Approve({ e, onClose }: { e: FieldException; onClose: () => void }) {
 }
 
 function Reject({ e, onClose }: { e: FieldException; onClose: () => void }) {
+  const t = useT(en, ar);
+  const { locale } = useLocale();
   const decide = useDecide(e, onClose);
   return (
     <ReasonCodeDialog
       open
       onClose={onClose}
-      title={`Refuse ${exceptionSubject(e)}?`}
-      description="The guard is told, with the reason."
+      title={t('rejectTitle', { who: exceptionSubjectIn(e, locale) })}
+      description={t('rejectDescription')}
       codes={REASON_CODES.gateExceptionReject}
-      confirmLabel="Reject"
+      confirmLabel={t('reject')}
       danger
       pending={decide.isPending}
       error={<ErrorAlert error={decide.error} />}
@@ -97,7 +133,22 @@ function Reject({ e, onClose }: { e: FieldException; onClose: () => void }) {
   );
 }
 
-function ExceptionDetail({ id, now, onClose, onAnswer }: { id: string; now: number; onClose: () => void; onAnswer: (e: FieldException, a: 'approve' | 'reject') => void }) {
+function ExceptionDetail({
+  id,
+  now,
+  onClose,
+  onAnswer,
+}: {
+  id: string;
+  now: number;
+  onClose: () => void;
+  onAnswer: (e: FieldException, a: 'approve' | 'reject') => void;
+}) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const detail = useQuery({ queryKey: keys.fieldException(id), queryFn: () => fetchers.fieldException(id), refetchInterval: 10_000 });
   const e = detail.data;
   const answerable = e ? exceptionState(e, now) === 'answerable' : false;
@@ -106,45 +157,55 @@ function ExceptionDetail({ id, now, onClose, onAnswer }: { id: string; now: numb
       open
       wide
       onClose={onClose}
-      title={e ? `${e.reference} · ${EXCEPTION_KINDS[e.kind] ?? humanize(e.kind)}` : 'Field exception'}
+      title={e ? `${e.reference} · ${exceptionKindText(e.kind, locale)}` : t('detailTitle')}
       footer={
         <>
           {e && answerable ? (
             <>
-              <Button variant="danger" onClick={() => onAnswer(e, 'reject')}>Reject</Button>
-              <Button variant="primary" onClick={() => onAnswer(e, 'approve')}>Approve</Button>
+              <Button variant="danger" onClick={() => onAnswer(e, 'reject')}>
+                {t('reject')}
+              </Button>
+              <Button variant="primary" onClick={() => onAnswer(e, 'approve')}>
+                {t('approve')}
+              </Button>
             </>
           ) : null}
-          <Button onClick={onClose}>Done</Button>
+          <Button onClick={onClose}>{c('close')}</Button>
         </>
       }
     >
       <QueryState query={detail} rows={5}>
         {e ? (
           <dl className="dl">
-            <dt>Who</dt>
-            <dd>{exceptionSubject(e)}</dd>
-            <dt>Unit · gate</dt>
-            <dd>{e.unitCode} · {e.gateName}</dd>
-            <dt>Why the guard asks</dt>
-            <dd>{humanize(e.reasonCode)}</dd>
-            <dt>Asked by</dt>
-            <dd>{e.raisedBy.fullName ?? 'An erased account'} · {formatDateTime(e.raisedAt)}</dd>
-            <dt>Now</dt>
-            <dd><TimeLeft e={e} now={now} /></dd>
+            <dt>{t('col.who')}</dt>
+            <dd>{exceptionSubjectIn(e, locale)}</dd>
+            <dt>{t('unitGate')}</dt>
+            <dd>
+              {e.unitCode} · {e.gateName}
+            </dd>
+            <dt>{t('whyGuardAsks')}</dt>
+            <dd>{label(e.reasonCode)}</dd>
+            <dt>{t('askedBy')}</dt>
+            <dd>
+              {e.raisedBy.fullName ?? t('erasedAccount')} · {f.dateTime(e.raisedAt)}
+            </dd>
+            <dt>{t('col.now')}</dt>
+            <dd>
+              <TimeLeft e={e} now={now} />
+            </dd>
             {e.decidedAt ? (
               <>
-                <dt>Answered</dt>
+                <dt>{t('answered')}</dt>
                 <dd>
-                  {e.decidedBy?.fullName ?? '—'} · {formatDateTime(e.decidedAt)}
-                  {e.rejectReasonCode ? ` · ${humanize(e.rejectReasonCode)}` : ''}
+                  {e.decidedBy?.fullName ?? '—'} · {f.dateTime(e.decidedAt)}
+                  {e.rejectReasonCode ? ` · ${label(e.rejectReasonCode)}` : ''}
                 </dd>
               </>
             ) : null}
             {e.usedAt ? (
               <>
-                <dt>Came in</dt>
-                <dd>{formatDateTime(e.usedAt)}</dd>
+                <dt>{t('cameInLabel')}</dt>
+                <dd>{f.dateTime(e.usedAt)}</dd>
               </>
             ) : null}
           </dl>
@@ -163,6 +224,11 @@ function ExceptionDetail({ id, now, onClose, onAnswer }: { id: string; now: numb
  * refreshes every ten seconds while it shows what waits.
  */
 export default function FieldExceptionsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('gate_exceptions.decide');
   const params = useSearchParams();
@@ -178,7 +244,7 @@ export default function FieldExceptionsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Field exceptions" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -186,19 +252,16 @@ export default function FieldExceptionsPage() {
   const answer = (e: FieldException, action: 'approve' | 'reject') => setAnswering({ e, action });
   return (
     <>
-      <PageHeader
-        title="Field exceptions"
-        description="A guard asks to let someone in once that the gate refused. Answer before the time runs out; the first answer wins."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<FieldExceptionFilter>
-          label="Exceptions shown"
+          label={t('shown')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'pending', label: 'Waiting' },
-            { value: 'decided', label: 'Answered or expired' },
-            { value: 'all', label: 'All' },
+            { value: 'pending', label: t('filter.pending') },
+            { value: 'decided', label: t('filter.decided') },
+            { value: 'all', label: c('all') },
           ]}
         />
       </div>
@@ -207,33 +270,37 @@ export default function FieldExceptionsPage() {
           <DataTable<FieldException>
             rows={list.rows}
             rowKey={(e) => e.id}
-            empty={status === 'pending' ? 'Nothing waits for an answer' : 'No field exception'}
+            empty={status === 'pending' ? t('emptyPending') : t('emptyAll')}
             columns={[
               {
                 key: 'who',
-                header: 'Who',
+                header: t('col.who'),
                 cell: (e) => (
                   <span className="row">
                     <Button variant="text" className="table__link" onClick={() => setOpen(e.id)}>
-                      {exceptionSubject(e)}
+                      {exceptionSubjectIn(e, locale)}
                     </Button>
-                    <Badge tone="beige">{EXCEPTION_KINDS[e.kind] ?? humanize(e.kind)}</Badge>
+                    <Badge tone="beige">{exceptionKindText(e.kind, locale)}</Badge>
                   </span>
                 ),
               },
-              { key: 'unit', header: 'Unit', cell: (e) => e.unitCode },
-              { key: 'gate', header: 'Gate', cell: (e) => e.gateName },
-              { key: 'reason', header: 'Why', cell: (e) => humanize(e.reasonCode) },
-              { key: 'asked', header: 'Asked', cell: (e) => <span title={formatDateTime(e.raisedAt)}>{relativeTime(e.raisedAt)}</span> },
-              { key: 'now', header: 'Now', cell: (e) => <TimeLeft e={e} now={now} /> },
+              { key: 'unit', header: t('col.unit'), cell: (e) => e.unitCode },
+              { key: 'gate', header: t('col.gate'), cell: (e) => e.gateName },
+              { key: 'reason', header: t('col.why'), cell: (e) => label(e.reasonCode) },
+              { key: 'asked', header: t('col.asked'), cell: (e) => <span title={f.dateTime(e.raisedAt)}>{f.relative(e.raisedAt)}</span> },
+              { key: 'now', header: t('col.now'), cell: (e) => <TimeLeft e={e} now={now} /> },
               {
                 key: 'answer',
                 header: '',
                 cell: (e) =>
                   exceptionState(e, now) === 'answerable' ? (
                     <span className="row">
-                      <Button size="sm" variant="primary" onClick={() => answer(e, 'approve')}>Approve</Button>
-                      <Button size="sm" variant="danger" onClick={() => answer(e, 'reject')}>Reject</Button>
+                      <Button size="sm" variant="primary" onClick={() => answer(e, 'approve')}>
+                        {t('approve')}
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => answer(e, 'reject')}>
+                        {t('reject')}
+                      </Button>
                     </span>
                   ) : null,
               },

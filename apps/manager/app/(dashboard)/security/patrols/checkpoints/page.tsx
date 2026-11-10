@@ -1,45 +1,67 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, ConfirmDialog, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  ConfirmDialog,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Segmented,
+  StatusBadge,
+  useCommonT,
+  useToast,
+} from '@jiwar/ui';
 import { Plus, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { positionFrom } from '@/components/patrols/logic';
 import { CheckpointQr } from '@/components/patrols/qr';
-import { postBody, postName } from '@/components/security/logic';
+import { nameIn, postBody, postNameIn } from '@/components/security/logic';
 import { PostPicker } from '@/components/security/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Checkpoint, type CheckpointSecret } from '@/lib/queries';
+import ar from '@/messages/ar/guard-checkpoints';
+import en from '@/messages/en/guard-checkpoints';
 
 const VIEWS = ['active', 'retired', 'all'] as const;
 type View = (typeof VIEWS)[number];
 
 /** The QR, shown once: print it now, or reissue later. */
 function QrDialog({ checkpoint, onClose }: { checkpoint: CheckpointSecret; onClose: () => void }) {
+  const t = useT(en, ar);
+  const { locale } = useLocale();
+  const name = nameIn(checkpoint, locale);
   return (
     <Dialog
       open
       onClose={onClose}
-      title={`QR of ${checkpoint.nameEn}`}
-      description="Shown once: only its fingerprint is kept. Print it now; a new one can be issued later, and the old one then stops scanning. Write the same text to the checkpoint’s NFC tag."
+      title={t('qrTitle', { name })}
+      description={t('qrDescription')}
       footer={
         <>
           <Button icon={<Printer aria-hidden />} onClick={() => window.print()}>
-            Print
+            {t('print')}
           </Button>
           <Button variant="primary" onClick={onClose}>
-            Done
+            {t('done')}
           </Button>
         </>
       }
     >
       <div className="stack" style={{ alignItems: 'center' }}>
-        <CheckpointQr payload={checkpoint.qrPayload} label={`QR of ${checkpoint.nameEn}`} />
-        <p className="t-title-md">{checkpoint.nameEn}</p>
+        <CheckpointQr payload={checkpoint.qrPayload} label={t('qrTitle', { name })} />
+        <p className="t-title-md" dir="ltr">
+          {checkpoint.nameEn}
+        </p>
         <p dir="rtl">{checkpoint.nameAr}</p>
-        <code className="t-secondary" style={{ wordBreak: 'break-all' }}>
+        <code className="t-secondary" dir="ltr" style={{ wordBreak: 'break-all' }}>
           {checkpoint.qrPayload}
         </code>
       </div>
@@ -48,6 +70,9 @@ function QrDialog({ checkpoint, onClose }: { checkpoint: CheckpointSecret; onClo
 }
 
 function CheckpointDialog({ checkpoint, onClose, onIssued }: { checkpoint?: Checkpoint; onClose: () => void; onIssued: (c: CheckpointSecret) => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const { locale } = useLocale();
   const toast = useToast();
   const [post, setPost] = useState('');
   const [nameEn, setNameEn] = useState(checkpoint?.nameEn ?? '');
@@ -79,7 +104,7 @@ function CheckpointDialog({ checkpoint, onClose, onIssued }: { checkpoint?: Chec
       invalidate: [keys.checkpointsAll],
       onDone: (r) => {
         if ('made' in r && r.made) onIssued(r.made);
-        else toast.show('Checkpoint saved.');
+        else toast.show(t('saved'));
         onClose();
       },
     },
@@ -89,40 +114,40 @@ function CheckpointDialog({ checkpoint, onClose, onIssued }: { checkpoint?: Chec
     <Dialog
       open
       onClose={onClose}
-      title={checkpoint ? `Edit ${checkpoint.nameEn}` : 'New checkpoint'}
-      description={checkpoint ? 'Its post never changes.' : 'At a gate or a zone. Its QR is shown once, when it is made.'}
+      title={checkpoint ? t('editTitle', { name: nameIn(checkpoint, locale) }) : t('newTitle')}
+      description={checkpoint ? t('editDescription') : t('newDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
         {checkpoint ? null : (
-          <Field label="Post" error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
+          <Field label={t('post')} error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
             {(p) => <PostPicker {...p} value={post} onChange={(e) => setPost(e.target.value)} />}
           </Field>
         )}
-        <Field label="Name (English)" error={fieldError(save.error, 'nameEn')}>
-          {(p) => <Input {...p} maxLength={60} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
+        <Field label={t('nameEn')} error={fieldError(save.error, 'nameEn')}>
+          {(p) => <Input {...p} dir="ltr" maxLength={60} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
         </Field>
-        <Field label="Name (Arabic)" error={fieldError(save.error, 'nameAr')}>
-          {(p) => <Input {...p} dir="rtl" maxLength={60} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
+        <Field label={t('nameAr')} error={fieldError(save.error, 'nameAr')}>
+          {(p) => <Input {...p} dir="rtl" lang="ar" maxLength={60} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
         </Field>
         <div className="row">
-          <Field label="Latitude" hint="Optional, with the longitude.">
-            {(p) => <Input {...p} inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} />}
+          <Field label={t('latitude')} hint={t('latitudeHint')}>
+            {(p) => <Input {...p} dir="ltr" inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} />}
           </Field>
-          <Field label="Longitude">{(p) => <Input {...p} inputMode="decimal" value={lng} onChange={(e) => setLng(e.target.value)} />}</Field>
-          <Field label="Radius (m)" hint="30 by default; a scan farther away is flagged.">
-            {(p) => <Input {...p} inputMode="numeric" value={radius} onChange={(e) => setRadius(e.target.value)} />}
+          <Field label={t('longitude')}>{(p) => <Input {...p} dir="ltr" inputMode="decimal" value={lng} onChange={(e) => setLng(e.target.value)} />}</Field>
+          <Field label={t('radius')} hint={t('radiusHint')}>
+            {(p) => <Input {...p} dir="ltr" inputMode="numeric" value={radius} onChange={(e) => setRadius(e.target.value)} />}
           </Field>
         </div>
-        {position === 'invalid' ? <p className="t-error">A latitude and a longitude together, in range; a radius of 5 to 500 metres.</p> : null}
+        {position === 'invalid' ? <p className="t-error">{t('positionInvalid')}</p> : null}
         <ErrorAlert error={save.error} />
       </div>
     </Dialog>
@@ -131,6 +156,9 @@ function CheckpointDialog({ checkpoint, onClose, onIssued }: { checkpoint?: Chec
 
 /** The points a patrol scans (ADR 0052), and their QR. */
 export default function PatrolCheckpointsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('patrols.manage');
   const [view, setView] = useState<View>('active');
@@ -158,26 +186,17 @@ export default function PatrolCheckpointsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Checkpoints" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Checkpoints" description="What a patrol scans: a QR, or an NFC tag carrying the same text. A retired checkpoint keeps its scans." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Segmented<View>
-          label="Checkpoints shown"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'active', label: 'In service' },
-            { value: 'retired', label: 'Retired' },
-            { value: 'all', label: 'All' },
-          ]}
-        />
+        <Segmented<View> label={t('shown')} value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))} />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-          New checkpoint
+          {t('add')}
         </Button>
       </div>
       <Card flush>
@@ -185,13 +204,24 @@ export default function PatrolCheckpointsPage() {
           <DataTable<Checkpoint>
             rows={list.rows}
             rowKey={(c) => c.id}
-            empty="No checkpoint"
+            empty={t('empty')}
             columns={[
-              { key: 'name', header: 'Checkpoint', cell: (c) => <span className="table__primary">{c.nameEn}</span> },
-              { key: 'post', header: 'Post', cell: (c) => postName(c.post) },
-              { key: 'where', header: 'Position', cell: (c) => (c.position ? `${c.position.lat}, ${c.position.lng} · ${c.position.radiusM} m` : '—') },
-              { key: 'routes', header: 'Routes', cell: (c) => <span className="t-num">{c.routes}</span> },
-              { key: 'qr', header: 'QR printed', cell: (c) => formatDateTime(c.tokenIssuedAt) },
+              { key: 'name', header: t('col.checkpoint'), cell: (c) => <span className="table__primary">{nameIn(c, locale)}</span> },
+              { key: 'post', header: t('col.post'), cell: (c) => postNameIn(c.post, locale) },
+              {
+                key: 'where',
+                header: t('col.position'),
+                cell: (c) =>
+                  c.position ? (
+                    <span className="t-num">
+                      {t('position', { lat: String(c.position.lat), lng: String(c.position.lng), radius: c.position.radiusM })}
+                    </span>
+                  ) : (
+                    '—'
+                  ),
+              },
+              { key: 'routes', header: t('col.routes'), cell: (c) => <span className="t-num">{fmt.number(c.routes)}</span> },
+              { key: 'qr', header: t('col.qr'), cell: (c) => fmt.dateTime(c.tokenIssuedAt) },
               {
                 key: 'actions',
                 header: '',
@@ -201,13 +231,13 @@ export default function PatrolCheckpointsPage() {
                   ) : (
                     <span className="row">
                       <Button size="sm" onClick={() => setEditing(c)}>
-                        Edit
+                        {t('edit')}
                       </Button>
                       <Button size="sm" onClick={() => setReissuing(c)}>
-                        New QR
+                        {t('newQr')}
                       </Button>
                       <Button size="sm" onClick={() => setRetiring(c)}>
-                        Retire
+                        {t('retire')}
                       </Button>
                     </span>
                   ),
@@ -223,9 +253,9 @@ export default function PatrolCheckpointsPage() {
       <ConfirmDialog
         open={reissuing !== null}
         onClose={() => setReissuing(null)}
-        title={`A new QR for ${reissuing?.nameEn ?? ''}?`}
-        description="The printed one stops scanning at once: replace it on the spot."
-        confirmLabel="Issue a new QR"
+        title={t('reissueTitle', { name: reissuing ? nameIn(reissuing, locale) : '' })}
+        description={t('reissueDescription')}
+        confirmLabel={t('reissueConfirm')}
         pending={reissue.isPending}
         error={<ErrorAlert error={reissue.error} />}
         onConfirm={() => reissuing && reissue.mutate(reissuing.id)}
@@ -233,9 +263,9 @@ export default function PatrolCheckpointsPage() {
       <ConfirmDialog
         open={retiring !== null}
         onClose={() => setRetiring(null)}
-        title={`Retire ${retiring?.nameEn ?? ''}?`}
-        description="For good: it scans no more. Its scans stay. A route in service must leave it out first."
-        confirmLabel="Retire"
+        title={t('retireTitle', { name: retiring ? nameIn(retiring, locale) : '' })}
+        description={t('retireDescription')}
+        confirmLabel={t('retire')}
         danger
         pending={retire.isPending}
         error={<ErrorAlert error={retire.error} />}

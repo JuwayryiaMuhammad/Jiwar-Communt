@@ -1,25 +1,57 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, relativeTime, unwrap } from '@jiwar/api';
+import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Segmented,
+  Select,
+  StatusBadge,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Parcel, type ParcelCarrier, type ParcelFilters, type ParcelStatus } from '@/lib/queries';
+import ar from '@/messages/ar/gate-parcels';
+import en from '@/messages/en/gate-parcels';
 
 const CARRIERS: ParcelCarrier[] = ['aramex', 'dhl', 'fedex', 'ups', 'bosta', 'mylerz', 'egypt_post', 'amazon', 'noon', 'jumia', 'talabat', 'other'];
-const CARRIER_TEXT: Partial<Record<ParcelCarrier, string>> = { dhl: 'DHL', ups: 'UPS', fedex: 'FedEx', egypt_post: 'Egypt Post' };
-const carrier = (c: ParcelCarrier) => CARRIER_TEXT[c] ?? humanize(c);
+const NAMED = ['dhl', 'ups', 'fedex', 'egypt_post'] as const;
+
+/** A carrier's name in the page's language: the few written their own way here, the shared words for the rest. */
+function useCarrier() {
+  const t = useT(en, ar);
+  const label = useLabel();
+  return (c: ParcelCarrier) => ((NAMED as readonly string[]).includes(c) ? t(`carrier.${c as (typeof NAMED)[number]}`) : label(c));
+}
+
 /** The API's `rejected` is the unit refusing the parcel: one word for it everywhere. */
 function ParcelStatusBadge({ status }: { status: ParcelStatus }) {
-  return status === 'rejected' ? <Badge tone="error">Refused</Badge> : <StatusBadge status={status} />;
+  const t = useT(en, ar);
+  return status === 'rejected' ? <Badge tone="error">{t('refused')}</Badge> : <StatusBadge status={status} />;
 }
 const VIEWS = ['held', 'handed_over', 'rejected', 'returned', 'all'] as const;
 type View = (typeof VIEWS)[number];
 
 function ParcelDialog({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const carrier = useCarrier();
   const parcel = useQuery({ queryKey: keys.parcel(id), queryFn: () => fetchers.parcel(id) });
   const p = parcel.data;
   return (
@@ -27,72 +59,70 @@ function ParcelDialog({ id, onClose }: { id: string; onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title={p ? `Parcel ${p.number} · unit ${p.unitCode}` : 'Parcel'}
-      description={p ? `${carrier(p.carrier)} · ${p.pieces} piece${p.pieces === 1 ? '' : 's'}` : undefined}
-      footer={<Button onClick={onClose}>Close</Button>}
+      title={p ? t('parcelTitle', { number: p.number, unit: p.unitCode }) : t('col.parcel')}
+      description={p ? t('parcelDescription', { carrier: carrier(p.carrier), pieces: p.pieces }) : undefined}
+      footer={<Button onClick={onClose}>{c('close')}</Button>}
     >
       <QueryState query={parcel} rows={4}>
         {p ? (
           <div className="stack">
             <dl className="dl">
-              <dt>Status</dt>
+              <dt>{c('status')}</dt>
               <dd>
                 <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
                   <ParcelStatusBadge status={p.status} />
-                  {p.status === 'held' ? <span className="t-secondary">{p.heldDays} day{p.heldDays === 1 ? '' : 's'} at the gate</span> : null}
-                  {p.unclaimable ? <Badge tone="terracotta">Nobody can claim it</Badge> : null}
+                  {p.status === 'held' ? <span className="t-secondary">{t('heldDays', { days: p.heldDays })}</span> : null}
+                  {p.unclaimable ? <Badge tone="terracotta">{t('nobodyCanClaim')}</Badge> : null}
                 </span>
               </dd>
-              <dt>Received</dt>
-              <dd>{formatDateTime(p.receivedAt)}</dd>
+              <dt>{t('receivedAt')}</dt>
+              <dd>{f.dateTime(p.receivedAt)}</dd>
               {p.handedOverAt ? (
                 <>
-                  <dt>Handed over</dt>
-                  <dd>{formatDateTime(p.handedOverAt)}</dd>
+                  <dt>{t('handedOver')}</dt>
+                  <dd>{f.dateTime(p.handedOverAt)}</dd>
                 </>
               ) : null}
               {p.rejectedAt ? (
                 <>
-                  <dt>Refused by the unit</dt>
+                  <dt>{t('refusedByUnit')}</dt>
                   <dd>
-                    {formatDateTime(p.rejectedAt)}
-                    {p.rejectReason ? ` · ${humanize(p.rejectReason)}` : ''}
+                    {f.dateTime(p.rejectedAt)}
+                    {p.rejectReason ? ` · ${label(p.rejectReason)}` : ''}
                   </dd>
                 </>
               ) : null}
               {p.returnedAt ? (
                 <>
-                  <dt>Returned to the carrier</dt>
+                  <dt>{t('returnedToCarrier')}</dt>
                   <dd>
-                    {formatDateTime(p.returnedAt)}
-                    {p.returnReason ? ` · ${humanize(p.returnReason)}` : ''}
+                    {f.dateTime(p.returnedAt)}
+                    {p.returnReason ? ` · ${label(p.returnReason)}` : ''}
                   </dd>
                 </>
               ) : null}
-              <dt>Reminders</dt>
+              <dt>{t('reminders')}</dt>
               <dd>
-                {p.reminded ? 'The unit was reminded' : 'No reminder yet'}
-                {p.heldLongNotified ? ' · management was told it is held long' : ''}
+                {p.reminded ? t('unitReminded') : t('noReminder')}
+                {p.heldLongNotified ? ` · ${t('heldLongTold')}` : ''}
               </dd>
             </dl>
             <div className="stack stack--sm">
-              <strong>What happened</strong>
+              <strong>{t('whatHappened')}</strong>
               <ol className="timeline" style={{ padding: 0 }}>
                 {p.events.map((e, i) => (
                   <li key={`${e.at}-${i}`} className={`timeline__item${e.kind === 'rejected' || e.kind === 'returned' ? ' timeline__item--warn' : ''}`}>
-                    <div className="timeline__title">{humanize(e.kind)}</div>
+                    <div className="timeline__title">{label(e.kind)}</div>
                     <div className="timeline__meta">
-                      {formatDateTime(e.at)} · by the {e.actorSide}
-                      {e.method ? ` · ${humanize(e.method).toLowerCase()}` : ''}
-                      {e.reasonCode ? ` · ${humanize(e.reasonCode).toLowerCase()}` : ''}
+                      {f.dateTime(e.at)} · {t(`by.${e.actorSide}`)}
+                      {e.method ? ` · ${label(e.method)}` : ''}
+                      {e.reasonCode ? ` · ${label(e.reasonCode)}` : ''}
                     </div>
                   </li>
                 ))}
               </ol>
             </div>
-            <p className="t-secondary">
-              Management sees no name here: not the one on the label, nor who collected it. The unit's residents see their own parcels in the app.
-            </p>
+            <p className="t-secondary">{t('noNames')}</p>
           </div>
         ) : null}
       </QueryState>
@@ -102,6 +132,8 @@ function ParcelDialog({ id, onClose }: { id: string; onClose: () => void }) {
 
 /** How long a parcel waits before its residents, then management, are told. */
 function HoldingPeriodsDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const settings = useQuery({ queryKey: keys.parcelSettings, queryFn: fetchers.parcelSettings });
   const [reminder, setReminder] = useState('');
@@ -125,7 +157,7 @@ function HoldingPeriodsDialog({ onClose }: { onClose: () => void }) {
   const save = useAction(() => unwrap(api.PATCH('/api/v1/parcel-settings', { body: changes })), {
     invalidate: [keys.parcelSettings],
     onDone: () => {
-      toast.show('Holding periods saved.');
+      toast.show(t('periodsSaved'));
       onClose();
     },
   });
@@ -133,27 +165,27 @@ function HoldingPeriodsDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Holding periods"
-      description="They apply to parcels that have not passed the mark yet; each notice is sent once per parcel."
+      title={t('periodsTitle')}
+      description={t('periodsDescription')}
       onSubmit={() => dirty && !inverted && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || inverted}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <QueryState query={settings} rows={2}>
         <div className="form">
-          <Field label="Remind the residents after (days)" hint="1 to 30." error={fieldError(save.error, 'parcelReminderDays')}>
+          <Field label={t('remindAfter')} hint={t('rangeHint', { min: 1, max: 30 })} error={fieldError(save.error, 'parcelReminderDays')}>
             {(p) => <Input {...p} type="number" min={1} max={30} value={reminder} onChange={(e) => setReminder(e.target.value)} />}
           </Field>
           <Field
-            label="Tell management after (days)"
-            hint="2 to 90. From then an unclaimed parcel may be returned to the carrier."
-            error={fieldError(save.error, 'parcelManagerDays') ?? (inverted ? 'More than the reminder.' : undefined)}
+            label={t('tellAfter')}
+            hint={t('managerHint', { min: 2, max: 90 })}
+            error={fieldError(save.error, 'parcelManagerDays') ?? (inverted ? t('moreThanReminder') : undefined)}
           >
             {(p) => <Input {...p} type="number" min={2} max={90} value={manager} onChange={(e) => setManager(e.target.value)} />}
           </Field>
@@ -169,6 +201,10 @@ function HoldingPeriodsDialog({ onClose }: { onClose: () => void }) {
  * hand over; this is management's read of what is waiting and for how long.
  */
 export default function ParcelsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const carrier = useCarrier();
   const [view, setView] = useState<View>('held');
   const [carrierFilter, setCarrierFilter] = useState<ParcelCarrier | ''>('');
   const [unitCode, setUnitCode] = useState('');
@@ -182,13 +218,13 @@ export default function ParcelsPage() {
   const filters: ParcelFilters = { status: view === 'all' ? '' : (view as ParcelStatus), carrier: carrierFilter, unitCode: unitCode.trim() };
   const { ready, can } = usePermissions();
   const allowed = can('parcels.manage');
-  const list = useCursorList(keys.parcels(filters), (c) => fetchers.parcels(filters, c), { refetchInterval: 120_000, enabled: allowed });
+  const list = useCursorList(keys.parcels(filters), (cursor) => fetchers.parcels(filters, cursor), { refetchInterval: 120_000, enabled: allowed });
 
   // The list and the holding periods both need `parcels.manage`.
   if (ready && !allowed) {
     return (
       <>
-        <PageHeader title="Parcels" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -196,37 +232,31 @@ export default function ParcelsPage() {
   return (
     <>
       <PageHeader
-        title="Parcels"
-        description="What the gate is holding for the units, and what became of the rest. No names: the guards and the residents handle the handover."
-        actions={<Button onClick={() => setSettings(true)}>Holding periods</Button>}
+        title={t('title')}
+        description={t('description')}
+        actions={<Button onClick={() => setSettings(true)}>{t('holdingPeriods')}</Button>}
       />
       <div className="toolbar">
         <Segmented<View>
-          label="Parcels shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'held', label: 'At the gate' },
-            { value: 'handed_over', label: 'Handed over' },
-            { value: 'rejected', label: 'Refused' },
-            { value: 'returned', label: 'Returned' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: v === 'all' ? c('all') : t(`view.${v}`) }))}
         />
-        <Field label="Carrier">
+        <Field label={t('carrier')}>
           {(p) => (
             <Select {...p} value={carrierFilter} onChange={(e) => setCarrierFilter(e.target.value as ParcelCarrier | '')}>
-              <option value="">Any carrier</option>
-              {CARRIERS.map((c) => (
-                <option key={c} value={c}>
-                  {carrier(c)}
+              <option value="">{t('anyCarrier')}</option>
+              {CARRIERS.map((k) => (
+                <option key={k} value={k}>
+                  {carrier(k)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Unit code">
-          {(p) => <Input {...p} placeholder="e.g. A-101" value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
+        <Field label={t('unitCode')}>
+          {(p) => <Input {...p} placeholder={t('unitCodePlaceholder')} dir="ltr" value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
         </Field>
       </div>
       <Card flush>
@@ -234,44 +264,45 @@ export default function ParcelsPage() {
           <DataTable<Parcel>
             rows={list.rows}
             rowKey={(p) => p.id}
-            empty={view === 'held' ? 'The gate is holding no parcel' : 'No parcel matches'}
-            emptyHint={view === 'held' ? 'A guard records each parcel when the carrier leaves it at the gate.' : undefined}
+            empty={view === 'held' ? t('emptyHeld') : t('empty')}
+            emptyHint={view === 'held' ? t('emptyHeldHint') : undefined}
             columns={[
               {
                 key: 'number',
-                header: 'Parcel',
+                header: t('col.parcel'),
                 cell: (p) => (
                   <Button variant="text" className="table__link t-mono" onClick={() => setOpen(p.id)}>
                     {p.number}
                   </Button>
                 ),
               },
-              { key: 'unit', header: 'Unit', cell: (p) => p.unitCode },
-              { key: 'carrier', header: 'Carrier', cell: (p) => carrier(p.carrier) },
-              { key: 'pieces', header: 'Pieces', cell: (p) => <span className="t-num">{p.pieces}</span> },
+              { key: 'unit', header: c('unit'), cell: (p) => p.unitCode },
+              { key: 'carrier', header: t('col.carrier'), cell: (p) => carrier(p.carrier) },
+              { key: 'pieces', header: t('col.pieces'), cell: (p) => <span className="t-num">{f.number(p.pieces)}</span> },
               {
                 key: 'status',
-                header: 'Status',
+                header: c('status'),
                 cell: (p) => (
                   <span className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
                     <ParcelStatusBadge status={p.status} />
-                    {p.status === 'held' && p.heldLongNotified ? <Badge tone="error">Held long</Badge> : null}
-                    {p.status === 'held' && p.reminded && !p.heldLongNotified ? <Badge plain>Reminded</Badge> : null}
-                    {p.unclaimable ? <Badge tone="terracotta">Unclaimable</Badge> : null}
+                    {p.status === 'held' && p.heldLongNotified ? <Badge tone="error">{t('heldLong')}</Badge> : null}
+                    {p.status === 'held' && p.reminded && !p.heldLongNotified ? <Badge plain>{t('reminded')}</Badge> : null}
+                    {p.unclaimable ? <Badge tone="terracotta">{t('unclaimable')}</Badge> : null}
                   </span>
                 ),
               },
               {
                 key: 'held',
-                header: 'At the gate',
-                cell: (p) => (p.status === 'held' ? <span className="t-num">{p.heldDays} d</span> : <span className="t-secondary">—</span>),
+                header: t('col.atGate'),
+                cell: (p) =>
+                  p.status === 'held' ? <span className="t-num">{t('daysShort', { days: f.number(p.heldDays) })}</span> : <span className="t-secondary">—</span>,
               },
               {
                 key: 'received',
-                header: 'Received',
+                header: t('col.received'),
                 cell: (p) => (
-                  <span title={formatDateTime(p.receivedAt)} style={{ whiteSpace: 'nowrap' }}>
-                    {relativeTime(p.receivedAt)}
+                  <span title={f.dateTime(p.receivedAt)} style={{ whiteSpace: 'nowrap' }}>
+                    {f.relative(p.receivedAt)}
                   </span>
                 ),
               },

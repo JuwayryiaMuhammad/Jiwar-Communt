@@ -2,11 +2,27 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Alert, Button, ButtonLink, Card, CardBody, CardHeader, Field, ForbiddenState, Input, PageHeader, Segmented, Textarea, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import {
+  Alert,
+  Button,
+  ButtonLink,
+  Card,
+  CardBody,
+  CardHeader,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  Segmented,
+  Textarea,
+  useCommonT,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
-import { Back, FacilityBadges } from '@/components/facilities/bits';
+import { Back, FacilityBadges, useLocalName } from '@/components/facilities/bits';
 import { Closures } from '@/components/facilities/closures';
 import { Fees, StayRules } from '@/components/facilities/fees';
 import { Rules } from '@/components/facilities/rules';
@@ -15,11 +31,15 @@ import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Facility } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/places-facilities';
+import en from '@/messages/en/places-facilities';
 
 const TABS = ['details', 'rules', 'stay', 'fees', 'hours', 'peaks', 'closures'] as const;
 type Tab = (typeof TABS)[number];
 
 function Details({ facility }: { facility: Facility }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [form, setForm] = useState({
     nameEn: facility.nameEn,
@@ -39,19 +59,22 @@ function Details({ facility }: { facility: Facility }) {
   const dirty = Object.keys(body).length > 0;
   const save = useAction(() => unwrap(api.PATCH('/api/v1/staff/facilities/{id}', { params: { path: { id: facility.id } }, body })), {
     invalidate: [keys.facilitiesAll],
-    onDone: () => toast.show('Saved.'),
+    onDone: () => toast.show(c('saved')),
   });
-  const text = (key: keyof typeof form, label: string, opts: { ar?: boolean; long?: boolean; hint?: string } = {}) => (
-    <Field label={label} hint={opts.hint} error={fieldError(save.error, key)}>
-      {(p) =>
-        opts.long ? (
-          <Textarea {...p} rows={3} maxLength={1000} dir={opts.ar ? 'rtl' : undefined} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
-        ) : (
-          <Input {...p} maxLength={80} dir={opts.ar ? 'rtl' : undefined} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
-        )
-      }
-    </Field>
-  );
+  const text = (key: keyof typeof form, label: string, opts: { ar?: boolean; en?: boolean; long?: boolean; hint?: string } = {}) => {
+    const dir = opts.ar ? 'rtl' : opts.en ? 'ltr' : undefined;
+    return (
+      <Field label={label} hint={opts.hint} error={fieldError(save.error, key)}>
+        {(p) =>
+          opts.long ? (
+            <Textarea {...p} rows={3} maxLength={1000} dir={dir} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+          ) : (
+            <Input {...p} maxLength={80} dir={dir} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+          )
+        }
+      </Field>
+    );
+  };
   return (
     <form
       className="stack"
@@ -62,14 +85,14 @@ function Details({ facility }: { facility: Facility }) {
       }}
     >
       <Card flush>
-        <CardHeader title="What residents read" />
+        <CardHeader title={t('whatResidentsRead')} />
         <CardBody>
           <div className="form">
-            {text('nameEn', 'Name in English')}
-            {text('nameAr', 'Name in Arabic', { ar: true })}
-            {text('descriptionEn', 'Description in English', { long: true, hint: 'Optional.' })}
-            {text('descriptionAr', 'Description in Arabic', { long: true, ar: true, hint: 'Optional.' })}
-            {text('position', 'Order in the list', { hint: 'Lower first, from 0 to 1000.' })}
+            {text('nameEn', t('nameEn'), { en: true })}
+            {text('nameAr', t('nameAr'), { ar: true })}
+            {text('descriptionEn', t('descriptionEn'), { long: true, en: true, hint: t('optional') })}
+            {text('descriptionAr', t('descriptionAr'), { long: true, ar: true, hint: t('optional') })}
+            {text('position', t('position'), { hint: t('positionHint') })}
           </div>
         </CardBody>
       </Card>
@@ -77,7 +100,7 @@ function Details({ facility }: { facility: Facility }) {
       <span className="row">
         <span className="spacer" />
         <Button type="submit" variant="primary" loading={save.isPending} disabled={!dirty || !ready}>
-          Save
+          {c('save')}
         </Button>
       </span>
     </form>
@@ -85,6 +108,8 @@ function Details({ facility }: { facility: Facility }) {
 }
 
 function FacilityView() {
+  const t = useT(en, ar);
+  const name = useLocalName();
   const { id } = useParams<{ id: string }>();
   const { ready, can } = usePermissions();
   const canManage = can('facilities.manage');
@@ -94,7 +119,7 @@ function FacilityView() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={<Back href="/facilities" label="Facilities" />} title="Facility" />
+        <PageHeader back={<Back href="/facilities" label={t('title')} />} title={t('facility')} />
         <ForbiddenState />
       </>
     );
@@ -106,18 +131,23 @@ function FacilityView() {
     : (!bookable && (tab === 'rules' || tab === 'peaks')) || (!stay && tab === 'stay') || (f?.mode === 'walk_in' && tab === 'fees')
       ? 'details'
       : tab;
+  const tabs: Tab[] = [
+    'details',
+    ...(bookable ? (['rules'] as const) : []),
+    ...(stay ? (['stay'] as const) : []),
+    ...(bookable || stay ? (['fees'] as const) : []),
+    'hours',
+    ...(bookable ? (['peaks'] as const) : []),
+    'closures',
+  ];
 
   return (
     <>
       <PageHeader
-        back={<Back href="/facilities" label="Facilities" />}
-        title={f ? f.nameEn : 'Facility'}
+        back={<Back href="/facilities" label={t('title')} />}
+        title={f ? name(f) : t('facility')}
         description={f ? <FacilityBadges facility={f} /> : undefined}
-        actions={
-          bookable ? (
-            <ButtonLink href={`/bookings?facility=${id}`}>Day view</ButtonLink>
-          ) : undefined
-        }
+        actions={bookable ? <ButtonLink href={`/bookings?facility=${id}`}>{t('dayView')}</ButtonLink> : undefined}
       />
       <QueryState query={facility}>
         {f ? (
@@ -125,22 +155,14 @@ function FacilityView() {
             {canManage ? (
               <div className="toolbar" style={{ overflowX: 'auto' }}>
                 <Segmented<Tab>
-                  label="Facility"
+                  label={t('facility')}
                   value={shown}
                   onChange={setTab}
-                  options={[
-                    { value: 'details', label: 'Details' },
-                    ...(bookable ? [{ value: 'rules' as const, label: 'Rules' }] : []),
-                    ...(stay ? [{ value: 'stay' as const, label: 'Nights' }] : []),
-                    ...(bookable || stay ? [{ value: 'fees' as const, label: 'Fees' }] : []),
-                    { value: 'hours', label: 'Opening hours' },
-                    ...(bookable ? [{ value: 'peaks' as const, label: 'Peak times' }] : []),
-                    { value: 'closures', label: 'Closures' },
-                  ]}
+                  options={tabs.map((v) => ({ value: v, label: t(`tab.${v}`) }))}
                 />
               </div>
             ) : null}
-            {!f.active ? <Alert tone="warn">Retired: residents do not see it and it takes no new booking. Bookings already made stay.</Alert> : null}
+            {!f.active ? <Alert tone="warn">{t('retiredAlert')}</Alert> : null}
             {shown === 'details' ? <Details key={f.updatedAt} facility={f} /> : null}
             {shown === 'rules' && f.rules ? <Rules key={f.updatedAt} facility={f} rules={f.rules} /> : null}
             {shown === 'stay' && f.stay ? <StayRules key={`stay-${f.updatedAt}`} facility={f} /> : null}

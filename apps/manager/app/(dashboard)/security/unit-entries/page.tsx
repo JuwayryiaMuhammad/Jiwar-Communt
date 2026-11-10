@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, unwrap, type Schema } from '@jiwar/api';
+import { unwrap, type Schema } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, PageHeader, Segmented } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, PageHeader, Segmented, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { RecordEntryDialog, ReportEntryDialog } from '@/components/security/unit-entry-dialogs';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/sec-unit-entries';
+import en from '@/messages/en/sec-unit-entries';
 
 type Entry = Schema<'StaffUnitEntryView'>;
 const VIEWS = ['open', 'reported'] as const;
@@ -18,6 +21,9 @@ type View = (typeof VIEWS)[number];
  * report, once, within a day (the inbox reminds).
  */
 export default function UnitEntriesPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
   const [view, setView] = useState<View>('open');
   const [recording, setRecording] = useState(false);
   const [reporting, setReporting] = useState<Entry | null>(null);
@@ -29,21 +35,21 @@ export default function UnitEntriesPage() {
   return (
     <>
       <PageHeader
-        title="Emergency entries"
-        description="Every time staff went into a unit without its owner: why, who, and what they found."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setRecording(true)}>
-            Record an entry
+            {t('recordEntry')}
           </Button>
         }
       />
       <Segmented<View>
-        label="Show"
+        label={t('show')}
         value={view}
         onChange={setView}
         options={[
-          { value: 'open', label: 'Report due' },
-          { value: 'reported', label: 'Reported' },
+          { value: 'open', label: t('view.open') },
+          { value: 'reported', label: t('view.reported') },
         ]}
       />
       <Card flush>
@@ -51,22 +57,22 @@ export default function UnitEntriesPage() {
           <DataTable<Entry>
             rows={list.data?.data}
             rowKey={(e) => e.id}
-            empty="No entry here"
-            emptyHint="Record one as soon as staff are out of the unit."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
-              { key: 'ref', header: 'Entry', cell: (e) => <span className="t-mono">{e.reference}</span> },
-              { key: 'unit', header: 'Unit', cell: (e) => <strong>{e.unitCode}</strong> },
-              { key: 'why', header: 'Why', cell: (e) => <Badge tone="terracotta">{e.reasonCode.replace(/_/g, ' ')}</Badge> },
-              { key: 'when', header: 'Went in', cell: (e) => formatDateTime(e.enteredAt) },
+              { key: 'ref', header: t('col.entry'), cell: (e) => <span className="t-mono ltr">{e.reference}</span> },
+              { key: 'unit', header: t('col.unit'), cell: (e) => <strong>{e.unitCode}</strong> },
+              { key: 'why', header: t('col.why'), cell: (e) => <Badge tone="terracotta">{label(e.reasonCode)}</Badge> },
+              { key: 'when', header: t('col.wentIn'), cell: (e) => f.dateTime(e.enteredAt) },
               {
                 key: 'who',
-                header: 'Who',
-                cell: (e) => [e.recordedByName ?? '—', ...e.witnessNames.map((n) => n ?? '—')].join(', '),
+                header: t('col.who'),
+                cell: (e) => f.list([e.recordedByName ?? '—', ...e.witnessNames.map((n) => n ?? '—')]),
               },
               {
                 key: 'found',
-                header: 'Found',
-                cell: (e) => (e.outcome ? e.outcome.replace(/_/g, ' ') : <span className="t-secondary">Report due</span>),
+                header: t('col.found'),
+                cell: (e) => (e.outcome ? label(e.outcome) : <span className="t-secondary">{t('reportDue')}</span>),
               },
               {
                 key: 'act',
@@ -74,7 +80,7 @@ export default function UnitEntriesPage() {
                 cell: (e) =>
                   e.status === 'open' ? (
                     <Button size="sm" variant="primary" onClick={() => setReporting(e)}>
-                      Report
+                      {t('report')}
                     </Button>
                   ) : null,
               },

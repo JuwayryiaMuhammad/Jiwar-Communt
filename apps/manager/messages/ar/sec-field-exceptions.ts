@@ -1,0 +1,40 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/sec-field-exceptions.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'استثناءات البوابة',
+  description: 'يطلب الحارس السماح بدخول شخص رفضته البوابة مرة واحدة. أجب قبل انتهاء الوقت، وتُعتمد أول إجابة.',
+  shown: 'الاستثناءات المعروضة',
+  'filter.pending': 'في الانتظار',
+  'filter.decided': 'تمت الإجابة أو انتهت',
+  emptyPending: 'لا شيء بانتظار إجابة',
+  emptyAll: 'لا توجد استثناءات',
+  'col.who': 'من',
+  'col.unit': 'الوحدة',
+  'col.gate': 'البوابة',
+  'col.why': 'السبب',
+  'col.asked': 'وقت الطلب',
+  'col.now': 'الآن',
+  timeLeft: 'متبقي {time}',
+  expired: 'انتهت المهلة',
+  entryFor: 'الدخول متاح لمدة {time}',
+  cameIn: 'دخل',
+  notUsed: 'لم يُستخدم',
+  approved: 'تمت الموافقة. يسمح الحارس له بالدخول مرة واحدة عند بوابته.',
+  rejected: 'تم الرفض، وسيُبلَّغ الحارس.',
+  approveTitle: 'السماح بدخول {who}؟',
+  approveDescription: 'مرة واحدة عند {gate}، خلال مهلة الدخول المحددة للبوابة. يظل الإغلاق الأمني أو الحظر مانعًا للدخول.',
+  approve: 'موافقة',
+  rejectTitle: 'رفض دخول {who}؟',
+  rejectDescription: 'سيُبلَّغ الحارس بالسبب.',
+  reject: 'رفض',
+  detailTitle: 'استثناء بوابة',
+  whyGuardAsks: 'سبب طلب الحارس',
+  unitGate: 'الوحدة · البوابة',
+  askedBy: 'طلبه',
+  erasedAccount: 'حساب محذوف',
+  answered: 'أُجيب عنه',
+  cameInLabel: 'وقت الدخول',
+};
+
+export default ar;

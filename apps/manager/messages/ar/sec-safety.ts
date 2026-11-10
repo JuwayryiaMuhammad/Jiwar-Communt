@@ -1,0 +1,40 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/sec-safety.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'مؤشرات السلامة',
+  description: 'الحوادث والملاحظات والإجراءات التصحيحية والتدريبات.',
+  safetyIncidents: 'حوادث السلامة',
+  injuries: 'الإصابات',
+  daysWithoutInjury: 'أيام بلا إصابات',
+  lastInjury: 'آخر إصابة في {date}',
+  noneRecorded: 'لا شيء مسجل',
+  observationsClosed: 'الملاحظات المغلقة',
+  closedOf: '{closed} من {reported}',
+  actionsOnTime: 'الإجراءات في موعدها',
+  overdueNow: 'متأخر الآن: {n}',
+  drillsHeld: 'التدريبات المنفذة',
+  drillsScheduled: 'مجدول: {n}',
+  inDetail: 'بالتفصيل',
+  incidents: 'الحوادث',
+  nearMisses: 'حوادث وشيكة: {n}',
+  hazards: 'مخاطر: {n}',
+  fires: 'حرائق: {n}',
+  propertyDamage: 'تلف ممتلكات: {n}',
+  observations: 'الملاحظات',
+  avgToClose: 'متوسط مدة الإغلاق: {value}',
+  hours: '{n} س',
+  correctiveActions: 'الإجراءات التصحيحية',
+  actionsMade: 'أُنشئ: {n}',
+  actionsDone: 'تم: {n} (في موعده: {onTime})',
+  actionsCalledOff: 'أُلغي: {n}',
+  actionsOpen: 'مفتوح الآن: {n}',
+  drills: 'التدريبات',
+  drillsPassed: 'نجح: {n}',
+  drillsIssues: 'بها ملاحظات: {n}',
+  drillsFailed: 'فشل: {n}',
+  drillsTookPart: 'المشاركون: {n}',
+  drillsAvg: 'متوسط المدة: {n} دقيقة',
+};
+
+export default ar;

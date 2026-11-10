@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -15,6 +16,8 @@ import {
   ReasonCodeDialog,
   Segmented,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -30,12 +33,16 @@ import {
   type VehicleFilters,
   type VehiclePermitStatus,
 } from '@/lib/queries';
+import ar from '@/messages/ar/safety-vehicles';
+import en from '@/messages/en/safety-vehicles';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 const VIEWS = ['pending', 'active', 'expires_soon', 'expired', 'rejected', 'removed', 'all'] as const;
 type View = (typeof VIEWS)[number];
 
 function Approve({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [sticker, setSticker] = useState('');
   const [until, setUntil] = useState(addDays(today(), 365));
@@ -50,7 +57,7 @@ function Approve({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: (
     {
       invalidate: [keys.vehiclesAll],
       onDone: () => {
-        toast.show('Approved. The registrant is told.');
+        toast.show(t('approved'));
         onClose();
       },
     },
@@ -61,27 +68,27 @@ function Approve({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: (
     <Dialog
       open
       onClose={onClose}
-      title={`Approve ${vehicle.plate} · unit ${vehicle.unitCode}`}
-      description="A sticker number is issued once in the compound, ever. The permit is valid through its last day."
+      title={t('approveTitle', { plate: vehicle.plate, unit: vehicle.unitCode })}
+      description={t('approveDescription')}
       onSubmit={() => ready && approve.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={approve.isPending} disabled={!ready}>
-            Approve
+            {t('approve')}
           </Button>
         </>
       }
     >
       <div className="form">
         <Field
-          label="Sticker number"
-          hint="Letters, digits and dashes."
-          error={fieldError(approve.error, 'stickerNumber') ?? (sticker && !validSticker(sticker) ? 'Letters, digits and dashes, up to 20.' : undefined)}
+          label={t('stickerNumber')}
+          hint={t('stickerHint')}
+          error={fieldError(approve.error, 'stickerNumber') ?? (sticker && !validSticker(sticker) ? t('stickerInvalid') : undefined)}
         >
           {(p) => <Input {...p} maxLength={20} value={sticker} onChange={(e) => setSticker(e.target.value)} />}
         </Field>
-        <Field label="Permit valid through" error={fieldError(approve.error, 'permitValidUntil') ?? dateProblem}>
+        <Field label={t('validThrough')} error={fieldError(approve.error, 'permitValidUntil') ?? (dateProblem ? t(`date.${dateProblem}`) : undefined)}>
           {(p) => <Input {...p} type="date" min={addDays(today(), 1)} max={addDays(today(), 731)} value={until} onChange={(e) => setUntil(e.target.value)} />}
         </Field>
         <ErrorAlert error={approve.error} />
@@ -91,6 +98,9 @@ function Approve({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: (
 }
 
 function Renew({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const current = vehicle.permitValidUntil ?? today();
   const [until, setUntil] = useState(addDays(current > today() ? current : today(), 365));
@@ -99,7 +109,7 @@ function Renew({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: () 
     {
       invalidate: [keys.vehiclesAll],
       onDone: () => {
-        toast.show('Renewed.');
+        toast.show(t('renewed'));
         onClose();
       },
     },
@@ -109,20 +119,20 @@ function Renew({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: () 
     <Dialog
       open
       onClose={onClose}
-      title={`Renew the permit of ${vehicle.plate}`}
-      description={`Valid through ${current} today. The sticker stays.`}
+      title={t('renewTitle', { plate: vehicle.plate })}
+      description={t('renewDescription', { day: fmt.day(current) })}
       onSubmit={() => !problem && renew.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={renew.isPending} disabled={!!problem}>
-            Renew
+            {t('renew')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="New last day" error={fieldError(renew.error, 'permitValidUntil') ?? problem}>
+        <Field label={t('newLastDay')} error={fieldError(renew.error, 'permitValidUntil') ?? (problem ? t(`date.${problem}`) : undefined)}>
           {(p) => <Input {...p} type="date" value={until} onChange={(e) => setUntil(e.target.value)} />}
         </Field>
         <ErrorAlert error={renew.error} />
@@ -132,6 +142,10 @@ function Renew({ vehicle, onClose }: { vehicle: StaffVehicleDetail; onClose: () 
 }
 
 function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const vehicle = useQuery({ queryKey: keys.vehicle(id), queryFn: () => fetchers.vehicle(id) });
   const [step, setStep] = useState<'approve' | 'reject' | 'renew' | 'remove' | null>(null);
@@ -141,7 +155,7 @@ function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.vehiclesAll],
       onDone: () => {
-        toast.show('Rejected. The registrant is told the reason.');
+        toast.show(t('rejectedToast'));
         setStep(null);
       },
     },
@@ -151,7 +165,7 @@ function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.vehiclesAll],
       onDone: () => {
-        toast.show('Removed. Its sticker and permit are void.');
+        toast.show(t('removedToast'));
         setStep(null);
       },
     },
@@ -163,25 +177,29 @@ function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
         open={step === null || step === 'reject' || step === 'remove'}
         wide
         onClose={onClose}
-        title={v ? `${v.plate} · unit ${v.unitCode}` : 'Vehicle'}
-        description={v ? `${v.reference} · ${v.makeAndModel}, ${v.color}, ${humanize(v.type).toLowerCase()}` : undefined}
+        title={v ? t('detailTitle', { plate: v.plate, unit: v.unitCode }) : t('vehicle')}
+        description={
+          v
+            ? t('detailDescription', { reference: v.reference, model: v.makeAndModel, color: v.color, type: label(v.type).toLocaleLowerCase() })
+            : undefined
+        }
         footer={
           <>
             {v?.status === 'pending' ? (
               <>
-                <Button onClick={() => setStep('reject')}>Reject</Button>
+                <Button onClick={() => setStep('reject')}>{t('reject')}</Button>
                 <Button variant="primary" onClick={() => setStep('approve')}>
-                  Approve
+                  {t('approve')}
                 </Button>
               </>
             ) : null}
-            {v?.status === 'active' ? <Button onClick={() => setStep('renew')}>Renew</Button> : null}
+            {v?.status === 'active' ? <Button onClick={() => setStep('renew')}>{t('renew')}</Button> : null}
             {v && v.status !== 'removed' ? (
               <Button variant="danger" onClick={() => setStep('remove')}>
-                Remove
+                {t('remove')}
               </Button>
             ) : null}
-            <Button onClick={onClose}>Close</Button>
+            <Button onClick={onClose}>{c('close')}</Button>
           </>
         }
       >
@@ -189,44 +207,45 @@ function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
           {v ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Permit</dt>
+                <dt>{t('permit')}</dt>
                 <dd>
                   <span className="row" style={{ gap: 8 }}>
                     <StatusBadge status={v.permitStatus} />
-                    {v.permitValidUntil ? <span className="t-secondary">through {v.permitValidUntil}</span> : null}
-                    {v.stickerNumber ? <Badge plain>Sticker {v.stickerNumber}</Badge> : null}
+                    {v.permitValidUntil ? <span className="t-secondary">{t('through', { day: fmt.day(v.permitValidUntil) })}</span> : null}
+                    {v.stickerNumber ? <Badge plain>{t('sticker', { number: v.stickerNumber })}</Badge> : null}
                   </span>
                 </dd>
-                <dt>Registered by</dt>
-                <dd>{v.registeredBy.erased ? 'An erased account' : v.registeredBy.fullName}</dd>
-                <dt>Registered</dt>
-                <dd>{formatDateTime(v.createdAt)}</dd>
+                <dt>{t('registeredBy')}</dt>
+                <dd>{v.registeredBy.erased ? t('erased') : v.registeredBy.fullName}</dd>
+                <dt>{t('registered')}</dt>
+                <dd>{fmt.dateTime(v.createdAt)}</dd>
                 {v.decidedAt ? (
                   <>
-                    <dt>Decided</dt>
+                    <dt>{t('decided')}</dt>
                     <dd>
-                      {formatDateTime(v.decidedAt)}
-                      {v.decidedBy ? ` · ${v.decidedBy.erased ? 'an erased account' : v.decidedBy.fullName}` : ''}
-                      {v.rejectionReason ? ` · ${humanize(v.rejectionReason)}` : ''}
+                      {fmt.dateTime(v.decidedAt)}
+                      {v.decidedBy ? ` · ${v.decidedBy.erased ? c('erasedAccount') : v.decidedBy.fullName}` : ''}
+                      {v.rejectionReason ? ` · ${label(v.rejectionReason)}` : ''}
                     </dd>
                   </>
                 ) : null}
                 {v.removedAt ? (
                   <>
-                    <dt>Removed</dt>
+                    <dt>{t('removed')}</dt>
                     <dd>
-                      {formatDateTime(v.removedAt)} · {v.removalSide === 'system' ? 'by the system' : `by the ${v.removalSide}`}
-                      {v.removalReason ? ` · ${humanize(v.removalReason)}` : ''}
+                      {fmt.dateTime(v.removedAt)}
+                      {v.removalSide ? ` · ${t(`removedBy.${v.removalSide}`)}` : ''}
+                      {v.removalReason ? ` · ${label(v.removalReason)}` : ''}
                     </dd>
                   </>
                 ) : null}
               </dl>
               {v.licencePhotoUrl ? (
                 <a className="btn btn--secondary btn--sm" href={v.licencePhotoUrl} target="_blank" rel="noreferrer">
-                  Open the licence
+                  {t('openLicence')}
                 </a>
               ) : (
-                <span className="t-secondary">No licence photo</span>
+                <span className="t-secondary">{t('noLicence')}</span>
               )}
             </div>
           ) : null}
@@ -237,10 +256,10 @@ function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'reject'}
         onClose={() => setStep(null)}
-        title={`Reject ${v?.plate ?? ''}?`}
-        description="The registrant is told the reason. A new plate sends it back to you."
+        title={t('rejectTitle', { plate: v?.plate ?? '' })}
+        description={t('rejectDescription')}
         codes={REASON_CODES.vehicleReject}
-        confirmLabel="Reject"
+        confirmLabel={t('reject')}
         danger
         pending={reject.isPending}
         error={<ErrorAlert error={reject.error} />}
@@ -249,10 +268,10 @@ function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'remove'}
         onClose={() => setStep(null)}
-        title={`Remove ${v?.plate ?? ''}?`}
-        description="Final: its sticker and permit are void, and the unit no longer sees it."
+        title={t('removeTitle', { plate: v?.plate ?? '' })}
+        description={t('removeDescription')}
         codes={REASON_CODES.vehicleStaffRemove}
-        confirmLabel="Remove"
+        confirmLabel={t('remove')}
         danger
         pending={remove.isPending}
         error={<ErrorAlert error={remove.error} />}
@@ -268,6 +287,8 @@ function VehicleDialog({ id, onClose }: { id: string; onClose: () => void }) {
  * Arabic or Western digits do not matter.
  */
 export default function VehiclesPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('vehicles.manage');
   const [view, setView] = useState<View>('pending');
@@ -287,33 +308,25 @@ export default function VehiclesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Vehicles" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Vehicles" description="The units’ vehicles and their permits. Approve with a sticker and a last day; a new plate comes back here." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<View>
-          label="Vehicles shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'pending', label: 'To approve' },
-            { value: 'active', label: 'Active' },
-            { value: 'expires_soon', label: 'Expiring' },
-            { value: 'expired', label: 'Expired' },
-            { value: 'rejected', label: 'Rejected' },
-            { value: 'removed', label: 'Removed' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
-        <Field label="Plate">
-          {(p) => <Input {...p} placeholder="e.g. ق ب ط 1234" value={plate} onChange={(e) => setPlate(e.target.value)} />}
+        <Field label={t('plate')}>
+          {(p) => <Input {...p} placeholder={t('platePlaceholder')} value={plate} onChange={(e) => setPlate(e.target.value)} />}
         </Field>
-        <Field label="Unit code">
-          {(p) => <Input {...p} placeholder="e.g. A-101" value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
+        <Field label={t('unitCode')}>
+          {(p) => <Input {...p} placeholder={t('unitCodePlaceholder')} value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
         </Field>
       </div>
       <Card flush>
@@ -321,26 +334,30 @@ export default function VehiclesPage() {
           <DataTable<StaffVehicle>
             rows={list.rows}
             rowKey={(v) => v.id}
-            empty={view === 'pending' ? 'No vehicle waits for approval' : 'No vehicle matches'}
+            empty={view === 'pending' ? t('emptyPending') : t('emptyMatch')}
             columns={[
               {
                 key: 'plate',
-                header: 'Plate',
+                header: t('col.plate'),
                 cell: (v) => (
                   <Button variant="text" className="table__link" onClick={() => setOpen(v.id)}>
                     {v.plate}
                   </Button>
                 ),
               },
-              { key: 'unit', header: 'Unit', cell: (v) => <span className="t-mono">{v.unitCode}</span> },
-              { key: 'car', header: 'Vehicle', cell: (v) => `${v.makeAndModel}, ${v.color}` },
-              { key: 'permit', header: 'Permit', cell: (v) => <StatusBadge status={v.permitStatus} /> },
-              { key: 'until', header: 'Through', cell: (v) => v.permitValidUntil ?? <span className="t-secondary">—</span> },
-              { key: 'sticker', header: 'Sticker', cell: (v) => <span className="t-mono">{v.stickerNumber ?? '—'}</span> },
+              { key: 'unit', header: t('col.unit'), cell: (v) => <span className="t-mono">{v.unitCode}</span> },
+              { key: 'car', header: t('col.vehicle'), cell: (v) => t('car', { model: v.makeAndModel, color: v.color }) },
+              { key: 'permit', header: t('col.permit'), cell: (v) => <StatusBadge status={v.permitStatus} /> },
+              {
+                key: 'until',
+                header: t('col.through'),
+                cell: (v) => (v.permitValidUntil ? fmt.day(v.permitValidUntil) : <span className="t-secondary">—</span>),
+              },
+              { key: 'sticker', header: t('col.sticker'), cell: (v) => <span className="t-mono">{v.stickerNumber ?? '—'}</span> },
               {
                 key: 'registered',
-                header: 'Registered',
-                cell: (v) => <span title={formatDateTime(v.createdAt)}>{relativeTime(v.createdAt)}</span>,
+                header: t('col.registered'),
+                cell: (v) => <span title={fmt.dateTime(v.createdAt)}>{fmt.relative(v.createdAt)}</span>,
               },
             ]}
           />

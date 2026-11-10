@@ -2,8 +2,39 @@
  * The gate's field exceptions and settings (ADR 0056), as the API holds
  * their rules: what the management's inbox shows and may still answer,
  * the countdown to an exception's deadline, and the settings' bounds.
- * Plain TypeScript with no imports, so the tests run it as is.
+ * Plain TypeScript importing only the layer's core and its catalog, by
+ * relative path, so the tests run it as is.
+ *
+ * The `…In(…, locale)` helpers give the words in the page's language; the
+ * English constants and helpers are kept for the pages not moved yet.
  */
+import { translator, type Locale } from '@jiwar/i18n/core';
+import ar from '../../messages/ar/guard-exceptions.ts';
+import en from '../../messages/en/guard-exceptions.ts';
+
+const words = (locale: Locale) => translator(locale, en, ar);
+
+/** A field exception's kind in the page's language; an unknown kind as it is. */
+export function exceptionKindText(kind: string, locale: Locale): string {
+  const key = `kind.${kind}`;
+  return key in en ? words(locale)(key as keyof typeof en) : kind;
+}
+
+/** Who or what asks to come in, a purged one in the page's language. */
+export function exceptionSubjectIn(
+  e: { kind: string; visitorName?: string | null; workerName?: string | null; vehiclePlate?: string | null },
+  locale: Locale,
+): string {
+  const t = words(locale);
+  if (e.kind === 'unregistered_vehicle') return e.vehiclePlate ?? t('purgedVehicle');
+  if (e.kind === 'worker_outside_hours') return e.workerName ?? t('aWorker');
+  return e.visitorName ?? t('purgedVisitor');
+}
+
+/** A gate setting's label in the page's language. */
+export function gateSettingLabel(name: GateSettingName, locale: Locale): string {
+  return words(locale)(`setting.${name}`);
+}
 
 export const EXCEPTION_KINDS: Record<string, string> = {
   worker_outside_hours: 'Worker outside hours',

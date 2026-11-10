@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT, type Translate } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -15,34 +16,56 @@ import {
   Select,
   StatusBadge,
   Textarea,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { localName } from '@/components/management-requests/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type GateServiceFilters, type GateServiceKind, type StaffGateService } from '@/lib/queries';
+import ar from '@/messages/ar/gate-services';
+import en from '@/messages/en/gate-services';
 
 const VIEWS = ['open', 'accepted', 'in_progress', 'closed', 'all'] as const;
 type View = (typeof VIEWS)[number];
 const KINDS: (GateServiceKind | '')[] = ['', 'accessibility', 'suspicious', 'escort', 'lane'];
 const MINUTES = [2, 5, 10, 15] as const;
 
-/** One line of what was asked. */
-function asked(r: StaffGateService): string {
-  switch (r.kind) {
-    case 'accessibility':
-      return `${humanize(r.assistanceKind ?? '')}${r.member ? ` for ${r.member.firstName ?? 'a member'}` : ''}, from ${r.fromPlace?.nameEn ?? '—'} to ${r.toPlace?.nameEn ?? 'the unit'}`;
-    case 'escort':
-      return `From ${r.fromPlace?.nameEn ?? '—'} to ${r.toPlace?.nameEn ?? '—'}`;
-    case 'suspicious':
-      return `At ${r.place?.nameEn ?? '—'}`;
-    case 'lane':
-      return `${humanize(r.laneReason ?? '')} at ${r.gate?.name ?? '—'}`;
-  }
+/** One line of what was asked, in the page's language. */
+function useAsked() {
+  const t = useT(en, ar);
+  const label = useLabel();
+  const { locale } = useLocale();
+  return (r: StaffGateService): string => {
+    const place = (p: { nameEn: string; nameAr?: string | null } | null | undefined, fallback = '—') => (p ? localName(locale, p) : fallback);
+    switch (r.kind) {
+      case 'accessibility': {
+        const help = label(r.assistanceKind);
+        const from = place(r.fromPlace);
+        const to = place(r.toPlace, t('asked.theUnit'));
+        return r.member
+          ? t('asked.accessibilityFor', { help, member: r.member.firstName ?? t('asked.aMember'), from, to })
+          : t('asked.accessibility', { help, from, to });
+      }
+      case 'escort':
+        return t('asked.escort', { from: place(r.fromPlace), to: place(r.toPlace) });
+      case 'suspicious':
+        return t('asked.suspicious', { place: place(r.place) });
+      case 'lane':
+        return t('asked.lane', { reason: label(r.laneReason), gate: r.gate?.name ?? '—' });
+    }
+  };
 }
 
 function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const asked = useAsked();
   const toast = useToast();
   const request = useQuery({ queryKey: keys.gateService(id), queryFn: () => fetchers.gateService(id) });
   const [step, setStep] = useState<'accept' | 'close' | null>(null);
@@ -59,14 +82,14 @@ function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.gateServicesAll],
       onDone: () => {
-        toast.show('Accepted. The resident is told.');
+        toast.show(t('accepted'));
         setStep(null);
       },
     },
   );
   const start = useAction(() => unwrap(api.POST('/api/v1/gate/gate-services/{id}/start', { params: { path: { id } } })), {
     invalidate: [keys.gateServicesAll],
-    onDone: () => toast.show('Started.'),
+    onDone: () => toast.show(t('started')),
   });
   const close = useAction(
     (reasonCode: string) =>
@@ -79,7 +102,7 @@ function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.gateServicesAll],
       onDone: () => {
-        toast.show('Closed. The resident is told.');
+        toast.show(t('closed'));
         setStep(null);
       },
     },
@@ -92,22 +115,22 @@ function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
         open={step === null}
         wide
         onClose={onClose}
-        title={r ? `${r.reference} · ${humanize(r.kind)}` : 'Request'}
+        title={r ? `${r.reference} · ${label(r.kind)}` : t('request')}
         description={r ? asked(r) : undefined}
         footer={
           <>
             {r?.status === 'open' ? (
               <Button variant="primary" onClick={() => setStep('accept')}>
-                Accept
+                {t('accept')}
               </Button>
             ) : null}
             {r?.status === 'accepted' && r.isMine ? (
               <Button loading={start.isPending} onClick={() => start.mutate(undefined)}>
-                Start
+                {t('start')}
               </Button>
             ) : null}
-            {live ? <Button onClick={() => setStep('close')}>Close</Button> : null}
-            <Button onClick={onClose}>Done</Button>
+            {live ? <Button onClick={() => setStep('close')}>{c('close')}</Button> : null}
+            <Button onClick={onClose}>{t('done')}</Button>
           </>
         }
       >
@@ -115,48 +138,51 @@ function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
           {r ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{c('status')}</dt>
                 <dd>
                   <StatusBadge status={r.status} />
-                  {r.closeReason ? <span className="t-secondary"> · {humanize(r.closeReason)}</span> : null}
+                  {r.closeReason ? <span className="t-secondary"> · {label(r.closeReason)}</span> : null}
                 </dd>
-                <dt>Asked by</dt>
+                <dt>{t('askedBy')}</dt>
                 <dd>
-                  {r.requestedBy.erased ? 'An erased account' : r.requestedBy.firstName} · {r.location.unitCode} ·{' '}
-                  {formatDateTime(r.createdAt)}
+                  {r.requestedBy.erased ? t('erasedAccount') : r.requestedBy.firstName} · {r.location.unitCode} · {f.dateTime(r.createdAt)}
                 </dd>
                 {r.wantedAt ? (
                   <>
-                    <dt>Wanted</dt>
-                    <dd>{formatDateTime(r.wantedAt)}</dd>
+                    <dt>{t('wanted')}</dt>
+                    <dd>{f.dateTime(r.wantedAt)}</dd>
                   </>
                 ) : null}
-                <dt>Handled by</dt>
+                <dt>{t('handledBy')}</dt>
                 <dd>
-                  {r.handledBy ? `${r.handledBy.firstName ?? '—'}${r.minutesAway !== null ? ` · ${r.minutesAway} min away` : ''}` : 'Nobody yet'}
+                  {r.handledBy
+                    ? r.minutesAway !== null
+                      ? t('minutesAway', { name: r.handledBy.firstName ?? '—', minutes: f.number(r.minutesAway) })
+                      : (r.handledBy.firstName ?? '—')
+                    : t('nobodyYet')}
                 </dd>
                 {r.description ? (
                   <>
-                    <dt>What they saw</dt>
+                    <dt>{t('saw')}</dt>
                     <dd>{r.description}</dd>
                   </>
                 ) : null}
                 {r.notes ? (
                   <>
-                    <dt>Notes</dt>
+                    <dt>{c('notes')}</dt>
                     <dd>{r.notes}</dd>
                   </>
                 ) : null}
                 {r.closeNote ? (
                   <>
-                    <dt>Our note</dt>
+                    <dt>{t('ourNote')}</dt>
                     <dd>{r.closeNote}</dd>
                   </>
                 ) : null}
               </dl>
               {r.photoUrl ? (
                 <a className="btn btn--secondary btn--sm" href={r.photoUrl} target="_blank" rel="noreferrer">
-                  Open the photo
+                  {t('openPhoto')}
                 </a>
               ) : null}
               <ErrorAlert error={start.error} />
@@ -167,30 +193,30 @@ function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <Dialog
         open={step === 'accept'}
         onClose={() => setStep(null)}
-        title={`Accept ${r?.reference ?? ''}`}
-        description="The resident sees your first name and, for help that comes to them, the minutes counting down."
+        title={t('acceptTitle', { reference: r?.reference ?? '' })}
+        description={t('acceptDescription')}
         onSubmit={() => accept.mutate(undefined)}
         footer={
           <>
-            <Button onClick={() => setStep(null)}>Cancel</Button>
+            <Button onClick={() => setStep(null)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={accept.isPending}>
-              Accept
+              {t('accept')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="Minutes away" hint="Required for accessibility help and an escort.">
+          <Field label={t('minutesLabel')} hint={t('minutesHint')}>
             {(p) => (
               <Select
                 {...p}
                 value={String(minutes)}
                 onChange={(ev) => setMinutes(ev.target.value ? (Number(ev.target.value) as (typeof MINUTES)[number]) : '')}
               >
-                <option value="">None</option>
+                <option value="">{c('none')}</option>
                 {MINUTES.map((m) => (
                   <option key={m} value={m}>
-                    {m} minutes
+                    {t('minutes', { m })}
                   </option>
                 ))}
               </Select>
@@ -202,15 +228,15 @@ function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'close'}
         onClose={() => setStep(null)}
-        title={`Close ${r?.reference ?? ''}?`}
-        description="The resident sees it closed and why, never your note."
+        title={t('closeTitle', { reference: r?.reference ?? '' })}
+        description={t('closeDescription')}
         codes={REASON_CODES.gateServiceClose}
-        confirmLabel="Close"
+        confirmLabel={c('close')}
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
         onConfirm={(reasonCode) => close.mutate(reasonCode)}
       >
-        <Field label="Note (optional)" hint="For the management: up to 500 characters.">
+        <Field label={t('noteLabel')} hint={t('noteHint')}>
           {(p) => <Textarea {...p} value={note} onChange={(ev) => setNote(ev.target.value)} />}
         </Field>
       </ReasonCodeDialog>
@@ -224,45 +250,44 @@ function ServiceDetail({ id, onClose }: { id: string; onClose: () => void }) {
  * first, refreshed every thirty seconds. Never a resident's phone.
  */
 export default function GateServicesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const asked = useAsked();
   const { ready, can } = usePermissions();
   const allowed = can('gate_services.handle');
   const [view, setView] = useState<View>('open');
   const [kind, setKind] = useState<GateServiceKind | ''>('');
   const [open, setOpen] = useState<string | null>(null);
   const filters: GateServiceFilters = { status: view === 'all' ? '' : view, kind };
-  const list = useCursorList(keys.gateServices(filters), (c) => fetchers.gateServices(filters, c), {
+  const list = useCursorList(keys.gateServices(filters), (cursor) => fetchers.gateServices(filters, cursor), {
     enabled: allowed,
     refetchInterval: 30_000,
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Gate services" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Gate services" description="Oldest first. Guards accept from the app; you can accept, start and close here." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<View>
-          label="Requests shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'open', label: 'Open' },
-            { value: 'accepted', label: 'Accepted' },
-            { value: 'in_progress', label: 'In progress' },
-            { value: 'closed', label: 'Closed' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: v === 'all' ? c('all') : label(v) }))}
         />
-        <Field label="Kind">
+        <Field label={c('kind')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as GateServiceKind | '')}>
               {KINDS.map((k) => (
                 <option key={k} value={k}>
-                  {k ? humanize(k) : 'All kinds'}
+                  {k ? label(k) : t('allKinds')}
                 </option>
               ))}
             </Select>
@@ -274,22 +299,22 @@ export default function GateServicesPage() {
           <DataTable<StaffGateService>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty={view === 'open' ? 'No request waits' : 'No request matches'}
+            empty={view === 'open' ? t('emptyOpen') : t('empty')}
             columns={[
               {
                 key: 'ref',
-                header: 'Request',
+                header: t('col.request'),
                 cell: (r) => (
                   <Button variant="text" className="table__link t-mono" onClick={() => setOpen(r.id)}>
                     {r.reference}
                   </Button>
                 ),
               },
-              { key: 'kind', header: 'Kind', cell: (r) => humanize(r.kind) },
-              { key: 'what', header: 'What', cell: (r) => asked(r) },
-              { key: 'unit', header: 'Unit', cell: (r) => r.location.unitCode },
-              { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
-              { key: 'when', header: 'Asked', cell: (r) => <span title={formatDateTime(r.createdAt)}>{relativeTime(r.createdAt)}</span> },
+              { key: 'kind', header: c('kind'), cell: (r) => label(r.kind) },
+              { key: 'what', header: t('col.what'), cell: (r) => asked(r) },
+              { key: 'unit', header: c('unit'), cell: (r) => r.location.unitCode },
+              { key: 'status', header: c('status'), cell: (r) => <StatusBadge status={r.status} /> },
+              { key: 'when', header: t('col.asked'), cell: (r) => <span title={f.dateTime(r.createdAt)}>{f.relative(r.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

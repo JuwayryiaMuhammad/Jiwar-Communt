@@ -1,12 +1,15 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, CardBody, CardHeader, DataTable, Field, ForbiddenState, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT, type Translate } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, DataTable, Field, ForbiddenState, Input, PageHeader, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
+import ar from '@/messages/ar/gate-access';
+import en from '@/messages/en/gate-access';
 
 interface Ref {
   id: string;
@@ -48,7 +51,7 @@ interface Settings {
   reviewEveryDays: number;
 }
 
-const name = (r: Ref) => r.fullName ?? 'Erased';
+const name = (t: Translate<typeof en>, r: Ref) => r.fullName ?? t('erased');
 const list = <T,>(res: unknown) => (res as { data: T[] }).data;
 
 /**
@@ -57,6 +60,11 @@ const list = <T,>(res: unknown) => (res as { data: T[] }).data;
  * revoked, revoked deactivating the account. `accounts.manage`.
  */
 export default function AccessChecksPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const who = (r: Ref, type: string) => `${name(t, r)} (${label(type)})`;
   const { ready, can, me } = usePermissions();
   const toast = useToast();
   const allowed = can('accounts.manage');
@@ -88,23 +96,23 @@ export default function AccessChecksPage() {
   const [draft, setDraft] = useState<Partial<Settings>>({});
   const save = useAction(
     () => unwrap(api.PATCH('/api/v1/staff/access/settings', { body: draft })),
-    { invalidate: [['access-checks']], onDone: () => toast.show('Saved.') },
+    { invalidate: [['access-checks']], onDone: () => toast.show(c('saved')) },
   );
   const keep = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
       unwrap(
         api.POST('/api/v1/staff/access/dangling-accounts/{id}/keep', { params: { path: { id } }, body: { reasonCode } }),
       ),
-    { invalidate: [['access-checks']], onDone: () => toast.show('Kept; not found again for 90 days.') },
+    { invalidate: [['access-checks']], onDone: () => toast.show(t('kept')) },
   );
   const deactivate = useAction(
     (id: string) =>
       unwrap(api.POST('/api/v1/staff/access/dangling-accounts/{id}/deactivate', { params: { path: { id } } })),
-    { invalidate: [['access-checks']], onDone: () => toast.show('Deactivated.') },
+    { invalidate: [['access-checks']], onDone: () => toast.show(t('deactivated')) },
   );
   const open = useAction(() => unwrap(api.POST('/api/v1/staff/access/reviews', {})), {
     invalidate: [['access-checks']],
-    onDone: () => toast.show('Review opened.'),
+    onDone: () => toast.show(t('reviewOpened')),
   });
   const decide = useAction(
     ({ lineId, decision }: { lineId: string; decision: 'keep' | 'revoke' }) =>
@@ -119,50 +127,50 @@ export default function AccessChecksPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Access checks" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Access checks"
-        description="Staff, manager and contractor accounts that look dangling, and the periodic review of who has access."
+        title={t('title')}
+        description={t('description')}
       />
       <Card>
-        <CardHeader title="Dangling accounts" />
+        <CardHeader title={t('dangling')} />
         <ErrorAlert error={keep.error ?? deactivate.error} />
         <QueryState query={findings}>
           <DataTable<Finding>
             rows={findings.data ?? []}
             rowKey={(r) => r.id}
-            empty="No account looks dangling"
+            empty={t('danglingEmpty')}
             columns={[
-              { key: 'a', header: 'Account', cell: (r) => `${name(r.account)} (${r.accountType})` },
-              { key: 'r', header: 'Why', cell: (r) => humanize(r.reason) },
-              { key: 'l', header: 'Last sign-in', cell: (r) => (r.lastActiveAt ? formatDateTime(r.lastActiveAt) : 'Never') },
-              { key: 'f', header: 'Found', cell: (r) => formatDateTime(r.foundAt) },
+              { key: 'a', header: t('col.account'), cell: (r) => who(r.account, r.accountType) },
+              { key: 'r', header: t('col.why'), cell: (r) => label(r.reason) },
+              { key: 'l', header: t('col.lastSignIn'), cell: (r) => (r.lastActiveAt ? f.dateTime(r.lastActiveAt) : t('never')) },
+              { key: 'f', header: t('col.found'), cell: (r) => f.dateTime(r.foundAt) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (r) =>
                   r.account.id === me?.id ? null : (
                     <span className="row" style={{ gap: 6 }}>
                       <Select
-                        aria-label="Keep, with a reason"
+                        aria-label={t('keepAria')}
                         value=""
                         onChange={(e) => e.target.value && keep.mutate({ id: r.id, reasonCode: e.target.value })}
                       >
-                        <option value="">Keep…</option>
-                        {REASON_CODES.danglingKeep.map((c) => (
-                          <option key={c} value={c}>
-                            {humanize(c)}
+                        <option value="">{t('keepPlaceholder')}</option>
+                        {REASON_CODES.danglingKeep.map((code) => (
+                          <option key={code} value={code}>
+                            {label(code)}
                           </option>
                         ))}
                       </Select>
                       <Button size="sm" variant="danger" loading={deactivate.isPending} onClick={() => deactivate.mutate(r.id)}>
-                        Deactivate
+                        {t('deactivate')}
                       </Button>
                     </span>
                   ),
@@ -173,16 +181,15 @@ export default function AccessChecksPage() {
       </Card>
 
       <Card>
-        <CardHeader title={openReview ? `Access review ${openReview.number}` : 'Access review'} />
+        <CardHeader title={openReview ? t('reviewNumbered', { number: openReview.number }) : t('review')} />
         <CardBody>
           {openReview ? (
             <p>
-              Opened {formatDateTime(openReview.openedAt)}: {openReview.undecided} of {openReview.lines} lines to decide.
-              Revoking deactivates the account at once.
+              {t('reviewIntro', { when: f.dateTime(openReview.openedAt), undecided: f.number(openReview.undecided), lines: f.number(openReview.lines) })}
             </p>
           ) : (
             <Button variant="primary" loading={open.isPending} onClick={() => open.mutate()}>
-              Open a review now
+              {t('openReview')}
             </Button>
           )}
           <ErrorAlert error={open.error ?? decide.error} />
@@ -192,24 +199,24 @@ export default function AccessChecksPage() {
             <DataTable<Line>
               rows={review.data?.reviewLines ?? []}
               rowKey={(r) => r.id}
-              empty="Nobody to review"
+              empty={t('reviewEmpty')}
               columns={[
-                { key: 'a', header: 'Account', cell: (r) => `${name(r.account)} (${r.accountType})` },
-                { key: 'r', header: 'Role', cell: (r) => (r.role.key ? humanize(r.role.key) : (r.role.name ?? '—')) },
-                { key: 'p', header: 'Permissions', cell: (r) => r.permissions.length },
-                { key: 'l', header: 'Last sign-in', cell: (r) => (r.lastActiveAt ? formatDateTime(r.lastActiveAt) : 'Never') },
+                { key: 'a', header: t('col.account'), cell: (r) => who(r.account, r.accountType) },
+                { key: 'r', header: t('col.role'), cell: (r) => (r.role.key ? label(r.role.key) : (r.role.name ?? '—')) },
+                { key: 'p', header: t('col.permissions'), cell: (r) => f.number(r.permissions.length) },
+                { key: 'l', header: t('col.lastSignIn'), cell: (r) => (r.lastActiveAt ? f.dateTime(r.lastActiveAt) : t('never')) },
                 {
                   key: 'd',
-                  header: 'Decision',
+                  header: t('col.decision'),
                   cell: (r) =>
                     r.decision ? (
-                      humanize(r.decision)
+                      label(r.decision)
                     ) : r.account.id === me?.id ? (
-                      'Someone else decides'
+                      t('someoneElse')
                     ) : (
                       <span className="row" style={{ gap: 6 }}>
                         <Button size="sm" loading={decide.isPending} onClick={() => decide.mutate({ lineId: r.id, decision: 'keep' })}>
-                          Keep
+                          {t('keep')}
                         </Button>
                         {r.protected ? null : (
                           <Button
@@ -218,7 +225,7 @@ export default function AccessChecksPage() {
                             loading={decide.isPending}
                             onClick={() => decide.mutate({ lineId: r.id, decision: 'revoke' })}
                           >
-                            Revoke
+                            {t('revoke')}
                           </Button>
                         )}
                       </span>
@@ -231,11 +238,11 @@ export default function AccessChecksPage() {
       </Card>
 
       <Card>
-        <CardHeader title="Settings" />
+        <CardHeader title={t('settings')} />
         <CardBody>
           <QueryState query={settings}>
             <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
-              <Field label="Idle days (14–365)">
+              <Field label={t('idleDays', { min: 14, max: 365 })}>
                 {(p) => (
                   <Input
                     {...p}
@@ -247,7 +254,7 @@ export default function AccessChecksPage() {
                   />
                 )}
               </Field>
-              <Field label="A review every (days, 30–365)">
+              <Field label={t('reviewEvery', { min: 30, max: 365 })}>
                 {(p) => (
                   <Input
                     {...p}
@@ -260,7 +267,7 @@ export default function AccessChecksPage() {
                 )}
               </Field>
               <Button variant="primary" disabled={!Object.keys(draft).length} loading={save.isPending} onClick={() => save.mutate()}>
-                Save
+                {c('save')}
               </Button>
             </div>
             <ErrorAlert error={save.error} />

@@ -1,22 +1,27 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Segmented, StatusBadge, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { DateRange } from '@/components/date-range';
-import { addDays, personName, postName, today } from '@/components/security/logic';
+import { addDays, personNameIn, postNameIn, today } from '@/components/security/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type HandoverItem, type StaffHandover } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/sec-handovers';
+import en from '@/messages/en/sec-handovers';
 
 const TABS = ['handovers', 'checklist'] as const;
 type Tab = (typeof TABS)[number];
 
 function ItemDialog({ item, onClose }: { item: HandoverItem | null; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [label, setLabel] = useState(item?.label ?? '');
   const [position, setPosition] = useState(String(item?.position ?? 0));
@@ -29,7 +34,7 @@ function ItemDialog({ item, onClose }: { item: HandoverItem | null; onClose: () 
     {
       invalidate: [keys.handoverItems],
       onDone: () => {
-        toast.show(item ? 'Item saved.' : 'Item added: guards tick it from their next end.');
+        toast.show(item ? t('itemSaved') : t('itemAdded'));
         onClose();
       },
     },
@@ -38,23 +43,23 @@ function ItemDialog({ item, onClose }: { item: HandoverItem | null; onClose: () 
     <Dialog
       open
       onClose={onClose}
-      title={item ? 'Edit item' : 'New checklist item'}
-      description="Every active item is ticked when a guard ends a shift. A handover keeps the words it was ticked under."
+      title={item ? t('editItem') : t('newItem')}
+      description={t('itemDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!label.trim()}>
-            {item ? 'Save' : 'Add item'}
+            {item ? c('save') : t('addItem')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Item" error={fieldError(save.error, 'label')}>
+        <Field label={t('item')} error={fieldError(save.error, 'label')}>
           {(p) => <Input {...p} autoFocus maxLength={120} value={label} onChange={(e) => setLabel(e.target.value)} />}
         </Field>
-        <Field label="Order" hint="Lower first (0–1000)." error={fieldError(save.error, 'position')}>
+        <Field label={t('order')} hint={t('orderHint')} error={fieldError(save.error, 'position')}>
           {(p) => <Input {...p} type="number" min={0} max={1000} value={position} onChange={(e) => setPosition(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -64,22 +69,25 @@ function ItemDialog({ item, onClose }: { item: HandoverItem | null; onClose: () 
 }
 
 function Checklist() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const items = useQuery({ queryKey: keys.handoverItems, queryFn: fetchers.handoverItems });
   const [editing, setEditing] = useState<HandoverItem | 'new' | null>(null);
   const toggle = useAction(
     (i: HandoverItem) =>
       unwrap(api.PATCH('/api/v1/staff/security/handover-items/{id}', { params: { path: { id: i.id } }, body: { active: !i.active } })),
-    { invalidate: [keys.handoverItems], onDone: (i) => toast.show(i.active ? 'Asked again.' : 'Retired.') },
+    { invalidate: [keys.handoverItems], onDone: (i) => toast.show(i.active ? t('askedAgain') : t('retired')) },
   );
   return (
     <div className="stack">
       <div className="row">
         <p className="t-secondary" style={{ flex: 1 }}>
-          At most 30 active items. Retired ones are asked no more; an item is never deleted.
+          {t('checklistNote')}
         </p>
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setEditing('new')}>
-          New item
+          {t('newItemButton')}
         </Button>
       </div>
       <ErrorAlert error={toggle.error} />
@@ -88,22 +96,22 @@ function Checklist() {
           <DataTable<HandoverItem>
             rows={items.data?.data}
             rowKey={(i) => i.id}
-            empty="No checklist: guards end their shifts with notes alone"
+            empty={t('emptyChecklist')}
             columns={[
-              { key: 'label', header: 'Item', cell: (i) => <span className="table__primary">{i.label}</span> },
-              { key: 'order', header: 'Order', cell: (i) => <span className="t-num">{i.position}</span> },
-              { key: 'status', header: 'Status', cell: (i) => <StatusBadge status={i.active ? 'active' : 'inactive'} /> },
+              { key: 'label', header: t('item'), cell: (i) => <span className="table__primary">{i.label}</span> },
+              { key: 'order', header: t('order'), cell: (i) => <span className="t-num">{f.number(i.position)}</span> },
+              { key: 'status', header: c('status'), cell: (i) => <StatusBadge status={i.active ? 'active' : 'inactive'} /> },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (i) => (
                   <span className="row" style={{ justifyContent: 'flex-end' }}>
                     <Button size="sm" onClick={() => setEditing(i)}>
-                      Edit
+                      {c('edit')}
                     </Button>
                     <Button size="sm" loading={toggle.isPending && toggle.variables?.id === i.id} onClick={() => toggle.mutate(i)}>
-                      {i.active ? 'Retire' : 'Restore'}
+                      {i.active ? t('retire') : t('restore')}
                     </Button>
                   </span>
                 ),
@@ -118,44 +126,59 @@ function Checklist() {
 }
 
 function HandoverDetail({ h, onClose }: { h: StaffHandover; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   return (
-    <Dialog open wide onClose={onClose} title={`Handover · ${postName(h.post)}`} description={formatDateTime(h.createdAt)} footer={<Button onClick={onClose}>Done</Button>}>
+    <Dialog
+      open
+      wide
+      onClose={onClose}
+      title={t('detailTitle', { post: postNameIn(h.post, locale) })}
+      description={f.dateTime(h.createdAt)}
+      footer={<Button onClick={onClose}>{c('close')}</Button>}
+    >
       <dl className="dl">
-        <dt>By</dt>
-        <dd>{personName(h.guard)}</dd>
-        <dt>Kind</dt>
-        <dd>{h.kind === 'system' ? 'Ended by the system (post out of service, or the guard left)' : 'Handed over by the guard'}</dd>
-        <dt>Checklist</dt>
-        <dd>{h.checklist.length ? h.checklist.map((c) => c.label).join(' · ') : '—'}</dd>
-        <dt>Notes</dt>
+        <dt>{t('by')}</dt>
+        <dd>{personNameIn(h.guard, locale)}</dd>
+        <dt>{c('kind')}</dt>
+        <dd>{h.kind === 'system' ? t('systemEnded') : t('handedOver')}</dd>
+        <dt>{t('checklist')}</dt>
+        <dd>{h.checklist.length ? h.checklist.map((x) => x.label).join(' · ') : '—'}</dd>
+        <dt>{c('notes')}</dt>
         <dd>{h.notes ?? '—'}</dd>
-        <dt>Tasks carried</dt>
-        <dd>{h.carriedTaskIds.length}</dd>
-        <dt>Acknowledged</dt>
-        <dd>{h.acknowledgedAt ? `${personName(h.acknowledgedBy)} · ${formatDateTime(h.acknowledgedAt)}` : 'Not yet'}</dd>
+        <dt>{t('tasksCarried')}</dt>
+        <dd>{f.number(h.carriedTaskIds.length)}</dd>
+        <dt>{t('acknowledged')}</dt>
+        <dd>{h.acknowledgedAt ? `${personNameIn(h.acknowledgedBy, locale)} · ${f.dateTime(h.acknowledgedAt)}` : t('notYet')}</dd>
       </dl>
     </Dialog>
   );
 }
 
 function Handovers() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { locale } = useLocale();
   const [range, setRange] = useState({ from: addDays(today(), -6), to: today() });
   const [state, setState] = useState<'pending' | 'acknowledged' | ''>('');
   const [open, setOpen] = useState<StaffHandover | null>(null);
-  const f = { ...range, state };
-  const list = useQuery({ queryKey: keys.handovers(f), queryFn: () => fetchers.handovers(f) });
+  const filters = { ...range, state };
+  const list = useQuery({ queryKey: keys.handovers(filters), queryFn: () => fetchers.handovers(filters) });
   return (
     <div className="stack">
       <div className="toolbar">
         <DateRange from={range.from} to={range.to} onChange={(r) => setRange(r)} />
         <Segmented<'pending' | 'acknowledged' | ''>
-          label="Handovers shown"
+          label={t('shown')}
           value={state}
           onChange={setState}
           options={[
-            { value: '', label: 'All' },
-            { value: 'pending', label: 'Waiting' },
-            { value: 'acknowledged', label: 'Acknowledged' },
+            { value: '', label: c('all') },
+            { value: 'pending', label: t('waiting') },
+            { value: 'acknowledged', label: t('acknowledged') },
           ]}
         />
       </div>
@@ -164,21 +187,25 @@ function Handovers() {
           <DataTable<StaffHandover>
             rows={list.data?.data}
             rowKey={(h) => h.id}
-            empty="No handover in this period"
+            empty={t('emptyHandovers')}
             columns={[
               {
                 key: 'when',
-                header: 'When',
+                header: t('col.when'),
                 cell: (h) => (
                   <Button variant="text" className="table__link" onClick={() => setOpen(h)}>
-                    {formatDateTime(h.createdAt)}
+                    {f.dateTime(h.createdAt)}
                   </Button>
                 ),
               },
-              { key: 'post', header: 'Post', cell: (h) => postName(h.post) },
-              { key: 'guard', header: 'By', cell: (h) => personName(h.guard) },
-              { key: 'kind', header: 'Kind', cell: (h) => <StatusBadge status={h.kind === 'system' ? 'closed' : 'done'} /> },
-              { key: 'ack', header: 'Acknowledged', cell: (h) => (h.acknowledgedAt ? personName(h.acknowledgedBy) : 'Waiting') },
+              { key: 'post', header: t('col.post'), cell: (h) => postNameIn(h.post, locale) },
+              { key: 'guard', header: t('col.by'), cell: (h) => personNameIn(h.guard, locale) },
+              { key: 'kind', header: t('col.kind'), cell: (h) => <StatusBadge status={h.kind === 'system' ? 'closed' : 'done'} /> },
+              {
+                key: 'ack',
+                header: t('acknowledged'),
+                cell: (h) => (h.acknowledgedAt ? personNameIn(h.acknowledgedBy, locale) : t('waiting')),
+              },
             ]}
           />
         </QueryState>
@@ -189,26 +216,27 @@ function Handovers() {
 }
 
 function HandoversView() {
+  const t = useT(en, ar);
   const { ready, can } = usePermissions();
   const [tab, setTab] = useTab(TABS, 'handovers');
   if (ready && !can('guard_roster.manage'))
     return (
       <>
-        <PageHeader title="Handovers" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Handovers" description="What each guard handed over at the end of a shift, and the checklist they tick." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<Tab>
-          label="Handovers"
+          label={t('title')}
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'handovers', label: 'Handovers' },
-            { value: 'checklist', label: 'Checklist' },
+            { value: 'handovers', label: t('tab.handovers') },
+            { value: 'checklist', label: t('tab.checklist') },
           ]}
         />
       </div>

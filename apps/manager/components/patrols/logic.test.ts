@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { stripIsolates } from '@jiwar/i18n/core';
 import { moved, patrolScheduleText, positionFrom, progressText, timesFrom } from './logic.ts';
 
 test('a schedule in words; none is unscheduled', () => {
-  assert.equal(patrolScheduleText({ days: [3, 1], times: ['22:00', '08:00'] }), 'Mon, Wed at 08:00, 22:00');
-  assert.equal(patrolScheduleText({ days: [0, 1, 2, 3, 4, 5, 6], times: ['03:00'] }), 'Every day at 03:00');
-  assert.equal(patrolScheduleText(null), 'Unscheduled');
+  const text = (...a: Parameters<typeof patrolScheduleText>) => stripIsolates(patrolScheduleText(...a));
+  assert.equal(text({ days: [3, 1], times: ['22:00', '08:00'] }), 'Mon, Wed at 08:00, 22:00');
+  assert.equal(text({ days: [0, 1, 2, 3, 4, 5, 6], times: ['03:00'] }), 'Every day at 03:00');
+  assert.equal(text(null), 'Unscheduled');
+  // In Arabic.
+  assert.equal(text({ days: [3, 1], times: ['22:00', '08:00'] }, 'ar'), 'الاثنين، الأربعاء في 08:00، 22:00');
+  assert.equal(text({ days: [0, 1, 2, 3, 4, 5, 6], times: ['03:00'] }, 'ar'), 'كل يوم في 03:00');
+  assert.equal(text(null, 'ar'), 'بلا جدول');
 });
 
 test('start times from the form, sorted, once each; anything else is refused', () => {

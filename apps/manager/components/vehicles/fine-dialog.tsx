@@ -1,13 +1,16 @@
 'use client';
 
-import { fieldError, humanize, REASON_CODES, type Schema } from '@jiwar/api';
+import { fieldError, REASON_CODES, type Schema } from '@jiwar/api';
 import { ErrorAlert } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Select, Textarea } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Select, Textarea, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { addDays, validFineAmount } from '@/components/vehicles/logic';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/safety-fine-dialog';
+import en from '@/messages/en/safety-fine-dialog';
 
 export type FineBody = Schema<'IssueFineDto'>;
 
@@ -38,6 +41,9 @@ export function FineDialog({
   onSubmit: (body: FineBody) => void;
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const [unitCode, setUnitCode] = useState(initial?.unitCode ?? '');
   const [vehicleId, setVehicleId] = useState('');
   const [plate, setPlate] = useState(initial?.plate ?? '');
@@ -74,7 +80,7 @@ export function FineDialog({
       onSubmit={() => ready && onSubmit(body)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={pending} disabled={!ready}>
             {confirmLabel}
           </Button>
@@ -82,13 +88,13 @@ export function FineDialog({
       }
     >
       <div className="form">
-        <Field label="Unit code" error={fieldError(error, 'unitCode')}>
+        <Field label={t('unitCode')} error={fieldError(error, 'unitCode')}>
           {(p) => <Input {...p} value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
         </Field>
-        <Field label="Vehicle" hint="One of the unit’s registered vehicles, or type the plate below." error={fieldError(error, 'vehicleId')}>
+        <Field label={t('vehicle')} hint={t('vehicleHint')} error={fieldError(error, 'vehicleId')}>
           {(p) => (
             <Select {...p} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} disabled={!code}>
-              <option value="">Not registered: type the plate</option>
+              <option value="">{t('notRegistered')}</option>
               {options.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.plate} · {v.makeAndModel}
@@ -98,45 +104,45 @@ export function FineDialog({
           )}
         </Field>
         {vehicleId ? null : (
-          <Field label="Plate" error={fieldError(error, 'plate')}>
+          <Field label={t('plate')} error={fieldError(error, 'plate')}>
             {(p) => <Input {...p} maxLength={40} value={plate} onChange={(e) => setPlate(e.target.value)} />}
           </Field>
         )}
-        <Field label="Reason" error={fieldError(error, 'reason')}>
+        <Field label={t('reason')} error={fieldError(error, 'reason')}>
           {(p) => (
             <Select {...p} value={reason} onChange={(e) => setReason(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{c('select')}</option>
               {REASON_CODES.vehicleFineReason.map((r) => (
                 <option key={r} value={r}>
-                  {humanize(r)}
+                  {label(r)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         <Field
-          label="Amount, EGP"
-          error={fieldError(error, 'amount') ?? (amount && !validFineAmount(amount) ? 'More than zero, at most 100,000, two decimals.' : undefined)}
+          label={t('amount')}
+          error={fieldError(error, 'amount') ?? (amount && !validFineAmount(amount) ? t('amountInvalid') : undefined)}
         >
           {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
         </Field>
-        <Field label="Day it happened" hint="Within the last 90 days." error={fieldError(error, 'occurredOn')}>
+        <Field label={t('occurredOn')} hint={t('occurredOnHint')} error={fieldError(error, 'occurredOn')}>
           {(p) => <Input {...p} type="date" min={addDays(today(), -90)} max={today()} value={occurredOn} onChange={(e) => setOccurredOn(e.target.value)} />}
         </Field>
-        <Field label="Note for the unit" hint="Optional. The unit’s people read it." error={fieldError(error, 'note')}>
+        <Field label={t('note')} hint={t('noteHint')} error={fieldError(error, 'note')}>
           {(p) => <Textarea {...p} maxLength={500} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />}
         </Field>
-        <Field label="Photo">
+        <Field label={t('photo')}>
           {() =>
             photoFileId ? (
               <span className="row" style={{ gap: 8 }}>
-                <span className="t-secondary">Photo attached.</span>
+                <span className="t-secondary">{t('photoAttached')}</span>
                 <Button size="sm" onClick={() => setPhoto(null)}>
-                  Remove
+                  {c('remove')}
                 </Button>
               </span>
             ) : (
-              <FileUpload purpose="vehicle_fine_photo" label="Add a photo" onUploaded={setPhoto} />
+              <FileUpload purpose="vehicle_fine_photo" label={t('addPhoto')} onUploaded={setPhoto} />
             )
           }
         </Field>

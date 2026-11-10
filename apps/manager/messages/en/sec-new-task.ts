@@ -1,0 +1,20 @@
+/** A new guard task (ADR 0050, 0063, 0083): components/security/new-task-dialog. */
+export default {
+  given: 'Task given. The guard, or the guards on shift there, are told.',
+  title: 'New task',
+  description: 'For one guard, or for whoever is on shift at a gate or a zone.',
+  giveTask: 'Give task',
+  inspectionDue: 'Inspection of {unit}, its round due.',
+  inspectionAsked: 'Inspection of {unit}, as its owner asked.',
+  'kind.custom': 'A task',
+  'kind.closed_unit_inspection': 'Closed unit inspection',
+  titleLabel: 'Title',
+  unitHint: 'In closed mode: the household turned it on.',
+  details: 'Details',
+  forLabel: 'For',
+  gateOrZone: 'A gate or zone',
+  oneGuard: 'One guard',
+  guard: 'Guard',
+  post: 'Post',
+  due: 'Due',
+} as const;

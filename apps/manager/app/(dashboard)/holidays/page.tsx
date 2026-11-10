@@ -2,17 +2,22 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Holiday } from '@/lib/queries';
+import ar from '@/messages/ar/fac-places';
+import en from '@/messages/en/fac-places';
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 function NewHolidayDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [day, setDay] = useState('');
   const [nameEn, setNameEn] = useState('');
@@ -23,7 +28,7 @@ function NewHolidayDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.spacesAll, keys.permitSettings],
       onDone: () => {
-        toast.show('Holiday added.');
+        toast.show(t('holidays.added'));
         onClose();
       },
     },
@@ -33,30 +38,30 @@ function NewHolidayDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Add a holiday"
-      description="One a day. Bookings and planned work that day are flagged, never moved."
+      title={t('holidays.add')}
+      description={t('holidays.newDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Add
+            {c('add')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Day" error={fieldError(save.error, 'day')}>
+        <Field label={t('holidays.col.day')} error={fieldError(save.error, 'day')}>
           {(p) => <Input {...p} type="date" value={day} onChange={(e) => setDay(e.target.value)} />}
         </Field>
-        <Field label="Name (English)" error={fieldError(save.error, 'nameEn')}>
-          {(p) => <Input {...p} value={nameEn} maxLength={80} onChange={(e) => setNameEn(e.target.value)} />}
+        <Field label={t('holidays.nameEn')} error={fieldError(save.error, 'nameEn')}>
+          {(p) => <Input {...p} dir="ltr" lang="en" value={nameEn} maxLength={80} onChange={(e) => setNameEn(e.target.value)} />}
         </Field>
-        <Field label="Name (Arabic)" error={fieldError(save.error, 'nameAr')}>
+        <Field label={t('holidays.nameAr')} error={fieldError(save.error, 'nameAr')}>
           {(p) => <Input {...p} dir="rtl" value={nameAr} maxLength={80} onChange={(e) => setNameAr(e.target.value)} />}
         </Field>
         <Checkbox
-          label="Works and moves stop that day (a permits’ day off)"
+          label={t('holidays.stopsWorks')}
           checked={stopsWorks}
           onChange={(e) => setStopsWorks(e.target.checked)}
         />
@@ -71,6 +76,9 @@ function NewHolidayDialog({ onClose }: { onClose: () => void }) {
  * a day off of the permits; bookings and planned work are only flagged.
  */
 export default function HolidaysPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('spaces.manage');
@@ -81,33 +89,33 @@ export default function HolidaysPage() {
   const toggle = useAction(
     (h: Holiday) =>
       unwrap(api.PATCH('/api/v1/staff/holidays/{id}', { params: { path: { id: h.id } }, body: { stopsWorks: !h.stopsWorks } })),
-    { invalidate: [keys.spacesAll, keys.permitSettings], onDone: () => toast.show('Saved.') },
+    { invalidate: [keys.spacesAll, keys.permitSettings], onDone: () => toast.show(c('saved')) },
   );
   const remove = useAction(
     (h: Holiday) => unwrap(api.DELETE('/api/v1/staff/holidays/{id}', { params: { path: { id: h.id } } })),
-    { invalidate: [keys.spacesAll, keys.permitSettings], onDone: () => toast.show('Holiday removed.') },
+    { invalidate: [keys.spacesAll, keys.permitSettings], onDone: () => toast.show(t('holidays.removed')) },
   );
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Holidays" />
+        <PageHeader title={t('holidays.title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Holidays"
-        description="The compound’s holidays. One that stops works refuses works and moves that day; bookings and planned work are flagged."
+        title={t('holidays.title')}
+        description={t('holidays.description')}
       />
       <div className="toolbar">
-        <Field label="From">{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To" hint="At most a year after From.">
+        <Field label={c('from')}>{(p) => <Input {...p} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={c('to')} hint={t('holidays.toHint')}>
           {(p) => <Input {...p} type="date" value={to} onChange={(e) => setTo(e.target.value)} />}
         </Field>
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-          Add a holiday
+          {t('holidays.add')}
         </Button>
       </div>
       <Card flush>
@@ -115,14 +123,14 @@ export default function HolidaysPage() {
           <DataTable<Holiday>
             rows={list.data?.data ?? []}
             rowKey={(h) => h.id}
-            empty="No holiday in this period"
+            empty={t('holidays.empty')}
             columns={[
-              { key: 'day', header: 'Day', cell: (h) => <span className="t-mono">{h.day}</span> },
-              { key: 'name', header: 'Name', cell: (h) => `${h.nameEn} · ${h.nameAr}` },
+              { key: 'day', header: t('holidays.col.day'), cell: (h) => <span className="t-num">{f.day(h.day)}</span> },
+              { key: 'name', header: t('holidays.col.name'), cell: (h) => `${h.nameEn} · ${h.nameAr}` },
               {
                 key: 'works',
-                header: 'Works',
-                cell: (h) => (h.stopsWorks ? <Badge tone="terracotta">Stop</Badge> : <Badge tone="beige">Go on</Badge>),
+                header: t('holidays.col.works'),
+                cell: (h) => (h.stopsWorks ? <Badge tone="terracotta">{t('holidays.stop')}</Badge> : <Badge tone="beige">{t('holidays.goOn')}</Badge>),
               },
               {
                 key: 'actions',
@@ -131,10 +139,10 @@ export default function HolidaysPage() {
                 cell: (h) => (
                   <>
                     <Button size="sm" loading={toggle.isPending} onClick={() => toggle.mutate(h)}>
-                      {h.stopsWorks ? 'Let works go on' : 'Stop works'}
+                      {h.stopsWorks ? t('holidays.letWorksGoOn') : t('holidays.stopWorks')}
                     </Button>
                     <Button size="sm" variant="text" loading={remove.isPending} onClick={() => remove.mutate(h)}>
-                      Remove
+                      {c('remove')}
                     </Button>
                   </>
                 ),

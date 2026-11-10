@@ -1,15 +1,37 @@
 'use client';
 
-import { fieldError, formatDate, formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Button,
+  Card,
+  DataTable,
+  Dialog,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  ReasonCodeDialog,
+  Select,
+  useCommonT,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useLocalName } from '@/components/facilities/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type FacilityBan } from '@/lib/queries';
+import ar from '@/messages/ar/fac-bans';
+import en from '@/messages/en/fac-bans';
 
 function NewBanDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const localName = useLocalName();
   const toast = useToast();
   const accounts = useQuery({ queryKey: [...keys.accounts, 'bookers'], queryFn: () => fetchers.accounts(undefined, 100) });
   const facilities = useQuery({ queryKey: keys.facilities, queryFn: fetchers.facilities });
@@ -34,9 +56,7 @@ function NewBanDialog({ onClose }: { onClose: () => void }) {
       invalidate: [['facility-bans'], keys.bookingsAll],
       onDone: (b) => {
         toast.show(
-          b.cancelledBookingIds.length
-            ? `Banned; ${b.cancelledBookingIds.length} booking(s) cancelled and their booker told.`
-            : 'Banned; no booking to cancel.',
+          b.cancelledBookingIds.length ? t('banned', { count: b.cancelledBookingIds.length }) : t('bannedNone'),
         );
         onClose();
       },
@@ -46,24 +66,24 @@ function NewBanDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Ban from booking"
-      description="The account's bookings in that scope that have not started are cancelled, as you would cancel them. Walk-in use and the club are untouched."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="danger" loading={save.isPending}>
-            Ban
+            {t('ban')}
           </Button>
         </>
       }
     >
       <div className="form">
         <ErrorAlert error={save.error} />
-        <Field label="Account" error={fieldError(save.error, 'accountId')}>
+        <Field label={t('account')} error={fieldError(save.error, 'accountId')}>
           {(p) => (
             <Select {...p} value={f.accountId} onChange={set('accountId')}>
-              <option value="">Choose…</option>
+              <option value="">{t('choose')}</option>
               {bookers.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.fullName}
@@ -72,31 +92,31 @@ function NewBanDialog({ onClose }: { onClose: () => void }) {
             </Select>
           )}
         </Field>
-        <Field label="Facility" error={fieldError(save.error, 'facilityId')}>
+        <Field label={t('col.facility')} error={fieldError(save.error, 'facilityId')}>
           {(p) => (
             <Select {...p} value={f.facilityId} onChange={set('facilityId')}>
-              <option value="">Every facility</option>
+              <option value="">{t('everyFacility')}</option>
               {(facilities.data?.data ?? []).map((x) => (
                 <option key={x.id} value={x.id}>
-                  {x.nameEn}
+                  {localName(x)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         <div className="form__row">
-          <Field label="Why" error={fieldError(save.error, 'reasonCode')}>
+          <Field label={t('col.why')} error={fieldError(save.error, 'reasonCode')}>
             {(p) => (
               <Select {...p} value={f.reasonCode} onChange={set('reasonCode')}>
-                {REASON_CODES.facilityBan.map((c) => (
-                  <option key={c} value={c}>
-                    {humanize(c)}
+                {REASON_CODES.facilityBan.map((code) => (
+                  <option key={code} value={code}>
+                    {label(code)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Last day" hint="Empty: until lifted." error={fieldError(save.error, 'endsOn')}>
+          <Field label={t('lastDay')} hint={t('lastDayHint')} error={fieldError(save.error, 'endsOn')}>
             {(p) => <Input {...p} type="date" value={f.endsOn} onChange={set('endsOn')} />}
           </Field>
         </div>
@@ -107,24 +127,32 @@ function NewBanDialog({ onClose }: { onClose: () => void }) {
 
 /** Accounts banned from booking (ADR 0067), beside the units' no-show suspensions. */
 export default function FacilityBansPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const localName = useLocalName();
   const { ready, can } = usePermissions();
   const toast = useToast();
   const [inForce, setInForce] = useState<'true' | 'false' | ''>('true');
   const [creating, setCreating] = useState(false);
   const [lifting, setLifting] = useState<FacilityBan | null>(null);
-  const list = useCursorList(keys.facilityBans({ inForce }), (c) => fetchers.facilityBans({ inForce }, c), {
+  const list = useCursorList(keys.facilityBans({ inForce }), (x) => fetchers.facilityBans({ inForce }, x), {
     enabled: can('bookings.handle'),
   });
   const facilities = useQuery({ queryKey: keys.facilities, queryFn: fetchers.facilities, enabled: can('bookings.handle') });
-  const nameOf = (id: string | null) =>
-    id === null ? 'Every facility' : ((facilities.data?.data ?? []).find((x) => x.id === id)?.nameEn ?? '—');
+  const nameOf = (id: string | null) => {
+    if (id === null) return t('everyFacility');
+    const found = (facilities.data?.data ?? []).find((x) => x.id === id);
+    return found ? localName(found) : '—';
+  };
   const lift = useAction(
     ({ id, reasonCode }: { id: string; reasonCode: string }) =>
       unwrap(api.POST('/api/v1/staff/facility-bans/{id}/lift', { params: { path: { id } }, body: { reasonCode } })),
     {
       invalidate: [['facility-bans']],
       onDone: () => {
-        toast.show('Lifted; the account is told.');
+        toast.show(t('liftedToast'));
         setLifting(null);
       },
     },
@@ -132,26 +160,26 @@ export default function FacilityBansPage() {
   if (ready && !can('bookings.handle'))
     return (
       <>
-        <PageHeader title="Facility bans" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Facility bans"
-        description="One account kept from booking a facility, or every one, until a day or until lifted."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setCreating(true)}>
-            Ban an account
+            {t('banAccount')}
           </Button>
         }
       />
       <div className="row" style={{ gap: 8, marginBottom: 12 }}>
-        <Select value={inForce} onChange={(e) => setInForce(e.target.value as typeof inForce)}>
-          <option value="true">In force</option>
-          <option value="false">Over</option>
-          <option value="">All</option>
+        <Select value={inForce} onChange={(e) => setInForce(e.target.value as typeof inForce)} aria-label={c('status')}>
+          <option value="true">{t('view.true')}</option>
+          <option value="false">{t('view.false')}</option>
+          <option value="">{t('view.all')}</option>
         </Select>
       </div>
       <Card flush>
@@ -159,22 +187,22 @@ export default function FacilityBansPage() {
           <DataTable<FacilityBan>
             rows={list.rows}
             rowKey={(b) => b.id}
-            empty="No ban"
+            empty={t('empty')}
             columns={[
-              { key: 'f', header: 'Facility', cell: (b) => nameOf(b.facilityId) },
-              { key: 'r', header: 'Why', cell: (b) => humanize(b.reasonCode) },
-              { key: 'c', header: 'Since', cell: (b) => formatDateTime(b.createdAt) },
-              { key: 'e', header: 'Until', cell: (b) => (b.endsOn ? formatDate(b.endsOn) : 'Lifted') },
-              { key: 's', header: 'State', cell: (b) => humanize(b.state) },
-              { key: 'n', header: 'Bookings cancelled', cell: (b) => b.cancelledBookingIds.length },
+              { key: 'f', header: t('col.facility'), cell: (b) => nameOf(b.facilityId) },
+              { key: 'r', header: t('col.why'), cell: (b) => label(b.reasonCode) },
+              { key: 'c', header: t('col.since'), cell: (b) => fmt.dateTime(b.createdAt) },
+              { key: 'e', header: t('col.until'), cell: (b) => (b.endsOn ? fmt.day(b.endsOn) : t('lifted')) },
+              { key: 's', header: c('status'), cell: (b) => label(b.state) },
+              { key: 'n', header: t('col.cancelled'), cell: (b) => fmt.number(b.cancelledBookingIds.length) },
               {
                 key: 'x',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (b) =>
                   b.state === 'in_force' ? (
                     <Button size="sm" onClick={() => setLifting(b)}>
-                      Lift
+                      {t('lift')}
                     </Button>
                   ) : null,
               },
@@ -187,12 +215,12 @@ export default function FacilityBansPage() {
       <ReasonCodeDialog
         open={lifting !== null}
         onClose={() => setLifting(null)}
-        title="Lift the ban"
+        title={t('liftTitle')}
         codes={REASON_CODES.facilityBanLift}
-        confirmLabel="Lift"
+        confirmLabel={t('lift')}
         pending={lift.isPending}
         error={<ErrorAlert error={lift.error} />}
-        onConfirm={(c) => lifting && lift.mutate({ id: lifting.id, reasonCode: c })}
+        onConfirm={(code) => lifting && lift.mutate({ id: lifting.id, reasonCode: code })}
       />
     </>
   );

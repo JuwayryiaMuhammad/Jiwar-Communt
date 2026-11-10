@@ -1,6 +1,18 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { batchSummary, classTone, deviceState, FLAG_TEXT, flagText, notCarriedText } from './offline-logic.ts';
+import { stripIsolates } from '@jiwar/i18n/core';
+import {
+  batchSummary,
+  batchSummaryIn,
+  classTone,
+  deviceState,
+  deviceStateIn,
+  FLAG_TEXT,
+  flagText,
+  flagTextIn,
+  notCarriedText,
+  notCarriedTextIn,
+} from './offline-logic.ts';
 
 const T0 = Date.parse('2026-11-06T09:00:00.000Z');
 const ago = (minutes: number) => new Date(T0 - minutes * 60_000).toISOString();
@@ -28,6 +40,34 @@ test('every flag the API raises has its words', () => {
     'duplicate_inside',
   ])
     assert.ok(FLAG_TEXT[kind], kind);
+});
+
+test('in either language: the same words as the English constants, and Arabic counts', () => {
+  const text = (s: string | null) => (s === null ? null : stripIsolates(s));
+  for (const kind of Object.keys(FLAG_TEXT)) assert.equal(flagTextIn({ kind, params: {} }, 'en'), FLAG_TEXT[kind], kind);
+  assert.equal(
+    text(flagTextIn({ kind: 'clock_skew', params: { skewSeconds: -90 } }, 'en')),
+    text(flagText({ kind: 'clock_skew', params: { skewSeconds: -90 } })),
+  );
+  assert.equal(text(flagTextIn({ kind: 'clock_skew', params: { skewSeconds: -90 } }, 'ar')), 'ساعة الجهاز لم تكن مضبوطة (مبكرًا 90 ث)');
+  assert.equal(
+    text(flagTextIn({ kind: 'credential_revoked', params: { reason: 'cancelled' } }, 'ar', (c) => (c === 'cancelled' ? 'ملغى' : c))),
+    'تصريح أو بطاقة لم تعد صالحة وقتها (ملغى)',
+  );
+  const device = { status: 'active' as const, onShift: true, lastSeenAt: null, missingActions: 2, openFlags: 0 };
+  assert.equal(text(deviceStateIn(device, T0, 30, 'en').text), deviceState(device, T0, 30).text);
+  assert.equal(text(deviceStateIn(device, T0, 30, 'ar').text), 'إجراءان ناقصان');
+  assert.equal(text(deviceStateIn({ ...device, missingActions: 0 }, T0, 30, 'ar').text), 'في الوردية، يتزامن');
+  assert.equal(text(notCarriedTextIn({ passes: 2, workers: 1 }, 'en')), notCarriedText({ passes: 2, workers: 1 }));
+  assert.equal(text(notCarriedTextIn({ passes: 3, workers: 0 }, 'ar')), '3 تصاريح زيارة تعمل عبر الإنترنت فقط حتى إعادة إصدارها');
+  assert.equal(notCarriedTextIn({ passes: 0, workers: 0 }, 'ar'), null);
+  const batch = [
+    { type: 'entry', status: 'quarantined' },
+    { type: 'entry', status: 'quarantined' },
+    { type: 'service_vehicle_in', status: 'quarantined' },
+  ];
+  assert.equal(text(batchSummaryIn(batch, 'en')), batchSummary(batch));
+  assert.equal(text(batchSummaryIn(batch, 'ar', (c) => (c === 'entry' ? 'دخول' : 'دخول مركبة خدمة'))), 'دخول: 2، دخول مركبة خدمة: 1');
 });
 
 test('a flag’s words, with its codes and numbers', () => {

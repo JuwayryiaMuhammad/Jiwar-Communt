@@ -1,0 +1,40 @@
+/** The gate offline (ADR 0057): components/security/offline-logic. */
+export default {
+  // What each flag the server raised at sync means, in a few words.
+  'flag.lockdown_entered': 'Let in while a lockdown held the gate',
+  'flag.blocklist_ban_entered': 'A banned plate let in',
+  'flag.credential_banned': 'A banned worker, or a stopped permit’s worker, let in',
+  'flag.once_only_reused': 'A one-time pass used again',
+  'flag.action_rejected': 'Something that cannot have happened',
+  'flag.device_revoked_upload': 'A revoked device uploaded: quarantined',
+  'flag.contractor_unresolved': 'A contractor no worker of the permit matches',
+  'flag.child_exit_unverified': 'A child released with an escort not verified',
+  'flag.credential_revoked': 'A pass or card no longer valid then',
+  'flag.invalid_at_time': 'Outside its validity or hours',
+  'flag.capacity_exceeded': 'More inside than the pass allows',
+  'flag.clock_skew': 'The device’s clock was off',
+  'flag.bundle_expired': 'Decided with an expired bundle',
+  'flag.shift_ended': 'After its shift had ended',
+  'flag.patrol_scan_refused': 'A patrol scan the run refused',
+  'flag.blocklist_watch_entered': 'A watched plate let in',
+  'flag.already_inside': 'Recorded in while already inside',
+  'flag.exit_without_entry': 'An exit with nobody inside',
+  'flag.duplicate_inside': 'A service vehicle recorded in twice',
+  // What a flag's numbers add.
+  skewEarly: '{s} s early',
+  skewLate: '{s} s late',
+  clockBehind: 'clock {s} s behind',
+  clockAhead: 'clock {s} s ahead',
+  matching: '{n} matching',
+  // How a device stands.
+  'device.revoked': 'Revoked',
+  'device.quiet': 'Quiet for {n} min',
+  'device.missing': '{n, plural, one {# action missing} other {# actions missing}}',
+  'device.flags': '{n, plural, one {# flag to look at} other {# flags to look at}}',
+  'device.onShift': 'On shift, syncing',
+  'device.offShift': 'Off shift',
+  // What the device's last bundle could not carry.
+  'notCarried.passes': '{n, plural, one {# visitor pass} other {# visitor passes}}',
+  'notCarried.workers': '{n, plural, one {# worker card} other {# worker cards}}',
+  notCarried: '{what} work online only until reissued',
+} as const;

@@ -2,7 +2,8 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,8 +13,12 @@ import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type FloorPlanSummary } from '@/lib/queries';
+import ar from '@/messages/ar/fac-places';
+import en from '@/messages/en/fac-places';
 
 function NewPlanDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const router = useRouter();
   const buildings = useQuery({ queryKey: keys.buildings, queryFn: fetchers.buildings });
@@ -25,7 +30,7 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.spacesAll],
       onDone: (p) => {
-        toast.show('Floor plan added. Now draw its units.');
+        toast.show(t('plans.added'));
         router.push(`/floor-plans/${p.id}`);
       },
     },
@@ -35,23 +40,23 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Add a floor plan"
-      description="One image per building and floor."
+      title={t('plans.addTitle')}
+      description={t('plans.addDescription')}
       onSubmit={() => ready && save.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Add
+            {c('add')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Building" error={fieldError(save.error, 'buildingId')}>
+        <Field label={c('building')} error={fieldError(save.error, 'buildingId')}>
           {(p) => (
             <Select {...p} value={buildingId} onChange={(e) => setBuildingId(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{c('select')}</option>
               {(buildings.data?.data ?? []).map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -60,10 +65,10 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
             </Select>
           )}
         </Field>
-        <Field label="Floor" hint="-5 to 200." error={fieldError(save.error, 'floor')}>
+        <Field label={c('floor')} hint={t('plans.floorHint')} error={fieldError(save.error, 'floor')}>
           {(p) => <Input {...p} type="number" value={floor} onChange={(e) => setFloor(e.target.value)} />}
         </Field>
-        <FileUpload purpose="floor_plan" label={fileId ? 'Image uploaded — replace' : 'Upload the image'} onUploaded={(id) => setFileId(id)} />
+        <FileUpload purpose="floor_plan" label={fileId ? t('plans.imageUploaded') : t('plans.uploadImage')} onUploaded={(id) => setFileId(id)} />
         <ErrorAlert error={save.error} />
       </div>
     </Dialog>
@@ -72,6 +77,9 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
 
 /** The buildings' floor plans (ADR 0084), by building and floor. */
 export default function FloorPlansPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const { ready, can } = usePermissions();
   const allowed = can('spaces.manage');
   const [adding, setAdding] = useState(false);
@@ -79,20 +87,20 @@ export default function FloorPlansPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Floor plans" />
+        <PageHeader title={t('plans.title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Floor plans"
-        description="A plan per building floor, with a box for each unit. A household sees its own floor’s plan with its own unit marked, never another."
+        title={t('plans.title')}
+        description={t('plans.description')}
       />
       <div className="toolbar">
         <span className="spacer" />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-          Add a floor plan
+          {t('plans.add')}
         </Button>
       </div>
       <Card flush>
@@ -100,19 +108,19 @@ export default function FloorPlansPage() {
           <DataTable<FloorPlanSummary>
             rows={list.data?.data ?? []}
             rowKey={(p) => p.id}
-            empty="No floor plan"
+            empty={t('plans.empty')}
             columns={[
               {
                 key: 'building',
-                header: 'Building',
+                header: c('building'),
                 cell: (p) => (
                   <Link className="table__link" href={`/floor-plans/${p.id}`}>
                     {p.buildingName}
                   </Link>
                 ),
               },
-              { key: 'floor', header: 'Floor', cell: (p) => p.floor },
-              { key: 'units', header: 'Units drawn', cell: (p) => p.hotspots },
+              { key: 'floor', header: c('floor'), cell: (p) => f.number(p.floor) },
+              { key: 'units', header: t('plans.col.unitsDrawn'), cell: (p) => f.number(p.hotspots) },
             ]}
           />
         </QueryState>

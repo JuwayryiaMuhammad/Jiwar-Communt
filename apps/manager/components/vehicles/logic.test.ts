@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { createFormat, translator } from '@jiwar/i18n/core';
+import reportsAr from '../../messages/ar/safety-parking-reports.ts';
+import vehiclesAr from '../../messages/ar/safety-vehicles.ts';
+import reportsEn from '../../messages/en/safety-parking-reports.ts';
+import vehiclesEn from '../../messages/en/safety-vehicles.ts';
 import { addDays, fineActions, matchesText, peakUse, permitDateProblem, validFineAmount, validSticker } from './logic.ts';
 
 test('a sticker is letters, digits and dashes, 1–20', () => {
@@ -12,12 +17,20 @@ test('a sticker is letters, digits and dashes, 1–20', () => {
 
 test('a permit’s last day is after today, at most 731 days ahead, not before the current one', () => {
   const today = '2026-10-15';
-  assert.equal(permitDateProblem('2026-10-15', today), 'After today.');
+  assert.equal(permitDateProblem('2026-10-15', today), 'after_today');
   assert.equal(permitDateProblem('2026-10-16', today), undefined);
   assert.equal(permitDateProblem(addDays(today, 731), today), undefined);
-  assert.equal(permitDateProblem(addDays(today, 732), today), 'At most two years ahead.');
-  assert.equal(permitDateProblem('2026-11-01', today, '2026-12-01'), 'Not before the current last day.');
-  assert.equal(permitDateProblem('', today), 'Pick a day.');
+  assert.equal(permitDateProblem(addDays(today, 732), today), 'too_far');
+  assert.equal(permitDateProblem('2026-11-01', today, '2026-12-01'), 'not_before_current');
+  assert.equal(permitDateProblem('', today), 'pick_day');
+});
+
+test('each permit-date problem is worded in both languages', () => {
+  const en = translator('en', vehiclesEn, vehiclesAr);
+  const ar = translator('ar', vehiclesEn, vehiclesAr);
+  assert.equal(en(`date.${permitDateProblem('2026-10-15', '2026-10-15')!}`), 'After today.');
+  assert.equal(en(`date.${permitDateProblem('', '2026-10-15')!}`), 'Pick a day.');
+  assert.equal(ar(`date.${permitDateProblem('', '2026-10-15')!}`), 'اختر يومًا.');
 });
 
 test('an area’s peak use counts what holds one instant, windows half-open', () => {
@@ -46,6 +59,22 @@ test('what the staff may do on a fine', () => {
 });
 
 test('a report’s matches as words', () => {
-  assert.equal(matchesText([]), 'No registered vehicle');
-  assert.equal(matchesText([{ unitCode: 'A-1', permitStatus: 'expires_soon' }]), 'A-1 (expires soon)');
+  const words = (locale: 'en' | 'ar') => ({
+    none: translator(locale, reportsEn, reportsAr)('noMatch'),
+    status: (code: string) => code.replace(/_/g, ' '),
+    list: createFormat(locale).list,
+  });
+  assert.equal(matchesText([], words('en')), 'No registered vehicle');
+  assert.equal(matchesText([], words('ar')), 'لا توجد مركبة مسجلة');
+  assert.equal(matchesText([{ unitCode: 'A-1', permitStatus: 'expires_soon' }], words('en')), 'A-1 (expires soon)');
+  assert.equal(
+    matchesText(
+      [
+        { unitCode: 'A-1', permitStatus: 'active' },
+        { unitCode: 'B-2', permitStatus: 'expired' },
+      ],
+      words('en'),
+    ),
+    'A-1 (active) and B-2 (expired)',
+  );
 });

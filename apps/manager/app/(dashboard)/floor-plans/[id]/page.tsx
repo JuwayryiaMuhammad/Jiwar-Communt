@@ -2,6 +2,7 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useT } from '@jiwar/i18n';
 import { Badge, Button, Card, ForbiddenState, PageHeader, Select, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
@@ -10,6 +11,8 @@ import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/fac-places';
+import en from '@/messages/en/fac-places';
 
 type Box = { unitId: string; x: number; y: number; width: number; height: number };
 const round = (v: number) => Math.min(1, Math.max(0, Math.round(v * 100_000) / 100_000));
@@ -21,6 +24,7 @@ const round = (v: number) => Math.min(1, Math.max(0, Math.round(v * 100_000) / 1
  * shows as misplaced.
  */
 export default function FloorPlanPage() {
+  const t = useT(en, ar);
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const router = useRouter();
@@ -41,23 +45,23 @@ export default function FloorPlanPage() {
   }, [plan.data]);
   const save = useAction(
     () => unwrap(api.PUT('/api/v1/staff/floor-plans/{id}/hotspots', { params: { path: { id } }, body: { hotspots: boxes } })),
-    { invalidate: [keys.spacesAll], onDone: () => toast.show('The units are saved on the plan.') },
+    { invalidate: [keys.spacesAll], onDone: () => toast.show(t('plan.saved')) },
   );
   const setImage = useAction(
     (fileId: string) => unwrap(api.PUT('/api/v1/staff/floor-plans/{id}/image', { params: { path: { id } }, body: { fileId } })),
-    { invalidate: [keys.spacesAll], onDone: () => toast.show('The image is replaced; the boxes stay where they were.') },
+    { invalidate: [keys.spacesAll], onDone: () => toast.show(t('plan.imageReplaced')) },
   );
   const remove = useAction(() => unwrap(api.DELETE('/api/v1/staff/floor-plans/{id}', { params: { path: { id } } })), {
     invalidate: [keys.spacesAll],
     onDone: () => {
-      toast.show('Floor plan removed.');
+      toast.show(t('plan.removed'));
       router.push('/floor-plans');
     },
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Floor plan" />
+        <PageHeader title={t('plan.title')} />
         <ForbiddenState />
       </>
     );
@@ -70,14 +74,14 @@ export default function FloorPlanPage() {
       {plan.data ? (
         <>
           <PageHeader
-            title={`${plan.data.buildingName} · floor ${plan.data.floor}`}
-            description="Pick a unit, then click two opposite corners of its box on the plan."
+            title={t('plan.heading', { building: plan.data.buildingName, floor: plan.data.floor })}
+            description={t('plan.description')}
           />
           <Card>
             <div className="stack">
               <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                <Select value={unitId} onChange={(e) => (setUnitId(e.target.value), setCorner(null))} aria-label="Unit to draw">
-                  <option value="">Pick a unit of this floor…</option>
+                <Select value={unitId} onChange={(e) => (setUnitId(e.target.value), setCorner(null))} aria-label={t('plan.unitToDraw')}>
+                  <option value="">{t('plan.pickUnit')}</option>
                   {onFloor.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.code}
@@ -85,11 +89,11 @@ export default function FloorPlanPage() {
                   ))}
                 </Select>
                 <Button variant="primary" loading={save.isPending} onClick={() => save.mutate()}>
-                  Save the units
+                  {t('plan.save')}
                 </Button>
-                <FileUpload purpose="floor_plan" label="Replace the image" disabled={setImage.isPending} onUploaded={(f) => setImage.mutateAsync(f).then(() => undefined)} />
+                <FileUpload purpose="floor_plan" label={t('plan.replaceImage')} disabled={setImage.isPending} onUploaded={(f) => setImage.mutateAsync(f).then(() => undefined)} />
                 <Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate()}>
-                  Remove the plan
+                  {t('plan.remove')}
                 </Button>
               </div>
               {plan.data.image ? (
@@ -97,7 +101,7 @@ export default function FloorPlanPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={plan.data.image.url}
-                    alt={`Floor ${plan.data.floor} of ${plan.data.buildingName}`}
+                    alt={t('plan.alt', { floor: plan.data.floor, building: plan.data.buildingName })}
                     style={{ maxWidth: '100%', display: 'block', cursor: unitId ? 'crosshair' : 'default' }}
                     onClick={(e) => {
                       if (!unitId) return;
@@ -119,7 +123,7 @@ export default function FloorPlanPage() {
                     <button
                       type="button"
                       key={b.unitId}
-                      title={`${codeOf(b.unitId)} — remove`}
+                      title={t('plan.removeBox', { code: codeOf(b.unitId) })}
                       onClick={() => setBoxes(boxes.filter((x) => x !== b))}
                       style={{
                         position: 'absolute',
@@ -139,7 +143,7 @@ export default function FloorPlanPage() {
               ) : null}
               {misplaced.size ? (
                 <p>
-                  <Badge tone="terracotta">Misplaced</Badge> These units are on another floor now: draw them on their own floor’s plan.
+                  <Badge tone="terracotta">{t('plan.misplaced')}</Badge> {t('plan.misplacedNote')}
                 </p>
               ) : null}
               <ErrorAlert error={save.error ?? setImage.error ?? remove.error} />

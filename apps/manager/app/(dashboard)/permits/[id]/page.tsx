@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -14,6 +15,8 @@ import {
   ReasonCodeDialog,
   StatusBadge,
   Textarea,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -21,15 +24,19 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Back } from '@/components/facilities/bits';
 import { FitOutCards } from '@/components/permits/fit-out';
-import { PERMIT_KIND_TEXT, periodText } from '@/components/permits/logic';
+import { periodText } from '@/components/permits/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StaffPermit } from '@/lib/queries';
+import ar from '@/messages/ar/places-permits';
+import en from '@/messages/en/places-permits';
 
 type Worker = NonNullable<StaffPermit['works']>['workers'][number];
 type Guest = NonNullable<StaffPermit['event']>['guests'][number];
 
 function Approve({ permit, onClose }: { permit: StaffPermit; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [note, setNote] = useState('');
   const approve = useAction(
@@ -43,7 +50,7 @@ function Approve({ permit, onClose }: { permit: StaffPermit; onClose: () => void
     {
       invalidate: [keys.permitsAll],
       onDone: () => {
-        toast.show('Approved. The resident was told; the guard sees it at the gate.');
+        toast.show(t('approved'));
         onClose();
       },
     },
@@ -52,19 +59,19 @@ function Approve({ permit, onClose }: { permit: StaffPermit; onClose: () => void
     <Dialog
       open
       onClose={onClose}
-      title={`Approve ${permit.reference}?`}
+      title={t('approveTitle', { reference: permit.reference })}
       onSubmit={() => approve.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={approve.isPending}>
-            Approve
+            {c('approve')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Note (the management’s own, never shown to the unit)">
+        <Field label={t('approveNote')}>
           {(p) => <Textarea {...p} rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />}
         </Field>
         <ErrorAlert error={approve.error} />
@@ -75,6 +82,10 @@ function Approve({ permit, onClose }: { permit: StaffPermit; onClose: () => void
 
 /** One permit (ADR 0049): what it asks, its people, and the decisions. */
 export default function PermitPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const { ready, can } = usePermissions();
@@ -94,7 +105,7 @@ export default function PermitPage() {
     {
       invalidate: [keys.permitsAll],
       onDone: (p) => {
-        toast.show(p.status === 'revoked' ? 'Revoked. The guard refuses it from now on; the resident was told.' : 'Rejected. The resident was told.');
+        toast.show(p.status === 'revoked' ? t('revokedToast') : t('rejectedToast'));
         setRejecting(false);
         setRevoking(false);
       },
@@ -111,7 +122,7 @@ export default function PermitPage() {
     {
       invalidate: [keys.permitsAll],
       onDone: () => {
-        toast.show('Taken off the permit: the guard refuses them from now on.');
+        toast.show(t('takenOff'));
         setRemoving(null);
       },
     },
@@ -127,36 +138,43 @@ export default function PermitPage() {
               params: { path: { id, guardId: target.guard } },
             }),
       ),
-    { invalidate: [keys.permitsAll], onDone: () => toast.show('Unlocked.') },
+    { invalidate: [keys.permitsAll], onDone: () => toast.show(t('unlocked')) },
   );
   if (ready && !allowed)
     return (
       <>
-        <PageHeader back={<Back href="/permits" label="Permits" />} title="Permit" />
+        <PageHeader back={<Back href="/permits" label={t('title')} />} title={t('permit')} />
         <ForbiddenState />
       </>
     );
   const p = permit.data;
   const lockedWorkers = new Set(p?.lockouts?.workerIds ?? []);
+  const erased = <span className="t-secondary">{t('erasedWithAccount')}</span>;
   return (
     <>
       <PageHeader
-        back={<Back href="/permits" label="Permits" />}
-        title={p ? `${p.reference} · ${PERMIT_KIND_TEXT[p.kind]}` : 'Permit'}
-        description={p ? `Unit ${p.unitCode}${p.building ? ` · building ${p.building}` : ''} · ${periodText(p, formatDateTime)}` : undefined}
+        back={<Back href="/permits" label={t('title')} />}
+        title={p ? t('detailTitle', { reference: p.reference, kind: t(`kind.${p.kind}`) }) : t('permit')}
+        description={
+          p
+            ? p.building
+              ? t('detailDescriptionBuilding', { unit: p.unitCode, building: p.building, period: periodText(p, fmt, t) })
+              : t('detailDescription', { unit: p.unitCode, period: periodText(p, fmt, t) })
+            : undefined
+        }
         actions={
           p?.status === 'pending' ? (
             <>
               <Button variant="danger" onClick={() => setRejecting(true)}>
-                Reject
+                {c('reject')}
               </Button>
               <Button variant="primary" onClick={() => setApproving(true)}>
-                Approve
+                {c('approve')}
               </Button>
             </>
           ) : p?.status === 'approved' ? (
             <Button variant="danger" onClick={() => setRevoking(true)}>
-              Revoke
+              {t('revoke')}
             </Button>
           ) : null
         }
@@ -166,89 +184,88 @@ export default function PermitPage() {
           <div className="stack">
             <Card>
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{t('status')}</dt>
                 <dd>
                   <StatusBadge status={p.status} />
                 </dd>
-                <dt>Asked by</dt>
+                <dt>{t('askedBy')}</dt>
                 <dd>
-                  {p.requestedBy.fullName ?? '—'} · {formatDateTime(p.createdAt)}
+                  {p.requestedBy.fullName ?? '—'} · {fmt.dateTime(p.createdAt)}
                 </dd>
                 {p.decidedAt ? (
                   <>
-                    <dt>Decided</dt>
+                    <dt>{t('decided')}</dt>
                     <dd>
-                      {p.decisionSource === 'auto' ? 'At once (20 guests or fewer)' : humanize(p.rejectReason ?? 'approved')} ·{' '}
-                      {formatDateTime(p.decidedAt)}
+                      {p.decisionSource === 'auto' ? t('decidedAuto') : label(p.rejectReason ?? 'approved')} · {fmt.dateTime(p.decidedAt)}
                       {p.staffNote ? ` · “${p.staffNote}”` : ''}
                     </dd>
                   </>
                 ) : null}
                 {p.revokedAt ? (
                   <>
-                    <dt>Revoked</dt>
+                    <dt>{t('revoked')}</dt>
                     <dd>
-                      {humanize(p.revokeReason ?? '')} · {formatDateTime(p.revokedAt)}
+                      {label(p.revokeReason)} · {fmt.dateTime(p.revokedAt)}
                       {p.revokeNote ? ` · “${p.revokeNote}”` : ''}
                     </dd>
                   </>
                 ) : null}
                 {p.cancelledAt ? (
                   <>
-                    <dt>Cancelled</dt>
+                    <dt>{t('cancelled')}</dt>
                     <dd>
-                      {p.cancelledBy === 'system' ? 'By the system' : 'By the resident'}
-                      {p.cancelReason ? ` · ${humanize(p.cancelReason)}` : ''} · {formatDateTime(p.cancelledAt)}
+                      {p.cancelledBy === 'system' ? t('cancelledBy.system') : t('cancelledBy.resident')}
+                      {p.cancelReason ? ` · ${label(p.cancelReason)}` : ''} · {fmt.dateTime(p.cancelledAt)}
                     </dd>
                   </>
                 ) : null}
                 {p.works ? (
                   <>
-                    <dt>Work</dt>
-                    <dd>{humanize(p.works.workType)}</dd>
-                    <dt>Contractor</dt>
-                    <dd>{p.works.contractorCompany ?? <span className="t-secondary">Erased with the resident’s account</span>}</dd>
-                    <dt>Description</dt>
-                    <dd>{p.works.description ?? <span className="t-secondary">Erased with the resident’s account</span>}</dd>
+                    <dt>{t('work')}</dt>
+                    <dd>{label(p.works.workType)}</dd>
+                    <dt>{t('contractor')}</dt>
+                    <dd>{p.works.contractorCompany ?? erased}</dd>
+                    <dt>{t('workDescription')}</dt>
+                    <dd>{p.works.description ?? erased}</dd>
                   </>
                 ) : null}
                 {p.move ? (
                   <>
-                    <dt>Truck</dt>
-                    <dd className="t-mono">{p.move.truckPlate ?? '—'}</dd>
-                    <dt>Items</dt>
-                    <dd>{p.move.itemsDescription ?? <span className="t-secondary">Erased with the resident’s account</span>}</dd>
+                    <dt>{t('truck')}</dt>
+                    <dd className="t-mono">
+                      <bdi>{p.move.truckPlate ?? '—'}</bdi>
+                    </dd>
+                    <dt>{t('items')}</dt>
+                    <dd>{p.move.itemsDescription ?? erased}</dd>
                   </>
                 ) : null}
                 {p.event ? (
                   <>
-                    <dt>Title</dt>
+                    <dt>{t('eventTitle')}</dt>
                     <dd>{p.event.title ?? '—'}</dd>
-                    <dt>Guests</dt>
-                    <dd>
-                      {p.event.guestCount} of {p.event.guestLimit}
-                    </dd>
+                    <dt>{t('guests')}</dt>
+                    <dd>{t('guestsOf', { count: p.event.guestCount, limit: p.event.guestLimit })}</dd>
                   </>
                 ) : null}
                 {p.materialExit?.usedAt ? (
                   <>
-                    <dt>Went out</dt>
-                    <dd>{formatDateTime(p.materialExit.usedAt)}</dd>
+                    <dt>{t('wentOut')}</dt>
+                    <dd>{fmt.dateTime(p.materialExit.usedAt)}</dd>
                   </>
                 ) : null}
               </dl>
             </Card>
             {p.works ? (
               <Card flush>
-                <CardHeader title={`Contractor workers (${p.works.workerCount})`} />
+                <CardHeader title={t('workers', { count: p.works.workerCount })} />
                 <DataTable<Worker>
                   rows={p.works.workers}
                   rowKey={(w) => w.id}
-                  empty="No worker yet"
+                  empty={t('noWorker')}
                   columns={[
                     {
                       key: 'f',
-                      header: 'Face',
+                      header: t('col.face'),
                       cell: (w) =>
                         w.photo ? (
                           // A short-lived link to the face, never stored.
@@ -258,11 +275,11 @@ export default function PermitPage() {
                           '—'
                         ),
                     },
-                    { key: 'n', header: 'Name', cell: (w) => w.fullName ?? <span className="t-secondary">Purged</span> },
-                    { key: 'i', header: 'ID', cell: (w) => humanize(w.idType) },
+                    { key: 'n', header: t('col.name'), cell: (w) => w.fullName ?? <span className="t-secondary">{t('purged')}</span> },
+                    { key: 'i', header: t('col.id'), cell: (w) => label(w.idType) },
                     {
                       key: 's',
-                      header: 'Status',
+                      header: t('col.status'),
                       cell: (w) =>
                         w.removedAt ? (
                           <StatusBadge status="removed" />
@@ -279,12 +296,12 @@ export default function PermitPage() {
                         <span className="row" style={{ gap: 8 }}>
                           {lockedWorkers.has(w.id) ? (
                             <Button variant="text" onClick={() => unlock.mutate({ worker: w.id })}>
-                              Unlock
+                              {t('unlock')}
                             </Button>
                           ) : null}
                           {!w.removedAt ? (
                             <Button variant="text" onClick={() => setRemoving(w)}>
-                              Take off
+                              {t('takeOff')}
                             </Button>
                           ) : null}
                         </span>
@@ -296,14 +313,14 @@ export default function PermitPage() {
             ) : null}
             {p.lockouts && p.lockouts.guards.length ? (
               <Card>
-                <CardHeader title="Guards locked out of the ID check" />
-                <p className="t-secondary">Five wrong ID last-fours in 15 minutes lock a guard out, on every permit.</p>
+                <CardHeader title={t('lockedGuards')} />
+                <p className="t-secondary">{t('lockedHint')}</p>
                 <ul className="stack stack--sm">
                   {p.lockouts.guards.map((g) => (
                     <li key={g.id} className="row" style={{ gap: 8 }}>
-                      <span>{g.firstName ?? 'A guard'}</span>
+                      <span>{g.firstName ?? t('aGuard')}</span>
                       <Button variant="text" onClick={() => unlock.mutate({ guard: g.id })}>
-                        Unlock
+                        {t('unlock')}
                       </Button>
                     </li>
                   ))}
@@ -312,33 +329,33 @@ export default function PermitPage() {
             ) : null}
             {p.materialExit ? (
               <Card flush>
-                <CardHeader title="Items going out" />
+                <CardHeader title={t('itemsOut')} />
                 <DataTable<{ name: string; quantity: number }>
                   rows={p.materialExit.items ?? []}
                   rowKey={(i) => i.name}
-                  empty="Erased with the resident’s account"
+                  empty={t('erasedWithAccount')}
                   columns={[
-                    { key: 'n', header: 'Item', cell: (i) => i.name },
-                    { key: 'q', header: 'Quantity', cell: (i) => i.quantity },
+                    { key: 'n', header: t('col.item'), cell: (i) => i.name },
+                    { key: 'q', header: t('col.quantity'), cell: (i) => fmt.number(i.quantity) },
                   ]}
                 />
                 {p.materialExit.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.materialExit.photo.url} alt="The goods" style={{ maxWidth: '100%', borderRadius: 8, margin: 16 }} />
+                  <img src={p.materialExit.photo.url} alt={t('goodsAlt')} style={{ maxWidth: '100%', borderRadius: 8, margin: 16 }} />
                 ) : null}
               </Card>
             ) : null}
             {p.kind === 'works' ? <FitOutCards permitId={p.id} unitId={p.unitId} /> : null}
             {p.event ? (
               <Card flush>
-                <CardHeader title="Guest list" />
+                <CardHeader title={t('guestList')} />
                 <DataTable<Guest>
                   rows={p.event.guests}
                   rowKey={(g) => g.id}
-                  empty="No guest"
+                  empty={t('noGuest')}
                   columns={[
-                    { key: 'n', header: 'Name', cell: (g) => g.fullName ?? <span className="t-secondary">Purged</span> },
-                    { key: 'p', header: 'Car', cell: (g) => <span className="t-mono">{g.vehiclePlate ?? '—'}</span> },
+                    { key: 'n', header: t('col.name'), cell: (g) => g.fullName ?? <span className="t-secondary">{t('purged')}</span> },
+                    { key: 'p', header: t('col.car'), cell: (g) => <span className="t-mono">{g.vehiclePlate ?? '—'}</span> },
                     { key: 's', header: '', cell: (g) => (g.removedAt ? <StatusBadge status="removed" /> : null) },
                   ]}
                 />
@@ -352,10 +369,10 @@ export default function PermitPage() {
       <ReasonCodeDialog
         open={rejecting}
         onClose={() => setRejecting(false)}
-        title="Reject this permit?"
-        description="The resident is told the reason."
+        title={t('rejectTitle')}
+        description={t('rejectDescription')}
         codes={REASON_CODES.unitPermitReject}
-        confirmLabel="Reject"
+        confirmLabel={c('reject')}
         danger
         pending={decide.isPending}
         error={<ErrorAlert error={decide.error} />}
@@ -364,10 +381,10 @@ export default function PermitPage() {
       <ReasonCodeDialog
         open={revoking}
         onClose={() => setRevoking(false)}
-        title="Revoke this permit?"
-        description="The guard refuses it from now on. The resident is told the reason."
+        title={t('revokeTitle')}
+        description={t('revokeDescription')}
         codes={REASON_CODES.unitPermitRevoke}
-        confirmLabel="Revoke"
+        confirmLabel={t('revoke')}
         danger
         pending={decide.isPending}
         error={<ErrorAlert error={decide.error} />}
@@ -376,9 +393,9 @@ export default function PermitPage() {
       <ReasonCodeDialog
         open={removing !== null}
         onClose={() => setRemoving(null)}
-        title={`Take ${removing?.fullName ?? 'this worker'} off the permit?`}
+        title={removing?.fullName ? t('takeOffTitle', { name: removing.fullName }) : t('takeOffTitleAnon')}
         codes={REASON_CODES.permitWorkerRemove}
-        confirmLabel="Take off"
+        confirmLabel={t('takeOff')}
         danger
         pending={remove.isPending}
         error={<ErrorAlert error={remove.error} />}

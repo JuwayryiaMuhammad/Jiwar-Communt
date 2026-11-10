@@ -1,8 +1,9 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Button, Card, DataTable, Dialog, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, DataTable, Dialog, ForbiddenState, PageHeader, ReasonCodeDialog, Segmented, StatusBadge, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FineDialog, type FineBody } from '@/components/vehicles/fine-dialog';
@@ -10,11 +11,16 @@ import { matchesText } from '@/components/vehicles/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ParkingReportStatus, type StaffParkingReport } from '@/lib/queries';
+import ar from '@/messages/ar/safety-parking-reports';
+import en from '@/messages/en/safety-parking-reports';
 
-const VIEWS = ['open', 'closed', 'converted', 'all'] as const;
+const VIEWS = ['open', 'converted', 'closed', 'all'] as const;
 type View = (typeof VIEWS)[number];
 
 function ReportDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { can } = usePermissions();
   const report = useQuery({ queryKey: keys.parkingReport(id), queryFn: () => fetchers.parkingReport(id) });
@@ -24,7 +30,7 @@ function ReportDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.parkingReportsAll],
       onDone: () => {
-        toast.show('Closed.');
+        toast.show(t('closed'));
         setStep(null);
       },
     },
@@ -34,7 +40,7 @@ function ReportDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.parkingReportsAll, keys.finesAll],
       onDone: () => {
-        toast.show('Fine issued. The unit is told; it never learns who reported.');
+        toast.show(t('fined'));
         setStep(null);
       },
     },
@@ -47,17 +53,17 @@ function ReportDetail({ id, onClose }: { id: string; onClose: () => void }) {
         open={step !== 'convert'}
         wide
         onClose={onClose}
-        title={r ? `${r.reference} · ${r.plate}` : 'Parking report'}
+        title={r ? `${r.reference} · ${r.plate}` : t('report')}
         description={r ? r.location : undefined}
         footer={
           <>
-            {open ? <Button onClick={() => setStep('close')}>Close</Button> : null}
+            {open ? <Button onClick={() => setStep('close')}>{t('close')}</Button> : null}
             {open && can('fines.issue') ? (
               <Button variant="primary" onClick={() => setStep('convert')}>
-                Issue a fine
+                {t('issueFine')}
               </Button>
             ) : null}
-            <Button onClick={onClose}>Done</Button>
+            <Button onClick={onClose}>{t('done')}</Button>
           </>
         }
       >
@@ -65,32 +71,30 @@ function ReportDetail({ id, onClose }: { id: string; onClose: () => void }) {
           {r ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{t('status')}</dt>
                 <dd>
                   <StatusBadge status={r.status} />
-                  {r.closeReason ? <span className="t-secondary"> · {humanize(r.closeReason)}</span> : null}
+                  {r.closeReason ? <span className="t-secondary"> · {label(r.closeReason)}</span> : null}
                 </dd>
-                <dt>Reported by</dt>
+                <dt>{t('reportedBy')}</dt>
                 <dd>
-                  {r.reporter.erased ? 'An erased account' : r.reporter.fullName} · {formatDateTime(r.createdAt)}
+                  {r.reporter.erased ? t('erased') : r.reporter.fullName} · {fmt.dateTime(r.createdAt)}
                 </dd>
-                <dt>Matches</dt>
-                <dd>{matchesText(r.matches)}</dd>
+                <dt>{t('matches')}</dt>
+                <dd>{matchesText(r.matches, { none: t('noMatch'), status: label, list: fmt.list })}</dd>
                 {r.note ? (
                   <>
-                    <dt>Note</dt>
+                    <dt>{t('note')}</dt>
                     <dd>{r.note}</dd>
                   </>
                 ) : null}
               </dl>
               {r.photoUrl ? (
                 <a className="btn btn--secondary btn--sm" href={r.photoUrl} target="_blank" rel="noreferrer">
-                  Open the photo
+                  {t('openPhoto')}
                 </a>
               ) : null}
-              <p className="t-secondary">
-                The reporter stays yours to know: a fine issued from here carries nothing of this report, not even its photo.
-              </p>
+              <p className="t-secondary">{t('reporterPrivate')}</p>
             </div>
           ) : null}
         </QueryState>
@@ -98,20 +102,20 @@ function ReportDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'close'}
         onClose={() => setStep(null)}
-        title={`Close ${r?.reference ?? ''}?`}
-        description="The reporter sees it closed, never why."
+        title={t('closeTitle', { reference: r?.reference ?? '' })}
+        description={t('closeDescription')}
         codes={REASON_CODES.parkingReportClose}
-        confirmLabel="Close"
+        confirmLabel={t('close')}
         pending={close.isPending}
         error={<ErrorAlert error={close.error} />}
         onConfirm={(reasonCode) => close.mutate(reasonCode)}
       />
       {r && step === 'convert' ? (
         <FineDialog
-          title={`A fine from ${r.reference}`}
-          description="Issued as any fine: the unit sees the fine, not the report."
+          title={t('fineTitle', { reference: r.reference })}
+          description={t('fineDescription')}
           initial={{ unitCode: r.matches.length === 1 ? r.matches[0]?.unitCode : undefined, plate: r.plate }}
-          confirmLabel="Issue"
+          confirmLabel={t('fineConfirm')}
           pending={convert.isPending}
           error={convert.error}
           onSubmit={(body) => convert.mutate(body)}
@@ -128,6 +132,9 @@ function ReportDetail({ id, onClose }: { id: string; onClose: () => void }) {
  * fine. The reported unit never learns who reported.
  */
 export default function ParkingReportsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('parking_reports.handle');
   const [view, setView] = useState<View>('open');
@@ -137,24 +144,19 @@ export default function ParkingReportsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Parking reports" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Parking reports" description="Oldest first. The reporter learns only that a report was dealt with." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<View>
-          label="Reports shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'open', label: 'Open' },
-            { value: 'converted', label: 'Fined' },
-            { value: 'closed', label: 'Closed' },
-            { value: 'all', label: 'All' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
       </div>
       <Card flush>
@@ -162,22 +164,26 @@ export default function ParkingReportsPage() {
           <DataTable<StaffParkingReport>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty={view === 'open' ? 'No report waits' : 'No report matches'}
+            empty={view === 'open' ? t('emptyOpen') : t('emptyMatch')}
             columns={[
               {
                 key: 'ref',
-                header: 'Report',
+                header: t('col.report'),
                 cell: (r) => (
                   <Button variant="text" className="table__link t-mono" onClick={() => setOpen(r.id)}>
                     {r.reference}
                   </Button>
                 ),
               },
-              { key: 'plate', header: 'Plate', cell: (r) => r.plate },
-              { key: 'where', header: 'Where', cell: (r) => r.location },
-              { key: 'matches', header: 'Matches', cell: (r) => matchesText(r.matches) },
-              { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
-              { key: 'when', header: 'Reported', cell: (r) => <span title={formatDateTime(r.createdAt)}>{relativeTime(r.createdAt)}</span> },
+              { key: 'plate', header: t('col.plate'), cell: (r) => r.plate },
+              { key: 'where', header: t('col.where'), cell: (r) => r.location },
+              {
+                key: 'matches',
+                header: t('col.matches'),
+                cell: (r) => matchesText(r.matches, { none: t('noMatch'), status: label, list: fmt.list }),
+              },
+              { key: 'status', header: t('col.status'), cell: (r) => <StatusBadge status={r.status} /> },
+              { key: 'when', header: t('col.reported'), cell: (r) => <span title={fmt.dateTime(r.createdAt)}>{fmt.relative(r.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

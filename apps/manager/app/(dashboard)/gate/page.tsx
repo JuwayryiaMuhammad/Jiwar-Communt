@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -14,6 +15,8 @@ import {
   Segmented,
   Select,
   StatusBadge,
+  useCommonT,
+  useLabel,
   useToast,
   Textarea,
 } from '@jiwar/ui';
@@ -22,10 +25,13 @@ import { Plus, RotateCcw } from 'lucide-react';
 import { Suspense, useMemo, useState } from 'react';
 import { DateRange, endOfDay, startOfDay } from '@/components/date-range';
 import { Places } from '@/components/safety/places';
+import { usePersonName } from '@/components/management-requests/bits';
 import { usePermissions } from '@/lib/permissions';
 import { api } from '@/lib/api';
 import { fetchers, keys, type Entry, type Gate } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/gate-main';
+import en from '@/messages/en/gate-main';
 
 const TABS = ['entries', 'gates', 'places'] as const;
 type Tab = (typeof TABS)[number];
@@ -34,21 +40,25 @@ type GateKind = Gate['kind'];
 /** Entries may be backdated up to 24 h (offline guards); flag a large gap. */
 const LATE_MS = 10 * 60 * 1000;
 
-const SUBJECT_TEXT: Record<Entry['subjectType'], string> = {
-  visitor_pass: 'Visitor',
-  worker_engagement: 'Worker',
-  gate_request: 'Approved at gate',
-  // Permits (ADR 0049).
-  permit_worker: 'Contractor',
-  event_guest: 'Event guest',
-  move_permit: 'Moving truck',
-  // A field exception the management approved (ADR 0056).
-  field_exception: 'Field exception',
-};
+/** Who came in, as the gate log words it (Permits: ADR 0049; field exceptions: ADR 0056). */
+const SUBJECTS = [
+  'visitor_pass',
+  'worker_engagement',
+  'gate_request',
+  'permit_worker',
+  'event_guest',
+  'move_permit',
+  'field_exception',
+] as const satisfies readonly Entry['subjectType'][];
 
 const EMPTY = { gateId: '', direction: '', subjectType: '', from: '', to: '' };
 
 function Entries({ gates }: { gates: Gate[] }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const personName = usePersonName();
   const [filters, setFilters] = useState(EMPTY);
   const names = useMemo(() => new Map(gates.map((g) => [g.id, g.name])), [gates]);
   const query = {
@@ -58,16 +68,16 @@ function Entries({ gates }: { gates: Gate[] }) {
     from: startOfDay(filters.from),
     to: endOfDay(filters.to),
   };
-  const list = useCursorList(keys.entries(query), (c) => fetchers.entries(query, c), { refetchInterval: 30_000 });
+  const list = useCursorList(keys.entries(query), (cursor) => fetchers.entries(query, cursor), { refetchInterval: 30_000 });
   const dirty = Object.values(filters).some(Boolean);
 
   return (
     <>
       <div className="toolbar">
-        <Field label="Gate">
+        <Field label={t('gate')}>
           {(p) => (
             <Select {...p} value={filters.gateId} onChange={(e) => setFilters({ ...filters, gateId: e.target.value })}>
-              <option value="">All gates</option>
+              <option value="">{t('allGates')}</option>
               {gates.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -76,22 +86,22 @@ function Entries({ gates }: { gates: Gate[] }) {
             </Select>
           )}
         </Field>
-        <Field label="Direction">
+        <Field label={t('direction')}>
           {(p) => (
             <Select {...p} value={filters.direction} onChange={(e) => setFilters({ ...filters, direction: e.target.value })}>
-              <option value="">In and out</option>
-              <option value="in">In</option>
-              <option value="out">Out</option>
+              <option value="">{t('inAndOut')}</option>
+              <option value="in">{t('in')}</option>
+              <option value="out">{t('out')}</option>
             </Select>
           )}
         </Field>
-        <Field label="Who">
+        <Field label={t('who')}>
           {(p) => (
             <Select {...p} value={filters.subjectType} onChange={(e) => setFilters({ ...filters, subjectType: e.target.value })}>
-              <option value="">Everyone</option>
-              {Object.entries(SUBJECT_TEXT).map(([v, label]) => (
+              <option value="">{t('everyone')}</option>
+              {SUBJECTS.map((v) => (
                 <option key={v} value={v}>
-                  {label}
+                  {t(`subject.${v}`)}
                 </option>
               ))}
             </Select>
@@ -100,7 +110,7 @@ function Entries({ gates }: { gates: Gate[] }) {
         <DateRange from={filters.from} to={filters.to} onChange={(r) => setFilters({ ...filters, ...r })} />
         {dirty ? (
           <Button variant="text" icon={<RotateCcw aria-hidden />} onClick={() => setFilters(EMPTY)} style={{ height: 40 }}>
-            Reset
+            {t('reset')}
           </Button>
         ) : null}
       </div>
@@ -109,21 +119,21 @@ function Entries({ gates }: { gates: Gate[] }) {
           <DataTable<Entry>
             rows={list.rows}
             rowKey={(e) => e.id}
-            empty={dirty ? 'No entry matches these filters' : 'No gate entries yet'}
+            empty={dirty ? t('emptyFiltered') : t('empty')}
             columns={[
               {
                 key: 'when',
-                header: 'When',
+                header: t('col.when'),
                 cell: (e) => {
                   const late = new Date(e.recordedAt).getTime() - new Date(e.occurredAt).getTime() > LATE_MS;
                   return (
                     <div>
                       <div className="t-num" style={{ whiteSpace: 'nowrap' }}>
-                        {formatDateTime(e.occurredAt)}
+                        {f.dateTime(e.occurredAt)}
                       </div>
                       {late ? (
-                        <div className="list__meta" title="Recorded later, e.g. after the guard's device was offline">
-                          Recorded {formatDateTime(e.recordedAt)}
+                        <div className="list__meta" title={t('recordedHint')}>
+                          {t('recorded', { when: f.dateTime(e.recordedAt) })}
                         </div>
                       ) : null}
                     </div>
@@ -132,26 +142,26 @@ function Entries({ gates }: { gates: Gate[] }) {
               },
               {
                 key: 'dir',
-                header: 'Direction',
-                cell: (e) => <Badge tone={e.direction === 'in' ? 'green' : 'beige'}>{e.direction === 'in' ? 'In' : 'Out'}</Badge>,
+                header: t('direction'),
+                cell: (e) => <Badge tone={e.direction === 'in' ? 'green' : 'beige'}>{e.direction === 'in' ? t('in') : t('out')}</Badge>,
               },
-              { key: 'who', header: 'Who', cell: (e) => SUBJECT_TEXT[e.subjectType] },
-              { key: 'unit', header: 'Unit', cell: (e) => <span className="table__primary">{e.unitCode}</span> },
-              { key: 'gate', header: 'Gate', cell: (e) => names.get(e.gateId) ?? '—' },
+              { key: 'who', header: t('who'), cell: (e) => t(`subject.${e.subjectType}`) },
+              { key: 'unit', header: c('unit'), cell: (e) => <span className="table__primary">{e.unitCode}</span> },
+              { key: 'gate', header: t('col.gate'), cell: (e) => names.get(e.gateId) ?? '—' },
               {
                 key: 'method',
-                header: 'How',
+                header: t('col.how'),
                 cell: (e) => (
                   <span className="row">
-                    {humanize(e.method)}
-                    {e.unconfirmed ? <Badge tone="terracotta">Unconfirmed</Badge> : null}
+                    {label(e.method)}
+                    {e.unconfirmed ? <Badge tone="terracotta">{t('unconfirmed')}</Badge> : null}
                   </span>
                 ),
               },
               {
                 key: 'guard',
-                header: 'Guard',
-                cell: (e) => (e.guard ? (e.guard.erased ? 'Erased account' : e.guard.fullName) : <span className="t-secondary">System</span>),
+                header: t('col.guard'),
+                cell: (e) => (e.guard ? personName(e.guard) : <span className="t-secondary">{t('system')}</span>),
               },
             ]}
           />
@@ -163,6 +173,8 @@ function Entries({ gates }: { gates: Gate[] }) {
 }
 
 function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [name, setName] = useState(gate?.name ?? '');
   const [kind, setKind] = useState<GateKind>(gate?.kind ?? 'mixed');
@@ -190,7 +202,7 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
     {
       invalidate: [keys.gates],
       onDone: (g) => {
-        toast.show(gate ? `${g.name} saved.` : `${g.name} added.`);
+        toast.show(gate ? t('saved', { name: g.name }) : t('added', { name: g.name }));
         onClose();
       },
     },
@@ -199,47 +211,41 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
     <Dialog
       open={open}
       onClose={onClose}
-      title={gate ? `Edit ${gate.name}` : 'New gate'}
+      title={gate ? t('edit', { name: gate.name }) : t('newGate')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!name.trim()}>
-            {gate ? 'Save' : 'Add gate'}
+            {gate ? c('save') : t('addGate')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Name" hint="As guards know it, e.g. Main gate." error={fieldError(save.error, 'name')}>
+        <Field label={c('name')} hint={t('nameHint')} error={fieldError(save.error, 'name')}>
           {(p) => <Input {...p} autoFocus value={name} onChange={(e) => setName(e.target.value)} />}
         </Field>
-        <Field label="Kind">
+        <Field label={c('kind')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as GateKind)}>
-              <option value="mixed">Pedestrians and vehicles</option>
-              <option value="pedestrian">Pedestrians</option>
-              <option value="vehicle">Vehicles</option>
+              <option value="mixed">{t('kind.mixed')}</option>
+              <option value="pedestrian">{t('kind.pedestrian')}</option>
+              <option value="vehicle">{t('kind.vehicle')}</option>
             </Select>
           )}
         </Field>
-        <Field
-          label="Gate phone"
-          hint="Optional. Residents asked about a visitor call it; it is in every unit's emergency contacts, and a guard on shift here gives it when they answer."
-          error={fieldError(save.error, 'phone')}
-        >
-          {(p) => <Input {...p} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />}
+        <Field label={t('phoneLabel')} hint={t('phoneHint')} error={fieldError(save.error, 'phone')}>
+          {(p) => <Input {...p} type="tel" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} />}
         </Field>
         {gate && (
           <>
-            <Field
-              label="Directions (English)"
-              hint="How a visitor reaches this gate from outside. Shown on the visitor's page when a pass names this gate."
-              error={fieldError(save.error, 'directionsEn')}
-            >
-              {(p) => <Textarea {...p} rows={2} maxLength={500} value={directionsEn} onChange={(e) => setDirectionsEn(e.target.value)} />}
+            <Field label={t('directionsEn')} hint={t('directionsHint')} error={fieldError(save.error, 'directionsEn')}>
+              {(p) => (
+                <Textarea {...p} dir="ltr" rows={2} maxLength={500} value={directionsEn} onChange={(e) => setDirectionsEn(e.target.value)} />
+              )}
             </Field>
-            <Field label="Directions (Arabic)" error={fieldError(save.error, 'directionsAr')}>
+            <Field label={t('directionsAr')} error={fieldError(save.error, 'directionsAr')}>
               {(p) => <Textarea {...p} dir="rtl" rows={2} maxLength={500} value={directionsAr} onChange={(e) => setDirectionsAr(e.target.value)} />}
             </Field>
           </>
@@ -251,6 +257,8 @@ function GateDialog({ gate, open, onClose }: { gate: Gate | null; open: boolean;
 }
 
 function Gates({ query }: { query: { data?: { data: Gate[] }; isPending: boolean; error: unknown } }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [editing, setEditing] = useState<Gate | 'new' | null>(null);
   const toggle = useAction(
@@ -263,17 +271,17 @@ function Gates({ query }: { query: { data?: { data: Gate[] }; isPending: boolean
       ),
     {
       invalidate: [keys.gates],
-      onDone: (g) => toast.show(g.status === 'active' ? `${g.name} is open for shifts.` : `${g.name} is closed; no new shifts.`),
+      onDone: (g) => toast.show(g.status === 'active' ? t('openedForShifts', { name: g.name }) : t('closedForShifts', { name: g.name })),
     },
   );
   return (
     <>
       <div className="row">
         <p className="t-secondary" style={{ flex: 1 }}>
-          Guards start their shift at an active gate.
+          {t('intro')}
         </p>
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setEditing('new')}>
-          New gate
+          {t('newGate')}
         </Button>
       </div>
       <ErrorAlert error={toggle.error} />
@@ -282,27 +290,27 @@ function Gates({ query }: { query: { data?: { data: Gate[] }; isPending: boolean
           <DataTable<Gate>
             rows={query.data?.data}
             rowKey={(g) => g.id}
-            empty="No gates yet"
+            empty={t('emptyGates')}
             columns={[
-              { key: 'name', header: 'Gate', cell: (g) => <span className="table__primary">{g.name}</span> },
-              { key: 'kind', header: 'Kind', cell: (g) => humanize(g.kind) },
+              { key: 'name', header: t('col.gate'), cell: (g) => <span className="table__primary">{g.name}</span> },
+              { key: 'kind', header: c('kind'), cell: (g) => t(`kind.${g.kind}`) },
               {
                 key: 'phone',
-                header: 'Phone',
-                cell: (g) => (g.phone ? <span className="t-num">{g.phone}</span> : <span className="t-secondary">—</span>),
+                header: c('phone'),
+                cell: (g) => (g.phone ? <span className="t-num ltr">{g.phone}</span> : <span className="t-secondary">—</span>),
               },
-              { key: 'status', header: 'Status', cell: (g) => <StatusBadge status={g.status} /> },
+              { key: 'status', header: c('status'), cell: (g) => <StatusBadge status={g.status} /> },
               {
                 key: 'actions',
-                header: <span className="visually-hidden">Actions</span>,
+                header: <span className="visually-hidden">{c('actions')}</span>,
                 className: 'table__actions',
                 cell: (g) => (
                   <span className="row" style={{ justifyContent: 'flex-end' }}>
                     <Button size="sm" onClick={() => setEditing(g)}>
-                      Edit
+                      {c('edit')}
                     </Button>
                     <Button size="sm" loading={toggle.isPending && toggle.variables?.id === g.id} onClick={() => toggle.mutate(g)}>
-                      {g.status === 'active' ? 'Deactivate' : 'Activate'}
+                      {g.status === 'active' ? t('deactivate') : t('activate')}
                     </Button>
                   </span>
                 ),
@@ -319,23 +327,24 @@ function Gates({ query }: { query: { data?: { data: Gate[] }; isPending: boolean
 }
 
 function GateView() {
+  const t = useT(en, ar);
   const [tab, setTab] = useTab(TABS, 'entries');
   const { can } = usePermissions();
   const gates = useQuery({ queryKey: keys.gates, queryFn: fetchers.gates });
   return (
     <>
       <PageHeader
-        title="Gate"
-        description="Every entry and exit, append-only, and the gates guards work at."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Segmented<Tab>
-            label="Gate"
+            label={t('title')}
             value={tab}
             onChange={setTab}
             options={[
-              { value: 'entries', label: 'Entries' },
-              { value: 'gates', label: 'Gates' },
-              ...(can('gate.manage') ? [{ value: 'places' as const, label: 'Places' }] : []),
+              { value: 'entries', label: t('tab.entries') },
+              { value: 'gates', label: t('tab.gates') },
+              ...(can('gate.manage') ? [{ value: 'places' as const, label: t('tab.places') }] : []),
             ]}
           />
         }

@@ -1,0 +1,42 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/fac-areas.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'الأماكن المشتركة',
+  description: 'مكان الأصل حين لا يكون داخل وحدة، وما تمرّ عليه جولة الفحص.',
+  newArea: 'مكان جديد',
+  'kind.building': 'مبنى',
+  'kind.area': 'منطقة',
+  'kind.facility': 'مرفق',
+  'kinds.building': 'المباني',
+  'kinds.area': 'المناطق',
+  'kinds.facility': 'المرافق',
+  empty: 'لا توجد أماكن مشتركة بعد',
+  emptyHint: 'أضف المباني والحدائق وغرف المعدات التي تضم تجهيزات الكمبوند.',
+  'col.code': 'الكود',
+  'col.name': 'الاسم',
+  'col.building': 'المبنى',
+  'col.tag': 'الملصق',
+  retired: 'متوقف',
+  tagIssued: 'صدر',
+  tagNone: 'لا يوجد',
+  newTag: 'ملصق جديد',
+  issueTag: 'إصدار ملصق',
+  tagToast: 'تم إصدار الملصق.',
+  editTitle: 'تعديل {code}',
+  newTitle: 'مكان مشترك جديد',
+  newDescription: 'مكان في الكمبوند ليس وحدة: مبنى بكامله، أو حديقة، أو سطح، أو غرفة مضخات، أو مرفق.',
+  addArea: 'أضف المكان',
+  'option.building': 'مبنى (بكامله)',
+  codeHint: 'قصير وغير مكرر، مثل PR-1. لا يتغير أبدًا.',
+  nameEn: 'الاسم (بالإنجليزية)',
+  nameAr: 'الاسم (بالعربية)',
+  buildingHintBuilding: 'كما هو مسجّل في الوحدات.',
+  buildingHintArea: 'موقع المكان، إذا كان داخل مبنى.',
+  facilityId: 'معرّف المرفق',
+  facilityIdHint: 'المرفق الذي يمثله هذا المكان.',
+  inUse: 'قيد الاستخدام. إلغاء التحديد يوقفه: لا يُضاف إليه شيء جديد',
+  saved: 'تم حفظ {name}.',
+};
+
+export default ar;

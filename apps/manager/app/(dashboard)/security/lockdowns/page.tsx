@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -17,19 +18,28 @@ import {
   Select,
   StatusBadge,
   Textarea,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { personName } from '@/components/security/logic';
-import { lockdownScope } from '@/components/security/ops-logic';
+import { personNameIn } from '@/components/security/logic';
+import { lockdownScopeIn } from '@/components/security/ops-logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type LockdownOverride, type LockdownState, type StaffLockdown } from '@/lib/queries';
+import ar from '@/messages/ar/safety-lockdowns';
+import en from '@/messages/en/safety-lockdowns';
 
 type View = LockdownState | 'all';
+const VIEWS = ['live', 'ended', 'all'] as const satisfies readonly View[];
+/** The word the API takes as the typed confirmation, in either language. */
+const CONFIRM_WORD = 'LOCKDOWN';
 
 function EndLockdown({ lockdown, onClose }: { lockdown: StaffLockdown; onClose: () => void }) {
+  const t = useT(en, ar);
+  const { locale } = useLocale();
   const toast = useToast();
   const [note, setNote] = useState('');
   const end = useAction(
@@ -43,7 +53,7 @@ function EndLockdown({ lockdown, onClose }: { lockdown: StaffLockdown; onClose: 
     {
       invalidate: [keys.lockdownsAll],
       onDone: () => {
-        toast.show('The lockdown ended. The guards and the residents are told.');
+        toast.show(t('ended'));
         onClose();
       },
     },
@@ -52,16 +62,16 @@ function EndLockdown({ lockdown, onClose }: { lockdown: StaffLockdown; onClose: 
     <ReasonCodeDialog
       open
       onClose={onClose}
-      title={`End the lockdown: ${lockdownScope(lockdown)}?`}
-      description="The gates let people in again. The guards on shift, the lockdown’s keepers and every resident are told."
+      title={t('endTitle', { scope: lockdownScopeIn(lockdown, locale) })}
+      description={t('endDescription')}
       codes={REASON_CODES.gateLockdownEnd}
-      confirmLabel="End the lockdown"
+      confirmLabel={t('endConfirm')}
       danger
       pending={end.isPending}
       error={<ErrorAlert error={end.error} />}
       onConfirm={(reasonCode) => end.mutate(reasonCode)}
     >
-      <Field label="Note" hint="Optional. The management’s own words: nobody else reads them.">
+      <Field label={t('note')} hint={t('noteHint')}>
         {(p) => <Textarea {...p} rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />}
       </Field>
     </ReasonCodeDialog>
@@ -73,6 +83,9 @@ function EndLockdown({ lockdown, onClose }: { lockdown: StaffLockdown; onClose: 
  * or all, a reason code, and the same typed confirmation a guard gives.
  */
 function StartLockdown({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const gates = useQuery({ queryKey: keys.gates, queryFn: () => fetchers.gates() });
   const [gateId, setGateId] = useState('');
@@ -86,14 +99,14 @@ function StartLockdown({ onClose }: { onClose: () => void }) {
             scope: gateId ? 'gate' : 'all',
             ...(gateId ? { gateId } : {}),
             reasonCode,
-            confirmation: 'LOCKDOWN',
+            confirmation: CONFIRM_WORD,
           },
         }),
       ),
     {
       invalidate: [keys.lockdownsAll],
       onDone: () => {
-        toast.show('The gates are locked down. The guards on shift and the residents are told.');
+        toast.show(t('started'));
         onClose();
       },
     },
@@ -102,23 +115,23 @@ function StartLockdown({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
-      title="Lock the gates down"
-      onSubmit={() => typed === 'LOCKDOWN' && start.mutate()}
+      title={t('startTitle')}
+      onSubmit={() => typed === CONFIRM_WORD && start.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="danger" loading={start.isPending} disabled={typed !== 'LOCKDOWN'}>
-            Lock down now
+          <Button onClick={onClose}>{c('cancel')}</Button>
+          <Button type="submit" variant="danger" loading={start.isPending} disabled={typed !== CONFIRM_WORD}>
+            {t('startConfirm')}
           </Button>
         </>
       }
     >
       <div className="form">
         <ErrorAlert error={start.error} />
-        <Field label="Gates">
+        <Field label={t('gates')}>
           {(p) => (
             <Select {...p} value={gateId} onChange={(e) => setGateId(e.target.value)}>
-              <option value="">Every gate</option>
+              <option value="">{t('everyGate')}</option>
               {(gates.data?.data ?? []).map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -127,19 +140,19 @@ function StartLockdown({ onClose }: { onClose: () => void }) {
             </Select>
           )}
         </Field>
-        <Field label="Reason">
+        <Field label={t('reason')}>
           {(p) => (
             <Select {...p} value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>
               {REASON_CODES.gateLockdownStart.map((r) => (
                 <option key={r} value={r}>
-                  {humanize(r)}
+                  {label(r)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Type LOCKDOWN to confirm" hint="It starts at once: only residents come in until it ends.">
-          {(p) => <Input {...p} value={typed} onChange={(e) => setTyped(e.target.value)} />}
+        <Field label={t('typeToConfirm', { word: CONFIRM_WORD })} hint={t('typeHint')}>
+          {(p) => <Input {...p} dir="ltr" value={typed} onChange={(e) => setTyped(e.target.value)} />}
         </Field>
       </div>
     </Dialog>
@@ -147,48 +160,56 @@ function StartLockdown({ onClose }: { onClose: () => void }) {
 }
 
 function LockdownDetail({ lockdown, onClose }: { lockdown: StaffLockdown; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
+  const who = (ref: Parameters<typeof personNameIn>[0]) => personNameIn(ref, locale);
   return (
-    <Dialog open wide onClose={onClose} title={`Lockdown · ${lockdownScope(lockdown)}`} footer={<Button onClick={onClose}>Close</Button>}>
+    <Dialog
+      open
+      wide
+      onClose={onClose}
+      title={t('detailTitle', { scope: lockdownScopeIn(lockdown, locale) })}
+      footer={<Button onClick={onClose}>{c('close')}</Button>}
+    >
       <div className="stack">
         <dl className="dl">
-          <dt>Status</dt>
+          <dt>{t('status')}</dt>
           <dd>
             <StatusBadge status={lockdown.endedAt ? 'ended' : 'live'} />
           </dd>
-          <dt>Started</dt>
-          <dd>
-            {formatDateTime(lockdown.startedAt)} · {humanize(lockdown.reasonCode)} · by {personName(lockdown.startedBy)}
-          </dd>
+          <dt>{t('startedAt')}</dt>
+          <dd>{t('byLine', { when: fmt.dateTime(lockdown.startedAt), reason: label(lockdown.reasonCode), who: who(lockdown.startedBy) })}</dd>
           {lockdown.endedAt ? (
             <>
-              <dt>Ended</dt>
-              <dd>
-                {formatDateTime(lockdown.endedAt)} · {humanize(lockdown.endReason)} · by {personName(lockdown.endedBy)}
-              </dd>
+              <dt>{t('endedAt')}</dt>
+              <dd>{t('byLine', { when: fmt.dateTime(lockdown.endedAt), reason: label(lockdown.endReason), who: who(lockdown.endedBy) })}</dd>
             </>
           ) : null}
           {lockdown.endNote ? (
             <>
-              <dt>Note</dt>
+              <dt>{t('note')}</dt>
               <dd>{lockdown.endNote}</dd>
             </>
           ) : null}
         </dl>
         <Card flush>
-          <CardHeader title="Overrides" />
+          <CardHeader title={t('overrides')} />
           <DataTable<LockdownOverride>
             rows={lockdown.overrides}
             rowKey={(o) => o.id}
-            empty="No emergency vehicle was let through"
+            empty={t('noOverride')}
             columns={[
-              { key: 'when', header: 'When', cell: (o) => formatDateTime(o.occurredAt) },
-              { key: 'gate', header: 'Gate', cell: (o) => o.gate.name },
-              { key: 'what', header: 'What came through', cell: (o) => humanize(o.reasonCode) },
-              { key: 'guard', header: 'Guard', cell: (o) => personName(o.guard) },
+              { key: 'when', header: t('col.when'), cell: (o) => fmt.dateTime(o.occurredAt) },
+              { key: 'gate', header: t('col.gate'), cell: (o) => o.gate.name },
+              { key: 'what', header: t('col.what'), cell: (o) => label(o.reasonCode) },
+              { key: 'guard', header: t('col.guard'), cell: (o) => who(o.guard) },
               {
                 key: 'link',
-                header: 'For',
-                cell: (o) => (o.emergencyId ? 'An emergency' : o.gateServiceRequestId ? 'A lane request' : '—'),
+                header: t('col.for'),
+                cell: (o) => (o.emergencyId ? t('for.emergency') : o.gateServiceRequestId ? t('for.lane') : '—'),
               },
             ]}
           />
@@ -204,6 +225,10 @@ function LockdownDetail({ lockdown, onClose }: { lockdown: StaffLockdown; onClos
  * vehicles let through.
  */
 export default function LockdownsPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('lockdown.end');
   const [view, setView] = useState<View>('live');
@@ -215,61 +240,58 @@ export default function LockdownsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Lockdown" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Lockdown"
-        description="A guard locks the gates from the app, or the management from here; it ends here. Exits stay open, and emergency vehicles pass."
+        title={t('title')}
+        description={t('description')}
         actions={
           can('lockdown.start') ? (
             <Button variant="danger" onClick={() => setStarting(true)}>
-              Lock down
+              {t('lockDown')}
             </Button>
           ) : null
         }
       />
       <div className="toolbar">
-        <Segmented<View>
-          label="Lockdowns shown"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'live', label: 'In force' },
-            { value: 'ended', label: 'Ended' },
-            { value: 'all', label: 'All' },
-          ]}
-        />
+        <Segmented<View> label={t('shown')} value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))} />
       </div>
       <Card flush>
         <QueryState query={list}>
           <DataTable<StaffLockdown>
             rows={list.rows}
             rowKey={(l) => l.id}
-            empty={view === 'live' ? 'No lockdown is in force' : 'No lockdown'}
+            empty={view === 'live' ? t('emptyLive') : t('empty')}
             columns={[
               {
                 key: 'scope',
-                header: 'Gates',
+                header: t('col.gates'),
                 cell: (l) => (
                   <Button variant="text" className="table__link" onClick={() => setOpen(l)}>
-                    {lockdownScope(l)}
+                    {lockdownScopeIn(l, locale)}
                   </Button>
                 ),
               },
-              { key: 'status', header: 'Status', cell: (l) => <StatusBadge status={l.endedAt ? 'ended' : 'live'} /> },
-              { key: 'reason', header: 'Reason', cell: (l) => humanize(l.reasonCode) },
+              { key: 'status', header: t('col.status'), cell: (l) => <StatusBadge status={l.endedAt ? 'ended' : 'live'} /> },
+              { key: 'reason', header: t('col.reason'), cell: (l) => label(l.reasonCode) },
               {
                 key: 'started',
-                header: 'Started',
+                header: t('col.started'),
                 cell: (l) =>
-                  `${formatDateTime(l.startedAt)} · ${personName(l.startedBy)}${l.startedFrom === 'office' ? ' · from the office' : ''}`,
+                  [fmt.dateTime(l.startedAt), personNameIn(l.startedBy, locale), l.startedFrom === 'office' ? t('fromOffice') : null]
+                    .filter(Boolean)
+                    .join(' · '),
               },
-              { key: 'ended', header: 'Ended', cell: (l) => (l.endedAt ? `${formatDateTime(l.endedAt)} · ${humanize(l.endReason)}` : '—') },
-              { key: 'overrides', header: 'Overrides', cell: (l) => <span className="t-num">{l.overrides.length}</span> },
+              {
+                key: 'ended',
+                header: t('col.ended'),
+                cell: (l) => (l.endedAt ? `${fmt.dateTime(l.endedAt)} · ${label(l.endReason)}` : '—'),
+              },
+              { key: 'overrides', header: t('col.overrides'), cell: (l) => <span className="t-num">{fmt.number(l.overrides.length)}</span> },
               {
                 key: 'actions',
                 header: '',
@@ -277,7 +299,7 @@ export default function LockdownsPage() {
                 cell: (l) =>
                   l.endedAt ? null : (
                     <Button size="sm" variant="danger" onClick={() => setEnding(l)}>
-                      End
+                      {t('end')}
                     </Button>
                   ),
               },

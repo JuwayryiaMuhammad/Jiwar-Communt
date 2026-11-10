@@ -1,0 +1,21 @@
+/** The compound's places (ADR 0047): components/safety/places. */
+export default {
+  saved: '{name} saved.',
+  added: '{name} added.',
+  editTitle: 'Edit {name}',
+  newPlace: 'New place',
+  defaultPlaceNote: 'A default place: the app names it in its own words; your names show on this dashboard.',
+  addPlace: 'Add place',
+  nameEn: 'Name (English)',
+  nameAr: 'Name (Arabic)',
+  order: 'Order',
+  orderHint: 'Lower first (0–1000).',
+  offeredAgain: '{name} is offered again.',
+  retiredToast: '{name} is retired.',
+  note: 'Offered to residents for accessibility help, escorts and suspicious-activity reports.',
+  empty: 'No places',
+  'col.place': 'Place',
+  'col.arabic': 'Arabic',
+  retire: 'Retire',
+  restore: 'Restore',
+} as const;

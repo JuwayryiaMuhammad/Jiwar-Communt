@@ -2,23 +2,28 @@
 
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useT } from '@jiwar/i18n';
 import { Button, ButtonLink, Card, DataTable, ForbiddenState, PageHeader, Segmented, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useState } from 'react';
-import { FacilityBadges, HoursText, rulesText } from '@/components/facilities/bits';
+import { FacilityBadges, HoursText, rulesText, useLocalName } from '@/components/facilities/bits';
 import { NewFacilityDialog } from '@/components/facilities/new-facility-dialog';
 import { NoShowRules } from '@/components/facilities/no-show-rules';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Facility } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
+import ar from '@/messages/ar/places-facilities';
+import en from '@/messages/en/places-facilities';
 
 const TABS = ['facilities', 'no-shows'] as const;
 type Tab = (typeof TABS)[number];
 
 function FacilitiesList({ canManage }: { canManage: boolean }) {
+  const t = useT(en, ar);
+  const name = useLocalName();
   const toast = useToast();
   const [creating, setCreating] = useState(false);
   const facilities = useQuery({ queryKey: keys.facilities, queryFn: fetchers.facilities });
@@ -26,7 +31,7 @@ function FacilitiesList({ canManage }: { canManage: boolean }) {
     (f: Facility) => unwrap(api.PATCH('/api/v1/staff/facilities/{id}', { params: { path: { id: f.id } }, body: { active: !f.active } })),
     {
       invalidate: [keys.facilitiesAll],
-      onDone: (f) => toast.show(f.active ? `${f.nameEn} is open to bookings again.` : `${f.nameEn} is retired. Bookings already made stay.`),
+      onDone: (f) => toast.show(f.active ? t('reopened', { name: name(f) }) : t('retiredToast', { name: name(f) })),
     },
   );
 
@@ -36,7 +41,7 @@ function FacilitiesList({ canManage }: { canManage: boolean }) {
         <div className="toolbar">
           <span className="spacer" />
           <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            New facility
+            {t('newFacility')}
           </Button>
         </div>
       ) : null}
@@ -46,12 +51,12 @@ function FacilitiesList({ canManage }: { canManage: boolean }) {
           <DataTable<Facility>
             rows={facilities.data?.data}
             rowKey={(f) => f.id}
-            empty="No facility yet"
-            emptyHint={canManage ? 'Create one: a court, the hall, the pool.' : undefined}
+            empty={t('empty')}
+            emptyHint={canManage ? t('emptyHint') : undefined}
             columns={[
               {
                 key: 'name',
-                header: 'Facility',
+                header: t('col.facility'),
                 cell: (f) => (
                   <span className="stack stack--sm">
                     <Link className="table__link table__primary" href={`/facilities/${f.id}`}>
@@ -63,9 +68,9 @@ function FacilitiesList({ canManage }: { canManage: boolean }) {
                   </span>
                 ),
               },
-              { key: 'kind', header: 'Kind', cell: (f) => <FacilityBadges facility={f} /> },
-              { key: 'rules', header: 'Booking', cell: (f) => rulesText(f) },
-              { key: 'hours', header: 'Hours', cell: (f) => <HoursText facility={f} /> },
+              { key: 'kind', header: t('col.kind'), cell: (f) => <FacilityBadges facility={f} /> },
+              { key: 'rules', header: t('col.booking'), cell: (f) => rulesText(f, t) },
+              { key: 'hours', header: t('col.hours'), cell: (f) => <HoursText facility={f} /> },
               {
                 key: 'actions',
                 header: '',
@@ -74,12 +79,12 @@ function FacilitiesList({ canManage }: { canManage: boolean }) {
                   <span className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
                     {f.mode === 'bookable' ? (
                       <ButtonLink size="sm" href={`/bookings?facility=${f.id}`}>
-                        Day view
+                        {t('dayView')}
                       </ButtonLink>
                     ) : null}
                     {canManage ? (
                       <Button size="sm" loading={setActive.isPending && setActive.variables?.id === f.id} onClick={() => setActive.mutate(f)}>
-                        {f.active ? 'Retire' : 'Restore'}
+                        {f.active ? t('retire') : t('restore')}
                       </Button>
                     ) : null}
                   </span>
@@ -95,32 +100,27 @@ function FacilitiesList({ canManage }: { canManage: boolean }) {
 }
 
 function FacilitiesView() {
+  const t = useT(en, ar);
   const { ready, can } = usePermissions();
   const [tab, setTab] = useTab(TABS, 'facilities');
   const canManage = can('facilities.manage');
   if (ready && !canManage && !can('bookings.handle'))
     return (
       <>
-        <PageHeader title="Facilities" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader
-        title="Facilities"
-        description="The compound’s facilities: bookable ones by slot, with their rules, hours, peak times and closures; walk-in ones with their hours."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       {canManage ? (
         <div className="toolbar">
           <Segmented<Tab>
-            label="Facilities"
+            label={t('title')}
             value={tab}
             onChange={setTab}
-            options={[
-              { value: 'facilities', label: 'Facilities' },
-              { value: 'no-shows', label: 'No-show rules' },
-            ]}
+            options={TABS.map((v) => ({ value: v, label: t(`tab.${v}`) }))}
           />
         </div>
       ) : null}

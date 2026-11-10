@@ -1,0 +1,43 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/fac-bans.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'حظر استخدام المرافق',
+  description: 'منع حساب واحد من حجز مرفق معيّن أو كل المرافق، حتى يوم محدد أو حتى رفع الحظر.',
+  banAccount: 'حظر حساب',
+  'view.true': 'ساري',
+  'view.false': 'منتهٍ',
+  'view.all': 'الكل',
+  empty: 'لا يوجد حظر',
+  everyFacility: 'كل المرافق',
+  lifted: 'تم رفعه',
+  'col.facility': 'المرفق',
+  'col.why': 'السبب',
+  'col.since': 'من',
+  'col.until': 'حتى',
+  'col.cancelled': 'الحجوزات الملغاة',
+  lift: 'رفع الحظر',
+  liftTitle: 'رفع الحظر',
+  liftedToast: 'تم رفع الحظر وإبلاغ صاحب الحساب.',
+  newTitle: 'حظر من الحجز',
+  newDescription: 'تُلغى حجوزات الحساب التي لم تبدأ بعد في هذا النطاق، كما لو ألغيتها بنفسك. لا يتأثر الدخول المباشر ولا النادي.',
+  ban: 'حظر',
+  account: 'الحساب',
+  choose: 'اختر…',
+  lastDay: 'آخر يوم',
+  lastDayHint: 'اتركه فارغًا ليستمر الحظر حتى رفعه.',
+  banned: 'تم الحظر، وأُلغي {count, plural, =0 {أي حجز} one {حجز واحد} two {حجزان} few {# حجوزات} many {# حجزًا} other {# حجز}} وأُبلغ أصحابها.',
+  bannedNone: 'تم الحظر، ولا يوجد حجز يلزم إلغاؤه.',
+  'usage.title': 'استخدام المرافق',
+  'usage.description': 'الحجوزات حسب الحالة، والوقت المحجوز مقابل وقت فتح كل مرفق (بعد خصم فترات الإغلاق)، وعدم الحضور، ونسبة وقت الذروة.',
+  'usage.export': 'تصدير CSV',
+  'usage.empty': 'لا يوجد مرفق قابل للحجز',
+  'usage.confirmed': 'مؤكد',
+  'usage.cancelled': 'ملغى',
+  'usage.noShows': 'عدم الحضور',
+  'usage.use': 'الاستخدام',
+  'usage.openHours': 'ساعات الفتح',
+  'usage.atPeak': 'وقت الذروة',
+};
+
+export default ar;

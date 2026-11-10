@@ -1,7 +1,8 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -18,35 +19,46 @@ import {
   Select,
   StatusBadge,
   Textarea,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
-import { instantOf, personName } from '@/components/security/logic';
-import { blocklistReady, blocklistSubject } from '@/components/security/ops-logic';
+import { instantOf, personNameIn } from '@/components/security/logic';
+import { blocklistReady, blocklistSubjectIn } from '@/components/security/ops-logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type BlocklistEntry, type BlocklistFilters, type BlocklistMatch } from '@/lib/queries';
+import ar from '@/messages/ar/safety-blocklist';
+import en from '@/messages/en/safety-blocklist';
 
 type Status = NonNullable<BlocklistFilters['status']>;
 type Kind = 'ban' | 'watch';
+const STATUSES = ['active', 'expired', 'lifted', ''] as const satisfies readonly Status[];
+const KINDS = ['ban', 'watch'] as const;
 
-const kindBadge = (kind: string) => <Badge tone={kind === 'ban' ? 'error' : 'terracotta'}>{kind === 'ban' ? 'Ban' : 'Watch'}</Badge>;
+function KindBadge({ kind }: { kind: string }) {
+  const t = useT(en, ar);
+  return <Badge tone={kind === 'ban' ? 'error' : 'terracotta'}>{kind === 'ban' ? t('kind.ban') : t('kind.watch')}</Badge>;
+}
 
 function PhotoField({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   return (
-    <Field label="Photo" hint="Optional. The guards on duty see it.">
+    <Field label={t('photo')} hint={t('photoHint')}>
       {() =>
         value ? (
           <span className="row" style={{ gap: 8 }}>
-            <span className="t-secondary">Photo attached.</span>
+            <span className="t-secondary">{t('photoAttached')}</span>
             <Button size="sm" onClick={() => onChange(null)}>
-              Remove
+              {c('remove')}
             </Button>
           </span>
         ) : (
-          <FileUpload purpose="blocklist_photo" label="Add a photo" onUploaded={onChange} />
+          <FileUpload purpose="blocklist_photo" label={t('addPhoto')} onUploaded={onChange} />
         )
       }
     </Field>
@@ -54,6 +66,10 @@ function PhotoField({ value, onChange }: { value: string | null; onChange: (id: 
 }
 
 function AddEntry({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const [kind, setKind] = useState<Kind>('ban');
   const [subject, setSubject] = useState<'plate' | 'person'>('plate');
@@ -82,7 +98,7 @@ function AddEntry({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.blocklistAll],
       onDone: (e) => {
-        toast.show(`${e.kind === 'ban' ? 'Banned' : 'Watched'}: ${blocklistSubject(e)}. The guards see it now.`);
+        toast.show(t('added', { kind: e.kind, subject: blocklistSubjectIn(e, locale) }));
         onClose();
       },
     },
@@ -93,71 +109,59 @@ function AddEntry({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="Add to the blocklist"
-      description="A ban refuses entry at the gate; a watch lets in and tells you. Matched at every plate and ID check."
+      title={t('addTitle')}
+      description={t('addDescription')}
       onSubmit={() => ready && add.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={add.isPending} disabled={!ready}>
-            Add
+            {t('add')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Segmented<Kind>
-          label="Kind"
-          value={kind}
-          onChange={setKind}
-          options={[
-            { value: 'ban', label: 'Ban' },
-            { value: 'watch', label: 'Watch' },
-          ]}
-        />
+        <Segmented<Kind> label={t('kind')} value={kind} onChange={setKind} options={KINDS.map((k) => ({ value: k, label: t(`kind.${k}`) }))} />
         <Segmented<'plate' | 'person'>
-          label="About"
+          label={t('about')}
           value={subject}
           onChange={setSubject}
           options={[
-            { value: 'plate', label: 'A plate' },
-            { value: 'person', label: 'A person' },
+            { value: 'plate', label: t('about.plate') },
+            { value: 'person', label: t('about.person') },
           ]}
         />
         {subject === 'plate' ? (
-          <Field label="Plate" error={fieldError(add.error, 'plate')}>
+          <Field label={t('plate')} error={fieldError(add.error, 'plate')}>
             {(p) => <Input {...p} maxLength={40} value={plate} onChange={(e) => setPlate(e.target.value)} />}
           </Field>
         ) : (
           <>
-            <Field label="Full name" error={fieldError(add.error, 'fullName')}>
+            <Field label={t('fullName')} error={fieldError(add.error, 'fullName')}>
               {(p) => <Input {...p} maxLength={120} value={fullName} onChange={(e) => setFullName(e.target.value)} />}
             </Field>
-            <Field
-              label="ID number"
-              hint="Matched when a guard checks an ID. Never shown again, to anyone: only a keyed hash is kept."
-              error={fieldError(add.error, 'idNumber')}
-            >
+            <Field label={t('idNumber')} hint={t('idNumberHint')} error={fieldError(add.error, 'idNumber')}>
               {(p) => <Input {...p} autoComplete="off" maxLength={40} value={idNumber} onChange={(e) => setIdNumber(e.target.value)} />}
             </Field>
           </>
         )}
-        <Field label="Reason" error={fieldError(add.error, 'reasonCode')}>
+        <Field label={t('reason')} error={fieldError(add.error, 'reasonCode')}>
           {(p) => (
             <Select {...p} value={reasonCode} onChange={(e) => setReason(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{c('select')}</option>
               {REASON_CODES.blocklistReason.map((r) => (
                 <option key={r} value={r}>
-                  {humanize(r)}
+                  {label(r)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Note" hint="Optional. The management’s only: guards never read it." error={fieldError(add.error, 'note')}>
+        <Field label={t('note')} hint={t('noteHint')} error={fieldError(add.error, 'note')}>
           {(p) => <Textarea {...p} rows={3} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />}
         </Field>
-        <Field label="Until" hint="Optional. Lifted by itself then." error={fieldError(add.error, 'expiresAt')}>
+        <Field label={t('until')} hint={t('untilHint')} error={fieldError(add.error, 'expiresAt')}>
           {(p) => <Input {...p} type="datetime-local" value={expires} onChange={(e) => setExpires(e.target.value)} />}
         </Field>
         <PhotoField value={photoFileId} onChange={setPhoto} />
@@ -168,6 +172,11 @@ function AddEntry({ onClose }: { onClose: () => void }) {
 }
 
 function EditEntry({ entry, onClose }: { entry: BlocklistEntry; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const [kind, setKind] = useState<Kind>(entry.kind as Kind);
   const [reasonCode, setReason] = useState<string>(entry.reasonCode);
@@ -190,7 +199,7 @@ function EditEntry({ entry, onClose }: { entry: BlocklistEntry; onClose: () => v
     {
       invalidate: [keys.blocklistAll],
       onDone: () => {
-        toast.show('Saved.');
+        toast.show(c('saved'));
         onClose();
       },
     },
@@ -199,45 +208,37 @@ function EditEntry({ entry, onClose }: { entry: BlocklistEntry; onClose: () => v
     <Dialog
       open
       onClose={onClose}
-      title={`Edit ${blocklistSubject(entry)}`}
-      description="The plate or the person never changes: lift this entry and add another."
+      title={t('editTitle', { subject: blocklistSubjectIn(entry, locale) })}
+      description={t('editDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Segmented<Kind>
-          label="Kind"
-          value={kind}
-          onChange={setKind}
-          options={[
-            { value: 'ban', label: 'Ban' },
-            { value: 'watch', label: 'Watch' },
-          ]}
-        />
-        <Field label="Reason" error={fieldError(save.error, 'reasonCode')}>
+        <Segmented<Kind> label={t('kind')} value={kind} onChange={setKind} options={KINDS.map((k) => ({ value: k, label: t(`kind.${k}`) }))} />
+        <Field label={t('reason')} error={fieldError(save.error, 'reasonCode')}>
           {(p) => (
             <Select {...p} value={reasonCode} onChange={(e) => setReason(e.target.value)}>
               {REASON_CODES.blocklistReason.map((r) => (
                 <option key={r} value={r}>
-                  {humanize(r)}
+                  {label(r)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Note" hint="Empty clears it." error={fieldError(save.error, 'note')}>
+        <Field label={t('note')} hint={t('noteClearHint')} error={fieldError(save.error, 'note')}>
           {(p) => <Textarea {...p} rows={3} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />}
         </Field>
         <Field
-          label="Until"
-          hint={entry.expiresAt ? `Now until ${formatDateTime(entry.expiresAt)}.` : 'Now with no end.'}
+          label={t('until')}
+          hint={entry.expiresAt ? t('untilNow', { when: fmt.dateTime(entry.expiresAt) }) : t('untilNone')}
           error={fieldError(save.error, 'expiresAt')}
         >
           {(p) => <Input {...p} type="datetime-local" value={expires} disabled={clearExpiry} onChange={(e) => setExpires(e.target.value)} />}
@@ -245,7 +246,7 @@ function EditEntry({ entry, onClose }: { entry: BlocklistEntry; onClose: () => v
         {entry.expiresAt ? (
           <label className="row" style={{ gap: 8 }}>
             <input type="checkbox" checked={clearExpiry} onChange={(e) => setClearExpiry(e.target.checked)} />
-            No end
+            {t('noEnd')}
           </label>
         ) : null}
         <ErrorAlert error={save.error} />
@@ -255,9 +256,14 @@ function EditEntry({ entry, onClose }: { entry: BlocklistEntry; onClose: () => v
 }
 
 function EntryDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const entry = useQuery({ queryKey: keys.blocklistEntry(id), queryFn: () => fetchers.blocklistEntry(id) });
-  const matches = useCursorList(keys.blocklistMatches(id), (c) => fetchers.blocklistMatches(id, c));
+  const matches = useCursorList(keys.blocklistMatches(id), (cursor) => fetchers.blocklistMatches(id, cursor));
   const [step, setStep] = useState<'edit' | 'lift' | 'photo' | null>(null);
   const lift = useAction(
     (reasonCode: string) =>
@@ -265,7 +271,7 @@ function EntryDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.blocklistAll],
       onDone: () => {
-        toast.show('Lifted. The guards no longer see it.');
+        toast.show(t('lifted'));
         setStep(null);
       },
     },
@@ -276,33 +282,34 @@ function EntryDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.blocklistAll],
       onDone: () => {
-        toast.show('Photo saved.');
+        toast.show(t('photoSaved'));
         setStep(null);
       },
     },
   );
   const e = entry.data;
   const active = e?.status === 'active';
+  const who = (ref: Parameters<typeof personNameIn>[0]) => personNameIn(ref, locale);
   return (
     <>
       <Dialog
         open={step === null || step === 'lift'}
         wide
         onClose={onClose}
-        title={e ? blocklistSubject(e) : 'Blocklist entry'}
-        description={e ? `${e.kind === 'ban' ? 'Ban' : 'Watch'} · ${humanize(e.reasonCode)}` : undefined}
+        title={e ? blocklistSubjectIn(e, locale) : t('entry')}
+        description={e ? `${e.kind === 'ban' ? t('kind.ban') : t('kind.watch')} · ${label(e.reasonCode)}` : undefined}
         footer={
           <>
             {active ? (
               <>
-                <Button onClick={() => setStep('edit')}>Edit</Button>
-                <Button onClick={() => setStep('photo')}>{e?.photo ? 'Change the photo' : 'Add a photo'}</Button>
+                <Button onClick={() => setStep('edit')}>{c('edit')}</Button>
+                <Button onClick={() => setStep('photo')}>{e?.photo ? t('changePhoto') : t('addPhoto')}</Button>
                 <Button variant="danger" onClick={() => setStep('lift')}>
-                  Lift
+                  {t('lift')}
                 </Button>
               </>
             ) : null}
-            <Button onClick={onClose}>Close</Button>
+            <Button onClick={onClose}>{c('close')}</Button>
           </>
         }
       >
@@ -310,61 +317,59 @@ function EntryDetail({ id, onClose }: { id: string; onClose: () => void }) {
           {e ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{t('status')}</dt>
                 <dd>
-                  <StatusBadge status={e.status} /> {kindBadge(e.kind)}
+                  <StatusBadge status={e.status} /> <KindBadge kind={e.kind} />
                 </dd>
                 {e.subject === 'person' ? (
                   <>
-                    <dt>ID number</dt>
-                    <dd>{e.hasIdNumber ? 'Recorded (never shown)' : 'Purged'}</dd>
+                    <dt>{t('idNumber')}</dt>
+                    <dd>{e.hasIdNumber ? t('idRecorded') : t('idPurged')}</dd>
                   </>
                 ) : null}
-                <dt>Added</dt>
-                <dd>
-                  {formatDateTime(e.since)} · by {personName(e.createdBy)}
-                </dd>
-                <dt>Until</dt>
-                <dd>{e.expiresAt ? formatDateTime(e.expiresAt) : 'No end'}</dd>
+                <dt>{t('addedAt')}</dt>
+                <dd>{t('addedBy', { when: fmt.dateTime(e.since), who: who(e.createdBy) })}</dd>
+                <dt>{t('until')}</dt>
+                <dd>{e.expiresAt ? fmt.dateTime(e.expiresAt) : t('noEnd')}</dd>
                 {e.liftedAt ? (
                   <>
-                    <dt>Lifted</dt>
+                    <dt>{t('liftedAt')}</dt>
                     <dd>
-                      {formatDateTime(e.liftedAt)} · {humanize(e.liftReason)} · {e.liftedBy ? personName(e.liftedBy) : 'by the system'}
+                      {fmt.dateTime(e.liftedAt)} · {label(e.liftReason)} · {e.liftedBy ? who(e.liftedBy) : t('bySystem')}
                     </dd>
                   </>
                 ) : null}
                 {e.purgedAt ? (
                   <>
-                    <dt>Purged</dt>
-                    <dd>{formatDateTime(e.purgedAt)}: the person’s name, ID, photo and note are gone.</dd>
+                    <dt>{t('purgedAt')}</dt>
+                    <dd>{t('purgedText', { when: fmt.dateTime(e.purgedAt) })}</dd>
                   </>
                 ) : null}
                 {e.note ? (
                   <>
-                    <dt>Note</dt>
+                    <dt>{t('note')}</dt>
                     <dd>{e.note}</dd>
                   </>
                 ) : null}
               </dl>
               {e.photo ? (
                 <a className="btn btn--secondary btn--sm" href={e.photo.url} target="_blank" rel="noreferrer">
-                  Open the photo
+                  {t('openPhoto')}
                 </a>
               ) : null}
               <Card flush>
-                <CardHeader title="Met at the gate" />
+                <CardHeader title={t('met')} />
                 <QueryState query={matches}>
                   <DataTable<BlocklistMatch>
                     rows={matches.rows}
                     rowKey={(m) => m.id}
-                    empty="Never met"
+                    empty={t('neverMet')}
                     columns={[
-                      { key: 'when', header: 'When', cell: (m) => <span title={formatDateTime(m.at)}>{relativeTime(m.at)}</span> },
-                      { key: 'where', header: 'Where', cell: (m) => humanize(m.source) },
-                      { key: 'gate', header: 'Gate', cell: (m) => m.gate?.name ?? '—' },
-                      { key: 'outcome', header: 'Outcome', cell: (m) => <StatusBadge status={m.outcome} /> },
-                      { key: 'by', header: 'By', cell: (m) => personName(m.actor) },
+                      { key: 'when', header: t('col.when'), cell: (m) => <span title={fmt.dateTime(m.at)}>{fmt.relative(m.at)}</span> },
+                      { key: 'where', header: t('col.where'), cell: (m) => label(m.source) },
+                      { key: 'gate', header: t('col.gate'), cell: (m) => m.gate?.name ?? '—' },
+                      { key: 'outcome', header: t('col.outcome'), cell: (m) => <StatusBadge status={m.outcome} /> },
+                      { key: 'by', header: t('col.by'), cell: (m) => who(m.actor) },
                     ]}
                   />
                   <LoadMore query={matches} />
@@ -379,20 +384,20 @@ function EntryDetail({ id, onClose }: { id: string; onClose: () => void }) {
         <Dialog
           open
           onClose={() => setStep(null)}
-          title="The entry’s photo"
+          title={t('photoTitle')}
           footer={
             <>
               {e.photo ? (
                 <Button variant="danger" loading={photo.isPending} onClick={() => photo.mutate(null)}>
-                  Remove the photo
+                  {t('removePhoto')}
                 </Button>
               ) : null}
-              <Button onClick={() => setStep(null)}>Close</Button>
+              <Button onClick={() => setStep(null)}>{c('close')}</Button>
             </>
           }
         >
           <div className="form">
-            <FileUpload purpose="blocklist_photo" label="Upload a photo" onUploaded={(fileId) => photo.mutate(fileId)} />
+            <FileUpload purpose="blocklist_photo" label={t('uploadPhoto')} onUploaded={(fileId) => photo.mutate(fileId)} />
             <ErrorAlert error={photo.error} />
           </div>
         </Dialog>
@@ -400,10 +405,10 @@ function EntryDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'lift'}
         onClose={() => setStep(null)}
-        title={`Lift ${e ? blocklistSubject(e) : ''}?`}
-        description="The gate lets them in again. A person’s name, ID and photo are purged 30 days later."
+        title={t('liftTitle', { subject: e ? blocklistSubjectIn(e, locale) : '' })}
+        description={t('liftDescription')}
         codes={REASON_CODES.blocklistLift}
-        confirmLabel="Lift"
+        confirmLabel={t('lift')}
         danger
         pending={lift.isPending}
         error={<ErrorAlert error={lift.error} />}
@@ -418,6 +423,10 @@ function EntryDetail({ id, onClose }: { id: string; onClose: () => void }) {
  * and people banned or watched at the gate, and where each was met.
  */
 export default function BlocklistPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('blocklist.manage');
   const [status, setStatus] = useState<Status>('active');
@@ -433,39 +442,34 @@ export default function BlocklistPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Blocklist" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Blocklist"
-        description="Matched at every plate and ID check at the gate. The management’s only; guards on duty see the active entries."
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="primary" onClick={() => setAdding(true)}>
-            Add
+            {t('add')}
           </Button>
         }
       />
       <div className="toolbar">
         <Segmented<Status>
-          label="Entries shown"
+          label={t('shown')}
           value={status}
           onChange={setStatus}
-          options={[
-            { value: 'active', label: 'Active' },
-            { value: 'expired', label: 'Expired' },
-            { value: 'lifted', label: 'Lifted' },
-            { value: '', label: 'All' },
-          ]}
+          options={STATUSES.map((v) => ({ value: v, label: t(`view.${v || 'all'}`) }))}
         />
-        <Field label="Kind">
+        <Field label={t('kind')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value as Kind | '')}>
-              <option value="">Bans and watches</option>
-              <option value="ban">Bans</option>
-              <option value="watch">Watches</option>
+              <option value="">{t('kindFilter.all')}</option>
+              <option value="ban">{t('kindFilter.ban')}</option>
+              <option value="watch">{t('kindFilter.watch')}</option>
             </Select>
           )}
         </Field>
@@ -475,22 +479,22 @@ export default function BlocklistPage() {
           <DataTable<BlocklistEntry>
             rows={list.rows}
             rowKey={(e) => e.id}
-            empty="No entry"
+            empty={t('empty')}
             columns={[
               {
                 key: 'subject',
-                header: 'Plate or person',
+                header: t('col.subject'),
                 cell: (e) => (
                   <Button variant="text" className="table__link" onClick={() => setOpen(e.id)}>
-                    {blocklistSubject(e)}
+                    {blocklistSubjectIn(e, locale)}
                   </Button>
                 ),
               },
-              { key: 'kind', header: 'Kind', cell: (e) => kindBadge(e.kind) },
-              { key: 'reason', header: 'Reason', cell: (e) => humanize(e.reasonCode) },
-              { key: 'status', header: 'Status', cell: (e) => <StatusBadge status={e.status} /> },
-              { key: 'until', header: 'Until', cell: (e) => (e.expiresAt ? formatDateTime(e.expiresAt) : '—') },
-              { key: 'since', header: 'Added', cell: (e) => <span title={formatDateTime(e.since)}>{relativeTime(e.since)}</span> },
+              { key: 'kind', header: t('col.kind'), cell: (e) => <KindBadge kind={e.kind} /> },
+              { key: 'reason', header: t('col.reason'), cell: (e) => label(e.reasonCode) },
+              { key: 'status', header: t('col.status'), cell: (e) => <StatusBadge status={e.status} /> },
+              { key: 'until', header: t('col.until'), cell: (e) => (e.expiresAt ? fmt.dateTime(e.expiresAt) : '—') },
+              { key: 'since', header: t('col.since'), cell: (e) => <span title={fmt.dateTime(e.since)}>{fmt.relative(e.since)}</span> },
             ]}
           />
           <LoadMore query={list} />

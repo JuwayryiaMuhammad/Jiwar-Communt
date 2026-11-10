@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, unwrap } from '@jiwar/api';
+import { unwrap } from '@jiwar/api';
 import { ErrorAlert, fieldError, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Button,
   Card,
@@ -16,17 +17,20 @@ import {
   Segmented,
   Select,
   StatusBadge,
+  useCommonT,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, Plus, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { moved, patrolScheduleText, timesFrom } from '@/components/patrols/logic';
-import { postBody, postName, WEEKDAYS } from '@/components/security/logic';
+import { nameIn, postBody, postNameIn, WEEKDAYS } from '@/components/security/logic';
 import { PostPicker } from '@/components/security/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PatrolRoute, type PatrolRouteDetail } from '@/lib/queries';
+import ar from '@/messages/ar/guard-routes';
+import en from '@/messages/en/guard-routes';
 
 const VIEWS = ['active', 'retired', 'all'] as const;
 type View = (typeof VIEWS)[number];
@@ -69,22 +73,28 @@ function versionBody(f: VersionForm) {
 
 /** Checkpoints in the order walked, chosen from those in service; and the schedule. */
 function VersionFields({ form, onChange, errorOf }: { form: VersionForm; onChange: (f: VersionForm) => void; errorOf: (field: string) => ReactNode }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const checkpoints = useQuery({ queryKey: keys.checkpoints('active'), queryFn: () => fetchers.checkpoints('active') });
   const all = checkpoints.data?.data ?? [];
-  const name = (id: string) => all.find((c) => c.id === id)?.nameEn ?? id;
+  const name = (id: string) => {
+    const c = all.find((x) => x.id === id);
+    return c ? nameIn(c, locale) : id;
+  };
   const [pick, setPick] = useState('');
   return (
     <>
-      <Field label="Checkpoints, in the order walked" error={errorOf('checkpointIds')}>
+      <Field label={t('checkpoints')} error={errorOf('checkpointIds')}>
         {(p) => (
           <div className="row">
             <Select {...p} value={pick} onChange={(e) => setPick(e.target.value)}>
-              <option value="">{checkpoints.isPending ? 'Loading checkpoints…' : 'Add a checkpoint…'}</option>
+              <option value="">{checkpoints.isPending ? t('loadingCheckpoints') : t('addCheckpoint')}</option>
               {all
                 .filter((c) => !form.checkpointIds.includes(c.id))
                 .map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nameEn} · {postName(c.post)}
+                    {nameIn(c, locale)} · {postNameIn(c.post, locale)}
                   </option>
                 ))}
             </Select>
@@ -95,7 +105,7 @@ function VersionFields({ form, onChange, errorOf }: { form: VersionForm; onChang
                 setPick('');
               }}
             >
-              Add
+              {t('addButton')}
             </Button>
           </div>
         )}
@@ -103,37 +113,33 @@ function VersionFields({ form, onChange, errorOf }: { form: VersionForm; onChang
       <ol className="stack stack--sm">
         {form.checkpointIds.map((id, i) => (
           <li key={id} className="row">
-            <span className="t-num">{i + 1}.</span>
+            <span className="t-num">{fmt.number(i + 1)}.</span>
             <span>{name(id)}</span>
-            <Button size="sm" variant="text" iconOnly aria-label="Up" icon={<ArrowUp aria-hidden />} onClick={() => onChange({ ...form, checkpointIds: moved(form.checkpointIds, i, -1) })} />
-            <Button size="sm" variant="text" iconOnly aria-label="Down" icon={<ArrowDown aria-hidden />} onClick={() => onChange({ ...form, checkpointIds: moved(form.checkpointIds, i, 1) })} />
-            <Button size="sm" variant="text" iconOnly aria-label="Remove" icon={<X aria-hidden />} onClick={() => onChange({ ...form, checkpointIds: form.checkpointIds.filter((c) => c !== id) })} />
+            <Button size="sm" variant="text" iconOnly aria-label={t('up')} icon={<ArrowUp aria-hidden />} onClick={() => onChange({ ...form, checkpointIds: moved(form.checkpointIds, i, -1) })} />
+            <Button size="sm" variant="text" iconOnly aria-label={t('down')} icon={<ArrowDown aria-hidden />} onClick={() => onChange({ ...form, checkpointIds: moved(form.checkpointIds, i, 1) })} />
+            <Button size="sm" variant="text" iconOnly aria-label={t('remove')} icon={<X aria-hidden />} onClick={() => onChange({ ...form, checkpointIds: form.checkpointIds.filter((c) => c !== id) })} />
           </li>
         ))}
       </ol>
-      <Checkbox label="Scanned in this order" checked={form.ordered} onChange={(e) => onChange({ ...form, ordered: e.target.checked })} />
-      <Field label="Expected minutes" hint="5 to 480. A run under way twice as long is closed as timed out." error={errorOf('expectedMinutes')}>
-        {(p) => <Input {...p} inputMode="numeric" value={form.expectedMinutes} onChange={(e) => onChange({ ...form, expectedMinutes: e.target.value })} />}
+      <Checkbox label={t('ordered')} checked={form.ordered} onChange={(e) => onChange({ ...form, ordered: e.target.checked })} />
+      <Field label={t('expectedMinutes')} hint={t('expectedMinutesHint')} error={errorOf('expectedMinutes')}>
+        {(p) => <Input {...p} dir="ltr" inputMode="numeric" value={form.expectedMinutes} onChange={(e) => onChange({ ...form, expectedMinutes: e.target.value })} />}
       </Field>
-      <Checkbox label="On a weekly schedule" checked={form.scheduled} onChange={(e) => onChange({ ...form, scheduled: e.target.checked })} />
+      <Checkbox label={t('scheduled')} checked={form.scheduled} onChange={(e) => onChange({ ...form, scheduled: e.target.checked })} />
       {form.scheduled ? (
         <>
           <div className="row">
             {WEEKDAYS.map((d, i) => (
               <Checkbox
                 key={d}
-                label={d}
+                label={fmt.weekday(i, 'short')}
                 checked={form.days.includes(i)}
                 onChange={(e) => onChange({ ...form, days: e.target.checked ? [...form.days, i] : form.days.filter((x) => x !== i) })}
               />
             ))}
           </div>
-          <Field
-            label="Start times"
-            hint="HH:MM, separated by commas. Each run may be started from 15 minutes before until its window (its minutes, 30 at least) ends; windows never overlap."
-            error={errorOf('schedule.times') ?? errorOf('schedule.days')}
-          >
-            {(p) => <Input {...p} placeholder="08:00, 14:00, 22:00" value={form.times} onChange={(e) => onChange({ ...form, times: e.target.value })} />}
+          <Field label={t('startTimes')} hint={t('startTimesHint')} error={errorOf('schedule.times') ?? errorOf('schedule.days')}>
+            {(p) => <Input {...p} dir="ltr" placeholder="08:00, 14:00, 22:00" value={form.times} onChange={(e) => onChange({ ...form, times: e.target.value })} />}
           </Field>
         </>
       ) : null}
@@ -142,6 +148,8 @@ function VersionFields({ form, onChange, errorOf }: { form: VersionForm; onChang
 }
 
 function NewRouteDialog({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [post, setPost] = useState('');
   const [nameEn, setNameEn] = useState('');
@@ -160,7 +168,7 @@ function NewRouteDialog({ onClose }: { onClose: () => void }) {
     {
       invalidate: [keys.routesAll, keys.checkpointsAll, keys.runsAll],
       onDone: () => {
-        toast.show('Route added. Its scheduled runs are made a week ahead.');
+        toast.show(t('added'));
         onClose();
       },
     },
@@ -171,27 +179,27 @@ function NewRouteDialog({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="New route"
-      description="Walked from a gate or a zone."
+      title={t('newTitle')}
+      description={t('newDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Add route
+            {t('addRoute')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Post" error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
+        <Field label={t('post')} error={fieldError(save.error, 'gateId') ?? fieldError(save.error, 'zoneId')}>
           {(p) => <PostPicker {...p} value={post} onChange={(e) => setPost(e.target.value)} />}
         </Field>
-        <Field label="Name (English)" error={fieldError(save.error, 'nameEn')}>
-          {(p) => <Input {...p} maxLength={60} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
+        <Field label={t('nameEn')} error={fieldError(save.error, 'nameEn')}>
+          {(p) => <Input {...p} dir="ltr" maxLength={60} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
         </Field>
-        <Field label="Name (Arabic)" error={fieldError(save.error, 'nameAr')}>
-          {(p) => <Input {...p} dir="rtl" maxLength={60} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
+        <Field label={t('nameAr')} error={fieldError(save.error, 'nameAr')}>
+          {(p) => <Input {...p} dir="rtl" lang="ar" maxLength={60} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
         </Field>
         <VersionFields form={form} onChange={setForm} errorOf={(f) => fieldError(save.error, `version.${f}`)} />
         <ErrorAlert error={save.error} />
@@ -201,6 +209,9 @@ function NewRouteDialog({ onClose }: { onClose: () => void }) {
 }
 
 function ChangeDialog({ route, onClose }: { route: PatrolRouteDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const { locale } = useLocale();
   const toast = useToast();
   const [form, setForm] = useState<VersionForm>(() => formOf(route));
   const version = versionBody(form);
@@ -215,7 +226,7 @@ function ChangeDialog({ route, onClose }: { route: PatrolRouteDetail; onClose: (
     {
       invalidate: [keys.routesAll, keys.checkpointsAll, keys.runsAll],
       onDone: () => {
-        toast.show('Route changed. Its runs nobody started are made again.');
+        toast.show(t('changed'));
         onClose();
       },
     },
@@ -225,14 +236,14 @@ function ChangeDialog({ route, onClose }: { route: PatrolRouteDetail; onClose: (
       open
       wide
       onClose={onClose}
-      title={`Change ${route.nameEn}`}
-      description="A new version: the scheduled runs nobody started are cancelled and made again from it; a run under way keeps its version."
+      title={t('changeTitle', { name: nameIn(route, locale) })}
+      description={t('changeDescription')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={version === null}>
-            Save version {route.version.number + 1}
+            {t('saveVersion', { n: route.version.number + 1 })}
           </Button>
         </>
       }
@@ -246,6 +257,8 @@ function ChangeDialog({ route, onClose }: { route: PatrolRouteDetail; onClose: (
 }
 
 function RenameDialog({ route, onClose }: { route: PatrolRouteDetail; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const [nameEn, setNameEn] = useState(route.nameEn);
   const [nameAr, setNameAr] = useState(route.nameAr);
   const save = useAction(
@@ -256,23 +269,23 @@ function RenameDialog({ route, onClose }: { route: PatrolRouteDetail; onClose: (
     <Dialog
       open
       onClose={onClose}
-      title="Rename route"
+      title={t('renameTitle')}
       onSubmit={() => save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!nameEn.trim() || !nameAr.trim()}>
-            Save
+            {c('save')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Name (English)" error={fieldError(save.error, 'nameEn')}>
-          {(p) => <Input {...p} maxLength={60} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
+        <Field label={t('nameEn')} error={fieldError(save.error, 'nameEn')}>
+          {(p) => <Input {...p} dir="ltr" maxLength={60} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />}
         </Field>
-        <Field label="Name (Arabic)" error={fieldError(save.error, 'nameAr')}>
-          {(p) => <Input {...p} dir="rtl" maxLength={60} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
+        <Field label={t('nameAr')} error={fieldError(save.error, 'nameAr')}>
+          {(p) => <Input {...p} dir="rtl" lang="ar" maxLength={60} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
       </div>
@@ -281,6 +294,9 @@ function RenameDialog({ route, onClose }: { route: PatrolRouteDetail; onClose: (
 }
 
 function RouteDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const toast = useToast();
   const route = useQuery({ queryKey: keys.route(id), queryFn: () => fetchers.route(id) });
   const [mode, setMode] = useState<'view' | 'change' | 'rename' | 'retire'>('view');
@@ -289,7 +305,7 @@ function RouteDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.routesAll, keys.checkpointsAll, keys.runsAll],
       onDone: () => {
-        toast.show('Route retired. Its scheduled runs are cancelled.');
+        toast.show(t('retiredToast'));
         onClose();
       },
     },
@@ -303,50 +319,52 @@ function RouteDetail({ id, onClose }: { id: string; onClose: () => void }) {
         open={mode === 'view'}
         wide
         onClose={onClose}
-        title={r?.nameEn ?? 'Route'}
+        title={r ? nameIn(r, locale) : t('route')}
         footer={
           <>
             {r && !r.retiredAt ? (
               <>
-                <Button onClick={() => setMode('rename')}>Rename</Button>
-                <Button onClick={() => setMode('change')}>Change</Button>
-                <Button onClick={() => setMode('retire')}>Retire</Button>
+                <Button onClick={() => setMode('rename')}>{t('rename')}</Button>
+                <Button onClick={() => setMode('change')}>{t('change')}</Button>
+                <Button onClick={() => setMode('retire')}>{t('retire')}</Button>
               </>
             ) : null}
-            <Button onClick={onClose}>Done</Button>
+            <Button onClick={onClose}>{t('done')}</Button>
           </>
         }
       >
         <QueryState query={route} rows={4}>
           {r ? (
             <dl className="dl">
-              <dt>Post</dt>
-              <dd>{postName(r.post)}</dd>
-              <dt>Version</dt>
+              <dt>{t('post')}</dt>
+              <dd>{postNameIn(r.post, locale)}</dd>
+              <dt>{t('version')}</dt>
+              <dd>{t('versionSince', { n: r.version.number, when: fmt.dateTime(r.version.createdAt) })}</dd>
+              <dt>{t('schedule')}</dt>
+              <dd>{patrolScheduleText(r.version.schedule, locale)}</dd>
+              <dt>{t('takes')}</dt>
               <dd>
-                {r.version.number} · since {formatDateTime(r.version.createdAt)}
+                {t('takesText', {
+                  minutes: r.version.expectedMinutes,
+                  window: r.version.windowMinutes,
+                  order: r.version.ordered ? t('inOrder') : t('anyOrder'),
+                })}
               </dd>
-              <dt>Schedule</dt>
-              <dd>{patrolScheduleText(r.version.schedule)}</dd>
-              <dt>Takes</dt>
-              <dd>
-                {r.version.expectedMinutes} min · window {r.version.windowMinutes} min · {r.version.ordered ? 'in order' : 'any order'}
-              </dd>
-              <dt>Checkpoints</dt>
+              <dt>{t('checkpoints')}</dt>
               <dd>
                 <ol>
                   {r.stops.map((s) => (
                     <li key={s.checkpointId}>
-                      {s.nameEn}
-                      {s.retired ? <span className="t-secondary"> · retired since</span> : null}
+                      {nameIn(s, locale)}
+                      {s.retired ? <span className="t-secondary"> · {t('retiredSince')}</span> : null}
                     </li>
                   ))}
                 </ol>
               </dd>
               {r.retiredAt ? (
                 <>
-                  <dt>Retired</dt>
-                  <dd>{formatDateTime(r.retiredAt)}</dd>
+                  <dt>{t('retired')}</dt>
+                  <dd>{fmt.dateTime(r.retiredAt)}</dd>
                 </>
               ) : null}
             </dl>
@@ -356,9 +374,9 @@ function RouteDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ConfirmDialog
         open={mode === 'retire'}
         onClose={() => setMode('view')}
-        title={`Retire ${r?.nameEn ?? 'this route'}?`}
-        description="For good: its scheduled runs nobody started are cancelled; a run under way finishes."
-        confirmLabel="Retire"
+        title={t('retireTitle', { name: r ? nameIn(r, locale) : t('retireThis') })}
+        description={t('retireDescription')}
+        confirmLabel={t('retire')}
         danger
         pending={retire.isPending}
         error={<ErrorAlert error={retire.error} />}
@@ -370,6 +388,9 @@ function RouteDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
 /** The routes a patrol walks (ADR 0052): checkpoints in order, how long, when. */
 export default function PatrolRoutesPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const allowed = can('patrols.manage');
   const [view, setView] = useState<View>('active');
@@ -380,26 +401,17 @@ export default function PatrolRoutesPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Patrol routes" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Patrol routes" description="Each change is a new version; a run keeps the version it started with." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Segmented<View>
-          label="Routes shown"
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'active', label: 'In service' },
-            { value: 'retired', label: 'Retired' },
-            { value: 'all', label: 'All' },
-          ]}
-        />
+        <Segmented<View> label={t('shown')} value={view} onChange={setView} options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))} />
         <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setAdding(true)}>
-          New route
+          {t('add')}
         </Button>
       </div>
       <Card flush>
@@ -407,21 +419,21 @@ export default function PatrolRoutesPage() {
           <DataTable<PatrolRoute>
             rows={list.rows}
             rowKey={(r) => r.id}
-            empty="No route"
+            empty={t('empty')}
             columns={[
               {
                 key: 'name',
-                header: 'Route',
+                header: t('col.route'),
                 cell: (r) => (
                   <Button variant="text" className="table__link" onClick={() => setOpen(r.id)}>
-                    {r.nameEn}
+                    {nameIn(r, locale)}
                   </Button>
                 ),
               },
-              { key: 'post', header: 'Post', cell: (r) => postName(r.post) },
-              { key: 'points', header: 'Checkpoints', cell: (r) => <span className="t-num">{r.version.checkpoints}</span> },
-              { key: 'when', header: 'Schedule', cell: (r) => patrolScheduleText(r.version.schedule) },
-              { key: 'takes', header: 'Minutes', cell: (r) => <span className="t-num">{r.version.expectedMinutes}</span> },
+              { key: 'post', header: t('col.post'), cell: (r) => postNameIn(r.post, locale) },
+              { key: 'points', header: t('col.checkpoints'), cell: (r) => <span className="t-num">{fmt.number(r.version.checkpoints)}</span> },
+              { key: 'when', header: t('col.schedule'), cell: (r) => patrolScheduleText(r.version.schedule, locale) },
+              { key: 'takes', header: t('col.minutes'), cell: (r) => <span className="t-num">{fmt.number(r.version.expectedMinutes)}</span> },
               { key: 'state', header: '', cell: (r) => (r.retiredAt ? <StatusBadge status="retired" /> : null) },
             ]}
           />

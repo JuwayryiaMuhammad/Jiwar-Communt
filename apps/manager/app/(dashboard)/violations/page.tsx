@@ -1,6 +1,6 @@
 'use client';
 
-import { fieldError, formatDateTime, humanize, REASON_CODES, relativeTime, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import {
   Badge,
@@ -17,27 +17,32 @@ import {
   Select,
   StatusBadge,
   Textarea,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { egp } from '@/components/club/logic';
 import { validReceipt } from '@/components/facilities/logic';
 import { FileUpload } from '@/components/file-upload';
-import { personName, postName } from '@/components/security/logic';
+import { personNameIn, postNameIn } from '@/components/security/logic';
 import { violationActions } from '@/components/security/ops-logic';
 import { addDays, validFineAmount } from '@/components/vehicles/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StaffViolation, type ViolationFilters, type ViolationPayment } from '@/lib/queries';
+import ar from '@/messages/ar/violations';
+import en from '@/messages/en/violations';
 
 type Body = Schema<'IssueViolationDto'>;
 type Status = NonNullable<ViolationFilters['status']>;
 
 const today = () => new Date().toLocaleDateString('en-CA');
-const amountText = (v: { amount: string | null }) => (v.amount ? egp(v.amount) : <Badge tone="beige">Warning</Badge>);
-
 function IssueViolation({ onClose }: { onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [kind, setKind] = useState('');
   const [unitCode, setUnitCode] = useState('');
@@ -58,7 +63,7 @@ function IssueViolation({ onClose }: { onClose: () => void }) {
   const issue = useAction(() => unwrap(api.POST('/api/v1/staff/violations', { body })), {
     invalidate: [keys.violationsAll],
     onDone: (v) => {
-      toast.show(`Issued ${v.reference}. The unit is told.`);
+      toast.show(t('issuedToast', { reference: v.reference }));
       onClose();
     },
   });
@@ -68,65 +73,65 @@ function IssueViolation({ onClose }: { onClose: () => void }) {
       open
       wide
       onClose={onClose}
-      title="Issue a violation"
-      description="To a unit, with an amount or none (a warning). Its keepers and its primary are told by the kind alone."
+      title={t('issueTitle')}
+      description={t('issueDescription')}
       onSubmit={() => ready && issue.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={issue.isPending} disabled={!ready}>
-            Issue
+            {t('issue')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Kind" error={fieldError(issue.error, 'kind')}>
+        <Field label={c('kind')} error={fieldError(issue.error, 'kind')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="">Select…</option>
+              <option value="">{c('select')}</option>
               {REASON_CODES.violationKind.map((k) => (
                 <option key={k} value={k}>
-                  {humanize(k)}
+                  {label(k)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
         {hours ? (
-          <Field label="Works permit" hint="The permit’s id: the unit is the permit’s. Or give the unit’s code below." error={fieldError(issue.error, 'permitId')}>
+          <Field label={t('worksPermit')} hint={t('worksPermitHint')} error={fieldError(issue.error, 'permitId')}>
             {(p) => <Input {...p} value={permitId} onChange={(e) => setPermitId(e.target.value)} />}
           </Field>
         ) : null}
         {!hours || !permitId.trim() ? (
-          <Field label="Unit code" error={fieldError(issue.error, 'unitCode')}>
-            {(p) => <Input {...p} value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
+          <Field label={t('unitCode')} error={fieldError(issue.error, 'unitCode')}>
+            {(p) => <Input {...p} className="ltr" value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
           </Field>
         ) : null}
         <Field
-          label="Amount, EGP"
-          hint="Empty: a warning, never paid."
-          error={fieldError(issue.error, 'amount') ?? (amount && !validFineAmount(amount) ? 'More than zero, at most 100,000, two decimals.' : undefined)}
+          label={t('amountEgp')}
+          hint={t('amountHint')}
+          error={fieldError(issue.error, 'amount') ?? (amount && !validFineAmount(amount) ? t('amountInvalid') : undefined)}
         >
           {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
         </Field>
-        <Field label="Day it happened" hint="Within the last 90 days." error={fieldError(issue.error, 'occurredOn')}>
+        <Field label={t('occurredOn')} hint={t('occurredOnHint')} error={fieldError(issue.error, 'occurredOn')}>
           {(p) => <Input {...p} type="date" min={addDays(today(), -90)} max={today()} value={occurredOn} onChange={(e) => setOccurredOn(e.target.value)} />}
         </Field>
-        <Field label="Note for the unit" hint="Optional. The unit’s people read it." error={fieldError(issue.error, 'note')}>
+        <Field label={t('noteForUnit')} hint={t('noteHint')} error={fieldError(issue.error, 'note')}>
           {(p) => <Textarea {...p} maxLength={500} rows={3} value={note} onChange={(e) => setNote(e.target.value)} />}
         </Field>
-        <Field label="Photo">
+        <Field label={t('photo')}>
           {() =>
             photoFileId ? (
               <span className="row" style={{ gap: 8 }}>
-                <span className="t-secondary">Photo attached.</span>
+                <span className="t-secondary">{t('photoAttached')}</span>
                 <Button size="sm" onClick={() => setPhoto(null)}>
-                  Remove
+                  {c('remove')}
                 </Button>
               </span>
             ) : (
-              <FileUpload purpose="violation_photo" label="Add a photo" onUploaded={setPhoto} />
+              <FileUpload purpose="violation_photo" label={t('addPhoto')} onUploaded={setPhoto} />
             )
           }
         </Field>
@@ -137,6 +142,9 @@ function IssueViolation({ onClose }: { onClose: () => void }) {
 }
 
 function RecordPayment({ violation, onClose }: { violation: StaffViolation; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
   const toast = useToast();
   const [receiptNumber, setReceipt] = useState('');
   const [paidOn, setPaidOn] = useState(today());
@@ -151,7 +159,7 @@ function RecordPayment({ violation, onClose }: { violation: StaffViolation; onCl
     {
       invalidate: [keys.violationsAll],
       onDone: () => {
-        toast.show('Payment recorded. The violation is paid.');
+        toast.show(t('paymentRecorded'));
         onClose();
       },
     },
@@ -161,27 +169,27 @@ function RecordPayment({ violation, onClose }: { violation: StaffViolation; onCl
     <Dialog
       open
       onClose={onClose}
-      title={`Record the payment of ${violation.reference}`}
-      description={`The whole amount, ${violation.amount ? egp(violation.amount) : ''}, paid at the office. Records are never edited: a wrong one is reversed.`}
+      title={t('recordTitle', { reference: violation.reference })}
+      description={t('recordDescription', { amount: violation.amount ? f.money(violation.amount) : '' })}
       onSubmit={() => ready && save.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={save.isPending} disabled={!ready}>
-            Record payment
+            {t('recordPayment')}
           </Button>
         </>
       }
     >
       <div className="form">
         <Field
-          label="Receipt number"
-          hint="Recorded once among the compound’s violation payments."
-          error={fieldError(save.error, 'receiptNumber') ?? (receiptNumber && !validReceipt(receiptNumber) ? 'Letters, digits, / and - only.' : undefined)}
+          label={t('receiptNumber')}
+          hint={t('receiptHint')}
+          error={fieldError(save.error, 'receiptNumber') ?? (receiptNumber && !validReceipt(receiptNumber) ? t('receiptInvalid') : undefined)}
         >
           {(p) => <Input {...p} maxLength={40} value={receiptNumber} onChange={(e) => setReceipt(e.target.value)} />}
         </Field>
-        <Field label="Paid on" hint="Not before the violation’s day, at most 90 days ago." error={fieldError(save.error, 'paidOn')}>
+        <Field label={t('paidOn')} hint={t('paidOnHint')} error={fieldError(save.error, 'paidOn')}>
           {(p) => <Input {...p} type="date" min={violation.date} max={today()} value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />}
         </Field>
         <ErrorAlert error={save.error} />
@@ -191,6 +199,11 @@ function RecordPayment({ violation, onClose }: { violation: StaffViolation; onCl
 }
 
 function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { locale } = useLocale();
   const toast = useToast();
   const { can } = usePermissions();
   const violation = useQuery({ queryKey: keys.violation(id), queryFn: () => fetchers.violation(id) });
@@ -202,7 +215,7 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.violationsAll],
       onDone: (v) => {
-        toast.show(v.status === 'cancelled' ? 'Appeal accepted: the violation is cancelled.' : 'Appeal upheld: the violation stands.');
+        toast.show(v.status === 'cancelled' ? t('appealAccepted') : t('appealUpheld'));
         setStep(null);
       },
     },
@@ -212,7 +225,7 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.violationsAll],
       onDone: () => {
-        toast.show('Cancelled.');
+        toast.show(t('cancelledToast'));
         setStep(null);
       },
     },
@@ -223,7 +236,7 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.violationsAll],
       onDone: () => {
-        toast.show('Reversed. The violation is open again.');
+        toast.show(t('reversedToast'));
         setReversing(null);
       },
     },
@@ -237,31 +250,33 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
         open={step === null || step === 'cancel' || step === 'accept'}
         wide
         onClose={onClose}
-        title={v ? `${v.reference} · unit ${v.unitCode}` : 'Violation'}
-        description={v ? `${humanize(v.kind)} · ${v.amount ? egp(v.amount) : 'a warning'} · ${v.date}` : undefined}
+        title={v ? t('detailTitle', { reference: v.reference, unit: v.unitCode }) : t('violation')}
+        description={
+          v ? [label(v.kind), v.amount ? f.money(v.amount) : t('warning'), f.day(v.date)].join(' · ') : undefined
+        }
         footer={
           <>
             {actions.includes('decide') ? (
               <>
                 <Button loading={decide.isPending} onClick={() => decide.mutate({ decision: 'upheld' })}>
-                  Uphold
+                  {t('uphold')}
                 </Button>
                 <Button variant="primary" onClick={() => setStep('accept')}>
-                  Accept the appeal
+                  {t('acceptAppeal')}
                 </Button>
               </>
             ) : null}
             {actions.includes('pay') ? (
               <Button variant="primary" onClick={() => setStep('pay')}>
-                Record payment
+                {t('recordPayment')}
               </Button>
             ) : null}
             {actions.includes('cancel') ? (
               <Button variant="danger" onClick={() => setStep('cancel')}>
-                Cancel the violation
+                {t('cancelViolation')}
               </Button>
             ) : null}
-            <Button onClick={onClose}>Close</Button>
+            <Button onClick={onClose}>{c('close')}</Button>
           </>
         }
       >
@@ -269,50 +284,50 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
           {v ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{c('status')}</dt>
                 <dd>
                   <StatusBadge status={v.status} />
-                  {v.cancelReason ? <span className="t-secondary"> · {humanize(v.cancelReason)}</span> : null}
+                  {v.cancelReason ? <span className="t-secondary"> · {label(v.cancelReason)}</span> : null}
                 </dd>
-                <dt>Issued</dt>
+                <dt>{t('issuedAt')}</dt>
                 <dd>
-                  {formatDateTime(v.createdAt)} · by {personName(v.issuedBy)}
-                  {v.post ? ` · on shift at ${postName(v.post)}` : ''}
+                  {t('issuedBy', { when: f.dateTime(v.createdAt), name: personNameIn(v.issuedBy, locale) })}
+                  {v.post ? t('onShift', { post: postNameIn(v.post, locale) }) : ''}
                 </dd>
                 {v.permitReference ? (
                   <>
-                    <dt>Works permit</dt>
-                    <dd className="t-mono">{v.permitReference}</dd>
+                    <dt>{t('worksPermit')}</dt>
+                    <dd className="t-mono ltr">{v.permitReference}</dd>
                   </>
                 ) : null}
                 {v.note ? (
                   <>
-                    <dt>Note for the unit</dt>
+                    <dt>{t('noteForUnit')}</dt>
                     <dd>{v.note}</dd>
                   </>
                 ) : null}
               </dl>
               {v.photoUrl ? (
                 <a className="btn btn--secondary btn--sm" href={v.photoUrl} target="_blank" rel="noreferrer">
-                  Open the photo
+                  {t('openPhoto')}
                 </a>
               ) : null}
               {v.appeal ? (
                 <Card>
                   <div className="stack stack--sm" style={{ padding: 16 }}>
-                    <strong>Appeal</strong>
+                    <strong>{t('appeal')}</strong>
                     <span className="t-secondary">
-                      {formatDateTime(v.appeal.appealedAt)} · by {personName(v.appealedBy)}
+                      {t('appealBy', { when: f.dateTime(v.appeal.appealedAt), name: personNameIn(v.appealedBy, locale) })}
                     </span>
-                    <span>{v.appeal.reason ?? <span className="t-secondary">The appellant’s words were erased.</span>}</span>
+                    <span>{v.appeal.reason ?? <span className="t-secondary">{t('appealErased')}</span>}</span>
                     {v.appeal.photoUrl ? (
                       <a href={v.appeal.photoUrl} target="_blank" rel="noreferrer">
-                        The appeal’s photo
+                        {t('appealPhoto')}
                       </a>
                     ) : null}
                     {v.appeal.decision ? (
                       <Badge tone={v.appeal.decision === 'upheld' ? 'beige' : 'green'}>
-                        {v.appeal.decision === 'upheld' ? 'Upheld' : 'Accepted'} · {personName(v.decidedBy)}
+                        {t(v.appeal.decision === 'upheld' ? 'decisionUpheld' : 'decisionAccepted', { name: personNameIn(v.decidedBy, locale) })}
                       </Badge>
                     ) : null}
                   </div>
@@ -323,18 +338,18 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   <DataTable<ViolationPayment>
                     rows={v.payments}
                     rowKey={(p) => p.id}
-                    empty="No payment"
+                    empty={t('noPayment')}
                     columns={[
                       {
                         key: 'kind',
                         header: '',
                         cell: (p) =>
-                          p.kind === 'reversal' ? <Badge tone="error">Reversal</Badge> : reversed.has(p.id) ? <Badge tone="beige">Reversed</Badge> : <Badge tone="green">Payment</Badge>,
+                          p.kind === 'reversal' ? <Badge tone="error">{t('reversal')}</Badge> : reversed.has(p.id) ? <Badge tone="beige">{t('reversed')}</Badge> : <Badge tone="green">{t('payment')}</Badge>,
                       },
-                      { key: 'paid', header: 'Paid on', cell: (p) => p.paidOn ?? new Date(p.createdAt).toLocaleDateString('en-CA') },
-                      { key: 'amount', header: 'Amount', cell: (p) => (p.amount ? egp(p.amount) : humanize(p.reasonCode)) },
-                      { key: 'receipt', header: 'Receipt', cell: (p) => <span className="t-mono">{p.receiptNumber ?? '—'}</span> },
-                      { key: 'by', header: 'By', cell: (p) => personName(p.recordedBy) },
+                      { key: 'paid', header: t('paidOn'), cell: (p) => (p.paidOn ? f.day(p.paidOn) : f.date(p.createdAt)) },
+                      { key: 'amount', header: c('amount'), cell: (p) => (p.amount ? f.money(p.amount) : label(p.reasonCode)) },
+                      { key: 'receipt', header: t('receipt'), cell: (p) => <span className="t-mono ltr">{p.receiptNumber ?? '—'}</span> },
+                      { key: 'by', header: c('by'), cell: (p) => personNameIn(p.recordedBy, locale) },
                       {
                         key: 'actions',
                         header: '',
@@ -342,7 +357,7 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
                         cell: (p) =>
                           p.kind === 'payment' && !reversed.has(p.id) && can('fines.billing') ? (
                             <Button size="sm" onClick={() => setReversing(p)}>
-                              Reverse
+                              {t('reverse')}
                             </Button>
                           ) : null,
                       },
@@ -359,10 +374,10 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'accept'}
         onClose={() => setStep(null)}
-        title={`Accept the appeal of ${v?.reference ?? ''}?`}
-        description="The violation is cancelled and the appellant is told."
+        title={t('acceptTitle', { reference: v?.reference ?? '' })}
+        description={t('acceptDescription')}
         codes={['appeal_accepted']}
-        confirmLabel="Accept and cancel"
+        confirmLabel={t('acceptConfirm')}
         pending={decide.isPending}
         error={<ErrorAlert error={decide.error} />}
         onConfirm={(reasonCode) => decide.mutate({ decision: 'cancelled', reasonCode })}
@@ -370,10 +385,10 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'cancel'}
         onClose={() => setStep(null)}
-        title={`Cancel ${v?.reference ?? ''}?`}
-        description="Final. The unit sees it cancelled, with the reason."
-        codes={REASON_CODES.violationCancel.filter((c) => c !== 'appeal_accepted')}
-        confirmLabel="Cancel the violation"
+        title={t('cancelTitle', { reference: v?.reference ?? '' })}
+        description={t('cancelDescription')}
+        codes={REASON_CODES.violationCancel.filter((code) => code !== 'appeal_accepted')}
+        confirmLabel={t('cancelViolation')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}
@@ -382,10 +397,10 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={reversing !== null}
         onClose={() => setReversing(null)}
-        title={`Reverse receipt ${reversing?.receiptNumber ?? ''}?`}
-        description="A new record cancels this one; nothing is edited. The violation is open again."
+        title={t('reverseTitle', { receipt: reversing?.receiptNumber ?? '' })}
+        description={t('reverseDescription')}
         codes={REASON_CODES.violationPaymentReverse}
-        confirmLabel="Reverse"
+        confirmLabel={t('reverse')}
         danger
         pending={reverse.isPending}
         error={<ErrorAlert error={reverse.error} />}
@@ -402,6 +417,10 @@ function ViolationDetail({ id, onClose }: { id: string; onClose: () => void }) {
  * (`fines.billing`). The unit never sees who issued one.
  */
 export default function ViolationsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = can('violations.manage') || can('violations.issue') || can('fines.billing');
   const [status, setStatus] = useState<Status>(can('violations.manage') ? 'under_appeal' : 'open');
@@ -418,50 +437,50 @@ export default function ViolationsPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Violations" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Violations"
-        description="Noise, waste, pets, contractor hours and others, issued to a unit. Paid at the office: no online payment yet."
+        title={t('title')}
+        description={t('description')}
         actions={
           can('violations.issue') ? (
             <Button variant="primary" onClick={() => setIssuing(true)}>
-              Issue a violation
+              {t('issueButton')}
             </Button>
           ) : undefined
         }
       />
       <div className="toolbar">
         <Segmented<Status>
-          label="Violations shown"
+          label={t('shown')}
           value={status}
           onChange={setStatus}
           options={[
-            { value: 'under_appeal', label: 'Appeals' },
-            { value: 'open', label: 'Open' },
-            { value: 'paid', label: 'Paid' },
-            { value: 'cancelled', label: 'Cancelled' },
-            { value: '', label: 'All' },
+            { value: 'under_appeal', label: t('view.under_appeal') },
+            { value: 'open', label: t('view.open') },
+            { value: 'paid', label: t('view.paid') },
+            { value: 'cancelled', label: t('view.cancelled') },
+            { value: '', label: t('view.all') },
           ]}
         />
-        <Field label="Kind">
+        <Field label={c('kind')}>
           {(p) => (
             <Select {...p} value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="">Every kind</option>
+              <option value="">{t('everyKind')}</option>
               {REASON_CODES.violationKind.map((k) => (
                 <option key={k} value={k}>
-                  {humanize(k)}
+                  {label(k)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Unit code">
-          {(p) => <Input {...p} placeholder="e.g. A-101" value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
+        <Field label={t('unitCode')}>
+          {(p) => <Input {...p} className="ltr" placeholder={t('unitCodePlaceholder')} value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />}
         </Field>
       </div>
       <Card flush>
@@ -469,22 +488,26 @@ export default function ViolationsPage() {
           <DataTable<StaffViolation>
             rows={list.rows}
             rowKey={(v) => v.id}
-            empty={status === 'under_appeal' ? 'No appeal waits' : 'No violation matches'}
+            empty={status === 'under_appeal' ? t('emptyAppeals') : t('empty')}
             columns={[
               {
                 key: 'ref',
-                header: 'Violation',
+                header: t('violation'),
                 cell: (v) => (
                   <Button variant="text" className="table__link t-mono" onClick={() => setOpen(v.id)}>
                     {v.reference}
                   </Button>
                 ),
               },
-              { key: 'unit', header: 'Unit', cell: (v) => <span className="t-mono">{v.unitCode}</span> },
-              { key: 'kind', header: 'Kind', cell: (v) => humanize(v.kind) },
-              { key: 'amount', header: 'Amount', cell: (v) => amountText(v) },
-              { key: 'status', header: 'Status', cell: (v) => <StatusBadge status={v.status} /> },
-              { key: 'when', header: 'Issued', cell: (v) => <span title={formatDateTime(v.createdAt)}>{relativeTime(v.createdAt)}</span> },
+              { key: 'unit', header: c('unit'), cell: (v) => <span className="t-mono ltr">{v.unitCode}</span> },
+              { key: 'kind', header: c('kind'), cell: (v) => label(v.kind) },
+              {
+                key: 'amount',
+                header: c('amount'),
+                cell: (v) => (v.amount ? f.money(v.amount) : <Badge tone="beige">{t('warning')}</Badge>),
+              },
+              { key: 'status', header: c('status'), cell: (v) => <StatusBadge status={v.status} /> },
+              { key: 'when', header: t('issued'), cell: (v) => <span title={f.dateTime(v.createdAt)}>{f.relative(v.createdAt)}</span> },
             ]}
           />
           <LoadMore query={list} />

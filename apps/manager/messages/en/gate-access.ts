@@ -1,0 +1,36 @@
+/** The account checks (ADR 0090): app/(dashboard)/access-checks. */
+export default {
+  title: 'Access checks',
+  description: 'Staff, manager and contractor accounts that look dangling, and the periodic review of who has access.',
+  // Dangling accounts.
+  dangling: 'Dangling accounts',
+  danglingEmpty: 'No account looks dangling',
+  erased: 'Erased',
+  'col.account': 'Account',
+  'col.why': 'Why',
+  'col.lastSignIn': 'Last sign-in',
+  'col.found': 'Found',
+  never: 'Never',
+  keepAria: 'Keep, with a reason',
+  keepPlaceholder: 'Keep…',
+  deactivate: 'Deactivate',
+  kept: 'Kept; not found again for 90 days.',
+  deactivated: 'Deactivated.',
+  // The review.
+  review: 'Access review',
+  reviewNumbered: 'Access review {number}',
+  reviewIntro: 'Opened {when}: {undecided} of {lines} lines to decide. Revoking deactivates the account at once.',
+  openReview: 'Open a review now',
+  reviewOpened: 'Review opened.',
+  reviewEmpty: 'Nobody to review',
+  'col.role': 'Role',
+  'col.permissions': 'Permissions',
+  'col.decision': 'Decision',
+  someoneElse: 'Someone else decides',
+  keep: 'Keep',
+  revoke: 'Revoke',
+  // Settings.
+  settings: 'Settings',
+  idleDays: 'Idle days ({min}–{max})',
+  reviewEvery: 'A review every (days, {min}–{max})',
+} as const;

@@ -1,19 +1,26 @@
 'use client';
 
-import { humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, Select, useToast } from '@jiwar/ui';
+import { useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, ForbiddenState, PageHeader, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { slotText } from '@/components/management-requests/bits';
+import { useLocalName } from '@/components/facilities/bits';
+import { useSlotText } from '@/components/management-requests/bits';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type SpaceUse, type SpaceUseArea, type SpaceUseStatus } from '@/lib/queries';
+import ar from '@/messages/ar/fac-space-uses';
+import en from '@/messages/en/fac-space-uses';
 
 const STATUSES: (SpaceUseStatus | '')[] = ['pending', 'approved', 'refused', 'cancelled', 'expired', ''];
 
 /** The common areas open to requests (`spaces.manage`). */
 function OpenAreas() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const localName = useLocalName();
   const toast = useToast();
   const open = useQuery({ queryKey: keys.spaceUseAreas, queryFn: fetchers.spaceUseAreas });
   const areas = useQuery({
@@ -29,7 +36,7 @@ function OpenAreas() {
     {
       invalidate: [keys.spaceUseAreas],
       onDone: (_r, v) => {
-        toast.show(v.open ? 'Residents may ask for it now.' : 'It takes no new requests; what was asked stands.');
+        toast.show(v.open ? t('opened') : t('closedToRequests'));
         setPicked('');
       },
     },
@@ -39,35 +46,35 @@ function OpenAreas() {
   return (
     <Card>
       <div className="stack">
-        <h3>Areas residents may ask for</h3>
+        <h3>{t('openTitle')}</h3>
         <div className="row" style={{ gap: 8 }}>
-          <Select value={picked} onChange={(e) => setPicked(e.target.value)} aria-label="Common area to open">
-            <option value="">Open a common area…</option>
+          <Select value={picked} onChange={(e) => setPicked(e.target.value)} aria-label={t('openPick')}>
+            <option value="">{t('openPlaceholder')}</option>
             {candidates.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.code} · {a.nameEn}
+                {a.code} · {localName(a)}
               </option>
             ))}
           </Select>
           <Button disabled={!picked} loading={change.isPending} onClick={() => change.mutate({ id: picked, open: true })}>
-            Open
+            {c('open')}
           </Button>
         </div>
         <QueryState query={open}>
           <DataTable<SpaceUseArea>
             rows={open.data?.data ?? []}
             rowKey={(a) => a.commonAreaId}
-            empty="No area is open to requests"
+            empty={t('openEmpty')}
             columns={[
-              { key: 'area', header: 'Area', cell: (a) => `${a.code} · ${a.nameEn}` },
-              { key: 'facility', header: '', cell: (a) => (a.facilityId ? <Badge tone="beige">A facility: closed to bookings while in use</Badge> : null) },
+              { key: 'area', header: t('col.area'), cell: (a) => `${a.code} · ${localName(a)}` },
+              { key: 'facility', header: '', cell: (a) => (a.facilityId ? <Badge tone="beige">{t('facilityNote')}</Badge> : null) },
               {
                 key: 'actions',
                 header: '',
                 className: 'table__actions',
                 cell: (a) => (
                   <Button size="sm" onClick={() => change.mutate({ id: a.commonAreaId, open: false })}>
-                    Close
+                    {c('close')}
                   </Button>
                 ),
               },
@@ -86,6 +93,11 @@ function OpenAreas() {
  * approved use overlaps, or the facility is booked or closed then.
  */
 export default function SpaceUsesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
+  const localName = useLocalName();
+  const slotText = useSlotText();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const handles = can('bookings.handle');
@@ -93,7 +105,7 @@ export default function SpaceUsesPage() {
   const [status, setStatus] = useState<SpaceUseStatus | ''>('pending');
   const [refusing, setRefusing] = useState<SpaceUse | null>(null);
   const [cancelling, setCancelling] = useState<SpaceUse | null>(null);
-  const list = useCursorList(keys.spaceUses(status), (c) => fetchers.spaceUses(status, c), { enabled: handles });
+  const list = useCursorList(keys.spaceUses(status), (x) => fetchers.spaceUses(status, x), { enabled: handles });
   const decide = useAction(
     (input: { id: string; action: 'approve' | 'refuse' | 'cancel'; reasonCode?: string }) =>
       input.action === 'approve'
@@ -114,7 +126,7 @@ export default function SpaceUsesPage() {
     {
       invalidate: [keys.spacesAll],
       onDone: (_r, v) => {
-        toast.show(v.action === 'approve' ? 'Approved; the requester is told.' : v.action === 'refuse' ? 'Refused; the requester is told.' : 'Cancelled; the requester is told.');
+        toast.show(v.action === 'approve' ? t('approvedToast') : v.action === 'refuse' ? t('refusedToast') : t('cancelledToast'));
         setRefusing(null);
         setCancelling(null);
       },
@@ -123,21 +135,21 @@ export default function SpaceUsesPage() {
   if (ready && !handles && !keeps)
     return (
       <>
-        <PageHeader title="Common-area uses" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Common-area uses" description="Residents ask to use a common area for a time; the staff decide." />
+      <PageHeader title={t('title')} description={t('description')} />
       {keeps ? <OpenAreas /> : null}
       {handles ? (
         <>
           <div className="toolbar">
-            <Select value={status} onChange={(e) => setStatus(e.target.value as SpaceUseStatus | '')} aria-label="Status">
+            <Select value={status} onChange={(e) => setStatus(e.target.value as SpaceUseStatus | '')} aria-label={c('status')}>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {s ? humanize(s) : 'All'}
+                  {s ? label(s) : c('all')}
                 </option>
               ))}
             </Select>
@@ -147,20 +159,20 @@ export default function SpaceUsesPage() {
               <DataTable<SpaceUse>
                 rows={list.rows}
                 rowKey={(u) => u.id}
-                empty="No request"
+                empty={t('empty')}
                 columns={[
-                  { key: 'when', header: 'When', cell: (u) => <span style={{ whiteSpace: 'nowrap' }}>{slotText(u.startsAt, u.endsAt)}</span> },
-                  { key: 'area', header: 'Area', cell: (u) => `${u.areaCode} · ${u.areaNameEn}` },
-                  { key: 'unit', header: 'Unit', cell: (u) => u.unitCode },
-                  { key: 'purpose', header: 'Purpose', cell: (u) => u.purpose ?? '—' },
-                  { key: 'guests', header: 'Guests', cell: (u) => u.guests },
+                  { key: 'when', header: t('col.when'), cell: (u) => <span style={{ whiteSpace: 'nowrap' }}>{slotText(u.startsAt, u.endsAt)}</span> },
+                  { key: 'area', header: t('col.area'), cell: (u) => `${u.areaCode} · ${localName({ nameEn: u.areaNameEn, nameAr: u.areaNameAr })}` },
+                  { key: 'unit', header: c('unit'), cell: (u) => u.unitCode },
+                  { key: 'purpose', header: t('col.purpose'), cell: (u) => u.purpose ?? '—' },
+                  { key: 'guests', header: t('col.guests'), cell: (u) => u.guests },
                   {
                     key: 'status',
-                    header: 'Status',
+                    header: c('status'),
                     cell: (u) => (
                       <Badge tone={u.status === 'approved' ? 'terracotta' : 'beige'}>
-                        {humanize(u.status)}
-                        {u.reasonCode ? ` · ${humanize(u.reasonCode)}` : ''}
+                        {label(u.status)}
+                        {u.reasonCode ? ` · ${label(u.reasonCode)}` : ''}
                       </Badge>
                     ),
                   },
@@ -172,15 +184,15 @@ export default function SpaceUsesPage() {
                       u.status === 'pending' ? (
                         <>
                           <Button size="sm" variant="primary" loading={decide.isPending} onClick={() => decide.mutate({ id: u.id, action: 'approve' })}>
-                            Approve
+                            {c('approve')}
                           </Button>
                           <Button size="sm" onClick={() => setRefusing(u)}>
-                            Refuse
+                            {t('refuse')}
                           </Button>
                         </>
                       ) : u.status === 'approved' && new Date(u.endsAt) > new Date() ? (
                         <Button size="sm" onClick={() => setCancelling(u)}>
-                          Cancel
+                          {c('cancel')}
                         </Button>
                       ) : null,
                   },
@@ -195,10 +207,10 @@ export default function SpaceUsesPage() {
       <ReasonCodeDialog
         open={refusing !== null}
         onClose={() => setRefusing(null)}
-        title="Refuse the request?"
-        description="The requester is told, with the reason."
+        title={t('refuseTitle')}
+        description={t('told')}
         codes={REASON_CODES.spaceUseRefuse}
-        confirmLabel="Refuse"
+        confirmLabel={t('refuse')}
         pending={decide.isPending}
         error={<ErrorAlert error={decide.error} />}
         onConfirm={(reasonCode) => refusing && decide.mutate({ id: refusing.id, action: 'refuse', reasonCode })}
@@ -206,10 +218,10 @@ export default function SpaceUsesPage() {
       <ReasonCodeDialog
         open={cancelling !== null}
         onClose={() => setCancelling(null)}
-        title="Cancel the approved use?"
-        description="The requester is told, with the reason."
+        title={t('cancelTitle')}
+        description={t('told')}
         codes={REASON_CODES.spaceUseCancel}
-        confirmLabel="Cancel the use"
+        confirmLabel={t('cancelUse')}
         pending={decide.isPending}
         error={<ErrorAlert error={decide.error} />}
         onConfirm={(reasonCode) => cancelling && decide.mutate({ id: cancelling.id, action: 'cancel', reasonCode })}

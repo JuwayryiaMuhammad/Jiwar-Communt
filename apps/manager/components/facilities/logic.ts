@@ -1,8 +1,11 @@
 /**
  * The facilities screens' rules (ADR 0044), as the API holds them
  * (src/facilities/setup/facility-rules.ts, settings/defaults.ts). Plain
- * TypeScript with no imports, so the tests run it as is.
+ * TypeScript with type imports only, so the tests run it as is; the words
+ * are in the facilities catalog, and a helper that shows text takes its `t`.
  */
+import type { Translate } from '@jiwar/i18n/core';
+import type en from '../../messages/en/places-facilities.ts';
 
 export const RULE_RANGES = {
   slotMinutes: { min: 15, max: 480 },
@@ -33,10 +36,10 @@ export function inRange(range: { min: number; max: number }, value: string): boo
   return n >= range.min && n <= range.max;
 }
 
-/** What the API refuses as PEAK_QUOTA_ABOVE_WEEKLY, said before it is sent. */
-export function peakProblem(weekly: string, peak: string): string | undefined {
-  if (!inRange(RULE_RANGES.weeklyQuota, weekly) || !inRange(RULE_RANGES.peakQuota, peak)) return undefined;
-  return Number(peak) > Number(weekly) ? 'At most the weekly quota.' : undefined;
+/** What the API refuses as PEAK_QUOTA_ABOVE_WEEKLY, caught before it is sent. */
+export function peakAboveWeekly(weekly: string, peak: string): boolean {
+  if (!inRange(RULE_RANGES.weeklyQuota, weekly) || !inRange(RULE_RANGES.peakQuota, peak)) return false;
+  return Number(peak) > Number(weekly);
 }
 
 /** The fields of `form` that differ from `saved`, as numbers: only what changed is sent. */
@@ -50,13 +53,37 @@ export function numberChanges<K extends string>(
   return out;
 }
 
-/** "1 h 30 min", "2 days", "0 min": a number of minutes for people. */
-export function minutesText(minutes: number): string {
-  if (minutes === 0) return 'no notice';
-  if (minutes % 1440 === 0) return `${minutes / 1440} day${minutes === 1440 ? '' : 's'}`;
+/** "1 h 30 min", "2 days", "no notice": a number of minutes for people. */
+export function minutesText(minutes: number, t: Translate<typeof en>): string {
+  if (minutes === 0) return t('duration.none');
+  if (minutes % 1440 === 0) return t('duration.days', { n: minutes / 1440 });
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return [h ? `${h} h` : '', m ? `${m} min` : ''].filter(Boolean).join(' ');
+  if (h && m) return t('duration.hoursMinutes', { h, m });
+  return h ? t('duration.hours', { h }) : t('duration.minutes', { m });
+}
+
+/**
+ * What is wrong with a week of windows, by position — the API's two rules
+ * (a window ends after it starts; two windows of one day may touch but not
+ * overlap), as codes the page words (`window.<code>`).
+ */
+export function windowIssues(
+  windows: readonly { weekday: number; startMinute: number; endMinute: number }[],
+): Record<number, 'order' | 'overlap'> {
+  const issues: Record<number, 'order' | 'overlap'> = {};
+  windows.forEach((w, i) => {
+    if (w.endMinute <= w.startMinute) {
+      issues[i] = 'order';
+      return;
+    }
+    const clash = windows.some(
+      (o, j) =>
+        j < i && o.weekday === w.weekday && o.endMinute > o.startMinute && o.startMinute < w.endMinute && w.startMinute < o.endMinute,
+    );
+    if (clash) issues[i] = 'overlap';
+  });
+  return issues;
 }
 
 export interface DaySlot {

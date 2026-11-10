@@ -1,14 +1,17 @@
 'use client';
 
-import { formatDate, formatDateTime, unwrap, type Schema } from '@jiwar/api';
+import { unwrap, type Schema } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Badge, Button, Card, DataTable, PageHeader } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, DataTable, PageHeader, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { NewTaskDialog } from '@/components/security/new-task-dialog';
 import { RecordEntryDialog } from '@/components/security/unit-entry-dialogs';
 import { api } from '@/lib/api';
+import ar from '@/messages/ar/sec-closed-units';
+import en from '@/messages/en/sec-closed-units';
 
 type ClosedUnit = Schema<'ClosedUnitView'>;
 const KEY = ['closed-units'] as const;
@@ -21,6 +24,9 @@ const KEY = ['closed-units'] as const;
  * recorded from here too.
  */
 export default function ClosedUnitsPage() {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
   const [scheduling, setScheduling] = useState<ClosedUnit | null>(null);
   const [entering, setEntering] = useState<ClosedUnit | null>(null);
   const list = useQuery({
@@ -30,21 +36,18 @@ export default function ClosedUnitsPage() {
   });
   return (
     <>
-      <PageHeader
-        title="Closed units"
-        description="Units their owners closed, the longest closed first. A round falls due every few days; schedule it as an inspection."
-      />
+      <PageHeader title={t('title')} description={t('description')} />
       <Card flush>
         <QueryState query={list}>
           <DataTable<ClosedUnit>
             rows={list.data?.data}
             rowKey={(u) => u.unitId}
-            empty="No closed unit"
-            emptyHint="An owner closes a unit from the app while away."
+            empty={t('empty')}
+            emptyHint={t('emptyHint')}
             columns={[
               {
                 key: 'unit',
-                header: 'Unit',
+                header: t('col.unit'),
                 cell: (u) => (
                   <span>
                     <strong>{u.unitCode}</strong>
@@ -52,45 +55,43 @@ export default function ClosedUnitsPage() {
                   </span>
                 ),
               },
-              { key: 'since', header: 'Closed since', cell: (u) => formatDate(u.closedSince) },
+              { key: 'since', header: t('col.since'), cell: (u) => f.date(u.closedSince) },
               {
                 key: 'last',
-                header: 'Last inspection',
+                header: t('col.last'),
                 cell: (u) =>
                   u.lastInspection ? (
                     <span>
-                      {formatDateTime(u.lastInspection.doneAt)}{' '}
-                      <Badge tone={u.lastInspection.outcome === 'issue_found' ? 'terracotta' : 'green'}>
-                        {u.lastInspection.outcome.replace(/_/g, ' ')}
-                      </Badge>
+                      {f.dateTime(u.lastInspection.doneAt)}{' '}
+                      <Badge tone={u.lastInspection.outcome === 'issue_found' ? 'terracotta' : 'green'}>{label(u.lastInspection.outcome)}</Badge>
                     </span>
                   ) : (
-                    <span className="t-secondary">None yet</span>
+                    <span className="t-secondary">{t('noneYet')}</span>
                   ),
               },
               {
                 key: 'request',
-                header: 'Owner’s request',
+                header: t('col.request'),
                 cell: (u) =>
                   u.openRequest ? (
                     <Link className="table__link" href="/security/inspection-requests">
-                      {u.openRequest.reference} ({u.openRequest.status})
+                      {t('requestStatus', { reference: u.openRequest.reference, status: label(u.openRequest.status) })}
                     </Link>
                   ) : (
                     '—'
                   ),
               },
-              { key: 'proxies', header: 'Proxies', cell: (u) => String(u.liveProxies) },
+              { key: 'proxies', header: t('col.proxies'), cell: (u) => f.number(u.liveProxies) },
               {
                 key: 'round',
-                header: 'Round',
+                header: t('col.round'),
                 cell: (u) =>
                   u.round ? (
                     <Badge tone={u.round.status === 'due' ? 'terracotta' : 'beige'}>
-                      {u.round.status === 'due' ? `Due since ${formatDate(u.round.dueOn)}` : 'Scheduled'}
+                      {u.round.status === 'due' ? t('dueSince', { date: f.day(u.round.dueOn) }) : t('scheduled')}
                     </Badge>
                   ) : (
-                    <span className="t-secondary">Next {formatDate(u.nextRoundOn)}</span>
+                    <span className="t-secondary">{t('next', { date: f.day(u.nextRoundOn) })}</span>
                   ),
               },
               {
@@ -100,11 +101,11 @@ export default function ClosedUnitsPage() {
                   <span style={{ display: 'flex', gap: 8 }}>
                     {u.round?.status === 'due' ? (
                       <Button size="sm" variant="primary" onClick={() => setScheduling(u)}>
-                        Schedule
+                        {t('schedule')}
                       </Button>
                     ) : null}
                     <Button size="sm" onClick={() => setEntering(u)}>
-                      Emergency entry
+                      {t('emergencyEntry')}
                     </Button>
                   </span>
                 ),

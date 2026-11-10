@@ -1,0 +1,20 @@
+/** The patrol report (ADR 0052): app/(dashboard)/security/patrols/report. */
+export default {
+  title: 'Patrol report',
+  description: 'Per route, the runs planned in the period: 31 days at most. The daily report counts each post’s patrols too.',
+  from: 'From',
+  to: 'To',
+  empty: 'No run in the period',
+  'col.route': 'Route',
+  'col.post': 'Post',
+  'col.scheduled': 'Scheduled',
+  'col.adhoc': 'Unscheduled',
+  'col.done': 'Done',
+  'col.late': 'Late',
+  'col.missed': 'Missed',
+  'col.incomplete': 'Incomplete',
+  'col.manual': 'By hand',
+  'col.suspect': 'Far',
+  'col.offline': 'Sent late',
+  'col.avg': 'Avg minutes',
+} as const;

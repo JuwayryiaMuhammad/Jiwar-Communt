@@ -1,16 +1,33 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, CardBody, DataTable, Field, ForbiddenState, Input, PageHeader, ReasonCodeDialog, Select, StatusBadge, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  DataTable,
+  Field,
+  ForbiddenState,
+  Input,
+  PageHeader,
+  ReasonCodeDialog,
+  Select,
+  StatusBadge,
+  useLabel,
+  useToast,
+} from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { addDays, peakUse } from '@/components/vehicles/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StaffVisitorParking } from '@/lib/queries';
+import ar from '@/messages/ar/safety-visitor-parking';
+import en from '@/messages/en/safety-visitor-parking';
 
-const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
 const today = () => new Date().toLocaleDateString('en-CA');
 
 /**
@@ -19,6 +36,9 @@ const today = () => new Date().toLocaleDateString('en-CA');
  * use against its spaces. The staff cancel a booking with a reason code.
  */
 export default function VisitorParkingPage() {
+  const t = useT(en, ar);
+  const fmt = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('vehicles.manage');
@@ -43,7 +63,7 @@ export default function VisitorParkingPage() {
     {
       invalidate: [keys.visitorParkingAll],
       onDone: () => {
-        toast.show('Cancelled.');
+        toast.show(t('cancelled'));
         setCancelling(null);
       },
     },
@@ -51,7 +71,7 @@ export default function VisitorParkingPage() {
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Visitor parking" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
@@ -70,13 +90,13 @@ export default function VisitorParkingPage() {
     }));
   return (
     <>
-      <PageHeader title="Visitor parking" description="Residents’ bookings for their visitors. The guard sees what holds now and the next two hours." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
-        <Field label="Day">{(p) => <Input {...p} type="date" value={day} onChange={(e) => setDay(e.target.value)} />}</Field>
-        <Field label="Area">
+        <Field label={t('day')}>{(p) => <Input {...p} type="date" value={day} onChange={(e) => setDay(e.target.value)} />}</Field>
+        <Field label={t('area')}>
           {(p) => (
             <Select {...p} value={areaId} onChange={(e) => setAreaId(e.target.value)}>
-              <option value="">Every area</option>
+              <option value="">{t('everyArea')}</option>
               {(areas.data?.data ?? []).map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
@@ -92,7 +112,7 @@ export default function VisitorParkingPage() {
             <span className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
               {peaks.map(({ area, peak }) => (
                 <Badge key={area.id} tone={peak > area.capacity ? 'error' : peak === area.capacity ? 'terracotta' : 'green'}>
-                  {area.name}: at most {peak} of {area.capacity}
+                  {t('peak', { area: area.name, peak, capacity: area.capacity })}
                 </Badge>
               ))}
             </span>
@@ -104,23 +124,23 @@ export default function VisitorParkingPage() {
           <DataTable<StaffVisitorParking>
             rows={rows}
             rowKey={(b) => b.id}
-            empty="No visitor parking that day"
+            empty={t('empty')}
             columns={[
-              { key: 'ref', header: 'Booking', cell: (b) => <span className="t-mono">{b.reference}</span> },
-              { key: 'when', header: 'When', cell: (b) => `${time.format(new Date(b.startsAt))}–${time.format(new Date(b.endsAt))}` },
-              { key: 'area', header: 'Area', cell: (b) => b.areaName },
-              { key: 'unit', header: 'Unit', cell: (b) => <span className="t-mono">{b.unitCode}</span> },
+              { key: 'ref', header: t('col.booking'), cell: (b) => <span className="t-mono">{b.reference}</span> },
+              { key: 'when', header: t('col.when'), cell: (b) => t('span', { from: fmt.time(b.startsAt), to: fmt.time(b.endsAt) }) },
+              { key: 'area', header: t('col.area'), cell: (b) => b.areaName },
+              { key: 'unit', header: t('col.unit'), cell: (b) => <span className="t-mono">{b.unitCode}</span> },
               {
                 key: 'visitor',
-                header: 'Visitor',
-                cell: (b) => (b.visitorPassId ? <Badge plain>Visitor pass</Badge> : (b.visitorName ?? <span className="t-secondary">—</span>)),
+                header: t('col.visitor'),
+                cell: (b) => (b.visitorPassId ? <Badge plain>{t('visitorPass')}</Badge> : (b.visitorName ?? <span className="t-secondary">—</span>)),
               },
-              { key: 'by', header: 'Booked by', cell: (b) => (b.bookedBy.erased ? 'An erased account' : b.bookedBy.fullName) },
+              { key: 'by', header: t('col.bookedBy'), cell: (b) => (b.bookedBy.erased ? t('erased') : b.bookedBy.fullName) },
               {
                 key: 'status',
-                header: 'Status',
+                header: t('col.status'),
                 cell: (b) => (
-                  <span title={b.cancelReason ? humanize(b.cancelReason) : formatDateTime(b.createdAt)}>
+                  <span title={b.cancelReason ? label(b.cancelReason) : fmt.dateTime(b.createdAt)}>
                     <StatusBadge status={b.status} />
                   </span>
                 ),
@@ -132,7 +152,7 @@ export default function VisitorParkingPage() {
                 cell: (b) =>
                   b.status === 'confirmed' && new Date(b.endsAt) > new Date() ? (
                     <Button size="sm" onClick={() => setCancelling(b)}>
-                      Cancel
+                      {t('cancel')}
                     </Button>
                   ) : null,
               },
@@ -143,10 +163,10 @@ export default function VisitorParkingPage() {
       <ReasonCodeDialog
         open={cancelling !== null}
         onClose={() => setCancelling(null)}
-        title={`Cancel ${cancelling?.reference ?? ''}?`}
-        description="The space is free again. The household sees it cancelled."
+        title={t('cancelTitle', { reference: cancelling?.reference ?? '' })}
+        description={t('cancelDescription')}
         codes={REASON_CODES.visitorParkingStaffCancel}
-        confirmLabel="Cancel booking"
+        confirmLabel={t('cancelConfirm')}
         danger
         pending={cancel.isPending}
         error={<ErrorAlert error={cancel.error} />}

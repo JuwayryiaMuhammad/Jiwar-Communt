@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
+import { REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Alert,
   Button,
@@ -16,6 +17,8 @@ import {
   Select,
   StatusBadge,
   Textarea,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
@@ -24,6 +27,8 @@ import { FileUpload } from '@/components/file-upload';
 import { StepUpDialog } from '@/components/step-up-dialog';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
+import ar from '@/messages/ar/places-fit-out';
+import en from '@/messages/en/places-fit-out';
 
 type FitOut = Schema<'FitOutView'>;
 type Slot = FitOut['debrisSlots'][number];
@@ -35,7 +40,16 @@ export const fitOutKey = (id: string) => [...keys.permitsAll, 'fit-out', id] as 
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** An area's name in the page's language. */
+function useAreaName() {
+  const { locale } = useLocale();
+  return (a: { nameEn: string; nameAr?: string | null }) => (locale === 'ar' && a.nameAr ? a.nameAr : a.nameEn);
+}
+
 function RecordDeposit({ permitId, unitId, onClose }: { permitId: string; unitId: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [amount, setAmount] = useState('');
   const [receivedOn, setReceivedOn] = useState(today());
@@ -44,7 +58,7 @@ function RecordDeposit({ permitId, unitId, onClose }: { permitId: string; unitId
     async () => {
       const unit = await unwrap(api.GET('/api/v1/units/{id}', { params: { path: { id: unitId } } }));
       const primary = unit.occupants?.find((o) => o.isPrimary);
-      if (!primary) throw new Error('The unit has no primary resident to hold the deposit for.');
+      if (!primary) throw new Error(t('deposit.noPrimary'));
       return unwrap(
         api.POST('/api/v1/staff/deposits', {
           body: { occupancyId: primary.occupancyId, kind: 'finishing_works', amount, receivedOn, method, permitId },
@@ -54,7 +68,7 @@ function RecordDeposit({ permitId, unitId, onClose }: { permitId: string; unitId
     {
       invalidate: [fitOutKey(permitId)],
       onDone: () => {
-        toast.show('Recorded for this permit. It may be approved now.');
+        toast.show(t('deposit.recorded'));
         onClose();
       },
     },
@@ -63,27 +77,29 @@ function RecordDeposit({ permitId, unitId, onClose }: { permitId: string; unitId
     <Dialog
       open
       onClose={onClose}
-      title="Record the finishing-works deposit"
-      description="Held for the unit’s primary resident, named on this permit. One deposit per permit."
+      title={t('deposit.title')}
+      description={t('deposit.description')}
       onSubmit={() => record.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={record.isPending}>
-            Record
+            {t('record')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Amount (EGP)">{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}</Field>
-        <Field label="Received on">{(p) => <Input {...p} type="date" value={receivedOn} onChange={(e) => setReceivedOn(e.target.value)} />}</Field>
-        <Field label="Method">
+        <Field label={t('amountEgp')}>{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}</Field>
+        <Field label={t('receivedOn')}>{(p) => <Input {...p} type="date" value={receivedOn} onChange={(e) => setReceivedOn(e.target.value)} />}</Field>
+        <Field label={t('method')}>
           {(p) => (
             <Select {...p} value={method} onChange={(e) => setMethod(e.target.value as 'cash' | 'bank_transfer' | 'cheque')}>
-              <option value="cash">Cash</option>
-              <option value="bank_transfer">Bank transfer</option>
-              <option value="cheque">Cheque</option>
+              {(['cash', 'bank_transfer', 'cheque'] as const).map((m) => (
+                <option key={m} value={m}>
+                  {label(m)}
+                </option>
+              ))}
             </Select>
           )}
         </Field>
@@ -94,6 +110,8 @@ function RecordDeposit({ permitId, unitId, onClose }: { permitId: string; unitId
 }
 
 function ScheduleDebris({ permitId, onClose }: { permitId: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
   const toast = useToast();
   const [day, setDay] = useState(today());
   const [from, setFrom] = useState('10:00');
@@ -109,7 +127,7 @@ function ScheduleDebris({ permitId, onClose }: { permitId: string; onClose: () =
     {
       invalidate: [fitOutKey(permitId)],
       onDone: () => {
-        toast.show('Scheduled. The guard sees it at the gate that day.');
+        toast.show(t('debris.scheduled'));
         onClose();
       },
     },
@@ -118,22 +136,22 @@ function ScheduleDebris({ permitId, onClose }: { permitId: string; onClose: () =
     <Dialog
       open
       onClose={onClose}
-      title="Schedule a debris removal"
-      description="A work day of the permit, inside the compound’s hours, 30 minutes to 4 hours. Three scheduled at once at most."
+      title={t('debris.title')}
+      description={t('debris.description')}
       onSubmit={() => schedule.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={schedule.isPending}>
-            Schedule
+            {t('schedule')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="Day">{(p) => <Input {...p} type="date" value={day} onChange={(e) => setDay(e.target.value)} />}</Field>
-        <Field label="From">{(p) => <Input {...p} type="time" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
-        <Field label="To">{(p) => <Input {...p} type="time" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
+        <Field label={t('day')}>{(p) => <Input {...p} type="date" value={day} onChange={(e) => setDay(e.target.value)} />}</Field>
+        <Field label={c('from')}>{(p) => <Input {...p} type="time" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
+        <Field label={c('to')}>{(p) => <Input {...p} type="time" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
         <ErrorAlert error={schedule.error} />
       </div>
     </Dialog>
@@ -141,6 +159,9 @@ function ScheduleDebris({ permitId, onClose }: { permitId: string; onClose: () =
 }
 
 function RecordArea({ permitId, phase, area, onClose }: { permitId: string; phase: 'before' | 'after'; area?: Area; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const name = useAreaName();
   const toast = useToast();
   const [commonAreaId, setCommonAreaId] = useState(area?.commonArea.id ?? '');
   const [photos, setPhotos] = useState<string[]>([]);
@@ -161,7 +182,7 @@ function RecordArea({ permitId, phase, area, onClose }: { permitId: string; phas
     {
       invalidate: [fitOutKey(permitId)],
       onDone: () => {
-        toast.show(phase === 'before' ? 'Recorded before the works.' : 'Recorded after the works.');
+        toast.show(phase === 'before' ? t('area.recordedBefore') : t('area.recordedAfter'));
         onClose();
       },
     },
@@ -170,35 +191,46 @@ function RecordArea({ permitId, phase, area, onClose }: { permitId: string; phas
     <Dialog
       open
       onClose={onClose}
-      title={phase === 'before' ? 'Record an area before the works' : `Record ${area?.commonArea.nameEn ?? 'the area'} after the works`}
-      description="One to ten photos, and a note the unit reads. Once per area and stage; never changed."
+      title={
+        phase === 'before'
+          ? t('area.beforeTitle')
+          : area
+            ? t('area.afterTitle', { area: name(area.commonArea) })
+            : t('area.afterTitleAnon')
+      }
+      description={t('area.description')}
       onSubmit={() => record.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={record.isPending} disabled={!commonAreaId || !photos.length}>
-            Record
+            {t('record')}
           </Button>
         </>
       }
     >
       <div className="form">
         {!area ? (
-          <Field label="Common area">
+          <Field label={t('commonArea')}>
             {(p) => (
               <Select {...p} value={commonAreaId} onChange={(e) => setCommonAreaId(e.target.value)}>
-                <option value="">Choose an area</option>
+                <option value="">{t('chooseArea')}</option>
                 {(areas.data?.data ?? []).map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.code} · {a.nameEn}
+                    {a.code} · {name(a)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
         ) : null}
-        <FileUpload purpose="fitout_photo" label={`Add a photo (${photos.length}/10)`} disabled={photos.length >= 10} onUploaded={(fileId) => setPhotos((list) => [...list, fileId])} />
-        <Field label="Note (the unit reads it)">{(p) => <Textarea {...p} rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
+        <FileUpload
+          purpose="fitout_photo"
+          label={t('addPhotoCount', { count: photos.length, max: 10 })}
+          disabled={photos.length >= 10}
+          onUploaded={(fileId) => setPhotos((list) => [...list, fileId])}
+        />
+        <Field label={t('noteForUnit')}>{(p) => <Textarea {...p} rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
         <ErrorAlert error={record.error} />
       </div>
     </Dialog>
@@ -206,6 +238,9 @@ function RecordArea({ permitId, phase, area, onClose }: { permitId: string; phas
 }
 
 function RaiseClaim({ permitId, onClose }: { permitId: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [reasonCode, setReasonCode] = useState<string>(REASON_CODES.damageClaim[0]);
   const [description, setDescription] = useState('');
@@ -222,7 +257,7 @@ function RaiseClaim({ permitId, onClose }: { permitId: string; onClose: () => vo
     {
       invalidate: [fitOutKey(permitId)],
       onDone: () => {
-        toast.show('Claimed. The requester and the primary were told; they may appeal for 14 days.');
+        toast.show(t('claim.claimed'));
         onClose();
       },
     },
@@ -231,33 +266,40 @@ function RaiseClaim({ permitId, onClose }: { permitId: string; onClose: () => vo
     <Dialog
       open
       onClose={onClose}
-      title="Claim damage the works did"
-      description="Settled after the unit’s 14 days to appeal, from the works deposit first and the rest as an invoice of the unit’s."
+      title={t('claim.title')}
+      description={t('claim.description')}
       onSubmit={() => raise.mutate()}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={raise.isPending} disabled={!photos.length}>
-            Claim
+            {t('claim')}
           </Button>
         </>
       }
     >
       <div className="form">
-        <Field label="What for">
+        <Field label={t('whatFor')}>
           {(p) => (
             <Select {...p} value={reasonCode} onChange={(e) => setReasonCode(e.target.value)}>
-              {REASON_CODES.damageClaim.map((c) => (
-                <option key={c} value={c}>
-                  {humanize(c)}
+              {REASON_CODES.damageClaim.map((code) => (
+                <option key={code} value={code}>
+                  {label(code)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="What was damaged (the unit reads it)">{(p) => <Textarea {...p} rows={3} maxLength={1000} value={description} onChange={(e) => setDescription(e.target.value)} />}</Field>
-        <Field label="Amount (EGP)">{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}</Field>
-        <FileUpload purpose="fitout_photo" label={`Add a photo (${photos.length}/6)`} disabled={photos.length >= 6} onUploaded={(fileId) => setPhotos((list) => [...list, fileId])} />
+        <Field label={t('whatDamaged')}>
+          {(p) => <Textarea {...p} rows={3} maxLength={1000} value={description} onChange={(e) => setDescription(e.target.value)} />}
+        </Field>
+        <Field label={t('amountEgp')}>{(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}</Field>
+        <FileUpload
+          purpose="fitout_photo"
+          label={t('addPhotoCount', { count: photos.length, max: 6 })}
+          disabled={photos.length >= 6}
+          onUploaded={(fileId) => setPhotos((list) => [...list, fileId])}
+        />
         <ErrorAlert error={raise.error} />
       </div>
     </Dialog>
@@ -270,6 +312,11 @@ function RaiseClaim({ permitId, onClose }: { permitId: string; onClose: () => vo
  * after the works, and its damage claims, with the management's actions.
  */
 export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: string }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
+  const label = useLabel();
+  const name = useAreaName();
   const toast = useToast();
   const fitOut = useQuery({
     queryKey: fitOutKey(permitId),
@@ -284,7 +331,7 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
   const done = useAction(
     (slotId: string) =>
       unwrap(api.POST('/api/v1/staff/unit-permits/{id}/debris-slots/{slotId}/done', { params: { path: { id: permitId, slotId } } })),
-    { ...refresh, onDone: () => toast.show('Marked done.') },
+    { ...refresh, onDone: () => toast.show(t('markedDone')) },
   );
   const cancel = useAction(
     (v: { slotId: string; reasonCode: string }) =>
@@ -304,7 +351,7 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
           body: { decision: v.decision },
         }),
       ),
-    { ...refresh, onDone: () => toast.show('Decided. The appellant was told.') },
+    { ...refresh, onDone: () => toast.show(t('decided')) },
   );
   const withdraw = useAction(
     (v: { claimId: string; reasonCode: string }) =>
@@ -319,58 +366,66 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
   const settle = useAction(
     (claimId: string) =>
       unwrap(api.POST('/api/v1/staff/unit-permits/{id}/damage-claims/{claimId}/settle', { params: { path: { id: permitId, claimId } } })),
-    { ...refresh, onDone: () => toast.show('Settled: from the deposit first, the rest as an invoice of the unit’s.') },
+    { ...refresh, onDone: () => toast.show(t('settled')) },
   );
   const f = fitOut.data;
+  const photosAt = (r: { photos: unknown[]; recordedAt: string }) => t('photosAt', { count: r.photos.length, when: fmt.dateTime(r.recordedAt) });
   return (
     <QueryState query={fitOut}>
       {f ? (
         <>
           {f.certificateBlockedBy ? (
             <Alert tone="warn">
-              The completion certificate waits for {f.certificateBlockedBy.violations} open violation(s) and {f.certificateBlockedBy.claims} open damage claim(s).
+              {t('blocked', { violations: f.certificateBlockedBy.violations, claims: f.certificateBlockedBy.claims })}
             </Alert>
           ) : null}
           <Card>
             <CardHeader
-              title="Finishing-works deposit"
-              actions={!f.deposit ? <Button onClick={() => setDialog('deposit')}>Record the deposit</Button> : null}
+              title={t('depositTitle')}
+              actions={!f.deposit ? <Button onClick={() => setDialog('deposit')}>{t('recordDeposit')}</Button> : null}
             />
             <CardBody>
               {f.deposit ? (
-                <p>
-                  {f.deposit.number}: {f.deposit.amount} EGP received, {f.deposit.held} EGP held.
-                </p>
+                <p>{t('depositLine', { number: f.deposit.number, amount: fmt.money(f.deposit.amount), held: fmt.money(f.deposit.held) })}</p>
               ) : (
-                <p className="t-secondary">
-                  None recorded for this permit.{f.depositRequired ? ' The compound approves works only once their deposit holds money.' : ''}
-                </p>
+                <p className="t-secondary">{f.depositRequired ? t('noDepositRequired') : t('noDeposit')}</p>
               )}
             </CardBody>
           </Card>
           <Card flush>
-            <CardHeader title={`Drawings (${f.drawings.length})`} />
+            <CardHeader title={t('drawings', { count: f.drawings.length })} />
             <DataTable
               rows={f.drawings}
               rowKey={(d) => d.id}
-              empty="No drawing joined"
+              empty={t('noDrawing')}
               columns={[
-                { key: 'a', header: 'Joined', cell: (d) => formatDateTime(d.addedAt) },
-                { key: 'f', header: '', cell: (d) => (d.file ? <a href={d.file.url} target="_blank" rel="noreferrer">Open</a> : <span className="t-secondary">Gone</span>) },
+                { key: 'a', header: t('col.joined'), cell: (d) => fmt.dateTime(d.addedAt) },
+                {
+                  key: 'f',
+                  header: '',
+                  cell: (d) =>
+                    d.file ? (
+                      <a href={d.file.url} target="_blank" rel="noreferrer">
+                        {c('open')}
+                      </a>
+                    ) : (
+                      <span className="t-secondary">{t('gone')}</span>
+                    ),
+                },
               ]}
             />
           </Card>
           <Card flush>
-            <CardHeader title="Debris removals" actions={<Button onClick={() => setDialog('debris')}>Schedule</Button>} />
+            <CardHeader title={t('debris')} actions={<Button onClick={() => setDialog('debris')}>{t('schedule')}</Button>} />
             <DataTable<Slot>
               rows={f.debrisSlots}
               rowKey={(d) => d.id}
-              empty="None scheduled"
+              empty={t('noneScheduled')}
               columns={[
-                { key: 'd', header: 'Day', cell: (d) => d.day },
-                { key: 'w', header: 'Window', cell: (d) => `${d.window.from}–${d.window.to}` },
-                { key: 'b', header: 'By', cell: (d) => humanize(d.scheduledSide) },
-                { key: 's', header: 'Status', cell: (d) => <StatusBadge status={d.status} /> },
+                { key: 'd', header: t('col.day'), cell: (d) => fmt.day(d.day) },
+                { key: 'w', header: t('col.window'), cell: (d) => `${d.window.from}–${d.window.to}` },
+                { key: 'b', header: t('col.by'), cell: (d) => label(d.scheduledSide) },
+                { key: 's', header: t('col.status'), cell: (d) => <StatusBadge status={d.status} /> },
                 {
                   key: 'x',
                   header: '',
@@ -378,10 +433,10 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
                     d.status === 'scheduled' ? (
                       <span className="row" style={{ gap: 8 }}>
                         <Button size="sm" onClick={() => done.mutate(d.id)} loading={done.isPending}>
-                          Done
+                          {t('done')}
                         </Button>
                         <Button size="sm" onClick={() => setCancelling(d)}>
-                          Call off
+                          {t('callOff')}
                         </Button>
                       </span>
                     ) : null,
@@ -391,23 +446,23 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
             <ErrorAlert error={done.error} />
           </Card>
           <Card flush>
-            <CardHeader title="Common areas before and after" actions={<Button onClick={() => setDialog('before')}>Record before</Button>} />
+            <CardHeader title={t('areas')} actions={<Button onClick={() => setDialog('before')}>{t('recordBefore')}</Button>} />
             <DataTable<Area>
               rows={f.areas}
               rowKey={(a) => a.commonArea.id}
-              empty="No area recorded"
+              empty={t('noArea')}
               columns={[
-                { key: 'n', header: 'Area', cell: (a) => `${a.commonArea.code} · ${a.commonArea.nameEn}` },
-                { key: 'b', header: 'Before', cell: (a) => (a.before ? `${a.before.photos.length} photo(s), ${formatDateTime(a.before.recordedAt)}` : '—') },
+                { key: 'n', header: t('col.area'), cell: (a) => `${a.commonArea.code} · ${name(a.commonArea)}` },
+                { key: 'b', header: t('col.before'), cell: (a) => (a.before ? photosAt(a.before) : '—') },
                 {
                   key: 'a',
-                  header: 'After',
+                  header: t('col.after'),
                   cell: (a) =>
                     a.after ? (
-                      `${a.after.photos.length} photo(s), ${formatDateTime(a.after.recordedAt)}`
+                      photosAt(a.after)
                     ) : (
                       <Button size="sm" onClick={() => setAfter(a)}>
-                        Record after
+                        {t('recordAfter')}
                       </Button>
                     ),
                 },
@@ -415,48 +470,50 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
             />
           </Card>
           <Card flush>
-            <CardHeader title="Damage claims" actions={<Button onClick={() => setDialog('claim')}>Claim damage</Button>} />
+            <CardHeader title={t('claims')} actions={<Button onClick={() => setDialog('claim')}>{t('claimDamage')}</Button>} />
             <DataTable<Claim>
               rows={f.claims}
-              rowKey={(c) => c.id}
-              empty="No claim"
+              rowKey={(cl) => cl.id}
+              empty={t('noClaim')}
               columns={[
-                { key: 'n', header: 'Claim', cell: (c) => <span className="t-mono">{c.number}</span> },
-                { key: 'r', header: 'For', cell: (c) => humanize(c.reasonCode) },
-                { key: 'm', header: 'EGP', cell: (c) => c.amount },
-                { key: 's', header: 'Status', cell: (c) => <StatusBadge status={c.status} /> },
+                { key: 'n', header: t('col.claim'), cell: (cl) => <span className="t-mono">{cl.number}</span> },
+                { key: 'r', header: t('col.for'), cell: (cl) => label(cl.reasonCode) },
+                { key: 'm', header: t('col.amount'), cell: (cl) => fmt.money(cl.amount) },
+                { key: 's', header: t('col.status'), cell: (cl) => <StatusBadge status={cl.status} /> },
                 {
                   key: 'o',
-                  header: 'Outcome',
-                  cell: (c) =>
-                    c.settlement
-                      ? `${c.settlement.deducted} from the deposit, ${c.settlement.charged} invoiced`
-                      : c.withdrawn
-                        ? humanize(c.withdrawn.reason)
-                        : c.appeal && !c.appeal.decision
-                          ? `Appealed: ${c.appeal.text ?? '(words gone)'}`
-                          : `Appeal until ${formatDateTime(c.appealUntil)}`,
+                  header: t('col.outcome'),
+                  cell: (cl) =>
+                    cl.settlement
+                      ? t('outcome.settled', { deducted: fmt.money(cl.settlement.deducted), charged: fmt.money(cl.settlement.charged) })
+                      : cl.withdrawn
+                        ? label(cl.withdrawn.reason)
+                        : cl.appeal && !cl.appeal.decision
+                          ? cl.appeal.text
+                            ? t('outcome.appealed', { text: cl.appeal.text })
+                            : t('outcome.appealedGone')
+                          : t('outcome.appealUntil', { when: fmt.dateTime(cl.appealUntil) }),
                 },
                 {
                   key: 'x',
                   header: '',
-                  cell: (c) =>
-                    c.status === 'under_appeal' ? (
+                  cell: (cl) =>
+                    cl.status === 'under_appeal' ? (
                       <span className="row" style={{ gap: 8 }}>
-                        <Button size="sm" onClick={() => decide.mutate({ claimId: c.id, decision: 'upheld' })}>
-                          Uphold
+                        <Button size="sm" onClick={() => decide.mutate({ claimId: cl.id, decision: 'upheld' })}>
+                          {t('uphold')}
                         </Button>
-                        <Button size="sm" onClick={() => decide.mutate({ claimId: c.id, decision: 'accepted' })}>
-                          Accept appeal
+                        <Button size="sm" onClick={() => decide.mutate({ claimId: cl.id, decision: 'accepted' })}>
+                          {t('acceptAppeal')}
                         </Button>
                       </span>
-                    ) : c.status === 'open' ? (
+                    ) : cl.status === 'open' ? (
                       <span className="row" style={{ gap: 8 }}>
-                        <Button size="sm" variant="primary" onClick={() => setSettling(c)}>
-                          Settle
+                        <Button size="sm" variant="primary" onClick={() => setSettling(cl)}>
+                          {t('settle')}
                         </Button>
-                        <Button size="sm" onClick={() => setWithdrawing(c)}>
-                          Withdraw
+                        <Button size="sm" onClick={() => setWithdrawing(cl)}>
+                          {t('withdraw')}
                         </Button>
                       </span>
                     ) : null,
@@ -472,8 +529,8 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
           {dialog === 'claim' ? <RaiseClaim permitId={permitId} onClose={() => setDialog(null)} /> : null}
           {settling ? (
             <StepUpDialog
-              title="Confirm it is you"
-              description={`Settling ${settling.number} takes money from the works deposit: we sent a code to your email.`}
+              title={t('stepUpTitle')}
+              description={t('stepUpDescription', { number: settling.number })}
               onClose={() => setSettling(null)}
               onVerified={() => {
                 const id = settling.id;
@@ -485,9 +542,9 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
           <ReasonCodeDialog
             open={cancelling !== null}
             onClose={() => setCancelling(null)}
-            title="Call off this debris removal?"
+            title={t('callOffTitle')}
             codes={REASON_CODES.debrisSlotCancel}
-            confirmLabel="Call off"
+            confirmLabel={t('callOff')}
             danger
             pending={cancel.isPending}
             error={<ErrorAlert error={cancel.error} />}
@@ -496,10 +553,10 @@ export function FitOutCards({ permitId, unitId }: { permitId: string; unitId: st
           <ReasonCodeDialog
             open={withdrawing !== null}
             onClose={() => setWithdrawing(null)}
-            title={`Withdraw ${withdrawing?.number ?? 'this claim'}?`}
-            description="The requester and the primary are told the reason."
-            codes={REASON_CODES.damageClaimWithdraw.filter((c) => c !== 'appeal_accepted')}
-            confirmLabel="Withdraw"
+            title={withdrawing ? t('withdrawTitle', { number: withdrawing.number }) : t('withdrawTitleAnon')}
+            description={t('withdrawDescription')}
+            codes={REASON_CODES.damageClaimWithdraw.filter((code) => code !== 'appeal_accepted')}
+            confirmLabel={t('withdraw')}
             danger
             pending={withdraw.isPending}
             error={<ErrorAlert error={withdraw.error} />}

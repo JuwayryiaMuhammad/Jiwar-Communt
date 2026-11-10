@@ -1,17 +1,14 @@
 /**
- * Pure helpers of the permits pages (ADR 0049): the words the dashboard
- * uses for a permit's kind and period, and the checks of the rules form.
+ * Pure helpers of the permits pages (ADR 0049): a permit's kinds and period,
+ * and the checks of the rules form. The words are in the permits catalog
+ * (`messages/{en,ar}/places-permits.ts`); the helpers that show text take its
+ * `t` and the page's `fmt`.
  */
+import type { Format, Translate } from '@jiwar/i18n/core';
+import type en from '../../messages/en/places-permits.ts';
 
-export const PERMIT_KIND_TEXT = {
-  works: 'Works',
-  move: 'Furniture move',
-  material_exit: 'Materials out',
-  event: 'Event',
-} as const satisfies Record<'works' | 'move' | 'material_exit' | 'event', string>;
-
-/** 0 = Sunday … 6 = Saturday, as the API counts them. */
-export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+/** The kinds a unit permit has, in the order the filter shows them (catalog keys `kind.<kind>`). */
+export const PERMIT_KINDS = ['works', 'move', 'material_exit', 'event'] as const;
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -34,10 +31,10 @@ export function toggleDay(days: readonly number[], day: number): number[] {
   return [...set].sort((a, b) => a - b);
 }
 
-/** "Sun–Thu, Sat" style: the work days, short. */
-export function describeDays(days: readonly number[]): string {
-  if (days.length === 7) return 'Every day';
-  return days.map((d) => WEEKDAYS[d]).join(', ');
+/** "Sun, Thu, Sat" style: the work days, short, in the page's language. */
+export function describeDays(days: readonly number[], fmt: Format, t: Translate<typeof en>): string {
+  if (days.length === 7) return t('everyDay');
+  return days.map((d) => fmt.weekday(d, 'short')).join(fmt.locale === 'ar' ? '، ' : ', ');
 }
 
 /** A day off added once, in order; a malformed date is refused (null). */
@@ -46,26 +43,23 @@ export function addDayOff(daysOff: readonly string[], date: string): string[] | 
   return [...new Set([...daysOff, date])].sort();
 }
 
-/** What a permit covers, in one line: its days, or its window (`at` formats an instant). */
+/** What a permit covers, in one line: its days and hours, or its window. */
 export function periodText(
   p: {
-  kind: string;
-  works?: { startsOn: string; endsOn: string; dailyHours: { from: string; to: string } } | null;
-  move?: { date: string; window: { from: string; to: string } } | null;
-  materialExit?: { validFrom: string; validUntil: string } | null;
-  startsAt: string;
-  endsAt: string;
+    kind: string;
+    works?: { startsOn: string; endsOn: string; dailyHours: { from: string; to: string } } | null;
+    move?: { date: string; window: { from: string; to: string } } | null;
+    materialExit?: { validFrom: string; validUntil: string } | null;
+    startsAt: string;
+    endsAt: string;
   },
-  at: (iso: string) => string,
+  fmt: Format,
+  t: Translate<typeof en>,
 ): string {
-  if (p.works) {
-    const days = p.works.startsOn === p.works.endsOn ? p.works.startsOn : `${p.works.startsOn} → ${p.works.endsOn}`;
-    return `${days}, ${p.works.dailyHours.from}–${p.works.dailyHours.to}`;
-  }
-  if (p.move) return `${p.move.date}, ${p.move.window.from}–${p.move.window.to}`;
-  if (p.materialExit)
-    return p.materialExit.validFrom === p.materialExit.validUntil
-      ? p.materialExit.validFrom
-      : `${p.materialExit.validFrom} → ${p.materialExit.validUntil}`;
-  return `${at(p.startsAt)} → ${at(p.endsAt)}`;
+  const days = (from: string, to: string) => (from === to ? fmt.day(from) : t('period.range', { from: fmt.day(from), to: fmt.day(to) }));
+  if (p.works)
+    return t('period.hours', { days: days(p.works.startsOn, p.works.endsOn), from: p.works.dailyHours.from, to: p.works.dailyHours.to });
+  if (p.move) return t('period.hours', { days: fmt.day(p.move.date), from: p.move.window.from, to: p.move.window.to });
+  if (p.materialExit) return days(p.materialExit.validFrom, p.materialExit.validUntil);
+  return t('period.range', { from: fmt.dateTime(p.startsAt), to: fmt.dateTime(p.endsAt) });
 }

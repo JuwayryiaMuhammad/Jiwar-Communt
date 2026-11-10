@@ -2,14 +2,20 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Button, Card, Checkbox, Field, ForbiddenState, Input, PageHeader, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, Checkbox, Field, ForbiddenState, Input, PageHeader, useCommonT, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { describeDays, toggleDay, validHours, WEEKDAYS } from '@/components/permits/logic';
+import { describeDays, toggleDay, validHours } from '@/components/permits/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PermitSettings } from '@/lib/queries';
+import ar from '@/messages/ar/places-permits';
+import en from '@/messages/en/places-permits';
+
+/** 0 = Sunday … 6 = Saturday, as the API counts them. */
+const DAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 /**
  * The compound's work days and hours for works and moves (ADR 0049). Its
@@ -17,6 +23,9 @@ import { fetchers, keys, type PermitSettings } from '@/lib/queries';
  * here, kept on the holidays page.
  */
 export default function PermitSettingsPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const fmt = useFormat();
   const toast = useToast();
   const { ready, can } = usePermissions();
   const allowed = can('permits.manage');
@@ -33,23 +42,20 @@ export default function PermitSettingsPage() {
         })),
     {
       invalidate: [keys.permitSettings],
-      onDone: () => toast.show('Saved. The guard applies them from the next entry; permits already approved keep their own dates.'),
+      onDone: () => toast.show(t('settings.saved')),
     },
   );
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Work hours" />
+        <PageHeader title={t('settings.title')} />
         <ForbiddenState />
       </>
     );
   const ok = form !== null && form.workDays.length > 0 && validHours(form.workHours.from, form.workHours.to);
   return (
     <>
-      <PageHeader
-        title="Work hours"
-        description="When works and furniture moves may go on. Residents’ requests must fit them; the guard refuses entries outside them."
-      />
+      <PageHeader title={t('settings.title')} description={t('settings.description')} />
       <QueryState query={settings}>
         {form ? (
           <Card>
@@ -60,13 +66,13 @@ export default function PermitSettingsPage() {
                 if (ok) save.mutate(form);
               }}
             >
-              <Field label={`Work days (${describeDays(form.workDays)})`} error={fieldError(save.error, 'workDays')}>
+              <Field label={t('settings.workDays', { days: describeDays(form.workDays, fmt, t) })} error={fieldError(save.error, 'workDays')}>
                 {() => (
                   <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-                    {WEEKDAYS.map((name, day) => (
+                    {DAYS.map((day) => (
                       <Checkbox
-                        key={name}
-                        label={name}
+                        key={day}
+                        label={fmt.weekday(day, 'short')}
                         checked={form.workDays.includes(day)}
                         onChange={() => setForm({ ...form, workDays: toggleDay(form.workDays, day) })}
                       />
@@ -75,7 +81,7 @@ export default function PermitSettingsPage() {
                 )}
               </Field>
               <div className="row" style={{ gap: 12 }}>
-                <Field label="From" error={fieldError(save.error, 'workHours')}>
+                <Field label={c('from')} error={fieldError(save.error, 'workHours')}>
                   {(p) => (
                     <Input
                       {...p}
@@ -85,7 +91,7 @@ export default function PermitSettingsPage() {
                     />
                   )}
                 </Field>
-                <Field label="To">
+                <Field label={c('to')}>
                   {(p) => (
                     <Input
                       {...p}
@@ -96,33 +102,29 @@ export default function PermitSettingsPage() {
                   )}
                 </Field>
               </div>
-              <Field label="Days off" hint="The holidays that stop works and moves. Kept on the holiday calendar.">
+              <Field label={t('settings.daysOff')} hint={t('settings.daysOffHint')}>
                 {() => (
                   <div className="stack stack--sm">
                     {form.daysOff.length ? (
-                      form.daysOff.map((d) => (
-                        <span key={d} className="t-mono">
-                          {d}
-                        </span>
-                      ))
+                      form.daysOff.map((d) => <span key={d}>{fmt.day(d)}</span>)
                     ) : (
-                      <span className="muted">None</span>
+                      <span className="muted">{c('none')}</span>
                     )}
                     <Link className="table__link" href="/holidays">
-                      Open the holiday calendar
+                      {t('settings.openHolidays')}
                     </Link>
                   </div>
                 )}
               </Field>
               <Checkbox
-                label="Approve works only once their finishing-works deposit is recorded and holds money"
+                label={t('settings.deposit')}
                 checked={form.worksDepositRequired}
                 onChange={(e) => setForm({ ...form, worksDepositRequired: e.target.checked })}
               />
               <ErrorAlert error={save.error} />
               <div>
                 <Button type="submit" variant="primary" loading={save.isPending} disabled={!ok}>
-                  Save
+                  {c('save')}
                 </Button>
               </div>
             </form>

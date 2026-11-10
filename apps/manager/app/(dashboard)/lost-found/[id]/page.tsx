@@ -1,53 +1,72 @@
 'use client';
 
-import { formatDate, formatDateTime, humanize } from '@jiwar/api';
 import { QueryState } from '@jiwar/api/react';
-import { Alert, Badge, Card, CardBody, CardHeader, ForbiddenState, PageHeader, StatusBadge } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Alert, Badge, Card, CardBody, CardHeader, ForbiddenState, PageHeader, StatusBadge, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import { Back, Evidence, personName, PersonLink } from '@/components/neighbours/bits';
-import { KIND_TEXT, postActionsFor } from '@/components/neighbours/logic';
+import { usePersonName } from '@/components/management-requests/bits';
+import { Back, Evidence, PersonLink } from '@/components/neighbours/bits';
+import { postActionsFor } from '@/components/neighbours/logic';
 import { Claims, Handover, RemovePost } from '@/components/neighbours/post-desk';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type NeighbourPost } from '@/lib/queries';
+import ar from '@/messages/ar/lf-posts';
+import en from '@/messages/en/lf-posts';
+
+function useKindText() {
+  const t = useT(en, ar);
+  const label = useLabel();
+  return (kind: string) => (kind === 'lost' || kind === 'found' || kind === 'lend' || kind === 'borrow' ? t(`kind.${kind}`) : label(kind));
+}
 
 function Details({ post }: { post: NeighbourPost }) {
+  const t = useT(en, ar);
+  const f = useFormat();
+  const label = useLabel();
+  const personName = usePersonName();
   const desk = post.board === 'lost_found';
   return (
     <Card flush>
-      <CardHeader title="Post" />
+      <CardHeader title={t('post')} />
       <CardBody>
         <dl className="dl">
-          <dt>Board</dt>
-          <dd>{desk ? 'Lost & found' : 'Lending'}</dd>
-          <dt>Author</dt>
+          <dt>{t('detail.board')}</dt>
+          <dd>{desk ? t('board.lost_found') : t('board.lending')}</dd>
+          <dt>{t('detail.author')}</dt>
           <dd>
             {post.authorSide === 'staff' ? (
-              <>Management · {personName(post.author)}</>
+              <>{t('managementAuthor', { name: personName(post.author) })}</>
             ) : (
               <>
                 <PersonLink person={post.author} />
-                {post.authorUnit ? ` · unit ${post.authorUnit.code}${post.authorUnit.building ? ` · ${post.authorUnit.building}` : ''}` : ''}
+                {post.authorUnit
+                  ? ` · ${
+                      post.authorUnit.building
+                        ? t('unitLineBuilding', { code: post.authorUnit.code, building: post.authorUnit.building })
+                        : t('unitLine', { code: post.authorUnit.code })
+                    }`
+                  : ''}
               </>
             )}
           </dd>
-          <dt>Place</dt>
-          <dd>{post.place ?? <span className="t-secondary">Not given</span>}</dd>
+          <dt>{t('detail.place')}</dt>
+          <dd>{post.place ?? <span className="t-secondary">{t('notGiven')}</span>}</dd>
           {desk ? (
             <>
-              <dt>{post.kind === 'found' ? 'Found on' : 'Lost on'}</dt>
-              <dd>{post.occurredOn ? formatDate(post.occurredOn) : <span className="t-secondary">Not given</span>}</dd>
+              <dt>{post.kind === 'found' ? t('foundOn') : t('lostOn')}</dt>
+              <dd>{post.occurredOn ? f.day(post.occurredOn) : <span className="t-secondary">{t('notGiven')}</span>}</dd>
             </>
           ) : null}
-          <dt>Posted</dt>
-          <dd>{formatDateTime(post.createdAt)}</dd>
-          <dt>{post.state === 'open' ? 'On the board until' : 'Its day was'}</dt>
-          <dd>{formatDateTime(post.expiresAt)}</dd>
+          <dt>{t('detail.posted')}</dt>
+          <dd>{f.dateTime(post.createdAt)}</dd>
+          <dt>{post.state === 'open' ? t('onBoardUntil') : t('itsDayWas')}</dt>
+          <dd>{f.dateTime(post.expiresAt)}</dd>
           {post.closedAt ? (
             <>
-              <dt>Closed</dt>
+              <dt>{t('detail.closed')}</dt>
               <dd>
-                {formatDateTime(post.closedAt)} · {humanize(post.closeReason)}
+                {f.dateTime(post.closedAt)} · {label(post.closeReason)}
               </dd>
             </>
           ) : null}
@@ -62,17 +81,20 @@ function Details({ post }: { post: NeighbourPost }) {
  * handover; a lost item and a lending post are read, and may be removed.
  */
 export default function NeighbourPostPage() {
+  const t = useT(en, ar);
+  const personName = usePersonName();
+  const kindText = useKindText();
   const { id } = useParams<{ id: string }>();
   const { can, ready } = usePermissions();
   const allowed = can('neighbours.handle');
   const post = useQuery({ queryKey: keys.neighbourPost(id), queryFn: () => fetchers.neighbourPost(id), refetchInterval: 60_000, enabled: allowed });
   const p = post.data;
-  const back = <Back href="/lost-found" label="Lost & found" />;
+  const back = <Back href="/lost-found" label={t('title')} />;
 
   if (ready && !allowed) {
     return (
       <>
-        <PageHeader back={back} title="Post" />
+        <PageHeader back={back} title={t('post')} />
         <ForbiddenState />
       </>
     );
@@ -86,15 +108,15 @@ export default function NeighbourPostPage() {
         title={
           p ? (
             <span className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-              {KIND_TEXT[p.kind] ?? p.kind}
+              {kindText(p.kind)}
               <StatusBadge status={p.state} />
-              {p.pendingClaims > 0 ? <Badge tone="terracotta">{p.pendingClaims === 1 ? '1 claim waiting' : `${p.pendingClaims} claims waiting`}</Badge> : null}
+              {p.pendingClaims > 0 ? <Badge tone="terracotta">{t('claimsWaiting', { n: p.pendingClaims })}</Badge> : null}
             </span>
           ) : (
-            'Post'
+            t('post')
           )
         }
-        description={p ? (p.authorSide === 'staff' ? 'Posted by the management' : `Posted by ${personName(p.author)}`) : undefined}
+        description={p ? (p.authorSide === 'staff' ? t('postedByManagement') : t('postedBy', { name: personName(p.author) })) : undefined}
         actions={p ? <RemovePost post={p} /> : undefined}
       />
       <QueryState query={post}>
@@ -102,20 +124,17 @@ export default function NeighbourPostPage() {
           <div className="grid grid--main-aside">
             <div className="stack">
               <Card flush>
-                <CardHeader title="What it says" />
+                <CardHeader title={t('whatItSays')} />
                 <CardBody>
-                  {p.body === null ? <p className="t-secondary">Text removed: its author was erased.</p> : <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{p.body}</p>}
-                  <Evidence items={p.photos} alt="Photo of the item" />
+                  {p.body === null ? (
+                    <p className="t-secondary">{t('removedBody')}</p>
+                  ) : (
+                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{p.body}</p>
+                  )}
+                  <Evidence items={p.photos} alt={t('photoAlt')} />
                 </CardBody>
               </Card>
-              {p.board === 'lending' ? (
-                <Alert>
-                  The lending board is the residents’ own. This post is read here and may be removed; what residents write to each other about it is
-                  not shown.
-                </Alert>
-              ) : p.kind === 'lost' ? (
-                <Alert>A lost item is not held at the office: there is nothing to claim or hand over here.</Alert>
-              ) : null}
+              {p.board === 'lending' ? <Alert>{t('lendingNote')}</Alert> : p.kind === 'lost' ? <Alert>{t('lostNote')}</Alert> : null}
               <Handover post={p} />
               <Claims post={p} />
             </div>

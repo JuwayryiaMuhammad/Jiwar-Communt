@@ -1,27 +1,54 @@
 /**
  * The security screens of ADR 0053 (lockdown, blocklist, incidents,
- * violations), as the API holds their rules. Plain TypeScript with no
- * imports, so the tests run it as is.
+ * violations), as the API holds their rules. Plain TypeScript importing
+ * only the layer's core and the guards' catalog (through ./logic.ts), so
+ * the tests run it as is.
+ *
+ * The `…In(…, locale)` helpers give the words in the page's language; the
+ * ones without a locale are their English, kept for the pages not moved yet.
  */
+import type { Locale } from '@jiwar/i18n/core';
+import { guardWords, listSep } from './logic.ts';
+
+type LockdownLike = { scope: string; gate?: { name: string } | null };
 
 /** "Every gate", or the gate's name. */
-export function lockdownScope(l: { scope: string; gate?: { name: string } | null }): string {
-  return l.scope === 'all' ? 'Every gate' : (l.gate?.name ?? 'A gate');
+export function lockdownScope(l: LockdownLike): string {
+  return lockdownScopeIn(l, 'en');
+}
+
+/** "Every gate", or the gate's name, in the page's language. */
+export function lockdownScopeIn(l: LockdownLike, locale: Locale): string {
+  const t = guardWords(locale);
+  return l.scope === 'all' ? t('everyGate') : (l.gate?.name ?? t('aGate'));
 }
 
 /** The banner's line for the live lockdowns: "Every gate, Main gate". */
-export function lockdownBanner(live: readonly { scope: string; gate?: { name: string } | null }[]): string | null {
-  if (!live.length) return null;
-  const all = live.some((l) => l.scope === 'all');
-  const gates = live.filter((l) => l.scope !== 'all').map(lockdownScope);
-  const parts = [...(all ? ['Every gate'] : []), ...gates];
-  return `Lockdown in force: ${parts.join(', ')}`;
+export function lockdownBanner(live: readonly LockdownLike[]): string | null {
+  return lockdownBannerIn(live, 'en');
 }
 
+/** The banner's line for the live lockdowns, in the page's language. */
+export function lockdownBannerIn(live: readonly LockdownLike[], locale: Locale): string | null {
+  if (!live.length) return null;
+  const t = guardWords(locale);
+  const all = live.some((l) => l.scope === 'all');
+  const gates = live.filter((l) => l.scope !== 'all').map((l) => lockdownScopeIn(l, locale));
+  const parts = [...(all ? [t('everyGate')] : []), ...gates];
+  return t('lockdownBanner', { gates: parts.join(listSep(locale)) });
+}
+
+type BlocklistLike = { subject: string; plate?: string | null; fullName?: string | null };
+
 /** What a blocklist entry is about: its plate, the person's name, or a purged person. */
-export function blocklistSubject(e: { subject: string; plate?: string | null; fullName?: string | null }): string {
+export function blocklistSubject(e: BlocklistLike): string {
+  return blocklistSubjectIn(e, 'en');
+}
+
+/** What a blocklist entry is about, a purged person in the page's language. */
+export function blocklistSubjectIn(e: BlocklistLike, locale: Locale): string {
   if (e.subject === 'plate') return e.plate ?? '—';
-  return e.fullName ?? 'A person (purged)';
+  return e.fullName ?? guardWords(locale)('purgedPerson');
 }
 
 /** A plate or a person: what the add form needs before it is sent. */
@@ -77,5 +104,10 @@ export function dayStart(day: string): string | undefined {
 
 /** "2.5 h", or a dash when nothing was closed. */
 export function hoursText(hours: number | null | undefined): string {
-  return hours === null || hours === undefined ? '—' : `${hours} h`;
+  return hoursTextIn(hours, 'en');
+}
+
+/** "2.5 h" in the page's language, or a dash. */
+export function hoursTextIn(hours: number | null | undefined, locale: Locale): string {
+  return hours === null || hours === undefined ? '—' : guardWords(locale)('hours', { h: hours });
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import { formatDateTime, humanize, REASON_CODES, relativeTime, unwrap } from '@jiwar/api';
+import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
+import { useFormat, useLocale, useT } from '@jiwar/i18n';
 import {
   Badge,
   Button,
@@ -16,28 +17,41 @@ import {
   Select,
   StatusBadge,
   Textarea,
+  useCommonT,
+  useLabel,
   useToast,
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { postName } from '@/components/security/logic';
+import { postNameIn } from '@/components/security/logic';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type StaffEmergency } from '@/lib/queries';
+import ar from '@/messages/ar/gate-emergencies';
+import en from '@/messages/en/gate-emergencies';
 
 const VIEWS = ['open', 'closed'] as const;
 type View = (typeof VIEWS)[number];
 const MINUTES = [2, 5, 10, 15] as const;
 
 /** Where: "Building 7 · 12", or a guard's post for their SOS (ADR 0053). */
-const where = (e: StaffEmergency) =>
-  e.location
-    ? [e.location.building, e.location.unitCode].filter(Boolean).join(' · ')
-    : e.post
-      ? `A guard’s SOS · ${postName(e.post)}`
-      : '—';
+function useWhere() {
+  const t = useT(en, ar);
+  const { locale } = useLocale();
+  return (e: StaffEmergency) =>
+    e.location
+      ? [e.location.building, e.location.unitCode].filter(Boolean).join(' · ')
+      : e.post
+        ? t('guardSos', { post: postNameIn(e.post, locale) })
+        : '—';
+}
 
 function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const where = useWhere();
   const toast = useToast();
   const emergency = useQuery({ queryKey: keys.emergency(id), queryFn: () => fetchers.emergency(id), refetchInterval: 10_000 });
   const [step, setStep] = useState<'accept' | 'resolve' | null>(null);
@@ -48,7 +62,7 @@ function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.emergenciesAll],
       onDone: () => {
-        toast.show('You are its responder. The household sees the duty phone.');
+        toast.show(t('answered'));
         setStep(null);
       },
     },
@@ -64,7 +78,7 @@ function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
     {
       invalidate: [keys.emergenciesAll],
       onDone: () => {
-        toast.show('Resolved.');
+        toast.show(t('resolved'));
         setStep(null);
       },
     },
@@ -77,17 +91,17 @@ function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
         open={step === null}
         wide
         onClose={onClose}
-        title={e ? `${e.reference} · ${humanize(e.type)}` : 'Emergency'}
+        title={e ? `${e.reference} · ${label(e.type)}` : t('emergency')}
         description={e ? where(e) : undefined}
         footer={
           <>
             {open && !e?.responderAccount ? (
               <Button variant="primary" onClick={() => setStep('accept')}>
-                Answer it
+                {t('answerIt')}
               </Button>
             ) : null}
-            {open ? <Button onClick={() => setStep('resolve')}>Resolve</Button> : null}
-            <Button onClick={onClose}>Done</Button>
+            {open ? <Button onClick={() => setStep('resolve')}>{t('resolve')}</Button> : null}
+            <Button onClick={onClose}>{t('done')}</Button>
           </>
         }
       >
@@ -95,45 +109,48 @@ function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
           {e ? (
             <div className="stack">
               <dl className="dl">
-                <dt>Status</dt>
+                <dt>{c('status')}</dt>
                 <dd>
                   <StatusBadge status={e.status} />
                   {e.escalatedAt ? (
                     <>
                       {' '}
-                      <Badge tone="error">{e.escalationReason === 'no_responders' ? 'Nobody to answer' : 'Not answered in time'}</Badge>
+                      <Badge tone="error">{e.escalationReason === 'no_responders' ? t('noResponders') : t('notInTime')}</Badge>
                     </>
                   ) : null}
-                  {e.closeReason ? <span className="t-secondary"> · {humanize(e.closeReason)}</span> : null}
+                  {e.closeReason ? <span className="t-secondary"> · {label(e.closeReason)}</span> : null}
                 </dd>
-                <dt>Reported by</dt>
+                <dt>{t('reportedBy')}</dt>
                 <dd>
-                  {e.reportedBy.erased ? 'An erased account' : e.reportedBy.firstName} · {formatDateTime(e.reportedAt)}
+                  {e.reportedBy.erased ? t('erasedAccount') : e.reportedBy.firstName} · {f.dateTime(e.reportedAt)}
                 </dd>
-                <dt>Responder</dt>
+                <dt>{t('responder')}</dt>
                 <dd>
                   {e.responderAccount
-                    ? `${e.responderAccount.erased ? 'An erased account' : e.responderAccount.firstName}${
-                        e.minutesAway !== null ? ` · ${e.minutesAway} min away` : ''
-                      }`
-                    : 'Nobody yet'}
+                    ? e.minutesAway !== null
+                      ? t('responderLine', {
+                          name: e.responderAccount.erased ? t('erasedAccount') : (e.responderAccount.firstName ?? '—'),
+                          minutes: f.number(e.minutesAway),
+                        })
+                      : e.responderAccount.erased
+                        ? t('erasedAccount')
+                        : (e.responderAccount.firstName ?? '—')
+                    : t('nobodyYet')}
                 </dd>
-                <dt>Family</dt>
-                <dd>
-                  {e.familyNotified} told · {e.familyOnTheWay} on the way
-                </dd>
+                <dt>{t('family')}</dt>
+                <dd>{t('familyLine', { told: f.number(e.familyNotified), onTheWay: f.number(e.familyOnTheWay) })}</dd>
                 {e.closeNote ? (
                   <>
-                    <dt>Note</dt>
+                    <dt>{c('note')}</dt>
                     <dd>{e.closeNote}</dd>
                   </>
                 ) : null}
               </dl>
               <ol className="stack" style={{ margin: 0, paddingInlineStart: '1.2em' }}>
-                {e.timeline.map((t, i) => (
+                {e.timeline.map((step, i) => (
                   <li key={i}>
-                    {humanize(t.step)}
-                    {t.firstName ? ` (${t.firstName})` : ''} · <span className="t-secondary">{formatDateTime(t.at)}</span>
+                    {label(step.step)}
+                    {step.firstName ? ` (${step.firstName})` : ''} · <span className="t-secondary">{f.dateTime(step.at)}</span>
                   </li>
                 ))}
               </ol>
@@ -144,25 +161,25 @@ function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <Dialog
         open={step === 'accept'}
         onClose={() => setStep(null)}
-        title={`Answer ${e?.reference ?? ''}`}
-        description="The household sees your first name, the minutes you pick counting down, and the duty phone."
+        title={t('answerTitle', { reference: e?.reference ?? '' })}
+        description={t('answerDescription')}
         onSubmit={() => accept.mutate(undefined)}
         footer={
           <>
-            <Button onClick={() => setStep(null)}>Cancel</Button>
+            <Button onClick={() => setStep(null)}>{c('cancel')}</Button>
             <Button type="submit" variant="primary" loading={accept.isPending}>
-              I am on the way
+              {t('onTheWay')}
             </Button>
           </>
         }
       >
         <div className="form">
-          <Field label="Minutes away">
+          <Field label={t('minutesLabel')}>
             {(p) => (
               <Select {...p} value={String(minutes)} onChange={(ev) => setMinutes(Number(ev.target.value) as (typeof MINUTES)[number])}>
                 {MINUTES.map((m) => (
                   <option key={m} value={m}>
-                    {m} minutes
+                    {t('minutes', { m })}
                   </option>
                 ))}
               </Select>
@@ -174,15 +191,15 @@ function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
       <ReasonCodeDialog
         open={step === 'resolve'}
         onClose={() => setStep(null)}
-        title={`Resolve ${e?.reference ?? ''}?`}
-        description="The household sees it resolved and why, never your note."
+        title={t('resolveTitle', { reference: e?.reference ?? '' })}
+        description={t('resolveDescription')}
         codes={REASON_CODES.emergencyResolve}
-        confirmLabel="Resolve"
+        confirmLabel={t('resolve')}
         pending={resolve.isPending}
         error={<ErrorAlert error={resolve.error} />}
         onConfirm={(reasonCode) => resolve.mutate(reasonCode)}
       >
-        <Field label="Note (optional)" hint="For the management: up to 500 characters.">
+        <Field label={t('noteLabel')} hint={t('noteHint')}>
           {(p) => <Textarea {...p} value={note} onChange={(ev) => setNote(ev.target.value)} />}
         </Field>
       </ReasonCodeDialog>
@@ -196,33 +213,35 @@ function EmergencyDetail({ id, onClose }: { id: string; onClose: () => void }) {
  * answer or resolve any. Never a resident's phone.
  */
 export default function EmergenciesPage() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const where = useWhere();
   const { ready, can } = usePermissions();
   const allowed = can('emergencies.manage') || can('emergencies.respond');
   const [view, setView] = useState<View>('open');
   const [open, setOpen] = useState<string | null>(null);
-  const list = useCursorList(keys.emergencies(view), (c) => fetchers.emergencies(view, c), {
+  const list = useCursorList(keys.emergencies(view), (cursor) => fetchers.emergencies(view, cursor), {
     enabled: allowed,
     refetchInterval: view === 'open' ? 10_000 : undefined,
   });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Emergencies" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
-      <PageHeader title="Emergencies" description="Live: refreshed every ten seconds. Guards answer from the app; you can answer or resolve here." />
+      <PageHeader title={t('title')} description={t('description')} />
       <div className="toolbar">
         <Segmented<View>
-          label="Emergencies shown"
+          label={t('shown')}
           value={view}
           onChange={setView}
-          options={[
-            { value: 'open', label: 'Open' },
-            { value: 'closed', label: 'Closed' },
-          ]}
+          options={VIEWS.map((v) => ({ value: v, label: t(`view.${v}`) }))}
         />
       </div>
       <Card flush>
@@ -230,43 +249,47 @@ export default function EmergenciesPage() {
           <DataTable<StaffEmergency>
             rows={list.rows}
             rowKey={(e) => e.id}
-            empty={view === 'open' ? 'No open emergency' : 'No emergency yet'}
+            empty={view === 'open' ? t('emptyOpen') : t('empty')}
             columns={[
               {
                 key: 'ref',
-                header: 'Emergency',
+                header: t('col.emergency'),
                 cell: (e) => (
                   <Button variant="text" className="table__link t-mono" onClick={() => setOpen(e.id)}>
                     {e.reference}
                   </Button>
                 ),
               },
-              { key: 'type', header: 'Type', cell: (e) => humanize(e.type) },
-              { key: 'where', header: 'Where', cell: (e) => where(e) },
+              { key: 'type', header: c('type'), cell: (e) => label(e.type) },
+              { key: 'where', header: t('col.where'), cell: (e) => where(e) },
               {
                 key: 'status',
-                header: 'Status',
+                header: c('status'),
                 cell: (e) => (
                   <span className="row">
                     <StatusBadge status={e.status} />
-                    {e.escalatedAt && e.status === 'reported' ? <Badge tone="error">Unanswered</Badge> : null}
+                    {e.escalatedAt && e.status === 'reported' ? <Badge tone="error">{t('unanswered')}</Badge> : null}
                   </span>
                 ),
               },
               {
                 key: 'responder',
-                header: 'Responder',
+                header: t('col.responder'),
                 cell: (e) =>
                   e.responderAccount ? (
-                    `${e.responderAccount.firstName ?? '—'}${e.minutesAway !== null ? ` · ${e.minutesAway} min` : ''}`
+                    e.minutesAway !== null ? (
+                      t('responderShort', { name: e.responderAccount.firstName ?? '—', minutes: f.number(e.minutesAway) })
+                    ) : (
+                      (e.responderAccount.firstName ?? '—')
+                    )
                   ) : (
-                    <span className="t-secondary">Nobody yet</span>
+                    <span className="t-secondary">{t('nobodyYet')}</span>
                   ),
               },
               {
                 key: 'when',
-                header: 'Reported',
-                cell: (e) => <span title={formatDateTime(e.reportedAt)}>{relativeTime(e.reportedAt)}</span>,
+                header: t('col.reported'),
+                cell: (e) => <span title={f.dateTime(e.reportedAt)}>{f.relative(e.reportedAt)}</span>,
               },
             ]}
           />

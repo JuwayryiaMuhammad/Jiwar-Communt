@@ -66,3 +66,62 @@ export async function glEntryId(tx: TenantTxClient): Promise<string> {
   if (!rows[0]) throw new Error('no gl entry yet');
   return rows[0].id;
 }
+
+/**
+ * A service charge of `total` invoiced to a unit on a past day, written as
+ * of then (the triggers post it on its day): for the year-end close's
+ * suites, which need a ledger that began in an earlier year.
+ */
+export async function glInvoiceOn(
+  tx: TenantTxClient,
+  r: {
+    tenantId: string;
+    unitId: string;
+    createdById: string;
+    on: string;
+    total: string;
+  },
+): Promise<string> {
+  const batchId = newId();
+  await tx.invoiceBatch.create({
+    data: {
+      id: batchId,
+      tenantId: r.tenantId,
+      target: 'unit',
+      unitId: r.unitId,
+      kind: 'service_charge',
+      unitCount: 1,
+      issuedOn: dbDate(r.on),
+      dueOn: dbDate(r.on),
+      createdById: r.createdById,
+    },
+  });
+  const id = newId();
+  await tx.invoice.create({
+    data: {
+      id,
+      tenantId: r.tenantId,
+      number: 700_000 + (Date.now() % 90_000) + ++counter,
+      batchId,
+      unitId: r.unitId,
+      kind: 'service_charge',
+      total: r.total,
+      currency: 'EGP',
+      issuedOn: dbDate(r.on),
+      dueOn: dbDate(r.on),
+      createdById: r.createdById,
+    },
+  });
+  await tx.invoiceLine.create({
+    data: {
+      id: newId(),
+      tenantId: r.tenantId,
+      invoiceId: id,
+      position: 1,
+      descriptionEn: 'Dues',
+      descriptionAr: 'مستحقات',
+      amount: r.total,
+    },
+  });
+  return id;
+}

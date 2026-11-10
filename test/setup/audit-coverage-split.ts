@@ -1349,3 +1349,14 @@ export const M35_COVERAGE: readonly string[] = [
   'gl_period.closed',
   'gl_period.reopened',
 ];
+
+/** Taxes and the year-end close (ADR 0093), covered by test/tax/audit-coverage.e2e-spec.ts. */
+export const M36_COVERAGE: readonly string[] = [
+  'tax_settings.updated',
+  'vendor.withholding_category_set',
+  'vat_declaration.declared',
+  'withholding_certificate.issued',
+  'tax_payment.recorded',
+  'gl_year.closed',
+  'gl_year.reopened',
+];

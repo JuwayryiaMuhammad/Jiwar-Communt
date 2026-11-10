@@ -266,4 +266,29 @@ export const GL_ROUTES: Row[] = [
       body: { ...badMonth.body, reasonCode: 'correction' },
     },
   }),
+  // The fiscal years (ADR 0093).
+  reader({
+    method: 'GET',
+    path: '/staff/finance/gl/years',
+    foreign: 'none',
+    invalid: 'none',
+  }),
+  reader({
+    method: 'POST',
+    path: '/staff/finance/gl/years/close',
+    foreign: 'none',
+    invalid: {
+      body: { startsOn: '2026-02-30' },
+      fields: [{ field: 'startsOn', code: 'INVALID_FORMAT' }],
+    },
+  }),
+  reader({
+    method: 'POST',
+    path: '/staff/finance/gl/years/reopen',
+    foreign: 'none',
+    invalid: {
+      body: { startsOn: '2027-02-29', reasonCode: 'correction' },
+      fields: [{ field: 'startsOn', code: 'INVALID_FORMAT' }],
+    },
+  }),
 ];

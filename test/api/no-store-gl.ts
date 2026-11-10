@@ -1,7 +1,7 @@
 import type { Response } from 'supertest';
 import { TenantTx } from '../../src/core/database/tenant-tx.service';
 import { day } from '../setup/compound-clock';
-import { glAccountId, glManualEntryRow } from '../setup/gl-rows';
+import { glAccountId, glInvoiceOn, glManualEntryRow } from '../setup/gl-rows';
 import { call } from './request';
 import type { World } from './world';
 
@@ -48,6 +48,41 @@ export function glCalls(
       ).body as { id: string }
     ).id;
   const period = `from=${day(0)}&to=${day(0)}`;
+  interface Year {
+    startsOn: string;
+    endsOn: string;
+    status: string;
+  }
+  const years = async () =>
+    ((await as('GET', '/staff/finance/gl/years')).body as { data: Year[] })
+      .data;
+  // A's ledger begins two years back with one invoice, once.
+  let began: Promise<void> | null = null;
+  const closeEndedYears = async () => {
+    began ??= inA<void>(async (tx) => {
+      await glInvoiceOn(tx, {
+        tenantId: world().a.tenantId,
+        unitId: world().a.homeUnitId,
+        createdById: world().a.ids.manager,
+        on: `${Number(day(0).slice(0, 4)) - 2}-03-15`,
+        total: '100.00',
+      });
+    });
+    await began;
+    const ended = (await years())
+      .filter((y) => y.endsOn < day(0))
+      .sort((a, b) => a.startsOn.localeCompare(b.startsOn));
+    await as('POST', '/staff/finance/gl/periods/close', {
+      month: ended[ended.length - 1].endsOn.slice(0, 7),
+    });
+    let last: Response | null = null;
+    for (const y of ended)
+      if (y.status === 'open')
+        last = await as('POST', '/staff/finance/gl/years/close', {
+          startsOn: y.startsOn,
+        });
+    return last ?? (await as('GET', '/staff/finance/gl/years'));
+  };
   return {
     'GET /staff/finance/gl/accounts': () =>
       as('GET', '/staff/finance/gl/accounts'),
@@ -146,6 +181,20 @@ export function glCalls(
         })
       ).body as { id: string };
       return as('POST', `/staff/finance/gl/manual-entries/${made.id}/withdraw`);
+    },
+    'GET /staff/finance/gl/years': () => as('GET', '/staff/finance/gl/years'),
+    // The months through the last ended year's end are closed, then each
+    // year that has ended; reopening takes the latest back.
+    'POST /staff/finance/gl/years/close': () => closeEndedYears(),
+    'POST /staff/finance/gl/years/reopen': async () => {
+      await closeEndedYears();
+      const latest = (await years())
+        .filter((y) => y.status === 'closed')
+        .sort((a, b) => b.startsOn.localeCompare(a.startsOn))[0];
+      return as('POST', '/staff/finance/gl/years/reopen', {
+        startsOn: latest.startsOn,
+        reasonCode: 'correction',
+      });
     },
     'GET /staff/finance/gl/periods': () =>
       as('GET', '/staff/finance/gl/periods'),

@@ -44,6 +44,7 @@ import { TREASURY_ROUTES } from './treasury';
 import { REPORTS_ROUTES } from './reports';
 import { CASH_FLOW_ROUTES } from './cash-flow';
 import { GL_ROUTES } from './gl';
+import { TAX_ROUTES } from './tax';
 import { READINESS_ROUTES } from './readiness';
 import { FACILITY_BAN_ROUTES } from './facility-bans';
 import { FIELD_SAFETY_ROUTES } from './field-safety';
@@ -483,4 +484,6 @@ export const ROUTES: Row[] = [
   // ADR 0091.
   ...CASH_FLOW_ROUTES,
   ...GL_ROUTES,
+  // ADR 0093.
+  ...TAX_ROUTES,
 ];

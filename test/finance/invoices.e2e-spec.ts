@@ -107,12 +107,14 @@ describe('Finance — invoices', () => {
           descriptionEn: 'Service charge',
           descriptionAr: 'رسوم الخدمات',
           amount: '700.00',
+          vat: '0.00',
         },
         {
           position: 2,
           descriptionEn: 'Water',
           descriptionAr: 'مياه',
           amount: '300.50',
+          vat: '0.00',
         },
       ]);
       const told = await f.notifications(s.c, s.owner.id, 'invoice.issued');

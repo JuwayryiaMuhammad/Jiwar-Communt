@@ -1925,6 +1925,12 @@ describe('API v0 — PII leak scan', () => {
       '/staff/finance/gl/accounts/{id}/ledger/export': w.bGlAccountId,
       '/staff/finance/gl/entries/{id}': w.bGlEntryId,
       '/staff/finance/gl/manual-entries/{id}': w.bGlManualEntryId,
+      // ADR 0093: B's vendor and certificate, not found for everyone of A.
+      '/staff/finance/tax/vendors/{id}': w.bVendorId,
+      '/staff/finance/tax/withholding/certificates/{id}':
+        w.bWithholdingCertificateId,
+      '/staff/finance/tax/withholding/certificates/{id}/pdf':
+        w.bWithholdingCertificateId,
       // ADR 0086: B's run, export and plan, not found for everyone of A.
       '/staff/report-runs/{id}/download': w.bReportRunId,
       '/staff/compound-exports/{id}/download': w.bCompoundExportId,

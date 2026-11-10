@@ -967,5 +967,55 @@ BEGIN
       INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
         (t, 'gl_manual_entry', je1, now());
     END;
+    -- ADR 0093: the settings (registered for VAT, one taxable kind, one
+    -- recoverable category, withholding on), a vendor's withholding
+    -- category, an invoice with its VAT, a month's VAT declared, a tax paid
+    -- from a bank account (its movement), a fiscal year closed, and the
+    -- certificate's and the tax payment's counters (the CHECKs widened).
+    DECLARE
+      wv uuid := gen_random_uuid();
+      tb uuid := gen_random_uuid();
+      tinv2 uuid := gen_random_uuid();
+      tbatch uuid := gen_random_uuid();
+      vdec uuid := gen_random_uuid();
+      tp uuid := gen_random_uuid();
+      q date := date_trunc('quarter', current_date)::date;
+    BEGIN
+      UPDATE finance_settings SET vat_registered = true, vat_number = 'SEED-' || left(gen_random_uuid()::text, 8),
+                                  vat_since = current_date - 40, vat_taxable_kinds = ARRAY['service_charge'],
+                                  vat_recoverable_categories = ARRAY['maintenance'], withholding_enabled = true
+       WHERE tenant_id = t;
+      INSERT INTO vendors (id, tenant_id, number, name, categories, withholding_category, updated_at) VALUES
+        (wv, t, 3 + (random() * 1000000)::int, 'Seed Auditors ' || left(gen_random_uuid()::text, 8), ARRAY['professional'], 'professional', now());
+      INSERT INTO invoice_batches (id, tenant_id, target, unit_id, kind, unit_count, issued_on, due_on,
+                                   created_by_account_id) VALUES
+        (tbatch, t, 'unit', u1, 'service_charge', 1, current_date - 5, current_date + 25, mgr);
+      INSERT INTO invoices (id, tenant_id, number, batch_id, unit_id, kind, total, vat, vat_rate, currency,
+                            issued_on, due_on, created_by_account_id) VALUES
+        (tinv2, t, 900000 + (random() * 90000)::int, tbatch, u1, 'service_charge', 114.00, 14.00, 14.00, 'EGP',
+         current_date - 5, current_date + 25, mgr);
+      INSERT INTO invoice_lines (id, tenant_id, invoice_id, position, description_en, description_ar, amount, vat) VALUES
+        (gen_random_uuid(), t, tinv2, 1, 'Service charge', 'رسوم الخدمة', 100.00, 14.00);
+      INSERT INTO finance_vat_declarations (id, tenant_id, month, taxable_sales, output_vat, taxable_purchases,
+                                            input_vat, carried_in, net_due, carried_out, declared_by_account_id,
+                                            declared_at) VALUES
+        (vdec, t, DATE '2020-02-01', 0, 0, 0, 0, 0, 0, 0, mgr, now());
+      INSERT INTO finance_cash_accounts (id, tenant_id, kind, name, opened_on, created_by_account_id, updated_at) VALUES
+        (tb, t, 'bank', 'Seed tax bank ' || left(gen_random_uuid()::text, 8), current_date - 30, mgr, now());
+      INSERT INTO finance_cash_movements (id, tenant_id, account_id, kind, amount, on_day, recorded_by_account_id) VALUES
+        (gen_random_uuid(), t, tb, 'opening', 5000.00, current_date - 30, mgr);
+      INSERT INTO finance_counters (tenant_id, kind, last_number) VALUES
+        (t, 'withholding_certificate', 0), (t, 'tax_payment', 1)
+        ON CONFLICT (tenant_id, kind) DO NOTHING;
+      INSERT INTO finance_tax_payments (id, tenant_id, number, kind, quarter, amount, paid_on, method, reference,
+                                        cash_account_id, paid_by_account_id, created_at) VALUES
+        (tp, t, 1, 'withholding', q, 25.00, current_date, 'bank_transfer', 'SEED-1', tb, mgr, now());
+      INSERT INTO finance_cash_movements (id, tenant_id, account_id, kind, amount, on_day, tax_payment_id,
+                                          recorded_by_account_id) VALUES
+        (gen_random_uuid(), t, tb, 'tax_payment', -25.00, current_date, tp, mgr);
+      INSERT INTO gl_year_closes (id, tenant_id, starts_on, ends_on, revenue, expenses, result,
+                                  closed_by_account_id, closed_at) VALUES
+        (gen_random_uuid(), t, DATE '2019-01-01', DATE '2019-12-31', 0, 0, 0, mgr, now());
+    END;
   END LOOP;
 END $$;

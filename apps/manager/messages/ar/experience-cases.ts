@@ -61,8 +61,8 @@ const ar: Translation<typeof en> = {
   closeConfirm: 'أغلق الحالة',
   closed: 'أُغلقت الحالة.',
   'propose.title': 'اقتراح تعويض',
-  'propose.recommended': 'يوصي الكمبوند بـ{kind} بمبلغ {amount} لهذا الإخفاق.',
-  'propose.recommendedKind': 'يوصي الكمبوند بـ{kind} لهذا الإخفاق.',
+  'propose.recommended': 'يوصي المجمع بـ{kind} بمبلغ {amount} لهذا الإخفاق.',
+  'propose.recommendedKind': 'يوصي المجمع بـ{kind} لهذا الإخفاق.',
   'propose.description':
     'يصدر الرصيد الدائن عبر المالية على إحدى فواتير الوحدة عند موافقة المدير، وإذا تجاوز حد المجلس فمع ما اعتمده المجلس.',
   'propose.submit': 'اقترح',

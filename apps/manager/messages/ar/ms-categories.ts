@@ -3,10 +3,10 @@ import type en from '../en/ms-categories.ts';
 
 const ar: Translation<typeof en> = {
   saved: 'تم حفظ {name}.',
-  added: 'تمت إضافة {name}. حدد تخصصاتها ومستهدفات اتفاقية الخدمة بعد ذلك.',
+  added: 'تمت إضافة {name}. حدد تخصصاتها ومستهدفات SLA بعد ذلك.',
   editTitle: 'تعديل {name}',
   newTitle: 'فئة جديدة',
-  newDescription: 'ما يختاره الساكنون عند فتح بلاغ. تبدأ بالمستهدفات الافتراضية لاتفاقية الخدمة وبدون تخصص.',
+  newDescription: 'ما يختاره الساكنون عند فتح بلاغ. تبدأ بالمستهدفات الافتراضية لSLA وبدون تخصص.',
   addCategory: 'أضف الفئة',
   defaultPriority: 'الأولوية الافتراضية',
   defaultPriorityHint: 'ما يحصل عليه البلاغ الجديد ما لم يحدد مقدّمه أو التوزيع غير ذلك.',

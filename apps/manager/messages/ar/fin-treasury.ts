@@ -3,7 +3,7 @@ import type en from '../en/fin-treasury.ts';
 
 const ar: Translation<typeof en> = {
   title: 'البنك والخزينة',
-  description: 'الحسابات البنكية وخزائن النقدية الخاصة بالكمبوند.',
+  description: 'الحسابات البنكية وخزائن النقدية الخاصة بالمجمع.',
   moveMoney: 'حوّل أموالًا',
   openAccount: 'افتح حسابًا',
   empty: 'لا توجد حسابات بعد',

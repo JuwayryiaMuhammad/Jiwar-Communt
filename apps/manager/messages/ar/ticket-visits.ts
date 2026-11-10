@@ -35,7 +35,7 @@ const ar: Translation<typeof en> = {
   reschedule: 'أعد الجدولة',
   proposeAnother: 'اقترح موعدًا آخر',
   counterDescription: 'يحل هذا الموعد محل اقتراح الساكن، ليؤكده الساكن.',
-  proposeDescription: 'للفني {name}، ضمن ساعات الزيارة في الكمبوند. يؤكدها الساكن.',
+  proposeDescription: 'للفني {name}، ضمن ساعات الزيارة في المجمع. يؤكدها الساكن.',
   propose: 'اقترح',
   confirmTitle: 'تأكيد موعد الساكن؟',
   confirmDescription: '{window}، للفني {name}.',

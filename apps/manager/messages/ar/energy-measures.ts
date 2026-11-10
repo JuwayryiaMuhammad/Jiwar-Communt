@@ -4,11 +4,11 @@ import type en from '../en/energy-measures.ts';
 const ar: Translation<typeof en> = {
   added: 'تمت إضافة الإجراء.',
   newTitle: 'إجراء توفير جديد',
-  newDescription: 'على مبنى، أو على الكمبوند كله إذا لم يُذكر مبنى. يُقرأ أثره بمقارنة الأسابيع قبله بالأسابيع بعده.',
+  newDescription: 'على مبنى، أو على المجمع كله إذا لم يُذكر مبنى. يُقرأ أثره بمقارنة الأسابيع قبله بالأسابيع بعده.',
   whatWasDone: 'ما الذي تم',
   saves: 'يوفّر',
   building: 'المبنى',
-  buildingHint: 'اتركه فارغًا للكمبوند كله.',
+  buildingHint: 'اتركه فارغًا للمجمع كله.',
   from: 'من',
   costEgp: 'التكلفة (جنيه)',
   ended: 'تم الإنهاء.',
@@ -35,7 +35,7 @@ const ar: Translation<typeof en> = {
   'col.ended': 'انتهى',
   'col.cost': 'التكلفة',
   aMeter: 'عداد',
-  theCompound: 'الكمبوند',
+  theCompound: 'المجمع',
 };
 
 export default ar;

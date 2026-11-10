@@ -18,7 +18,7 @@ const ar: Translation<typeof en> = {
   'details.notifyEmail': 'بريد الإشعارات (للإدارة فقط)',
   'details.notifyEmailHint': 'يصله إشعار بكل طلب جديد، دون بيانات الساكن ودون رابط. إن تُرك فارغًا فلا يُرسل بريد لأحد.',
   'details.buildings': 'المباني التي يخدمها',
-  'details.buildingsHint': 'كما تسميها الوحدات، مفصولة بفواصل. إن تُرك فارغًا فهو يخدم الكمبوند كله.',
+  'details.buildingsHint': 'كما تسميها الوحدات، مفصولة بفواصل. إن تُرك فارغًا فهو يخدم المجمع كله.',
   'details.homeVisit': 'يأتي إلى المنزل',
   discard: 'تراجع',
   'services.title': 'الخدمات',

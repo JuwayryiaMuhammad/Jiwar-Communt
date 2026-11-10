@@ -3,7 +3,7 @@ import type en from '../en/fin-expenses.ts';
 
 const ar: Translation<typeof en> = {
   title: 'المصروفات',
-  description: 'ما أنفقه الكمبوند، على بنود الميزانية السارية.',
+  description: 'ما أنفقه المجمع، على بنود الميزانية السارية.',
   recordExpense: 'سجّل مصروفًا',
   none: 'لا توجد مصروفات بعد',
   'col.number': 'الرقم',

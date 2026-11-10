@@ -5,7 +5,7 @@ const ar: Translation<typeof en> = {
   title: 'صندوق الوارد',
   descriptionCount:
     '{total} في الانتظار، منها {overdue} تجاوزت موعدها. يُفتح كل منها في صفحته؛ وتُضبط المواعيد من إعدادات صندوق الوارد.',
-  descriptionEmpty: 'ما ينتظر قرارك في أنحاء الكمبوند.',
+  descriptionEmpty: 'ما ينتظر قرارك في أنحاء المجمع.',
   dueTimes: 'المواعيد',
   approveSelected: 'وافق على المحدد',
   everyType: 'كل الأنواع',

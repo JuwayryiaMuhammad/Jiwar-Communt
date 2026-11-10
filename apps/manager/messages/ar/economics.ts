@@ -3,7 +3,7 @@ import type en from '../en/economics.ts';
 
 const ar: Translation<typeof en> = {
   title: 'التكلفة والأداء',
-  description: 'ما أُنفق، وخطة السنوات القادمة، وكيف سار العمل، على مدى أيام الكمبوند.',
+  description: 'ما أُنفق، وخطة السنوات القادمة، وكيف سار العمل، على مدى أيام المجمع.',
   plannedWork: 'الأعمال المخططة',
   plannedHint: '{planned} مخطط، {repairs} إصلاح',
   mttr: 'متوسط وقت الإصلاح',

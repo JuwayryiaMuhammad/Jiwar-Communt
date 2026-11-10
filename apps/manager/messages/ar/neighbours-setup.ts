@@ -50,7 +50,7 @@ const ar: Translation<typeof en> = {
   'welcome.emptyWarning': 'الترحيب مفعّل لكن كل النصوص فارغة: لا شيء يُعرض، فلا تُرحَّب أي أسرة.',
   'welcome.english': 'الإنجليزية',
   'welcome.arabic': 'العربية',
-  'welcome.rules': 'قواعد الكمبوند',
+  'welcome.rules': 'قواعد المجمع',
   'welcome.officeHours': 'مواعيد المكتب',
   'welcome.emergency': 'أرقام الطوارئ',
   'welcome.clear': 'امسح',

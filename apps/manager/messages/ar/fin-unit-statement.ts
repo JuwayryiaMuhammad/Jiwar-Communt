@@ -6,7 +6,7 @@ const ar: Translation<typeof en> = {
   title: 'كشف حساب الوحدة',
   unitTitle: 'الوحدة {code}',
   onlineOn: 'يستطيع ساكنوها الدفع عبر الإنترنت.',
-  onlineOff: 'الدفع عبر الإنترنت متوقف في هذا الكمبوند.',
+  onlineOff: 'الدفع عبر الإنترنت متوقف في هذا المجمع.',
   issue: 'أصدر فاتورة',
   refund: 'استرداد الرصيد',
   record: 'سجّل دفعة',

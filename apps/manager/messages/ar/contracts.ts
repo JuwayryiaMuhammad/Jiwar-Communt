@@ -3,7 +3,7 @@ import type en from '../en/contracts.ts';
 
 const ar: Translation<typeof en> = {
   title: 'العقود',
-  description: 'عقود الكمبوند مع الموردين: ما تغطيه، وشروطها، وإلى متى تسري.',
+  description: 'عقود المجمع مع الموردين: ما تغطيه، وشروطها، وإلى متى تسري.',
   newContract: 'عقد جديد',
   empty: 'لا توجد عقود',
   reference: 'المرجع',

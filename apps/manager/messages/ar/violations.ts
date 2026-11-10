@@ -41,7 +41,7 @@ const ar: Translation<typeof en> = {
   recordDescription: 'المبلغ كاملًا، {amount}، دُفع في المكتب. السجلات لا تُعدَّل أبدًا: السجل الخاطئ يُعكس.',
   recordPayment: 'سجّل الدفعة',
   receiptNumber: 'رقم الإيصال',
-  receiptHint: 'يُسجَّل مرة واحدة بين دفعات مخالفات الكمبوند.',
+  receiptHint: 'يُسجَّل مرة واحدة بين دفعات مخالفات المجمع.',
   receiptInvalid: 'حروف وأرقام و / و - فقط.',
   paidOn: 'تاريخ الدفع',
   paidOnHint: 'ليس قبل يوم المخالفة، وبحد أقصى قبل 90 يومًا.',

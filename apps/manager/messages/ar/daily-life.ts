@@ -35,7 +35,7 @@ const ar: Translation<typeof en> = {
   'buses.route': 'الخط',
   'buses.choose': 'اختر…',
   'buses.time': 'الوقت',
-  'buses.timeHint': 'بتوقت الكمبوند.',
+  'buses.timeHint': 'بتوقت المجمع.',
   'buses.days': 'الأيام',
   'buses.addDeparture': 'أضف موعد الانطلاق',
   'buses.empty': 'لا توجد خطوط',

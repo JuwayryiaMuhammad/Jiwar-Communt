@@ -3,7 +3,7 @@ import type en from '../en/requests.ts';
 
 const ar: Translation<typeof en> = {
   title: 'الطلبات',
-  description: 'أشخاص ينتظرون الانضمام إلى الكمبوند أو إلى أسرة.',
+  description: 'أشخاص ينتظرون الانضمام إلى المجمع أو إلى أسرة.',
   requestType: 'نوع الطلب',
   'tab.registrations': 'التسجيل',
   'tab.household': 'الأسرة',
@@ -51,7 +51,7 @@ const ar: Translation<typeof en> = {
   joined: 'انضم {name} إلى الوحدة {unit}.',
   rejectedMember: 'تم رفض الطلب.',
   noHousehold: 'لا يوجد طلب أسرة ينتظر',
-  noHouseholdHint: 'عندما يشترط الكمبوند الموافقة، ينتظر هنا أفراد الأسرة الذين يضيفهم السكان.',
+  noHouseholdHint: 'عندما يشترط المجمع الموافقة، ينتظر هنا أفراد الأسرة الذين يضيفهم السكان.',
   invitedMember: 'عضو مدعو',
   relation: 'صلة القرابة',
   kinshipProof: 'إثبات القرابة',

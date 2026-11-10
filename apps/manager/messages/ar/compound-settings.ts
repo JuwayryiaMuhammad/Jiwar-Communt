@@ -3,15 +3,15 @@ import type en from '../en/compound-settings.ts';
 
 const ar: Translation<typeof en> = {
   title: 'الإعدادات',
-  description: 'قواعد على مستوى الكمبوند للأسر والزوار والبوابة.',
+  description: 'قواعد على مستوى المجمع للأسر والزوار والبوابة.',
   discard: 'تراجع',
   saved: 'تم حفظ الإعدادات.',
-  compound: 'الكمبوند',
+  compound: 'المجمع',
   timezone: 'المنطقة الزمنية',
   timezoneHint: 'اسم IANA، مثل Africa/Cairo. تعتمد عليها الجداول والحضور.',
   emergencyPhone: 'هاتف الطوارئ',
   emergencyPhoneHint: 'يظهر في صفحة الزائر وبطاقة العامل وجهات الطوارئ لكل وحدة.',
-  officePhone: 'هاتف مكتب الكمبوند',
+  officePhone: 'هاتف مكتب المجمع',
   officePhoneHint: 'يظهر في جهات الطوارئ لكل وحدة.',
   dutyPhone: 'هاتف المدير المناوب',
   dutyPhoneHint: 'يظهر في جهات الطوارئ لكل وحدة، وتراه الأسرة عندما ترد الإدارة على حالة طارئة.',

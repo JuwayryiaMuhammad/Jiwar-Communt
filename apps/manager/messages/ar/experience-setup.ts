@@ -28,7 +28,7 @@ const ar: Translation<typeof en> = {
   'reports.kept': 'تحقق',
   'reports.missed': 'لم يتحقق',
   'setup.title': 'إعداد التجربة',
-  'setup.description': 'قواعد المؤشرات، والتعويض الموصى به لكل إخفاق، وما يعد به الكمبوند.',
+  'setup.description': 'قواعد المؤشرات، والتعويض الموصى به لكل إخفاق، وما يعد به المجمع.',
   'setup.rules': 'قواعد المؤشرات',
   'setup.rule': 'القاعدة',
   'setup.events': 'الأحداث',

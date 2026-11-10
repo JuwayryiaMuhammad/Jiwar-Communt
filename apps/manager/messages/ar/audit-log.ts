@@ -3,7 +3,7 @@ import type en from '../en/audit-log.ts';
 
 const ar: Translation<typeof en> = {
   title: 'سجل المراجعة',
-  description: 'كل تغيير في الكمبوند، يُضاف إليه ولا يُعدَّل. تُذكر الأسماء بالمعرّف فقط، ولا تُحفظ فيه بيانات شخصية.',
+  description: 'كل تغيير في المجمع، يُضاف إليه ولا يُعدَّل. تُذكر الأسماء بالمعرّف فقط، ولا تُحفظ فيه بيانات شخصية.',
   action: 'الإجراء',
   actionHint: 'بالنص الكامل، مثل resident.created',
   targetType: 'نوع الهدف',

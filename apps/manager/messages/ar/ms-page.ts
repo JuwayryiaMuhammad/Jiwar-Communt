@@ -9,7 +9,7 @@ const ar: Translation<typeof en> = {
   'tab.preventive': 'الخدمات الوقائية',
   'tab.rules': 'الساعات والحدود',
   'tab.dispatch': 'التوزيع',
-  'tab.sla': 'اتفاقية الخدمة',
+  'tab.sla': 'SLA',
   'tab.asset-types': 'أنواع الأصول',
   'tab.checklists': 'قوائم الفحص',
   'tab.safety': 'السلامة الميدانية',

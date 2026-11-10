@@ -3,7 +3,7 @@ import type en from '../en/res-residents.ts';
 
 const ar: Translation<typeof en> = {
   title: 'السكان',
-  description: 'الملاك والمستأجرون الذين لهم حساب في الكمبوند.',
+  description: 'الملاك والمستأجرون الذين لهم حساب في المجمع.',
   newResident: 'ساكن جديد',
   none: 'لا يوجد سكان بعد',
   'col.resident': 'الساكن',

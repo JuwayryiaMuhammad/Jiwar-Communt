@@ -3,7 +3,7 @@ import type en from '../en/staff.ts';
 
 const ar: Translation<typeof en> = {
   title: 'الموظفون',
-  description: 'الحسابات التي تعمل لصالح الكمبوند: المديرون والموظفون مثل الحراس.',
+  description: 'الحسابات التي تعمل لصالح المجمع: المديرون والموظفون مثل الحراس.',
   accountType: 'نوع الحساب',
   staff: 'الموظفون',
   managers: 'المديرون',

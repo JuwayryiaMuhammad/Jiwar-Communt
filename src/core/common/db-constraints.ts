@@ -1238,4 +1238,19 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gl_manual_entries_number_key: null,
   gl_manual_entries_entry_key: null,
   gl_manual_entries_one_reversal: null,
+  // Taxes and the year-end close (ADR 0093): numbers and one row per
+  // payout, month, tax payment's movement and live close are the
+  // database's, or decided first under the compound's months lock.
+  finance_withholding_certificates_tenant_id_id_key: null,
+  finance_withholding_certificates_number_key: null,
+  finance_withholding_certificates_payout_key: null,
+  finance_vat_declarations_tenant_id_id_key: null,
+  finance_vat_declarations_month_key: null,
+  finance_tax_payments_tenant_id_id_key: null,
+  finance_tax_payments_number_key: null,
+  finance_cash_movements_one_per_tax_payment: null,
+  gl_year_closes_tenant_id_id_key: null,
+  gl_year_closes_one_live: null,
+  gl_year_closes_entry_key: null,
+  gl_year_closes_reversal_key: null,
 };

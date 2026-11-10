@@ -7255,6 +7255,22 @@ model FinanceSettings {
   cashLowSince         DateTime? @map("cash_low_since") @db.Timestamptz(3)
   /// When the `finance.cashflow` holders were last told of a dip.
   cashLowToldAt        DateTime? @map("cash_low_told_at") @db.Timestamptz(3)
+  /// VAT (ADR 0093): registered or not (off by default), its number and
+  /// rate, the day it was first turned on, the invoice kinds it applies to
+  /// and the budget categories whose input VAT is recovered.
+  vatRegistered               Boolean   @default(false) @map("vat_registered")
+  vatNumber                   String?   @map("vat_number")
+  vatRate                     Decimal   @default(14.00) @map("vat_rate") @db.Decimal(5, 2)
+  vatSince                    DateTime? @map("vat_since") @db.Date
+  vatTaxableKinds             String[]  @default([]) @map("vat_taxable_kinds")
+  vatRecoverableCategories    String[]  @default([]) @map("vat_recoverable_categories")
+  /// Withholding tax on vendor payments (ADR 0093): off by default; its
+  /// rates by category and the least invoice it applies to.
+  withholdingEnabled          Boolean   @default(false) @map("withholding_enabled")
+  withholdingSuppliesRate     Decimal   @default(1.00) @map("withholding_supplies_rate") @db.Decimal(5, 2)
+  withholdingServicesRate     Decimal   @default(3.00) @map("withholding_services_rate") @db.Decimal(5, 2)
+  withholdingProfessionalRate Decimal   @default(5.00) @map("withholding_professional_rate") @db.Decimal(5, 2)
+  withholdingThreshold        Decimal   @default(300.00) @map("withholding_threshold") @db.Decimal(14, 2)
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -7367,7 +7383,11 @@ model Invoice {
   batchId            String      @map("batch_id") @db.Uuid
   unitId             String      @map("unit_id") @db.Uuid
   kind               InvoiceKind
+  /// What the unit owes: net and VAT.
   total              Decimal     @db.Decimal(12, 2)
+  /// Its VAT (ADR 0093), at `vatRate`; 0 when untaxed.
+  vat                Decimal     @default(0) @db.Decimal(12, 2)
+  vatRate            Decimal     @default(0) @map("vat_rate") @db.Decimal(5, 2)
   currency           String
   issuedOn           DateTime    @map("issued_on") @db.Date
   dueOn              DateTime    @map("due_on") @db.Date
@@ -7416,7 +7436,10 @@ model InvoiceLine {
   position      Int
   descriptionEn String  @map("description_en")
   descriptionAr String  @map("description_ar")
+  /// Net of VAT.
   amount        Decimal @db.Decimal(12, 2)
+  /// Its VAT (ADR 0093).
+  vat           Decimal @default(0) @db.Decimal(12, 2)
 
   invoice Invoice @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
 
@@ -7433,6 +7456,8 @@ model CreditNote {
   number             Int
   invoiceId          String   @map("invoice_id") @db.Uuid
   amount             Decimal  @db.Decimal(12, 2)
+  /// The share of its invoice's VAT it takes back, set by the database (ADR 0093).
+  vat                Decimal  @default(0) @db.Decimal(12, 2)
   reasonCode         String   @map("reason_code")
   /// Null only for `charge_cancelled` written by the system (ADR 0070).
   createdById        String?  @map("created_by_account_id") @db.Uuid
@@ -7855,6 +7880,7 @@ model FinancePayment {
 
   depositEvents FinanceDepositEvent[]
   finePayment   VehicleFinePayment?
+
   @@unique([tenantId, id])
   @@unique([tenantId, reversesId], map: "finance_payments_one_reversal")
   @@index([tenantId, unitId, createdAt, id], map: "finance_payments_unit_idx")
@@ -8838,6 +8864,7 @@ model FoundItemPhoto {
   @@index([tenantId, itemId], map: "found_item_photos_item_idx")
   @@map("found_item_photos")
 }
+
 // Governance (ADR 0051): the owners' board, its polls and elections.
 // ============================================================================
 
@@ -9317,6 +9344,7 @@ model BoardPublication {
   approvalRequestId String? @map("approval_request_id") @db.Uuid
 
   compoundDocumentVersions CompoundDocumentVersion[]
+
   @@unique([tenantId, id])
   @@unique([tenantId, announcementId], map: "board_publications_announcement_key")
   @@index([tenantId, createdAt, id], map: "board_publications_created_idx")
@@ -11848,6 +11876,8 @@ model Vendor {
   taxNumber          String?   @map("tax_number")
   /// VENDOR_CATEGORIES.
   categories         String[]  @default(["other"])
+  /// WITHHOLDING_CATEGORIES (ADR 0093); null: by its trades.
+  withholdingCategory String?   @map("withholding_category")
   contactName        String?   @map("contact_name")
   phone              String?
   email              String?
@@ -13860,6 +13890,10 @@ model FinanceVendorInvoice {
   /// REASON_CODES.vendorInvoiceCancel
   cancelReason      String?   @map("cancel_reason")
   paidAt            DateTime? @map("paid_at") @db.Timestamptz(3)
+  /// WITHHOLDING_CATEGORIES (ADR 0093); null: its vendor's.
+  withholdingCategory String?   @map("withholding_category")
+  /// The VAT the compound recovers, set by the database at its approval.
+  vatRecoverable      Decimal   @default(0) @map("vat_recoverable") @db.Decimal(14, 2)
 
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "finance_vendor_invoices_number_key")
@@ -13942,6 +13976,12 @@ model FinanceVendorPayout {
   /// when net is above zero (CHECK); its movement is net, out.
   cashAccountId   String?  @map("cash_account_id") @db.Uuid
   createdAt       DateTime @map("created_at") @db.Timestamptz(3)
+  /// Tax withheld (ADR 0093), deducted from what is paid: at its
+  /// category's rate on its base (the invoice's subtotal).
+  withholding         Decimal  @default(0) @db.Decimal(14, 2)
+  withholdingRate     Decimal  @default(0) @map("withholding_rate") @db.Decimal(5, 2)
+  withholdingBase     Decimal  @default(0) @map("withholding_base") @db.Decimal(14, 2)
+  withholdingCategory String?  @map("withholding_category")
 
   @@unique([tenantId, id])
   @@unique([tenantId, number], map: "finance_vendor_payouts_number_key")
@@ -14195,7 +14235,7 @@ model FinanceCashMovement {
   tenantId     String   @map("tenant_id") @db.Uuid
   accountId    String   @map("account_id") @db.Uuid
   /// opening | handin | recovery | transfer | cheque | statement_payment |
-  /// adjustment | reversal | payout (CHECK).
+  /// adjustment | reversal | payout | tax_payment (CHECK).
   kind         String
   amount       Decimal  @db.Decimal(14, 2)
   onDay        DateTime @map("on_day") @db.Date
@@ -14207,6 +14247,8 @@ model FinanceCashMovement {
   reasonCode   String?  @map("reason_code")
   /// A vendor's payout paid from this account (ADR 0089): its net, out.
   payoutId     String?  @map("payout_id") @db.Uuid
+  /// A tax paid from this account (ADR 0093): its amount, out.
+  taxPaymentId String?  @map("tax_payment_id") @db.Uuid
   recordedById String   @map("recorded_by_account_id") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
@@ -14634,4 +14676,104 @@ model GlManualEntryLine {
 
   @@id([tenantId, manualEntryId, lineNo])
   @@map("gl_manual_entry_lines")
+}
+
+/// A fiscal year closed (ADR 0093): its closing entry, dated its last day,
+/// and the entry that reversed it when the manager reopened it. One live
+/// close a year (a partial unique key).
+model GlYearClose {
+  id                  String    @id @db.Uuid
+  tenantId            String    @map("tenant_id") @db.Uuid
+  startsOn            DateTime  @map("starts_on") @db.Date
+  endsOn              DateTime  @map("ends_on") @db.Date
+  revenue             Decimal   @db.Decimal(14, 2)
+  expenses            Decimal   @db.Decimal(14, 2)
+  /// Revenue less expenses, into accumulated surplus.
+  result              Decimal   @db.Decimal(14, 2)
+  /// Null when the year had nothing to close.
+  entryId             String?   @map("entry_id") @db.Uuid
+  closedByAccountId   String    @map("closed_by_account_id") @db.Uuid
+  closedAt            DateTime  @map("closed_at") @db.Timestamptz(3)
+  reopenedAt          DateTime? @map("reopened_at") @db.Timestamptz(3)
+  reopenedByAccountId String?   @map("reopened_by_account_id") @db.Uuid
+  /// REASON_CODES.glPeriodReopen.
+  reopenReason        String?   @map("reopen_reason")
+  reversalEntryId     String?   @map("reversal_entry_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@index([tenantId, startsOn, closedAt], map: "gl_year_closes_starts_idx")
+  @@map("gl_year_closes")
+}
+
+/// A month's VAT declared (ADR 0093), once; append-only. Its figures are
+/// the ledger's for the month, closed by then.
+model FinanceVatDeclaration {
+  id                  String   @id @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  /// Its first day.
+  month               DateTime @db.Date
+  taxableSales        Decimal  @map("taxable_sales") @db.Decimal(14, 2)
+  outputVat           Decimal  @map("output_vat") @db.Decimal(14, 2)
+  taxablePurchases    Decimal  @map("taxable_purchases") @db.Decimal(14, 2)
+  inputVat            Decimal  @map("input_vat") @db.Decimal(14, 2)
+  /// What the month before carried forward.
+  carriedIn           Decimal  @map("carried_in") @db.Decimal(14, 2)
+  netDue              Decimal  @map("net_due") @db.Decimal(14, 2)
+  carriedOut          Decimal  @map("carried_out") @db.Decimal(14, 2)
+  declaredByAccountId String   @map("declared_by_account_id") @db.Uuid
+  declaredAt          DateTime @map("declared_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, month], map: "finance_vat_declarations_month_key")
+  @@map("finance_vat_declarations")
+}
+
+/// VAT or withholding paid to the tax authority from a treasury account
+/// (ADR 0093); append-only, with its `tax_payment` movement.
+model FinanceTaxPayment {
+  id              String    @id @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  number          Int
+  /// vat | withholding (CHECK).
+  kind            String
+  /// VAT: the declaration it pays.
+  declarationId   String?   @map("declaration_id") @db.Uuid
+  /// Withholding: the calendar quarter's first day.
+  quarter         DateTime? @db.Date
+  amount          Decimal   @db.Decimal(14, 2)
+  paidOn          DateTime  @map("paid_on") @db.Date
+  /// bank_transfer | cheque | cash
+  method          String
+  reference       String?
+  cashAccountId   String    @map("cash_account_id") @db.Uuid
+  paidByAccountId String    @map("paid_by_account_id") @db.Uuid
+  createdAt       DateTime  @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_tax_payments_number_key")
+  @@index([tenantId, paidOn, id], map: "finance_tax_payments_paid_idx")
+  @@map("finance_tax_payments")
+}
+
+/// A payout's withholding certificate (ADR 0093): what it withheld, once.
+model FinanceWithholdingCertificate {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  number    Int
+  payoutId  String   @map("payout_id") @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  /// supplies | services | professional
+  category  String
+  rate      Decimal  @db.Decimal(5, 2)
+  base      Decimal  @db.Decimal(14, 2)
+  amount    Decimal  @db.Decimal(14, 2)
+  paidOn    DateTime @map("paid_on") @db.Date
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "finance_withholding_certificates_number_key")
+  @@unique([tenantId, payoutId], map: "finance_withholding_certificates_payout_key")
+  @@index([tenantId, paidOn, id], map: "finance_withholding_certificates_paid_idx")
+  @@index([tenantId, vendorId, paidOn], map: "finance_withholding_certificates_vendor_idx")
+  @@map("finance_withholding_certificates")
 }

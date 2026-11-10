@@ -3216,6 +3216,34 @@ const REVIEWED: Record<string, { guarded?: string }> = {
   gl_manual_entry_lines_memo_length: {
     guarded: 'memo IS NULL is tested first',
   },
+  // Taxes and the year-end close (ADR 0093).
+  finance_settings_tax_shape: {
+    guarded:
+      'vat_number IS NULL is tested first before its length; vat_since appears only under IS NOT NULL',
+  },
+  invoices_vat: {},
+  invoice_lines_vat: {},
+  credit_notes_vat: {},
+  vendors_withholding_category: {
+    guarded: 'withholding_category IS NULL is tested first',
+  },
+  finance_vendor_invoices_tax_shape: {
+    guarded: 'withholding_category IS NULL is tested first',
+  },
+  finance_vendor_payouts_withholding_shape: {
+    guarded:
+      'withholding_category IS NULL is tested first; its other mention is under IS NOT NULL',
+  },
+  finance_withholding_certificates_shape: {},
+  finance_vat_declarations_shape: {},
+  finance_tax_payments_shape: {
+    guarded:
+      'quarter IS NULL is tested first before its day and month, reference IS NULL before its length; declaration_id appears only under IS NOT NULL',
+  },
+  gl_year_closes_shape: {
+    guarded:
+      'reopen_reason IS NULL is tested first; the list runs only on a value; the other nullable columns appear only under IS [NOT] NULL',
+  },
 };
 
 interface Check {

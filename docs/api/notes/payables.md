@@ -56,3 +56,7 @@ Three of this module's contract classes shared a name with older ones, and Swagg
 
 - A vendor invoice's tax (its lines' `taxCode`) is input VAT: at its approval `vatRecoverable` is set — its tax while the compound is registered for VAT and the line's category is marked recoverable, else `0.00` (the tax stays part of the cost). `withholdingCategory` (`supplies | services | professional | exempt`, null: its vendor's) may be named when recording it.
 - A payout, while withholding is on, deducts the tax withheld from what it pays: `payout.withholding`, `withholdingRate`, `withholdingBase`, `withholdingCategory`; `net` is after it; its certificate (`WHT-`) is written with it. See [taxes.md](taxes.md).
+
+## Purchase orders (ADR 0094)
+
+- A vendor invoice may name a purchase order (`purchaseOrderId`, instead of a contract or a request); its lines then name the order's lines with a `quantity` and a `unitPrice`, and its approval waits for a match. Commitments and the payment schedule have a third source, `purchase_order`. A request an order took over is invoiced through the order. See [purchase-orders.md](purchase-orders.md).

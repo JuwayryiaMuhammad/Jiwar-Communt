@@ -88,3 +88,6 @@ ADR 0089 recorded a vendor invoice's tax as part of its cost ("no VAT return yet
 - A taxable flag per fee item, VAT on deposits and on refunds, a reverse charge, other taxes (income, stamp duty) and withholding on payments other than vendor invoices.
 - A refund of a VAT credit instead of carrying it forward.
 - A year closed in parts (a short first year, a changed start month after a close).
+
+## Update (Phase M3-7, ADR 0094)
+- An order's lines carry a VAT code and an optional withholding category; an invoice against an order takes its lines' VAT codes and, unless it says its own, the withholding category of the order's largest line that names one.

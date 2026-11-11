@@ -104,3 +104,6 @@ The manager audit of 2026-11-01 (finance slice 05: "تقارير مقارنة ب
 
 ## Update (Phase M3-6, ADR 0093)
 - Two reports for `finance.ledger`: `tax_vat` (the declaration's figures by month or by source) and `tax_withholding` (the certificates by vendor, category or month), PDF, workbook and CSV, compared and scheduled.
+
+## Update (Phase M3-7, ADR 0094)
+- Three reports for `finance.payables` (now among the reports' readers): `po_open`, `po_received_not_invoiced`, `po_match_exceptions`.

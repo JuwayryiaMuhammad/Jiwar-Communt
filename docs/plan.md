@@ -29,6 +29,7 @@ What landed, the owner's standing decisions, and what is left. It replaces the l
 | M3-5 | 0092 | The general ledger |
 | i18n | 0013 | The dashboards and the public pages in Arabic and English, Arabic by default, right to left, switchable (the owner's decision of 2026-11-10): `packages/i18n`, see `apps/README.md` |
 | M3-6 | 0093 | Taxes and the year-end close |
+| M3-7 | 0094 | Purchase orders, goods receipts and the three-way match |
 
 ## The owner's standing decisions
 
@@ -70,7 +71,7 @@ Still open:
 
 ### Finance deferred
 
-filing taxes with the authority, other taxes (0093); purchase orders with three-way match (0077, 0088, 0089); bank integration (0085); matching online payments to the bank (0085, 0091, 0092); sub-ledgers (0092).
+filing taxes with the authority, other taxes (0093); accruing receipts in the ledger once stock is valued, returns to the vendor (0094); bank integration (0085); matching online payments to the bank (0085, 0091, 0092); sub-ledgers (0092).
 
 ### Each domain's open items
 
@@ -127,3 +128,4 @@ From the ADRs' "Open" sections; the ADR has the detail.
 - 0091 — Forecast against actual; a run rate for unscheduled spending; scenarios.
 - 0092 — Budgets against the ledger's expense accounts; cash refunds out of a cash box.
 - 0093 — Filing with the tax authority; a taxable flag per fee item; a VAT credit refunded; other taxes.
+- 0094 — Returns to the vendor and reversing a receipt; a vendor credit-note register; an order emailed with its PDF; the tolerances per vendor or category.

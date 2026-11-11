@@ -1326,6 +1326,42 @@
         ],
         "type": "object"
       },
+      "AmendPurchaseOrderDto": {
+        "properties": {
+          "budgetLineId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "deliveryOn": {
+            "description": "Not before the compound’s today.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "lines": {
+            "description": "The whole order as amended: a line that carries its `id` changes, one without is new, one left out is dropped.",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderLineDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.purchaseOrderAmend.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "lines"
+        ],
+        "type": "object"
+      },
       "AnalyticsSettingsView": {
         "properties": {
           "caseMinTickets": {
@@ -2611,6 +2647,20 @@
           "note": {
             "description": "The management’s own note. Never shown to the unit.",
             "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ApprovePurchaseOrderDto": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "Above the manager’s limit: the board’s approved major contract of at least the order’s total, covering no other order, request or contract.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 1000,
             "type": "string"
           }
         },
@@ -13716,6 +13766,11 @@
             "example": "1200.00",
             "type": "string"
           },
+          "purchaseOrderId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "purchaseRequestId": {
             "format": "uuid",
             "nullable": true,
@@ -13729,7 +13784,8 @@
           "source": {
             "enum": [
               "contract",
-              "purchase_request"
+              "purchase_request",
+              "purchase_order"
             ],
             "type": "string"
           },
@@ -13747,6 +13803,7 @@
           "contractId",
           "contractPaymentId",
           "purchaseRequestId",
+          "purchaseOrderId",
           "vendorId",
           "amount",
           "released",
@@ -17198,6 +17255,11 @@
             "minLength": 1,
             "type": "string"
           },
+          "purchaseOrderId": {
+            "description": "A purchase order sent to my company (ADR 0094).",
+            "format": "uuid",
+            "type": "string"
+          },
           "purchaseRequestId": {
             "description": "A purchase my company fulfilled.",
             "format": "uuid",
@@ -17252,6 +17314,11 @@
             "nullable": true,
             "type": "string"
           },
+          "purchaseOrderId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "purchaseRequestId": {
             "format": "uuid",
             "nullable": true,
@@ -17298,6 +17365,7 @@
           "contractId",
           "contractPaymentId",
           "purchaseRequestId",
+          "purchaseOrderId",
           "subtotal",
           "tax",
           "total",
@@ -17441,6 +17509,157 @@
           "dueOn",
           "amount",
           "paid"
+        ],
+        "type": "object"
+      },
+      "ContractorPurchaseOrderLineView": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "net": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "tax": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "taxCode": {
+            "enum": [
+              "zero",
+              "exempt",
+              "vat_14"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "description",
+          "quantity",
+          "unit",
+          "unitPrice",
+          "taxCode",
+          "net",
+          "tax"
+        ],
+        "type": "object"
+      },
+      "ContractorPurchaseOrderView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "acknowledgedRevision": {
+            "nullable": true,
+            "type": "number"
+          },
+          "deliveryOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ContractorPurchaseOrderLineView"
+            },
+            "type": "array"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reference": {
+            "example": "PO-000001",
+            "type": "string"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sentRevision": {
+            "nullable": true,
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderStatus"
+              }
+            ]
+          },
+          "subtotal": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "tax": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "total": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "revision",
+          "status",
+          "deliveryOn",
+          "note",
+          "subtotal",
+          "tax",
+          "total",
+          "sentAt",
+          "sentRevision",
+          "acknowledgedAt",
+          "acknowledgedRevision",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "ContractorPurchaseOrderViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ContractorPurchaseOrderView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
         ],
         "type": "object"
       },
@@ -19999,6 +20218,51 @@
         ],
         "type": "object"
       },
+      "CreateGoodsReceiptDto": {
+        "properties": {
+          "deliveryNote": {
+            "description": "The vendor’s delivery note’s number.",
+            "maxLength": 60,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/GoodsReceiptLineDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "photoFileIds": {
+            "description": "The caller’s `goods_receipt_photo` uploads.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "receivedOn": {
+            "description": "Not after the compound’s today.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "storeId": {
+            "description": "The store the accepted stock lines go into; required with one, refused without.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receivedOn",
+          "lines"
+        ],
+        "type": "object"
+      },
       "CreateGovernanceElectionDto": {
         "properties": {
           "bodyAr": {
@@ -21394,6 +21658,53 @@
         "required": [
           "titleEn",
           "titleAr"
+        ],
+        "type": "object"
+      },
+      "CreatePurchaseOrderDto": {
+        "properties": {
+          "budgetLineId": {
+            "description": "Required unless its request or tender names one.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "deliveryOn": {
+            "description": "Not before the compound’s today.",
+            "format": "date",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderLineDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "purchaseRequestId": {
+            "description": "Raised from an approved purchase request (it takes the request’s budget line and vendor).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "tenderId": {
+            "description": "Raised from an awarded tender (its vendor; its contract must keep no payment schedule).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "A vendor of the register; required for a direct order.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deliveryOn",
+          "lines"
         ],
         "type": "object"
       },
@@ -31266,7 +31577,8 @@
           "compound_logo",
           "unit_entry_photo",
           "tender_document",
-          "tender_bid"
+          "tender_bid",
+          "goods_receipt_photo"
         ],
         "type": "string"
       },
@@ -35213,6 +35525,186 @@
         "required": [
           "data",
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "GoodsReceiptLineDto": {
+        "properties": {
+          "accepted": {
+            "description": "In the line’s unit; at most the ordered quantity and the compound’s tolerance in all (GOODS_RECEIPT_EXCEEDS_ORDER).",
+            "pattern": "^\\d{1,6}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "purchaseOrderLineId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "REASON_CODES.goodsRejection; required with a rejection.",
+            "type": "string"
+          },
+          "rejected": {
+            "pattern": "^\\d{1,6}(\\.\\d{1,3})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purchaseOrderLineId",
+          "accepted"
+        ],
+        "type": "object"
+      },
+      "GoodsReceiptLineView": {
+        "properties": {
+          "accepted": {
+            "example": "4.000",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderLineKind"
+              }
+            ]
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "purchaseOrderLineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "REASON_CODES.goodsRejection.",
+            "nullable": true,
+            "type": "string"
+          },
+          "rejected": {
+            "example": "0.000",
+            "type": "string"
+          },
+          "stockMovementId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "purchaseOrderLineId",
+          "position",
+          "kind",
+          "description",
+          "unit",
+          "accepted",
+          "rejected",
+          "rejectReason",
+          "note",
+          "stockMovementId"
+        ],
+        "type": "object"
+      },
+      "GoodsReceiptPhotoView": {
+        "properties": {
+          "fileId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "url": {
+            "description": "A signed read URL.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "url"
+        ],
+        "type": "object"
+      },
+      "GoodsReceiptView": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "nullable": false,
+            "type": "string"
+          },
+          "deliveryNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/GoodsReceiptLineView"
+            },
+            "type": "array"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/GoodsReceiptPhotoView"
+            },
+            "type": "array"
+          },
+          "purchaseOrderId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "receivedByMe": {
+            "description": "The caller recorded it.",
+            "type": "boolean"
+          },
+          "receivedOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "reference": {
+            "example": "GR-000001",
+            "type": "string"
+          },
+          "storeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "purchaseOrderId",
+          "receivedOn",
+          "storeId",
+          "deliveryNote",
+          "note",
+          "createdAt",
+          "receivedByMe",
+          "lines",
+          "photos"
         ],
         "type": "object"
       },
@@ -39665,7 +40157,8 @@
           "dangling_account",
           "access_review",
           "reinforcement_suggestion",
-          "gl_manual_entry"
+          "gl_manual_entry",
+          "purchase_order"
         ],
         "type": "string"
       },
@@ -41997,6 +42490,89 @@
           "descriptionAr",
           "amount",
           "vat"
+        ],
+        "type": "object"
+      },
+      "InvoiceMatchStatus": {
+        "description": "`matched`: within tolerance, it goes on to approval; `blocked`: it cannot be approved until resolved (a receipt, a corrected invoice) or overridden; `overridden`: let through with a reason.",
+        "enum": [
+          "none",
+          "matched",
+          "blocked",
+          "overridden"
+        ],
+        "type": "string"
+      },
+      "InvoiceMatchView": {
+        "properties": {
+          "invoiceId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/MatchIssueView"
+            },
+            "type": "array"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/MatchLineView"
+            },
+            "type": "array"
+          },
+          "orderReference": {
+            "example": "PO-000001",
+            "nullable": true,
+            "type": "string"
+          },
+          "orderStatus": {
+            "nullable": true,
+            "type": "string"
+          },
+          "override": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MatchOverrideView"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "priceVariance": {
+            "description": "The lines’ price variances, signed, within tolerance or not: what the invoice costs over the order’s prices. It stays in the line’s budget category (ADR 0092).",
+            "example": "0.00",
+            "type": "string"
+          },
+          "purchaseOrderId": {
+            "description": "Null: the invoice names no purchase order, so there is no match.",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceMatchStatus"
+              }
+            ],
+            "description": "`matched`: within tolerance, it goes on to approval; `blocked`: it cannot be approved until resolved (a receipt, a corrected invoice) or overridden; `overridden`: let through with a reason."
+          },
+          "tolerance": {
+            "$ref": "#/components/schemas/PurchaseOrderSettingsView"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "purchaseOrderId",
+          "orderReference",
+          "orderStatus",
+          "status",
+          "issues",
+          "lines",
+          "priceVariance",
+          "tolerance",
+          "override"
         ],
         "type": "object"
       },
@@ -45855,6 +46431,52 @@
         ],
         "type": "object"
       },
+      "MatchIssueKind": {
+        "enum": [
+          "quantity_not_received",
+          "quantity_over_order",
+          "price_over",
+          "extra_line"
+        ],
+        "type": "string"
+      },
+      "MatchIssueView": {
+        "properties": {
+          "amount": {
+            "description": "The money over: the line’s price variance, or an extra line.",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MatchIssueKind"
+              }
+            ]
+          },
+          "orderLineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "position": {
+            "description": "The invoice line’s position.",
+            "type": "number"
+          },
+          "quantity": {
+            "description": "The quantity over, for the quantity issues.",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "position",
+          "orderLineId",
+          "quantity",
+          "amount"
+        ],
+        "type": "object"
+      },
       "MatchLineDto": {
         "properties": {
           "kind": {
@@ -45878,6 +46500,129 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "MatchLineView": {
+        "properties": {
+          "acceptedQuantity": {
+            "nullable": true,
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "invoiceQuantity": {
+            "nullable": true,
+            "type": "string"
+          },
+          "invoiceUnitPrice": {
+            "nullable": true,
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/MatchIssueKind"
+            },
+            "type": "array"
+          },
+          "orderDescription": {
+            "nullable": true,
+            "type": "string"
+          },
+          "orderLineId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "orderUnitPrice": {
+            "nullable": true,
+            "type": "string"
+          },
+          "orderedQuantity": {
+            "nullable": true,
+            "type": "string"
+          },
+          "otherInvoicedQuantity": {
+            "description": "Billed by the other invoices that count before this one.",
+            "nullable": true,
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "priceDifference": {
+            "description": "Signed: above (positive) or below the order’s price.",
+            "nullable": true,
+            "type": "string"
+          },
+          "priceVariance": {
+            "description": "Signed.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "orderLineId",
+          "description",
+          "invoiceQuantity",
+          "invoiceUnitPrice",
+          "amount",
+          "orderDescription",
+          "orderedQuantity",
+          "orderUnitPrice",
+          "acceptedQuantity",
+          "otherInvoicedQuantity",
+          "priceDifference",
+          "priceVariance",
+          "issues"
+        ],
+        "type": "object"
+      },
+      "MatchOverrideDto": {
+        "properties": {
+          "note": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.matchOverride.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
+      "MatchOverrideView": {
+        "properties": {
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "overriddenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "overriddenByMe": {
+            "description": "The caller let it through.",
+            "type": "boolean"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.matchOverride.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode",
+          "note",
+          "overriddenAt",
+          "overriddenByMe"
         ],
         "type": "object"
       },
@@ -58472,6 +59217,707 @@
         },
         "type": "object"
       },
+      "PurchaseOrderCloseReason": {
+        "enum": [
+          "completed",
+          "remainder_cancelled"
+        ],
+        "type": "string"
+      },
+      "PurchaseOrderInvoiceView": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "reference": {
+            "example": "VI-000001",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status",
+          "total"
+        ],
+        "type": "object"
+      },
+      "PurchaseOrderLineDto": {
+        "properties": {
+          "description": {
+            "description": "Required unless the line is a stock item’s.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "id": {
+            "description": "An amendment: the existing line this changes. Absent: a new line. A line left out of an amendment is dropped (only while nothing was received or invoiced of it).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderLineKind"
+              }
+            ],
+            "description": "`stock`: a stock item, received into a store; `goods`: other goods, confirmed received; `service`: confirmed done."
+          },
+          "quantity": {
+            "pattern": "^(?!0+(\\.0{1,3})?$)\\d{1,6}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
+          "stockItemId": {
+            "description": "A `stock` line’s item (its unit is the line’s).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "taxCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxCode"
+              }
+            ],
+            "description": "`zero` by default."
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderUnit"
+              }
+            ],
+            "description": "Required unless the line is a stock item’s."
+          },
+          "unitPrice": {
+            "description": "EGP, net of VAT, for one.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "withholdingCategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WithholdingCategory"
+              }
+            ],
+            "description": "What its payout withholds by (ADR 0093); absent: the invoice’s, else the vendor’s."
+          }
+        },
+        "required": [
+          "kind",
+          "quantity",
+          "unitPrice"
+        ],
+        "type": "object"
+      },
+      "PurchaseOrderLineKind": {
+        "enum": [
+          "stock",
+          "goods",
+          "service"
+        ],
+        "type": "string"
+      },
+      "PurchaseOrderLineView": {
+        "properties": {
+          "accepted": {
+            "example": "0.000",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "invoiced": {
+            "description": "Billed on approved or paid invoices.",
+            "example": "0.000",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderLineKind"
+              }
+            ]
+          },
+          "net": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "quantity": {
+            "example": "10.000",
+            "type": "string"
+          },
+          "rejected": {
+            "example": "0.000",
+            "type": "string"
+          },
+          "stockItemId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "tax": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "taxCode": {
+            "enum": [
+              "zero",
+              "exempt",
+              "vat_14"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "Net of VAT, for one.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "withholdingCategory": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "kind",
+          "stockItemId",
+          "description",
+          "quantity",
+          "unit",
+          "unitPrice",
+          "taxCode",
+          "withholdingCategory",
+          "net",
+          "tax",
+          "accepted",
+          "rejected",
+          "invoiced"
+        ],
+        "type": "object"
+      },
+      "PurchaseOrderRevisionLineView": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderLineKind"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "string"
+          },
+          "stockItemId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "taxCode": {
+            "enum": [
+              "zero",
+              "exempt",
+              "vat_14"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "type": "string"
+          },
+          "withholdingCategory": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "stockItemId",
+          "description",
+          "quantity",
+          "unit",
+          "unitPrice",
+          "taxCode",
+          "withholdingCategory"
+        ],
+        "type": "object"
+      },
+      "PurchaseOrderRevisionStatus": {
+        "enum": [
+          "requested",
+          "approved",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "PurchaseOrderRevisionView": {
+        "properties": {
+          "approvalRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decisionNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "deliveryOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderRevisionLineView"
+            },
+            "type": "array"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.purchaseOrderAmend; null for the first.",
+            "nullable": true,
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "REASON_CODES.purchaseOrderReject.",
+            "nullable": true,
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "nullable": false,
+            "type": "string"
+          },
+          "requestedByMe": {
+            "description": "The caller asked for it.",
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderRevisionStatus"
+              }
+            ]
+          },
+          "subtotal": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "tax": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "total": {
+            "example": "1200.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "status",
+          "reasonCode",
+          "budgetLineId",
+          "deliveryOn",
+          "note",
+          "lines",
+          "subtotal",
+          "tax",
+          "total",
+          "requestedAt",
+          "requestedByMe",
+          "decidedAt",
+          "rejectReason",
+          "decisionNote",
+          "approvalRequestId"
+        ],
+        "type": "object"
+      },
+      "PurchaseOrderSettingsDto": {
+        "properties": {
+          "amount": {
+            "description": "EGP.",
+            "pattern": "^\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "poRequiredAbove": {
+            "description": "EGP, or null for never.",
+            "nullable": true,
+            "pattern": "^\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "pricePct": {
+            "description": "In percent, 0 to 100.",
+            "pattern": "^\\d{1,3}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "quantityPct": {
+            "description": "In percent, 0 to 100.",
+            "pattern": "^\\d{1,3}(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PurchaseOrderSettingsView": {
+        "properties": {
+          "amount": {
+            "description": "A line’s price variance may be this much money; an extra line (naming no order line) may be this much.",
+            "example": "100.00",
+            "type": "string"
+          },
+          "poRequiredAbove": {
+            "description": "An invoice with no contract above this amount needs a purchase order (VENDOR_INVOICE_PO_REQUIRED); null: never, so invoices without one keep working.",
+            "example": null,
+            "nullable": true,
+            "type": "string"
+          },
+          "pricePct": {
+            "description": "A unit price may exceed the order’s by this percentage (and by the amount below a line); a lower price never blocks.",
+            "example": "2.00",
+            "type": "string"
+          },
+          "quantityPct": {
+            "description": "A quantity may exceed the ordered and the accepted by this percentage of it; also what a receipt may accept over the order.",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "poRequiredAbove",
+          "pricePct",
+          "quantityPct",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "PurchaseOrderSource": {
+        "enum": [
+          "direct",
+          "purchase_request",
+          "tender"
+        ],
+        "type": "string"
+      },
+      "PurchaseOrderStatus": {
+        "enum": [
+          "requested",
+          "approved",
+          "rejected",
+          "cancelled",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "PurchaseOrderUnit": {
+        "description": "Required unless the line is a stock item’s.",
+        "enum": [
+          "piece",
+          "metre",
+          "litre",
+          "kilogram",
+          "box",
+          "set",
+          "pair",
+          "roll",
+          "lot",
+          "hour",
+          "day",
+          "month"
+        ],
+        "type": "string"
+      },
+      "PurchaseOrderView": {
+        "properties": {
+          "acknowledgedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "acknowledgedRevision": {
+            "nullable": true,
+            "type": "number"
+          },
+          "approvalRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "budgetLineId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "REASON_CODES.purchaseOrderCancel.",
+            "nullable": true,
+            "type": "string"
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "closeReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderCloseReason"
+              }
+            ],
+            "nullable": true
+          },
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "committed": {
+            "description": "What its commitment still keeps of the budget line.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "contractId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decisionNote": {
+            "nullable": true,
+            "type": "string"
+          },
+          "deliveryOn": {
+            "format": "date",
+            "nullable": false,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "invoices": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderInvoiceView"
+            },
+            "type": "array"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderLineView"
+            },
+            "type": "array"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "pendingRevision": {
+            "description": "The revision waiting for its decision.",
+            "nullable": true,
+            "type": "number"
+          },
+          "purchaseRequestId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "raisedAt": {
+            "format": "date-time",
+            "nullable": false,
+            "type": "string"
+          },
+          "raisedByMe": {
+            "description": "The caller raised it.",
+            "type": "boolean"
+          },
+          "receipts": {
+            "description": "Newest first.",
+            "items": {
+              "$ref": "#/components/schemas/GoodsReceiptView"
+            },
+            "type": "array"
+          },
+          "reference": {
+            "example": "PO-000001",
+            "type": "string"
+          },
+          "rejectReason": {
+            "description": "REASON_CODES.purchaseOrderReject.",
+            "nullable": true,
+            "type": "string"
+          },
+          "revision": {
+            "description": "The revision in force.",
+            "type": "number"
+          },
+          "revisions": {
+            "description": "Newest first.",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderRevisionView"
+            },
+            "type": "array"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sentRevision": {
+            "nullable": true,
+            "type": "number"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderSource"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PurchaseOrderStatus"
+              }
+            ]
+          },
+          "subtotal": {
+            "description": "Net of VAT.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "tax": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "tenderId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "total": {
+            "description": "Net plus VAT.",
+            "example": "1200.00",
+            "type": "string"
+          },
+          "vendorId": {
+            "format": "uuid",
+            "nullable": false,
+            "type": "string"
+          },
+          "vendorName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "vendorId",
+          "vendorName",
+          "budgetLineId",
+          "source",
+          "purchaseRequestId",
+          "tenderId",
+          "contractId",
+          "deliveryOn",
+          "note",
+          "revision",
+          "pendingRevision",
+          "status",
+          "subtotal",
+          "tax",
+          "total",
+          "committed",
+          "approvalRequestId",
+          "raisedAt",
+          "raisedByMe",
+          "decidedAt",
+          "decisionNote",
+          "rejectReason",
+          "cancelledAt",
+          "cancelReason",
+          "closedAt",
+          "closeReason",
+          "sentAt",
+          "sentRevision",
+          "acknowledgedAt",
+          "acknowledgedRevision",
+          "lines",
+          "revisions",
+          "receipts",
+          "invoices"
+        ],
+        "type": "object"
+      },
+      "PurchaseOrderViewList": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderView"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
       "PurchaseRequestStatus": {
         "enum": [
           "requested",
@@ -60197,7 +61643,7 @@
       "RecordVendorInvoiceDto": {
         "properties": {
           "budgetLineId": {
-            "description": "The line it is paid from; by default its contract’s or purchase’s.",
+            "description": "The line it is paid from; by default its contract’s, purchase’s or order’s.",
             "format": "uuid",
             "type": "string"
           },
@@ -60237,6 +61683,11 @@
           "note": {
             "maxLength": 500,
             "minLength": 1,
+            "type": "string"
+          },
+          "purchaseOrderId": {
+            "description": "A purchase order (ADR 0094): the invoice is matched to its lines and what was accepted on receipt before it is approved. Its vendor and budget line are the order’s.",
+            "format": "uuid",
             "type": "string"
           },
           "purchaseRequestId": {
@@ -61512,6 +62963,22 @@
         ],
         "type": "object"
       },
+      "RejectPurchaseOrderDto": {
+        "properties": {
+          "note": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "REASON_CODES.purchaseOrderReject.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reasonCode"
+        ],
+        "type": "object"
+      },
       "RejectPurchaseRequestDto": {
         "properties": {
           "note": {
@@ -62286,7 +63753,10 @@
           "gl_balance_sheet",
           "gl_general_ledger",
           "tax_vat",
-          "tax_withholding"
+          "tax_withholding",
+          "po_open",
+          "po_received_not_invoiced",
+          "po_match_exceptions"
         ],
         "type": "string"
       },
@@ -68159,6 +69629,11 @@
             ],
             "type": "string"
           },
+          "purchaseOrderId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "purchaseRequestId": {
             "format": "uuid",
             "nullable": true,
@@ -68171,7 +69646,8 @@
           "source": {
             "enum": [
               "contract",
-              "purchase_request"
+              "purchase_request",
+              "purchase_order"
             ],
             "type": "string"
           },
@@ -68194,6 +69670,7 @@
           "source",
           "contractId",
           "purchaseRequestId",
+          "purchaseOrderId",
           "vendorId",
           "vendorName",
           "budgetLineId",
@@ -80453,7 +81930,7 @@
         "type": "object"
       },
       "TaxCode": {
-        "description": "zero by default.",
+        "description": "`zero` by default.",
         "enum": [
           "zero",
           "exempt",
@@ -86454,7 +87931,7 @@
             "items": {
               "$ref": "#/components/schemas/InboxDueHoursDto"
             },
-            "maxItems": 30,
+            "maxItems": 31,
             "minItems": 1,
             "type": "array"
           }
@@ -88715,7 +90192,7 @@
       "VendorInvoiceLineDto": {
         "properties": {
           "amount": {
-            "description": "EGP, before tax.",
+            "description": "EGP, before tax. Required, except on a line that names an order’s line (then it is the quantity at the unit price, and refused).",
             "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
             "type": "string"
           },
@@ -88724,18 +90201,32 @@
             "minLength": 1,
             "type": "string"
           },
+          "purchaseOrderLineId": {
+            "description": "An invoice against a purchase order: the order’s line this one bills (ADR 0094), with `quantity` and `unitPrice`; matched to what was ordered and accepted.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "With `purchaseOrderLineId`: what is billed, in the line’s unit.",
+            "pattern": "^(?!0+(\\.0{1,3})?$)\\d{1,6}(\\.\\d{1,3})?$",
+            "type": "string"
+          },
           "taxCode": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/TaxCode"
               }
             ],
-            "description": "zero by default."
+            "description": "zero by default; a line that names an order’s line takes that line’s."
+          },
+          "unitPrice": {
+            "description": "With `purchaseOrderLineId`: the unit price billed, before tax.",
+            "pattern": "^(?!0+(\\.0{1,2})?$)\\d{1,9}(\\.\\d{1,2})?$",
+            "type": "string"
           }
         },
         "required": [
-          "description",
-          "amount"
+          "description"
         ],
         "type": "object"
       },
@@ -88751,6 +90242,16 @@
           "position": {
             "type": "number"
           },
+          "purchaseOrderLineId": {
+            "description": "The order’s line it bills (ADR 0094).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "quantity": {
+            "nullable": true,
+            "type": "string"
+          },
           "tax": {
             "example": "1200.00",
             "type": "string"
@@ -88765,6 +90266,10 @@
           "taxRate": {
             "example": "0.00",
             "type": "string"
+          },
+          "unitPrice": {
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
@@ -88773,7 +90278,10 @@
           "amount",
           "taxCode",
           "taxRate",
-          "tax"
+          "tax",
+          "purchaseOrderLineId",
+          "quantity",
+          "unitPrice"
         ],
         "type": "object"
       },
@@ -88870,6 +90378,12 @@
             "nullable": true,
             "type": "object"
           },
+          "purchaseOrderId": {
+            "description": "The purchase order it bills (ADR 0094).",
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "purchaseRequestId": {
             "format": "uuid",
             "nullable": true,
@@ -88942,6 +90456,7 @@
           "contractId",
           "contractPaymentId",
           "purchaseRequestId",
+          "purchaseOrderId",
           "budgetLineId",
           "authorizationId",
           "subtotal",
@@ -90962,7 +92477,7 @@
         "type": "object"
       },
       "WithholdingCategory": {
-        "description": "What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt.",
+        "description": "What its payout withholds by (ADR 0093); absent: the invoice’s, else the vendor’s.",
         "enum": [
           "supplies",
           "services",
@@ -98870,6 +100385,173 @@
           }
         ],
         "summary": "Send my company’s invoice in",
+        "tags": [
+          "contractor"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/purchase-orders": {
+      "get": {
+        "description": "Newest first; once sent, approved or closed.",
+        "operationId": "ContractorPurchaseOrdersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorPurchaseOrderViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the purchase orders sent to my company",
+        "tags": [
+          "contractor"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/purchase-orders/{id}": {
+      "get": {
+        "operationId": "ContractorPurchaseOrdersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorPurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a purchase order sent to my company",
+        "tags": [
+          "contractor"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/purchase-orders/{id}/acknowledge": {
+      "post": {
+        "description": "Records that my company has the revision sent; a new revision asks again. Audited.",
+        "operationId": "ContractorPurchaseOrdersController_acknowledge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractorPurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge the purchase order",
+        "tags": [
+          "contractor"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/contractor/purchase-orders/{id}/pdf": {
+      "get": {
+        "operationId": "ContractorPurchaseOrdersController_pdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A purchase order sent to my company, as a PDF",
         "tags": [
           "contractor"
         ],
@@ -143090,7 +144772,8 @@
             "schema": {
               "enum": [
                 "contract",
-                "purchase_request"
+                "purchase_request",
+                "purchase_order"
               ],
               "type": "string"
             }
@@ -146063,6 +147746,73 @@
         "x-stability": "draft"
       }
     },
+    "/api/v1/staff/finance/purchase-order-settings": {
+      "get": {
+        "operationId": "InvoiceMatchController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the match tolerances and when an order is required",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "patch": {
+        "description": "Applies from the next match; nothing is reposted. Audited with the old and new values.",
+        "operationId": "InvoiceMatchController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurchaseOrderSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderSettingsView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the match tolerances and when an order is required",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
     "/api/v1/staff/finance/reports/aging": {
       "get": {
         "description": "Not yet due, 1–30, 31–60, 61–90 and 91 days or more; per unit or per building.",
@@ -147853,6 +149603,15 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "purchaseOrderId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -148057,6 +149816,94 @@
           }
         ],
         "summary": "Call off a vendor’s invoice",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices/{id}/match": {
+      "get": {
+        "description": "Its lines beside the order’s lines, the quantities accepted and billed before, the price variance and the issues that block its approval. `status: none` when the invoice names no order.",
+        "operationId": "InvoiceMatchController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceMatchView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a vendor’s invoice against its purchase order",
+        "tags": [
+          "finance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/finance/vendor-invoices/{id}/match/override": {
+      "post": {
+        "description": "While the invoice waits for its approval and does not match: once, with a reason, by someone who did not record it (MATCH_SELF_OVERRIDE). Audited with the issues it let through.",
+        "operationId": "InvoiceMatchController_override",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchOverrideDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceMatchView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Let a mismatch through",
         "tags": [
           "finance"
         ],
@@ -155451,6 +157298,558 @@
         "tags": [
           "finance"
         ],
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders": {
+      "get": {
+        "description": "Newest first.",
+        "operationId": "PurchaseOrdersController_list",
+        "parameters": [
+          {
+            "description": "Opaque cursor from the previous page (`nextCursor`).",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PurchaseOrderStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vendorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "purchaseRequestId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tenderId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only orders waiting for a decision: a first approval or a revision.",
+            "in": "query",
+            "name": "waiting",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderViewList"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List purchase orders",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      },
+      "post": {
+        "description": "Directly, from an approved purchase request (`purchaseRequestId`: its vendor and budget line, its commitment taken over at the approval) or from an awarded tender (`tenderId`). It waits for an approver other than the caller (PURCHASE_ORDER_SELF_APPROVAL). Audited.",
+        "operationId": "PurchaseOrdersController_raise",
+        "parameters": [
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Raise a purchase order",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}": {
+      "get": {
+        "description": "With its lines and what happened to each, its revisions, its receipts and the invoices naming it.",
+        "operationId": "PurchaseOrdersController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a purchase order",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/amend": {
+      "post": {
+        "description": "A new revision, approved again; one waits at a time (PURCHASE_ORDER_REVISION_PENDING). No line goes below what was received or invoiced of it (PURCHASE_ORDER_LINE_BELOW_USED). The revision in force stands until it is approved.",
+        "operationId": "PurchaseOrdersController_amend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AmendPurchaseOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Amend an approved purchase order",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/approve": {
+      "post": {
+        "description": "Never by who raised it (PURCHASE_ORDER_SELF_APPROVAL, even under the board’s approval). Up to the manager’s limit, above it under the board’s approved major contract (`approvalRequestId`; PURCHASE_ORDER_NEEDS_APPROVAL, PURCHASE_ORDER_APPROVAL_INVALID). Keeps the budget line’s money as the order’s commitment (BUDGET_LINE_INSUFFICIENT); an order raised from a purchase request takes the request’s commitment over.",
+        "operationId": "PurchaseOrdersController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovePurchaseOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a purchase order, or its waiting revision",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/cancel": {
+      "post": {
+        "description": "A waiting order is called off. An approved one closes: what was not received is cancelled and its commitment given back, keeping the value of what arrived and is not invoiced yet.",
+        "operationId": "PurchaseOrdersController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Call off a waiting order, or cancel what is left of an approved one",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/pdf": {
+      "get": {
+        "description": "The revision in force, drawn on demand and never stored.",
+        "operationId": "PurchaseOrdersController_pdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A purchase order as a PDF, for its vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/receipts": {
+      "post": {
+        "description": "A goods or service receipt, in parts: per line the quantity accepted and rejected (a rejection has a `goodsRejection` code), a note and photos. A stock line accepted goes into a store (`storeId`) at the order’s unit cost. At most the ordered quantity and the compound’s tolerance is accepted in all (GOODS_RECEIPT_EXCEEDS_ORDER). Who holds `purchase_orders.receive` receives anything; the order’s raiser or its request’s requester confirms its service lines only. Audited.",
+        "operationId": "PurchaseOrdersController_receive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoodsReceiptDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoodsReceiptView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record what arrived against a purchase order",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/reject": {
+      "post": {
+        "operationId": "PurchaseOrdersController_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectPurchaseOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Turn down a purchase order, or its revision",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/send": {
+      "post": {
+        "description": "Records that the revision in force went to the vendor and tells its contractors, who then see it (and its PDF) and acknowledge it. Sent again after a revision.",
+        "operationId": "PurchaseOrdersController_send",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send an approved order to its vendor",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
+        "x-stability": "draft"
+      }
+    },
+    "/api/v1/staff/purchase-orders/{id}/withdraw-revision": {
+      "post": {
+        "operationId": "PurchaseOrdersController_withdrawRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderView"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take back the revision that waits",
+        "tags": [
+          "maintenance"
+        ],
+        "x-no-store": true,
         "x-stability": "draft"
       }
     },

@@ -60,3 +60,6 @@ Custom roles, per-account overrides (possible later as overrides on top of the r
 
 ## Update (Phase M3-6, ADR 0093)
 - Taxes and the fiscal year-end close add no permission: reading the tax settings, the VAT months, the withholding quarters and certificates, the taxes paid and the fiscal years is `finance.ledger`; keeping the settings and the vendors' withholding categories, declaring a month, paying a tax and closing a year is `finance.ledger_write`; reopening a closed year is `finance.ledger_reopen`, the manager's alone, as for a month.
+
+## Update (Phase M3-7, ADR 0094)
+- New permissions: `purchase_orders.raise` (staff, manager: the manager, the accountant and the maintenance supervisor) raises, amends, sends and cancels the rest of a purchase order; `purchase_orders.receive` (the manager and the maintenance supervisor) records goods and service receipts; `finance.match_override` (staff, manager: the manager; a `finance.*`, so a deputy never holds it) lets an invoice past a mismatch with its order, never one the caller recorded; `purchase_orders.acknowledge` (the contractor kind) reads its company's orders and acknowledges them. An order is approved with the existing `purchases.approve`, the tolerances kept with `finance.payables_approve`.

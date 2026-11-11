@@ -9245,9 +9245,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"description\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
+              "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"description\": \"\"\n    }\n  ]\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contractId` | string (uuid) |  | One of my company’s contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of that contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes |  |\n| `invoiceFileId` | string (uuid) | yes | My upload of purpose `expense_invoice`: the invoice’s scan. |\n| `issuedOn` | string | yes |  |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseRequestId` | string (uuid) |  | A purchase my company fulfilled. |\n| `vendorNumber` | string | yes | My company’s own invoice number: once among its live invoices (VENDOR_INVOICE_DUPLICATE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contractId` | string (uuid) |  | One of my company’s contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of that contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes |  |\n| `invoiceFileId` | string (uuid) | yes | My upload of purpose `expense_invoice`: the invoice’s scan. |\n| `issuedOn` | string | yes |  |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseOrderId` | string (uuid) |  | A purchase order sent to my company (ADR 0094). |\n| `purchaseRequestId` | string (uuid) |  | A purchase my company fulfilled. |\n| `vendorNumber` | string | yes | My company’s own invoice number: once among its live invoices (VENDOR_INVOICE_DUPLICATE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -9267,6 +9267,126 @@
                 "invoices"
               ],
               "raw": "{{baseUrl}}/api/v1/contractor/invoices"
+            }
+          }
+        },
+        {
+          "name": "List the purchase orders sent to my company",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "purchase-orders"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/purchase-orders"
+            }
+          }
+        },
+        {
+          "name": "Get a purchase order sent to my company",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "purchase-orders",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/purchase-orders/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge the purchase order",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "purchase-orders",
+                ":id",
+                "acknowledge"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/purchase-orders/:id/acknowledge",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A purchase order sent to my company, as a PDF",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "contractor",
+                "purchase-orders",
+                ":id",
+                "pdf"
+              ],
+              "raw": "{{baseUrl}}/api/v1/contractor/purchase-orders/:id/pdf",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           }
         },
@@ -12665,7 +12785,7 @@
               },
               "raw": "{\n  \"purpose\": \"worker_photo\",\n  \"contentType\": \"image/jpeg\",\n  \"size\": 1\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` \\| `text/csv` \\| `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` \\| `contract` \\| `asset_document` \\| `checklist_photo` \\| `data_import` \\| `works_inspection_photo` \\| `gate_face_probe` \\| `gate_id_scan` \\| `market_listing_photo` \\| `gallery_photo` \\| `permit_drawing` \\| `fitout_photo` \\| `damage_appeal_photo` \\| `site_map` \\| `floor_plan` \\| `report_file` \\| `compound_export` \\| `staff_certificate` \\| `vendor_document` \\| `compliance_evidence` \\| `compound_logo` \\| `unit_entry_photo` \\| `tender_document` \\| `tender_bid` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `contentType` | `image/jpeg` \\| `image/png` \\| `image/webp` \\| `application/pdf` \\| `application/zip` \\| `audio/mp4` \\| `video/mp4` \\| `video/quicktime` \\| `text/csv` \\| `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | yes | Signed into the upload. The purpose decides which types it takes (FILE_TYPE_NOT_ALLOWED). |\n| `purpose` | `worker_photo` \\| `document` \\| `resident_photo` \\| `ticket_photo` \\| `parcel_photo` \\| `data_export` \\| `request_attachment` \\| `community_attachment` \\| `complaint_evidence` \\| `neighbour_post_photo` \\| `gate_request_photo` \\| `vehicle_licence` \\| `parking_photo` \\| `vehicle_fine_photo` \\| `gate_service_photo` \\| `dispute_photo` \\| `contractor_photo` \\| `permit_photo` \\| `guard_task_photo` \\| `found_item_photo` \\| `patrol_photo` \\| `incident_photo` \\| `blocklist_photo` \\| `violation_photo` \\| `violation_appeal_photo` \\| `child_photo` \\| `child_escort_photo` \\| `approval_attachment` \\| `board_appeal_attachment` \\| `expense_invoice` \\| `visitor_photo` \\| `patrol_note_audio` \\| `patrol_note_video` \\| `incident_audio` \\| `incident_video` \\| `incident_signature` \\| `decision_appeal_attachment` \\| `registration_document` \\| `kinship_proof` \\| `unit_document` \\| `compound_document` \\| `contract` \\| `asset_document` \\| `checklist_photo` \\| `data_import` \\| `works_inspection_photo` \\| `gate_face_probe` \\| `gate_id_scan` \\| `market_listing_photo` \\| `gallery_photo` \\| `permit_drawing` \\| `fitout_photo` \\| `damage_appeal_photo` \\| `site_map` \\| `floor_plan` \\| `report_file` \\| `compound_export` \\| `staff_certificate` \\| `vendor_document` \\| `compliance_evidence` \\| `compound_logo` \\| `unit_entry_photo` \\| `tender_document` \\| `tender_bid` \\| `goods_receipt_photo` | yes |  |\n| `size` | number | yes | Bytes, signed into the upload. The purpose sets the limit (FILE_TOO_LARGE). |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -17620,6 +17740,63 @@
           }
         },
         {
+          "name": "Read the match tolerances and when an order is required",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "purchase-order-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/purchase-order-settings"
+            }
+          }
+        },
+        {
+          "name": "Change the match tolerances and when an order is required",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"amount\": \"\",\n  \"poRequiredAbove\": \"\",\n  \"pricePct\": \"\",\n  \"quantityPct\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `amount` | string |  | EGP. |\n| `poRequiredAbove` | string |  | EGP, or null for never. |\n| `pricePct` | string |  | In percent, 0 to 100. |\n| `quantityPct` | string |  | In percent, 0 to 100. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "purchase-order-settings"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/purchase-order-settings"
+            }
+          }
+        },
+        {
           "name": "Read what is owed today by how far past its due date",
           "request": {
             "description": "**Responses:** 200",
@@ -18678,7 +18855,7 @@
               },
               "raw": "{\n  \"withholdingCategory\": \"supplies\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `withholdingCategory` | `supplies` \\| `services` \\| `professional` \\| `exempt` | yes | What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt. |\n\n**Responses:** 200",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `withholdingCategory` | `supplies` \\| `services` \\| `professional` \\| `exempt` | yes | What its payout withholds by (ADR 0093); absent: the invoice’s, else the vendor’s. |\n\n**Responses:** 200",
             "header": [
               {
                 "description": "",
@@ -19001,6 +19178,12 @@
                   "disabled": true,
                   "key": "purchaseRequestId",
                   "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "purchaseOrderId",
+                  "value": ""
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices"
@@ -19017,9 +19200,9 @@
                   "language": "json"
                 }
               },
-              "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"description\": \"\",\n      \"amount\": \"\"\n    }\n  ]\n}"
+              "raw": "{\n  \"vendorNumber\": \"\",\n  \"issuedOn\": \"\",\n  \"dueOn\": \"\",\n  \"invoiceFileId\": \"\",\n  \"lines\": [\n    {\n      \"description\": \"\"\n    }\n  ]\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  | The line it is paid from; by default its contract’s or purchase’s. |\n| `contractId` | string (uuid) |  | One of its contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of the contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes | When it is to be paid, not before its date. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice`. |\n| `issuedOn` | string | yes | The invoice’s date, not ahead. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseRequestId` | string (uuid) |  | A purchase request it fulfilled. |\n| `vendorId` | string (uuid) |  | The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs). |\n| `vendorNumber` | string | yes | The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). |\n| `withholdingCategory` | `supplies` \\| `services` \\| `professional` \\| `exempt` |  | What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt. |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  | The line it is paid from; by default its contract’s, purchase’s or order’s. |\n| `contractId` | string (uuid) |  | One of its contracts; or `purchaseRequestId`. |\n| `contractPaymentId` | string (uuid) |  | A line of the contract’s schedule, unpaid and not invoiced. |\n| `dueOn` | string | yes | When it is to be paid, not before its date. |\n| `invoiceFileId` | string (uuid) | yes | The caller’s upload of purpose `expense_invoice`. |\n| `issuedOn` | string | yes | The invoice’s date, not ahead. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseOrderId` | string (uuid) |  | A purchase order (ADR 0094): the invoice is matched to its lines and what was accepted on receipt before it is approved. Its vendor and budget line are the order’s. |\n| `purchaseRequestId` | string (uuid) |  | A purchase request it fulfilled. |\n| `vendorId` | string (uuid) |  | The vendor: its contract’s or purchase’s; required for a purchase that named none (VENDOR_INVOICE_SOURCE_INVALID `vendor_mismatch` when it differs). |\n| `vendorNumber` | string | yes | The vendor’s own invoice number: once among its live invoices, whatever its case (VENDOR_INVOICE_DUPLICATE). |\n| `withholdingCategory` | `supplies` \\| `services` \\| `professional` \\| `exempt` |  | What its payout withholds by (ADR 0093); absent: the invoice’s, else the vendor’s. |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",
@@ -19157,6 +19340,82 @@
                 "cancel"
               ],
               "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read a vendor’s invoice against its purchase order",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices",
+                ":id",
+                "match"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id/match",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Let a mismatch through",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  |  |\n| `reasonCode` | string | yes | REASON_CODES.matchOverride. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "finance",
+                "vendor-invoices",
+                ":id",
+                "match",
+                "override"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/finance/vendor-invoices/:id/match/override",
               "variable": [
                 {
                   "description": "",
@@ -42340,6 +42599,450 @@
           }
         },
         {
+          "name": "List purchase orders",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders"
+              ],
+              "query": [
+                {
+                  "description": "Opaque cursor from the previous page (`nextCursor`).",
+                  "disabled": true,
+                  "key": "cursor",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "limit",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "vendorId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "purchaseRequestId",
+                  "value": ""
+                },
+                {
+                  "description": "",
+                  "disabled": true,
+                  "key": "tenderId",
+                  "value": ""
+                },
+                {
+                  "description": "Only orders waiting for a decision: a first approval or a revision.",
+                  "disabled": true,
+                  "key": "waiting",
+                  "value": ""
+                }
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders"
+            }
+          }
+        },
+        {
+          "name": "Raise a purchase order",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"deliveryOn\": \"2026-01-01\",\n  \"lines\": [\n    {\n      \"kind\": \"stock\",\n      \"quantity\": \"\",\n      \"unitPrice\": \"\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  | Required unless its request or tender names one. |\n| `deliveryOn` | string (date) | yes | Not before the compound’s today. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `purchaseRequestId` | string (uuid) |  | Raised from an approved purchase request (it takes the request’s budget line and vendor). |\n| `tenderId` | string (uuid) |  | Raised from an awarded tender (its vendor; its contract must keep no payment schedule). |\n| `vendorId` | string (uuid) |  | A vendor of the register; required for a direct order. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders"
+            }
+          }
+        },
+        {
+          "name": "Get a purchase order",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Amend an approved purchase order",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\",\n  \"lines\": [\n    {\n      \"kind\": \"stock\",\n      \"quantity\": \"\",\n      \"unitPrice\": \"\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `budgetLineId` | string (uuid) |  |  |\n| `deliveryOn` | string (date) |  | Not before the compound’s today. |\n| `lines` | object[] | yes | The whole order as amended: a line that carries its `id` changes, one without is new, one left out is dropped. |\n| `note` | string |  |  |\n| `reasonCode` | string | yes | REASON_CODES.purchaseOrderAmend. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "amend"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/amend",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve a purchase order, or its waiting revision",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"approvalRequestId\": \"\",\n  \"note\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `approvalRequestId` | string (uuid) |  | Above the manager’s limit: the board’s approved major contract of at least the order’s total, covering no other order, request or contract. |\n| `note` | string |  |  |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "approve"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/approve",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Call off a waiting order, or cancel what is left of an approved one",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `reasonCode` | string | yes | A code from the closed list for this action; see `allowed` on INVALID_REASON_CODE. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "cancel"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/cancel",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A purchase order as a PDF, for its vendor",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "GET",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "pdf"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/pdf",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Record what arrived against a purchase order",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"receivedOn\": \"2026-01-01\",\n  \"lines\": [\n    {\n      \"purchaseOrderLineId\": \"\",\n      \"accepted\": \"\"\n    }\n  ]\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `deliveryNote` | string |  | The vendor’s delivery note’s number. |\n| `lines` | object[] | yes |  |\n| `note` | string |  |  |\n| `photoFileIds` | string[] |  | The caller’s `goods_receipt_photo` uploads. |\n| `receivedOn` | string (date) | yes | Not after the compound’s today. |\n| `storeId` | string (uuid) |  | The store the accepted stock lines go into; required with one, refused without. |\n\n**Responses:** 201",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "description": "A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT.",
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "receipts"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/receipts",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Turn down a purchase order, or its revision",
+          "request": {
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reasonCode\": \"\"\n}"
+            },
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `note` | string |  |  |\n| `reasonCode` | string | yes | REASON_CODES.purchaseOrderReject. |\n\n**Responses:** 200",
+            "header": [
+              {
+                "description": "",
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "reject"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/reject",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send an approved order to its vendor",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "send"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/send",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Take back the revision that waits",
+          "request": {
+            "description": "**Responses:** 200",
+            "header": [],
+            "method": "POST",
+            "url": {
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "staff",
+                "purchase-orders",
+                ":id",
+                "withdraw-revision"
+              ],
+              "raw": "{{baseUrl}}/api/v1/staff/purchase-orders/:id/withdraw-revision",
+              "variable": [
+                {
+                  "description": "",
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "List purchase requests",
           "request": {
             "description": "**Responses:** 200",
@@ -59388,7 +60091,7 @@
               },
               "raw": "{\n  \"reportKey\": \"maintenance_spend\",\n  \"cadence\": \"daily\",\n  \"format\": \"pdf\"\n}"
             },
-            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` \\| `cash_flow` \\| `gl_trial_balance` \\| `gl_income_statement` \\| `gl_balance_sheet` \\| `gl_general_ledger` \\| `tax_vat` \\| `tax_withholding` | yes |  |\n\n**Responses:** 201",
+            "description": "**Body**\n\n| Field | Type | Required | Notes |\n|---|---|---|---|\n| `cadence` | `daily` \\| `weekly` \\| `monthly` | yes |  |\n| `compare` | `none` \\| `previous` \\| `last_year` \\| `both` |  |  |\n| `format` | `pdf` \\| `xlsx` \\| `csv` | yes |  |\n| `groupBy` | string |  |  |\n| `reportKey` | `maintenance_spend` \\| `stock_consumption` \\| `service_by_building` \\| `energy_cost` \\| `collections_by_building` \\| `cash_flow` \\| `gl_trial_balance` \\| `gl_income_statement` \\| `gl_balance_sheet` \\| `gl_general_ledger` \\| `tax_vat` \\| `tax_withholding` \\| `po_open` \\| `po_received_not_invoiced` \\| `po_match_exceptions` | yes |  |\n\n**Responses:** 201",
             "header": [
               {
                 "description": "",

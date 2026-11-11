@@ -98,3 +98,6 @@ So this phase builds **registers, not a ledger**: every balance is the sum of ap
 
 ## Update (Phase M3-6, ADR 0093)
 - A movement kind `tax_payment`: VAT or withholding paid to the tax authority leaves a bank or cash account like a payout, against VAT payable or withholding payable (a cash box for cash, a bank account for a transfer or a cheque). Its entry is the payment's own.
+
+## Update (Phase M3-7, ADR 0094)
+- Nothing changes in the treasury: an invoice against an order is paid out as any (ADR 0089).

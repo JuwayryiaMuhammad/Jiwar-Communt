@@ -150,3 +150,6 @@ A store is shared-locked under a movement. A contract is locked for update, then
 - Taking an accepted replacement recommendation (ADR 0064) into the capital plan, and its board approval.
 - Counts by store and the store's own audit of a count.
 - Technician offline (O2) for part requests and returns.
+
+## Update (Phase M3-7, ADR 0094)
+- "A receipt's reference is free text" gains a link where the receipt is a purchase order's: a stock line accepted on a goods receipt writes the receipt movement at the order's unit price, with `stock_movements.goods_receipt_id`; its free-text reference is the receipt's number. "Purchasing (requisitions, purchase orders, suppliers) stays the ERP's" is over: purchase orders are built (ADR 0094).

@@ -76,3 +76,6 @@ The manager audit (2026-11-01) found no vendor entity: a vendor was free text on
 
 ## Update (Phase M3-6, ADR 0093)
 - A vendor carries a withholding category (`supplies`, `services`, `professional`, `exempt`; null: by its trades) beside its tax number, which a withholding certificate prints. It is set with `PUT /staff/finance/tax/vendors/{id}` (`finance.ledger_write`, audited).
+
+## Update (Phase M3-7, ADR 0094)
+- "No purchase order" was the light first step. An approved purchase request can now be ordered: the order takes over the request's commitment, the request is marked fulfilled with the order's number and is no longer called off or fulfilled by hand; an invoice of a request an order took over goes through the order. A suspended vendor takes no order.

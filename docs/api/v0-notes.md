@@ -499,3 +499,13 @@ The full notes are in [`notes/taxes.md`](notes/taxes.md).
 - **Withholding.** `GET …/tax/withholding/quarters`, `…/certificates[/{id}[/pdf]]`; report `tax_withholding`.
 - **Paid.** `GET|POST …/tax/payments`.
 - **Fiscal years.** `GET …/gl/years`, `POST …/gl/years/close {startsOn}`, `POST …/gl/years/reopen {startsOn, reasonCode}` (`finance.ledger_reopen`).
+
+### Purchase orders, goods receipts and the three-way match (ADR 0094)
+
+The full notes are in [`notes/purchase-orders.md`](notes/purchase-orders.md).
+
+- **Orders.** `GET|POST /staff/purchase-orders`, `GET …/{id}[/pdf]`, `POST …/{id}/approve|reject|amend|withdraw-revision|cancel|send`; permissions `purchase_orders.raise`, `purchases.approve`; inbox type `purchase_order`; notices `purchase_order.submitted|decided|sent`.
+- **Receipts.** `POST …/{id}/receipts` (`purchase_orders.receive`); file purpose `goods_receipt_photo`.
+- **Match.** `GET …/vendor-invoices/{id}/match`, `POST …/match/override` (`finance.match_override`), `GET|PATCH …/purchase-order-settings`; invoices take `purchaseOrderId` and lines naming the order's lines; `corrected` in `vendorInvoiceCancel`.
+- **Contractors.** `/contractor/purchase-orders[/{id}[/pdf|acknowledge]]` (`purchase_orders.acknowledge`).
+- **Reports.** `po_open`, `po_received_not_invoiced`, `po_match_exceptions`.

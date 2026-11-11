@@ -286,3 +286,6 @@ Category `governance`, none critical. The params are codes only.
 
 ## Update (Phase M3-6, ADR 0093)
 - The fiscal year's first month, fixed once a budget was submitted, is fixed once a fiscal year was closed in the ledger too (`FISCAL_YEAR_LOCKED`): the close's days are its own. The fiscal year is the general ledger's year-end close's as well.
+
+## Update (Phase M3-7, ADR 0094)
+- A purchase order is approved by the same threshold: `major_contract`'s, on the order's gross, always binding; above it only under the board's approved major contract, which signs one order, purchase request or contract. Who raised an order never approves it, even under the board's approval.

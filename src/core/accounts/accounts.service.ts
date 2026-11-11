@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import type { AccountType, Prisma } from '@prisma/client';
 import { SecurityEventsService } from '../audit/security-events.service';
 import { RequestContext } from '../common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../common/cursor';
@@ -16,10 +16,18 @@ import { runAfterCommit } from './account-lifecycle';
 import { AccountWriter } from './account-writer';
 import { AccountRecord } from './account-record';
 import { accountTextFilter } from './account-search';
+import type { AccountGroup } from './dto/accounts-query.dto';
 import type { CreateAccountDto } from './dto/create-account.dto';
 import type { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 
 const ACCOUNT_PAGE = keysetCursor('createdAt');
+
+/** The account types of each group of the list's `group`. */
+const GROUP_TYPES: Record<AccountGroup, AccountType[]> = {
+  staff: ['staff', 'manager'],
+  managers: ['manager'],
+  households: ['resident', 'family'],
+};
 
 @Injectable()
 export class AccountsService {
@@ -39,13 +47,21 @@ export class AccountsService {
    * narrows them to who a typed text finds (ADR 0072).
    */
   async list(
-    q: { cursor?: string; limit?: number; q?: string } = {},
+    q: {
+      cursor?: string;
+      limit?: number;
+      q?: string;
+      group?: AccountGroup;
+      active?: 'true';
+    } = {},
   ): Promise<Page<AccountRecord>> {
     const limit = clampLimit(q.limit);
     const rows = await this.prisma.tenant.account.findMany({
       where: {
         AND: [
           ...(q.q ? [accountTextFilter(q.q)] : []),
+          ...(q.group ? [{ type: { in: GROUP_TYPES[q.group] } }] : []),
+          ...(q.active === 'true' ? [{ status: 'active' as const }] : []),
           ...(ACCOUNT_PAGE.after(q.cursor) as Prisma.AccountWhereInput[]),
         ],
       },

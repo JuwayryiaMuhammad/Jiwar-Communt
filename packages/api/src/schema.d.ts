@@ -29295,6 +29295,8 @@ export interface components {
             status?: components["schemas"]["AccountStatus"];
             type?: components["schemas"]["AccountType"];
         };
+        /** @enum {string} */
+        AccountGroup: "staff" | "managers" | "households";
         AccountListItemView: {
             /** Format: date-time */
             createdAt?: string;
@@ -58177,6 +58179,10 @@ export interface operations {
                 limit?: number;
                 /** @description Part of the name, any case; or exactly the phone or the email. An erased account is never found. */
                 q?: string;
+                /** @description `staff`: staff and manager accounts; `managers`: manager accounts; `households`: resident and family accounts. */
+                group?: components["schemas"]["AccountGroup"];
+                /** @description `true`: only the accounts that can sign in now (active). */
+                active?: "true";
             };
             header?: never;
             path?: never;

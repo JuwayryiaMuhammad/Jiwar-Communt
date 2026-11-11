@@ -192,6 +192,32 @@ describe('API v0 — residents & accounts', () => {
       [id, other.id].sort(),
     );
     expect(second.nextCursor).toBeNull();
+    // A picker asks for its own side of the compound, and only who can sign in.
+    const grouped = async (group: string, q?: string) =>
+      (
+        (
+          await call(w, 'GET', '/accounts', {
+            token: manager(),
+            query: { ...(q ? { q } : {}), group, active: 'true' },
+          }).expect(200)
+        ).body as { data: { id: string; type: string }[] }
+      ).data;
+    expect((await grouped('households', tag)).map((a) => a.id).sort()).toEqual(
+      [id, other.id].sort(),
+    );
+    expect(await grouped('staff', tag)).toEqual([]);
+    expect(await grouped('managers', tag)).toEqual([]);
+    const staff = await grouped('staff');
+    expect(staff.length).toBeGreaterThan(0);
+    expect(staff.every((a) => a.type === 'staff' || a.type === 'manager')).toBe(
+      true,
+    );
+    const managers = await grouped('managers');
+    expect(managers.every((a) => a.type === 'manager')).toBe(true);
+    await call(w, 'GET', '/accounts', {
+      token: manager(),
+      query: { group: 'owners' },
+    }).expect(400);
     // One character is too little to search.
     await call(w, 'GET', '/residents', {
       token: manager(),

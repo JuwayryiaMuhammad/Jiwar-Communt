@@ -1964,6 +1964,18 @@
                   "disabled": true,
                   "key": "q",
                   "value": ""
+                },
+                {
+                  "description": "`staff`: staff and manager accounts; `managers`: manager accounts; `households`: resident and family accounts.",
+                  "disabled": true,
+                  "key": "group",
+                  "value": ""
+                },
+                {
+                  "description": "`true`: only the accounts that can sign in now (active).",
+                  "disabled": true,
+                  "key": "active",
+                  "value": ""
                 }
               ],
               "raw": "{{baseUrl}}/api/v1/accounts"

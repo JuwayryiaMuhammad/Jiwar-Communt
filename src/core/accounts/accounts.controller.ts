@@ -23,7 +23,7 @@ import { parseId } from '../common/validation/parse-id.pipe';
 import { AccountsService } from './accounts.service';
 import { ContactDto } from './dto/contact.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { PeopleSearchQueryDto } from './dto/people-search-query.dto';
+import { AccountsQueryDto } from './dto/accounts-query.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { AccountDetailView, AccountListItemView } from './views/account.views';
 
@@ -40,7 +40,7 @@ export class AccountsController {
   @ApiOperation({ summary: "List the compound's accounts" })
   @ApiOkResponse({ type: ListOf(AccountListItemView) })
   async list(
-    @Query() q: PeopleSearchQueryDto,
+    @Query() q: AccountsQueryDto,
   ): Promise<ListResponse<AccountListItemView | ErasedAccount>> {
     return toList(await this.accounts.list(q), (a) =>
       AccountListItemView.from(a),

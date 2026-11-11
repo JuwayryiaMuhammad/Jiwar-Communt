@@ -496,6 +496,14 @@
         ],
         "type": "object"
       },
+      "AccountGroup": {
+        "enum": [
+          "staff",
+          "managers",
+          "households"
+        ],
+        "type": "string"
+      },
       "AccountListItemView": {
         "properties": {
           "createdAt": {
@@ -91797,6 +91805,27 @@
             "schema": {
               "maxLength": 64,
               "minLength": 2,
+              "type": "string"
+            }
+          },
+          {
+            "description": "`staff`: staff and manager accounts; `managers`: manager accounts; `households`: resident and family accounts.",
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AccountGroup"
+            }
+          },
+          {
+            "description": "`true`: only the accounts that can sign in now (active).",
+            "in": "query",
+            "name": "active",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true"
+              ],
               "type": "string"
             }
           }

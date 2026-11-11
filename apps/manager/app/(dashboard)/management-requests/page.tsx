@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { HandlerPicker, ResponseBadges, usePersonName } from '@/components/management-requests/bits';
 import { emptyKey, filtersFor, localName, VIEWS, type View } from '@/components/management-requests/logic';
 import { NewRequestDialog } from '@/components/management-requests/new-request-dialog';
+import { OutreachDialog } from '@/components/management-requests/outreach-dialog';
 import { usePermissions } from '@/lib/permissions';
 import {
   fetchers,
@@ -47,6 +48,7 @@ export default function ManagementRequestsPage() {
   const [topicId, setTopicId] = useState('');
   const [assignee, setAssignee] = useState('');
   const [creating, setCreating] = useState(false);
+  const [reaching, setReaching] = useState(false);
   const allowed = can('requests.handle');
 
   const filters = filtersFor(view, { status, type, topicId, assignee }) as ManagementRequestFilters;
@@ -122,9 +124,12 @@ export default function ManagementRequestsPage() {
         </Field>
         <span className="spacer" />
         {can('residents.read', 'units.read') ? (
-          <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
-            {t('newRequest')}
-          </Button>
+          <>
+            <Button onClick={() => setReaching(true)}>{t('startConversation')}</Button>
+            <Button variant="primary" icon={<Plus aria-hidden />} onClick={() => setCreating(true)}>
+              {t('newRequest')}
+            </Button>
+          </>
         ) : null}
       </div>
       <Card flush>
@@ -186,6 +191,15 @@ export default function ManagementRequestsPage() {
           <LoadMore query={list} />
         </QueryState>
       </Card>
+      <OutreachDialog
+        open={reaching}
+        onClose={() => setReaching(false)}
+        onStarted={(request) => {
+          setReaching(false);
+          toast.show(t('outreachStarted', { number: request.number }));
+          router.push(`/management-requests/${request.id}`);
+        }}
+      />
       <NewRequestDialog
         open={creating}
         onClose={() => setCreating(false)}

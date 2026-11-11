@@ -81,6 +81,15 @@ export default {
   'new.slotHint': 'Booked and confirmed at once.',
   'new.body': 'What they asked',
   'new.bodyHint': 'Becomes the request’s first message, in your name.',
+  // A conversation the management starts (ADR 0080).
+  startConversation: 'Start a conversation',
+  outreachStarted: 'The conversation {number} is started. The resident is told and answers when they can.',
+  'outreach.title': 'Start a conversation with a resident',
+  'outreach.description': 'For when the office has something to tell or ask. Your message goes as the office’s official one and the resident is told; the request waits for their answer and joins the queue when they give it. Never answered, it closes by itself.',
+  'outreach.submit': 'Send and start',
+  'outreach.aboutUnit': 'It is about this unit',
+  'outreach.body': 'What you write',
+  'outreach.bodyHint': 'The first message, read as from the office. Up to five files can go with it.',
   slot: 'Slot',
   how: 'How',
   // A handler's actions.

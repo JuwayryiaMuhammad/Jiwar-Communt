@@ -74,6 +74,9 @@ describe('Reports — the curated reports', () => {
       'gl_general_ledger',
       'tax_vat',
       'tax_withholding',
+      'po_open',
+      'po_received_not_invoiced',
+      'po_match_exceptions',
     ]);
     expect(all.data[0].groupBy[0]).toBe('building');
     const mine = (await get('/staff/reports', s.supervisor.token).expect(200))

@@ -1360,3 +1360,22 @@ export const M36_COVERAGE: readonly string[] = [
   'gl_year.closed',
   'gl_year.reopened',
 ];
+
+/** Purchase orders, goods receipts and the match (ADR 0094), covered by test/purchase-orders/audit-coverage.e2e-spec.ts. */
+export const M37_COVERAGE: readonly string[] = [
+  'purchase_order.raised',
+  'purchase_order.approved',
+  'purchase_order.rejected',
+  'purchase_order.cancelled',
+  'purchase_order.amended',
+  'purchase_order.revision_approved',
+  'purchase_order.revision_rejected',
+  'purchase_order.revision_withdrawn',
+  'purchase_order.remainder_cancelled',
+  'purchase_order.closed',
+  'purchase_order.sent',
+  'purchase_order.acknowledged',
+  'goods_receipt.recorded',
+  'vendor_invoice.match_overridden',
+  'purchase_order_settings.updated',
+];

@@ -66,6 +66,7 @@ import { reportsCalls } from './no-store-reports';
 import { cashFlowCalls } from './no-store-cash-flow';
 import { glCalls } from './no-store-gl';
 import { taxCalls } from './no-store-tax';
+import { purchaseOrderCalls } from './no-store-po';
 import { proxyCalls } from './no-store-proxies';
 import { inspectionCalls } from './no-store-inspections';
 import { decisionAppealCalls } from './no-store-decision-appeals';
@@ -3449,6 +3450,7 @@ describe('API v0 — no-store', () => {
     ...cashFlowCalls(() => w),
     ...glCalls(() => w),
     ...taxCalls(() => w),
+    ...purchaseOrderCalls(() => w, aSittingBoard),
   };
 
   const secretRows = ROUTES.filter((r) => r.noStore).map(

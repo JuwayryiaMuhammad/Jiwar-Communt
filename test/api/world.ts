@@ -117,6 +117,7 @@ import { m210World, type M210World } from './world-m210';
 import { m32World, type M32World } from './world-m32';
 import { m35World, type M35World } from './world-m35';
 import { m36World, type M36World } from './world-m36';
+import { m37World, type M37World } from './world-m37';
 import { m33World, type M33World } from './world-m33';
 import { fileHelpers } from '../setup/files';
 import { parcelHelpers } from '../setup/parcels';
@@ -204,7 +205,8 @@ export interface World
     M32World,
     M33World,
     M35World,
-    M36World {
+    M36World,
+    M37World {
   h: HttpHarness;
   helpers: ReturnType<typeof communityHelpers>;
   /** The compound the requests act in. */
@@ -2005,9 +2007,11 @@ export async function buildWorld(h: HttpHarness): Promise<World> {
   const m33 = await m33World(h, helpers, b);
   const m35 = await m35World(h, helpers, b);
   const m36 = await m36World(b, bVendor.id);
+  const m37 = await m37World(b, bVendor.id, bPayables.line);
   return {
     ...m35,
     ...m36,
+    ...m37,
     ...m33,
     ...m21,
     ...m29,

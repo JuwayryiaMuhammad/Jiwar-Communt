@@ -2634,6 +2634,8 @@ describe('Permission sync', () => {
       expect([...report.added].sort()).toEqual([...m27].sort());
       expect(report.rolesCreated).toEqual(['contractor']);
       expect([...(await role(t, 'contractor')).permissions].sort()).toEqual([
+        // ADR 0094: its company's purchase orders, acknowledged.
+        'purchase_orders.acknowledge',
         'tenders.bid',
         'tickets.contract_work',
         'vendor_invoices.submit',
@@ -3213,6 +3215,74 @@ describe('Permission sync', () => {
         expect(
           (await role(t, key)).permissions.filter((p) => m32.includes(p)),
         ).toEqual([]);
+      expect(await sync(base, t)).toMatchObject({
+        added: [],
+        rolesCreated: [],
+        rolesChanged: 0,
+      });
+    });
+  });
+
+  describe('Phase M3-7 (ADR 0094)', () => {
+    const m37 = [
+      'purchase_orders.raise',
+      'purchase_orders.receive',
+      'finance.match_override',
+      'purchase_orders.acknowledge',
+    ];
+    /** The catalog before M3-7: no purchase order permission anywhere. */
+    const before: AccessCatalog = {
+      ...base,
+      permissions: Object.fromEntries(
+        Object.entries(base.permissions).filter(([p]) => !m37.includes(p)),
+      ),
+      defaultRoles: base.defaultRoles.map((r) => ({
+        ...r,
+        permissions: r.permissions.filter((p) => !m37.includes(p)),
+      })),
+    };
+
+    it('reaches an existing compound: the manager raises, receives and lets a mismatch through; the accountant raises; the store raises and receives; the contractor acknowledges; nobody else gains any', async () => {
+      expect(catalogProblems(before)).toEqual([]);
+      const t = newId();
+      await h.globalDb.tenant.create({
+        data: { id: t, name: `Sync M3-7 ${t}` },
+      });
+      await h.asTenant(t, () =>
+        h.tenantTx.withTenantTx(async (tx) => {
+          await new RoleProvisioner(before).provision(tx, t);
+          await tx.tenantSettings.create({ data: { tenantId: t } });
+          await tenantLifecycle.tenantCreated(tx, t);
+        }),
+      );
+      const report = await sync(base, t);
+      expect([...report.added].sort()).toEqual([...m37].sort());
+      expect(report.rolesCreated).toEqual([]);
+      const held = async (key: string) =>
+        (await role(t, key)).permissions.filter((p) => m37.includes(p)).sort();
+      expect(await held('manager')).toEqual(
+        [
+          'finance.match_override',
+          'purchase_orders.raise',
+          'purchase_orders.receive',
+        ].sort(),
+      );
+      expect(await held('accountant')).toEqual(['purchase_orders.raise']);
+      expect(await held('maintenance_supervisor')).toEqual([
+        'purchase_orders.raise',
+        'purchase_orders.receive',
+      ]);
+      expect(await held('contractor')).toEqual(['purchase_orders.acknowledge']);
+      for (const key of [
+        'resident',
+        'family_member',
+        'guard',
+        'security_supervisor',
+        'technician',
+        'collector',
+        'unit_proxy',
+      ])
+        expect(await held(key)).toEqual([]);
       expect(await sync(base, t)).toMatchObject({
         added: [],
         rolesCreated: [],

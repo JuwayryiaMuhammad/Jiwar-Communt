@@ -1931,6 +1931,12 @@ describe('API v0 — PII leak scan', () => {
         w.bWithholdingCertificateId,
       '/staff/finance/tax/withholding/certificates/{id}/pdf':
         w.bWithholdingCertificateId,
+      // ADR 0094: B's purchase order and invoice, not found for everyone of A.
+      '/staff/purchase-orders/{id}': w.bPurchaseOrderId,
+      '/staff/purchase-orders/{id}/pdf': w.bPurchaseOrderId,
+      '/contractor/purchase-orders/{id}': w.bPurchaseOrderId,
+      '/contractor/purchase-orders/{id}/pdf': w.bPurchaseOrderId,
+      '/staff/finance/vendor-invoices/{id}/match': w.bVendorInvoiceId,
       // ADR 0086: B's run, export and plan, not found for everyone of A.
       '/staff/report-runs/{id}/download': w.bReportRunId,
       '/staff/compound-exports/{id}/download': w.bCompoundExportId,

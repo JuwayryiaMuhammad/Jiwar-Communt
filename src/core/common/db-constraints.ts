@@ -1253,4 +1253,23 @@ export const UNIQUE_CONSTRAINT_FIELDS: Record<string, string[] | null> = {
   gl_year_closes_one_live: null,
   gl_year_closes_entry_key: null,
   gl_year_closes_reversal_key: null,
+  // Purchase orders, goods receipts and the three-way match (ADR 0094):
+  // numbers, one live order a purchase request, one board approval an order,
+  // one open revision, one stock receipt a line and one open commitment an
+  // order are the database's, or decided first under the order's lock.
+  purchase_orders_tenant_id_id_key: null,
+  purchase_orders_number_key: null,
+  purchase_orders_request_key: null,
+  purchase_orders_approval_key: null,
+  purchase_order_lines_tenant_id_id_key: null,
+  purchase_order_lines_position_key: null,
+  purchase_order_revisions_tenant_id_id_key: null,
+  purchase_order_revisions_number_key: null,
+  purchase_order_revisions_waiting_key: null,
+  goods_receipts_tenant_id_id_key: null,
+  goods_receipts_number_key: null,
+  goods_receipt_lines_movement_key: null,
+  finance_commitments_open_order_key: null,
+  finance_invoice_match_overrides_tenant_id_id_key: null,
+  finance_invoice_match_overrides_invoice_key: null,
 };

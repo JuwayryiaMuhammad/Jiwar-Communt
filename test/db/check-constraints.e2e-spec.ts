@@ -3244,6 +3244,38 @@ const REVIEWED: Record<string, { guarded?: string }> = {
     guarded:
       'reopen_reason IS NULL is tested first; the list runs only on a value; the other nullable columns appear only under IS [NOT] NULL',
   },
+  // Purchase orders, goods receipts and the three-way match (ADR 0094).
+  finance_settings_match_shape: {
+    guarded: 'po_required_above IS NULL is tested first',
+  },
+  finance_vendor_invoice_lines_matched: {
+    guarded:
+      'quantity IS NULL is tested first before the amount is compared; unit_price is compared only under it',
+  },
+  finance_invoice_match_overrides_shape: {
+    guarded: 'note IS NULL is tested first',
+  },
+  purchase_orders_shape: {
+    guarded: 'note and decision_note are tested IS NULL first',
+  },
+  purchase_orders_state_shape: {
+    guarded:
+      'reject_reason, cancel_reason and close_reason are tested IS NULL first; the lists run only on a value; the other nullable columns appear only under IS [NOT] NULL',
+  },
+  purchase_order_lines_shape: {
+    guarded: 'withholding_category IS NULL is tested first',
+  },
+  purchase_order_revisions_shape: {
+    guarded:
+      'reason_code, note, decision_note and reject_reason are tested IS NULL first; the lists run only on a value',
+  },
+  goods_receipts_shape: {
+    guarded: 'delivery_note and note are tested IS NULL first',
+  },
+  goods_receipt_lines_shape: {
+    guarded: 'note and reject_reason are tested IS NULL first',
+  },
+  stock_movements_goods_receipt_receive: {},
 };
 
 interface Check {

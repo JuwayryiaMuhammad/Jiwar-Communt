@@ -7273,6 +7273,14 @@ model FinanceSettings {
   withholdingServicesRate     Decimal   @default(3.00) @map("withholding_services_rate") @db.Decimal(5, 2)
   withholdingProfessionalRate Decimal   @default(5.00) @map("withholding_professional_rate") @db.Decimal(5, 2)
   withholdingThreshold        Decimal   @default(300.00) @map("withholding_threshold") @db.Decimal(14, 2)
+  /// Purchase orders and the three-way match (ADR 0094): an invoice with no
+  /// contract above this amount needs an order (null: never); the tolerances
+  /// of the match, a percentage of the unit price and of the ordered
+  /// quantity, and an absolute amount a line may vary by.
+  poRequiredAbove             Decimal?  @map("po_required_above") @db.Decimal(14, 2)
+  matchPricePct               Decimal   @default(2.00) @map("match_price_pct") @db.Decimal(5, 2)
+  matchQuantityPct            Decimal   @default(0.00) @map("match_quantity_pct") @db.Decimal(5, 2)
+  matchAmount                 Decimal   @default(100.00) @map("match_amount") @db.Decimal(14, 2)
   createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -11750,6 +11758,8 @@ model StockMovement {
   transferId    String?  @map("transfer_id") @db.Uuid
   ticketId      String?  @map("ticket_id") @db.Uuid
   partRequestId String?  @map("part_request_id") @db.Uuid
+  /// The goods receipt of a purchase order a receipt came with (ADR 0094).
+  goodsReceiptId String? @map("goods_receipt_id") @db.Uuid
   actorId       String?  @map("actor_account_id") @db.Uuid
   occurredAt    DateTime @map("occurred_at") @db.Timestamptz(3)
 
@@ -11857,7 +11867,7 @@ model MaintenanceContractPayment {
 /// A compound's V- and PR- numbers, taken under the row lock (ADR 0077).
 model ProcurementCounter {
   tenantId   String @map("tenant_id") @db.Uuid
-  /// vendor | purchase_request
+  /// vendor | purchase_request | tender | purchase_order | goods_receipt
   kind       String
   lastNumber Int    @default(0) @map("last_number")
 
@@ -13822,11 +13832,12 @@ model FinanceCommitment {
   id                String    @id @db.Uuid
   tenantId          String    @map("tenant_id") @db.Uuid
   lineId            String    @map("line_id") @db.Uuid
-  /// contract | purchase_request
+  /// contract | purchase_request | purchase_order
   source            String
   contractId        String?   @map("contract_id") @db.Uuid
   contractPaymentId String?   @map("contract_payment_id") @db.Uuid
   purchaseRequestId String?   @map("purchase_request_id") @db.Uuid
+  purchaseOrderId   String?   @map("purchase_order_id") @db.Uuid
   vendorId          String?   @map("vendor_id") @db.Uuid
   amount            Decimal   @db.Decimal(14, 2)
   dueOn             DateTime? @map("due_on") @db.Date
@@ -13845,7 +13856,7 @@ model FinanceCommitmentRelease {
   tenantId        String   @map("tenant_id") @db.Uuid
   commitmentId    String   @map("commitment_id") @db.Uuid
   amount          Decimal  @db.Decimal(14, 2)
-  /// invoiced | changed | cancelled | terminated | paid_outside
+  /// invoiced | changed | cancelled | terminated | paid_outside | ordered | closed
   reason          String
   vendorInvoiceId String?  @map("vendor_invoice_id") @db.Uuid
   createdById     String?  @map("created_by_account_id") @db.Uuid
@@ -13872,6 +13883,8 @@ model FinanceVendorInvoice {
   contractId        String?   @map("contract_id") @db.Uuid
   contractPaymentId String?   @map("contract_payment_id") @db.Uuid
   purchaseRequestId String?   @map("purchase_request_id") @db.Uuid
+  /// The order it bills (ADR 0094), matched to its lines and receipts.
+  purchaseOrderId   String?   @map("purchase_order_id") @db.Uuid
   budgetLineId      String?   @map("budget_line_id") @db.Uuid
   authorizationId   String?   @map("authorization_id") @db.Uuid
   invoiceFileId     String    @map("invoice_file_id") @db.Uuid
@@ -13916,6 +13929,10 @@ model FinanceVendorInvoiceLine {
   taxCode     String  @default("zero") @map("tax_code")
   taxRate     Decimal @default(0) @map("tax_rate") @db.Decimal(5, 2)
   tax         Decimal @default(0) @db.Decimal(14, 2)
+  /// The order's line it bills, with the quantity and the unit price (ADR 0094).
+  purchaseOrderLineId String?  @map("purchase_order_line_id") @db.Uuid
+  quantity            Decimal? @db.Decimal(12, 3)
+  unitPrice           Decimal? @map("unit_price") @db.Decimal(12, 2)
 
   @@id([tenantId, invoiceId, position])
   @@map("finance_vendor_invoice_lines")
@@ -14778,4 +14795,186 @@ model FinanceWithholdingCertificate {
   @@index([tenantId, paidOn, id], map: "finance_withholding_certificates_paid_idx")
   @@index([tenantId, vendorId, paidOn], map: "finance_withholding_certificates_vendor_idx")
   @@map("finance_withholding_certificates")
+}
+
+/// A purchase order (ADR 0094): what the compound orders from a vendor of the
+/// register against a budget line. Its own columns and lines are the
+/// revision in force (or revision 1 while it waits for its first approval).
+model PurchaseOrder {
+  id                      String    @id @db.Uuid
+  tenantId                String    @map("tenant_id") @db.Uuid
+  number                  Int
+  vendorId                String    @map("vendor_id") @db.Uuid
+  budgetLineId            String    @map("budget_line_id") @db.Uuid
+  /// direct | purchase_request | tender
+  source                  String
+  purchaseRequestId       String?   @map("purchase_request_id") @db.Uuid
+  tenderId                String?   @map("tender_id") @db.Uuid
+  /// The contract a tender's award signed.
+  contractId              String?   @map("contract_id") @db.Uuid
+  deliveryOn              DateTime  @map("delivery_on") @db.Date
+  note                    String?
+  revision                Int       @default(1) @db.SmallInt
+  pendingRevision         Int?      @map("pending_revision") @db.SmallInt
+  /// requested | approved | rejected | cancelled | closed
+  status                  String    @default("requested")
+  subtotal                Decimal   @db.Decimal(14, 2)
+  tax                     Decimal   @db.Decimal(14, 2)
+  total                   Decimal   @db.Decimal(14, 2)
+  /// The board's approved major contract it was approved under, if any.
+  approvalRequestId       String?   @map("approval_request_id") @db.Uuid
+  raisedById              String    @map("raised_by_account_id") @db.Uuid
+  raisedAt                DateTime  @map("raised_at") @db.Timestamptz(3)
+  decidedById             String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt               DateTime? @map("decided_at") @db.Timestamptz(3)
+  decisionNote            String?   @map("decision_note")
+  /// REASON_CODES.purchaseOrderReject
+  rejectReason            String?   @map("reject_reason")
+  cancelledById           String?   @map("cancelled_by_account_id") @db.Uuid
+  cancelledAt             DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  /// REASON_CODES.purchaseOrderCancel
+  cancelReason            String?   @map("cancel_reason")
+  closedAt                DateTime? @map("closed_at") @db.Timestamptz(3)
+  /// completed | remainder_cancelled
+  closeReason             String?   @map("close_reason")
+  sentById                String?   @map("sent_by_account_id") @db.Uuid
+  sentAt                  DateTime? @map("sent_at") @db.Timestamptz(3)
+  sentRevision            Int?      @map("sent_revision") @db.SmallInt
+  acknowledgedById        String?   @map("acknowledged_by_account_id") @db.Uuid
+  acknowledgedAt          DateTime? @map("acknowledged_at") @db.Timestamptz(3)
+  acknowledgedRevision    Int?      @map("acknowledged_revision") @db.SmallInt
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "purchase_orders_number_key")
+  @@index([tenantId, status, raisedAt, id], map: "purchase_orders_status_idx")
+  @@index([tenantId, vendorId, raisedAt(sort: Desc), id(sort: Desc)], map: "purchase_orders_vendor_idx")
+  @@map("purchase_orders")
+}
+
+/// An order's line, in the revision in force.
+model PurchaseOrderLine {
+  id                  String   @id @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  purchaseOrderId     String   @map("purchase_order_id") @db.Uuid
+  position            Int      @db.SmallInt
+  /// stock | goods | service
+  kind                String
+  stockItemId         String?  @map("stock_item_id") @db.Uuid
+  description         String
+  quantity            Decimal  @db.Decimal(12, 3)
+  /// ORDER_UNITS
+  unit                String
+  unitPrice           Decimal  @map("unit_price") @db.Decimal(12, 2)
+  /// TAX_CODES: zero | exempt | vat_14
+  taxCode             String   @default("zero") @map("tax_code")
+  taxRate             Decimal  @default(0) @map("tax_rate") @db.Decimal(5, 2)
+  /// WITHHOLDING_CATEGORIES (ADR 0093); null: the invoice's, else the vendor's.
+  withholdingCategory String?  @map("withholding_category")
+  net                 Decimal  @db.Decimal(14, 2)
+  tax                 Decimal  @db.Decimal(14, 2)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, purchaseOrderId, position], map: "purchase_order_lines_position_key")
+  @@map("purchase_order_lines")
+}
+
+/// A proposal to raise (revision 1) or amend an order, kept whole.
+model PurchaseOrderRevision {
+  id                String    @id @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  purchaseOrderId   String    @map("purchase_order_id") @db.Uuid
+  revision          Int       @db.SmallInt
+  /// requested | approved | rejected | withdrawn
+  status            String    @default("requested")
+  /// REASON_CODES.purchaseOrderAmend; null for revision 1.
+  reasonCode        String?   @map("reason_code")
+  budgetLineId      String    @map("budget_line_id") @db.Uuid
+  deliveryOn        DateTime  @map("delivery_on") @db.Date
+  note              String?
+  /// The lines proposed: id (of the line it changes, else new), kind,
+  /// stockItemId, description, quantity, unit, unitPrice, taxCode,
+  /// withholdingCategory.
+  lines             Json
+  subtotal          Decimal   @db.Decimal(14, 2)
+  tax               Decimal   @db.Decimal(14, 2)
+  total             Decimal   @db.Decimal(14, 2)
+  requestedById     String    @map("requested_by_account_id") @db.Uuid
+  requestedAt       DateTime  @map("requested_at") @db.Timestamptz(3)
+  decidedById       String?   @map("decided_by_account_id") @db.Uuid
+  decidedAt         DateTime? @map("decided_at") @db.Timestamptz(3)
+  decisionNote      String?   @map("decision_note")
+  /// REASON_CODES.purchaseOrderReject
+  rejectReason      String?   @map("reject_reason")
+  approvalRequestId String?   @map("approval_request_id") @db.Uuid
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, purchaseOrderId, revision], map: "purchase_order_revisions_number_key")
+  @@index([tenantId, status, requestedAt, id], map: "purchase_order_revisions_requested_idx")
+  @@map("purchase_order_revisions")
+}
+
+/// What arrived against an order; append-only.
+model GoodsReceipt {
+  id              String   @id @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  number          Int
+  purchaseOrderId String   @map("purchase_order_id") @db.Uuid
+  receivedOn      DateTime @map("received_on") @db.Date
+  storeId         String?  @map("store_id") @db.Uuid
+  deliveryNote    String?  @map("delivery_note")
+  note            String?
+  receivedById    String   @map("received_by_account_id") @db.Uuid
+  createdAt       DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, number], map: "goods_receipts_number_key")
+  @@index([tenantId, purchaseOrderId, createdAt, id], map: "goods_receipts_order_idx")
+  @@map("goods_receipts")
+}
+
+/// A receipt's line: accepted and rejected quantities of an order's line.
+model GoodsReceiptLine {
+  tenantId            String  @map("tenant_id") @db.Uuid
+  receiptId           String  @map("receipt_id") @db.Uuid
+  purchaseOrderLineId String  @map("purchase_order_line_id") @db.Uuid
+  accepted            Decimal @db.Decimal(12, 3)
+  rejected            Decimal @default(0) @db.Decimal(12, 3)
+  /// REASON_CODES.goodsRejection
+  rejectReason        String? @map("reject_reason")
+  note                String?
+  /// The stock receipt a stock line wrote (ADR 0065).
+  stockMovementId     String? @map("stock_movement_id") @db.Uuid
+
+  @@id([tenantId, receiptId, purchaseOrderLineId])
+  @@map("goods_receipt_lines")
+}
+
+/// A receipt's photo (a `goods_receipt_photo` file); append-only.
+model GoodsReceiptPhoto {
+  tenantId  String @map("tenant_id") @db.Uuid
+  receiptId String @map("receipt_id") @db.Uuid
+  fileId    String @map("file_id") @db.Uuid
+
+  @@id([tenantId, fileId])
+  @@map("goods_receipt_photos")
+}
+
+/// A mismatch of an invoice with its order and receipts let through, once,
+/// with its reason (ADR 0094); append-only.
+model FinanceInvoiceMatchOverride {
+  id             String   @id @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  invoiceId      String   @map("invoice_id") @db.Uuid
+  /// REASON_CODES.matchOverride
+  reasonCode     String   @map("reason_code")
+  note           String?
+  /// The exceptions it let through: kind, position, quantity or amount.
+  issues         Json
+  overriddenById String   @map("overridden_by_account_id") @db.Uuid
+  overriddenAt   DateTime @map("overridden_at") @db.Timestamptz(3)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, invoiceId], map: "finance_invoice_match_overrides_invoice_key")
+  @@index([tenantId, overriddenAt, id], map: "finance_invoice_match_overrides_at_idx")
+  @@map("finance_invoice_match_overrides")
 }

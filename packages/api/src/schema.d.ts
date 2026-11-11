@@ -58175,6 +58175,8 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
+                /** @description Part of the name, any case; or exactly the phone or the email. An erased account is never found. */
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -67249,6 +67251,8 @@ export interface operations {
                 /** @description Its direct parts. */
                 parentId?: string;
                 criticality?: "low" | "medium" | "high" | "critical";
+                /** @description Part of the code or the name, any case (ADR 0072). */
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -80523,6 +80527,8 @@ export interface operations {
                 /** @description Opaque cursor from the previous page (`nextCursor`). */
                 cursor?: string;
                 limit?: number;
+                /** @description Part of the name, any case; or exactly the phone or the email. An erased account is never found. */
+                q?: string;
             };
             header?: never;
             path?: never;

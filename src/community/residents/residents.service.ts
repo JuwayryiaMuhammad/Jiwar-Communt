@@ -12,6 +12,7 @@ import {
 } from '../../core/accounts/account-lifecycle';
 import { AccountWriter } from '../../core/accounts/account-writer';
 import { isoDate } from '../../core/accounts/account-record';
+import { accountTextFilter } from '../../core/accounts/account-search';
 import { AuditService } from '../../core/audit/audit.service';
 import { diffChanges } from '../../core/audit/diff';
 import { RequestContext } from '../../core/common/cls/request-context';
@@ -169,13 +170,14 @@ export class ResidentsService {
 
   /** Resident accounts, newest first, a page at a time. */
   async list(
-    q: { cursor?: string; limit?: number } = {},
+    q: { cursor?: string; limit?: number; q?: string } = {},
   ): Promise<Page<ResidentView>> {
     const limit = clampLimit(q.limit);
     const rows = await this.prisma.tenant.account.findMany({
       where: {
         AND: [
           { type: 'resident' },
+          ...(q.q ? [accountTextFilter(q.q)] : []),
           ...(RESIDENT_PAGE.after(q.cursor) as Prisma.AccountWhereInput[]),
         ],
       },

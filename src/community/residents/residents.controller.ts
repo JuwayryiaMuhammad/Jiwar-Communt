@@ -14,13 +14,9 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../../core/access/require-permissions.decorator';
 import { ContactDto } from '../../core/accounts/dto/contact.dto';
+import { PeopleSearchQueryDto } from '../../core/accounts/dto/people-search-query.dto';
 import { ApiArea } from '../../core/common/http/decorators';
-import {
-  ListOf,
-  PageQueryDto,
-  toList,
-  type ListResponse,
-} from '../../core/common/http/list';
+import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
 import type { ErasedAccount } from '../../core/common/http/personal';
 import { parseId } from '../../core/common/validation/parse-id.pipe';
 import { CreateResidentDto, OccupancyInputDto } from './dto/residents.dto';
@@ -44,7 +40,7 @@ export class ResidentsController {
   @ApiOperation({ summary: 'List residents' })
   @ApiOkResponse({ type: ListOf(ResidentListItemView) })
   async list(
-    @Query() q: PageQueryDto,
+    @Query() q: PeopleSearchQueryDto,
   ): Promise<ListResponse<ResidentListItemView | ErasedAccount>> {
     return toList(await this.residents.list(q), (r) =>
       ResidentListItemView.from(r),

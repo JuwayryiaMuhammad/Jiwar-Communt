@@ -91788,6 +91788,17 @@
               "minimum": 1,
               "type": "number"
             }
+          },
+          {
+            "description": "Part of the name, any case; or exactly the phone or the email. An erased account is never found.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 2,
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -108939,6 +108950,17 @@
                 "high",
                 "critical"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Part of the code or the name, any case (ADR 0072).",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 1,
               "type": "string"
             }
           }
@@ -134331,6 +134353,17 @@
               "maximum": 100,
               "minimum": 1,
               "type": "number"
+            }
+          },
+          {
+            "description": "Part of the name, any case; or exactly the phone or the email. An erased account is never found.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "minLength": 2,
+              "type": "string"
             }
           }
         ],

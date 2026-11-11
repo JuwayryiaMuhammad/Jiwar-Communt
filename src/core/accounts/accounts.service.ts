@@ -15,6 +15,7 @@ import { AttachedFileUrls } from '../files/attached-file-urls';
 import { runAfterCommit } from './account-lifecycle';
 import { AccountWriter } from './account-writer';
 import { AccountRecord } from './account-record';
+import { accountTextFilter } from './account-search';
 import type { CreateAccountDto } from './dto/create-account.dto';
 import type { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 
@@ -33,14 +34,20 @@ export class AccountsService {
     private readonly fileUrls: AttachedFileUrls,
   ) {}
 
-  /** Every account of the compound, newest first, a page at a time. */
+  /**
+   * Every account of the compound, newest first, a page at a time; `q`
+   * narrows them to who a typed text finds (ADR 0072).
+   */
   async list(
-    q: { cursor?: string; limit?: number } = {},
+    q: { cursor?: string; limit?: number; q?: string } = {},
   ): Promise<Page<AccountRecord>> {
     const limit = clampLimit(q.limit);
     const rows = await this.prisma.tenant.account.findMany({
       where: {
-        AND: ACCOUNT_PAGE.after(q.cursor) as Prisma.AccountWhereInput[],
+        AND: [
+          ...(q.q ? [accountTextFilter(q.q)] : []),
+          ...(ACCOUNT_PAGE.after(q.cursor) as Prisma.AccountWhereInput[]),
+        ],
       },
       orderBy: ACCOUNT_PAGE.orderBy,
       take: limit + 1,

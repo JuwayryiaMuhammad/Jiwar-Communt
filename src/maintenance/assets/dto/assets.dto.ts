@@ -390,4 +390,15 @@ export class AssetsQueryDto extends PageQueryDto {
   @IsOptional()
   @IsIn(ASSET_CRITICALITIES, allowed(ASSET_CRITICALITIES))
   criticality?: AssetCriticality;
+
+  @ApiPropertyOptional({
+    type: String,
+    minLength: 1,
+    maxLength: 64,
+    description: 'Part of the code or the name, any case (ADR 0072).',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 64, withParams({ min: 1, max: 64 }))
+  q?: string;
 }

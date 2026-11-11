@@ -1,6 +1,6 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { AccountType } from '@prisma/client';
-import { normalizeEmail, normalizePhone } from '../../core/auth/identifier';
+import { accountTextFilter } from '../../core/accounts/account-search';
 import type { TenantTxClient } from '../../core/database/tenant-tx.service';
 import type { ItemQuery } from '../../core/resident-items/resident-items';
 import {
@@ -75,18 +75,8 @@ async function people(
   types: AccountType[],
   hit: 'resident' | 'staff',
 ): Promise<StaffSearchHit[]> {
-  const email = normalizeEmail(q.text);
-  const phone = normalizePhone(q.text);
   const rows = await tx.account.findMany({
-    where: {
-      type: { in: types },
-      status: { not: 'erased' },
-      OR: [
-        { fullName: { contains: q.text, mode: 'insensitive' } },
-        ...(email ? [{ email }] : []),
-        ...(phone ? [{ phone }] : []),
-      ],
-    },
+    where: { type: { in: types }, ...accountTextFilter(q.text) },
     orderBy: [{ fullName: 'asc' }, { id: 'asc' }],
     take,
     select: { id: true, fullName: true },

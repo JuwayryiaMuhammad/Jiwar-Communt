@@ -83,6 +83,8 @@ export interface AssetQuery {
   commonAreaId?: string;
   parentId?: string;
   criticality?: AssetCriticality;
+  /** Part of the code or the name, any case (ADR 0072). */
+  q?: string;
   cursor?: string;
   limit?: number;
 }
@@ -170,6 +172,15 @@ export class AssetsService implements OnModuleInit {
             q.commonAreaId ? { commonAreaId: q.commonAreaId } : {},
             q.parentId ? { parentId: q.parentId } : {},
             q.criticality ? { criticality: q.criticality } : {},
+            q.q
+              ? {
+                  OR: [
+                    { code: { contains: q.q.trim(), mode: 'insensitive' } },
+                    { nameEn: { contains: q.q.trim(), mode: 'insensitive' } },
+                    { nameAr: { contains: q.q.trim() } },
+                  ],
+                }
+              : {},
             ...PAGE.after(q.cursor),
           ],
         },

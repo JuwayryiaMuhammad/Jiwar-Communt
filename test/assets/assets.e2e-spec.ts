@@ -175,6 +175,44 @@ describe('Assets — the register', () => {
     });
   });
 
+  it('the list searches by part of the code or the name, in any case (ADR 0072)', async () => {
+    const tag = uniqueSuffix().toUpperCase();
+    const room = await a.area(s, { building: s.building });
+    const one = (
+      await create({
+        commonAreaId: room.id,
+        code: `SRCH-${tag}-A`,
+        nameEn: `Booster ${tag}`,
+      }).expect(201)
+    ).body as Card;
+    const two = (
+      await create({
+        commonAreaId: room.id,
+        code: `SRCH-${tag}-B`,
+        nameAr: `مضخة ${tag}`,
+      }).expect(201)
+    ).body as Card;
+    const find = async (q: string) =>
+      (
+        (
+          await a
+            .http(
+              'get',
+              `/maintenance/assets?q=${encodeURIComponent(q)}`,
+              s.techs[0].token,
+            )
+            .expect(200)
+        ).body as { data: { id: string }[] }
+      ).data
+        .map((x) => x.id)
+        .sort();
+    expect(await find(tag.toLowerCase())).toEqual([one.id, two.id].sort());
+    expect(await find(`srch-${tag}-a`)).toEqual([one.id]);
+    expect(await find(`booster ${tag}`)).toEqual([one.id]);
+    expect(await find(`مضخة ${tag}`)).toEqual([two.id]);
+    expect(await find(`nothing-${tag}`)).toEqual([]);
+  });
+
   it('a unit’s asset, and who its failure reaches: counts only', async () => {
     const own = (await create({ unitId: s.unit.id }).expect(201)).body as Card;
     expect(own).toMatchObject({

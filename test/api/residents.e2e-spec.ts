@@ -130,6 +130,75 @@ describe('API v0 — residents & accounts', () => {
     }).expect(404);
   });
 
+  it('the account and resident lists search by part of the name, or exactly the phone or the email (ADR 0072)', async () => {
+    const tag = `Finder ${uniqueSuffix()}`;
+    const email = uniqueEmail('find');
+    const phone = uniquePhone();
+    const created = await call(w, 'POST', '/residents', {
+      token: manager(),
+      body: {
+        fullName: `${tag} Hassan`,
+        idDocumentType: 'national_id',
+        idDocumentNumber: nationalIdFor(),
+        phone,
+        email,
+        units: [{ unitId: w.a.rentedUnitId, occupancyType: 'tenant' }],
+      },
+    }).expect(201);
+    const { id } = created.body as { id: string };
+    const ids = async (path: string, q: string) =>
+      (
+        (
+          await call(w, 'GET', path, { token: manager(), query: { q } }).expect(
+            200,
+          )
+        ).body as { data: { id: string }[] }
+      ).data.map((r) => r.id);
+
+    // A part of the name, in any case, in both lists.
+    expect(await ids('/residents', tag.toUpperCase())).toEqual([id]);
+    expect(await ids('/accounts', tag.toLowerCase())).toEqual([id]);
+    // Exactly the email or the phone, and nothing near them.
+    expect(await ids('/residents', email)).toEqual([id]);
+    expect(await ids('/accounts', phone)).toEqual([id]);
+    expect(await ids('/accounts', email.slice(0, -4))).toEqual([]);
+    // A second one of the same name: a search pages like the list does, and
+    // its next page continues the same search.
+    const other = (
+      await call(w, 'POST', '/residents', {
+        token: manager(),
+        body: {
+          fullName: `${tag} Soliman`,
+          idDocumentType: 'national_id',
+          idDocumentNumber: nationalIdFor(),
+          phone: uniquePhone(),
+          email: uniqueEmail('find2'),
+          units: [{ unitId: w.a.rentedUnitId, occupancyType: 'tenant' }],
+        },
+      }).expect(201)
+    ).body as { id: string };
+    const page = async (cursor?: string) =>
+      (
+        await call(w, 'GET', '/accounts', {
+          token: manager(),
+          query: { q: tag, limit: '1', ...(cursor ? { cursor } : {}) },
+        }).expect(200)
+      ).body as { data: { id: string }[]; nextCursor: string | null };
+    const first = await page();
+    expect(first.data).toHaveLength(1);
+    expect(first.nextCursor).not.toBeNull();
+    const second = await page(first.nextCursor!);
+    expect([first.data[0].id, second.data[0].id].sort()).toEqual(
+      [id, other.id].sort(),
+    );
+    expect(second.nextCursor).toBeNull();
+    // One character is too little to search.
+    await call(w, 'GET', '/residents', {
+      token: manager(),
+      query: { q: 'x' },
+    }).expect(400);
+  });
+
   it('accounts: list, detail, create, status, contact, freeze and recovery', async () => {
     const list = await call(w, 'GET', '/accounts', {
       token: manager(),

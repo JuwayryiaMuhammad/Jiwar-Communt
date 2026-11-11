@@ -16,18 +16,14 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '../access/require-permissions.decorator';
 import { ApiArea } from '../common/http/decorators';
-import {
-  ListOf,
-  PageQueryDto,
-  toList,
-  type ListResponse,
-} from '../common/http/list';
+import { ListOf, toList, type ListResponse } from '../common/http/list';
 import type { ErasedAccount } from '../common/http/personal';
 import { ReasonDto, reasonOf } from '../common/http/reason.dto';
 import { parseId } from '../common/validation/parse-id.pipe';
 import { AccountsService } from './accounts.service';
 import { ContactDto } from './dto/contact.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
+import { PeopleSearchQueryDto } from './dto/people-search-query.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { AccountDetailView, AccountListItemView } from './views/account.views';
 
@@ -44,7 +40,7 @@ export class AccountsController {
   @ApiOperation({ summary: "List the compound's accounts" })
   @ApiOkResponse({ type: ListOf(AccountListItemView) })
   async list(
-    @Query() q: PageQueryDto,
+    @Query() q: PeopleSearchQueryDto,
   ): Promise<ListResponse<AccountListItemView | ErasedAccount>> {
     return toList(await this.accounts.list(q), (a) =>
       AccountListItemView.from(a),

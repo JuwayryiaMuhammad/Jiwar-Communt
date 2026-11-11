@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { PriorityBadge, SlaBadges, useTicketWords } from '@/components/maintenance/sla';
 import { TicketActions } from '@/components/maintenance/ticket-actions';
+import { TicketVendorOffer } from '@/components/maintenance/ticket-vendor-offer';
 import { TicketStaffMoves } from '@/components/maintenance/ticket-staff-moves';
 import { SensitiveReads, TicketSensitivity } from '@/components/maintenance/ticket-sensitivity';
 import { TicketQuotes } from '@/components/maintenance/ticket-quotes';
@@ -295,6 +296,7 @@ export default function TicketPage() {
             </div>
             <div className="stack">
               <Sla ticket={t} />
+              <TicketVendorOffer ticket={t} />
               <Feedback ticket={t} />
               <TicketTrail ticketId={t.id} />
             </div>

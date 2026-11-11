@@ -1,0 +1,23 @@
+/** A vendor's contractor accounts (ADR 0088): components/vendors/contractors, on the vendor's page. */
+export default {
+  title: 'Contractors',
+  description: 'The people who sign in for this company: they take the tickets dispatch offers it and bid on its tenders.',
+  invite: 'Invite a contractor',
+  suspendedHint: 'A suspended vendor takes no contractor.',
+  inviteTitle: 'Invite a contractor of {vendor}',
+  inviteDescription: 'They sign in as staff do, with a code sent to their email. Their ID is kept as any account’s.',
+  invited: '{name} is invited as a contractor of {vendor}.',
+  contractor: 'The contractor',
+  none: 'No contractor yet',
+  erased: 'Erased account',
+  contact: 'Contact',
+  since: 'Since',
+  deactivate: 'Deactivate',
+  activate: 'Activate',
+  canSignIn: '{name} can sign in again.',
+  cannotSignIn: '{name} can no longer sign in.',
+  deactivateTitle: 'Deactivate {name}?',
+  activateTitle: 'Activate {name}?',
+  deactivateDescription: 'They can no longer sign in, and the tickets they hold go back to dispatch.',
+  activateDescription: 'They can sign in again as a contractor of this vendor.',
+} as const;

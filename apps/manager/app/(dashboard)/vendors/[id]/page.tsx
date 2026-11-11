@@ -7,6 +7,7 @@ import { Button, Card, CardBody, CardHeader, DataTable, ForbiddenState, PageHead
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { VendorContractors } from '@/components/vendors/contractors';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Vendor } from '@/lib/queries';
@@ -109,6 +110,7 @@ export default function VendorPage() {
               ]}
             />
           </Card>
+          <VendorContractors vendor={v} />
         </>
       ) : null}
     </QueryState>

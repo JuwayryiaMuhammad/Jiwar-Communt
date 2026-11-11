@@ -7,6 +7,12 @@ export default {
   // The unit picker.
   pickUnit: 'Select a unit…',
   loadingUnits: 'Loading units…',
+  // A picker that searches on the server.
+  pickSearch: 'Type to search',
+  pickSelect: 'Select…',
+  pickLoading: 'Loading…',
+  pickNone: 'Nothing matches.',
+  pickMore: 'Only the first matches are listed: type more to narrow them.',
   // An occupancy row.
   occupancyAs: 'As',
   residesHere: 'Lives in the unit',

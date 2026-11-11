@@ -90,6 +90,7 @@ export type Disbursement = Schema<'DisbursementView'>;
 // Vendors and purchase requests (ADR 0077).
 export type VendorSummary = Schema<'VendorSummaryView'>;
 export type Vendor = Schema<'VendorView'>;
+export type VendorDispatch = Schema<'VendorDispatchView'>;
 // Tenders (ADR 0088).
 export type TenderSummary = Schema<'TenderSummaryView'>;
 export type Tender = Schema<'TenderView'>;
@@ -704,6 +705,8 @@ export const keys = {
   vendorsAll: ['vendors'] as const,
   vendors: (filters: object) => ['vendors', 'list', filters] as const,
   vendor: (id: string) => ['vendors', 'detail', id] as const,
+  vendorContractors: (id: string) => ['vendors', 'detail', id, 'contractors'] as const,
+  ticketVendorOffers: (id: string) => ['tickets', 'detail', id, 'vendor-offers'] as const,
   tendersAll: ['tenders'] as const,
   tenders: (filters: object) => ['tenders', 'list', filters] as const,
   tender: (id: string) => ['tenders', 'detail', id] as const,
@@ -1283,6 +1286,10 @@ export const fetchers = {
       }),
     ),
   vendor: (id: string) => unwrap(api.GET('/api/v1/staff/vendors/{id}', { params: { path: { id } } })),
+  vendorContractors: (id: string, cursor?: string, limit = 50) =>
+    unwrap(api.GET('/api/v1/staff/vendors/{id}/contractors', { params: { path: { id }, query: { cursor, limit } } })),
+  ticketVendorOffers: (id: string) =>
+    unwrap(api.GET('/api/v1/maintenance/tickets/{id}/vendor-dispatches', { params: { path: { id } } })),
   // Compliance and safety (ADR 0087).
   complianceItems: (filters: { kind?: ComplianceItem['kind'] | ''; status?: 'active' | 'retired' | '' }, cursor?: string, limit = 50) =>
     unwrap(

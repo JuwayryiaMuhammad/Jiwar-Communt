@@ -732,6 +732,21 @@ const ar: Translation<typeof en> = {
   TAX_DECLARATION_NOT_FOUND: 'الإقرار غير موجود.',
   TAX_PAYMENT_EXCEEDED: 'المبلغ أكبر من المتبقي سداده.',
   WITHHOLDING_CERTIFICATE_NOT_FOUND: 'شهادة الخصم غير موجودة.',
+  // أوامر الشراء وأذون الاستلام والمطابقة الثلاثية (ADR 0094).
+  PURCHASE_ORDER_NOT_FOUND: 'أمر الشراء غير موجود.',
+  PURCHASE_ORDER_STATE: 'أمر الشراء ليس في حالة تسمح بهذا الإجراء.',
+  PURCHASE_ORDER_SELF_APPROVAL: 'أنت من أصدر هذا الأمر: يعتمده شخص آخر.',
+  PURCHASE_ORDER_NEEDS_APPROVAL: 'المبلغ فوق حد المدير: اذكر اعتماد مجلس الإدارة.',
+  PURCHASE_ORDER_APPROVAL_INVALID: 'لا يغطي هذا الاعتماد أمر الشراء.',
+  PURCHASE_ORDER_SOURCE_INVALID: 'لا يمكن إصدار أمر شراء من هذا المصدر.',
+  PURCHASE_ORDER_REVISION_PENDING: 'يوجد تعديل على أمر الشراء بانتظار البت فيه.',
+  PURCHASE_ORDER_LINE_BELOW_USED: 'لا يمكن أن تقل كمية البند عمّا استُلم أو فُوتر منه.',
+  GOODS_RECEIPT_EXCEEDS_ORDER: 'الكمية أكبر مما يسمح به أمر الشراء مع حد التسامح.',
+  GOODS_RECEIPT_NOT_FOUND: 'إذن الاستلام غير موجود.',
+  VENDOR_INVOICE_PO_REQUIRED: 'فاتورة بهذا المبلغ تحتاج إلى أمر شراء.',
+  INVOICE_MATCH_BLOCKED: 'الفاتورة لا تطابق أمر الشراء وأذون الاستلام: عالج الفروق أولاً.',
+  INVOICE_MATCH_NOT_BLOCKED: 'لا توجد فروق في هذه الفاتورة لتجاوزها.',
+  MATCH_SELF_OVERRIDE: 'أنت من سجّل هذه الفاتورة: يتجاوز مطابقتها شخص آخر.',
 };
 
 export default ar;

@@ -92,6 +92,8 @@ export const FILES_ROUTES: Row[] = [
               // ADR 0088.
               'tender_document',
               'tender_bid',
+              // ADR 0094.
+              'goods_receipt_photo',
             ],
           },
         },

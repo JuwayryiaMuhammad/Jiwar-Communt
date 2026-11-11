@@ -34,4 +34,6 @@ export const INBOX_TYPE: Record<string, { label: string; href: (id: string) => s
   reinforcement_suggestion: { label: 'Reinforcement suggested', href: () => '/field-team?tab=reinforcement' },
   // ADR 0092.
   gl_manual_entry: { label: 'Journal entry', href: () => '/finance/gl/entries' },
+  // ADR 0094.
+  purchase_order: { label: 'Purchase order', href: (id) => `/purchase-orders/${id}` },
 };

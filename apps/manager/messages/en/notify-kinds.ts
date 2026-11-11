@@ -322,6 +322,10 @@ export default {
   // The general ledger (ADR 0092).
   'gl_manual_entry.submitted': 'Journal entry {entryRef} waits for your approval',
   'gl_manual_entry.decided': 'Journal entry {entryRef} was {decision, select, approved {approved and posted} other {turned down}}',
+  // Purchase orders (ADR 0094).
+  'purchase_order.submitted': 'Purchase order {orderRef} waits for your approval',
+  'purchase_order.decided': 'Purchase order {orderRef} was {decision, select, approved {approved} other {turned down}}',
+  'purchase_order.sent': 'Purchase order {orderRef} was sent to your company',
   'meter.anomaly': 'Meter {meterRef} used far more than usual up to {readOn}',
   'part_request.created': 'Ticket {ticketNumber} asks the store for {itemRef}',
   'maintenance.plan_overdue': 'Planned work on asset {assetRef}, due {dueOn}, is overdue',

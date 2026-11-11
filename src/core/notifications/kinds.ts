@@ -3560,6 +3560,32 @@ export const NOTIFICATION_KINDS = {
     target: 'gl_manual_entry',
     params: { entryRef: {}, decision: {} },
   },
+  // Purchase orders (ADR 0094). References and codes; never an amount.
+  /** A purchase order waits for its approver (`purchases.approve`, never its raiser). */
+  'purchase_order.submitted': {
+    needsDecision: true,
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'purchase_order',
+    params: { orderRef: {} },
+  },
+  /** Its raiser: the order was approved or turned down. */
+  'purchase_order.decided': {
+    priority: 'normal',
+    category: 'finance',
+    critical: false,
+    target: 'purchase_order',
+    params: { orderRef: {}, decision: {} },
+  },
+  /** The vendor's contractors: an order was sent to the company (or a revision of it). */
+  'purchase_order.sent': {
+    priority: 'normal',
+    category: 'maintenance',
+    critical: false,
+    target: 'purchase_order',
+    params: { orderRef: {} },
+  },
 } as const satisfies Record<string, KindSpec>;
 
 export type NotificationKind = keyof typeof NOTIFICATION_KINDS;

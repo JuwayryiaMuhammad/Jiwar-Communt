@@ -176,6 +176,11 @@ export function notificationHref(n: NotificationLike, can: (permission: string) 
   if (n.targetType === 'vendor' && n.targetId) return can('vendors.manage') ? `/vendors/${n.targetId}` : null;
   if (n.targetType === 'purchase_request' && n.targetId)
     return can('purchases.approve') || can('purchases.request') ? `/purchases/${n.targetId}` : null;
+  // Purchase orders (ADR 0094).
+  if (n.targetType === 'purchase_order' && n.targetId)
+    return can('purchases.approve') || can('purchase_orders.raise') || can('purchase_orders.receive')
+      ? `/purchase-orders/${n.targetId}`
+      : null;
   // Compliance (ADR 0087).
   if (n.targetType === 'compliance_item' && n.targetId) return can('compliance.manage') ? `/compliance/${n.targetId}` : null;
   // Tenders (ADR 0088); a vendor's offer is the contractor's app's.

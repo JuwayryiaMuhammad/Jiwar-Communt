@@ -198,7 +198,7 @@ export const REASON_CODES = {
   expenseVoid: ['entered_in_error', 'duplicate', 'vendor_refund', 'other'],
   // Payables and commitments (ADR 0089).
   vendorInvoiceReject: ['wrong_amount', 'not_delivered', 'duplicate', 'not_ours', 'other'],
-  vendorInvoiceCancel: ['entered_in_error', 'vendor_withdrew', 'duplicate', 'other'],
+  vendorInvoiceCancel: ['entered_in_error', 'vendor_withdrew', 'duplicate', 'corrected', 'other'],
   disbursementReject: ['not_due', 'too_much', 'not_agreed', 'other'],
   disbursementCancel: ['entered_in_error', 'not_needed', 'other'],
   budgetVariance: ['timing', 'price_change', 'unplanned_work', 'saving', 'scope_change', 'emergency', 'other'],
@@ -334,6 +334,11 @@ export const REASON_CODES = {
   reinforcementCancel: ['no_longer_needed', 'pressure_eased', 'raised_in_error', 'other'],
   glEntryReject: ['wrong_accounts', 'wrong_amounts', 'wrong_date', 'not_needed', 'other'],
   glPeriodReopen: ['late_document', 'correction', 'audit_finding', 'other'],
+  purchaseOrderReject: ['wrong_vendor', 'wrong_price', 'no_budget', 'not_needed', 'other'],
+  purchaseOrderCancel: ['vendor_unavailable', 'no_longer_needed', 'duplicate', 'price_changed', 'other'],
+  purchaseOrderAmend: ['price_change', 'quantity_change', 'delivery_date', 'item_added', 'item_removed', 'other'],
+  goodsRejection: ['damaged', 'defective', 'wrong_item', 'not_as_specified', 'expired', 'other'],
+  matchOverride: ['vendor_price_agreed', 'delivery_accepted_short', 'receipt_to_follow', 'rounding', 'other'],
 } as const;
 
 export type ReasonAction = keyof typeof REASON_CODES;

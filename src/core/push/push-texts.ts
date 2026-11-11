@@ -3844,6 +3844,36 @@ export const PUSH_TEXTS: Record<NotificationKind, Record<Locale, PushText>> = {
       body: 'تم البت في قيد اليومية {entryRef}.',
     },
   },
+  'purchase_order.submitted': {
+    en: {
+      title: 'A purchase order waits',
+      body: 'Purchase order {orderRef} waits for approval.',
+    },
+    ar: {
+      title: 'أمر شراء بانتظار الاعتماد',
+      body: 'أمر الشراء {orderRef} بانتظار الاعتماد.',
+    },
+  },
+  'purchase_order.decided': {
+    en: {
+      title: 'Your purchase order was decided',
+      body: 'Purchase order {orderRef} was decided.',
+    },
+    ar: {
+      title: 'تم البت في أمر الشراء',
+      body: 'تم البت في أمر الشراء {orderRef}.',
+    },
+  },
+  'purchase_order.sent': {
+    en: {
+      title: 'A purchase order for your company',
+      body: 'Purchase order {orderRef} was sent to your company. Open it to acknowledge it.',
+    },
+    ar: {
+      title: 'أمر شراء لشركتكم',
+      body: 'تم إرسال أمر الشراء {orderRef} إلى شركتكم. افتحه لتأكيد الاستلام.',
+    },
+  },
 };
 
 /** The names between braces in a text. */

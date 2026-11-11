@@ -1551,6 +1551,21 @@ const ar: Translation<typeof en> = {
   yes_no: 'نعم أو لا',
   zero: 'نسبة صفرية',
   zone: 'منطقة',
+  wrong_vendor: 'مورد خاطئ',
+  wrong_price: 'سعر خاطئ',
+  quantity_change: 'تغيير الكمية',
+  delivery_date: 'موعد التسليم',
+  item_added: 'إضافة بند',
+  item_removed: 'حذف بند',
+  defective: 'معيب',
+  wrong_item: 'صنف خاطئ',
+  not_as_specified: 'غير مطابق للمواصفات',
+  vendor_price_agreed: 'سعر متفق عليه مع المورد',
+  delivery_accepted_short: 'قُبل تسليم ناقص',
+  receipt_to_follow: 'إذن الاستلام قادم',
+  rounding: 'تقريب',
+  corrected: 'فاتورة مصححة',
+  goods_receipt_photo: 'صورة التسليم',
 };
 
 export default ar;

@@ -2192,6 +2192,33 @@ export const ErrorCode = {
   /** More than is still due (409, params.open). */
   TAX_PAYMENT_EXCEEDED: 'TAX_PAYMENT_EXCEEDED',
   WITHHOLDING_CERTIFICATE_NOT_FOUND: 'WITHHOLDING_CERTIFICATE_NOT_FOUND',
+  // Purchase orders, goods receipts and the three-way match (ADR 0094).
+  PURCHASE_ORDER_NOT_FOUND: 'PURCHASE_ORDER_NOT_FOUND',
+  /** The order is not in a state that allows this (409, params.status). */
+  PURCHASE_ORDER_STATE: 'PURCHASE_ORDER_STATE',
+  /** Its raiser never approves it (409). */
+  PURCHASE_ORDER_SELF_APPROVAL: 'PURCHASE_ORDER_SELF_APPROVAL',
+  /** Above the manager's limit: the board's approval is named (409, params.threshold). */
+  PURCHASE_ORDER_NEEDS_APPROVAL: 'PURCHASE_ORDER_NEEDS_APPROVAL',
+  /** That approval cannot cover this order (409, params.reason: not_approved | below_amount | covers_another). */
+  PURCHASE_ORDER_APPROVAL_INVALID: 'PURCHASE_ORDER_APPROVAL_INVALID',
+  /** What it is raised from cannot take an order (409, params.reason). */
+  PURCHASE_ORDER_SOURCE_INVALID: 'PURCHASE_ORDER_SOURCE_INVALID',
+  /** A revision waits for its decision already (409, params.revision). */
+  PURCHASE_ORDER_REVISION_PENDING: 'PURCHASE_ORDER_REVISION_PENDING',
+  /** A line cannot go below what was received or invoiced of it (409, params.min). */
+  PURCHASE_ORDER_LINE_BELOW_USED: 'PURCHASE_ORDER_LINE_BELOW_USED',
+  /** More than the order and its tolerance take (409, params.max). */
+  GOODS_RECEIPT_EXCEEDS_ORDER: 'GOODS_RECEIPT_EXCEEDS_ORDER',
+  GOODS_RECEIPT_NOT_FOUND: 'GOODS_RECEIPT_NOT_FOUND',
+  /** The invoice needs a purchase order above the compound's amount (409, params.above). */
+  VENDOR_INVOICE_PO_REQUIRED: 'VENDOR_INVOICE_PO_REQUIRED',
+  /** The invoice does not match its order and receipts: resolve it first (409, params.issues). */
+  INVOICE_MATCH_BLOCKED: 'INVOICE_MATCH_BLOCKED',
+  /** The invoice has no mismatch to override (409). */
+  INVOICE_MATCH_NOT_BLOCKED: 'INVOICE_MATCH_NOT_BLOCKED',
+  /** Who recorded the invoice never overrides its match (409). */
+  MATCH_SELF_OVERRIDE: 'MATCH_SELF_OVERRIDE',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

@@ -134,6 +134,11 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'field_team.manage',
       'finance.payables',
       'finance.payables_approve',
+      // Purchase orders, what arrived against them, and a mismatch let
+      // through (ADR 0094).
+      'purchase_orders.raise',
+      'purchase_orders.receive',
+      'finance.match_override',
       // Tenders (ADR 0088); a second holder of tenders.open confirms an
       // opening, the accountant by default.
       'tenders.manage',
@@ -277,6 +282,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'purchases.request',
       'dashboard.read',
       'field_team.manage',
+      // The store raises the orders it receives against (ADR 0094).
+      'purchase_orders.raise',
+      'purchase_orders.receive',
     ],
   },
   {
@@ -314,6 +322,9 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       // ADR 0092: the general ledger and its manual entries; never a reopen.
       'finance.ledger',
       'finance.ledger_write',
+      // ADR 0094: raises purchase orders; never receives what arrives, and
+      // never lets a mismatch past.
+      'purchase_orders.raise',
     ],
   },
   {
@@ -354,6 +365,8 @@ export const DEFAULT_ROLES: readonly DefaultRole[] = [
       'tickets.contract_work',
       'tenders.bid',
       'vendor_invoices.submit',
+      // Its company's purchase orders, acknowledged (ADR 0094).
+      'purchase_orders.acknowledge',
     ],
   },
 ];

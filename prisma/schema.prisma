@@ -3670,6 +3670,8 @@ enum FilePurpose {
   tender_document
   /// A bid's offer (ADR 0088): a photo or a PDF, 10 MB; never served before the opening.
   tender_bid
+  /// A delivery's photo (ADR 0094): an image, 10 MB, from who records receipts.
+  goods_receipt_photo
 }
 
 enum FileStatus {

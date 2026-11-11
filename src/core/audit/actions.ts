@@ -3039,6 +3039,52 @@ export const AUDIT_ACTIONS = {
   },
   // VAT or withholding paid to the tax authority from a treasury account.
   'tax_payment.recorded': { log: 'tenant', target: 'tax_payment' },
+  // Purchase orders, goods receipts and the three-way match (ADR 0094).
+  // Ids, numbers, codes, quantities, days and amounts only; a note, a
+  // delivery note's number and a line's description as { changed }.
+  // A PO raised (number, vendor, line, source, revision, lines, totals).
+  'purchase_order.raised': { log: 'tenant', target: 'purchase_order' },
+  // Approved (the board's approval if named) or turned down (reasonCode).
+  'purchase_order.approved': { log: 'tenant', target: 'purchase_order' },
+  'purchase_order.rejected': { log: 'tenant', target: 'purchase_order' },
+  // Called off before it was approved (reasonCode).
+  'purchase_order.cancelled': { log: 'tenant', target: 'purchase_order' },
+  // A new revision of an approved order asked for, decided, withdrawn.
+  'purchase_order.amended': { log: 'tenant', target: 'purchase_order' },
+  'purchase_order.revision_approved': {
+    log: 'tenant',
+    target: 'purchase_order',
+  },
+  'purchase_order.revision_rejected': {
+    log: 'tenant',
+    target: 'purchase_order',
+  },
+  'purchase_order.revision_withdrawn': {
+    log: 'tenant',
+    target: 'purchase_order',
+  },
+  // What is left of an approved order cancelled (reasonCode, the commitment
+  // released), and an order closed (fully received and invoiced).
+  'purchase_order.remainder_cancelled': {
+    log: 'tenant',
+    target: 'purchase_order',
+  },
+  'purchase_order.closed': { log: 'tenant', target: 'purchase_order' },
+  // Sent to its vendor (the PDF's revision, the contractors told), and
+  // acknowledged by one of the vendor's contractors.
+  'purchase_order.sent': { log: 'tenant', target: 'purchase_order' },
+  'purchase_order.acknowledged': { log: 'tenant', target: 'purchase_order' },
+  // What arrived: a receipt's number, order, lines (accepted, rejected,
+  // reason codes), the stock movements it wrote and its photos' count.
+  'goods_receipt.recorded': { log: 'tenant', target: 'goods_receipt' },
+  // A mismatch let through (reasonCode, the exceptions as codes and amounts).
+  'vendor_invoice.match_overridden': {
+    log: 'tenant',
+    target: 'vendor_invoice',
+  },
+  // The match tolerances and when an order is required (changes: the three
+  // tolerances, the required-above amount).
+  'purchase_order_settings.updated': { log: 'tenant', target: 'tenant' },
 } as const satisfies Record<string, AuditActionDefinition>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

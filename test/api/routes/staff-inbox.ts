@@ -36,6 +36,8 @@ const INBOX_TYPES = [
   'reinforcement_suggestion',
   // ADR 0092.
   'gl_manual_entry',
+  // ADR 0094.
+  'purchase_order',
 ];
 
 /**

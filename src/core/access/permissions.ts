@@ -232,6 +232,21 @@ export const PERMISSIONS = {
   // Both are `finance.*`, so a deputy never holds them (ADR 0073).
   'finance.payables': { kinds: ['staff', 'manager'] },
   'finance.payables_approve': { kinds: ['staff', 'manager'] },
+  // Purchase orders, goods receipts and the three-way match (ADR 0094).
+  // `purchase_orders.raise` raises a purchase order (from an approved
+  // purchase request, a tender's award or directly), amends it, sends it to
+  // the vendor and cancels what is left of it; `purchase_orders.receive`
+  // records what arrived (goods into a store, a service confirmed). A PO is
+  // approved with `purchases.approve` (ADR 0077), never by who raised it.
+  // `finance.match_override` lets a vendor's invoice past a mismatch with its
+  // PO and receipts, with a reason, never one the caller recorded: a
+  // `finance.*`, so a deputy never holds it (ADR 0073). A vendor's contractor
+  // reads its company's orders and acknowledges them
+  // (`purchase_orders.acknowledge`, ADR 0088).
+  'purchase_orders.raise': { kinds: ['staff', 'manager'] },
+  'purchase_orders.receive': { kinds: ['staff', 'manager'] },
+  'finance.match_override': { kinds: ['staff', 'manager'] },
+  'purchase_orders.acknowledge': { kinds: ['contractor'] },
   // Treasury and custody (ADR 0085). `finance.treasury` keeps the
   // compound's bank and cash accounts (registers, not a ledger): their
   // movements, transfers between them, adjustments by hand, and bank

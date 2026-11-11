@@ -64,6 +64,8 @@ export const INBOX_TYPES = [
   'reinforcement_suggestion',
   // ADR 0092: a manual journal entry waiting for its second person.
   'gl_manual_entry',
+  // ADR 0094: a purchase order waiting for its approver.
+  'purchase_order',
 ] as const;
 export type InboxType = (typeof INBOX_TYPES)[number];
 

@@ -321,6 +321,9 @@ describe('audit catalog', () => {
         'vat_declaration',
         'withholding_certificate',
         'tax_payment',
+        // ADR 0094.
+        'purchase_order',
+        'goods_receipt',
       ]).toContain(def.target);
     }
   });

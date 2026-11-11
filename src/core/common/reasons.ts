@@ -653,6 +653,9 @@ export const REASON_CODES = {
     'entered_in_error',
     'vendor_withdrew',
     'duplicate',
+    // The vendor's corrected invoice, or its credit note, replaces it (ADR
+    // 0094): how a three-way mismatch is resolved by the vendor.
+    'corrected',
     'other',
   ],
   disbursementReject: ['not_due', 'too_much', 'not_agreed', 'other'],
@@ -1288,4 +1291,45 @@ export const REASON_CODES = {
     'other',
   ],
   glPeriodReopen: ['late_document', 'correction', 'audit_finding', 'other'],
+  // Purchase orders, goods receipts and the three-way match (ADR 0094): why
+  // an order is turned down; why one is called off or its remainder
+  // cancelled; why an approved one is amended; why goods are rejected at the
+  // door; why a mismatch is let through. The migrations' CHECKs repeat them.
+  purchaseOrderReject: [
+    'wrong_vendor',
+    'wrong_price',
+    'no_budget',
+    'not_needed',
+    'other',
+  ],
+  purchaseOrderCancel: [
+    'vendor_unavailable',
+    'no_longer_needed',
+    'duplicate',
+    'price_changed',
+    'other',
+  ],
+  purchaseOrderAmend: [
+    'price_change',
+    'quantity_change',
+    'delivery_date',
+    'item_added',
+    'item_removed',
+    'other',
+  ],
+  goodsRejection: [
+    'damaged',
+    'defective',
+    'wrong_item',
+    'not_as_specified',
+    'expired',
+    'other',
+  ],
+  matchOverride: [
+    'vendor_price_agreed',
+    'delivery_accepted_short',
+    'receipt_to_follow',
+    'rounding',
+    'other',
+  ],
 } as const;

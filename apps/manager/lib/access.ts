@@ -80,6 +80,9 @@ export const ENTRY_PERMISSIONS = [
   // The vendor register and purchase approvals (ADR 0077).
   'vendors.manage',
   'purchases.approve',
+  // Purchase orders and what arrives against them (ADR 0094).
+  'purchase_orders.raise',
+  'purchase_orders.receive',
   // The operations dashboard (ADR 0079).
   'dashboard.read',
   // The holidays, the site map and the floor plans (ADR 0084).

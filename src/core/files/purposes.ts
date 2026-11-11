@@ -411,6 +411,14 @@ export const FILE_PURPOSES = {
     maxBytes: 10 * MB,
     uploaders: ['tenders.bid'],
   },
+  // A delivery's photo (ADR 0094): what arrived at the door, an image of
+  // 10 MB, from who records receipts. Neither files CHECK changes for it
+  // (the image default).
+  goods_receipt_photo: {
+    types: IMAGE_TYPES,
+    maxBytes: 10 * MB,
+    uploaders: ['purchase_orders.receive'],
+  },
   // A sheet to import (ADR 0064): the asset register, and meter readings
   // (ADR 0066). UTF-8 CSV, 1 MB, read whole by the import and never served
   // back.

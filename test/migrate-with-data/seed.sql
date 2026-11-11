@@ -1017,5 +1017,81 @@ BEGIN
                                   closed_by_account_id, closed_at) VALUES
         (gen_random_uuid(), t, DATE '2019-01-01', DATE '2019-12-31', 0, 0, 0, mgr, now());
     END;
+    -- ADR 0094: the match tolerances and the amount an order is required
+    -- above, a vendor's order approved and sent with its line, its first
+    -- revision and a receipt (accepted and rejected); its commitment and an
+    -- invoice naming its line with a quantity and a unit price, whose
+    -- mismatch was let through; the procurement counters and an order
+    -- overdue in the inbox (the CHECKs widened, the invoice's source and
+    -- the commitment's shape restated).
+    DECLARE
+      pv uuid := gen_random_uuid();
+      pb uuid := gen_random_uuid();
+      pl uuid := gen_random_uuid();
+      po uuid := gen_random_uuid();
+      pol uuid := gen_random_uuid();
+      gr uuid := gen_random_uuid();
+      pinv uuid := gen_random_uuid();
+      pf uuid := gen_random_uuid();
+    BEGIN
+      UPDATE finance_settings SET po_required_above = 5000.00, match_price_pct = 3.00,
+                                  match_quantity_pct = 5.00, match_amount = 150.00
+       WHERE tenant_id = t;
+      INSERT INTO procurement_counters (tenant_id, kind, last_number) VALUES
+        (t, 'purchase_order', 1), (t, 'goods_receipt', 1)
+        ON CONFLICT (tenant_id, kind) DO NOTHING;
+      INSERT INTO vendors (id, tenant_id, number, name, categories, updated_at) VALUES
+        (pv, t, 4 + (random() * 1000000)::int, 'Seed Suppliers ' || left(gen_random_uuid()::text, 8),
+         ARRAY['supplies'], now());
+      INSERT INTO finance_budgets (id, tenant_id, fiscal_year, starts_on, ends_on, created_by_account_id,
+                                   created_at) VALUES
+        (pb, t, 2090, DATE '2090-01-01', DATE '2090-12-31', mgr, now());
+      INSERT INTO finance_budget_lines (id, tenant_id, budget_id, category, amount) VALUES
+        (pl, t, pb, 'maintenance', 50000.00);
+      INSERT INTO purchase_orders (id, tenant_id, number, vendor_id, budget_line_id, source, delivery_on,
+                                   revision, status, subtotal, tax, total, raised_by_account_id, raised_at,
+                                   decided_by_account_id, decided_at, sent_by_account_id, sent_at,
+                                   sent_revision) VALUES
+        (po, t, 900001 + (random() * 90000)::int, pv, pl, 'direct', current_date + 20, 1, 'approved',
+         1000.00, 140.00, 1140.00, mgr, now(), guard, now(), mgr, now(), 1);
+      INSERT INTO purchase_order_lines (id, tenant_id, purchase_order_id, position, kind, description, quantity,
+                                        unit, unit_price, tax_code, tax_rate, withholding_category, net, tax) VALUES
+        (pol, t, po, 1, 'goods', 'Seed gaskets', 10, 'box', 100.00, 'vat_14', 14, 'supplies', 1000.00, 140.00);
+      INSERT INTO purchase_order_revisions (id, tenant_id, purchase_order_id, revision, status, budget_line_id,
+                                            delivery_on, lines, subtotal, tax, total, requested_by_account_id,
+                                            requested_at, decided_by_account_id, decided_at) VALUES
+        (gen_random_uuid(), t, po, 1, 'approved', pl, current_date + 20,
+         jsonb_build_array(jsonb_build_object('id', pol, 'kind', 'goods', 'description', 'Seed gaskets',
+                                              'quantity', '10.000', 'unit', 'box', 'unitPrice', '100.00',
+                                              'taxCode', 'vat_14')),
+         1000.00, 140.00, 1140.00, mgr, now(), guard, now());
+      INSERT INTO goods_receipts (id, tenant_id, number, purchase_order_id, received_on, delivery_note,
+                                  received_by_account_id, created_at) VALUES
+        (gr, t, 900001 + (random() * 90000)::int, po, current_date, 'SEED-DN-1', mgr, now());
+      INSERT INTO goods_receipt_lines (tenant_id, receipt_id, purchase_order_line_id, accepted, rejected,
+                                       reject_reason, note) VALUES
+        (t, gr, pol, 6, 1, 'damaged', 'One box was cracked');
+      INSERT INTO finance_commitments (id, tenant_id, line_id, source, purchase_order_id, vendor_id, amount,
+                                       due_on, created_by_account_id, created_at) VALUES
+        (gen_random_uuid(), t, pl, 'purchase_order', po, pv, 1140.00, current_date + 20, guard, now());
+      INSERT INTO files (id, tenant_id, owner_account_id, purpose, content_type, size_bytes, status,
+                         upload_expires_at, finalized_at, attached_at) VALUES
+        (pf, t, NULL, 'expense_invoice', 'application/pdf', 4096, 'ready', now(), now(), now());
+      INSERT INTO finance_vendor_invoices (id, tenant_id, number, vendor_id, vendor_number, issued_on, due_on,
+                                           purchase_order_id, invoice_file_id, subtotal, tax, total,
+                                           recorded_by_account_id, recorded_at) VALUES
+        (pinv, t, 900001 + (random() * 90000)::int, pv, 'SEED-PO-' || left(gen_random_uuid()::text, 8),
+         current_date, current_date + 30, po, pf, 800.00, 0.00, 800.00, mgr, now());
+      INSERT INTO finance_vendor_invoice_lines (tenant_id, invoice_id, position, description, amount,
+                                                purchase_order_line_id, quantity, unit_price) VALUES
+        (t, pinv, 1, 'Seed gaskets billed', 800.00, pol, 8, 100.00);
+      INSERT INTO finance_invoice_match_overrides (id, tenant_id, invoice_id, reason_code, note, issues,
+                                                   overridden_by_account_id, overridden_at) VALUES
+        (gen_random_uuid(), t, pinv, 'rounding', 'Seed override',
+         '[{"kind": "quantity_not_received", "position": 1, "quantity": "1.000", "amount": "100.00"}]'::jsonb,
+         guard, now());
+      INSERT INTO staff_inbox_overdue (tenant_id, type, item_id, notified_at) VALUES
+        (t, 'purchase_order', gen_random_uuid(), now());
+    END;
   END LOOP;
 END $$;

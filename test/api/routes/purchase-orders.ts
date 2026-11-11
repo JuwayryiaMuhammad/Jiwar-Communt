@@ -7,7 +7,9 @@ const UNKNOWN = '00000000-0000-4000-8000-000000000094';
  * The orders’ routes (ADR 0094): a technician, who only asks to buy, is
  * denied; every response is no-store (a receipt carries signed photo links).
  */
-const staff = (row: Omit<Row, 'auth' | 'as' | 'denied'>): Row => ({
+const staff = (
+  row: Omit<Row, 'auth' | 'as' | 'denied'> & { denied?: Row['denied'] },
+): Row => ({
   auth: 'tenant',
   as: 'manager',
   denied: 'technician',

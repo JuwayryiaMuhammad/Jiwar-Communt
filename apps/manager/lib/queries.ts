@@ -651,6 +651,8 @@ export const keys = {
   experienceSignals: (filters: object) => ['experience', 'signals', filters] as const,
   compensations: (filters: object) => ['experience', 'compensations', filters] as const,
   compensationRules: ['experience', 'compensation-rules'] as const,
+  compensationInvoices: (unitId: string) => ['experience', 'compensation-invoices', unitId] as const,
+  compensationAuthorizations: ['experience', 'compensation-authorizations'] as const,
   servicePromises: ['experience', 'promises'] as const,
   promisesReport: (from: string, to: string) => ['experience', 'promises-report', from, to] as const,
   ratingsReport: (from: string, to: string) => ['experience', 'ratings-report', from, to] as const,
@@ -1162,6 +1164,9 @@ export const fetchers = {
       }),
     ),
   compensationRules: () => unwrap(api.GET('/api/v1/staff/experience/compensation-rules')),
+  // The board's approvals of compensations above the limit that no credit has used (ADR 0073, 0082).
+  compensationAuthorizations: () =>
+    unwrap(api.GET('/api/v1/staff/finance/board-authorizations', { params: { query: { type: 'compensation_above_limit', unused: 'true' } } })),
   servicePromises: () => unwrap(api.GET('/api/v1/staff/experience/promises')),
   promisesReport: (from: string, to: string) =>
     unwrap(api.GET('/api/v1/staff/experience/promises/report', { params: { query: { from, to } } })),

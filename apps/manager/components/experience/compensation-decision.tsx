@@ -1,15 +1,83 @@
 'use client';
 
 import { REASON_CODES, unwrap } from '@jiwar/api';
-import { ErrorAlert, useAction } from '@jiwar/api/react';
+import { ErrorAlert, LoadMore, useAction, useCursorList } from '@jiwar/api/react';
 import { useFormat, useT } from '@jiwar/i18n';
-import { Button, Dialog, Field, Input, ReasonCodeDialog, useToast } from '@jiwar/ui';
+import { Button, Dialog, Field, Input, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { keys, type Compensation } from '@/lib/queries';
+import { usePermissions } from '@/lib/permissions';
+import { fetchers, keys, type Compensation } from '@/lib/queries';
 import ar from '@/messages/ar/experience-cases';
 import en from '@/messages/en/experience-cases';
+
+/** What a Field hands its input. */
+interface FieldProps {
+  id?: string;
+  'aria-invalid'?: true;
+  'aria-describedby'?: string;
+}
+
+/**
+ * The unit's invoices to put a credit note on (ADR 0082), newest first, paged:
+ * a unit with many invoices loads more. Without `finance.invoice` the list
+ * is closed to the account, so the id is typed as before.
+ */
+function InvoicePicker({ unitId, value, onChange, id, ...aria }: FieldProps & { unitId: string; value: string; onChange: (id: string) => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
+  const { can } = usePermissions();
+  const mayList = can('finance.invoice');
+  const list = useCursorList(keys.compensationInvoices(unitId), (cursor) => fetchers.invoices({ unitId }, cursor, 50), { enabled: mayList });
+  if (!mayList) return <Input id={id} {...aria} value={value} onChange={(e) => onChange(e.target.value)} placeholder={t('decision.invoiceId')} />;
+  return (
+    <div className="stack stack--sm">
+      <Select id={id} {...aria} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{list.isPending ? t('decision.loading') : (list.rows ?? []).length ? c('select') : t('decision.noInvoice')}</option>
+        {(list.rows ?? []).map((i) => (
+          <option key={i.id} value={i.id}>
+            {t('decision.invoiceOption', { number: i.number, due: f.day(i.dueOn), total: f.money(i.total), status: label(i.status) })}
+          </option>
+        ))}
+      </Select>
+      <ErrorAlert error={list.error} />
+      <LoadMore query={list} />
+    </div>
+  );
+}
+
+/**
+ * What the board approved for a compensation above its limit and no credit
+ * has used yet (ADR 0073), at least the compensation's amount. Without
+ * `finance.invoice` the id is typed as before.
+ */
+function AuthorizationPicker({ amount, value, onChange, id, ...aria }: FieldProps & { amount: string | null; value: string; onChange: (id: string) => void }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const { can } = usePermissions();
+  const mayList = can('finance.invoice');
+  const found = useQuery({ queryKey: keys.compensationAuthorizations, queryFn: fetchers.compensationAuthorizations, enabled: mayList });
+  if (!mayList) return <Input id={id} {...aria} value={value} onChange={(e) => onChange(e.target.value)} />;
+  const rows = (found.data?.data ?? []).filter((a) => amount === null || Number(a.amount) >= Number(amount));
+  return (
+    <div className="stack stack--sm">
+      <Select id={id} {...aria} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{found.isPending ? t('decision.loading') : rows.length ? c('select') : t('decision.noAuthorization')}</option>
+        {rows.map((a) => (
+          <option key={a.id} value={a.id}>
+            {t('decision.authorizationOption', { amount: f.money(a.amount), when: f.date(a.createdAt) })}
+          </option>
+        ))}
+      </Select>
+      <ErrorAlert error={found.error} />
+    </div>
+  );
+}
 
 /**
  * The manager's decision on a compensation (ADR 0082), once. A credit names
@@ -87,12 +155,12 @@ export function CompensationDecision({ compensation: x, unitId }: { compensation
         <div className="stack">
           {x.kind === 'credit' ? (
             <Field label={t('decision.invoice')} hint={<Link href={`/units/${unitId}`}>{t('decision.invoiceLink')}</Link>}>
-              {(p) => <Input {...p} value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} placeholder={t('decision.invoiceId')} />}
+              {(p) => <InvoicePicker {...p} unitId={unitId} value={invoiceId} onChange={setInvoiceId} />}
             </Field>
           ) : null}
           {board ? (
             <Field label={t('decision.authorization')} hint={<Link href="/governance">{t('decision.authorizationLink')}</Link>}>
-              {(p) => <Input {...p} value={authorizationId} onChange={(e) => setAuthorizationId(e.target.value)} />}
+              {(p) => <AuthorizationPicker {...p} amount={x.amount} value={authorizationId} onChange={setAuthorizationId} />}
             </Field>
           ) : null}
           <ErrorAlert error={approve.error} />

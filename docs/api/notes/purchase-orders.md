@@ -12,7 +12,7 @@ Conventions, as everywhere in API v0: every path is under `/api/v1`, amounts are
 
 ## Who does what
 
-- `purchase_orders.raise` (the manager, the accountant, the maintenance supervisor): raise, amend, take back a revision, send, cancel.
+- `purchase_orders.raise` (the manager, the accountant, the maintenance supervisor): raise, amend, take back a revision, send, cancel. It also reads the budgets (`GET /staff/finance/budgets`, `GET /staff/finance/budgets/{id}`) to pick the order's line, and changes nothing in them.
 - `purchases.approve` (the manager): approve or turn down an order or a revision; call off a waiting order. **Never the order's raiser, or the asker of the revision, even under the board's approval** (`409 PURCHASE_ORDER_SELF_APPROVAL`).
 - `purchase_orders.receive` (the manager, the maintenance supervisor): receive. The order's raiser or its request's requester may confirm its **service** lines alone.
 - Reads of orders: any of `purchase_orders.raise`, `purchase_orders.receive`, `purchases.approve`, `finance.payables`, `finance.payables_approve`.

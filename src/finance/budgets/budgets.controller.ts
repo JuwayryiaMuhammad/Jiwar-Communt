@@ -15,7 +15,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '../../core/access/require-permissions.decorator';
+import {
+  RequireAnyPermission,
+  RequirePermissions,
+} from '../../core/access/require-permissions.decorator';
 import { ApiArea, NoStore } from '../../core/common/http/decorators';
 import { ListOf, toList, type ListResponse } from '../../core/common/http/list';
 import { ReasonCodeOnlyDto } from '../../core/common/http/reason.dto';
@@ -38,7 +41,11 @@ import {
   ExpenseView,
 } from './views/budgets.views';
 
-/** The annual budget (ADR 0055): the accountant's and the manager's. */
+/**
+ * The annual budget (ADR 0055): the accountant's and the manager's. Who
+ * raises a purchase order also reads the budgets, to name the line it is
+ * paid from (ADR 0094), and changes nothing in them.
+ */
 @ApiArea('finance')
 @RequirePermissions('finance.budget')
 @Controller('staff/finance')
@@ -87,6 +94,7 @@ export class BudgetsController {
   }
 
   @Get('budgets')
+  @RequireAnyPermission('finance.budget', 'purchase_orders.raise')
   @NoStore()
   @ApiOperation({ summary: 'List the budgets', description: 'Newest first.' })
   @ApiOkResponse({ type: ListOf(BudgetView) })
@@ -95,6 +103,7 @@ export class BudgetsController {
   }
 
   @Get('budgets/:id')
+  @RequireAnyPermission('finance.budget', 'purchase_orders.raise')
   @NoStore()
   @ApiOperation({
     summary: 'Read a budget',

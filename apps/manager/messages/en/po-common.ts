@@ -38,7 +38,7 @@ export default {
   'budget.choose': 'Choose a line',
   'budget.option': '{category} · {available} available',
   'budget.none': 'No active budget',
-  'budget.noAccess': 'Budget lines are listed to roles that keep the budget.',
+  'budget.noAccess': 'Budget lines are listed to who keeps the budget or raises orders.',
   // Source errors of PURCHASE_ORDER_SOURCE_INVALID.
   'source.request_not_approved': 'The purchase request is not approved.',
   'source.already_ordered': 'An order is already raised from this purchase request.',

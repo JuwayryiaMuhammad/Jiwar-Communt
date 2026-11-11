@@ -289,3 +289,6 @@ Category `governance`, none critical. The params are codes only.
 
 ## Update (Phase M3-7, ADR 0094)
 - A purchase order is approved by the same threshold: `major_contract`'s, on the order's gross, always binding; above it only under the board's approved major contract, which signs one order, purchase request or contract. Who raised an order never approves it, even under the board's approval.
+
+## Update 2026-11-11 (ADR 0094)
+- The budgets' two reads, `GET /staff/finance/budgets` and `GET /staff/finance/budgets/{id}`, are also open to `purchase_orders.raise`, so who raises a purchase order names its line. Every other budget route stays `finance.budget`'s.

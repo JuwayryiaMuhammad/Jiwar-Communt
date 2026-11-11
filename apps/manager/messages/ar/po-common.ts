@@ -37,7 +37,7 @@ const ar: Translation<typeof en> = {
   'budget.choose': 'اختر بندًا',
   'budget.option': '{category} · المتاح {available}',
   'budget.none': 'لا توجد ميزانية فعالة',
-  'budget.noAccess': 'بنود الميزانية تظهر للأدوار التي تتولى الميزانية.',
+  'budget.noAccess': 'بنود الميزانية تظهر لمن يتولى الميزانية أو يصدر أوامر الشراء.',
   'source.request_not_approved': 'طلب الشراء غير معتمد.',
   'source.already_ordered': 'سبق إصدار أمر شراء من طلب الشراء هذا.',
   'source.vendor_mismatch': 'المورد ليس المورد المذكور في الطلب أو في الترسية.',

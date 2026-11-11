@@ -219,6 +219,50 @@ describe('Goods receipts and the three-way match (ADR 0094)', () => {
 
   afterAll(() => h.close());
 
+  describe('raised by the maintenance supervisor', () => {
+    it('reads the budgets to name the line, and the vendors and the stock, so a whole order is theirs to raise; the budget itself stays the accountant’s and the manager’s', async () => {
+      const active = (
+        await http('get', '/staff/finance/budgets?status=active', sup()).expect(
+          200,
+        )
+      ).body as { data: { id: string }[] };
+      expect(active.data.map((b) => b.id)).toContain(budget.id);
+      const read = (
+        await http('get', `/staff/finance/budgets/${budget.id}`, sup()).expect(
+          200,
+        )
+      ).body as { lines: { id: string }[] };
+      expect(read.lines.map((l) => l.id)).toContain(line().id);
+      await http('get', '/staff/vendors?status=active', sup()).expect(200);
+      await http('get', '/maintenance/stock/items?active=true', sup()).expect(
+        200,
+      );
+      const o = (
+        await http('post', '/staff/purchase-orders', sup(), {
+          vendorId,
+          budgetLineId: line().id,
+          deliveryOn: day(10),
+          lines: [service('1500.00')],
+        }).expect(201)
+      ).body as Order;
+      expect(o.status).toBe('requested');
+      // Reading is all: the budget's lines, its settings and its expenses
+      // stay with finance.budget.
+      await http('put', `/staff/finance/budgets/${budget.id}/lines`, sup(), {
+        lines: [],
+      }).expect(403);
+      await http('get', '/staff/finance/budget-settings', sup()).expect(403);
+      await http('get', '/staff/finance/expenses', sup()).expect(403);
+      // Who neither keeps the budget nor raises an order still reads none.
+      const guard = await gateHelpers(h).guard(s.c);
+      const g = await f.who(s.c, guard.id, 'staff');
+      await http('get', '/staff/finance/budgets', g.token).expect(403);
+      await http('get', `/staff/finance/budgets/${budget.id}`, g.token).expect(
+        403,
+      );
+    });
+  });
+
   describe('receipts', () => {
     it('are in parts: accepted and rejected with a reason, a note and photos; a stock line goes into the store at the order’s cost', async () => {
       const item = (

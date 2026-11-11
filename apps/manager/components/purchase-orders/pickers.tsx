@@ -44,10 +44,10 @@ export function useStoreChoices(enabled = true) {
   return { allowed, stores: (query.data?.data ?? []).filter((s) => s.active) };
 }
 
-/** The lines of the active budget, for the roles that keep the budget. */
+/** The lines of the active budget, for who keeps the budget or raises an order (ADR 0094). */
 export function useBudgetLineChoices() {
   const { can } = usePermissions();
-  const allowed = can('finance.budget');
+  const allowed = can('finance.budget') || can('purchase_orders.raise');
   const query = useQuery({
     queryKey: keys.poBudgetLines,
     queryFn: () => fetchers.budgets('active', undefined, 1),

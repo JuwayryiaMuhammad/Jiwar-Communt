@@ -84,7 +84,7 @@ The caller → the purchase request (update) → the order (update) → the vend
 1. **Gross, not net, is committed and approved** — the invoice's total includes VAT, and a commitment is released by it.
 2. **Revisions do not re-approve a price decrease differently:** every revision is approved again, up or down.
 3. **Mistaken receipts are not reversed** (a return to the vendor, a counting error): a correction is the stock's adjustment (ADR 0065) and, for the match, an amendment or an override. Open.
-4. **A role that raises orders needs the pickers' permissions** (vendors, budget lines, stock) to use the manager's form fully; from a request or an award the source supplies the vendor and line.
+4. **A role that raises orders needs the pickers' permissions** (vendors, budget lines, stock) to use the manager's form fully; from a request or an award the source supplies the vendor and line. The budget lines were the maintenance supervisor's gap; see the update below.
 
 ## Consequences
 
@@ -98,3 +98,12 @@ The caller → the purchase request (update) → the order (update) → the vend
 - An order's email to the vendor with the PDF attached; the vendor's price list or catalog; blanket orders; a purchase request's lines.
 - Accruing receipts in the ledger once stock is valued (a goods-received-not-invoiced account and a price variance account).
 - Match tolerances per vendor or per budget category; requiring an order by category.
+
+## Update 2026-11-11: who raises an order reads the budgets
+
+The owner widened the maintenance supervisor's reading, so the whole order form is theirs.
+
+- `GET /staff/finance/budgets` and `GET /staff/finance/budgets/{id}` take `finance.budget` **or** `purchase_orders.raise`. Who raises an order reads the budgets and their lines, with what each has left, to name the line it is paid from.
+- Everything else on the budget stays with `finance.budget`: drafting and submitting a budget, its lines and months, the settings, the expenses and their authorizations.
+- The maintenance supervisor already read the vendors (`assets.manage`, `purchases.request`) and the stock (`stock.manage`), so a direct order is now theirs from start to end. No role gained a permission.
+- The accountant still reads no stock items or stores (`stock.manage`), so the accountant's orders have no stock lines.

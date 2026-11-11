@@ -142,3 +142,7 @@ A missing source fails the bootstrap.
 - A fourth rule from logins after a bad event, and an SLA-breach rule.
 - A resident's side of a case (told, asked to confirm), and recovery steps as a checklist.
 - Ticket reads here respect M2-13's sensitive tickets once it lands. The source reads only the rating and the unit, never the ticket's words.
+
+## Update 2026-11-11: the credit's pickers
+
+The decision dialog of a credit no longer asks for ids typed in. The invoice is chosen from the unit's own invoices (newest first, paged with "load more"; its number, due day, total and status), and, above the board's limit, the authorization from what the board approved as `compensation_above_limit`, still unused and at least the compensation's amount (`GET /staff/finance/board-authorizations?type=compensation_above_limit&unused=true`). Both lists are finance's (`finance.invoice`, which the manager holds); an account without it keeps typing the ids. Nothing changed in the API.

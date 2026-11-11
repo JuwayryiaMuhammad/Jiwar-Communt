@@ -18,6 +18,7 @@ The design decisions are in [ADR 0072](../../decisions/0072-unit-register.md). T
 4. [A unit's history and workers](#a-units-history-and-workers)
 5. [Sheets of units and residents](#sheets-of-units-and-residents)
 6. [The staff's search](#the-staffs-search)
+7. [Lists a picker searches](#lists-a-picker-searches)
 
 ## Buildings
 
@@ -60,3 +61,17 @@ Upload the CSV as a `data_import` file (`POST /files`, `PUT`, `POST /files/{id}/
 ## The staff's search
 
 - `GET /staff/search?q=` (2–64 characters; for an account holding the permission of at least one kind's list; 60 a minute): `{ data: [{ type, id, title, subtitle }] }`, at most 8 of each `type`: `unit`, `building`, `resident`, `staff`, `ticket`, `asset`. Each type only when the account holds its list's permission. `q` may be a reference (`MT-000123`, `123`) or words; a resident is also found by exactly their phone or email. Residents get `403 FORBIDDEN` (they have `GET /me/search`).
+
+## Lists a picker searches
+
+A picker no longer reads the first 100 rows of a list: the lists it reads take a text to search, and the next page (`cursor`) continues the same search.
+
+| Route | Parameter | Finds |
+| --- | --- | --- |
+| `GET /units` | `q` (1–32) | Part of the code, any case (as before). |
+| `GET /staff/vendors` | `q` | Part of the name (as before). |
+| `GET /accounts` (`accounts.read`) | `q` (2–64) | Part of the name, any case; or exactly the phone or the email. An erased account is never found. |
+| `GET /residents` (`residents.read`) | `q` (2–64) | The same, among the resident accounts. |
+| `GET /maintenance/assets` (`assets.read`) | `q` (1–64) | Part of the code, the English name or the Arabic name. |
+
+`GET /accounts` also takes `group` (`staff`: staff and manager accounts; `managers`; `households`: resident and family accounts) and `active=true` (only the accounts that can sign in), so a picker that names an owner, a manager or a household's person asks for exactly them. Anything else is `400 INVALID_VALUE` with `allowed`; a `q` shorter than its minimum is `400 INVALID_LENGTH`. The views and the permissions are the lists' own.

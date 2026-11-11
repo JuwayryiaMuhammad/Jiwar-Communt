@@ -48,13 +48,16 @@ Closed in the maintenance phase of 2026-11-09:
 - a staff certificate's paper (0090);
 - the journal paged past its first 50 entries (0092).
 
-Still open:
+Closed in the dashboard-gaps phase of 2026-11-11:
 - a vendor's contractors and the dispatch's "offer to a vendor" (0088);
-- the reinforcement call's zone, the technicians' locations on a map (0090);
+- the reinforcement call's zone (0090), and a technician's last point plotted, one technician at a time, audited, with no map tiles (a map of several is not built: it would break the one-read-one-audit rule);
 - starting a conversation with a resident (0080);
 - the compensation credit's invoice and authorization pickers (0082);
-- the ledger: a top-level account, code changes (0092);
-- pickers and counts past the first 100 rows (0072); the rest of `apps/README.md` "Known limits".
+- pickers past the first 100 rows (0072): `q` on the account, resident and asset lists and `group` / `active` on the accounts, the dashboard's pickers searching on the server, and the dispatch queue counted past one page.
+- the ledger: a top-level account and code changes (0092), and the year-end entry (0093), in the taxes phase.
+
+Still open:
+- exact counts in the sidebar's badges past 99 (they read one page of 100), and the rest of `apps/README.md` "Known limits" that are the API's: a manager's `GET /gate/inside`, a wage's currency, the client's IP behind the proxy.
 
 ### Waiting on the owner
 

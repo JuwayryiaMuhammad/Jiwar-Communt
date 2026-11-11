@@ -75,7 +75,7 @@ The manager audit of 2026-11-01 (the residents' slice, groups M-R2 and M-R3; pla
 7. **Letters print the name, the unit, the capacity and since when — no ID number.** Signed by the compound's record and the code, no e-signature.
 8. **The public check gives no letter number**: only validity, the issuer and the day, as the brief asked.
 9. **An erased subject's letter stays valid** at its check; only its PDF is no longer drawn.
-10. **The outreach dialog** is not on the dashboard yet; the route is (`POST /management/outreach`).
+10. ~~**The outreach dialog** is not on the dashboard yet; the route is (`POST /management/outreach`).~~ *Closed on 2026-11-11: "Start a conversation" on the requests to the management finds the resident through their unit, then takes the topic, the message and up to five files; it needs `requests.handle`, `residents.read` and `units.read`, and opens the request it started.*
 
 ## Consequences
 

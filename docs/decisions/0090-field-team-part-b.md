@@ -105,3 +105,8 @@ The owner's decisions (2026-11-08, as recommended): the system suggests, the fie
 - Certificates required per ticket category, and assignment rules on them, are not built (warn only, by the owner's decision).
 - Reinforcement beyond the technicians (guards at peaks), and a suggestion per category or building.
 - A review's lines for accounts made while it is open; a review of the residents' side.
+
+## Update 2026-11-11: the zone and the plotted point
+
+- **A zone on the call.** The reinforcement call takes a zone in service or the whole compound (`zoneId`, from `GET /staff/field-team/zones`); the roster's single slot takes one too.
+- **The location, plotted, one technician at a time.** The Location tab reads one technician's last point when they are picked, or when "Read again" is pressed (each read is audited, as before). It does not refetch on a window's focus or a remount, and drops the point from the page's memory when another is picked. The point is drawn on its own: a plot with the point at the centre, rings every few metres, north up and the circle of its accuracy, drawn in the browser; the coordinates still open a public map in a new tab. **No map tiles and no key**: the repo has none, and the site map (ADR 0084) is an image with positions as fractions, not coordinates, so a point cannot be laid on it. **A map of several technicians is not built**, since it would show many people's locations in one view and read them unaudited or in bulk, which this ADR rules out: a read is one technician's, with their consent, and audited.

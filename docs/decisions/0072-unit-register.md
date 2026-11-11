@@ -55,3 +55,12 @@ M2 is the first manager phase after the resident, guard and technician roles wer
 - Later phases move what keys on building names (audiences, partners' service areas, governance's building votes, finance's issue by building) to ids at their own pace; until then the trigger keeps names and ids together.
 - The staff's search grows by registering sources (vendors in M2-5, compound documents).
 - Tests: buildings and the edit (races: a move against a delete, two units naming one new building), the register's reads, imports (race: two applies), the search, audit coverage, isolation, registry rows, no-store calls.
+
+## Update 2026-11-11: the pickers search
+
+A picker listed the first 100 rows of a list and could not reach the rest. The lists a picker reads now search on the server, and the dashboard's pickers ask for what was typed.
+
+- **`q` on three more lists**, 2 to 64 characters: `GET /accounts` and `GET /residents` find part of a name in any case, or exactly the phone or the email (the staff's search shares the filter: an erased account is never found); `GET /maintenance/assets` finds part of the code, the English name or the Arabic one (1 to 64). Units and vendors already had `q`. The next page of a search continues the same search.
+- **`group` and `active` on `GET /accounts`**: `staff` (staff and manager accounts), `managers` or `households` (resident and family accounts), and `active=true` (can sign in now). The pickers that name an owner, a manager or a household's person ask for exactly them instead of filtering one page in the browser.
+- **The manager dashboard**: `UnitPicker` and the new account, resident, asset and vendor pickers list the first 50 and find any other by what is typed (after a short pause), keep the chosen one in view and say when there are more matches than are listed. The dispatch setup counts the waiting queue by following its pages up to 1000. The sidebar's badges still read one page and show `99+`.
+- No new route, permission, audit action or migration: a read narrowed by a parameter, under the list's own permission.

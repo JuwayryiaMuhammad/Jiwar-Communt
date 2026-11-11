@@ -33,6 +33,10 @@ export const REPORT_KEYS = [
   // Taxes (ADR 0093).
   'tax_vat',
   'tax_withholding',
+  // Purchase orders (ADR 0094).
+  'po_open',
+  'po_received_not_invoiced',
+  'po_match_exceptions',
 ] as const;
 export type ReportKey = (typeof REPORT_KEYS)[number];
 
@@ -49,6 +53,7 @@ export const REPORT_READERS = [
   'finance.reports',
   'finance.cashflow',
   'finance.ledger',
+  'finance.payables',
 ] as const satisfies readonly Permission[];
 
 /** The longest period one report covers, as the domains' reports (ADR 0065). */

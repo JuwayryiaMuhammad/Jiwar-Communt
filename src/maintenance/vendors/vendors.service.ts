@@ -676,7 +676,12 @@ export class VendorsService implements OnModuleInit {
 export async function nextProcurementNumber(
   tx: TenantTxClient,
   tenantId: string,
-  kind: 'vendor' | 'purchase_request' | 'tender',
+  kind:
+    | 'vendor'
+    | 'purchase_request'
+    | 'tender'
+    | 'purchase_order'
+    | 'goods_receipt',
 ): Promise<number> {
   const [{ number }] = await tx.$queryRaw<{ number: number }[]>`
     INSERT INTO procurement_counters (tenant_id, kind, last_number)

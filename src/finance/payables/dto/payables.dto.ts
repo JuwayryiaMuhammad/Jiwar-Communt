@@ -32,6 +32,7 @@ import {
   DISBURSEMENT_KINDS,
   GUARANTEE_KINDS,
   INVOICE_STATUSES,
+  LINE_QUANTITY,
   PAYABLE_LIMITS as L,
   PAYOUT_METHODS,
   TAX_CODE_LIST,
@@ -175,13 +176,15 @@ export class CommitmentsQueryDto extends PageQueryDto {
   @IsUUID()
   lineId?: string;
 
-  @ApiPropertyOptional({ enum: ['contract', 'purchase_request'] })
+  @ApiPropertyOptional({
+    enum: ['contract', 'purchase_request', 'purchase_order'],
+  })
   @IsOptional()
   @IsIn(
-    ['contract', 'purchase_request'],
-    withParams({ allowed: ['contract', 'purchase_request'] }),
+    ['contract', 'purchase_request', 'purchase_order'],
+    withParams({ allowed: ['contract', 'purchase_request', 'purchase_order'] }),
   )
-  source?: 'contract' | 'purchase_request';
+  source?: 'contract' | 'purchase_request' | 'purchase_order';
 
   @ApiPropertyOptional({
     type: Boolean,
@@ -205,23 +208,58 @@ export class VendorInvoiceLineDto {
   @Length(1, L.lineDescription, withParams({ min: 1, max: L.lineDescription }))
   description: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     pattern: LARGE_AMOUNT.source,
-    description: 'EGP, before tax.',
+    description:
+      'EGP, before tax. Required, except on a line that names an order’s line (then it is the quantity at the unit price, and refused).',
   })
+  @IsOptional()
   @IsString()
   @Matches(LARGE_AMOUNT)
-  amount: string;
+  amount?: string;
 
   @ApiPropertyOptional({
     enum: TAX_CODE_LIST,
     enumName: 'TaxCode',
-    description: 'zero by default.',
+    description:
+      'zero by default; a line that names an order’s line takes that line’s.',
   })
   @IsOptional()
   @IsIn(TAX_CODE_LIST, withParams({ allowed: [...TAX_CODE_LIST] }))
   taxCode?: TaxCode;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'An invoice against a purchase order: the order’s line this one bills (ADR 0094), with `quantity` and `unitPrice`; matched to what was ordered and accepted.',
+  })
+  @IsOptional()
+  @IsUUID()
+  purchaseOrderLineId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: LINE_QUANTITY.source,
+    description:
+      'With `purchaseOrderLineId`: what is billed, in the line’s unit.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(LINE_QUANTITY)
+  quantity?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    pattern: LARGE_AMOUNT.source,
+    description:
+      'With `purchaseOrderLineId`: the unit price billed, before tax.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(LARGE_AMOUNT)
+  unitPrice?: string;
 }
 
 export class RecordVendorInvoiceDto {
@@ -295,7 +333,17 @@ export class RecordVendorInvoiceDto {
     type: String,
     format: 'uuid',
     description:
-      'The line it is paid from; by default its contract’s or purchase’s.',
+      'A purchase order (ADR 0094): the invoice is matched to its lines and what was accepted on receipt before it is approved. Its vendor and budget line are the order’s.',
+  })
+  @IsOptional()
+  @IsUUID()
+  purchaseOrderId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'The line it is paid from; by default its contract’s, purchase’s or order’s.',
   })
   @IsOptional()
   @IsUUID()
@@ -431,6 +479,11 @@ export class VendorInvoicesQueryDto extends PageQueryDto {
   @IsOptional()
   @IsUUID()
   purchaseRequestId?: string;
+
+  @ApiPropertyOptional({ type: String, format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  purchaseOrderId?: string;
 }
 
 export class PaymentScheduleQueryDto {

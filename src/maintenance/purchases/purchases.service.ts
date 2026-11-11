@@ -378,6 +378,9 @@ export class PurchasesService implements OnModuleInit {
           throw notFound();
         if (before.status !== 'requested' && before.status !== 'approved')
           throw wrongStatus(before.status);
+        // A request a live purchase order was raised from is called off
+        // through the order (ADR 0094).
+        if (await this.hasLiveOrder(tx, id)) throw wrongStatus('ordered');
         await tx.purchaseRequest.update({
           where: { id },
           data: {
@@ -409,6 +412,8 @@ export class PurchasesService implements OnModuleInit {
       .withTenantTx(async (tx) => {
         const before = await this.lock(tx, id);
         if (before.status !== 'approved') throw wrongStatus(before.status);
+        // Bought through a purchase order, it is fulfilled by the order.
+        if (await this.hasLiveOrder(tx, id)) throw wrongStatus('ordered');
         await tx.purchaseRequest.update({
           where: { id },
           data: {
@@ -451,6 +456,11 @@ export class PurchasesService implements OnModuleInit {
         (await tx.maintenanceContract.findFirst({
           where: { approvalRequestId },
           select: { id: true },
+        })) ??
+        // So does a purchase order (ADR 0094).
+        (await tx.purchaseOrder.findFirst({
+          where: { approvalRequestId },
+          select: { id: true },
         }));
       if (other) throw approvalInvalid('covers_another');
       return approvalRequestId;
@@ -476,6 +486,18 @@ export class PurchasesService implements OnModuleInit {
       params: { requestRef: purchaseReference(r.number), decision },
       targetId: r.id,
     });
+  }
+
+  private async hasLiveOrder(tx: TenantTxClient, id: string): Promise<boolean> {
+    return (
+      (await tx.purchaseOrder.findFirst({
+        where: {
+          purchaseRequestId: id,
+          status: { in: ['requested', 'approved'] },
+        },
+        select: { id: true },
+      })) !== null
+    );
   }
 
   private async lock(tx: TenantTxClient, id: string): Promise<PurchaseRequest> {

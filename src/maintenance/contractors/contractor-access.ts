@@ -59,7 +59,8 @@ export class ContractorAccess {
 export async function contractorsOf(
   tx: TenantTxClient,
   vendorId: string,
-  permission: 'tickets.contract_work' | 'tenders.bid',
+  permission:
+    'tickets.contract_work' | 'tenders.bid' | 'purchase_orders.acknowledge',
 ): Promise<string[]> {
   const rows = await tx.account.findMany({
     where: {

@@ -200,6 +200,13 @@ import { MaintenanceContractsService } from './contracts/contracts.service';
 import { ContractSweep } from './contracts/contract-sweep';
 import { PurchaseInboxItems } from './purchases/purchase-inbox-items';
 import { PayableSources } from './contracts/payable-sources';
+import { ContractorPurchaseOrdersController } from './purchase-orders/contractor-purchase-orders.controller';
+import { GoodsReceiptsService } from './purchase-orders/goods-receipts';
+import { OrderProgress } from './purchase-orders/order-progress';
+import { PurchaseOrderDocuments } from './purchase-orders/purchase-order-documents';
+import { PurchaseOrderInboxItems } from './purchase-orders/purchase-order-inbox-items';
+import { PurchaseOrdersController } from './purchase-orders/purchase-orders.controller';
+import { PurchaseOrdersService } from './purchase-orders/purchase-orders.service';
 import { PurchasesController } from './purchases/purchases.controller';
 import { PurchasesService } from './purchases/purchases.service';
 import { VendorDocumentSweep } from './vendors/vendor-sweep';
@@ -359,6 +366,9 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     ContractPaymentsDueController,
     VendorsController,
     PurchasesController,
+    // Purchase orders and goods receipts (ADR 0094).
+    PurchaseOrdersController,
+    ContractorPurchaseOrdersController,
     ComplianceController,
     VendorContractorsController,
     VendorDispatchController,
@@ -503,6 +513,11 @@ import { TicketCorrespondence } from './tickets/ticket-correspondence';
     TenderInboxItems,
     PurchasesService,
     PurchaseInboxItems,
+    PurchaseOrdersService,
+    GoodsReceiptsService,
+    OrderProgress,
+    PurchaseOrderDocuments,
+    PurchaseOrderInboxItems,
     ComplianceService,
     ComplianceSweep,
     ComplianceOverview,

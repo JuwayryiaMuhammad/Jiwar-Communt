@@ -897,6 +897,11 @@ export class MaintenanceContractsService implements OnModuleInit {
         (await tx.purchaseRequest.findFirst({
           where: { approvalRequestId: q.approvalRequestId },
           select: { id: true },
+        })) ??
+        // So does a purchase order (ADR 0094).
+        (await tx.purchaseOrder.findFirst({
+          where: { approvalRequestId: q.approvalRequestId },
+          select: { id: true },
         }));
       if (other) throw approvalInvalid('signs_another');
       return q.approvalRequestId;

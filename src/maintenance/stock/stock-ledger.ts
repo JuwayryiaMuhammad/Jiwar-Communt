@@ -41,6 +41,8 @@ export interface Move {
   transferId?: string;
   ticketId?: string;
   partRequestId?: string;
+  /** The goods receipt of a purchase order a receipt came with (ADR 0094). */
+  goodsReceiptId?: string;
   actorId: string | null;
 }
 
@@ -151,6 +153,7 @@ export class StockLedger {
         transferId: m.transferId ?? null,
         ticketId: m.ticketId ?? null,
         partRequestId: m.partRequestId ?? null,
+        goodsReceiptId: m.goodsReceiptId ?? null,
         actorId: m.actorId,
         occurredAt: await dbNow(tx),
       },

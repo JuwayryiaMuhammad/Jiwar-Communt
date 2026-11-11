@@ -32,6 +32,9 @@ export function retentionOf(
     .toFixed(2);
 }
 
+/** A billed quantity of an order's line (ADR 0094): three decimals, above zero, under a million. */
+export const LINE_QUANTITY = /^(?!0+(\.0{1,3})?$)\d{1,6}(\.\d{1,3})?$/;
+
 export const INVOICE_STATUSES = [
   'received',
   'approved',

@@ -86,7 +86,18 @@ describe('the general ledger’s rules (ADR 0092)', () => {
   });
 
   it('the last CHECKs name every inbox type and every counter, in their order', () => {
-    const last = migration('20270615090400_gl_checks').replace(/\s+/g, ' ');
+    // The ledger's CHECKs name the types it knew; ADR 0094's (20270702090300)
+    // state them last, with a purchase order waiting for its approver.
+    const ledger = migration('20270615090400_gl_checks').replace(/\s+/g, ' ');
+    expect(
+      ledger.split(
+        `"type" IN (${quoted(INBOX_TYPES.filter((t) => t !== 'purchase_order'))}))`,
+      ),
+    ).toHaveLength(3);
+    const last = migration('20270702090300_purchase_order_checks').replace(
+      /\s+/g,
+      ' ',
+    );
     expect(last.split(`"type" IN (${quoted(INBOX_TYPES)}))`)).toHaveLength(3);
     // The counters are stated last by ADR 0093's (20270617090200).
     const taxes = migration('20270617090200_tax_checks').replace(/\s+/g, ' ');

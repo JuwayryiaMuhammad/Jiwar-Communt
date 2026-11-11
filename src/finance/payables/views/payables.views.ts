@@ -121,10 +121,12 @@ export class CommitmentView {
   @id() id: string;
   @id() budgetLineId: string;
   @ApiProperty({ type: String }) category: string;
-  @ApiProperty({ enum: ['contract', 'purchase_request'] }) source: string;
+  @ApiProperty({ enum: ['contract', 'purchase_request', 'purchase_order'] })
+  source: string;
   @id(true) contractId: string | null;
   @id(true) contractPaymentId: string | null;
   @id(true) purchaseRequestId: string | null;
+  @id(true) purchaseOrderId: string | null;
   @id(true) vendorId: string | null;
   @money() amount: string;
   @money('Given back so far.') released: string;
@@ -144,6 +146,7 @@ export class CommitmentView {
       contractId: c.contractId,
       contractPaymentId: c.contractPaymentId,
       purchaseRequestId: c.purchaseRequestId,
+      purchaseOrderId: c.purchaseOrderId,
       vendorId: c.vendorId,
       amount: show(c.amount),
       released: show(r.released),
@@ -220,6 +223,10 @@ export class VendorInvoiceLineView {
   @ApiProperty({ enum: TAX_CODE_LIST, enumName: 'TaxCode' }) taxCode: string;
   @ApiProperty({ type: String, example: '0.00' }) taxRate: string;
   @money() tax: string;
+  @id(true, 'The order’s line it bills (ADR 0094).')
+  purchaseOrderLineId: string | null;
+  @ApiProperty({ type: String, nullable: true }) quantity: string | null;
+  @ApiProperty({ type: String, nullable: true }) unitPrice: string | null;
 }
 
 /** A vendor's invoice (ADR 0089). */
@@ -239,6 +246,8 @@ export class VendorInvoiceView {
   @id(true) contractId: string | null;
   @id(true) contractPaymentId: string | null;
   @id(true) purchaseRequestId: string | null;
+  @id(true, 'The purchase order it bills (ADR 0094).')
+  purchaseOrderId: string | null;
   @id(true) budgetLineId: string | null;
   @id(true, 'The board’s approved major contract it spends down.')
   authorizationId: string | null;
@@ -293,6 +302,7 @@ export class VendorInvoiceView {
       contractId: i.contractId,
       contractPaymentId: i.contractPaymentId,
       purchaseRequestId: i.purchaseRequestId,
+      purchaseOrderId: i.purchaseOrderId,
       budgetLineId: i.budgetLineId,
       authorizationId: i.authorizationId,
       subtotal: show(i.subtotal),
@@ -315,6 +325,9 @@ export class VendorInvoiceView {
         taxCode: l.taxCode,
         taxRate: show(l.taxRate),
         tax: show(l.tax),
+        purchaseOrderLineId: l.purchaseOrderLineId,
+        quantity: l.quantity?.toFixed(3) ?? null,
+        unitPrice: l.unitPrice?.toFixed(2) ?? null,
       })),
       payout: r.payout ? PayoutView.from(r.payout) : null,
     };
@@ -441,9 +454,11 @@ export class ScheduleRowView {
   @dayProp() day: string;
   @money() amount: string;
   @ApiProperty({ type: String, nullable: true }) reference: string | null;
-  @ApiProperty({ enum: ['contract', 'purchase_request'] }) source: string;
+  @ApiProperty({ enum: ['contract', 'purchase_request', 'purchase_order'] })
+  source: string;
   @id(true) contractId: string | null;
   @id(true) purchaseRequestId: string | null;
+  @id(true) purchaseOrderId: string | null;
   @id(true) vendorId: string | null;
   @ApiProperty({ type: String, nullable: true }) vendorName: string | null;
   @id() budgetLineId: string;

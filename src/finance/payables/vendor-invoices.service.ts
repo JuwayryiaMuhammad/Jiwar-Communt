@@ -12,7 +12,12 @@ import { diffChanges } from '../../core/audit/diff';
 import { BoardMatters } from '../../core/board-matters/board-matters';
 import { RequestContext } from '../../core/common/cls/request-context';
 import { clampLimit, keysetCursor, type Page } from '../../core/common/cursor';
-import { appError, ErrorCode, FieldErrorCode } from '../../core/common/errors';
+import {
+  appError,
+  ErrorCode,
+  FieldErrorCode,
+  type FieldError,
+} from '../../core/common/errors';
 import { invalid } from '../../core/common/localized';
 import { REASON_CODES, requireReasonCodeOnly } from '../../core/common/reasons';
 import { newId } from '../../core/common/uuid';
@@ -26,6 +31,7 @@ import { Notifier } from '../../core/notifications/notifier';
 import {
   PayablesBridge,
   type PayableContract,
+  type PayableOrder,
 } from '../../core/payables/payables-bridge';
 import { TenantSettingsService } from '../../core/tenant-settings/tenant-settings.service';
 import { VendorDirectory } from '../../core/vendors/vendor-directory';
@@ -49,6 +55,8 @@ import {
   type PayoutMethod,
   type TaxCode,
 } from './payable-rules';
+import { InvoiceMatchService } from './invoice-match.service';
+import { orderRequired } from './match-rules';
 import { VendorInvoiceView } from './views/payables.views';
 import {
   categoryByTrades,
@@ -71,9 +79,20 @@ export interface NewVendorInvoice {
   contractId?: string;
   contractPaymentId?: string;
   purchaseRequestId?: string;
+  /** The order it bills (ADR 0094): matched before it is approved. */
+  purchaseOrderId?: string;
   budgetLineId?: string;
   invoiceFileId: string;
-  lines: { description: string; amount: string; taxCode?: TaxCode }[];
+  lines: {
+    description: string;
+    /** Required, except on a line that names an order's line. */
+    amount?: string;
+    taxCode?: TaxCode;
+    /** The order's line this one bills, with the quantity and unit price. */
+    purchaseOrderLineId?: string;
+    quantity?: string;
+    unitPrice?: string;
+  }[];
   note?: string;
   /** What its payout withholds by (ADR 0093); null: its vendor's. */
   withholdingCategory?: WithholdingCategory;
@@ -111,7 +130,9 @@ const sourceInvalid = (
     | 'not_fulfilled'
     | 'paid'
     | 'invoiced'
-    | 'not_its_contract',
+    | 'not_its_contract'
+    | 'ordered'
+    | 'order_not_open',
 ) =>
   appError.conflict(
     ErrorCode.VENDOR_INVOICE_SOURCE_INVALID,
@@ -164,6 +185,7 @@ export class VendorInvoicesService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly idempotency: IdempotencyService,
     private readonly cashAccounts: CashAccountsService,
+    private readonly match: InvoiceMatchService,
   ) {}
 
   onModuleInit(): void {
@@ -210,13 +232,24 @@ export class VendorInvoicesService implements OnModuleInit {
           code: FieldErrorCode.FIELD_NOT_ALLOWED,
         },
       ]);
-    if (!input.contractId === !input.purchaseRequestId)
+    const against = [
+      input.contractId,
+      input.purchaseRequestId,
+      input.purchaseOrderId,
+    ].filter(Boolean).length;
+    if (against !== 1)
       throw invalid([
         {
-          field: input.contractId ? 'purchaseRequestId' : 'contractId',
-          code: input.contractId
-            ? FieldErrorCode.FIELD_NOT_ALLOWED
-            : FieldErrorCode.FIELD_REQUIRED,
+          field: !against
+            ? 'contractId'
+            : input.contractId
+              ? input.purchaseRequestId
+                ? 'purchaseRequestId'
+                : 'purchaseOrderId'
+              : 'purchaseOrderId',
+          code: !against
+            ? FieldErrorCode.FIELD_REQUIRED
+            : FieldErrorCode.FIELD_NOT_ALLOWED,
         },
       ]);
     if (input.contractPaymentId && !input.contractId)
@@ -227,26 +260,44 @@ export class VendorInvoicesService implements OnModuleInit {
       throw invalid([
         { field: 'dueOn', code: FieldErrorCode.ENDS_BEFORE_START },
       ]);
-    const lines = input.lines.map((l, i) => {
-      const code = l.taxCode ?? 'zero';
-      return {
-        position: i + 1,
-        description: l.description.trim(),
-        amount: show(l.amount),
-        taxCode: code,
-        tax: lineTax(l.amount, code),
-      };
+    // A line names an order's line with its quantity and unit price, or it
+    // carries its amount: never both, and only against an order.
+    const lineFields = input.lines.flatMap((l, i): FieldError[] => {
+      const at = (f: string) => `lines.${i}.${f}`;
+      if (l.purchaseOrderLineId) {
+        return [
+          ...(input.purchaseOrderId
+            ? []
+            : [
+                {
+                  field: at('purchaseOrderLineId'),
+                  code: FieldErrorCode.FIELD_NOT_ALLOWED,
+                },
+              ]),
+          ...(l.amount !== undefined
+            ? [{ field: at('amount'), code: FieldErrorCode.FIELD_NOT_ALLOWED }]
+            : []),
+          ...(l.quantity === undefined
+            ? [{ field: at('quantity'), code: FieldErrorCode.FIELD_REQUIRED }]
+            : []),
+          ...(l.unitPrice === undefined
+            ? [{ field: at('unitPrice'), code: FieldErrorCode.FIELD_REQUIRED }]
+            : []),
+        ];
+      }
+      return [
+        ...(l.amount === undefined
+          ? [{ field: at('amount'), code: FieldErrorCode.FIELD_REQUIRED }]
+          : []),
+        ...(l.quantity !== undefined
+          ? [{ field: at('quantity'), code: FieldErrorCode.FIELD_NOT_ALLOWED }]
+          : []),
+        ...(l.unitPrice !== undefined
+          ? [{ field: at('unitPrice'), code: FieldErrorCode.FIELD_NOT_ALLOWED }]
+          : []),
+      ];
     });
-    const subtotal = lines.reduce((a, l) => a.add(l.amount), ZERO);
-    const tax = lines.reduce((a, l) => a.add(l.tax), ZERO);
-    if (subtotal.add(tax).gt(MAX_TOTAL))
-      throw invalid([
-        {
-          field: 'lines',
-          code: FieldErrorCode.INVALID_VALUE,
-          params: { max: show(MAX_TOTAL) },
-        },
-      ]);
+    if (lineFields.length) throw invalid(lineFields);
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
       const { timezone } = await this.settings.inTx(tx, this.ctx.txTenantId);
@@ -263,7 +314,20 @@ export class VendorInvoicesService implements OnModuleInit {
       let vendorId: string | null = null;
       let lineId: string | null = null;
       let approvalRequestId: string | null = null;
-      if (input.contractId) {
+      let order: PayableOrder | null = null;
+      if (input.purchaseOrderId) {
+        order = await this.bridge.source.order(tx, input.purchaseOrderId);
+        if (!order || (contractor && order.vendorId !== contractor.vendorId))
+          throw appError.notFound(
+            ErrorCode.PURCHASE_ORDER_NOT_FOUND,
+            'Purchase order not found',
+          );
+        if (order.status !== 'approved' && order.status !== 'closed')
+          throw sourceInvalid('order_not_open');
+        vendorId = order.vendorId;
+        lineId = order.budgetLineId;
+        approvalRequestId = order.approvalRequestId;
+      } else if (input.contractId) {
         const c = await this.bridge.source.contract(tx, input.contractId);
         if (!c || (contractor && c.vendorId !== contractor.vendorId))
           throw appError.notFound(
@@ -307,6 +371,17 @@ export class VendorInvoicesService implements OnModuleInit {
             'Purchase request not found',
           );
         if (r.status !== 'fulfilled') throw sourceInvalid('not_fulfilled');
+        // A request an order took over is invoiced through the order.
+        if (
+          await tx.purchaseOrder.findFirst({
+            where: {
+              purchaseRequestId: r.id,
+              status: { in: ['requested', 'approved', 'closed'] },
+            },
+            select: { id: true },
+          })
+        )
+          throw sourceInvalid('ordered');
         vendorId = r.vendorId;
         lineId = r.budgetLineId;
         approvalRequestId = r.approvalRequestId;
@@ -323,6 +398,81 @@ export class VendorInvoicesService implements OnModuleInit {
           vendorId: input.vendorId,
         }))!.id;
       }
+      const orderLines = new Map((order?.lines ?? []).map((l) => [l.id, l]));
+      const seenOrderLines = new Set<string>();
+      const lineFields2: FieldError[] = [];
+      const lines = input.lines.map((l, i) => {
+        const matched = l.purchaseOrderLineId
+          ? orderLines.get(l.purchaseOrderLineId)
+          : undefined;
+        if (l.purchaseOrderLineId) {
+          if (!matched)
+            lineFields2.push({
+              field: `lines.${i}.purchaseOrderLineId`,
+              code: FieldErrorCode.INVALID_VALUE,
+            });
+          else if (seenOrderLines.has(matched.id))
+            lineFields2.push({
+              field: `lines.${i}.purchaseOrderLineId`,
+              code: FieldErrorCode.DUPLICATE_VALUE,
+            });
+          else seenOrderLines.add(matched.id);
+        }
+        const code: TaxCode =
+          l.taxCode ?? (matched?.taxCode as TaxCode) ?? 'zero';
+        const quantity = matched ? money(l.quantity!) : null;
+        const unitPrice = matched ? money(l.unitPrice!) : null;
+        const amount =
+          quantity && unitPrice
+            ? quantity
+                .mul(unitPrice)
+                .toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP)
+            : l.amount !== undefined
+              ? money(l.amount)
+              : ZERO;
+        return {
+          position: i + 1,
+          description: l.description.trim(),
+          amount: show(amount),
+          taxCode: code,
+          tax: lineTax(amount, code),
+          purchaseOrderLineId: matched?.id ?? null,
+          quantity: quantity ? quantity.toFixed(3) : null,
+          unitPrice: unitPrice ? unitPrice.toFixed(2) : null,
+          withholdingCategory: matched?.withholdingCategory ?? null,
+        };
+      });
+      if (lineFields2.length) throw invalid(lineFields2);
+      const subtotal = lines.reduce((a, l) => a.add(l.amount), ZERO);
+      const tax = lines.reduce((a, l) => a.add(l.tax), ZERO);
+      if (subtotal.add(tax).gt(MAX_TOTAL) || subtotal.lte(0))
+        throw invalid([
+          {
+            field: 'lines',
+            code: FieldErrorCode.INVALID_VALUE,
+            params: { max: show(MAX_TOTAL) },
+          },
+        ]);
+      // Above the compound's amount an invoice with no contract needs an
+      // order (default: never, so invoices without one keep working).
+      if (!input.contractId && !input.purchaseOrderId) {
+        const above = (await this.match.settingsIn(tx)).poRequiredAbove;
+        if (orderRequired(above, subtotal.add(tax)))
+          throw appError.conflict(
+            ErrorCode.VENDOR_INVOICE_PO_REQUIRED,
+            'An invoice this size needs a purchase order',
+            { params: { above: above as string } },
+          );
+      }
+      // Its payout withholds by the category of the order's largest line
+      // that names one, unless the invoice says its own.
+      const withholdingCategory =
+        input.withholdingCategory ??
+        (lines
+          .filter((l) => l.withholdingCategory)
+          .sort((a, b) => money(b.amount).comparedTo(a.amount))[0]
+          ?.withholdingCategory as WithholdingCategory | undefined) ??
+        undefined;
       const budgetLineId = input.budgetLineId ?? lineId;
       if (
         input.budgetLineId &&
@@ -391,6 +541,7 @@ export class VendorInvoicesService implements OnModuleInit {
           contractId: input.contractId ?? null,
           contractPaymentId: input.contractPaymentId ?? null,
           purchaseRequestId: input.purchaseRequestId ?? null,
+          purchaseOrderId: input.purchaseOrderId ?? null,
           budgetLineId,
           authorizationId,
           invoiceFileId: file.id,
@@ -400,7 +551,7 @@ export class VendorInvoicesService implements OnModuleInit {
           note,
           recordedById: this.ctx.accountId,
           recordedAt: now,
-          withholdingCategory: input.withholdingCategory ?? null,
+          withholdingCategory: withholdingCategory ?? null,
         },
       });
       await tx.financeVendorInvoiceLine.createMany({
@@ -413,6 +564,9 @@ export class VendorInvoicesService implements OnModuleInit {
           taxCode: l.taxCode,
           taxRate: l.taxCode === 'vat_14' ? 14 : 0,
           tax: l.tax,
+          purchaseOrderLineId: l.purchaseOrderLineId,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
         })),
       });
       await this.audit.record(tx, {
@@ -430,13 +584,14 @@ export class VendorInvoicesService implements OnModuleInit {
             contractId: invoice.contractId,
             contractPaymentId: invoice.contractPaymentId,
             purchaseRequestId: invoice.purchaseRequestId,
+            purchaseOrderId: invoice.purchaseOrderId,
             budgetLineId,
             subtotal: show(subtotal),
             tax: show(tax),
             total: show(subtotal.add(tax)),
             lines: lines.length,
             note,
-            withholdingCategory: input.withholdingCategory ?? null,
+            withholdingCategory: withholdingCategory ?? null,
           },
           'vendor_invoice.recorded',
         ),
@@ -467,10 +622,20 @@ export class VendorInvoicesService implements OnModuleInit {
   ): Promise<InvoiceRecord> {
     return this.tenantTx.withTenantTx(async (tx) => {
       await this.access.lockSelf(tx);
+      // An invoice against an order locks the order first (maintenance's
+      // row, as the contract is locked), so a receipt and its approval
+      // never decide on the same quantities at once.
+      const seen = await tx.financeVendorInvoice.findUnique({ where: { id } });
+      if (!seen) throw invoiceNotFound();
+      if (seen.purchaseOrderId)
+        await this.bridge.source.order(tx, seen.purchaseOrderId);
       const before = await this.lock(tx, id);
       if (before.status !== 'received') throw invoiceState(before.status);
       // Nobody approves what they recorded, the board's approval or not.
       if (before.recordedById === this.ctx.accountId) throw selfApproval();
+      // A mismatch with its order and receipts blocks the approval until it
+      // is resolved (a receipt, a corrected invoice) or let through.
+      await this.match.assertApprovable(tx, before);
       const lineId = input.budgetLineId ?? before.budgetLineId;
       if (!lineId)
         throw invalid([
@@ -546,6 +711,9 @@ export class VendorInvoicesService implements OnModuleInit {
         },
       });
       await this.tell(tx, before, 'approved');
+      // The order closes once fully received and invoiced.
+      if (before.purchaseOrderId)
+        await this.bridge.source.orderInvoiced(tx, before.purchaseOrderId);
       return this.load(tx, invoice);
     });
   }
@@ -863,6 +1031,7 @@ export class VendorInvoicesService implements OnModuleInit {
     vendorId?: string;
     contractId?: string;
     purchaseRequestId?: string;
+    purchaseOrderId?: string;
     cursor?: string;
     limit?: number;
   }): Promise<Page<InvoiceRecord>> {
@@ -877,6 +1046,7 @@ export class VendorInvoicesService implements OnModuleInit {
             q.purchaseRequestId
               ? { purchaseRequestId: q.purchaseRequestId }
               : {},
+            q.purchaseOrderId ? { purchaseOrderId: q.purchaseOrderId } : {},
             ...PAGE.after(q.cursor),
           ],
         },

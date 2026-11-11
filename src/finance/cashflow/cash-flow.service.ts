@@ -508,7 +508,7 @@ export class CashFlowService {
                SELECT SUM(r.amount) FROM finance_commitment_releases r
                 WHERE r.tenant_id = c.tenant_id AND r.commitment_id = c.id), 0) AS open
         FROM finance_commitments c
-       WHERE c.closed_at IS NULL AND c.source = 'purchase_request'
+       WHERE c.closed_at IS NULL AND c.source IN ('purchase_request', 'purchase_order')
          AND (c.due_on IS NULL OR c.due_on <= ${end}::date)`;
     for (const c of purchases) {
       if (money(c.open).lte(0)) continue;

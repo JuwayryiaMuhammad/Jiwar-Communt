@@ -14,7 +14,8 @@ import type { TenantTxClient } from '../database/tenant-tx.service';
 // the sources. A missing one stops the start.
 
 /** What reserves a budget line. */
-export type CommitmentSource = 'contract' | 'purchase_request';
+export type CommitmentSource =
+  'contract' | 'purchase_request' | 'purchase_order';
 
 /**
  * One amount a source would spend from a line: a contract's unpaid
@@ -32,7 +33,14 @@ export interface CommitmentItem {
 
 /** Why an open commitment is given back without an invoice. */
 export type CommitmentReleaseReason =
-  'changed' | 'cancelled' | 'terminated' | 'paid_outside';
+  | 'changed'
+  | 'cancelled'
+  | 'terminated'
+  | 'paid_outside'
+  // A purchase request's commitment taken over by its order, and what an
+  // order that closed has left (ADR 0094).
+  | 'ordered'
+  | 'closed';
 
 /**
  * Finance's side, in the source's transaction, after the source's own row
@@ -123,6 +131,36 @@ export interface PayablePurchase {
   approvalRequestId: string | null;
 }
 
+/** One line of a purchase order as an invoice's match reads it (ADR 0094). */
+export interface PayableOrderLine {
+  id: string;
+  position: number;
+  kind: string;
+  description: string;
+  /** Ordered. */
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  taxCode: string;
+  withholdingCategory: string | null;
+  /** Accepted on receipts so far. */
+  accepted: string;
+}
+
+/** A purchase order as an invoice and its match read it. */
+export interface PayableOrder {
+  id: string;
+  number: number;
+  /** requested | approved | rejected | cancelled | closed */
+  status: string;
+  vendorId: string;
+  budgetLineId: string;
+  /** The board's approved major contract it was approved under, if any. */
+  approvalRequestId: string | null;
+  total: string;
+  lines: PayableOrderLine[];
+}
+
 /**
  * Maintenance's side: each read locks its row for update (null when
  * unknown) in the caller's transaction, before finance's own rows.
@@ -131,6 +169,17 @@ export interface PayableSources {
   contract(tx: TenantTxClient, id: string): Promise<PayableContract | null>;
   payment(tx: TenantTxClient, id: string): Promise<PayablePayment | null>;
   purchase(tx: TenantTxClient, id: string): Promise<PayablePurchase | null>;
+  /**
+   * A purchase order with its lines and what was accepted of each (ADR
+   * 0094), locked for update like the rest.
+   */
+  order(tx: TenantTxClient, id: string): Promise<PayableOrder | null>;
+  /**
+   * After an invoice naming the order was approved or called off: the
+   * order closes when it is fully received and invoiced, and gives back
+   * what its commitment still holds (the order's lock held already).
+   */
+  orderInvoiced(tx: TenantTxClient, id: string): Promise<void>;
   /**
    * The unpaid payments of the contracts not terminated, due on or before
    * `through` (earlier ones too: overdue), by day. A read, no lock (ADR

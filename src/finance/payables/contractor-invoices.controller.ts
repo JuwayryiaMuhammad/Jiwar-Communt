@@ -91,6 +91,15 @@ export class ContractorInvoiceDto {
   @IsUUID()
   purchaseRequestId?: string;
 
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description: 'A purchase order sent to my company (ADR 0094).',
+  })
+  @IsOptional()
+  @IsUUID()
+  purchaseOrderId?: string;
+
   @ApiProperty({
     type: String,
     format: 'uuid',
@@ -130,6 +139,8 @@ export class ContractorInvoiceView {
   contractPaymentId: string | null;
   @ApiProperty({ type: String, format: 'uuid', nullable: true })
   purchaseRequestId: string | null;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true })
+  purchaseOrderId: string | null;
   @ApiProperty({ type: String, example: '1200.00' }) subtotal: string;
   @ApiProperty({ type: String, example: '0.00' }) tax: string;
   @ApiProperty({ type: String, example: '1200.00' }) total: string;
@@ -155,6 +166,7 @@ export class ContractorInvoiceView {
       contractId: i.contractId,
       contractPaymentId: i.contractPaymentId,
       purchaseRequestId: i.purchaseRequestId,
+      purchaseOrderId: i.purchaseOrderId,
       subtotal: show(i.subtotal),
       tax: show(i.tax),
       total: show(i.total),

@@ -151,6 +151,7 @@ export class ContractorPortalController {
     'tickets.contract_work',
     'tenders.bid',
     'vendor_invoices.submit',
+    'purchase_orders.acknowledge',
   )
   @ApiOperation({ summary: 'My company' })
   @ApiOkResponse({ type: ContractorVendorView })

@@ -164,6 +164,9 @@ import { ContractorInvoicesController } from './payables/contractor-invoices.con
 import { PayablesInboxItems } from './payables/payables-inbox-items';
 import { PayablesReportsService } from './payables/payables-reports.service';
 import { VendorInvoicesService } from './payables/vendor-invoices.service';
+import { InvoiceMatchController } from './payables/invoice-match.controller';
+import { InvoiceMatchService } from './payables/invoice-match.service';
+import { PurchaseOrderSections } from './payables/purchase-order-sections';
 @Module({
   imports: [
     AccountsModule,
@@ -218,6 +221,8 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     PayablesReportsController,
     PayablesController,
     ContractorInvoicesController,
+    // The three-way match (ADR 0094).
+    InvoiceMatchController,
     // Cash flow and liquidity (ADR 0091).
     CashFlowController,
     // The general ledger (ADR 0092).
@@ -261,6 +266,8 @@ import { VendorInvoicesService } from './payables/vendor-invoices.service';
     CommitmentsService,
     BudgetPlanningService,
     VendorInvoicesService,
+    InvoiceMatchService,
+    PurchaseOrderSections,
     ContractMoneyService,
     PayablesReportsService,
     PayablesInboxItems,

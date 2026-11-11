@@ -67,10 +67,12 @@ export async function lockLines(
 
 /**
  * The commitment keeper (ADR 0089), registered with core's PayablesBridge
- * for maintenance's contracts and purchase requests: a contract's unpaid
- * payments due within its line's active budget, and an approved purchase
- * request, keep their line's budget until invoiced, changed, cancelled,
- * terminated or paid by hand. Called in the source's transaction, under
+ * for maintenance's contracts, purchase requests and purchase orders: a
+ * contract's unpaid payments due within its line's active budget, an
+ * approved purchase request, and an approved purchase order (ADR 0094, the
+ * same budget as its request's, taken over by it), keep their line's budget
+ * until invoiced, changed, cancelled, terminated, ordered, closed or paid
+ * by hand. Called in the source's transaction, under
  * the source's own row lock, then the lines' (see lockLines).
  */
 @Injectable()
@@ -161,7 +163,9 @@ export class CommitmentsService implements OnModuleInit {
         closedAt: null,
         ...(ev.source === 'contract'
           ? { contractId: ev.sourceId }
-          : { purchaseRequestId: ev.sourceId }),
+          : ev.source === 'purchase_order'
+            ? { purchaseOrderId: ev.sourceId }
+            : { purchaseRequestId: ev.sourceId }),
       },
     });
     // An item a live invoice names keeps its commitment as it is: the
@@ -179,7 +183,11 @@ export class CommitmentsService implements OnModuleInit {
       for (const i of live) invoiced.add(i.contractPaymentId!);
     }
     const itemOf = (c: FinanceCommitment) =>
-      (ev.source === 'contract' ? c.contractPaymentId : c.purchaseRequestId)!;
+      (ev.source === 'contract'
+        ? c.contractPaymentId
+        : ev.source === 'purchase_order'
+          ? c.purchaseOrderId
+          : c.purchaseRequestId)!;
     const wanted = ev.items.filter((i) => !invoiced.has(i.itemId));
     const lines = await lockLines(tx, this.budgets, [
       ...open.map((c) => c.lineId),
@@ -239,6 +247,7 @@ export class CommitmentsService implements OnModuleInit {
           contractId: ev.source === 'contract' ? ev.sourceId : null,
           contractPaymentId: ev.source === 'contract' ? i.itemId : null,
           purchaseRequestId: ev.source === 'purchase_request' ? i.itemId : null,
+          purchaseOrderId: ev.source === 'purchase_order' ? i.itemId : null,
           vendorId: i.vendorId,
           amount: i.amount,
           dueOn: i.dueOn ? asDate(i.dueOn) : null,
@@ -290,9 +299,13 @@ export class CommitmentsService implements OnModuleInit {
     tx: TenantTxClient,
     invoice: Pick<
       FinanceVendorInvoice,
-      'contractPaymentId' | 'purchaseRequestId'
+      'contractPaymentId' | 'purchaseRequestId' | 'purchaseOrderId'
     >,
   ): Promise<FinanceCommitment | null> {
+    if (invoice.purchaseOrderId)
+      return tx.financeCommitment.findFirst({
+        where: { purchaseOrderId: invoice.purchaseOrderId, closedAt: null },
+      });
     if (invoice.contractPaymentId)
       return tx.financeCommitment.findFirst({
         where: { contractPaymentId: invoice.contractPaymentId, closedAt: null },

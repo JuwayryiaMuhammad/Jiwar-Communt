@@ -25,9 +25,10 @@ export interface ScheduleRow {
   amount: string;
   /** VI- for an invoice; null for a commitment. */
   reference: string | null;
-  source: 'contract' | 'purchase_request';
+  source: 'contract' | 'purchase_request' | 'purchase_order';
   contractId: string | null;
   purchaseRequestId: string | null;
+  purchaseOrderId: string | null;
   vendorId: string | null;
   vendorName: string | null;
   budgetLineId: string;
@@ -93,6 +94,7 @@ export class PayablesReportsService {
           number: number | null;
           contract_id: string | null;
           purchase_request_id: string | null;
+          purchase_order_id: string | null;
           vendor_id: string | null;
           vendor_name: string | null;
           line_id: string;
@@ -100,7 +102,7 @@ export class PayablesReportsService {
         }[]
       >`
         SELECT 'invoice' AS kind, i.id, i.due_on AS day, i.total AS amount, i.number,
-               i.contract_id, i.purchase_request_id, i.vendor_id, v.name AS vendor_name,
+               i.contract_id, i.purchase_request_id, i.purchase_order_id, i.vendor_id, v.name AS vendor_name,
                i.budget_line_id AS line_id, l.category
           FROM finance_vendor_invoices i
           JOIN finance_budget_lines l ON l.id = i.budget_line_id
@@ -108,7 +110,7 @@ export class PayablesReportsService {
          WHERE i.status = 'approved' AND i.due_on BETWEEN ${from}::date AND ${to}::date
         UNION ALL
         SELECT 'commitment', c.id, c.due_on, c.amount - COALESCE(r.released, 0), NULL,
-               c.contract_id, c.purchase_request_id, c.vendor_id, v.name,
+               c.contract_id, c.purchase_request_id, c.purchase_order_id, c.vendor_id, v.name,
                c.line_id, l.category
           FROM finance_commitments c
           JOIN finance_budget_lines l ON l.id = c.line_id
@@ -143,9 +145,14 @@ export class PayablesReportsService {
             r.number === null
               ? null
               : `VI-${String(r.number).padStart(6, '0')}`,
-          source: r.purchase_request_id ? 'purchase_request' : 'contract',
+          source: r.purchase_order_id
+            ? 'purchase_order'
+            : r.purchase_request_id
+              ? 'purchase_request'
+              : 'contract',
           contractId: r.contract_id,
           purchaseRequestId: r.purchase_request_id,
+          purchaseOrderId: r.purchase_order_id,
           vendorId: r.vendor_id,
           vendorName: r.vendor_name,
           budgetLineId: r.line_id,

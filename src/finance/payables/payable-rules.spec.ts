@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import {
   fiscalMonth,
   lineTax,
+  TAX_CODES,
   monthsFromQuarters,
   monthsOf,
   retentionOf,
@@ -10,6 +11,10 @@ import {
 const d = (v: string) => new Prisma.Decimal(v);
 
 describe('payables’ rules (ADR 0089)', () => {
+  it('the tax codes are the ones a purchase order’s lines carry (ADR 0094)', () => {
+    expect(TAX_CODES).toEqual({ zero: 0, exempt: 0, vat_14: 14 });
+  });
+
   it('a line’s tax is its amount at the code’s rate, to the piastre', () => {
     expect(lineTax('1000.00', 'zero')).toBe('0.00');
     expect(lineTax('1000.00', 'exempt')).toBe('0.00');

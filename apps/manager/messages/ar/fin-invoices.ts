@@ -18,6 +18,7 @@ const ar: Translation<typeof en> = {
   'col.owed': 'المستحق',
   'col.due': 'تاريخ الاستحقاق',
   'col.issued': 'تاريخ الإصدار',
+  'total.withVat': '{total} (الصافي {net} + ضريبة القيمة المضافة {vat})',
 };
 
 export default ar;

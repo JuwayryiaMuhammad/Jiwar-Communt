@@ -16,4 +16,5 @@ export default {
   'col.owed': 'Owed',
   'col.due': 'Due',
   'col.issued': 'Issued',
+  'total.withVat': '{total} (net {net} + VAT {vat})',
 } as const;

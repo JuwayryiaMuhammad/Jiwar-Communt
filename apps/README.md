@@ -143,6 +143,10 @@ One Arabic word per domain term, the same on every page.
 | Vehicle fine | غرامة | | Violation | مخالفة |
 | Permit | تصريح | | Visitor | زائر |
 | Appeal | تظلم | | SLA | SLA (kept in Latin) |
+| VAT | ضريبة القيمة المضافة | | Tax declaration | الإقرار الضريبي |
+| Withholding tax | ضريبة الخصم من المنبع (الخصم والإضافة) | | Withholding certificate | شهادة الخصم |
+| Fiscal year | السنة المالية | | Year-end close | إقفال السنة |
+| Accumulated surplus | الفائض المرحّل | | | |
 
 ## Checks
 

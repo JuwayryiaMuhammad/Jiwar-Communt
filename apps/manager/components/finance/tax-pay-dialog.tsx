@@ -2,10 +2,13 @@
 
 import { fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, useAction } from '@jiwar/api/react';
-import { Button, Dialog, Field, Input, Select, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Dialog, Field, Input, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/queries';
+import ar from '@/messages/ar/fin-tax-pay';
+import en from '@/messages/en/fin-tax-pay';
 import { amountOk } from './tax';
 import { PayoutAccountField } from './payout-account';
 
@@ -28,6 +31,10 @@ export function TaxPayDialog({
   what: { kind: 'vat'; declarationId: string } | { kind: 'withholding'; quarter: string };
   onClose: () => void;
 }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [amount, setAmount] = useState(due);
   const [paidOn, setPaidOn] = useState(today());
@@ -51,7 +58,7 @@ export function TaxPayDialog({
     {
       invalidate: [keys.taxAll, keys.glAll, ['finance', 'cash-accounts']],
       onDone: (p) => {
-        toast.show(`Recorded as ${p.number}.`);
+        toast.show(t('done', { number: p.number }));
         onClose();
       },
     },
@@ -62,27 +69,27 @@ export function TaxPayDialog({
       open
       onClose={onClose}
       title={title}
-      description={`Still due: ${due} EGP. It leaves a treasury account against ${what.kind === 'vat' ? 'VAT payable' : 'withholding payable'}.`}
+      description={t(what.kind === 'vat' ? 'dueVat' : 'dueWithholding', { amount: f.money(due) })}
       onSubmit={() => pay.mutate(undefined)}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c('cancel')}</Button>
           <Button type="submit" variant="primary" loading={pay.isPending} disabled={!amountOk(amount) || !account}>
-            Pay
+            {t('pay')}
           </Button>
         </>
       }
     >
       <div className="form">
         <div className="row" style={{ gap: 16 }}>
-          <Field label="Amount, EGP" error={err('amount')}>
+          <Field label={t('amount')} error={err('amount')}>
             {(p) => <Input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
           </Field>
-          <Field label="Paid on" error={err('paidOn')}>
+          <Field label={t('paidOn')} error={err('paidOn')}>
             {(p) => <Input {...p} type="date" value={paidOn} max={today()} onChange={(e) => setPaidOn(e.target.value)} />}
           </Field>
         </div>
-        <Field label="Method" error={err('method')}>
+        <Field label={t('method')} error={err('method')}>
           {(p) => (
             <Select
               {...p}
@@ -92,14 +99,14 @@ export function TaxPayDialog({
                 setAccount('');
               }}
             >
-              <option value="bank_transfer">Bank transfer</option>
-              <option value="cheque">Cheque</option>
-              <option value="cash">Cash</option>
+              <option value="bank_transfer">{label('bank_transfer')}</option>
+              <option value="cheque">{label('cheque')}</option>
+              <option value="cash">{label('cash')}</option>
             </Select>
           )}
         </Field>
         <PayoutAccountField method={method} value={account} onChange={setAccount} error={pay.error} />
-        <Field label="The tax authority’s receipt or the transfer’s reference" error={err('reference')}>
+        <Field label={t('reference')} error={err('reference')}>
           {(p) => <Input {...p} maxLength={100} value={reference} onChange={(e) => setReference(e.target.value)} />}
         </Field>
         <ErrorAlert error={pay.error} />

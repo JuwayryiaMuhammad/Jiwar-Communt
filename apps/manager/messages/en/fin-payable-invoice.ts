@@ -25,4 +25,7 @@ export default {
   'tax.zero': 'No tax',
   'tax.exempt': 'Exempt',
   'tax.vat_14': 'VAT 14%',
+  headlineRecovered: '{total} (tax {tax}, {recovered} recovered as input VAT)',
+  payoutWithheld:
+    '{gross} less {held} held back, {setOff} set off and {withheld} withheld as tax ({rate} of {base}): {net} paid by {method}.',
 } as const;

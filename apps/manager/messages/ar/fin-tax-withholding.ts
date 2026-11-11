@@ -1,0 +1,50 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/fin-tax-withholding.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'ضريبة الخصم من المنبع',
+  description:
+    'تُخصم مما يُدفع للمورد وتُرحَّل إلى حساب ضريبة الخصم المستحقة؛ ويحصل المورد على شهادة خصم عن كل دفعة، وتُسدَّد ضريبة كل ربع سنة من الخزينة.',
+  settingsLink: 'إعدادات الضرائب',
+  tabs: 'الخصم من المنبع',
+  quarters: 'الأرباع',
+  certificates: 'شهادات الخصم',
+  vendors: 'فئات الموردين',
+  quartersTitle: 'الأرباع',
+  quartersHint: 'أرباع السنة الميلادية من الأحدث إلى الأقدم: ما خُصم بموجب الشهادات، وما سُدِّد، وما بقي.',
+  quartersEmpty: 'لم يُخصم شيء بعد',
+  quarter: 'الربع',
+  quarterRange: '{quarter} (من {from} إلى {to})',
+  certificateCount: 'الشهادات',
+  withheld: 'المخصوم',
+  paid: 'المسدَّد',
+  stillDue: 'المتبقي',
+  pay: 'سدّد {amount}',
+  pdf: 'ملف PDF',
+  workbook: 'ملف Excel',
+  csv: 'ملف CSV',
+  payTitle: 'سداد الضريبة المخصومة في {quarter}',
+  certificatesTitle: 'شهادات الخصم',
+  certificatesHint: 'شهادة لكل دفعة خُصمت منها ضريبة، بفئتها ونسبتها والمبلغ الخاضع.',
+  everyQuarter: 'كل الأرباع',
+  certificatesEmpty: 'لا توجد شهادات',
+  certificate: 'الشهادة',
+  vendor: 'المورد',
+  payout: 'الدفعة',
+  paidOn: 'تاريخ الدفع',
+  category: 'الفئة',
+  categoryRate: '{category}، بنسبة {rate}',
+  base: 'المبلغ الخاضع',
+  vendorsTitle: 'فئات الموردين',
+  vendorsHint:
+    'الفئة التي تُخصم بها مدفوعات المورد. وإن تُركت فبحسب تخصصه: أتعاب مهنية إن كان تخصصه مهنيًا، وتوريدات إن كان لا يعمل غير ذلك، وإلا خدمات. والمعفى لا يُخصم منه شيء.',
+  vendorsEmpty: 'لا يوجد موردون',
+  taxNumber: 'الرقم الضريبي',
+  trades: 'التخصصات',
+  withholdsBy: 'يُخصم منه بفئة',
+  byTrades: 'بحسب تخصصاته ({category})',
+  categoryOf: 'فئة الخصم من المنبع للمورد {name}',
+  saved: 'تم الحفظ.',
+};
+
+export default ar;

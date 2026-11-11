@@ -156,7 +156,11 @@ export default function VendorInvoicePage() {
           <>
             <Card>
               <SectionHeader
-                title={t('headline', { total: f.money(i.total), tax: f.money(i.tax) })}
+                title={
+                  Number(i.vatRecoverable) > 0
+                    ? t('headlineRecovered', { total: f.money(i.total), tax: f.money(i.tax), recovered: f.money(i.vatRecoverable) })
+                    : t('headline', { total: f.money(i.total), tax: f.money(i.tax) })
+                }
                 description={t('dates', { issued: f.day(i.issuedOn), due: f.day(i.dueOn), recorded: f.dateTime(i.recordedAt) })}
               />
               {i.invoiceUrl ? (
@@ -179,13 +183,26 @@ export default function VendorInvoicePage() {
               <Card>
                 <SectionHeader
                   title={t('paidAs', { number: i.payout.number, day: f.day(i.payout.paidOn) })}
-                  description={t('payout', {
-                    gross: f.money(i.payout.gross),
-                    held: f.money(i.payout.retentionHeld),
-                    setOff: f.money(i.payout.advanceSetOff),
-                    net: f.money(i.payout.net),
-                    method: code('method', i.payout.method),
-                  })}
+                  description={
+                    Number(i.payout.withholding) > 0
+                      ? t('payoutWithheld', {
+                          gross: f.money(i.payout.gross),
+                          held: f.money(i.payout.retentionHeld),
+                          setOff: f.money(i.payout.advanceSetOff),
+                          withheld: f.money(i.payout.withholding),
+                          rate: f.percent(Number(i.payout.withholdingRate) / 100, 2),
+                          base: f.money(i.payout.withholdingBase),
+                          net: f.money(i.payout.net),
+                          method: code('method', i.payout.method),
+                        })
+                      : t('payout', {
+                          gross: f.money(i.payout.gross),
+                          held: f.money(i.payout.retentionHeld),
+                          setOff: f.money(i.payout.advanceSetOff),
+                          net: f.money(i.payout.net),
+                          method: code('method', i.payout.method),
+                        })
+                  }
                 />
               </Card>
             ) : null}

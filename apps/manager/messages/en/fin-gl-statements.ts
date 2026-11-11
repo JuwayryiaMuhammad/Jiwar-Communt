@@ -27,7 +27,8 @@ export default {
   assets: 'Assets',
   liabilities: 'Liabilities',
   equity: 'Equity',
-  surplusToDate: 'Surplus to date, not yet closed into equity:',
+  currentYearResult: 'This fiscal year’s result (from {day}), apart from accumulated surplus:',
+  priorYearsResult: 'Earlier years not yet closed into it:',
   balances: 'Balances',
   doesNotBalance: 'Does not balance',
 } as const;

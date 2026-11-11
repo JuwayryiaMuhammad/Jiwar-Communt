@@ -29,7 +29,8 @@ const ar: Translation<typeof en> = {
   assets: 'الأصول',
   liabilities: 'الخصوم',
   equity: 'حقوق الملكية',
-  surplusToDate: 'الفائض حتى الآن، ولم يُرحَّل بعد إلى حقوق الملكية:',
+  currentYearResult: 'نتيجة السنة المالية الحالية (من {day}) منفصلة عن الفائض المرحّل:',
+  priorYearsResult: 'نتيجة سنوات سابقة لم تُقفل بعد في الفائض المرحّل:',
   balances: 'متوازنة',
   doesNotBalance: 'غير متوازنة',
 };

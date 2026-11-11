@@ -97,7 +97,7 @@ export default function InvoicesPage() {
                 ),
               },
               { key: 'kind', header: c('kind'), cell: (i) => code('kind', i.kind) },
-              { key: 'total', header: c('total'), cell: (i) => fmt.money(i.total) },
+              { key: 'total', header: c('total'), cell: (i) => (Number(i.vat) > 0 ? t('total.withVat', { total: fmt.money(i.total), net: fmt.money(i.net), vat: fmt.money(i.vat) }) : fmt.money(i.total)) },
               { key: 'owed', header: t('col.owed'), cell: (i) => fmt.money(i.outstanding) },
               { key: 'due', header: t('col.due'), cell: (i) => fmt.day(i.dueOn) },
               { key: 'status', header: c('status'), cell: (i) => <StatusBadge status={i.status} /> },

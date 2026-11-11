@@ -27,6 +27,9 @@ const ar: Translation<typeof en> = {
   'tax.zero': 'بدون ضريبة',
   'tax.exempt': 'معفاة',
   'tax.vat_14': 'ضريبة القيمة المضافة 14%',
+  headlineRecovered: '{total} (ضريبة {tax}، منها {recovered} مستردة كضريبة مدخلات)',
+  payoutWithheld:
+    '{gross} بعد خصم {held} محتجزة و{setOff} مقاصة من الدفعات المقدمة و{withheld} ضريبة خصم من المنبع ({rate} من {base}): دُفع {net} بطريقة {method}.',
 };
 
 export default ar;

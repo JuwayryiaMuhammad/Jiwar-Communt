@@ -42,4 +42,7 @@ export default {
   'tax.zero': 'No tax',
   'tax.exempt': 'Exempt',
   'tax.vat_14': 'VAT 14%',
+  'record.withholding': 'Tax withheld from its payout',
+  'record.withholdingHint': 'Only while withholding is on in the tax settings.',
+  'record.withholdingDefault': 'By the vendor’s category',
 } as const;

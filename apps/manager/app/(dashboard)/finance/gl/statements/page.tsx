@@ -169,7 +169,13 @@ export default function StatementsPage() {
                 <Rows rows={balance.data.liabilities} title={t('liabilities')} total={balance.data.totalLiabilities} t={t} f={f} />
                 <Rows rows={balance.data.equity} title={t('equity')} total={balance.data.totalEquity} t={t} f={f} />
                 <Card>
-                  {t('surplusToDate')} {money(f, balance.data.surplus)}{' '}
+                  {t('currentYearResult', { day: f.day(balance.data.fiscalYearStartsOn) })} {money(f, balance.data.currentYearResult)}
+                  {Number(balance.data.priorYearsResult) !== 0 ? (
+                    <>
+                      {' '}
+                      {t('priorYearsResult')} {money(f, balance.data.priorYearsResult)}
+                    </>
+                  ) : null}{' '}
                   {balance.data.balanced ? <Badge tone="green">{t('balances')}</Badge> : <Badge tone="error">{t('doesNotBalance')}</Badge>}
                 </Card>
               </div>

@@ -1,8 +1,9 @@
 'use client';
 
-import { fieldError, humanize, unwrap, type Schema } from '@jiwar/api';
+import { fieldError, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { Badge, Button, Card, Checkbox, Field, ForbiddenState, Input, PageHeader, useToast } from '@jiwar/ui';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Badge, Button, Card, Checkbox, Field, ForbiddenState, Input, PageHeader, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -11,6 +12,8 @@ import { rateOk, thresholdOk, toggled } from '@/components/finance/tax';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
+import ar from '@/messages/ar/fin-tax-settings';
+import en from '@/messages/en/fin-tax-settings';
 
 type Settings = Schema<'TaxSettingsView'>;
 type Kind = Settings['taxableKinds'][number];
@@ -31,6 +34,10 @@ const CATEGORIES: Category[] = [
 ];
 
 function Form({ s, canWrite }: { s: Settings; canWrite: boolean }) {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const label = useLabel();
   const toast = useToast();
   const [registered, setRegistered] = useState(s.vatRegistered);
   const [number, setNumber] = useState(s.vatNumber ?? '');
@@ -72,7 +79,7 @@ function Form({ s, canWrite }: { s: Settings; canWrite: boolean }) {
           },
         }),
       ),
-    { invalidate: [keys.taxAll], onDone: () => toast.show('Saved. It applies from the next event.') },
+    { invalidate: [keys.taxAll], onDone: () => toast.show(t('saved')) },
   );
   const err = (f: string) => fieldError(save.error, f);
   const ok =
@@ -86,46 +93,44 @@ function Form({ s, canWrite }: { s: Settings; canWrite: boolean }) {
     <div className="stack">
       <Card>
         <SectionHeader
-          title="Value added tax"
+          title={t('vatTitle')}
           description={
-            s.vatSince
-              ? `Registered since ${s.vatSince}: invoices of the taxable kinds carry VAT from then; nothing before it was reposted.`
-              : 'Off. Turn it on and VAT starts that day: nothing before it is reposted.'
+            s.vatSince ? t('vatSince', { day: f.day(s.vatSince) }) : t('vatOff')
           }
         />
         <div className="form">
           <Checkbox
-            label="The compound is registered for VAT"
+            label={t('registered')}
             checked={registered}
             disabled={!canWrite}
             onChange={(e) => setRegistered(e.target.checked)}
           />
           <div className="row" style={{ gap: 16 }}>
-            <Field label="Registration number" error={err('vatNumber')}>
+            <Field label={t('vatNumber')} error={err('vatNumber')}>
               {(p) => <Input {...p} maxLength={40} value={number} disabled={!canWrite} onChange={(e) => setNumber(e.target.value)} />}
             </Field>
-            <Field label="Rate, %" error={err('vatRate')} hint="Egypt’s standard rate is 14.">
+            <Field label={t('vatRate')} error={err('vatRate')} hint={t('vatRateHint')}>
               {(p) => <Input {...p} inputMode="decimal" value={rate} disabled={!canWrite} onChange={(e) => setRate(e.target.value)} />}
             </Field>
           </div>
           <fieldset className="form" disabled={!canWrite}>
             <legend className="t-secondary">
-              Invoice kinds that carry VAT. None by default: residential service charges are often outside VAT, and the compound decides.
+              {t('taxableKinds')}
             </legend>
             {KINDS.map((k) => (
-              <Checkbox key={k} label={humanize(k)} checked={kinds.includes(k)} onChange={() => setKinds(toggled(kinds, KINDS, k))} />
+              <Checkbox key={k} label={label(k)} checked={kinds.includes(k)} onChange={() => setKinds(toggled(kinds, KINDS, k))} />
             ))}
           </fieldset>
           <fieldset className="form" disabled={!canWrite}>
             <legend className="t-secondary">
-              Purchase categories whose input VAT is recovered while registered (the VAT a vendor charges). Otherwise it stays part of the cost.
+              {t('recoverable')}
             </legend>
-            {CATEGORIES.map((c) => (
+            {CATEGORIES.map((cat) => (
               <Checkbox
-                key={c}
-                label={humanize(c)}
-                checked={recoverable.includes(c)}
-                onChange={() => setRecoverable(toggled(recoverable, CATEGORIES, c))}
+                key={cat}
+                label={label(cat)}
+                checked={recoverable.includes(cat)}
+                onChange={() => setRecoverable(toggled(recoverable, CATEGORIES, cat))}
               />
             ))}
           </fieldset>
@@ -133,29 +138,29 @@ function Form({ s, canWrite }: { s: Settings; canWrite: boolean }) {
       </Card>
       <Card>
         <SectionHeader
-          title="Withholding tax on vendors’ payouts"
-          description="Deducted from what a vendor is paid, posted to withholding payable, with a certificate for the vendor. Each vendor, or each invoice, carries its category."
+          title={t('withholdingTitle')}
+          description={t('withholdingDescription')}
         />
         <div className="form">
           <Checkbox
-            label="Withhold tax from vendors’ payouts"
+            label={t('withholdingOn')}
             checked={withholding}
             disabled={!canWrite}
             onChange={(e) => setWithholding(e.target.checked)}
           />
           <div className="row" style={{ gap: 16 }}>
-            <Field label="Supplies, %" error={err('suppliesRate')}>
+            <Field label={t('supplies')} error={err('suppliesRate')}>
               {(p) => <Input {...p} inputMode="decimal" value={supplies} disabled={!canWrite} onChange={(e) => setSupplies(e.target.value)} />}
             </Field>
-            <Field label="Services and contracting, %" error={err('servicesRate')}>
+            <Field label={t('services')} error={err('servicesRate')}>
               {(p) => <Input {...p} inputMode="decimal" value={services} disabled={!canWrite} onChange={(e) => setServices(e.target.value)} />}
             </Field>
-            <Field label="Professional fees, %" error={err('professionalRate')}>
+            <Field label={t('professional')} error={err('professionalRate')}>
               {(p) => (
                 <Input {...p} inputMode="decimal" value={professional} disabled={!canWrite} onChange={(e) => setProfessional(e.target.value)} />
               )}
             </Field>
-            <Field label="Below this invoice subtotal, EGP" error={err('withholdingThreshold')} hint="Nothing is withheld under it.">
+            <Field label={t('threshold')} error={err('withholdingThreshold')} hint={t('thresholdHint')}>
               {(p) => <Input {...p} inputMode="decimal" value={threshold} disabled={!canWrite} onChange={(e) => setThreshold(e.target.value)} />}
             </Field>
           </div>
@@ -165,11 +170,11 @@ function Form({ s, canWrite }: { s: Settings; canWrite: boolean }) {
       {canWrite ? (
         <div className="row" style={{ gap: 8 }}>
           <Button variant="primary" loading={save.isPending} disabled={!ok} onClick={() => save.mutate(undefined)}>
-            Save
+            {c('save')}
           </Button>
         </div>
       ) : (
-        <Badge tone="beige">Changing the settings needs the ledger’s write permission.</Badge>
+        <Badge tone="beige">{t('needsWrite')}</Badge>
       )}
     </div>
   );
@@ -183,26 +188,27 @@ function Form({ s, canWrite }: { s: Settings; canWrite: boolean }) {
  * the next event: nothing is reposted.
  */
 export default function TaxSettingsPage() {
+  const t = useT(en, ar);
   const { ready, can } = usePermissions();
   const allowed = can('finance.ledger');
   const q = useQuery({ queryKey: keys.taxSettings, queryFn: fetchers.taxSettings, enabled: allowed });
   if (ready && !allowed)
     return (
       <>
-        <PageHeader title="Tax settings" />
+        <PageHeader title={t('title')} />
         <ForbiddenState />
       </>
     );
   return (
     <>
       <PageHeader
-        title="Tax settings"
-        description="The rates and rules are the compound’s to set; the defaults are common Egyptian practice, not advice."
+        title={t('title')}
+        description={t('description')}
         actions={
           <span className="row" style={{ gap: 12 }}>
-            <Link href="/finance/tax/vat">VAT declaration</Link>
-            <Link href="/finance/tax/withholding">Withholding</Link>
-            <Link href="/finance/budgets">Fiscal year’s first month</Link>
+            <Link href="/finance/tax/vat">{t('vatLink')}</Link>
+            <Link href="/finance/tax/withholding">{t('withholdingLink')}</Link>
+            <Link href="/finance/budgets">{t('fiscalYearLink')}</Link>
           </span>
         }
       />

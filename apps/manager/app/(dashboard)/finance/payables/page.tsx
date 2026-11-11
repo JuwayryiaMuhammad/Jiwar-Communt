@@ -32,14 +32,18 @@ import en from '@/messages/en/fin-payables';
 type Status = VendorInvoice['status'] | '';
 const today = () => new Date().toLocaleDateString('en-CA');
 const TAX_CODES = ['zero', 'exempt', 'vat_14'] as const;
+const WITHHOLDING = ['supplies', 'services', 'professional', 'exempt'] as const;
+type Withholding = (typeof WITHHOLDING)[number];
 type TaxCode = (typeof TAX_CODES)[number];
 
 /** A vendor's invoice, against a contract (or one of its payments) or a fulfilled purchase request. */
 function RecordInvoice({ onClose }: { onClose: () => void }) {
   const t = useT(en, ar);
   const c = useCommonT();
+  const label = useLabel();
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
+  const [withholding, setWithholding] = useState<'' | Withholding>('');
   const [against, setAgainst] = useState<'contract' | 'purchase'>('contract');
   const [sourceId, setSourceId] = useState('');
   const [paymentId, setPaymentId] = useState('');
@@ -58,6 +62,7 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
             issuedOn,
             dueOn,
             invoiceFileId: file ?? '',
+            ...(withholding ? { withholdingCategory: withholding } : {}),
             ...(against === 'contract'
               ? { contractId: sourceId.trim(), ...(paymentId.trim() ? { contractPaymentId: paymentId.trim() } : {}) }
               : { purchaseRequestId: sourceId.trim() }),
@@ -171,6 +176,18 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
             </Field>
           </div>
         ))}
+        <Field label={t('record.withholding')} error={err('withholdingCategory')} hint={t('record.withholdingHint')}>
+          {(p) => (
+            <Select {...p} value={withholding} onChange={(e) => setWithholding(e.target.value as '' | Withholding)}>
+              <option value="">{t('record.withholdingDefault')}</option>
+              {WITHHOLDING.map((w) => (
+                <option key={w} value={w}>
+                  {label(w)}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
         <Button size="sm" onClick={() => setLines([...lines, { description: '', amount: '', taxCode: 'zero' }])} disabled={lines.length >= 50}>
           {t('record.addLine')}
         </Button>

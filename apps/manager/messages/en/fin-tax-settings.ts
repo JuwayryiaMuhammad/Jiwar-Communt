@@ -1,0 +1,28 @@
+/** The tax settings (ADR 0093): app/(dashboard)/finance/tax. */
+export default {
+  title: 'Tax settings',
+  description: 'The rates and rules are the compound’s to set; the defaults are common Egyptian practice, not advice.',
+  vatLink: 'VAT declaration',
+  withholdingLink: 'Withholding tax',
+  fiscalYearLink: 'Fiscal year’s first month',
+  vatTitle: 'Value added tax',
+  vatSince: 'Registered since {day}: invoices of the taxable kinds carry VAT from then; nothing before it was reposted.',
+  vatOff: 'Off. Turn it on and VAT starts that day: nothing before it is reposted.',
+  registered: 'The compound is registered for VAT',
+  vatNumber: 'Registration number',
+  vatRate: 'Rate, %',
+  vatRateHint: 'Egypt’s standard rate is 14.',
+  taxableKinds: 'Invoice kinds that carry VAT. None by default: residential service charges are often outside VAT, and the compound decides.',
+  recoverable: 'Purchase categories whose input VAT is recovered while registered (the VAT a vendor charges). Otherwise it stays part of the cost.',
+  withholdingTitle: 'Withholding tax on vendors’ payouts',
+  withholdingDescription:
+    'Deducted from what a vendor is paid, posted to withholding payable, with a certificate for the vendor. Each vendor, or each invoice, carries its category.',
+  withholdingOn: 'Withhold tax from vendors’ payouts',
+  supplies: 'Supplies, %',
+  services: 'Services and contracting, %',
+  professional: 'Professional fees, %',
+  threshold: 'Below this invoice subtotal, EGP',
+  thresholdHint: 'Nothing is withheld under it.',
+  saved: 'Saved. It applies from the next event.',
+  needsWrite: 'Changing the settings needs the ledger’s write permission.',
+} as const;

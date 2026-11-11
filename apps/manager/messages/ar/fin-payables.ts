@@ -42,6 +42,9 @@ const ar: Translation<typeof en> = {
   'tax.zero': 'بدون ضريبة',
   'tax.exempt': 'معفاة',
   'tax.vat_14': 'ضريبة القيمة المضافة 14%',
+  'record.withholding': 'ضريبة الخصم من المنبع على دفعتها',
+  'record.withholdingHint': 'تُطبَّق فقط عند تفعيل الخصم من المنبع في إعدادات الضرائب.',
+  'record.withholdingDefault': 'بحسب فئة المورد',
 };
 
 export default ar;

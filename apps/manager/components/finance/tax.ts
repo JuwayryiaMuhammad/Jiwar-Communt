@@ -30,30 +30,6 @@ export function quarterOf(day: string): string {
   return `${y}-Q${Math.ceil(m / 3)}`;
 }
 
-/** The quarter's label with its months, e.g. `2026-Q3 (Jul–Sep)`. */
-export function quarterWords(quarter: string): string {
-  const q = Number(quarter.slice(6));
-  const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const first = names[(q - 1) * 3];
-  const last = names[q * 3 - 1];
-  return first && last ? `${quarter} (${first}–${last})` : quarter;
-}
-
-const CATEGORY_TEXT: Record<string, string> = {
-  supplies: 'Supplies',
-  services: 'Services and contracting',
-  professional: 'Professional fees',
-  exempt: 'Exempt',
-};
-
-/** A withholding category in words. */
-export const withholdingCategoryText = (c: string) => CATEGORY_TEXT[c] ?? c;
-
-/** What a VAT month's status says. */
-export function vatStatusText(status: string): string {
-  return status === 'declared' ? 'Declared' : status === 'ready' ? 'Ready to declare' : 'Open';
-}
-
 /** The last day of a `YYYY-MM` month. */
 export function monthEnd(month: string): string {
   const [y = 1970, m = 1] = month.split('-').map(Number);

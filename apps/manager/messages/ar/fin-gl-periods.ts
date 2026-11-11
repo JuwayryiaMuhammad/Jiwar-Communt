@@ -18,6 +18,23 @@ const ar: Translation<typeof en> = {
   reopenTitle: 'إعادة فتح {month}',
   reopenDescription: 'يمكن بعدها تأريخ القيود فيه من جديد. يُسجَّل ذلك مع السبب.',
   reopenDone: 'تمت إعادة الفتح.',
+  yearsTitle: 'السنوات المالية',
+  yearsHint: 'إقفال السنة يصفّر إيراداتها ومصروفاتها في الفائض المرحّل ويقفل شهورها.',
+  yearsHintLink: 'الشهر الأول من السنة',
+  year: 'السنة',
+  yearRange: 'من {from} إلى {to}',
+  revenue: 'الإيرادات',
+  expenses: 'المصروفات',
+  result: 'النتيجة',
+  reopenings: 'أُعيد فتحها {count, plural, one {مرة واحدة} two {مرتين} few {# مرات} many {# مرة} other {# مرة}}',
+  closeYear: 'إقفال السنة',
+  openMonths: 'شهور مفتوحة: {months}',
+  closeYearTitle: 'إقفال السنة المالية التي تبدأ في {day}؟',
+  closeYearDescription: 'قيد إقفال واحد يصفّر إيرادات السنة ومصروفاتها في الفائض المرحّل بتاريخ آخر يوم فيها. ولا يمكن إعادة فتح شهورها قبل إعادة فتح السنة.',
+  closeYearDone: 'تم إقفال السنة.',
+  reopenYearTitle: 'إعادة فتح السنة المالية التي تبدأ في {day}',
+  reopenYearDescription: 'يُعكس قيد إقفالها. وتُعاد أحدث سنة مقفلة أولًا. يُسجَّل ذلك مع السبب.',
+  reopenYearDone: 'تمت إعادة فتح السنة.',
 };
 
 export default ar;

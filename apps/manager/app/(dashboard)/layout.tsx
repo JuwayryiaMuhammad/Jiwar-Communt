@@ -727,6 +727,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { href: '/finance/gl/statements', label: t('nav.finance.gl.statements'), icon: <ChartColumn aria-hidden />, show: can('finance.ledger') },
         { href: '/finance/gl/entries', label: t('nav.finance.gl.entries'), icon: <BookOpen aria-hidden />, show: can('finance.ledger') },
         { href: '/finance/gl/periods', label: t('nav.finance.gl.periods'), icon: <CalendarClock aria-hidden />, show: can('finance.ledger') },
+        // Taxes (ADR 0093).
+        { href: '/finance/tax', label: t('nav.finance.tax'), icon: <Landmark aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/tax/vat', label: t('nav.finance.tax.vat'), icon: <Receipt aria-hidden />, show: can('finance.ledger') },
+        { href: '/finance/tax/withholding', label: t('nav.finance.tax.withholding'), icon: <Receipt aria-hidden />, show: can('finance.ledger') },
         { href: '/finance/reports', label: t('nav.finance.reports'), icon: <ChartColumn aria-hidden />, show: can('finance.reports') },
         // Where the fees went, published to every payer (ADR 0069).
         { href: '/finance/spending-reports', label: t('nav.finance.spending-reports'), icon: <PiggyBank aria-hidden />, show: can('finance.reports') || can('finance.budget') },

@@ -6,12 +6,9 @@ import {
   quarterEnd,
   quarterOf,
   quarterStart,
-  quarterWords,
   rateOk,
   thresholdOk,
   toggled,
-  vatStatusText,
-  withholdingCategoryText,
 } from './tax.ts';
 
 test('taxes: a rate is a percent of two decimals; a VAT rate is above zero, a withholding rate may be zero', () => {
@@ -41,13 +38,6 @@ test('taxes: the quarter of a day, in words', () => {
   assert.equal(quarterOf('2026-01-01'), '2026-Q1');
   assert.equal(quarterOf('2026-09-30'), '2026-Q3');
   assert.equal(quarterOf('2026-12-31'), '2026-Q4');
-  assert.equal(quarterWords('2026-Q3'), '2026-Q3 (Jul–Sep)');
-});
-
-test('taxes: categories and statuses read as words', () => {
-  assert.equal(withholdingCategoryText('professional'), 'Professional fees');
-  assert.equal(withholdingCategoryText('other'), 'other');
-  assert.equal(vatStatusText('ready'), 'Ready to declare');
 });
 
 test('taxes: the days a month and a quarter span', () => {

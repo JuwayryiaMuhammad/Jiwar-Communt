@@ -6,6 +6,7 @@ import { useT } from '@jiwar/i18n';
 import { Button, Dialog, Field, Input, Segmented, Select, Textarea, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { ResidentPicker } from '@/components/pickers';
 import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { fetchers, keys, type TicketPriority } from '@/lib/queries';
@@ -57,18 +58,10 @@ export function NewTicketDialog({
     queryFn: () => fetchers.ticketReporters(form.unitId),
     enabled: open && form.place === 'unit' && form.unitId !== '',
   });
-  const residents = useQuery({
-    queryKey: [...keys.residents, 'picker'],
-    queryFn: () => fetchers.residents(undefined, 100),
-    enabled: open && form.place === 'common',
-  });
 
   const category = categories.data?.data.find((c) => c.id === form.categoryId);
   const usable = (categories.data?.data ?? []).filter((c) => form.place === 'unit' || c.commonAreaAllowed);
-  const reporters =
-    form.place === 'unit'
-      ? (unitReporters.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? t('resident') }))
-      : (residents.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? t('resident') }));
+  const reporters = (unitReporters.data?.data ?? []).map((r) => ({ id: r.id, name: r.fullName ?? t('resident') }));
 
   const reset = () => {
     setForm(EMPTY);
@@ -184,19 +177,18 @@ export function NewTicketDialog({
           error={err('reporterAccountId')}
         >
           {(p) => (
-            <Select
-              {...p}
-              value={form.reporterId}
-              disabled={form.place === 'unit' && form.unitId === ''}
-              onChange={(e) => set('reporterId', e.target.value)}
-            >
-              <option value="">{form.place === 'unit' && form.unitId === '' ? t('pickUnitFirst') : t('selectResident')}</option>
-              {reporters.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </Select>
+            form.place === 'unit' ? (
+              <Select {...p} value={form.reporterId} disabled={form.unitId === ''} onChange={(e) => set('reporterId', e.target.value)}>
+                <option value="">{form.unitId === '' ? t('pickUnitFirst') : t('selectResident')}</option>
+                {reporters.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <ResidentPicker {...p} enabled={open} placeholder={t('selectResident')} value={form.reporterId} onChange={(id) => set('reporterId', id)} />
+            )
           )}
         </Field>
         <div className="form__row">

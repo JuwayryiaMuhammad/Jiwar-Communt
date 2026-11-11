@@ -6,7 +6,7 @@ import { useFormat, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, CardBody, CardHeader, Dialog, Field, ReasonCodeDialog, Textarea, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { SearchSelect } from '@/components/search-select';
+import { VendorPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type TicketDetail, type VendorDispatch } from '@/lib/queries';
@@ -15,7 +15,6 @@ import en from '@/messages/en/maint-vendor-offer';
 
 /** Who may read the vendor register (the API lists it to these permissions). */
 const READ_VENDORS = ['vendors.manage', 'assets.manage', 'finance.budget', 'purchases.request', 'purchases.approve'];
-const PAGE = 50;
 
 const TONE: Record<VendorDispatch['status'], 'green' | 'beige' | 'terracotta'> = {
   offered: 'beige',
@@ -175,21 +174,13 @@ export function TicketVendorOffer({ ticket }: { ticket: TicketDetail }) {
         <div className="form">
           <Field label={t('vendor')} hint={t('vendorHint')} error={fieldError(offer.error, 'vendorId')}>
             {(p) => (
-              <SearchSelect
+              <VendorPicker
                 {...p}
                 value={vendorId}
-                onChange={(id, option) => {
-                  setVendorId(id);
-                  setVendorName(option?.label ?? '');
-                }}
-                queryKey={['vendors', 'offer-picker']}
                 enabled={open === 'offer'}
-                fetchOptions={async (q) => {
-                  const page = await fetchers.vendors({ status: 'active', q }, undefined, PAGE);
-                  return {
-                    options: page.data.map((v) => ({ id: v.id, label: `${v.reference} · ${v.name}` })),
-                    more: page.nextCursor !== null,
-                  };
+                onChange={(id, text) => {
+                  setVendorId(id);
+                  setVendorName(text);
                 }}
               />
             )}

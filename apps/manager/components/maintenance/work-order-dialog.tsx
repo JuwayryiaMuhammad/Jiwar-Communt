@@ -6,6 +6,7 @@ import { useT } from '@jiwar/i18n';
 import { Button, Dialog, Field, Segmented, Select, Textarea, useCommonT, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { AssetPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { fetchers, keys, type TicketPriority } from '@/lib/queries';
 import ar from '@/messages/ar/maint-work-order';
@@ -49,11 +50,6 @@ export function WorkOrderDialog({
   const set = <K extends keyof typeof EMPTY>(key: K, value: (typeof EMPTY)[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   const categories = useQuery({ queryKey: keys.ticketCategories, queryFn: fetchers.ticketCategories, enabled: open });
-  const assets = useQuery({
-    queryKey: keys.assets({ status: 'in_service', picker: true }),
-    queryFn: () => fetchers.assets({ status: 'in_service' }, undefined, 100),
-    enabled: open && form.place === 'asset' && !assetId,
-  });
   const areas = useQuery({
     queryKey: keys.areas({ active: 'true', picker: true }),
     queryFn: () => fetchers.areas({ active: 'true' }),
@@ -132,14 +128,13 @@ export function WorkOrderDialog({
         {assetId ? null : form.place === 'asset' ? (
           <Field label={t('asset')} error={err('assetId')}>
             {(p) => (
-              <Select {...p} value={form.assetId} onChange={(e) => set('assetId', e.target.value)}>
-                <option value="">{meterAlertId ? t('theMeters') : t('chooseAsset')}</option>
-                {(assets.data?.data ?? []).map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.code} · {a.nameEn}
-                  </option>
-                ))}
-              </Select>
+              <AssetPicker
+                {...p}
+                enabled={open}
+                placeholder={meterAlertId ? t('theMeters') : t('chooseAsset')}
+                value={form.assetId}
+                onChange={(id) => set('assetId', id)}
+              />
             )}
           </Field>
         ) : (

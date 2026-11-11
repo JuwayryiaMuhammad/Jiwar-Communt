@@ -21,6 +21,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocalName } from '@/components/facilities/bits';
+import { AccountPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type FacilityBan } from '@/lib/queries';
@@ -33,11 +34,7 @@ function NewBanDialog({ onClose }: { onClose: () => void }) {
   const label = useLabel();
   const localName = useLocalName();
   const toast = useToast();
-  const accounts = useQuery({ queryKey: [...keys.accounts, 'bookers'], queryFn: () => fetchers.accounts(undefined, 100) });
   const facilities = useQuery({ queryKey: keys.facilities, queryFn: fetchers.facilities });
-  const bookers = (accounts.data?.data ?? []).filter(
-    (a) => !a.erased && a.status === 'active' && (a.type === 'resident' || a.type === 'family'),
-  );
   const [f, setF] = useState({ accountId: '', facilityId: '', reasonCode: REASON_CODES.facilityBan[0] as string, endsOn: '' });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const save = useAction(
@@ -82,14 +79,7 @@ function NewBanDialog({ onClose }: { onClose: () => void }) {
         <ErrorAlert error={save.error} />
         <Field label={t('account')} error={fieldError(save.error, 'accountId')}>
           {(p) => (
-            <Select {...p} value={f.accountId} onChange={set('accountId')}>
-              <option value="">{t('choose')}</option>
-              {bookers.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.fullName}
-                </option>
-              ))}
-            </Select>
+            <AccountPicker {...p} group="households" placeholder={t('choose')} value={f.accountId} onChange={(id) => setF({ ...f, accountId: id })} />
           )}
         </Field>
         <Field label={t('col.facility')} error={fieldError(save.error, 'facilityId')}>

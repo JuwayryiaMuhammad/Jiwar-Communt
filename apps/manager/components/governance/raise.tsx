@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
 import { codeText } from '@/components/governance/logic';
 import { APPROVAL_SUBJECT, APPROVAL_TYPES } from '@/components/governance/matters';
+import { AccountPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ApprovalType } from '@/lib/queries';
@@ -68,12 +69,6 @@ export function RaiseApproval({
   });
   const lines = active.data?.data[0]?.lines ?? [];
   // ADR 0075: the board approves a manager leaving without a handover.
-  const staff = useQuery({
-    queryKey: keys.accounts,
-    queryFn: () => fetchers.accounts(undefined, 100),
-    enabled: subject === 'manager',
-  });
-  const managers = (staff.data?.data ?? []).filter((a) => a.type === 'manager' && a.status === 'active');
   const types = (APPROVAL_TYPES as ApprovalType[]).filter(
     (x) =>
       x !== 'annual_budget' && x !== 'budget_transfer' && x !== 'capital_plan' && (x !== 'budget_increase' || can('finance.budget')),
@@ -152,14 +147,7 @@ export function RaiseApproval({
         {subject === 'manager' ? (
           <Field label={t('manager')} hint={t('managerHint')} error={err('managerAccountId')}>
             {(p) => (
-              <Select {...p} value={managerId} onChange={(e) => setManagerId(e.target.value)}>
-                <option value="">{staff.isPending ? t('loading') : t('chooseManager')}</option>
-                {managers.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.fullName}
-                  </option>
-                ))}
-              </Select>
+              <AccountPicker {...p} group="managers" placeholder={t('chooseManager')} value={managerId} onChange={(id) => setManagerId(id)} />
             )}
           </Field>
         ) : null}

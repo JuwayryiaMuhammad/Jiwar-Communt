@@ -33,6 +33,8 @@ export function SearchSelect({
   queryKey,
   fetchOptions,
   enabled = true,
+  hide,
+  decorate,
   placeholder,
   ...rest
 }: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children' | 'value' | 'onChange'> & {
@@ -42,6 +44,10 @@ export function SearchSelect({
   queryKey: readonly unknown[];
   fetchOptions: (q: string) => Promise<PickPage>;
   enabled?: boolean;
+  /** Ids left out of the list (not yourself; already invited). */
+  hide?: ReadonlySet<string>;
+  /** The words shown for a choice, when they depend on the page (who lives here now). */
+  decorate?: (option: PickOption) => string;
   placeholder?: string;
 }) {
   const t = useT(en, ar);
@@ -53,7 +59,7 @@ export function SearchSelect({
     return () => clearTimeout(timer);
   }, [text]);
   const page = useQuery({ queryKey: [...queryKey, 'pick', q], queryFn: () => fetchOptions(q), enabled, placeholderData: (prev) => prev });
-  const found = page.data?.options ?? [];
+  const found = (page.data?.options ?? []).filter((o) => !hide?.has(o.id));
   const kept = value && chosen?.id === value && !found.some((o) => o.id === value) ? [chosen] : [];
   const options = [...kept, ...found];
   return (
@@ -80,7 +86,7 @@ export function SearchSelect({
         <option value="">{page.isPending && enabled ? t('pickLoading') : (placeholder ?? t('pickSelect'))}</option>
         {options.map((o) => (
           <option key={o.id} value={o.id}>
-            {o.label}
+            {decorate ? decorate(o) : o.label}
           </option>
         ))}
       </Select>

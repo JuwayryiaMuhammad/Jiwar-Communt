@@ -6,7 +6,6 @@ export default {
   notificationsUrgent: 'Notifications: {n} unread, {urgent} urgent',
   // The unit picker.
   pickUnit: 'Select a unit…',
-  loadingUnits: 'Loading units…',
   // A picker that searches on the server.
   pickSearch: 'Type to search',
   pickSelect: 'Select…',

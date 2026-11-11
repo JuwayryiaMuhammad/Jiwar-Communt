@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
+import { UnitPicker } from '@/components/unit-picker';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type Meter, type MeterReadingImport } from '@/lib/queries';
@@ -26,7 +27,6 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
   const toast = useToast();
   const router = useRouter();
   const areas = useQuery({ queryKey: keys.areas({ active: 'true' }), queryFn: () => fetchers.areas({ active: 'true' }) });
-  const units = useQuery({ queryKey: keys.units, queryFn: () => fetchers.units(undefined, 100) });
   const [place, setPlace] = useState<'area' | 'unit'>('area');
   const [f, setF] = useState({
     code: '',
@@ -135,14 +135,7 @@ function NewMeterDialog({ onClose }: { onClose: () => void }) {
         ) : (
           <Field label={t('unit')} error={fieldError(save.error, 'unitId')}>
             {(p) => (
-              <Select {...p} value={f.unitId} onChange={set('unitId')}>
-                <option value="">{t('choose')}</option>
-                {(units.data?.data ?? []).map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.code}
-                  </option>
-                ))}
-              </Select>
+              <UnitPicker {...p} placeholder={t('choose')} value={f.unitId} onChange={set('unitId')} />
             )}
           </Field>
         )}

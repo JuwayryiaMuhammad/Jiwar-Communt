@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { nameOf } from '@/components/assets/format';
+import { AssetPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type PlanSummary } from '@/lib/queries';
@@ -27,7 +28,6 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
   const fmt = useFormat();
   const toast = useToast();
   const router = useRouter();
-  const assets = useQuery({ queryKey: keys.assets({ status: 'in_service' }), queryFn: () => fetchers.assets({ status: 'in_service' }, undefined, 100) });
   const checklists = useQuery({ queryKey: keys.checklists, queryFn: fetchers.checklists });
   const [f, setF] = useState({
     assetId: '',
@@ -96,14 +96,7 @@ function NewPlanDialog({ onClose }: { onClose: () => void }) {
         <div className="form__row">
           <Field label={t('asset')} error={fieldError(save.error, 'assetId')}>
             {(p) => (
-              <Select {...p} value={f.assetId} onChange={set('assetId')}>
-                <option value="">{c('select')}</option>
-                {(assets.data?.data ?? []).map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.code} · {nameOf(fmt.locale, a)}
-                  </option>
-                ))}
-              </Select>
+              <AssetPicker {...p} placeholder={c('select')} value={f.assetId} onChange={(id) => setF({ ...f, assetId: id })} />
             )}
           </Field>
           <Field label={t('whatIsDone')} error={fieldError(save.error, 'title')}>

@@ -14,7 +14,6 @@ import {
   Field,
   Input,
   ReasonCodeDialog,
-  Select,
   StatusBadge,
   useCommonT,
   useLabel,
@@ -22,6 +21,7 @@ import {
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { ResidentPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type NeighbourClaim, type NeighbourPost } from '@/lib/queries';
@@ -87,10 +87,6 @@ function WalkInDialog({ onClose, onPick, pending, error }: { onClose: () => void
   const { can } = usePermissions();
   const mayList = can('residents.read');
   const [accountId, setAccountId] = useState('');
-  const residents = useQuery({ queryKey: [...keys.residents, 'picker'], queryFn: () => fetchers.residents(undefined, 100), enabled: mayList });
-  const list = [...(residents.data?.data ?? [])]
-    .filter((r) => !r.erased && r.status === 'active')
-    .sort((a, b) => (a.fullName ?? '').localeCompare(b.fullName ?? ''));
   const typed = accountId.trim();
   const ready = isAccountId(typed);
 
@@ -114,15 +110,7 @@ function WalkInDialog({ onClose, onPick, pending, error }: { onClose: () => void
         {mayList ? (
           <Field label={t('walkIn.resident')} hint={t('walkIn.residentHint')}>
             {(p) => (
-              <Select {...p} value={list.some((r) => r.id === typed) ? typed : ''} onChange={(e) => setAccountId(e.target.value)}>
-                <option value="">{residents.isPending ? c('state.loading') : c('select')}</option>
-                {list.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {who.person(r)}
-                    {r.units?.length ? ` · ${f.list(r.units.map((u) => u.unitCode))}` : ''}
-                  </option>
-                ))}
-              </Select>
+              <ResidentPicker {...p} placeholder={c('select')} value={isAccountId(typed) ? typed : ''} onChange={(id) => setAccountId(id)} />
             )}
           </Field>
         ) : null}

@@ -14,15 +14,14 @@ import {
   Field,
   ReasonCodeDialog,
   ReasonDialog,
-  Select,
   useCommonT,
   useLabel,
   useToast,
 } from '@jiwar/ui';
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { ResidentPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
-import { fetchers, keys, type UnitDetail } from '@/lib/queries';
+import { keys, type UnitDetail } from '@/lib/queries';
 import ar from '@/messages/ar/units-states';
 import en from '@/messages/en/units-states';
 import { REVIEW_LABELS } from './review-labels';
@@ -53,11 +52,6 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
   const flags = unit.reviewFlags ?? [];
   const has = (reason: string) => flags.some((f) => f.reason === reason);
 
-  const residents = useQuery({
-    queryKey: [...keys.residents, 'picker'],
-    queryFn: () => fetchers.residents(undefined, 100),
-    enabled: open === 'transfer',
-  });
 
   const close = () => {
     setOpen(null);
@@ -111,7 +105,6 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
   );
 
   const occupantIds = new Set((unit.occupants ?? []).map((o) => o.account.id));
-  const buyers = (residents.data?.data ?? []).filter((r) => !r.erased);
   const noteHint = t('noteHint');
 
   return (
@@ -226,17 +219,14 @@ export function UnitStates({ unit }: { unit: UnitDetail }) {
       >
         <Field label={t('newOwner')} hint={t('newOwnerHint')} error={fieldError(transfer.error, 'toAccountId')}>
           {(p) => (
-            <Select {...p} value={buyerId} onChange={(e) => setBuyerId(e.target.value)}>
-              <option value="">{t('selectResident')}</option>
-              {buyers.map((r) => {
-                const name = r.fullName ?? c('resident');
-                return (
-                  <option key={r.id} value={r.id}>
-                    {occupantIds.has(r.id) ? t('livesHereNow', { name }) : name}
-                  </option>
-                );
-              })}
-            </Select>
+            <ResidentPicker
+              {...p}
+              enabled={open === 'transfer'}
+              placeholder={t('selectResident')}
+              value={buyerId}
+              onChange={(id) => setBuyerId(id)}
+              decorate={(o) => (occupantIds.has(o.id) ? t('livesHereNow', { name: o.label }) : o.label)}
+            />
           )}
         </Field>
         <Checkbox label={t('newOwnerLives')} checked={resides} onChange={(e) => setResides(e.target.checked)} />

@@ -6,7 +6,6 @@ const ar: Translation<typeof en> = {
   notificationsUnread: 'الإشعارات: {n} غير مقروء',
   notificationsUrgent: 'الإشعارات: {n} غير مقروء، منها {urgent} عاجل',
   pickUnit: 'اختر وحدة…',
-  loadingUnits: 'جارٍ تحميل الوحدات…',
   pickSearch: 'اكتب للبحث',
   pickSelect: 'اختر…',
   pickLoading: 'جارٍ التحميل…',

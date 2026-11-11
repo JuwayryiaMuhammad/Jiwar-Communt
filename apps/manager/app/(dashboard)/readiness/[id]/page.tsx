@@ -23,6 +23,7 @@ import {
 import { useQuery, type QueryKey } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { AccountPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type ContractDue, type ReadinessItem, type ReadinessProgram } from '@/lib/queries';
@@ -35,19 +36,12 @@ const DRILL_TYPES = ['fire', 'evacuation', 'lockdown', 'medical', 'earthquake', 
 const OUTCOMES = REASON_CODES.drillOutcome;
 const DECISIONS = REASON_CODES.contractReviewDecision;
 
-/** Who may own an item: an active staff member or the manager. */
-function useOwners() {
-  const accounts = useQuery({ queryKey: [...keys.accounts, 'owners'], queryFn: () => fetchers.accounts(undefined, 100) });
-  return (accounts.data?.data ?? []).filter((a) => !a.erased && a.status === 'active' && (a.type === 'staff' || a.type === 'manager'));
-}
-
 function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; due: ContractDue[]; onClose: () => void }) {
   const t = useT(en, ar);
   const c = useCommonT();
   const fmt = useFormat();
   const label = useLabel();
   const toast = useToast();
-  const owners = useOwners();
   const checklists = useQuery({ queryKey: keys.checklists, queryFn: fetchers.checklists });
   const [f, setF] = useState({
     kind: 'task' as (typeof ITEM_KINDS)[number],
@@ -125,14 +119,7 @@ function NewItemDialog({ program, due, onClose }: { program: ReadinessProgram; d
         </Field>
         <Field label={t('owner')} error={fieldError(save.error, 'ownerId')}>
           {(p) => (
-            <Select {...p} value={f.ownerId} onChange={set('ownerId')}>
-              <option value="">{t('choose')}</option>
-              {owners.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.fullName}
-                </option>
-              ))}
-            </Select>
+            <AccountPicker {...p} group="staff" placeholder={t('choose')} value={f.ownerId} onChange={(id) => setF({ ...f, ownerId: id })} />
           )}
         </Field>
         {f.kind === 'estimate' || f.kind === 'task' ? (

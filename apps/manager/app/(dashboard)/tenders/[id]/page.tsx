@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
+import { VendorPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { useNow } from '@/lib/use-now';
@@ -302,11 +303,6 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
   const readsVendors = ['vendors.manage', 'assets.manage', 'finance.budget', 'purchases.request', 'purchases.approve'].some((p) =>
     can(p as Parameters<typeof can>[0]),
   );
-  const vendors = useQuery({
-    queryKey: keys.vendors({ status: 'active' }),
-    queryFn: () => fetchers.vendors({ status: 'active' }, undefined, 100),
-    enabled: editable && readsVendors,
-  });
   const [vendorId, setVendorId] = useState('');
   const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
@@ -412,16 +408,7 @@ function Invitations({ tender, editable }: { tender: Tender; editable: boolean }
             <div className="form__row">
               <Field label={t('registeredVendor')} hint={t('registeredVendorHint')} error={fieldError(inviteVendor.error, 'vendorId')}>
                 {(p) => (
-                  <Select {...p} value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
-                    <option value="">{t('choose')}</option>
-                    {(vendors.data?.data ?? [])
-                      .filter((v) => !invited.has(v.id))
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.reference} · {v.name}
-                        </option>
-                      ))}
-                  </Select>
+                  <VendorPicker {...p} placeholder={t('choose')} enabled={editable} hide={invited as ReadonlySet<string>} value={vendorId} onChange={(id) => setVendorId(id)} />
                 )}
               </Field>
               <Button loading={inviteVendor.isPending} disabled={!vendorId} onClick={() => inviteVendor.mutate(undefined)}>

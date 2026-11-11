@@ -40,7 +40,7 @@ export default {
     'For a resident who came to the office without a claim. The handover is recorded in their name, closes the post, and declines every claim still waiting.',
   'walkIn.submit': 'Record handover',
   'walkIn.resident': 'Resident',
-  'walkIn.residentHint': 'From the first 100 residents. Not listed: paste their account ID below.',
+  'walkIn.residentHint': 'Type part of the name, or the exact phone or email. Not found: paste their account ID below.',
   'walkIn.accountId': 'Resident’s account ID',
   'walkIn.accountIdHint':
     'The long id at the end of the resident’s page address, e.g. 0b1f6f0e-3c1d-4a52-9d57-0c7d5a3f9b11. An active resident or family account of this compound.',

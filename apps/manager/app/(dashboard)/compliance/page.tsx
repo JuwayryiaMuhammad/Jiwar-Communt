@@ -24,6 +24,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { AccountPicker, VendorPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { download } from '@/lib/download';
 import { usePermissions } from '@/lib/permissions';
@@ -41,9 +42,6 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
   const label = useLabel();
   const toast = useToast();
   const router = useRouter();
-  const accounts = useQuery({ queryKey: [...keys.accounts, 'owners'], queryFn: () => fetchers.accounts(undefined, 100) });
-  const vendors = useQuery({ queryKey: keys.vendors({ status: 'active' }), queryFn: () => fetchers.vendors({ status: 'active' }, undefined, 100) });
-  const owners = (accounts.data?.data ?? []).filter((a) => !a.erased && a.status === 'active' && (a.type === 'staff' || a.type === 'manager'));
   const [f, setF] = useState({
     kind: 'fire_system' as (typeof COMPLIANCE_KINDS)[number],
     title: '',
@@ -127,26 +125,12 @@ function NewItemDialog({ onClose }: { onClose: () => void }) {
         <div className="form__row">
           <Field label={t('staffMember')} hint={t('staffHint')} error={fieldError(save.error, 'ownerId')}>
             {(p) => (
-              <Select {...p} value={f.ownerId} onChange={set('ownerId')}>
-                <option value="">{t('nobody')}</option>
-                {owners.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.fullName}
-                  </option>
-                ))}
-              </Select>
+              <AccountPicker {...p} group="staff" placeholder={t('nobody')} value={f.ownerId} onChange={(id) => setF({ ...f, ownerId: id })} />
             )}
           </Field>
           <Field label={t('vendor')} error={fieldError(save.error, 'vendorId')}>
             {(p) => (
-              <Select {...p} value={f.vendorId} onChange={set('vendorId')}>
-                <option value="">{t('noVendor')}</option>
-                {(vendors.data?.data ?? []).map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.reference} · {v.name}
-                  </option>
-                ))}
-              </Select>
+              <VendorPicker {...p} placeholder={t('noVendor')} value={f.vendorId} onChange={(id) => setF({ ...f, vendorId: id })} />
             )}
           </Field>
         </div>

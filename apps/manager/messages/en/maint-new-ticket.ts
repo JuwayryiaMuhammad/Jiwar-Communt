@@ -17,7 +17,7 @@ export default {
   reportersFailed: 'The people of this unit could not be loaded.',
   reportersNone: 'Nobody in this unit may open a ticket there.',
   reportersUnit: 'The occupants and the household members who may open tickets there.',
-  reportersCommon: 'A resident of the compound (the first 100 by the list’s order).',
+  reportersCommon: 'A resident of the compound: type part of the name, or the exact phone or email.',
   pickUnitFirst: 'Pick a unit first',
   selectResident: 'Select a resident…',
   category: 'Category',

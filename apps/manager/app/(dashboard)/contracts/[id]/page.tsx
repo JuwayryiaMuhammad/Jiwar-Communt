@@ -2,13 +2,14 @@
 
 import { REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
-import { useFormat, useLocale, useT } from '@jiwar/i18n';
-import { Button, Card, CardBody, CardHeader, ForbiddenState, PageHeader, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
-import { useQuery } from '@tanstack/react-query';
+import { useFormat, useT } from '@jiwar/i18n';
+import { Button, Card, CardBody, CardHeader, ForbiddenState, PageHeader, ReasonCodeDialog, useCommonT, useLabel, useToast } from '@jiwar/ui';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { FileUpload } from '@/components/file-upload';
+import { AssetPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys } from '@/lib/queries';
@@ -22,14 +23,16 @@ export default function ContractPage() {
   const cm = useCommonT();
   const f = useFormat();
   const label = useLabel();
-  const { locale } = useLocale();
   const { ready, can } = usePermissions();
   const toast = useToast();
   const contract = useQuery({ queryKey: keys.contract(id), queryFn: () => fetchers.contract(id), enabled: can('assets.manage') });
-  const assets = useQuery({
-    queryKey: keys.assets({ status: 'in_service' }),
-    queryFn: () => fetchers.assets({ status: 'in_service' }, undefined, 100),
-    enabled: can('assets.manage'),
+  // The covered assets are named one by one: they may be past any page of the register.
+  const covering = useQueries({
+    queries: (contract.data?.assetIds ?? []).map((assetId) => ({
+      queryKey: keys.asset(assetId),
+      queryFn: () => fetchers.asset(assetId),
+      enabled: can('assets.manage'),
+    })),
   });
   const docs = useQuery({ queryKey: keys.documents({ contractId: id }), queryFn: () => fetchers.documents({ contractId: id }) });
   const [adding, setAdding] = useState('');
@@ -70,7 +73,7 @@ export default function ContractPage() {
     );
   const c = contract.data;
   const covered = new Set(c?.assetIds ?? []);
-  const byId = new Map((assets.data?.data ?? []).map((a) => [a.id, a]));
+  const byId = new Map(covering.map((q) => [q.data?.id ?? '', q.data]));
   return (
     <>
       <PageHeader
@@ -107,16 +110,7 @@ export default function ContractPage() {
                 )}
                 {c.status !== 'terminated' ? (
                   <div className="row">
-                    <Select aria-label={t('assetToAdd')} value={adding} onChange={(e) => setAdding(e.target.value)}>
-                      <option value="">{t('addAnAsset')}</option>
-                      {(assets.data?.data ?? [])
-                        .filter((a) => !covered.has(a.id))
-                        .map((a) => (
-                          <option key={a.id} value={a.id}>
-                            <span className="ltr">{a.code}</span> · {locale === 'ar' ? a.nameAr : a.nameEn}
-                          </option>
-                        ))}
-                    </Select>
+                    <AssetPicker aria-label={t('assetToAdd')} placeholder={t('addAnAsset')} hide={covered} value={adding} onChange={(id) => setAdding(id)} />
                     <Button size="sm" disabled={!adding} loading={setAssets.isPending} onClick={() => setAssets.mutate([...c.assetIds, adding])}>
                       {cm('add')}
                     </Button>

@@ -19,7 +19,7 @@ const ar: Translation<typeof en> = {
   reportersFailed: 'تعذّر تحميل أفراد هذه الوحدة.',
   reportersNone: 'لا يحق لأحد في هذه الوحدة فتح بلاغ فيها.',
   reportersUnit: 'المقيمون فيها وأفراد الأسرة المسموح لهم بفتح البلاغات.',
-  reportersCommon: 'ساكن في المجمع (أول 100 حسب ترتيب القائمة).',
+  reportersCommon: 'ساكن في المجمع: اكتب جزءًا من الاسم، أو الهاتف أو البريد الإلكتروني كاملًا.',
   pickUnitFirst: 'اختر وحدة أولًا',
   selectResident: 'اختر ساكنًا…',
   category: 'الفئة',

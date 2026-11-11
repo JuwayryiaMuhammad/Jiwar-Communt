@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
-import { fetchers, keys, type DispatchSettings } from '@/lib/queries';
+import { countRows, fetchers, keys, type DispatchSettings } from '@/lib/queries';
 import ar from '@/messages/ar/ms-dispatch';
 import en from '@/messages/en/ms-dispatch';
 import { useNameOf } from './names';
@@ -42,8 +42,8 @@ export function Dispatch() {
   const technicians = useQuery({ queryKey: keys.technicians, queryFn: fetchers.technicians, enabled: dispatcher, retry: false });
   const categories = useQuery({ queryKey: keys.categories, queryFn: fetchers.categories });
   const waiting = useQuery({
-    queryKey: keys.tickets({ status: 'new' }),
-    queryFn: () => fetchers.tickets({ status: 'new' }, undefined, 100),
+    queryKey: [...keys.tickets({ status: 'new' }), 'waiting-count'],
+    queryFn: () => countRows((cursor) => fetchers.tickets({ status: 'new' }, cursor, 100)),
     enabled: dispatcher,
     retry: false,
   });
@@ -82,8 +82,8 @@ export function Dispatch() {
   const available = techs?.filter((x) => x.availability.state === 'available') ?? [];
   const unskilled = techs?.filter((x) => x.specialties.length === 0) ?? [];
   const bare = (categories.data?.data ?? []).filter((c) => c.active && c.specialtyIds.length === 0);
-  const queue = waiting.data ? (waiting.data.nextCursor ? `${waiting.data.data.length}+` : String(waiting.data.data.length)) : null;
-  const queueCount = waiting.data?.data.length ?? 0;
+  const queue = waiting.data ? (waiting.data.more ? `${waiting.data.count}+` : String(waiting.data.count)) : null;
+  const queueCount = waiting.data?.count ?? 0;
 
   return (
     <div className="grid grid--2" style={{ alignItems: 'start' }}>

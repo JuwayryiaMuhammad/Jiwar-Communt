@@ -1,31 +1,41 @@
 'use client';
 
 import { useT } from '@jiwar/i18n';
-import { Select } from '@jiwar/ui';
-import { useQuery } from '@tanstack/react-query';
 import type { SelectHTMLAttributes } from 'react';
 import { fetchers, keys } from '@/lib/queries';
 import ar from '@/messages/ar/shell-components';
 import en from '@/messages/en/shell-components';
+import { SearchSelect } from './search-select';
 
 /**
- * Units by code, from the first 100. The API has no unit search yet
- * (docs/api/v0-notes.md); a larger compound needs it before this scales.
+ * Units by code (ADR 0072): the first 50 at once, any other by typing part
+ * of its code, which the API searches. `onChange` answers like a select's,
+ * with the chosen unit's id in `target.value`.
  */
-export function UnitPicker(props: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children'> & { placeholder?: string }) {
+export function UnitPicker({
+  onChange,
+  placeholder,
+  ...rest
+}: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children' | 'onChange'> & {
+  value: string;
+  onChange?: (e: { target: { value: string } }) => void;
+  placeholder?: string;
+}) {
   const t = useT(en, ar);
-  const { placeholder = t('pickUnit'), ...rest } = props;
-  const units = useQuery({ queryKey: [...keys.units, 'picker'], queryFn: () => fetchers.units(undefined, 100) });
-  const list = [...(units.data?.data ?? [])].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
   return (
-    <Select {...rest}>
-      <option value="">{units.isPending ? t('loadingUnits') : placeholder}</option>
-      {list.map((u) => (
-        <option key={u.id} value={u.id}>
-          {u.code}
-          {u.building ? ` · ${u.building}` : ''}
-        </option>
-      ))}
-    </Select>
+    <SearchSelect
+      {...rest}
+      value={rest.value}
+      placeholder={placeholder ?? t('pickUnit')}
+      queryKey={[...keys.units, 'picker']}
+      onChange={(id) => onChange?.({ target: { value: id } })}
+      fetchOptions={async (q) => {
+        const page = await fetchers.unitsFind(q || undefined, 50);
+        return {
+          options: page.data.map((u) => ({ id: u.id, label: `${u.code}${u.building ? ` · ${u.building}` : ''}` })),
+          more: page.nextCursor !== null,
+        };
+      }}
+    />
   );
 }

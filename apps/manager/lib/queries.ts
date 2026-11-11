@@ -20,6 +20,7 @@ export type UnitFilters = {
 export type UnitNeedingReview = Schema<'UnitNeedingReviewView'>;
 export type Resident = Schema<'ResidentListItemView'>;
 export type ResidentDetail = Schema<'ResidentDetailView'>;
+export { countRows } from './count-rows';
 export type Account = Schema<'AccountListItemView'>;
 export type Registration = Schema<'PendingRegistrationView'>;
 export type RegistrationLink = Schema<'RegistrationLinkResponse'>;
@@ -1069,6 +1070,15 @@ export const fetchers = {
   resident: (id: string) => unwrap(api.GET('/api/v1/residents/{id}', { params: { path: { id } } })),
   accounts: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/accounts', { params: { query: { cursor, limit } } })),
+  // The pickers' searches (ADR 0072): the API finds by part of a name, a code.
+  accountsFind: (q: string | undefined, group: 'staff' | 'managers' | 'households', limit = 50) =>
+    unwrap(api.GET('/api/v1/accounts', { params: { query: { q, group, active: 'true', limit } } })),
+  residentsFind: (q: string | undefined, limit = 50) =>
+    unwrap(api.GET('/api/v1/residents', { params: { query: { q, limit } } })),
+  unitsFind: (q: string | undefined, limit = 50) =>
+    unwrap(api.GET('/api/v1/units', { params: { query: { q, limit } } })),
+  assetsFind: (q: string | undefined, status: 'in_service', limit = 50) =>
+    unwrap(api.GET('/api/v1/maintenance/assets', { params: { query: { q, status, limit } } })),
   registrations: (cursor?: string, limit = 50) =>
     unwrap(api.GET('/api/v1/registrations', { params: { query: { cursor, limit } } })),
   registrationLinks: (cursor?: string, limit = 50) =>

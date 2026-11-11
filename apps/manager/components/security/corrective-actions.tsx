@@ -3,10 +3,11 @@
 import { fieldError, REASON_CODES, unwrap } from '@jiwar/api';
 import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { useFormat, useLocale, useT } from '@jiwar/i18n';
-import { Button, Card, CardHeader, DataTable, Field, Input, ReasonCodeDialog, Select, Textarea, useCommonT, useLabel, useToast } from '@jiwar/ui';
+import { Button, Card, CardHeader, DataTable, Field, Input, ReasonCodeDialog, Textarea, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { personNameIn } from '@/components/security/logic';
+import { AccountPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { fetchers, keys, type IncidentAction } from '@/lib/queries';
 import ar from '@/messages/ar/sec-corrective-actions';
@@ -24,10 +25,6 @@ export function CorrectiveActions({ incidentId, closed }: { incidentId: string; 
   const { locale } = useLocale();
   const toast = useToast();
   const actions = useQuery({ queryKey: keys.incidentActions(incidentId), queryFn: () => fetchers.incidentActions(incidentId) });
-  const accounts = useQuery({ queryKey: [...keys.accounts, 'owners'], queryFn: () => fetchers.accounts(undefined, 100) });
-  const owners = (accounts.data?.data ?? []).filter(
-    (a) => !a.erased && a.status === 'active' && (a.type === 'staff' || a.type === 'manager'),
-  );
   const [form, setForm] = useState({ description: '', ownerId: '', dueOn: '' });
   const [cancelling, setCancelling] = useState<IncidentAction | null>(null);
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
@@ -124,14 +121,7 @@ export function CorrectiveActions({ incidentId, closed }: { incidentId: string; 
           <div className="form__row">
             <Field label={t('owner')} error={fieldError(add.error, 'ownerId')}>
               {(p) => (
-                <Select {...p} value={form.ownerId} onChange={set('ownerId')}>
-                  <option value="">{t('choose')}</option>
-                  {owners.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.fullName}
-                    </option>
-                  ))}
-                </Select>
+                <AccountPicker {...p} group="staff" placeholder={t('choose')} value={form.ownerId} onChange={(id) => setForm({ ...form, ownerId: id })} />
               )}
             </Field>
             <Field label={t('due')} error={fieldError(add.error, 'dueOn')}>

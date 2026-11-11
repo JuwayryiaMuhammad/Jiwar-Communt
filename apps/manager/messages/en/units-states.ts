@@ -39,7 +39,7 @@ export default {
   transferConfirm: 'Request the transfer',
   pickOwnerFirst: 'Pick the new owner first.',
   newOwner: 'New owner',
-  newOwnerHint: 'A resident of the compound (the first 100). Add them on the Residents page first if they are new.',
+  newOwnerHint: 'A resident of the compound: type part of the name, or the exact phone or email. Add them on the Residents page first if they are new.',
   selectResident: 'Select a resident…',
   livesHereNow: '{name} (lives here now)',
   newOwnerLives: 'The new owner will live in the unit (they become its primary resident)',

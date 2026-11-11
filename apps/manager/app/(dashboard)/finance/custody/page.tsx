@@ -6,6 +6,7 @@ import { useFormat, useT } from '@jiwar/i18n';
 import { Badge, Button, Card, CardHeader, DataTable, Dialog, Field, ForbiddenState, Input, PageHeader, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { AccountPicker } from '@/components/pickers';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import ar from '@/messages/ar/fin-custody';
@@ -168,7 +169,6 @@ function Investigate({ handin, onClose }: { handin: Handin; onClose: () => void 
   const t = useT(en, ar);
   const c = useCommonT();
   const toast = useToast();
-  const staff = useQuery({ queryKey: ['accounts', 'staff'], queryFn: () => unwrap(api.GET('/api/v1/accounts', { params: { query: { limit: 100 } } })) });
   const [owner, setOwner] = useState('');
   const [dueOn, setDueOn] = useState('');
   const open = useAction(
@@ -197,28 +197,17 @@ function Investigate({ handin, onClose }: { handin: Handin; onClose: () => void 
         </>
       }
     >
-      <QueryState query={staff}>
-        <div className="form">
-          <Field label={t('col.owner')} error={fieldError(open.error, 'ownerId')}>
-            {(p) => (
-              <Select {...p} value={owner} onChange={(e) => setOwner(e.target.value)}>
-                <option value="">{t('choose')}</option>
-                {staff.data?.data
-                  .filter((a) => 'type' in a && (a.type === 'staff' || a.type === 'manager') && a.id !== handin.custodian.id)
-                  .map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {'fullName' in a ? a.fullName : a.id}
-                    </option>
-                  ))}
-              </Select>
-            )}
-          </Field>
-          <Field label={t('col.due')} hint={t('dueHint')} error={fieldError(open.error, 'dueOn')}>
-            {(p) => <Input {...p} type="date" value={dueOn} onChange={(e) => setDueOn(e.target.value)} />}
-          </Field>
-          <ErrorAlert error={open.error} />
-        </div>
-      </QueryState>
+      <div className="form">
+        <Field label={t('col.owner')} error={fieldError(open.error, 'ownerId')}>
+          {(p) => (
+            <AccountPicker {...p} group="staff" exclude={handin.custodian.id} placeholder={t('choose')} value={owner} onChange={(id) => setOwner(id)} />
+          )}
+        </Field>
+        <Field label={t('col.due')} hint={t('dueHint')} error={fieldError(open.error, 'dueOn')}>
+          {(p) => <Input {...p} type="date" value={dueOn} onChange={(e) => setDueOn(e.target.value)} />}
+        </Field>
+        <ErrorAlert error={open.error} />
+      </div>
     </Dialog>
   );
 }

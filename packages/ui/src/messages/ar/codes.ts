@@ -1566,6 +1566,18 @@ const ar: Translation<typeof en> = {
   rounding: 'تقريب',
   corrected: 'فاتورة مصححة',
   goods_receipt_photo: 'صورة التسليم',
+  remainder_cancelled: 'أُلغي المتبقي',
+  direct: 'مباشر',
+  tender: 'مناقصة',
+  stock: 'مخزون',
+  goods: 'بضاعة',
+  quantity_not_received: 'كمية لم تُستلم',
+  quantity_over_order: 'كمية تزيد على أمر الشراء',
+  price_over: 'سعر يزيد على أمر الشراء',
+  extra_line: 'بند خارج أمر الشراء',
+  lot: 'مقطوعية',
+  hour: 'ساعة',
+  overridden: 'تم تجاوز الفرق',
 };
 
 export default ar;

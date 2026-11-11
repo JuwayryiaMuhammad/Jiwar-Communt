@@ -33,7 +33,13 @@ export default {
   'group.asset_type': 'Asset type',
   'group.category': 'Category',
   'group.month': 'Month',
+  'match.blocked': 'Does not match',
+  'match.overridden': 'Let through',
   'group.item': 'Item',
+  'group.order': 'Purchase order',
+  'group.vendor': 'Vendor',
+  'group.invoice': 'Invoice',
+  'group.issue': 'Kind of issue',
   // Sent reports.
   runsTitle: 'Sent reports',
   runsDescription: 'Every period’s run of a scheduled report, kept for 90 days.',

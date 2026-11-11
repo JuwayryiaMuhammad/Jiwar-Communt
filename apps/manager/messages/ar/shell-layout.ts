@@ -48,6 +48,7 @@ const ar: Translation<typeof en> = {
   'nav.vendors': 'الموردون',
   'nav.tenders': 'المناقصات',
   'nav.purchases': 'طلبات الشراء',
+  'nav.purchase-orders': 'أوامر الشراء',
   'nav.economics': 'اقتصاديات الأصول',
   'nav.meters': 'العدادات',
   'nav.energy': 'الطاقة',

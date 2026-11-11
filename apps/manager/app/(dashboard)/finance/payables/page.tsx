@@ -1,6 +1,6 @@
 'use client';
 
-import { fieldError, unwrap } from '@jiwar/api';
+import { ApiError, fieldError, unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import { useFormat, useT } from '@jiwar/i18n';
 import {
@@ -23,6 +23,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { SectionHeader } from '@/components/community/bits';
 import { FileUpload } from '@/components/file-upload';
+import { OrderBilling } from '@/components/purchase-orders/bill-order';
+import { billLines, billReady, type BillRow, type ExtraRow } from '@/components/purchase-orders/po';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type VendorInvoice } from '@/lib/queries';
@@ -36,7 +38,7 @@ const WITHHOLDING = ['supplies', 'services', 'professional', 'exempt'] as const;
 type Withholding = (typeof WITHHOLDING)[number];
 type TaxCode = (typeof TAX_CODES)[number];
 
-/** A vendor's invoice, against a contract (or one of its payments) or a fulfilled purchase request. */
+/** A vendor's invoice, against a contract (or one of its payments), a fulfilled purchase request or a purchase order (ADR 0094). */
 function RecordInvoice({ onClose }: { onClose: () => void }) {
   const t = useT(en, ar);
   const c = useCommonT();
@@ -44,7 +46,10 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
   const toast = useToast();
   const [key] = useState(() => crypto.randomUUID());
   const [withholding, setWithholding] = useState<'' | Withholding>('');
-  const [against, setAgainst] = useState<'contract' | 'purchase'>('contract');
+  const [against, setAgainst] = useState<'contract' | 'purchase' | 'order'>('contract');
+  const [orderId, setOrderId] = useState('');
+  const [billRows, setBillRows] = useState<BillRow[]>([]);
+  const [extras, setExtras] = useState<ExtraRow[]>([]);
   const [sourceId, setSourceId] = useState('');
   const [paymentId, setPaymentId] = useState('');
   const [vendorNumber, setVendorNumber] = useState('');
@@ -65,12 +70,17 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
             ...(withholding ? { withholdingCategory: withholding } : {}),
             ...(against === 'contract'
               ? { contractId: sourceId.trim(), ...(paymentId.trim() ? { contractPaymentId: paymentId.trim() } : {}) }
-              : { purchaseRequestId: sourceId.trim() }),
-            lines: lines.map((l) => ({
-              description: l.description.trim(),
-              amount: l.amount.trim(),
-              taxCode: l.taxCode,
-            })),
+              : against === 'purchase'
+                ? { purchaseRequestId: sourceId.trim() }
+                : { purchaseOrderId: orderId }),
+            lines:
+              against === 'order'
+                ? billLines(billRows, extras)
+                : lines.map((l) => ({
+                    description: l.description.trim(),
+                    amount: l.amount.trim(),
+                    taxCode: l.taxCode,
+                  })),
           },
         }),
       ),
@@ -83,6 +93,10 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
     },
   );
   const err = (f: string) => fieldError(record.error, f);
+  const f = useFormat();
+  const poRequired = record.error instanceof ApiError && record.error.code === 'VENDOR_INVOICE_PO_REQUIRED' ? String(record.error.params.above ?? '') : null;
+  const sourceReady =
+    against === 'order' ? orderId !== '' && billReady(billRows, extras) : sourceId.trim() !== '' && !lines.some((l) => !l.description.trim() || !l.amount.trim());
   return (
     <Dialog
       open
@@ -98,7 +112,7 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
             type="submit"
             variant="primary"
             loading={record.isPending}
-            disabled={!sourceId.trim() || !vendorNumber.trim() || !file || lines.some((l) => !l.description.trim() || !l.amount.trim())}
+            disabled={!sourceReady || !vendorNumber.trim() || !file}
           >
             {t('record.confirm')}
           </Button>
@@ -106,21 +120,34 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
       }
     >
       <div className="form">
-        <Segmented<'contract' | 'purchase'>
+        <Segmented<'contract' | 'purchase' | 'order'>
           label={t('record.against')}
           value={against}
           onChange={setAgainst}
           options={[
             { value: 'contract', label: t('record.contract') },
             { value: 'purchase', label: t('record.purchase') },
+            { value: 'order', label: t('record.order') },
           ]}
         />
-        <Field
-          label={against === 'contract' ? t('record.contractId') : t('record.purchaseId')}
-          error={err(against === 'contract' ? 'contractId' : 'purchaseRequestId')}
-        >
-          {(p) => <Input {...p} dir="ltr" value={sourceId} onChange={(e) => setSourceId(e.target.value)} />}
-        </Field>
+        {against === 'order' ? (
+          <OrderBilling
+            orderId={orderId}
+            onOrder={(o) => setOrderId(o?.id ?? '')}
+            rows={billRows}
+            onRows={setBillRows}
+            extras={extras}
+            onExtras={setExtras}
+            error={record.error}
+          />
+        ) : (
+          <Field
+            label={against === 'contract' ? t('record.contractId') : t('record.purchaseId')}
+            error={err(against === 'contract' ? 'contractId' : 'purchaseRequestId')}
+          >
+            {(p) => <Input {...p} dir="ltr" value={sourceId} onChange={(e) => setSourceId(e.target.value)} />}
+          </Field>
+        )}
         {against === 'contract' ? (
           <Field label={t('record.paymentId')} error={err('contractPaymentId')}>
             {(p) => <Input {...p} dir="ltr" value={paymentId} onChange={(e) => setPaymentId(e.target.value)} />}
@@ -137,7 +164,7 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
             {(p) => <Input {...p} type="date" value={dueOn} onChange={(e) => setDueOn(e.target.value)} />}
           </Field>
         </div>
-        {lines.map((l, i) => (
+        {against === 'order' ? null : lines.map((l, i) => (
           <div key={i} className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
             <Field label={t('record.line', { n: i + 1 })} error={err(`lines.${i}.description`)}>
               {(p) => (
@@ -188,12 +215,20 @@ function RecordInvoice({ onClose }: { onClose: () => void }) {
             </Select>
           )}
         </Field>
-        <Button size="sm" onClick={() => setLines([...lines, { description: '', amount: '', taxCode: 'zero' }])} disabled={lines.length >= 50}>
-          {t('record.addLine')}
-        </Button>
+        {against === 'order' ? null : (
+          <Button size="sm" onClick={() => setLines([...lines, { description: '', amount: '', taxCode: 'zero' }])} disabled={lines.length >= 50}>
+            {t('record.addLine')}
+          </Button>
+        )}
         {file ? <p className="t-secondary">{t('record.attached')}</p> : null}
         <FileUpload purpose="expense_invoice" label={t('record.attach')} onUploaded={setFile} disabled={file !== null} />
         <ErrorAlert error={record.error} />
+        {poRequired !== null ? (
+          <div className="stack stack--sm">
+            <p className="hint">{t('record.poRequired', { above: f.money(poRequired) })}</p>
+            {against !== 'order' ? <Button size="sm" onClick={() => setAgainst('order')}>{t('record.useOrder')}</Button> : null}
+          </div>
+        ) : null}
       </div>
     </Dialog>
   );
@@ -231,6 +266,8 @@ export default function PayablesPage() {
         actions={
           <>
             <Link href="/finance/payables/contracts">{t('contractsLink')}</Link>{' '}
+            <Link href="/purchase-orders/settings">{t('settingsLink')}</Link>{' '}
+            {can('purchase_orders.raise') || can('purchase_orders.receive') || can('purchases.approve') ? <Link href="/purchase-orders">{t('ordersLink')}</Link> : null}{' '}
             {can('finance.payables') ? (
               <Button variant="primary" onClick={() => setRecording(true)}>
                 {t('recordInvoice')}

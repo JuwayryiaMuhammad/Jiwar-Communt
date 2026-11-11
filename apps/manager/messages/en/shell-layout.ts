@@ -48,6 +48,7 @@ export default {
   'nav.vendors': 'Vendors',
   'nav.tenders': 'Tenders',
   'nav.purchases': 'Purchase requests',
+  'nav.purchase-orders': 'Purchase orders',
   'nav.economics': 'Economics',
   'nav.meters': 'Meters',
   'nav.energy': 'Energy',

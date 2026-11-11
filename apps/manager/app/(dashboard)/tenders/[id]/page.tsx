@@ -5,6 +5,7 @@ import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { useFormat, useT } from '@jiwar/i18n';
 import {
   Button,
+  ButtonLink,
   Card,
   CardHeader,
   ConfirmDialog,
@@ -492,6 +493,11 @@ export default function TenderPage() {
                   </Button>
                 ) : null}
                 {takingBids && manage ? <Button onClick={() => setDeadline(true)}>{t('moveDeadline')}</Button> : null}
+                {tender.status === 'awarded' && tender.contractId && can('purchase_orders.raise') ? (
+                  <ButtonLink href={`/purchase-orders/new?tenderId=${tender.id}`} variant="primary">
+                    {t('raiseOrder')}
+                  </ButtonLink>
+                ) : null}
                 {(tender.status === 'open' || tender.status === 'opening') && can('tenders.open') ? (
                   <Button variant="primary" loading={open.isPending} onClick={() => open.mutate(undefined)}>
                     {tender.status === 'opening' ? t('confirmOpening') : t('openBids')}

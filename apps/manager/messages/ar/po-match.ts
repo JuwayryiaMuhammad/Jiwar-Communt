@@ -1,0 +1,48 @@
+import type { Translation } from '@jiwar/i18n';
+import type en from '../en/po-match.ts';
+
+const ar: Translation<typeof en> = {
+  title: 'المطابقة الثلاثية',
+  description: 'الفاتورة مقابل أمر الشراء {order} وما قُبل عند الاستلام، في حدود التسامح.',
+  openOrder: 'افتح {order}',
+  'status.matched': 'مطابقة',
+  'status.blocked': 'غير مطابقة',
+  'status.overridden': 'تم تجاوز الفرق',
+  'status.none': 'بدون أمر شراء',
+  matchedBody: 'كل البنود ضمن حدود التسامح: تنتقل الفاتورة إلى الاعتماد كأي فاتورة أخرى.',
+  blockedBody: 'لا يمكن اعتماد الفاتورة قبل حل الفرق أو تجاوزه.',
+  issuesTitle: 'ما لا يطابق',
+  'issue.quantity_not_received': 'البند {position}: فُوتر {quantity} فوق ما استُلم (نحو {amount}).',
+  'issue.quantity_over_order': 'البند {position}: فُوتر {quantity} فوق ما طُلب (نحو {amount}).',
+  'issue.price_over': 'البند {position}: السعر يزيد {amount} على سعر الأمر.',
+  'issue.extra_line': 'البند {position}: {amount} خارج أمر الشراء.',
+  linesTitle: 'البنود بجوار بنود الأمر',
+  'col.line': 'البند',
+  'col.ordered': 'المطلوب',
+  'col.accepted': 'المقبول',
+  'col.billedBefore': 'فُوتر سابقًا',
+  'col.billed': 'في هذه الفاتورة',
+  'col.orderPrice': 'سعر الأمر',
+  'col.invoicePrice': 'سعر الفاتورة',
+  'col.variance': 'الفرق',
+  'col.issues': 'الفروق',
+  extraLine: 'خارج أمر الشراء',
+  priceVariance: 'فرق السعر: {amount}. يكون موجبًا حين تكلّف الفاتورة أكثر من أسعار الأمر.',
+  tolerance: 'حدود التسامح: السعر {price}، والكمية {quantity}، والمبلغ {amount}.',
+  overriddenOn: 'تم تجاوز الفرق في {when}: {reason}.',
+  overriddenNote: 'ملاحظة: {note}',
+  overriddenByYou: 'أنت من تجاوز الفرق.',
+  resolveTitle: 'لحل الفرق',
+  resolveHint:
+    'سجّل إذن استلام لما وصل، أو ألغِ الفاتورة بسبب «فاتورة مصححة» وسجّل فاتورة المورد المصححة أو إشعار الدائن. أو تجاوز الفرق مع ذكر السبب إذا اتُّفق عليه.',
+  receiveLink: 'سجّل إذن استلام على {order}',
+  override: 'تجاوز الفرق',
+  overrideTitle: 'تجاوز فرق {number}؟',
+  overrideHint: 'يبقى الفرق مسجلًا مع سببك، وتنتقل الفاتورة إلى الاعتماد.',
+  overrideNote: 'ملاحظة (اختياري)',
+  overridden: 'تم تجاوز فرق {number}.',
+  recordedByYou: 'أنت من سجّل هذه الفاتورة: يتجاوز فرقها شخص آخر.',
+  approveBlocked: 'هذه الفاتورة لا تطابق أمر الشراء وأذون الاستلام، فلا يمكن اعتمادها بعد. أحل الفرق أدناه أو تجاوزه.',
+};
+
+export default ar;

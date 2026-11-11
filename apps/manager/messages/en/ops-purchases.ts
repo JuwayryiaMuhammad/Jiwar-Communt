@@ -8,6 +8,7 @@ export default {
   approve: 'Approve',
   reject: 'Turn down',
   fulfil: 'Mark bought',
+  raiseOrder: 'Raise an order',
   status: 'Status',
   'view.requested': 'Waiting',
   'view.approved': 'Approved',

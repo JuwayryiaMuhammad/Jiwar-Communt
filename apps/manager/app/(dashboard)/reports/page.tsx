@@ -2,7 +2,7 @@
 
 import { ErrorAlert, QueryState } from '@jiwar/api/react';
 import { useFormat, useLocale, useT } from '@jiwar/i18n';
-import { Button, Card, DataTable, EmptyState, Field, ForbiddenState, Input, PageHeader, Select } from '@jiwar/ui';
+import { Button, Card, DataTable, EmptyState, Field, ForbiddenState, Input, PageHeader, Select, useLabel } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { change, COMPARES, isGroup, isNote } from '@/components/reports/labels';
@@ -14,7 +14,7 @@ import en from '@/messages/en/ops-reports';
 
 type Row = ReportResult['rows'][number] & { n: number };
 const iso = (d: Date) => d.toLocaleDateString('en-CA');
-const READERS = ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'];
+const READERS = ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports', 'finance.payables'];
 
 /**
  * The curated reports (ADR 0086): the ones the signed-in account may read,
@@ -25,6 +25,7 @@ export default function ReportsPage() {
   const t = useT(en, ar);
   const fmt = useFormat();
   const { locale } = useLocale();
+  const label = useLabel();
   const { ready, can } = usePermissions();
   const allowed = READERS.some((p) => can(p));
   const catalog = useQuery({ queryKey: keys.reportCatalog(), queryFn: fetchers.reportCatalog, enabled: allowed });
@@ -65,6 +66,13 @@ export default function ReportsPage() {
     if (v === null || v === undefined) return '—';
     if (!figure(i)) return v;
     return r?.columns[i]?.kind === 'money' ? fmt.money(v) : fmt.number(v);
+  };
+  /** The purchase-order reports name a match status, a kind of issue or a budget category by its code. */
+  const codeWords = (column: string, i: number, v: string | null | undefined) => {
+    if (!key.startsWith('po_') || !v || figure(i)) return value(i, v);
+    if (column === 'status') return v === 'blocked' || v === 'overridden' ? t(`match.${v}`) : label(v);
+    if (column === 'issue' || column === 'category') return label(v);
+    return value(i, v);
   };
   const pct = (now: string | null, before: string | null) => {
     const ratio = change(now, before);
@@ -142,7 +150,7 @@ export default function ReportsPage() {
                       header: c[locale],
                       cell: (x: Row) => {
                         const v = x.values[i];
-                        const shown = c.key === 'note' && v ? (isNote(v) ? t(`note.${v}`) : v) : value(i, v);
+                        const shown = c.key === 'note' && v ? (isNote(v) ? t(`note.${v}`) : v) : codeWords(c.key, i, v);
                         if (!figure(i) || r.compare === 'none') return x.n === -1 ? <strong>{shown}</strong> : shown;
                         const parts = [
                           r.previousPeriod

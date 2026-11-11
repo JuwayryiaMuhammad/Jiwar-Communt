@@ -16,6 +16,7 @@ export default {
   'status.opened': 'Opened',
   'status.awarded': 'Awarded',
   'status.cancelled': 'Cancelled',
+  raiseOrder: 'Raise a purchase order',
   empty: 'No tender',
   'col.tender': 'Tender',
   'col.status': 'Status',

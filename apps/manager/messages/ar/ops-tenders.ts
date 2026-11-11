@@ -17,6 +17,7 @@ const ar: Translation<typeof en> = {
   'status.opened': 'فُتحت المظاريف',
   'status.awarded': 'تمت الترسية',
   'status.cancelled': 'ملغاة',
+  raiseOrder: 'أصدر أمر شراء',
   empty: 'لا توجد مناقصات',
   'col.tender': 'المناقصة',
   'col.status': 'الحالة',

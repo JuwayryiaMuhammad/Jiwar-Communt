@@ -146,7 +146,12 @@ One Arabic word per domain term, the same on every page.
 | VAT | ضريبة القيمة المضافة | | Tax declaration | الإقرار الضريبي |
 | Withholding tax | ضريبة الخصم من المنبع (الخصم والإضافة) | | Withholding certificate | شهادة الخصم |
 | Fiscal year | السنة المالية | | Year-end close | إقفال السنة |
-| Accumulated surplus | الفائض المرحّل | | | |
+| Accumulated surplus | الفائض المرحّل | Purchase order | أمر شراء |
+| Goods receipt | إذن استلام | Three-way match | المطابقة الثلاثية |
+| Tolerance | حد التسامح | Received, not invoiced | مستلم غير مفوتر |
+| Revision (of an order) | مراجعة | Accepted | مقبول |
+| Rejected | مرفوض | Delivery | التسليم |
+| Acknowledge (by the vendor) | تأكيد الاستلام | Override (a mismatch) | تجاوز الفرق |
 
 ## Checks
 

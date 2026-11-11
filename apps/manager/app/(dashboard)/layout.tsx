@@ -366,6 +366,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: <Handshake aria-hidden />,
           show: can('purchases.approve') || can('purchases.request'),
         },
+        // Purchase orders, their receipts and the three-way match (ADR 0094).
+        {
+          href: '/purchase-orders',
+          label: t('nav.purchase-orders'),
+          icon: <Handshake aria-hidden />,
+          show: can('purchase_orders.raise') || can('purchase_orders.receive') || can('purchases.approve'),
+        },
         { href: '/economics', label: t('nav.economics'), icon: <Receipt aria-hidden />, show: can('assets.manage') },
         // Energy and utilities (ADR 0066).
         { href: '/meters', label: t('nav.meters'), icon: <Gauge aria-hidden />, show: can('energy.read') },
@@ -767,14 +774,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           href: '/reports',
           label: t('nav.reports'),
           icon: <ChartColumn aria-hidden />,
-          show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'].some((p) => can(p)),
+          show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports', 'finance.payables'].some((p) => can(p)),
         },
         { href: '/reports/schedules', label: t('nav.reports.schedules'), icon: <CalendarClock aria-hidden />, show: can('reports.schedule') },
         {
           href: '/reports/runs',
           label: t('nav.reports.runs'),
           icon: <FileChartColumn aria-hidden />,
-          show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports'].some((p) => can(p)),
+          show: ['assets.manage', 'stock.manage', 'tickets.dispatch', 'energy.read', 'finance.reports', 'finance.payables'].some((p) => can(p)),
         },
         { href: '/capital-plans', label: t('nav.capital-plans'), icon: <Landmark aria-hidden />, show: can('assets.manage') },
         { href: '/compound-export', label: t('nav.compound-export'), icon: <Boxes aria-hidden />, show: can('compound.export') },

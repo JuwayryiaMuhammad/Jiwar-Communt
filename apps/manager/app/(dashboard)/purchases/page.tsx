@@ -3,7 +3,7 @@
 import { unwrap } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
 import { useFormat, useT } from '@jiwar/i18n';
-import { Button, Card, DataTable, ForbiddenState, PageHeader, Segmented, useLabel, useToast } from '@jiwar/ui';
+import { Button, ButtonLink, Card, DataTable, ForbiddenState, PageHeader, Segmented, useLabel, useToast } from '@jiwar/ui';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
@@ -98,7 +98,20 @@ export default function PurchasesPage() {
               { key: 'a', header: t('col.amount'), cell: (r) => fmt.money(r.estimatedAmount) },
               { key: 'n', header: t('col.neededBy'), cell: (r) => (r.neededBy ? fmt.day(r.neededBy) : '—') },
               { key: 's', header: t('col.status'), cell: (r) => label(r.status) },
-              { key: 'd', header: '', cell: (r) => (can('purchases.approve') ? <Decide r={r} /> : null) },
+              {
+                key: 'd',
+                header: '',
+                cell: (r) => (
+                  <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                    {can('purchases.approve') ? <Decide r={r} /> : null}
+                    {r.status === 'approved' && can('purchase_orders.raise') ? (
+                      <ButtonLink size="sm" href={`/purchase-orders/new?purchaseRequestId=${r.id}`}>
+                        {t('raiseOrder')}
+                      </ButtonLink>
+                    ) : null}
+                  </span>
+                ),
+              },
             ]}
           />
           <LoadMore query={list} />

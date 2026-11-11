@@ -91,6 +91,8 @@ const RULES: Partial<Record<Purpose, { types: readonly ContentType[]; maxBytes: 
     maxBytes: 10 * 1024 * 1024,
     what: 'imageOrPdf10',
   },
+  // A delivery's photo on a goods receipt (ADR 0094).
+  goods_receipt_photo: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'photo10' },
   // The site map and a building floor's plan (ADR 0084).
   site_map: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'image10' },
   floor_plan: { types: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 10 * 1024 * 1024, what: 'image10' },

@@ -6,7 +6,7 @@ export const CADENCES = ['daily', 'weekly', 'monthly'] as const;
 export const FORMATS = ['pdf', 'xlsx', 'csv'] as const;
 /** Why a figure is missing, as the energy report says. */
 export const NOTES = ['no_tariff', 'no_area'] as const;
-export const GROUPS = ['building', 'asset_type', 'category', 'month', 'item'] as const;
+export const GROUPS = ['building', 'asset_type', 'category', 'month', 'item', 'order', 'vendor', 'invoice', 'issue'] as const;
 
 export const isNote = (v: string): v is (typeof NOTES)[number] => (NOTES as readonly string[]).includes(v);
 export const isGroup = (v: string): v is (typeof GROUPS)[number] => (GROUPS as readonly string[]).includes(v);

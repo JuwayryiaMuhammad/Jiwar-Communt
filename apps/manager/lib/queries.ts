@@ -96,6 +96,13 @@ export type VendorDispatch = Schema<'VendorDispatchView'>;
 export type TenderSummary = Schema<'TenderSummaryView'>;
 export type Tender = Schema<'TenderView'>;
 export type PurchaseRequest = Schema<'PurchaseRequestView'>;
+// Purchase orders, goods receipts and the three-way match (ADR 0094).
+export type PurchaseOrder = Schema<'PurchaseOrderView'>;
+export type PurchaseOrderLine = Schema<'PurchaseOrderLineView'>;
+export type PurchaseOrderStatus = Schema<'PurchaseOrderStatus'>;
+export type GoodsReceipt = Schema<'GoodsReceiptView'>;
+export type InvoiceMatch = Schema<'InvoiceMatchView'>;
+export type PurchaseOrderSettings = Schema<'PurchaseOrderSettingsView'>;
 // Compliance and safety (ADR 0087).
 export type ComplianceItem = Schema<'ComplianceItemView'>;
 export type ComplianceItemDetail = Schema<'ComplianceItemDetailView'>;
@@ -715,6 +722,17 @@ export const keys = {
   tender: (id: string) => ['tenders', 'detail', id] as const,
   purchasesAll: ['purchases'] as const,
   purchases: (filters: object) => ['purchases', 'list', filters] as const,
+  purchaseRequest: (id: string) => ['purchases', 'detail', id] as const,
+  // Purchase orders (ADR 0094).
+  purchaseOrdersAll: ['purchase-orders'] as const,
+  purchaseOrders: (filters: object) => ['purchase-orders', 'list', filters] as const,
+  purchaseOrder: (id: string) => ['purchase-orders', 'detail', id] as const,
+  purchaseOrdersToBill: (status: string) => ['purchase-orders', 'to-bill', status] as const,
+  poVendors: ['purchase-orders', 'pick', 'vendors'] as const,
+  poStockItems: ['purchase-orders', 'pick', 'stock-items'] as const,
+  poStores: ['purchase-orders', 'pick', 'stores'] as const,
+  poBudgetLines: ['purchase-orders', 'pick', 'budget-lines'] as const,
+  poContract: (id: string) => ['purchase-orders', 'pick', 'contract', id] as const,
   complianceAll: ['compliance'] as const,
   complianceItems: (filters: object) => ['compliance', 'items', filters] as const,
   complianceItem: (id: string) => ['compliance', 'item', id] as const,
@@ -730,6 +748,8 @@ export const keys = {
   paymentSchedule: (from: string, to: string) => ['payables', 'schedule', from, to] as const,
   contractPayables: (id: string) => ['payables', 'contract', id] as const,
   disbursements: ['payables', 'disbursements'] as const,
+  invoiceMatch: (id: string) => ['payables', 'invoice', id, 'match'] as const,
+  purchaseOrderSettings: ['payables', 'purchase-order-settings'] as const,
   budgetTransfers: (budgetId: string) => ['budgets', 'transfers', budgetId] as const,
   commitments: (filters: object) => ['budgets', 'commitments', filters] as const,
   budgetPeriods: (budgetId: string, by: string) => ['budgets', 'periods', budgetId, by] as const,
@@ -1360,6 +1380,28 @@ export const fetchers = {
         params: { query: { ...(clean(filters) as { status?: PurchaseRequest['status'] }), cursor, limit } },
       }),
     ),
+  purchaseRequest: (id: string) => unwrap(api.GET('/api/v1/staff/purchase-requests/{id}', { params: { path: { id } } })),
+  // Purchase orders (ADR 0094).
+  purchaseOrders: (
+    filters: { status?: PurchaseOrderStatus | ''; vendorId?: string; waiting?: boolean },
+    cursor?: string,
+    limit = 50,
+  ) =>
+    unwrap(
+      api.GET('/api/v1/staff/purchase-orders', {
+        params: {
+          query: {
+            ...(clean({ status: filters.status, vendorId: filters.vendorId }) as { status?: PurchaseOrderStatus; vendorId?: string }),
+            ...(filters.waiting ? { waiting: true } : {}),
+            cursor,
+            limit,
+          },
+        },
+      }),
+    ),
+  purchaseOrder: (id: string) => unwrap(api.GET('/api/v1/staff/purchase-orders/{id}', { params: { path: { id } } })),
+  invoiceMatch: (id: string) => unwrap(api.GET('/api/v1/staff/finance/vendor-invoices/{id}/match', { params: { path: { id } } })),
+  purchaseOrderSettings: () => unwrap(api.GET('/api/v1/staff/finance/purchase-order-settings')),
   assetEconomics: (id: string) =>
     unwrap(api.GET('/api/v1/maintenance/assets/{id}/economics', { params: { path: { id } } })),
   economics: (from: string, to: string) =>

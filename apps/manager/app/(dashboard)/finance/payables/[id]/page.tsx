@@ -5,21 +5,26 @@ import { ErrorAlert, QueryState, useAction } from '@jiwar/api/react';
 import { useFormat, useT } from '@jiwar/i18n';
 import { Button, Card, DataTable, Field, Input, PageHeader, ReasonCodeDialog, Select, useCommonT, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { SectionHeader } from '@/components/community/bits';
 import { useFinanceCode } from '@/components/finance/codes';
 import { PayoutAccountField } from '@/components/finance/payout-account';
+import { MatchPanel } from '@/components/purchase-orders/match-panel';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { fetchers, keys, type VendorInvoice } from '@/lib/queries';
 import ar from '@/messages/ar/fin-payable-invoice';
 import en from '@/messages/en/fin-payable-invoice';
+import matchAr from '@/messages/ar/po-match';
+import matchEn from '@/messages/en/po-match';
 
 const today = () => new Date().toLocaleDateString('en-CA');
 
-function Decide({ i }: { i: VendorInvoice }) {
+function Decide({ i, blocked }: { i: VendorInvoice; blocked: boolean }) {
   const t = useT(en, ar);
+  const m = useT(matchEn, matchAr);
   const c = useCommonT();
   const code = useFinanceCode();
   const toast = useToast();
@@ -32,7 +37,7 @@ function Decide({ i }: { i: VendorInvoice }) {
   const [reference, setReference] = useState('');
   const [setOff, setSetOff] = useState('');
   const [account, setAccount] = useState('');
-  const done = { invalidate: [keys.payablesAll, keys.budgetsAll] };
+  const done = { invalidate: [keys.payablesAll, keys.budgetsAll, keys.purchaseOrdersAll] };
   const close = useAction(
     (v: { to: 'reject' | 'cancel'; reasonCode: string }) =>
       unwrap(
@@ -80,10 +85,11 @@ function Decide({ i }: { i: VendorInvoice }) {
           <p className="t-secondary">{t('recordedByYou')}</p>
         ) : (
           <>
-            <Button variant="primary" loading={approve.isPending} onClick={() => approve.mutate()}>
+            <Button variant="primary" loading={approve.isPending} disabled={blocked} onClick={() => approve.mutate()}>
               {c('approve')}
             </Button>{' '}
             <Button onClick={() => setAsking('reject')}>{t('turnDown')}</Button>
+            {blocked ? <p className="hint">{m('approveBlocked')}</p> : null}
           </>
         )
       ) : null}
@@ -148,6 +154,11 @@ export default function VendorInvoicePage() {
   const { id } = useParams<{ id: string }>();
   const q = useQuery({ queryKey: keys.vendorInvoice(id), queryFn: () => fetchers.vendorInvoice(id) });
   const i = q.data;
+  const match = useQuery({
+    queryKey: keys.invoiceMatch(id),
+    queryFn: () => fetchers.invoiceMatch(id),
+    enabled: Boolean(i?.purchaseOrderId),
+  });
   return (
     <>
       <PageHeader title={i ? `${i.number} · ${i.vendorNumber}` : t('title')} description={i ? label(i.status) : undefined} />
@@ -163,6 +174,14 @@ export default function VendorInvoicePage() {
                 }
                 description={t('dates', { issued: f.day(i.issuedOn), due: f.day(i.dueOn), recorded: f.dateTime(i.recordedAt) })}
               />
+              {i.purchaseOrderId ? (
+                <p>
+                  {t('order')}{' '}
+                  <Link className="ltr" href={`/purchase-orders/${i.purchaseOrderId}`}>
+                    {match.data?.orderReference ?? '—'}
+                  </Link>
+                </p>
+              ) : null}
               {i.invoiceUrl ? (
                 <a href={i.invoiceUrl} target="_blank" rel="noreferrer">
                   {t('scan')}
@@ -173,12 +192,19 @@ export default function VendorInvoicePage() {
                 rowKey={(l) => String(l.position)}
                 columns={[
                   { key: 'd', header: t('line'), cell: (l) => l.description },
+                  ...(i.lines.some((l) => l.quantity !== null)
+                    ? [
+                        { key: 'q', header: t('quantity'), cell: (l: (typeof i.lines)[number]) => f.number(l.quantity, { maximumFractionDigits: 3 }) },
+                        { key: 'p', header: t('unitPrice'), cell: (l: (typeof i.lines)[number]) => f.money(l.unitPrice) },
+                      ]
+                    : []),
                   { key: 'a', header: c('amount'), cell: (l) => f.money(l.amount) },
                   { key: 't', header: t('tax'), cell: (l) => `${t(`tax.${l.taxCode}`)} · ${f.money(l.tax)}` },
                 ]}
               />
-              <Decide i={i} />
+              <Decide i={i} blocked={match.data?.status === 'blocked'} />
             </Card>
+            {match.data && match.data.status !== 'none' ? <MatchPanel invoice={i} match={match.data} /> : null}
             {i.payout ? (
               <Card>
                 <SectionHeader

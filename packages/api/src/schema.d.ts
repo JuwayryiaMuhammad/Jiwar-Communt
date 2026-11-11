@@ -2598,6 +2598,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/contractor/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the purchase orders sent to my company
+         * @description Newest first; once sent, approved or closed.
+         */
+        get: operations["ContractorPurchaseOrdersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a purchase order sent to my company */
+        get: operations["ContractorPurchaseOrdersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/purchase-orders/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge the purchase order
+         * @description Records that my company has the revision sent; a new revision asks again. Audited.
+         */
+        post: operations["ContractorPurchaseOrdersController_acknowledge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/contractor/purchase-orders/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A purchase order sent to my company, as a PDF */
+        get: operations["ContractorPurchaseOrdersController_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contractor/tenders": {
         parameters: {
             query?: never;
@@ -19032,6 +19106,27 @@ export interface paths {
         patch: operations["StaffPlanRequestsController_setSettings"];
         trace?: never;
     };
+    "/api/v1/staff/finance/purchase-order-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the match tolerances and when an order is required */
+        get: operations["InvoiceMatchController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the match tolerances and when an order is required
+         * @description Applies from the next match; nothing is reposted. Audited with the old and new values.
+         */
+        patch: operations["InvoiceMatchController_updateSettings"];
+        trace?: never;
+    };
     "/api/v1/staff/finance/reports/aging": {
         parameters: {
             query?: never;
@@ -19734,6 +19829,46 @@ export interface paths {
          * @description A `vendorInvoiceCancel` code; an approved one only by an approver (VENDOR_INVOICE_STATE).
          */
         post: operations["PayablesController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices/{id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a vendor’s invoice against its purchase order
+         * @description Its lines beside the order’s lines, the quantities accepted and billed before, the price variance and the issues that block its approval. `status: none` when the invoice names no order.
+         */
+        get: operations["InvoiceMatchController_read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/finance/vendor-invoices/{id}/match/override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Let a mismatch through
+         * @description While the invoice waits for its approval and does not match: once, with a reason, by someone who did not record it (MATCH_SELF_OVERRIDE). Audited with the issues it let through.
+         */
+        post: operations["InvoiceMatchController_override"];
         delete?: never;
         options?: never;
         head?: never;
@@ -22259,6 +22394,204 @@ export interface paths {
         put?: never;
         /** Decline a plan request with a reason code */
         post: operations["StaffPlanRequestsController_decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List purchase orders
+         * @description Newest first.
+         */
+        get: operations["PurchaseOrdersController_list"];
+        put?: never;
+        /**
+         * Raise a purchase order
+         * @description Directly, from an approved purchase request (`purchaseRequestId`: its vendor and budget line, its commitment taken over at the approval) or from an awarded tender (`tenderId`). It waits for an approver other than the caller (PURCHASE_ORDER_SELF_APPROVAL). Audited.
+         */
+        post: operations["PurchaseOrdersController_raise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a purchase order
+         * @description With its lines and what happened to each, its revisions, its receipts and the invoices naming it.
+         */
+        get: operations["PurchaseOrdersController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/amend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Amend an approved purchase order
+         * @description A new revision, approved again; one waits at a time (PURCHASE_ORDER_REVISION_PENDING). No line goes below what was received or invoiced of it (PURCHASE_ORDER_LINE_BELOW_USED). The revision in force stands until it is approved.
+         */
+        post: operations["PurchaseOrdersController_amend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a purchase order, or its waiting revision
+         * @description Never by who raised it (PURCHASE_ORDER_SELF_APPROVAL, even under the board’s approval). Up to the manager’s limit, above it under the board’s approved major contract (`approvalRequestId`; PURCHASE_ORDER_NEEDS_APPROVAL, PURCHASE_ORDER_APPROVAL_INVALID). Keeps the budget line’s money as the order’s commitment (BUDGET_LINE_INSUFFICIENT); an order raised from a purchase request takes the request’s commitment over.
+         */
+        post: operations["PurchaseOrdersController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Call off a waiting order, or cancel what is left of an approved one
+         * @description A waiting order is called off. An approved one closes: what was not received is cancelled and its commitment given back, keeping the value of what arrived and is not invoiced yet.
+         */
+        post: operations["PurchaseOrdersController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A purchase order as a PDF, for its vendor
+         * @description The revision in force, drawn on demand and never stored.
+         */
+        get: operations["PurchaseOrdersController_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record what arrived against a purchase order
+         * @description A goods or service receipt, in parts: per line the quantity accepted and rejected (a rejection has a `goodsRejection` code), a note and photos. A stock line accepted goes into a store (`storeId`) at the order’s unit cost. At most the ordered quantity and the compound’s tolerance is accepted in all (GOODS_RECEIPT_EXCEEDS_ORDER). Who holds `purchase_orders.receive` receives anything; the order’s raiser or its request’s requester confirms its service lines only. Audited.
+         */
+        post: operations["PurchaseOrdersController_receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn down a purchase order, or its revision */
+        post: operations["PurchaseOrdersController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send an approved order to its vendor
+         * @description Records that the revision in force went to the vendor and tells its contractors, who then see it (and its PDF) and acknowledge it. Sent again after a revision.
+         */
+        post: operations["PurchaseOrdersController_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/purchase-orders/{id}/withdraw-revision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take back the revision that waits */
+        post: operations["PurchaseOrdersController_withdrawRevision"];
         delete?: never;
         options?: never;
         head?: never;
@@ -29598,6 +29931,20 @@ export interface components {
             /** Format: uuid */
             shiftId: string;
         };
+        AmendPurchaseOrderDto: {
+            /** Format: uuid */
+            budgetLineId?: string;
+            /**
+             * Format: date
+             * @description Not before the compound’s today.
+             */
+            deliveryOn?: string;
+            /** @description The whole order as amended: a line that carries its `id` changes, one without is new, one left out is dropped. */
+            lines: components["schemas"]["PurchaseOrderLineDto"][];
+            note?: string;
+            /** @description REASON_CODES.purchaseOrderAmend. */
+            reasonCode: string;
+        };
         AnalyticsSettingsView: {
             /** @description Residents’ tickets of one category in one building within the window that make a community case. */
             caseMinTickets: number;
@@ -29985,6 +30332,14 @@ export interface components {
         };
         ApprovePermitDto: {
             /** @description The management’s own note. Never shown to the unit. */
+            note?: string;
+        };
+        ApprovePurchaseOrderDto: {
+            /**
+             * Format: uuid
+             * @description Above the manager’s limit: the board’s approved major contract of at least the order’s total, covering no other order, request or contract.
+             */
+            approvalRequestId?: string;
             note?: string;
         };
         ApprovePurchaseRequestDto: {
@@ -33499,6 +33854,8 @@ export interface components {
              */
             open: string;
             /** Format: uuid */
+            purchaseOrderId: string | null;
+            /** Format: uuid */
             purchaseRequestId: string | null;
             /**
              * @description Given back so far.
@@ -33506,7 +33863,7 @@ export interface components {
              */
             released: string;
             /** @enum {string} */
-            source: "contract" | "purchase_request";
+            source: "contract" | "purchase_request" | "purchase_order";
             /** Format: uuid */
             vendorId: string | null;
         };
@@ -34539,6 +34896,11 @@ export interface components {
             note?: string;
             /**
              * Format: uuid
+             * @description A purchase order sent to my company (ADR 0094).
+             */
+            purchaseOrderId?: string;
+            /**
+             * Format: uuid
              * @description A purchase my company fulfilled.
              */
             purchaseRequestId?: string;
@@ -34560,6 +34922,8 @@ export interface components {
             number: string;
             /** Format: date-time */
             paidAt: string | null;
+            /** Format: uuid */
+            purchaseOrderId: string | null;
             /** Format: uuid */
             purchaseRequestId: string | null;
             /** @description From the closed list `vendorInvoiceReject`. */
@@ -34614,6 +34978,48 @@ export interface components {
             /** Format: uuid */
             id: string;
             paid: boolean;
+        };
+        ContractorPurchaseOrderLineView: {
+            description: string;
+            /** @example 1200.00 */
+            net: string;
+            position: number;
+            quantity: string;
+            /** @example 1200.00 */
+            tax: string;
+            /** @enum {string} */
+            taxCode: "zero" | "exempt" | "vat_14";
+            unit: string;
+            /** @example 1200.00 */
+            unitPrice: string;
+        };
+        ContractorPurchaseOrderView: {
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            acknowledgedRevision: number | null;
+            /** Format: date */
+            deliveryOn: string;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["ContractorPurchaseOrderLineView"][];
+            note: string | null;
+            /** @example PO-000001 */
+            reference: string;
+            revision: number;
+            /** Format: date-time */
+            sentAt: string | null;
+            sentRevision: number | null;
+            status: components["schemas"]["PurchaseOrderStatus"];
+            /** @example 1200.00 */
+            subtotal: string;
+            /** @example 1200.00 */
+            tax: string;
+            /** @example 1200.00 */
+            total: string;
+        };
+        ContractorPurchaseOrderViewList: {
+            data: components["schemas"]["ContractorPurchaseOrderView"][];
+            nextCursor: string | null;
         };
         ContractorVendorView: {
             categories: components["schemas"]["VendorCategory"][];
@@ -35558,6 +35964,24 @@ export interface components {
             /** @description As the visitor gives it; shown to the household only. */
             visitorName?: string;
         };
+        CreateGoodsReceiptDto: {
+            /** @description The vendor’s delivery note’s number. */
+            deliveryNote?: string;
+            lines: components["schemas"]["GoodsReceiptLineDto"][];
+            note?: string;
+            /** @description The caller’s `goods_receipt_photo` uploads. */
+            photoFileIds?: string[];
+            /**
+             * Format: date
+             * @description Not after the compound’s today.
+             */
+            receivedOn: string;
+            /**
+             * Format: uuid
+             * @description The store the accepted stock lines go into; required with one, refused without.
+             */
+            storeId?: string;
+        };
         CreateGovernanceElectionDto: {
             bodyAr?: string | null;
             bodyEn?: string | null;
@@ -36177,6 +36601,35 @@ export interface components {
             targetShare?: number | null;
             titleAr: string;
             titleEn: string;
+        };
+        CreatePurchaseOrderDto: {
+            /**
+             * Format: uuid
+             * @description Required unless its request or tender names one.
+             */
+            budgetLineId?: string;
+            /**
+             * Format: date
+             * @description Not before the compound’s today.
+             */
+            deliveryOn: string;
+            lines: components["schemas"]["PurchaseOrderLineDto"][];
+            note?: string;
+            /**
+             * Format: uuid
+             * @description Raised from an approved purchase request (it takes the request’s budget line and vendor).
+             */
+            purchaseRequestId?: string;
+            /**
+             * Format: uuid
+             * @description Raised from an awarded tender (its vendor; its contract must keep no payment schedule).
+             */
+            tenderId?: string;
+            /**
+             * Format: uuid
+             * @description A vendor of the register; required for a direct order.
+             */
+            vendorId?: string;
         };
         CreatePurchaseRequestDto: {
             /**
@@ -39353,7 +39806,7 @@ export interface components {
             unitId: string;
         };
         /** @enum {string} */
-        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "report_file" | "compound_export" | "staff_certificate" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo" | "tender_document" | "tender_bid";
+        FilePurpose: "worker_photo" | "document" | "resident_photo" | "ticket_photo" | "parcel_photo" | "data_export" | "request_attachment" | "community_attachment" | "complaint_evidence" | "neighbour_post_photo" | "gate_request_photo" | "vehicle_licence" | "parking_photo" | "vehicle_fine_photo" | "gate_service_photo" | "dispute_photo" | "contractor_photo" | "permit_photo" | "guard_task_photo" | "found_item_photo" | "patrol_photo" | "incident_photo" | "blocklist_photo" | "violation_photo" | "violation_appeal_photo" | "child_photo" | "child_escort_photo" | "approval_attachment" | "board_appeal_attachment" | "expense_invoice" | "visitor_photo" | "patrol_note_audio" | "patrol_note_video" | "incident_audio" | "incident_video" | "incident_signature" | "decision_appeal_attachment" | "registration_document" | "kinship_proof" | "unit_document" | "compound_document" | "contract" | "asset_document" | "checklist_photo" | "data_import" | "works_inspection_photo" | "gate_face_probe" | "gate_id_scan" | "market_listing_photo" | "gallery_photo" | "permit_drawing" | "fitout_photo" | "damage_appeal_photo" | "site_map" | "floor_plan" | "report_file" | "compound_export" | "staff_certificate" | "vendor_document" | "compliance_evidence" | "compound_logo" | "unit_entry_photo" | "tender_document" | "tender_bid" | "goods_receipt_photo";
         FileReadView: {
             contentType: string;
             /** Format: date-time */
@@ -40634,6 +41087,59 @@ export interface components {
             data: components["schemas"]["GlYearView"][];
             nextCursor: string | null;
         };
+        GoodsReceiptLineDto: {
+            /** @description In the line’s unit; at most the ordered quantity and the compound’s tolerance in all (GOODS_RECEIPT_EXCEEDS_ORDER). */
+            accepted: string;
+            note?: string;
+            /** Format: uuid */
+            purchaseOrderLineId: string;
+            /** @description REASON_CODES.goodsRejection; required with a rejection. */
+            rejectReason?: string;
+            rejected?: string;
+        };
+        GoodsReceiptLineView: {
+            /** @example 4.000 */
+            accepted: string;
+            description: string;
+            kind: components["schemas"]["PurchaseOrderLineKind"];
+            note: string | null;
+            position: number;
+            /** Format: uuid */
+            purchaseOrderLineId: string;
+            /** @description REASON_CODES.goodsRejection. */
+            rejectReason: string | null;
+            /** @example 0.000 */
+            rejected: string;
+            /** Format: uuid */
+            stockMovementId: string | null;
+            unit: string;
+        };
+        GoodsReceiptPhotoView: {
+            /** Format: uuid */
+            fileId: string;
+            /** @description A signed read URL. */
+            url: string | null;
+        };
+        GoodsReceiptView: {
+            /** Format: date-time */
+            createdAt: string;
+            deliveryNote: string | null;
+            /** Format: uuid */
+            id: string;
+            lines: components["schemas"]["GoodsReceiptLineView"][];
+            note: string | null;
+            photos: components["schemas"]["GoodsReceiptPhotoView"][];
+            /** Format: uuid */
+            purchaseOrderId: string;
+            /** @description The caller recorded it. */
+            receivedByMe: boolean;
+            /** Format: date */
+            receivedOn: string;
+            /** @example GR-000001 */
+            reference: string;
+            /** Format: uuid */
+            storeId: string | null;
+        };
         GovernanceCandidacyView: {
             /** Format: uuid */
             id: string;
@@ -41911,7 +42417,7 @@ export interface components {
             nextCursor: string | null;
         };
         /** @enum {string} */
-        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening" | "cash_custody" | "custody_variance" | "dangling_account" | "access_review" | "reinforcement_suggestion" | "gl_manual_entry";
+        InboxType: "registration" | "identity_change" | "worker_engagement" | "vehicle" | "booking" | "unit_permit" | "work_permit" | "field_exception" | "plan_request" | "invoice_dispute" | "decision_appeal" | "management_request" | "purchase_request" | "space_use_request" | "plan_suggestion" | "follow_up_case" | "recovery_case" | "compensation" | "ownership_transfer" | "closed_unit_round" | "unit_entry_report" | "vendor_invoice" | "contract_disbursement" | "tender_opening" | "cash_custody" | "custody_variance" | "dangling_account" | "access_review" | "reinforcement_suggestion" | "gl_manual_entry" | "purchase_order";
         InboxTypeCountView: {
             overdue: number;
             total: number;
@@ -42640,6 +43146,34 @@ export interface components {
             position: number;
             /** @description Its VAT (ADR 0093): 0.00 when untaxed. */
             vat: string;
+        };
+        /**
+         * @description `matched`: within tolerance, it goes on to approval; `blocked`: it cannot be approved until resolved (a receipt, a corrected invoice) or overridden; `overridden`: let through with a reason.
+         * @enum {string}
+         */
+        InvoiceMatchStatus: "none" | "matched" | "blocked" | "overridden";
+        InvoiceMatchView: {
+            /** Format: uuid */
+            invoiceId: string;
+            issues: components["schemas"]["MatchIssueView"][];
+            lines: components["schemas"]["MatchLineView"][];
+            /** @example PO-000001 */
+            orderReference: string | null;
+            orderStatus: string | null;
+            override: components["schemas"]["MatchOverrideView"] | null;
+            /**
+             * @description The lines’ price variances, signed, within tolerance or not: what the invoice costs over the order’s prices. It stays in the line’s budget category (ADR 0092).
+             * @example 0.00
+             */
+            priceVariance: string;
+            /**
+             * Format: uuid
+             * @description Null: the invoice names no purchase order, so there is no match.
+             */
+            purchaseOrderId: string | null;
+            /** @description `matched`: within tolerance, it goes on to approval; `blocked`: it cannot be approved until resolved (a receipt, a corrected invoice) or overridden; `overridden`: let through with a reason. */
+            status: components["schemas"]["InvoiceMatchStatus"];
+            tolerance: components["schemas"]["PurchaseOrderSettingsView"];
         };
         InvoicePayoutDto: {
             /** @description Of the contract’s open advances, set off against this invoice (ADVANCE_SET_OFF_EXCEEDED). */
@@ -43907,6 +44441,19 @@ export interface components {
             data: components["schemas"]["MatchCandidateView"][];
             nextCursor: string | null;
         };
+        /** @enum {string} */
+        MatchIssueKind: "quantity_not_received" | "quantity_over_order" | "price_over" | "extra_line";
+        MatchIssueView: {
+            /** @description The money over: the line’s price variance, or an extra line. */
+            amount: string;
+            kind: components["schemas"]["MatchIssueKind"];
+            /** Format: uuid */
+            orderLineId: string | null;
+            /** @description The invoice line’s position. */
+            position: number;
+            /** @description The quantity over, for the quantity issues. */
+            quantity: string | null;
+        };
         MatchLineDto: {
             /** @enum {string} */
             kind: "payment" | "cheque" | "transfer" | "adjustment";
@@ -43917,6 +44464,40 @@ export interface components {
              * @description The payment, cheque or transfer leg; not for an adjustment.
              */
             targetId?: string;
+        };
+        MatchLineView: {
+            acceptedQuantity: string | null;
+            amount: string;
+            description: string;
+            invoiceQuantity: string | null;
+            invoiceUnitPrice: string | null;
+            issues: components["schemas"]["MatchIssueKind"][];
+            orderDescription: string | null;
+            /** Format: uuid */
+            orderLineId: string | null;
+            orderUnitPrice: string | null;
+            orderedQuantity: string | null;
+            /** @description Billed by the other invoices that count before this one. */
+            otherInvoicedQuantity: string | null;
+            position: number;
+            /** @description Signed: above (positive) or below the order’s price. */
+            priceDifference: string | null;
+            /** @description Signed. */
+            priceVariance: string;
+        };
+        MatchOverrideDto: {
+            note?: string;
+            /** @description REASON_CODES.matchOverride. */
+            reasonCode: string;
+        };
+        MatchOverrideView: {
+            note: string | null;
+            /** Format: date-time */
+            overriddenAt: string;
+            /** @description The caller let it through. */
+            overriddenByMe: boolean;
+            /** @description REASON_CODES.matchOverride. */
+            reasonCode: string;
         };
         MaterialEntryView: {
             /** @description What came in, in the guard’s words. */
@@ -47925,6 +48506,240 @@ export interface components {
             titleEn?: string | null;
         };
         /** @enum {string} */
+        PurchaseOrderCloseReason: "completed" | "remainder_cancelled";
+        PurchaseOrderInvoiceView: {
+            /** Format: uuid */
+            id: string;
+            /** @example VI-000001 */
+            reference: string;
+            status: string;
+            /** @example 1200.00 */
+            total: string;
+        };
+        PurchaseOrderLineDto: {
+            /** @description Required unless the line is a stock item’s. */
+            description?: string;
+            /**
+             * Format: uuid
+             * @description An amendment: the existing line this changes. Absent: a new line. A line left out of an amendment is dropped (only while nothing was received or invoiced of it).
+             */
+            id?: string;
+            /** @description `stock`: a stock item, received into a store; `goods`: other goods, confirmed received; `service`: confirmed done. */
+            kind: components["schemas"]["PurchaseOrderLineKind"];
+            quantity: string;
+            /**
+             * Format: uuid
+             * @description A `stock` line’s item (its unit is the line’s).
+             */
+            stockItemId?: string;
+            /** @description `zero` by default. */
+            taxCode?: components["schemas"]["TaxCode"];
+            /** @description Required unless the line is a stock item’s. */
+            unit?: components["schemas"]["PurchaseOrderUnit"];
+            /** @description EGP, net of VAT, for one. */
+            unitPrice: string;
+            /** @description What its payout withholds by (ADR 0093); absent: the invoice’s, else the vendor’s. */
+            withholdingCategory?: components["schemas"]["WithholdingCategory"];
+        };
+        /** @enum {string} */
+        PurchaseOrderLineKind: "stock" | "goods" | "service";
+        PurchaseOrderLineView: {
+            /** @example 0.000 */
+            accepted: string;
+            description: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Billed on approved or paid invoices.
+             * @example 0.000
+             */
+            invoiced: string;
+            kind: components["schemas"]["PurchaseOrderLineKind"];
+            /** @example 1200.00 */
+            net: string;
+            position: number;
+            /** @example 10.000 */
+            quantity: string;
+            /** @example 0.000 */
+            rejected: string;
+            /** Format: uuid */
+            stockItemId: string | null;
+            /** @example 1200.00 */
+            tax: string;
+            /** @enum {string} */
+            taxCode: "zero" | "exempt" | "vat_14";
+            unit: string;
+            /**
+             * @description Net of VAT, for one.
+             * @example 1200.00
+             */
+            unitPrice: string;
+            withholdingCategory: string | null;
+        };
+        PurchaseOrderRevisionLineView: {
+            description: string;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["PurchaseOrderLineKind"];
+            quantity: string;
+            /** Format: uuid */
+            stockItemId: string | null;
+            /** @enum {string} */
+            taxCode: "zero" | "exempt" | "vat_14";
+            unit: string;
+            unitPrice: string;
+            withholdingCategory: string | null;
+        };
+        /** @enum {string} */
+        PurchaseOrderRevisionStatus: "requested" | "approved" | "rejected" | "withdrawn";
+        PurchaseOrderRevisionView: {
+            /** Format: uuid */
+            approvalRequestId: string | null;
+            /** Format: uuid */
+            budgetLineId: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decisionNote: string | null;
+            /** Format: date */
+            deliveryOn: string;
+            lines: components["schemas"]["PurchaseOrderRevisionLineView"][];
+            note: string | null;
+            /** @description REASON_CODES.purchaseOrderAmend; null for the first. */
+            reasonCode: string | null;
+            /** @description REASON_CODES.purchaseOrderReject. */
+            rejectReason: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description The caller asked for it. */
+            requestedByMe: boolean;
+            revision: number;
+            status: components["schemas"]["PurchaseOrderRevisionStatus"];
+            /** @example 1200.00 */
+            subtotal: string;
+            /** @example 1200.00 */
+            tax: string;
+            /** @example 1200.00 */
+            total: string;
+        };
+        PurchaseOrderSettingsDto: {
+            /** @description EGP. */
+            amount?: string;
+            /** @description EGP, or null for never. */
+            poRequiredAbove?: string | null;
+            /** @description In percent, 0 to 100. */
+            pricePct?: string;
+            /** @description In percent, 0 to 100. */
+            quantityPct?: string;
+        };
+        PurchaseOrderSettingsView: {
+            /**
+             * @description A line’s price variance may be this much money; an extra line (naming no order line) may be this much.
+             * @example 100.00
+             */
+            amount: string;
+            /**
+             * @description An invoice with no contract above this amount needs a purchase order (VENDOR_INVOICE_PO_REQUIRED); null: never, so invoices without one keep working.
+             * @example null
+             */
+            poRequiredAbove: string | null;
+            /**
+             * @description A unit price may exceed the order’s by this percentage (and by the amount below a line); a lower price never blocks.
+             * @example 2.00
+             */
+            pricePct: string;
+            /**
+             * @description A quantity may exceed the ordered and the accepted by this percentage of it; also what a receipt may accept over the order.
+             * @example 0.00
+             */
+            quantityPct: string;
+        };
+        /** @enum {string} */
+        PurchaseOrderSource: "direct" | "purchase_request" | "tender";
+        /** @enum {string} */
+        PurchaseOrderStatus: "requested" | "approved" | "rejected" | "cancelled" | "closed";
+        /**
+         * @description Required unless the line is a stock item’s.
+         * @enum {string}
+         */
+        PurchaseOrderUnit: "piece" | "metre" | "litre" | "kilogram" | "box" | "set" | "pair" | "roll" | "lot" | "hour" | "day" | "month";
+        PurchaseOrderView: {
+            /** Format: date-time */
+            acknowledgedAt: string | null;
+            acknowledgedRevision: number | null;
+            /** Format: uuid */
+            approvalRequestId: string | null;
+            /** Format: uuid */
+            budgetLineId: string;
+            /** @description REASON_CODES.purchaseOrderCancel. */
+            cancelReason: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+            closeReason: components["schemas"]["PurchaseOrderCloseReason"] | null;
+            /** Format: date-time */
+            closedAt: string | null;
+            /**
+             * @description What its commitment still keeps of the budget line.
+             * @example 1200.00
+             */
+            committed: string;
+            /** Format: uuid */
+            contractId: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            decisionNote: string | null;
+            /** Format: date */
+            deliveryOn: string;
+            /** Format: uuid */
+            id: string;
+            invoices: components["schemas"]["PurchaseOrderInvoiceView"][];
+            lines: components["schemas"]["PurchaseOrderLineView"][];
+            note: string | null;
+            /** @description The revision waiting for its decision. */
+            pendingRevision: number | null;
+            /** Format: uuid */
+            purchaseRequestId: string | null;
+            /** Format: date-time */
+            raisedAt: string;
+            /** @description The caller raised it. */
+            raisedByMe: boolean;
+            /** @description Newest first. */
+            receipts: components["schemas"]["GoodsReceiptView"][];
+            /** @example PO-000001 */
+            reference: string;
+            /** @description REASON_CODES.purchaseOrderReject. */
+            rejectReason: string | null;
+            /** @description The revision in force. */
+            revision: number;
+            /** @description Newest first. */
+            revisions: components["schemas"]["PurchaseOrderRevisionView"][];
+            /** Format: date-time */
+            sentAt: string | null;
+            sentRevision: number | null;
+            source: components["schemas"]["PurchaseOrderSource"];
+            status: components["schemas"]["PurchaseOrderStatus"];
+            /**
+             * @description Net of VAT.
+             * @example 1200.00
+             */
+            subtotal: string;
+            /** @example 1200.00 */
+            tax: string;
+            /** Format: uuid */
+            tenderId: string | null;
+            /**
+             * @description Net plus VAT.
+             * @example 1200.00
+             */
+            total: string;
+            /** Format: uuid */
+            vendorId: string;
+            vendorName: string;
+        };
+        PurchaseOrderViewList: {
+            data: components["schemas"]["PurchaseOrderView"][];
+            nextCursor: string | null;
+        };
+        /** @enum {string} */
         PurchaseRequestStatus: "requested" | "approved" | "rejected" | "cancelled" | "fulfilled";
         PurchaseRequestView: {
             /**
@@ -48524,7 +49339,7 @@ export interface components {
         RecordVendorInvoiceDto: {
             /**
              * Format: uuid
-             * @description The line it is paid from; by default its contract’s or purchase’s.
+             * @description The line it is paid from; by default its contract’s, purchase’s or order’s.
              */
             budgetLineId?: string;
             /**
@@ -48548,6 +49363,11 @@ export interface components {
             issuedOn: string;
             lines: components["schemas"]["VendorInvoiceLineDto"][];
             note?: string;
+            /**
+             * Format: uuid
+             * @description A purchase order (ADR 0094): the invoice is matched to its lines and what was accepted on receipt before it is approved. Its vendor and budget line are the order’s.
+             */
+            purchaseOrderId?: string;
             /**
              * Format: uuid
              * @description A purchase request it fulfilled.
@@ -48944,6 +49764,11 @@ export interface components {
             /** @description From the closed list `unitPermitReject`. */
             reasonCode: string;
         };
+        RejectPurchaseOrderDto: {
+            note?: string;
+            /** @description REASON_CODES.purchaseOrderReject. */
+            reasonCode: string;
+        };
         RejectPurchaseRequestDto: {
             note?: string;
             /** @description REASON_CODES.purchaseReject. */
@@ -49175,7 +50000,7 @@ export interface components {
             unitCode?: string;
         };
         /** @enum {string} */
-        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building" | "cash_flow" | "gl_trial_balance" | "gl_income_statement" | "gl_balance_sheet" | "gl_general_ledger" | "tax_vat" | "tax_withholding";
+        ReportKey: "maintenance_spend" | "stock_consumption" | "service_by_building" | "energy_cost" | "collections_by_building" | "cash_flow" | "gl_trial_balance" | "gl_income_statement" | "gl_balance_sheet" | "gl_general_ledger" | "tax_vat" | "tax_withholding" | "po_open" | "po_received_not_invoiced" | "po_match_exceptions";
         ReportListingDto: {
             /** @description For the staff alone; the seller never reads it. */
             note?: string;
@@ -50956,10 +51781,12 @@ export interface components {
             /** @enum {string} */
             kind: "invoice" | "commitment";
             /** Format: uuid */
+            purchaseOrderId: string | null;
+            /** Format: uuid */
             purchaseRequestId: string | null;
             reference: string | null;
             /** @enum {string} */
-            source: "contract" | "purchase_request";
+            source: "contract" | "purchase_request" | "purchase_order";
             /** Format: uuid */
             vendorId: string | null;
             vendorName: string | null;
@@ -54536,7 +55363,7 @@ export interface components {
             unitId: string;
         };
         /**
-         * @description zero by default.
+         * @description `zero` by default.
          * @enum {string}
          */
         TaxCode: "zero" | "exempt" | "vat_14";
@@ -57200,22 +58027,38 @@ export interface components {
             count: number;
         };
         VendorInvoiceLineDto: {
-            /** @description EGP, before tax. */
-            amount: string;
+            /** @description EGP, before tax. Required, except on a line that names an order’s line (then it is the quantity at the unit price, and refused). */
+            amount?: string;
             description: string;
-            /** @description zero by default. */
+            /**
+             * Format: uuid
+             * @description An invoice against a purchase order: the order’s line this one bills (ADR 0094), with `quantity` and `unitPrice`; matched to what was ordered and accepted.
+             */
+            purchaseOrderLineId?: string;
+            /** @description With `purchaseOrderLineId`: what is billed, in the line’s unit. */
+            quantity?: string;
+            /** @description zero by default; a line that names an order’s line takes that line’s. */
             taxCode?: components["schemas"]["TaxCode"];
+            /** @description With `purchaseOrderLineId`: the unit price billed, before tax. */
+            unitPrice?: string;
         };
         VendorInvoiceLineView: {
             /** @example 1200.00 */
             amount: string;
             description: string;
             position: number;
+            /**
+             * Format: uuid
+             * @description The order’s line it bills (ADR 0094).
+             */
+            purchaseOrderLineId: string | null;
+            quantity: string | null;
             /** @example 1200.00 */
             tax: string;
             taxCode: components["schemas"]["TaxCode"];
             /** @example 0.00 */
             taxRate: string;
+            unitPrice: string | null;
         };
         /** @enum {string} */
         VendorInvoiceStatus: "received" | "approved" | "rejected" | "cancelled" | "paid";
@@ -57252,6 +58095,11 @@ export interface components {
             /** @example VI-000001 */
             number: string;
             payout?: components["schemas"]["PayoutView"] | null;
+            /**
+             * Format: uuid
+             * @description The purchase order it bills (ADR 0094).
+             */
+            purchaseOrderId: string | null;
             /** Format: uuid */
             purchaseRequestId: string | null;
             /** Format: date-time */
@@ -57892,7 +58740,7 @@ export interface components {
             reasonCode: string;
         };
         /**
-         * @description What its payout withholds by (ADR 0093), if not its vendor’s: supplies, services and contracting, professional fees, or exempt.
+         * @description What its payout withholds by (ADR 0093); absent: the invoice’s, else the vendor’s.
          * @enum {string}
          */
         WithholdingCategory: "supplies" | "services" | "professional" | "exempt";
@@ -61921,6 +62769,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContractorInvoiceView"];
+                };
+            };
+        };
+    };
+    ContractorPurchaseOrdersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorPurchaseOrderViewList"];
+                };
+            };
+        };
+    };
+    ContractorPurchaseOrdersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorPurchaseOrderView"];
+                };
+            };
+        };
+    };
+    ContractorPurchaseOrdersController_acknowledge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractorPurchaseOrderView"];
+                };
+            };
+        };
+    };
+    ContractorPurchaseOrdersController_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
                 };
             };
         };
@@ -85102,7 +86036,7 @@ export interface operations {
                 cursor?: string;
                 limit?: number;
                 lineId?: string;
-                source?: "contract" | "purchase_request";
+                source?: "contract" | "purchase_request" | "purchase_order";
                 /** @description Open only (true) or closed only (false). */
                 open?: boolean;
             };
@@ -86565,6 +87499,48 @@ export interface operations {
             };
         };
     };
+    InvoiceMatchController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSettingsView"];
+                };
+            };
+        };
+    };
+    InvoiceMatchController_updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseOrderSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSettingsView"];
+                };
+            };
+        };
+    };
     ReportsController_aging: {
         parameters: {
             query?: {
@@ -87435,6 +88411,7 @@ export interface operations {
                 vendorId?: string;
                 contractId?: string;
                 purchaseRequestId?: string;
+                purchaseOrderId?: string;
             };
             header?: never;
             path?: never;
@@ -87545,6 +88522,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VendorInvoiceView"];
+                };
+            };
+        };
+    };
+    InvoiceMatchController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceMatchView"];
+                };
+            };
+        };
+    };
+    InvoiceMatchController_override: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchOverrideDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceMatchView"];
                 };
             };
         };
@@ -91257,6 +92280,273 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlanRequestView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_list: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page (`nextCursor`). */
+                cursor?: string;
+                limit?: number;
+                status?: components["schemas"]["PurchaseOrderStatus"];
+                vendorId?: string;
+                purchaseRequestId?: string;
+                tenderId?: string;
+                /** @description Only orders waiting for a decision: a first approval or a revision. */
+                waiting?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderViewList"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_raise: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePurchaseOrderDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_amend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AmendPurchaseOrderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovePurchaseOrderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonCodeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_receive: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A client-generated id (8–128 of A-Z a-z 0-9 . _ : -). A retry with the same key replays the first response for 24 h; another request with it is 409 IDEMPOTENCY_CONFLICT. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGoodsReceiptDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoodsReceiptView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectPurchaseOrderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
+                };
+            };
+        };
+    };
+    PurchaseOrdersController_withdrawRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderView"];
                 };
             };
         };

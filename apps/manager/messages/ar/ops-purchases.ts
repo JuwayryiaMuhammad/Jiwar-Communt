@@ -10,6 +10,7 @@ const ar: Translation<typeof en> = {
   approve: 'اعتمد',
   reject: 'ارفض',
   fulfil: 'سجّل الشراء',
+  raiseOrder: 'أصدر أمر شراء',
   status: 'الحالة',
   'view.requested': 'قيد الانتظار',
   'view.approved': 'معتمدة',

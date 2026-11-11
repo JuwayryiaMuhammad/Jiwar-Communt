@@ -121,7 +121,9 @@ export const PAYABLES_ROUTES: Row[] = [
         {
           field: 'source',
           code: 'INVALID_VALUE',
-          params: { allowed: ['contract', 'purchase_request'] },
+          params: {
+            allowed: ['contract', 'purchase_request', 'purchase_order'],
+          },
         },
       ],
     },

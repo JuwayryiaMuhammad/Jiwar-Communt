@@ -737,6 +737,7 @@ describe('Permission sync', () => {
       'fines.billing',
       'governance.approvals',
       'inbox.read',
+      'purchase_orders.raise',
       'purchases.request',
       'tenders.open',
     ]);
@@ -813,6 +814,7 @@ describe('Permission sync', () => {
       'finance.treasury',
       'governance.approvals',
       'inbox.read',
+      'purchase_orders.raise',
       'purchases.request',
       'tenders.open',
     ]);
@@ -836,6 +838,7 @@ describe('Permission sync', () => {
       'fines.billing',
       'governance.approvals',
       'inbox.read',
+      'purchase_orders.raise',
       'purchases.request',
       'tenders.open',
     ]);
@@ -1049,6 +1052,8 @@ describe('Permission sync', () => {
       'inbox.read',
       'inspections.manage',
       'meters.record',
+      'purchase_orders.raise',
+      'purchase_orders.receive',
       'purchases.request',
       'readiness.manage',
       'safety.manage',

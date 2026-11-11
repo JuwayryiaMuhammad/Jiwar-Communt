@@ -21,6 +21,7 @@ import {
 } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { ZoneSelect } from '@/components/field-team/zone-select';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import ar from '@/messages/ar/ops-field-team';
@@ -140,7 +141,7 @@ export default function FieldTeamPage() {
       unwrap(api.POST('/api/v1/staff/field-team/help-requests/{id}/resolve', { params: { path: { id } } })),
     { invalidate: [['field-team']], onDone: () => toast.show(t('resolvedToast')) },
   );
-  const [slot, setSlot] = useState({ technicianId: '', startsAt: '', hours: '8' });
+  const [slot, setSlot] = useState({ technicianId: '', zoneId: '', startsAt: '', hours: '8' });
   const addSlot = useAction(
     () => {
       const startsAt = new Date(slot.startsAt);
@@ -150,6 +151,7 @@ export default function FieldTeamPage() {
             technicianId: slot.technicianId,
             startsAt: startsAt.toISOString(),
             endsAt: new Date(startsAt.getTime() + Number(slot.hours) * 3_600_000).toISOString(),
+            ...(slot.zoneId ? { zoneId: slot.zoneId } : {}),
           },
         }),
       );
@@ -265,6 +267,9 @@ export default function FieldTeamPage() {
                       ))}
                     </Select>
                   )}
+                </Field>
+                <Field label={t('zone')}>
+                  {(p) => <ZoneSelect {...p} value={slot.zoneId} onChange={(e) => setSlot({ ...slot, zoneId: e.target.value })} />}
                 </Field>
                 <Field label={t('starts')}>
                   {(p) => (

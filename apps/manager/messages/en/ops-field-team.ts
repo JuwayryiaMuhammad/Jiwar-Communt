@@ -14,6 +14,8 @@ export default {
   erased: 'Erased',
   actions: 'Actions',
   wholeCompound: 'Whole compound',
+  zone: 'Zone',
+  zoneHint: 'A zone in service, or the whole compound.',
   choose: 'Choose',
   add: 'Add',
   technician: 'Technician',
@@ -121,4 +123,9 @@ export default {
   accuracy: '(±{m} m)',
   noStep: 'No step with a location in the 30 days.',
   noConsent: 'The technician has not consented.',
+  readAgain: 'Read again',
+  north: 'N',
+  ringScale: '{m} m',
+  plotCaption: 'One point of one technician, plotted on its own: north is up and each ring is {m} m. The shaded circle is the point’s accuracy. No street or building is drawn; the coordinates open a public map.',
+  plotSummary: 'The technician’s last point, latitude {latitude}, longitude {longitude}, with rings every {ring} m.',
 } as const;

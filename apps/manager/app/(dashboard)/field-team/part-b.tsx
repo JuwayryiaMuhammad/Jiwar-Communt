@@ -6,6 +6,8 @@ import { useFormat, useLocale, useT, type Translate } from '@jiwar/i18n';
 import { Button, Card, CardBody, CardHeader, DataTable, Field, Input, Select, useLabel, useToast } from '@jiwar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { LocationPlot } from '@/components/field-team/location-plot';
+import { ZoneSelect } from '@/components/field-team/zone-select';
 import { FileUpload } from '@/components/file-upload';
 import { api } from '@/lib/api';
 import ar from '@/messages/ar/ops-field-team';
@@ -95,7 +97,7 @@ export function ReinforcementTab() {
     queryKey: ['field-team', 'reinforcement', 'calls'],
     queryFn: async () => list<Call>(await unwrap(api.GET('/api/v1/staff/field-team/reinforcement-calls', {}))),
   });
-  const [form, setForm] = useState({ needed: '2', inHours: '1', hours: '4' });
+  const [form, setForm] = useState({ needed: '2', inHours: '1', hours: '4', zoneId: '' });
   const open = suggestions.data?.[0];
   const send = useAction(
     () => {
@@ -107,6 +109,7 @@ export function ReinforcementTab() {
             needed: Number(form.needed),
             startsAt: startsAt.toISOString(),
             endsAt: new Date(startsAt.getTime() + Number(form.hours) * HOUR).toISOString(),
+            ...(form.zoneId ? { zoneId: form.zoneId } : {}),
             ...(open ? { suggestionId: open.id } : {}),
           },
         }),
@@ -152,6 +155,9 @@ export function ReinforcementTab() {
           <div className="row" style={{ gap: 8, alignItems: 'flex-end' }}>
             <Field label={t('needed')}>
               {(p) => <Input {...p} type="number" min={1} max={10} value={form.needed} onChange={(e) => setForm({ ...form, needed: e.target.value })} />}
+            </Field>
+            <Field label={t('zone')} hint={t('zoneHint')}>
+              {(p) => <ZoneSelect {...p} value={form.zoneId} onChange={(e) => setForm({ ...form, zoneId: e.target.value })} />}
             </Field>
             <Field label={t('startsIn')}>
               {(p) => (
@@ -402,8 +408,12 @@ export function CertificatesTab({ technicians }: { technicians: Ref[] }) {
 }
 
 /**
- * A technician's last known location (ADR 0090), one at a time, with
- * their consent; every read is audited.
+ * A technician's last known location (ADR 0090), one at a time, with their
+ * consent; every read is audited. So a read happens when a technician is
+ * picked or "Read again" is pressed: never on a window's focus, never for
+ * several technicians at once, and the point is dropped from the page's
+ * memory once another is picked. The point is plotted on its own, with its
+ * accuracy; nothing is loaded from a map provider.
  */
 export function LocationTab({ technicians }: { technicians: Ref[] }) {
   const t = useT(en, ar);
@@ -417,6 +427,10 @@ export function LocationTab({ technicians }: { technicians: Ref[] }) {
         api.GET('/api/v1/staff/field-team/technicians/{id}/location', { params: { path: { id } } }),
       )) as LastLocation,
     enabled: !!id,
+    staleTime: Infinity,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const last = location.data?.last;
   return (
@@ -439,18 +453,28 @@ export function LocationTab({ technicians }: { technicians: Ref[] }) {
         {id ? (
           <QueryState query={location}>
             {last ? (
-              <p>
-                {t('locationOn', { moment: label(last.moment), ticket: last.ticketNumber ?? t('aTicket'), when: f.dateTime(last.capturedAt) })}{' '}
-                <a href={`https://www.openstreetmap.org/?mlat=${last.latitude}&mlon=${last.longitude}#map=18/${last.latitude}/${last.longitude}`}>
-                  <span className="ltr">
-                    {last.latitude.toFixed(5)}, {last.longitude.toFixed(5)}
-                  </span>
-                </a>
-                {last.accuracyMeters !== null ? ` ${t('accuracy', { m: last.accuracyMeters })}` : ''}
-              </p>
+              <div className="stack">
+                <p>
+                  {t('locationOn', { moment: label(last.moment), ticket: last.ticketNumber ?? t('aTicket'), when: f.dateTime(last.capturedAt) })}{' '}
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${last.latitude}&mlon=${last.longitude}#map=18/${last.latitude}/${last.longitude}`}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    <span className="ltr">
+                      {last.latitude.toFixed(5)}, {last.longitude.toFixed(5)}
+                    </span>
+                  </a>
+                  {last.accuracyMeters !== null ? ` ${t('accuracy', { m: last.accuracyMeters })}` : ''}
+                </p>
+                <LocationPlot latitude={last.latitude} longitude={last.longitude} accuracyMeters={last.accuracyMeters} />
+              </div>
             ) : (
               <p>{location.data?.consent ? t('noStep') : t('noConsent')}</p>
             )}
+            <Button size="sm" loading={location.isFetching} onClick={() => location.refetch()}>
+              {t('readAgain')}
+            </Button>
           </QueryState>
         ) : null}
       </CardBody>

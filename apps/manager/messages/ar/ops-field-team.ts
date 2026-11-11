@@ -16,6 +16,8 @@ const ar: Translation<typeof en> = {
   erased: 'محذوف',
   actions: 'الإجراءات',
   wholeCompound: 'المجمع كله',
+  zone: 'المنطقة',
+  zoneHint: 'منطقة قيد الخدمة، أو المجمع كله.',
   choose: 'اختر',
   add: 'أضف',
   technician: 'الفني',
@@ -116,6 +118,11 @@ const ar: Translation<typeof en> = {
   accuracy: '(±{m} م)',
   noStep: 'لا توجد خطوة بموقع خلال الثلاثين يومًا.',
   noConsent: 'لم يوافق الفني.',
+  readAgain: 'اقرأ من جديد',
+  north: 'ش',
+  ringScale: '{m} م',
+  plotCaption: 'نقطة واحدة لفني واحد، مرسومة وحدها: الشمال إلى أعلى وكل حلقة {m} م. الدائرة المظللة هي دقة النقطة. لا شارع ولا مبنى مرسوم؛ وتفتح الإحداثيات خريطة عامة.',
+  plotSummary: 'آخر نقطة للفني، خط العرض {latitude} وخط الطول {longitude}، وحلقات كل {ring} م.',
 };
 
 export default ar;

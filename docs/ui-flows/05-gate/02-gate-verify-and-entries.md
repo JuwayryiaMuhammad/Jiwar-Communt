@@ -1,7 +1,7 @@
 # التحقق عند البوابة وسجل الدخول والخروج — Gate Verify and Entries
 
 > **التطبيق/الواجهة:** guard app (التحقق والتسجيل و"مين جوه") · manager dashboard (سجل البوابة) · resident app + family member (حضور العامل وإشعارات دخوله وخروجه)
-> **الصلاحيات:** `gate.operate` (دور `guard`) لـ `verify` و`entries` و`inside`، وكلها داخل وردية مفتوحة · `gate.read` (دور `manager`) لـ `GET /gate/entries` · حضور العامل: `workers.manage` (أدوار `resident` و`family_member`) أو `workers.review` (دور `manager`) + سلطة على العامل (راجع تحت) · إشعارات العامل تروح لأصحاب capability `visitorsNotify` على الوحدة
+> **الصلاحيات:** `gate.operate` (دور `guard`) لـ `verify` و`entries` و`inside`، وكلها داخل وردية مفتوحة · `gate.read` (دور `manager`) لـ `GET /gate/entries` و`GET /gate/inside` (من غير وردية) · حضور العامل: `workers.manage` (أدوار `resident` و`family_member`) أو `workers.review` (دور `manager`) + سلطة على العامل (راجع تحت) · إشعارات العامل تروح لأصحاب capability `visitorsNotify` على الوحدة
 > **المصادر:** ADR 0028 · ADR 0030 · ADR 0031 · `src/gate/entries/` · `src/gate/entry/resident-verifier.ts` · `src/gate/entry/entry-secrets.ts` · `src/gate/attendance/` · `src/community/gate-port.ts`
 
 ## الفكرة باختصار
@@ -138,7 +138,7 @@
 5. ملاحظة: `POST /gate/verify` نفسه يحتاج نت؛ مفيش تحقق offline.
 
 ### 6. "مين جوه دلوقتي" (`GET /gate/inside`)
-1. فرد الأمن (بوردية مفتوحة) يفتح القائمة → `GET /gate/inside?cursor&limit`.
+1. فرد الأمن (بوردية مفتوحة) أو المدير (`gate.read`، من غير وردية) يفتح القائمة → `GET /gate/inside?cursor&limit`. اللي معاه الصلاحيتين بيقرأ كمدير. القائمة نفسها للاتنين، وصفحة البوابة عند المدير فيها تاب "بالداخل الآن".
 2. القائمة: كل شخص آخر سجل له `in` (من **كل البوابات**، مش بوابته بس)، الأحدث دخولًا أولًا، مقسمة صفحات.
 3. كل صف: نوع الشخص، كود الوحدة، النوع (`one_time`/`recurring` للتصريح، أو نوع العامل، أو نوع طلب الموافقة)، عدد الأفراد، بوابة الدخول، وقت الدخول.
 4. الاستخدام: تسجيل خروج حد دخل وخرج من غير ما يوري الكود → `POST /gate/entries` بـ `subjectType`/`subjectId` من الصف و`direction: out`.
@@ -303,7 +303,7 @@ stateDiagram-v2
 |---|---|---|---|
 | `POST /gate/verify` | أمن (`gate.operate`، وردية) | التحقق من كود أو QR | `200` `VerifyView` (no-store) |
 | `POST /gate/entries` | أمن (`gate.operate`، وردية) | تسجيل دخول/خروج | `201` `EntryView` |
-| `GET /gate/inside` | أمن (`gate.operate`، وردية) | مين جوه دلوقتي | `200` `{ data: InsideView[], nextCursor }` |
+| `GET /gate/inside` | أمن (`gate.operate`، وردية) أو مدير (`gate.read`) | مين جوه دلوقتي | `200` `{ data: InsideView[], nextCursor }` |
 | `GET /gate/entries` | مدير (`gate.read`) | سجل البوابة بالفلاتر | `200` `{ data: EntryListView[], nextCursor }` |
 | `GET /worker-engagements/{id}/attendance` | ساكن/أسرة (`workers.manage`) أو مدير (`workers.review`) | أيام حضور العامل | `200` `AttendanceView` |
 

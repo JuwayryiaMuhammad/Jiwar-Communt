@@ -137,7 +137,7 @@ sequenceDiagram
 | `workers.incidents` | بطاقات العمال المفقودة أو المصادرة، واستقبال تنبيهاتها | manager | manager | `/worker-engagements/{id}/card-incident`، `GET /card-incidents` |
 | `gate.operate` | تشغيل البوابة داخل وردية: التحقق، وتسجيل الدخول والخروج، ومن بالداخل، وطلبات الموافقة | staff | guard | `/gate/shifts`، `POST /gate/verify`، `POST /gate/entries`، `GET /gate/inside` |
 | `gate.manage` | إنشاء البوابات وتعديلها | manager | manager | `POST /gates`، `PATCH /gates/{id}` |
-| `gate.read` | قائمة البوابات وسجل الدخول والخروج | manager | manager | `GET /gates`، `GET /gate/entries` |
+| `gate.read` | قائمة البوابات وسجل الدخول والخروج ومن بالداخل الآن (من غير وردية) | manager | manager | `GET /gates`، `GET /gate/entries`، `GET /gate/inside` |
 | `visitors.invite` | دعوة زوار (تصاريح زيارة). تحكمها أيضًا capability `visitorsInvite` لكل وحدة | resident, family, proxy | resident, family_member, unit_proxy | `/units/{unitId}/visitor-passes`، `/visitor-passes/{id}/*` |
 | `profile.photo` | رفع الصورة الشخصية التي يراها الحارس عند البوابة | resident, family | resident, family_member | `/me/photo` |
 | `profile.contact` | بريد الساكن نفسه، وطلب تغيير الاسم أو الهاتف (ADR 0062) | resident, family | resident, family_member | `POST /me/contact/email`، `GET /me/identity-changes` |

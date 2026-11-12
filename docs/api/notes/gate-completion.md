@@ -72,6 +72,7 @@ When the gate refuses someone, the guard may ask the management to let them in, 
 For a visitor's `in` (a pass, a gate request, a field exception), upload a `visitor_photo` (image, 5 MB) first, then send its id as `photoFileId` with `POST /gate/entries`.
 
 - It is shown in `GET /gate/inside` and `GET /gate/entries/{id}/photo` to the guards on shift and the management. Never to the household.
+- `GET /gate/inside` takes `gate.read` or `gate.operate` (the update of ADR 0056 on who is inside): the management (`gate.read`) reads it with no shift, every gate's entries, no name; a guard (`gate.operate`, without `gate.read`) needs an open shift at a gate (403 `NO_OPEN_SHIFT`, or `SHIFT_NOT_AT_GATE` in a zone). A holder of both reads as the management. The response is `no-store` and not audited, as the log is not.
 - It is deleted 30 days after the entry, unless an incident keeps it (below).
 
 ### Service vehicles

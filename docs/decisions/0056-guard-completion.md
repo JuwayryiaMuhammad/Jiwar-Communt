@@ -430,3 +430,18 @@ The traffic report and the log search pages wait for M3.
 ## Update (Phase M2-4, ADR 0079)
 - The traffic report and the log search have their dashboard pages ("Gate traffic", "Gate log search").
 - `POST /staff/gate/log-search/export`: the search's body to a CSV, under the search's rules and its shared rate, at most 50 000 entries, audited as `gate.log_exported` without the name.
+
+## Update (the manager sees who is inside, 2026-11-12)
+
+The owner asked that the manager see who is inside the compound now. `GET /gate/inside` was `gate.operate` only, so only a guard on shift read it.
+
+- **Who reads it:** `gate.read` or `gate.operate` (`@RequireAnyPermission`, as the entry photo's route). The route, its view, its paging (newest entry first) and its `no-store` do not change.
+- **The rule, decided in the service by the permission, never the role's name:**
+  - a caller with `gate.read` is the management: it reads with **no shift**;
+  - a caller without it is a guard: it needs an open shift at a gate, as before (`NO_OPEN_SHIFT`; `SHIFT_NOT_AT_GATE` for a zone shift);
+  - a holder of **both** is read as the management, on shift or off. The list is the same either way, so the shift would only turn a reader away who may read the gate log and every entry's photo already. This is the rule of `GET /gate/entries/{id}/photo`. Today no account can hold both: `gate.read` is for managers and `gate.operate` for staff, so the rule only settles the case should the catalog ever allow it.
+- **Scope:** the list was never scoped to the guard's gate: it holds every gate of the compound, and the management sees the same. Another compound's entries are never listed (RLS).
+- **Privacy:** unchanged. No name; the unit code, the kind, the party and how many are inside, the gate, the entry time, a permit's reference, and the visitor's photo (a presigned link, so the read is `no-store`). The photo's rules above hold: not for the household, a notification or the audit; deleted 30 days after the entry.
+- **Audit:** none. Reading the gate log (`GET /gate/entries`) and an entry's photo is not audited, and this is the same kind of read of the same rows. Only the log *search* is audited (`gate.log_searched`), because it can name a visitor.
+- **Dashboard:** the Gate page gains the tab "Inside now" (`/gate?tab=inside`) for `gate.read`: the list with paging, the gate, the unit, since when, how many, and the photo when there is one; it is read again every 30 seconds. The overview's gate card links to it beside the log.
+- ADR 0028's `GET /gate/inside` is updated by this section.

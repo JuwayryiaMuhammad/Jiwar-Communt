@@ -50,3 +50,6 @@ The compound's gate is where the community data meets people at the door: guards
 - Guards log in with OTP by email until an SMS/WhatsApp channel exists (ADR 0009, #3).
 - `gate_entries` grows forever, like the audit log; partitioning and retention are deferred with the audit follow-ups (ADR 0009, #6).
 - Worker in/out notices reach every residing member; per-account preferences come with the design (ADR 0027).
+
+## Update (the manager sees who is inside, ADR 0056)
+- `GET /gate/inside` takes `gate.read` or `gate.operate`. The management (`gate.read`) reads it with no shift; a guard still needs an open shift at a gate. The list is the same for both (every gate of the compound, no visitor name). The rule and its reasons are in ADR 0056's update.

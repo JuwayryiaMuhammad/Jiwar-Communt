@@ -285,6 +285,7 @@ describe('Personal-data export', () => {
     expect(Object.keys(exportedWorkers[0]).sort()).toEqual([
       'capacity',
       'createdAt',
+      'currency',
       'engagementId',
       'monthlyWage',
       'schedule',
@@ -295,6 +296,7 @@ describe('Personal-data export', () => {
       'workerName',
     ]);
     expect(exportedWorkers[0].monthlyWage).toBe('4321.07');
+    expect(exportedWorkers[0].currency).toBe('EGP');
     const payments = JSON.parse(archive.text('wage-payments.json')) as Record<
       string,
       unknown
@@ -302,6 +304,7 @@ describe('Personal-data export', () => {
     expect(payments).toHaveLength(1);
     expect(Object.keys(payments[0]).sort()).toEqual([
       'amount',
+      'currency',
       'engagementId',
       'paidAt',
       'paymentId',
@@ -315,6 +318,7 @@ describe('Personal-data export', () => {
       workerName: 'EXPORT-P-WORKER',
       period: paidMonth,
       amount: '987.65',
+      currency: 'EGP',
     });
     for (const mine of [
       'EXPORT-P-TICKET',

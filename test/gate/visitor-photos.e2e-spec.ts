@@ -47,6 +47,11 @@ describe('Gate — the visitor’s photo at entry (ADR 0056)', () => {
       await g.http('get', '/gate/inside', s.guard.token).expect(200)
     ).body as { data: { photo: { url: string } | null }[] };
     expect(inside.data.some((i) => i.photo?.url)).toBe(true);
+    // The management reads the same list, photo and all, with no shift.
+    const managed = (
+      await g.http('get', '/gate/inside', s.manager.token).expect(200)
+    ).body as { data: { photo: { url: string } | null }[] };
+    expect(managed.data.some((i) => i.photo?.url)).toBe(true);
     const log = (
       await g.http('get', '/gate/entries', s.manager.token).expect(200)
     ).body as { data: { id: string; hasPhoto: boolean }[] };
@@ -72,6 +77,27 @@ describe('Gate — the visitor’s photo at entry (ADR 0056)', () => {
       }),
     }));
     expect(JSON.stringify(rows)).not.toContain(fileId);
+  });
+
+  it('who is inside: the management with no shift, a guard only on shift (ADR 0056)', async () => {
+    const t = await g.setUp('Inside Now Court');
+    const p = await g.pass(t.alice, t.home.id);
+    await g.enter(t.guard, 'visitor_pass', p.id);
+    const ids = (res: { body: unknown }) =>
+      (res.body as { data: { subjectId: string }[] }).data.map(
+        (i) => i.subjectId,
+      );
+    for (const reader of [t.manager, t.guard])
+      expect(
+        ids(await g.http('get', '/gate/inside', reader.token).expect(200)),
+      ).toContain(p.id);
+
+    // A guard off shift is refused: `gate.read` is the managers' alone (no
+    // staff role can hold it), so the shift is the guard's only way in.
+    const off = await g.guard(t.c);
+    expect(
+      code(await g.http('get', '/gate/inside', off.token).expect(403)),
+    ).toBe('NO_OPEN_SHIFT');
   });
 
   it('a visitor’s `in` only, the guard’s own upload', async () => {

@@ -91,8 +91,10 @@ export const ENTRIES_ROUTES: Row[] = [
     auth: 'tenant',
     // A visitor's photo is a presigned URL (ADR 0056).
     noStore: true,
-    as: 'guard',
-    denied: 'manager',
+    // The management reads it with no shift (ADR 0056's update); a guard on
+    // shift too. A resident has neither permission.
+    as: 'manager',
+    denied: 'owner',
     foreign: 'none',
     invalid: 'none',
   },

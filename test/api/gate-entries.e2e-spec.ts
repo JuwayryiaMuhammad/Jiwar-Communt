@@ -585,6 +585,103 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
     expect(data.every((e) => e.guard.id === w.a.ids.guard)).toBe(true);
   });
 
+  it('the management reads who is inside with no shift, across the gates; a guard still needs a shift (ADR 0056)', async () => {
+    const inside = (token: string, query: Record<string, string> = {}) =>
+      call(w, 'GET', '/gate/inside', {
+        token,
+        query: { limit: '100', ...query },
+      });
+    const subjects = (res: { body: unknown }) =>
+      (res.body as { data: { subjectId: string; gateName: string }[] }).data;
+
+    // Two gates of A, a guard on shift at each, one visitor in at each.
+    const second = await gateHelpers(h).onDuty(w.a);
+    const secondToken = await w.tokenFor(w.a, second.guardId, 'staff');
+    const atFirst = await newPass({ visitorName: 'Inside Management One' });
+    const atSecond = await newPass({ visitorName: 'Inside Management Two' });
+    await record({
+      subjectType: 'visitor_pass',
+      subjectId: atFirst.id,
+      direction: 'in',
+    }).expect(201);
+    await record(
+      {
+        subjectType: 'visitor_pass',
+        subjectId: atSecond.id,
+        direction: 'in',
+      },
+      secondToken,
+    ).expect(201);
+    // Compound B's guard lets one of B's visitors in.
+    const bPass = (
+      await call(w, 'POST', `/units/${w.b.homeUnitId}/visitor-passes`, {
+        token: w.b.tokens.owner,
+        body: passBody(),
+      }).expect(201)
+    ).body as { id: string };
+    await call(w, 'POST', '/gate/entries', {
+      token: w.b.tokens.guard,
+      body: {
+        subjectType: 'visitor_pass',
+        subjectId: bPass.id,
+        direction: 'in',
+      },
+    }).expect(201);
+
+    // The manager holds no shift: the same view, both gates, no name.
+    const seen = await inside(w.a.tokens.manager).expect(200);
+    expect(keyPaths(seen.body)).toEqual(listKeys(INSIDE));
+    expect(JSON.stringify(seen.body)).not.toContain('Inside Management');
+    const gateOf = new Map(
+      subjects(seen).map((i) => [i.subjectId, i.gateName]),
+    );
+    expect(gateOf.get(atFirst.id)).toBe(w.a.gateName);
+    expect(gateOf.get(atSecond.id)).toBe(second.gateName);
+    expect(gateOf.get(atFirst.id)).not.toBe(gateOf.get(atSecond.id));
+    // Another compound's entries are never listed, to either side.
+    expect(gateOf.has(bPass.id)).toBe(false);
+    expect(JSON.stringify(seen.body)).not.toContain(bPass.id);
+    const bSeen = await inside(w.b.tokens.manager).expect(200);
+    expect(subjects(bSeen).map((i) => i.subjectId)).toContain(bPass.id);
+    expect(JSON.stringify(bSeen.body)).not.toContain(atFirst.id);
+    expect(JSON.stringify(bSeen.body)).not.toContain(atSecond.id);
+
+    // The guards' own reads are the same list, each on their own shift.
+    for (const token of [guard(), secondToken])
+      expect(
+        subjects(await inside(token).expect(200)).map((i) => i.subjectId),
+      ).toEqual(expect.arrayContaining([atFirst.id, atSecond.id]));
+
+    // Paged by entry time, newest first, as for the guard.
+    const first = await inside(w.a.tokens.manager, { limit: '1' }).expect(200);
+    const page = first.body as {
+      data: { subjectId: string }[];
+      nextCursor: string | null;
+    };
+    expect(page.data.map((i) => i.subjectId)).toEqual([atSecond.id]);
+    expect(page.nextCursor).toEqual(expect.any(String));
+    const next = await inside(w.a.tokens.manager, {
+      limit: '1',
+      cursor: page.nextCursor!,
+    }).expect(200);
+    expect(subjects(next).map((i) => i.subjectId)).toEqual([atFirst.id]);
+
+    // A guard off duty still needs a shift; a role with neither permission
+    // is refused outright, a resident too.
+    const off = await gateHelpers(h).guard(w.a);
+    expect(
+      status(await inside(await w.tokenFor(w.a, off.id, 'staff'))),
+    ).toEqual({ status: 403, code: 'NO_OPEN_SHIFT' });
+    expect(status(await inside(w.a.tokens.technician))).toEqual({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+    expect(status(await inside(w.a.tokens.owner))).toEqual({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+  });
+
   it('verify is rate-limited per guard', async () => {
     const g = await gateHelpers(h).guard(w.a);
     await gateHelpers(h).startShift(w.a, g.id, w.a.gateId);

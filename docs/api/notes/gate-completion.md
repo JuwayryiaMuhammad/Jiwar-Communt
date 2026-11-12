@@ -73,6 +73,7 @@ For a visitor's `in` (a pass, a gate request, a field exception), upload a `visi
 
 - It is shown in `GET /gate/inside` and `GET /gate/entries/{id}/photo` to the guards on shift and the management. Never to the household.
 - `GET /gate/inside` takes `gate.read` or `gate.operate` (the update of ADR 0056 on who is inside): the management (`gate.read`) reads it with no shift, every gate's entries, no name; a guard (`gate.operate`, without `gate.read`) needs an open shift at a gate (403 `NO_OPEN_SHIFT`, or `SHIFT_NOT_AT_GATE` in a zone). A holder of both reads as the management. The response is `no-store` and not audited, as the log is not.
+- How many are inside is not a route: the operations dashboard's `gate` section (`gate.read`) carries `insideNow`, the people inside now, counted as this list counts them (the total of its `insideCount`s over every page; a group pass by its party). Not the day's, not audited, no name; the overview's gate card shows it on its "Inside now" link (ADR 0056's update, ADR 0079).
 - It is deleted 30 days after the entry, unless an incident keeps it (below).
 
 ### Service vehicles

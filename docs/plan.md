@@ -58,7 +58,7 @@ Closed in the dashboard-gaps phase of 2026-11-11:
 - the ledger: a top-level account and code changes (0092), and the year-end entry (0093), in the taxes phase.
 
 Still open:
-- exact counts in the sidebar's badges past 99 (they read one page of 100), and the rest of `apps/README.md` "Known limits" that are the API's: a wage's currency, the client's IP behind the proxy.
+- exact counts in the sidebar's badges past 99 (they read one page of 100), and the rest of `apps/README.md` "Known limits" that are the API's: the client's IP behind the proxy.
 
 ### Waiting on the owner
 

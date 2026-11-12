@@ -445,3 +445,14 @@ The owner asked that the manager see who is inside the compound now. `GET /gate/
 - **Audit:** none. Reading the gate log (`GET /gate/entries`) and an entry's photo is not audited, and this is the same kind of read of the same rows. Only the log *search* is audited (`gate.log_searched`), because it can name a visitor.
 - **Dashboard:** the Gate page gains the tab "Inside now" (`/gate?tab=inside`) for `gate.read`: the list with paging, the gate, the unit, since when, how many, and the photo when there is one; it is read again every 30 seconds. The overview's gate card links to it beside the log.
 - ADR 0028's `GET /gate/inside` is updated by this section.
+
+## Update (how many are inside, on the overview, 2026-11-12)
+
+The overview's gate card linked to "Inside now" but showed no count.
+
+- **Where the count comes from:** the operations dashboard's one call (ADR 0079). Its `gate` section (`gate.read`, the same permission as the list) gains `insideNow`, the number of **people** inside the compound now. No new route: the overview reads all its cards in one call by design, and this card already belongs to that call's gate section, so a second request for one number would only undo it. A separate `GET /gate/inside/count` was the alternative and is not added.
+- **The rule is the list's, once:** `countInsideNow` (gate/entries/entries.service.ts) sums `inside` over the same open-subject query the list reads (`OPEN_SUBJECTS`, joined to the gate as the list is): `in`s less `out`s per subject, first in first out (ADR 0043). A group pass counts its party (three came in, one left: two), a one-time pass its entries, a recurring pass its people, a worker one. So the number equals the total of `insideCount` over every page of `GET /gate/inside`. Two gates add up; another compound's entries are never counted (RLS, the summary's own tenant transaction).
+- **Not bounded by the day**, unlike the section's other figures (today's entries, exits and visitors): someone who came in yesterday and has not left is inside now. It costs one more query in the section, over the same window as the list.
+- **Not audited:** a count is a read of the same rows the list shows without an audit entry. No name, unit or plate is in the summary, as for every card.
+- **Briefs:** a brief keeps the section's figures as they were (ADR 0079), so the figure is optional in the contract: absent from a brief written before this existed.
+- **Dashboard:** the overview's gate card names the count on its link: "Inside now: N" (Arabic and English), which opens the Gate page's "Inside now" tab; without the number (a brief's, or the section not read) it reads "Inside now".

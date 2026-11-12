@@ -34,7 +34,7 @@ The inbox's parts need `inbox.read`, and show only the types the reader decides 
 - `maintenance`: `slaEnabled`, `open` (new or in a technician's hands), `unassigned`, `onHold`, `awaitingConfirmation`, `emergencyOpen`, `emergencyUnassigned`, `atRisk`, `overdue` (as the list's `overdue`), `overdueEmergency`, `openedToday`, `completedToday`, `closedToday`, `plannedDueToday`, `inspectionsDueToday`, `pressure: { threshold, available, underPressure, since }`. While the SLA is off, `overdue` and `atRisk` are 0.
 - `energy`: `outagesActive`, `outagesLaterToday`, `meterAlertsOpen`.
 - `security`: `incidentsToday`, `incidentsOpen`, `criticalOpen`, `lockdownsLive`.
-- `gate`: `entriesToday`, `exitsToday`, `visitorsToday`.
+- `gate`: `entriesToday`, `exitsToday`, `visitorsToday`, `insideNow` (people inside the compound now, as `GET /gate/inside` counts them: the total of its `insideCount`s, a group pass by its party; not the day's, not audited. Absent from a brief written before it existed).
 - `finance`: `currency`, `collectedToday`, `collectedMonth` (net of reversals), `dueMonth`, `collectionRate` (0–1, null when nothing is due), `overdueInvoices`, `overdueAmount`. Amounts are decimal strings.
 - `units`: `units`, `occupied`, `vacant`, `closed`.
 - `liquidityDays` (ADR 0091): the days of spending the cash covers — the live bank and cash accounts' balances over the average daily spending of the 90 days before today, whole days. Null without `finance.cashflow`, with no account or with nothing spent in the window: show a dash. See [cash-flow.md](cash-flow.md).

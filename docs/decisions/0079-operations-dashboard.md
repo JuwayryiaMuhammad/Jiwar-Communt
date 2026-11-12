@@ -92,3 +92,6 @@ The manager audit of 2026-11-01 (operations rows MO-2: "موجز تشغيلي ي
 
 ## Update (M2-12b, ADR 0090)
 - **A rise of service pressure, when told, suggests reinforcement** to the field team, in the same transaction under the pressure row's lock: one open suggestion per compound, an inbox item for `field_team.manage`; it lapses when the pressure eases or is turned off. The notice to the dispatch and the managers, and its debounce, are unchanged.
+
+## Update (people inside now, 2026-11-12)
+- The `gate` section (`gate.read`) gains `insideNow`: the people inside the compound now, counted as `GET /gate/inside` counts them (a group pass by its party; the total of the list's `insideCount`s), not bounded by the day and not audited. One more aggregate query in the section; no route. The overview's gate card shows it on its "Inside now" link. A brief keeps the figure from its day and reads without it when written before. The reasons are in ADR 0056's update.

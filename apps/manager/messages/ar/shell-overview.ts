@@ -64,6 +64,7 @@ const ar: Translation<typeof en> = {
   gateTitle: 'آخر حركة على البوابة',
   log: 'السجل',
   insideNow: 'بالداخل الآن',
+  insideNowCount: 'بالداخل الآن: {n}',
   in: 'دخول',
   out: 'خروج',
   'entry.worker': 'عامل',

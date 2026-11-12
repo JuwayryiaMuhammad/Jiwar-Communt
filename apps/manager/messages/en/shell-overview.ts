@@ -55,6 +55,7 @@ export default {
   gateTitle: 'Latest at the gate',
   log: 'Log',
   insideNow: 'Inside now',
+  insideNowCount: 'Inside now: {n}',
   in: 'In',
   out: 'Out',
   'entry.worker': 'Worker',

@@ -256,7 +256,7 @@ export default function OverviewPage() {
               actions={
                 <span className="row">
                   <ButtonLink href="/gate?tab=inside" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
-                    {t('insideNow')}
+                    {typeof f?.gate?.insideNow === 'number' ? t('insideNowCount', { n: n(f.gate.insideNow) }) : t('insideNow')}
                   </ButtonLink>
                   <ButtonLink href="/gate?tab=entries" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
                     {t('log')}

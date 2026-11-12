@@ -11,12 +11,14 @@ import { required } from '../setup/test-env';
 import { keyPaths, listKeys } from './keys';
 import { call, err } from './request';
 import { workerBody } from './routes/workers';
+import { CURRENCY } from '../../src/finance/money';
 import { buildWorld, type World } from './world';
 import { month } from '../setup/compound-clock';
 import { leakText } from '../setup/leak-text';
 
 const PAYMENT = [
   'amount',
+  'currency',
   'engagementId',
   'id',
   'paidAt',
@@ -83,7 +85,7 @@ describe('API v0 — worker wages', () => {
       token: owner(),
       body: { monthlyWage: 3200 },
     }).expect(200);
-    expect(set.body).toEqual({ monthlyWage: '3200.00' });
+    expect(set.body).toEqual({ monthlyWage: '3200.00', currency: 'EGP' });
     const list = await call(w, 'GET', `/units/${w.a.homeUnitId}/workers`, {
       token: owner(),
     }).expect(200);
@@ -103,7 +105,7 @@ describe('API v0 — worker wages', () => {
       token: owner(),
       body: { monthlyWage: null },
     }).expect(200);
-    expect(cleared.body).toEqual({ monthlyWage: null });
+    expect(cleared.body).toEqual({ monthlyWage: null, currency: 'EGP' });
     const missing = await call(w, 'PUT', `/worker-engagements/${id}/wage`, {
       token: owner(),
       body: {},
@@ -111,6 +113,63 @@ describe('API v0 — worker wages', () => {
     expect(err(missing).fields).toEqual([
       { field: 'monthlyWage', code: 'FIELD_REQUIRED' },
     ]);
+  });
+
+  it('every wage view names the compound’s currency, the one the finance views name', async () => {
+    const id = await active();
+    await call(w, 'PUT', `/worker-engagements/${id}/wage`, {
+      token: owner(),
+      body: { monthlyWage: 2750 },
+    }).expect(200);
+    await pay(id, { period: thisMonth(), amount: 2750 }).expect(201);
+    const currencyOf = (body: unknown) =>
+      (body as { currency?: string }).currency;
+
+    // The finance views' own currency is the reference.
+    expect(CURRENCY).toBe('EGP');
+
+    const unitList = await call(w, 'GET', `/units/${w.a.homeUnitId}/workers`, {
+      token: owner(),
+    }).expect(200);
+    const mine = (
+      unitList.body as { data: { id: string; currency?: string }[] }
+    ).data.find((e) => e.id === id)!;
+    expect(mine.currency).toBe(CURRENCY);
+    const one = await call(w, 'GET', `/units/${w.a.homeUnitId}/workers/${id}`, {
+      token: owner(),
+    }).expect(200);
+    expect(currencyOf(one.body)).toBe(CURRENCY);
+
+    const review = await call(w, 'GET', '/worker-engagements', {
+      token: manager(),
+    }).expect(200);
+    const rows = (review.body as { data: { id: string; currency?: string }[] })
+      .data;
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.currency === CURRENCY)).toBe(true);
+    const detail = await call(w, 'GET', `/worker-engagements/${id}`, {
+      token: manager(),
+    }).expect(200);
+    expect(currencyOf(detail.body)).toBe(CURRENCY);
+
+    const payments = await call(
+      w,
+      'GET',
+      `/worker-engagements/${id}/wage-payments`,
+      { token: manager() },
+    ).expect(200);
+    const listed = (payments.body as { data: { currency?: string }[] }).data;
+    expect(listed).toHaveLength(1);
+    expect(listed[0].currency).toBe(CURRENCY);
+
+    // A reader off the employer side sees no wage, so no currency either.
+    const seen = await call(w, 'GET', `/units/${w.a.homeUnitId}/workers`, {
+      token: w.a.tokens.family,
+    }).expect(200);
+    const hidden = (
+      seen.body as { data: { id: string; currency?: string }[] }
+    ).data.find((e) => e.id === id)!;
+    expect('currency' in hidden).toBe(false);
   });
 
   it('a payment: the worker’s notice, the receipts, and its view', async () => {

@@ -5,6 +5,7 @@ import {
   WorkerCapacity,
   WorkerEngagementStatus,
 } from '@prisma/client';
+import { COMPOUND_CURRENCY } from '../../../core/common/amounts';
 import {
   AccountRefView,
   accountRef,
@@ -56,6 +57,13 @@ export class EngagementResponse {
       'Per month; null until set. Only for the employer side (the primary, a `workers` delegate, the engagement’s requester): absent for anyone else.',
   })
   monthlyWage?: string | null;
+  @ApiPropertyOptional({
+    type: String,
+    example: 'EGP',
+    description:
+      'ISO 4217: the compound’s currency, the one `monthlyWage` is in. Present with `monthlyWage`.',
+  })
+  currency?: string;
 
   static from(e: EngagementView): EngagementResponse {
     return {
@@ -66,7 +74,9 @@ export class EngagementResponse {
       status: e.status,
       validUntil: e.validUntil,
       suspendedByManagement: e.suspendedByManagement,
-      ...(e.monthlyWage !== undefined ? { monthlyWage: e.monthlyWage } : {}),
+      ...(e.monthlyWage !== undefined
+        ? { monthlyWage: e.monthlyWage, currency: COMPOUND_CURRENCY }
+        : {}),
     };
   }
 }
@@ -225,6 +235,13 @@ export class ReviewEngagementView {
       'Per month, as the household set it; null until then. For the managers who review workers (ADR 0037).',
   })
   monthlyWage: string | null;
+  @ApiProperty({
+    type: String,
+    example: 'EGP',
+    description:
+      'ISO 4217: the compound’s currency, the one the amounts are in.',
+  })
+  currency: string;
   @ApiProperty({ enum: IdDocumentType, enumName: 'IdDocumentType' })
   idDocumentType: IdDocumentType;
   @ApiProperty({
@@ -245,6 +262,7 @@ export class ReviewEngagementView {
       capacity: e.capacity,
       status: e.status,
       monthlyWage: e.monthlyWage,
+      currency: COMPOUND_CURRENCY,
       idDocumentType: e.idDocumentType,
       birthDateVerified: e.birthDateVerified,
       createdAt: e.createdAt,
@@ -306,6 +324,13 @@ export class EngagementDetailView {
       'Per month, as the household set it; null until then. For the managers who review workers (ADR 0037).',
   })
   monthlyWage: string | null;
+  @ApiProperty({
+    type: String,
+    example: 'EGP',
+    description:
+      'ISO 4217: the compound’s currency, the one the amounts are in.',
+  })
+  currency: string;
   @ApiProperty({ type: AccountRefView })
   requestedBy: AccountRefView;
   @ApiProperty({ type: String, format: 'date-time' })
@@ -331,6 +356,7 @@ export class EngagementDetailView {
       validUntil: e.validUntil,
       status: e.status,
       monthlyWage: e.monthlyWage,
+      currency: COMPOUND_CURRENCY,
       requestedBy: accountRef(e.requestedBy),
       createdAt: e.createdAt,
       openWageObligations: e.openWageObligations,

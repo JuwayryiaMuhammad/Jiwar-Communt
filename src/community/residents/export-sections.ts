@@ -5,6 +5,7 @@ import {
   type ExportEntry,
   type ExportSubject,
 } from '../../core/exports/export-sections';
+import { COMPOUND_CURRENCY } from '../../core/common/amounts';
 import { DelegationsService } from '../households/delegations.service';
 import { MemberPermissionsService } from '../households/member-permissions.service';
 import { ResidentsService } from './residents.service';
@@ -104,6 +105,7 @@ export class CommunityExportSections implements OnModuleInit {
         createdAt: e.createdAt,
         updatedAt: e.updatedAt,
         monthlyWage: e.monthlyWage?.toFixed(2) ?? null,
+        currency: COMPOUND_CURRENCY,
       })),
     };
   }
@@ -134,6 +136,7 @@ export class CommunityExportSections implements OnModuleInit {
           workerName: e?.worker.fullName ?? null,
           period: p.period.toISOString().slice(0, 7),
           amount: p.amount.toFixed(2),
+          currency: COMPOUND_CURRENCY,
           paidAt: p.createdAt,
         };
       });

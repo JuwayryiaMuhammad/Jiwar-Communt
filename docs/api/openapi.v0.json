@@ -28528,6 +28528,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "currency": {
+            "description": "ISO 4217: the compound’s currency, the one the amounts are in.",
+            "example": "EGP",
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -28583,6 +28588,7 @@
           "validUntil",
           "status",
           "monthlyWage",
+          "currency",
           "requestedBy",
           "createdAt",
           "openWageObligations",
@@ -28598,6 +28604,11 @@
                 "$ref": "#/components/schemas/WorkerCapacity"
               }
             ]
+          },
+          "currency": {
+            "description": "ISO 4217: the compound’s currency, the one `monthlyWage` is in. Present with `monthlyWage`.",
+            "example": "EGP",
+            "type": "string"
           },
           "id": {
             "format": "uuid",
@@ -67871,6 +67882,11 @@
             "format": "date-time",
             "type": "string"
           },
+          "currency": {
+            "description": "ISO 4217: the compound’s currency, the one the amounts are in.",
+            "example": "EGP",
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -67919,6 +67935,7 @@
           "capacity",
           "status",
           "monthlyWage",
+          "currency",
           "idDocumentType",
           "birthDateVerified",
           "createdAt"
@@ -85269,6 +85286,11 @@
               }
             ]
           },
+          "currency": {
+            "description": "ISO 4217: the compound’s currency, the one `monthlyWage` is in. Present with `monthlyWage`.",
+            "example": "EGP",
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -92013,6 +92035,11 @@
             "example": "3200.00",
             "type": "string"
           },
+          "currency": {
+            "description": "ISO 4217: the compound’s currency, the one the amounts are in.",
+            "example": "EGP",
+            "type": "string"
+          },
           "engagementId": {
             "format": "uuid",
             "type": "string"
@@ -92038,6 +92065,7 @@
           "engagementId",
           "period",
           "amount",
+          "currency",
           "paidAt",
           "paidBy"
         ],
@@ -92064,6 +92092,11 @@
       },
       "WageView": {
         "properties": {
+          "currency": {
+            "description": "ISO 4217: the compound’s currency, the one the amounts are in.",
+            "example": "EGP",
+            "type": "string"
+          },
           "monthlyWage": {
             "example": "3200.00",
             "nullable": true,
@@ -92071,7 +92104,8 @@
           }
         },
         "required": [
-          "monthlyWage"
+          "monthlyWage",
+          "currency"
         ],
         "type": "object"
       },

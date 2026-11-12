@@ -38869,6 +38869,11 @@ export interface components {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
             createdAt: string;
+            /**
+             * @description ISO 4217: the compound’s currency, the one the amounts are in.
+             * @example EGP
+             */
+            currency: string;
             /** Format: uuid */
             id: string;
             /**
@@ -38890,6 +38895,11 @@ export interface components {
         };
         EngagementResponse: {
             capacity: components["schemas"]["WorkerCapacity"];
+            /**
+             * @description ISO 4217: the compound’s currency, the one `monthlyWage` is in. Present with `monthlyWage`.
+             * @example EGP
+             */
+            currency?: string;
             /** Format: uuid */
             id: string;
             /**
@@ -51241,6 +51251,11 @@ export interface components {
             capacity: components["schemas"]["WorkerCapacity"];
             /** Format: date-time */
             createdAt: string;
+            /**
+             * @description ISO 4217: the compound’s currency, the one the amounts are in.
+             * @example EGP
+             */
+            currency: string;
             /** Format: uuid */
             id: string;
             idDocumentType: components["schemas"]["IdDocumentType"];
@@ -56378,6 +56393,11 @@ export interface components {
         };
         UnitEngagementView: {
             capacity: components["schemas"]["WorkerCapacity"];
+            /**
+             * @description ISO 4217: the compound’s currency, the one `monthlyWage` is in. Present with `monthlyWage`.
+             * @example EGP
+             */
+            currency?: string;
             /** Format: uuid */
             id: string;
             /**
@@ -58601,6 +58621,11 @@ export interface components {
         WagePaymentView: {
             /** @example 3200.00 */
             amount: string;
+            /**
+             * @description ISO 4217: the compound’s currency, the one the amounts are in.
+             * @example EGP
+             */
+            currency: string;
             /** Format: uuid */
             engagementId: string;
             /** Format: uuid */
@@ -58616,6 +58641,11 @@ export interface components {
             nextCursor: string | null;
         };
         WageView: {
+            /**
+             * @description ISO 4217: the compound’s currency, the one the amounts are in.
+             * @example EGP
+             */
+            currency: string;
             /** @example 3200.00 */
             monthlyWage: string | null;
         };

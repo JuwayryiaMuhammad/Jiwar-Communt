@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
+import { COMPOUND_CURRENCY } from '../core/common/amounts';
 
-export const CURRENCY = 'EGP';
+export const CURRENCY = COMPOUND_CURRENCY;
 
 /** A positive EGP amount of at most 1,000,000 with two decimals at most. */
 export const MONEY = /^(?!0+(\.0{1,2})?$)\d{1,7}(\.\d{1,2})?$/;

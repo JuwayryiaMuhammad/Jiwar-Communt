@@ -74,6 +74,7 @@ describe('API v0 — workers', () => {
       listKeys(
         [
           'capacity',
+          'currency',
           'id',
           'monthlyWage',
           ...SCHEDULE,
@@ -95,6 +96,7 @@ describe('API v0 — workers', () => {
         'birthDateVerified',
         'capacity',
         'createdAt',
+        'currency',
         'id',
         'idDocumentType',
         'monthlyWage',
@@ -114,6 +116,7 @@ describe('API v0 — workers', () => {
       [
         'capacity',
         'createdAt',
+        'currency',
         'id',
         'monthlyWage',
         'openWageObligations',

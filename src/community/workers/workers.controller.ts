@@ -162,7 +162,7 @@ export class WorkersController {
     @Param('id', parseId()) id: string,
     @Body() dto: SetWageDto,
   ): Promise<WageView> {
-    return { monthlyWage: await this.wages.setWage(id, dto.monthlyWage) };
+    return WageView.of(await this.wages.setWage(id, dto.monthlyWage));
   }
 
   /**

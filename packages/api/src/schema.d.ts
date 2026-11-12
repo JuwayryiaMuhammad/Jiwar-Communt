@@ -4382,7 +4382,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List who is inside now */
+        /**
+         * List who is inside now
+         * @description Every gate’s, most recent first. The management (`gate.read`) reads it with no shift; a guard (`gate.operate`) needs an open shift at a gate (NO_OPEN_SHIFT, SHIFT_NOT_AT_GATE).
+         */
         get: operations["EntriesController_inside"];
         put?: never;
         post?: never;

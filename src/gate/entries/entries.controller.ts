@@ -102,12 +102,17 @@ export class EntriesController {
 
   /**
    * Who is inside now: an entry with no exit yet. No-store: a visitor's
-   * photo is a presigned URL (ADR 0056).
+   * photo is a presigned URL (ADR 0056). For the management, or a guard on
+   * shift.
    */
-  @RequirePermissions('gate.operate')
+  @RequireAnyPermission('gate.read', 'gate.operate')
   @Get('inside')
   @NoStore()
-  @ApiOperation({ summary: 'List who is inside now' })
+  @ApiOperation({
+    summary: 'List who is inside now',
+    description:
+      'Every gate’s, most recent first. The management (`gate.read`) reads it with no shift; a guard (`gate.operate`) needs an open shift at a gate (NO_OPEN_SHIFT, SHIFT_NOT_AT_GATE).',
+  })
   @ApiOkResponse({ type: ListOf(InsideView) })
   async inside(@Query() q: PageQueryDto): Promise<ListResponse<InsideView>> {
     return toList(await this.entries.inside(q), (i) => InsideView.from(i));

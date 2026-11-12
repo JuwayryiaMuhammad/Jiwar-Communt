@@ -636,14 +636,21 @@ export class EntriesService implements OnModuleInit {
    * Who is inside right now (an `in` with no later `out`), most recent
    * first, so the guard can record the exit of someone who came without a
    * code. No visitor name: the guard never sees one (ADR 0028).
+   *
+   * The management (`gate.read`) reads it with no shift, across every gate
+   * (ADR 0056's update); a guard without `gate.read` needs an open shift at
+   * a gate. The view is the same for both and is not audited, as the log
+   * and the photo are not. A holder of both is read as the management, on
+   * shift or off: the shift would change nothing they see.
    */
   async inside(
     q: { cursor?: string; limit?: number } = {},
   ): Promise<Page<InsideItem>> {
     const limit = clampLimit(q.limit);
     const after = q.cursor ? PAGE.decode(q.cursor) : null;
+    const management = (await this.permissions.current()).has('gate.read');
     return this.tenantTx.withTenantTx(async (tx) => {
-      await this.shifts.requireOpen(tx);
+      if (!management) await this.shifts.requireOpen(tx);
       const rows = await tx.$queryRaw<
         {
           id: string;

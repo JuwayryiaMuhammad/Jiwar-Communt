@@ -214,6 +214,8 @@ describe('Operations dashboard — the cards, needs you now and the buildings', 
     ])
       expect(manager.figures[section]).not.toBeNull();
     expect(manager.inbox).not.toBeNull();
+    // How many are inside now (ADR 0079): people, on no day.
+    expect(manager.figures.gate!.insideNow).toEqual(expect.any(Number));
 
     // The maintenance supervisor: tickets.dispatch, energy.read, inbox.read.
     const dispatch = await summary(s.supervisor);

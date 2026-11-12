@@ -682,6 +682,111 @@ describe('API v0 — verify, entries, inside (ADR 0028)', () => {
     });
   });
 
+  it('the overview counts the people inside as the list does: a group by its party, across two gates, after an exit, never another compound’s (ADR 0079)', async () => {
+    const insideNow = async (token: string) => {
+      const res = await call(w, 'GET', '/staff/dashboard', { token }).expect(
+        200,
+      );
+      const gate = (
+        res.body as { figures: { gate: { insideNow?: number } | null } }
+      ).figures.gate;
+      return gate === null ? null : gate.insideNow;
+    };
+    /** The list's people: every page's `insideCount`, followed to the end. */
+    const listed = async (token: string, limit = '100') => {
+      let cursor: string | undefined;
+      let people = 0;
+      let rows = 0;
+      do {
+        const res = await call(w, 'GET', '/gate/inside', {
+          token,
+          query: { limit, ...(cursor ? { cursor } : {}) },
+        }).expect(200);
+        const page = res.body as {
+          data: { insideCount: number }[];
+          nextCursor: string | null;
+        };
+        for (const i of page.data) people += i.insideCount;
+        rows += page.data.length;
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor);
+      return { people, rows };
+    };
+    const secondGate = await gateHelpers(h).onDuty(w.a);
+    const secondToken = await w.tokenFor(w.a, secondGate.guardId, 'staff');
+    const manager = w.a.tokens.manager;
+
+    // Whoever is inside already (the suite's other tests leave some).
+    const before = await listed(manager);
+    expect(await insideNow(manager)).toBe(before.people);
+
+    // A party of three at the first gate, one visitor at the second.
+    const group = await newPass({ partySize: 3 });
+    const single = await newPass();
+    for (let i = 0; i < 3; i++)
+      await record({
+        subjectType: 'visitor_pass',
+        subjectId: group.id,
+        direction: 'in',
+      }).expect(201);
+    await record(
+      { subjectType: 'visitor_pass', subjectId: single.id, direction: 'in' },
+      secondToken,
+    ).expect(201);
+    const three = await listed(manager);
+    // Two rows more, four people more: people, not entries and not subjects.
+    expect(three.rows).toBe(before.rows + 2);
+    expect(three.people).toBe(before.people + 4);
+    expect(await insideNow(manager)).toBe(before.people + 4);
+    // Paged one row at a time, the list adds up to the same number.
+    expect((await listed(manager, '1')).people).toBe(three.people);
+
+    // One of the party leaves, and then the visitor at the second gate.
+    await record({
+      subjectType: 'visitor_pass',
+      subjectId: group.id,
+      direction: 'out',
+    }).expect(201);
+    expect(await insideNow(manager)).toBe(before.people + 3);
+    expect((await listed(manager)).people).toBe(before.people + 3);
+    await record(
+      { subjectType: 'visitor_pass', subjectId: single.id, direction: 'out' },
+      secondToken,
+    ).expect(201);
+    expect(await insideNow(manager)).toBe(before.people + 2);
+    expect(await insideNow(manager)).toBe((await listed(manager)).people);
+
+    // Another compound's entries are never counted, either way.
+    const bBefore = await insideNow(w.b.tokens.manager);
+    const bPass = (
+      await call(w, 'POST', `/units/${w.b.homeUnitId}/visitor-passes`, {
+        token: w.b.tokens.owner,
+        body: passBody({ partySize: 2 }),
+      }).expect(201)
+    ).body as { id: string };
+    for (let i = 0; i < 2; i++)
+      await call(w, 'POST', '/gate/entries', {
+        token: w.b.tokens.guard,
+        body: {
+          subjectType: 'visitor_pass',
+          subjectId: bPass.id,
+          direction: 'in',
+        },
+      }).expect(201);
+    expect(await insideNow(w.b.tokens.manager)).toBe(bBefore! + 2);
+    expect(await insideNow(w.b.tokens.manager)).toBe(
+      (await listed(w.b.tokens.manager)).people,
+    );
+    expect(await insideNow(manager)).toBe(before.people + 2);
+
+    // Who reads it: the dashboard's gate section is `gate.read`'s. A guard
+    // holds no dashboard permission and a technician neither.
+    for (const token of [guard(), w.a.tokens.technician, w.a.tokens.owner])
+      expect(
+        status(await call(w, 'GET', '/staff/dashboard', { token })),
+      ).toEqual({ status: 403, code: 'FORBIDDEN' });
+  });
+
   it('verify is rate-limited per guard', async () => {
     const g = await gateHelpers(h).guard(w.a);
     await gateHelpers(h).startShift(w.a, g.id, w.a.gateId);

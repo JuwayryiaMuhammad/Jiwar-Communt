@@ -65,6 +65,11 @@ test('dates and amounts in each language, with Western digits', () => {
   assert.equal(ar.money('1250.5'), '1,250.50 ج.م');
   assert.equal(en.money(1250.5), '1,250.50 EGP');
   assert.equal(en.money(null), '—');
+  // The currency the API names; EGP when it names none, the code itself when it has no local name.
+  assert.equal(ar.money('3200', 'EGP'), '3,200.00 ج.م');
+  assert.equal(ar.money('3200', null), '3,200.00 ج.م');
+  assert.equal(en.money('3200', 'usd'), '3,200.00 USD');
+  assert.equal(ar.money('3200', 'USD'), '3,200.00 USD');
   assert.equal(ar.number(1234567), '1,234,567');
   assert.equal(ar.day('2026-11-10'), ar.date('2026-11-10T00:00:00Z'));
   assert.equal(en.month('2026-11'), 'November 2026');

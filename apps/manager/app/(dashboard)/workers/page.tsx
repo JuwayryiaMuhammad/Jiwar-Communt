@@ -21,7 +21,7 @@ import {
 import { useFormat, useT } from '@jiwar/i18n';
 import { Suspense, useState } from 'react';
 import { AccessCodeDialog, EngagementReview } from '@/components/engagement-review';
-import { wageText } from '@/components/workers/worker-wages';
+import { wageText } from '@/components/workers/wage-text';
 import { api } from '@/lib/api';
 import {
   fetchers,
@@ -86,7 +86,7 @@ function EngagementTable({
             </span>
           ),
         },
-        { key: 'wage', header: t('monthlyWage'), cell: (e) => <span className="t-num">{wageText(f, e.monthlyWage)}</span> },
+        { key: 'wage', header: t('monthlyWage'), cell: (e) => <span className="t-num">{wageText(f, e.monthlyWage, e.currency)}</span> },
         { key: 'status', header: c('status'), cell: (e) => <StatusBadge status={e.status} /> },
         { key: 'when', header: t('registered'), cell: (e) => <span title={f.dateTime(e.createdAt)}>{f.relative(e.createdAt)}</span> },
         ...(actions

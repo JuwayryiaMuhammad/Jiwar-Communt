@@ -31,8 +31,12 @@ export interface Format {
   relative(value: DateInput, now?: number): string;
   /** `1,250` · `1,250.5`; four-digit numbers are not grouped. */
   number(value: number | string | null | undefined, options?: Intl.NumberFormatOptions): string;
-  /** An amount in EGP with two decimals: `1,250.00 EGP` · `1,250.00 ج.م` */
-  money(amount: number | string | null | undefined): string;
+  /**
+   * An amount with two decimals and its currency, EGP unless the API named
+   * another (`currency`, ISO 4217): `1,250.00 EGP` · `1,250.00 ج.م`. A code
+   * with no local name is shown as the code.
+   */
+  money(amount: number | string | null | undefined, currency?: string | null): string;
   /** A ratio as a percentage: 0.125 → `12.5%` */
   percent(ratio: number | null | undefined, maximumFractionDigits?: number): string;
   /** `a, b and c` · `a وb وc` */
@@ -41,6 +45,12 @@ export interface Format {
 
 const DASH = '—';
 const CURRENCY: Record<Locale, string> = { en: 'EGP', ar: 'ج.م' };
+
+/** The label of a currency code: the pound has an Arabic name, any other shows its code. */
+function currencyLabel(locale: Locale, code: string | null | undefined): string {
+  const iso = code?.trim().toUpperCase();
+  return !iso || iso === 'EGP' ? CURRENCY[locale] : iso;
+}
 
 function toDate(value: DateInput): Date | null {
   if (value === null || value === undefined || value === '') return null;
@@ -122,11 +132,11 @@ export function createFormat(locale: Locale, options: { timeZone?: string } = {}
       const n = typeof v === 'number' ? v : Number(v);
       return Number.isFinite(n) ? nf({ maximumFractionDigits: 2, useGrouping: 'min2', ...o }).format(n) : DASH;
     },
-    money: (amount) => {
+    money: (amount, currency) => {
       if (amount === null || amount === undefined || amount === '') return DASH;
       const n = typeof amount === 'number' ? amount : Number(amount);
       if (!Number.isFinite(n)) return DASH;
-      return `${nf({ minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)} ${CURRENCY[locale]}`;
+      return `${nf({ minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)} ${currencyLabel(locale, currency)}`;
     },
     percent: (ratio, digits = 1) =>
       ratio === null || ratio === undefined || !Number.isFinite(ratio)

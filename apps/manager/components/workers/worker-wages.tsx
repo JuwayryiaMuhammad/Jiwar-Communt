@@ -2,25 +2,20 @@
 
 import { ApiError, REASON_CODES, unwrap, type Schema } from '@jiwar/api';
 import { ErrorAlert, LoadMore, QueryState, useAction, useCursorList } from '@jiwar/api/react';
-import { useFormat, useT, type Format } from '@jiwar/i18n';
+import { useFormat, useT } from '@jiwar/i18n';
 import { Alert, Button, DataTable, ReasonCodeDialog, useCommonT, useToast } from '@jiwar/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermissions } from '@/lib/permissions';
 import { keys } from '@/lib/queries';
+import { wageText } from '@/components/workers/wage-text';
 import ar from '@/messages/ar/workers';
 import en from '@/messages/en/workers';
 
 type Engagement = Schema<'EngagementDetailView'>;
 type Payment = Schema<'WagePaymentView'>;
 type ObligationKind = Schema<'WageObligationKind'>;
-
-/** "3200.00" → "3,200.00": the compound's currency, which the API does not name. */
-export function wageText(f: Format, amount: string | null | undefined): string {
-  if (amount === null || amount === undefined) return '—';
-  return Number.isFinite(Number(amount)) ? f.number(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : amount;
-}
 
 /**
  * A worker's wage as management reads it (ADR 0037): what the household
@@ -74,7 +69,7 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
         {engagement.monthlyWage === null ? (
           <span className="t-secondary">{t('noWage')}</span>
         ) : (
-          t('perMonth', { wage: wageText(f, engagement.monthlyWage) })
+          t('perMonth', { wage: wageText(f, engagement.monthlyWage, engagement.currency) })
         )}
       </p>
       {open.includes('settle_before_close') ? (
@@ -125,7 +120,7 @@ export function WorkerWages({ engagement }: { engagement: Engagement }) {
             empty={t('noPayments')}
             columns={[
               { key: 'period', header: t('month'), cell: (p) => f.month(p.period) },
-              { key: 'amount', header: c('amount'), cell: (p) => <span className="t-num">{wageText(f, p.amount)}</span> },
+              { key: 'amount', header: c('amount'), cell: (p) => <span className="t-num">{wageText(f, p.amount, p.currency)}</span> },
               { key: 'at', header: t('recorded'), cell: (p) => f.dateTime(p.paidAt) },
               { key: 'by', header: c('by'), cell: (p) => (p.paidBy.erased ? c('erasedAccount') : p.paidBy.fullName) },
             ]}

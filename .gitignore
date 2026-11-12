@@ -67,3 +67,15 @@ next-env.d.ts
 
 # Local env backups (secrets)
 .env.bak.*
+
+# pnpm api-docs writes these from the contract and the controllers; never edit or commit them
+/docs/api/README.md
+/docs/api/resident/
+/docs/api/manager/
+/docs/api/guard/
+/docs/api/technician/
+/docs/api/contractor/
+/docs/api/partner/
+/docs/api/platform/
+/docs/api/public/
+/docs/api/postman/

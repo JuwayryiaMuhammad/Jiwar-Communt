@@ -31,6 +31,7 @@ export type ComplianceCase = Schema<'ComplianceCaseResponse'>;
 export type CardIncident = Schema<'CardIncidentResponse'>;
 export type Gate = Schema<'GateView'>;
 export type Entry = Schema<'EntryListView'>;
+export type Inside = Schema<'InsideView'>;
 export type Role = Schema<'RoleView'>;
 export type Permission = Schema<'PermissionView'>;
 export type Settings = Schema<'SettingsView'>;
@@ -627,6 +628,7 @@ export const keys = {
   incidents: (status: string) => ['card-incidents', status] as const,
   gates: ['gates'] as const,
   entries: (filters: object) => ['gate-entries', filters] as const,
+  gateInside: ['gate-inside'] as const,
   roles: ['roles'] as const,
   permissions: ['permissions'] as const,
   settings: ['settings'] as const,
@@ -1117,6 +1119,8 @@ export const fetchers = {
     cursor?: string,
     limit = 50,
   ) => unwrap(api.GET('/api/v1/gate/entries', { params: { query: { ...clean(filters), cursor, limit } } })),
+  // Who is inside now, every gate (ADR 0056's update): `gate.read`, no shift.
+  gateInside: (cursor?: string, limit = 50) => unwrap(api.GET('/api/v1/gate/inside', { params: { query: { cursor, limit } } })),
   roles: () => unwrap(api.GET('/api/v1/roles')),
   permissions: () => unwrap(api.GET('/api/v1/permissions')),
   settings: () => unwrap(api.GET('/api/v1/settings')),

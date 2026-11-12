@@ -3,6 +3,7 @@ export default {
   title: 'Gate',
   description: 'Every entry and exit, append-only, and the gates guards work at.',
   'tab.entries': 'Entries',
+  'tab.inside': 'Inside now',
   'tab.gates': 'Gates',
   'tab.places': 'Places',
   // Entries.
@@ -31,6 +32,14 @@ export default {
   recordedHint: 'Recorded later, e.g. after the guard’s device was offline',
   unconfirmed: 'Unconfirmed',
   system: 'System',
+  // Inside now (ADR 0056).
+  insideIntro: 'Everyone who came in and has not gone out yet, at every gate. No names are shown.',
+  emptyInside: 'No one is inside right now',
+  'col.since': 'Since',
+  'col.count': 'People',
+  insideOf: '{inside} of {party}',
+  'col.photo': 'Photo',
+  photoAlt: 'The guard’s photo of the visitor at the gate',
   // The gates.
   intro: 'Guards start their shift at an active gate.',
   newGate: 'New gate',

@@ -254,9 +254,14 @@ export default function OverviewPage() {
             <CardHeader
               title={t('gateTitle')}
               actions={
-                <ButtonLink href="/gate?tab=entries" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
-                  {t('log')}
-                </ButtonLink>
+                <span className="row">
+                  <ButtonLink href="/gate?tab=inside" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
+                    {t('insideNow')}
+                  </ButtonLink>
+                  <ButtonLink href="/gate?tab=entries" size="sm" variant="text" icon={<ArrowRight aria-hidden className="icon-dir" />}>
+                    {t('log')}
+                  </ButtonLink>
+                </span>
               }
             />
             <QueryState query={entries} rows={4}>

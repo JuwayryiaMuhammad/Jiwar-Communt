@@ -102,7 +102,7 @@ const ar: Translation<typeof en> = {
   'perm.workers.incidents': 'متابعة حوادث البطاقات',
   'perm.gate.operate': 'تشغيل البوابة',
   'perm.gate.manage': 'إعداد البوابات',
-  'perm.gate.read': 'قراءة سجل الدخول من البوابة',
+  'perm.gate.read': 'قراءة سجل الدخول من البوابة ومن بالداخل الآن',
   'perm.visitors.invite': 'دعوة الزوار',
   'perm.profile.photo': 'تعيين صورته الشخصية',
   'perm.tickets.create': 'فتح بلاغات صيانة',

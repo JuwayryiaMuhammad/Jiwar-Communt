@@ -102,7 +102,7 @@ export default {
   'perm.workers.incidents': 'Handle card incidents',
   'perm.gate.operate': 'Operate the gate',
   'perm.gate.manage': 'Set up gates',
-  'perm.gate.read': 'Read gate entries',
+  'perm.gate.read': 'Read gate entries and who is inside',
   'perm.visitors.invite': 'Invite visitors',
   'perm.profile.photo': 'Set own photo',
   'perm.tickets.create': 'Open maintenance tickets',

@@ -54,6 +54,7 @@ export default {
   // The gate.
   gateTitle: 'Latest at the gate',
   log: 'Log',
+  insideNow: 'Inside now',
   in: 'In',
   out: 'Out',
   'entry.worker': 'Worker',

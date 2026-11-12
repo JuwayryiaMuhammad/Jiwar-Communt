@@ -63,6 +63,7 @@ const ar: Translation<typeof en> = {
   'alert.other': '{what} ({n})',
   gateTitle: 'آخر حركة على البوابة',
   log: 'السجل',
+  insideNow: 'بالداخل الآن',
   in: 'دخول',
   out: 'خروج',
   'entry.worker': 'عامل',

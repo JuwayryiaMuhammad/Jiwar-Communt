@@ -28,12 +28,12 @@ import { Places } from '@/components/safety/places';
 import { usePersonName } from '@/components/management-requests/bits';
 import { usePermissions } from '@/lib/permissions';
 import { api } from '@/lib/api';
-import { fetchers, keys, type Entry, type Gate } from '@/lib/queries';
+import { fetchers, keys, type Entry, type Gate, type Inside } from '@/lib/queries';
 import { useTab } from '@/lib/use-tab';
 import ar from '@/messages/ar/gate-main';
 import en from '@/messages/en/gate-main';
 
-const TABS = ['entries', 'gates', 'places'] as const;
+const TABS = ['entries', 'inside', 'gates', 'places'] as const;
 type Tab = (typeof TABS)[number];
 type GateKind = Gate['kind'];
 
@@ -162,6 +162,84 @@ function Entries({ gates }: { gates: Gate[] }) {
                 key: 'guard',
                 header: t('col.guard'),
                 cell: (e) => (e.guard ? personName(e.guard) : <span className="t-secondary">{t('system')}</span>),
+              },
+            ]}
+          />
+          <LoadMore query={list} />
+        </QueryState>
+      </Card>
+    </>
+  );
+}
+
+/**
+ * Who is inside now, at every gate (ADR 0056's update): an entry with no exit
+ * yet, newest first, read with `gate.read` and no shift. No name: a visitor
+ * is a pass, a unit and, when the guard took one, a photo (a presigned link,
+ * so the list is read again every 30 s and never stored).
+ */
+function InsideNow() {
+  const t = useT(en, ar);
+  const c = useCommonT();
+  const f = useFormat();
+  const list = useCursorList(keys.gateInside, (cursor) => fetchers.gateInside(cursor), { refetchInterval: 30_000 });
+  return (
+    <>
+      <p className="t-secondary">{t('insideIntro')}</p>
+      <Card flush>
+        <QueryState query={list}>
+          <DataTable<Inside>
+            rows={list.rows}
+            rowKey={(i) => `${i.subjectType}:${i.subjectId}`}
+            empty={t('emptyInside')}
+            columns={[
+              {
+                key: 'since',
+                header: t('col.since'),
+                cell: (i) => (
+                  <div>
+                    <div className="t-num" style={{ whiteSpace: 'nowrap' }}>
+                      {f.dateTime(i.enteredAt)}
+                    </div>
+                    <div className="list__meta">{f.relative(i.enteredAt)}</div>
+                  </div>
+                ),
+              },
+              {
+                key: 'who',
+                header: t('who'),
+                cell: (i) => (
+                  <div>
+                    {t(`subject.${i.subjectType}`)}
+                    {i.permitReference ? <div className="list__meta t-num">{i.permitReference}</div> : null}
+                  </div>
+                ),
+              },
+              { key: 'unit', header: c('unit'), cell: (i) => <span className="table__primary">{i.unitCode}</span> },
+              { key: 'gate', header: t('col.gate'), cell: (i) => i.gateName },
+              {
+                key: 'count',
+                header: t('col.count'),
+                cell: (i) => (i.partySize > 1 ? t('insideOf', { inside: i.insideCount, party: i.partySize }) : i.insideCount),
+              },
+              {
+                key: 'photo',
+                header: t('col.photo'),
+                cell: (i) =>
+                  i.photo ? (
+                    // A short-lived presigned link: opened in a new tab, never stored.
+                    <a href={i.photo.url} target="_blank" rel="noreferrer" title={t('photoAlt')}>
+                      <img
+                        src={i.photo.url}
+                        alt={t('photoAlt')}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 6, display: 'block' }}
+                      />
+                    </a>
+                  ) : (
+                    <span className="t-secondary">—</span>
+                  ),
               },
             ]}
           />
@@ -343,6 +421,7 @@ function GateView() {
             onChange={setTab}
             options={[
               { value: 'entries', label: t('tab.entries') },
+              ...(can('gate.read') ? [{ value: 'inside' as const, label: t('tab.inside') }] : []),
               { value: 'gates', label: t('tab.gates') },
               ...(can('gate.manage') ? [{ value: 'places' as const, label: t('tab.places') }] : []),
             ]}
@@ -351,6 +430,8 @@ function GateView() {
       />
       {tab === 'entries' ? (
         <Entries gates={gates.data?.data ?? []} />
+      ) : tab === 'inside' && can('gate.read') ? (
+        <InsideNow />
       ) : tab === 'places' && can('gate.manage') ? (
         <Places />
       ) : (

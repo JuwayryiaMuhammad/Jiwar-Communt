@@ -1,12 +1,15 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { StaffDashboard } from '../../core/staff-dashboard/staff-dashboard';
+import { countInsideNow } from '../entries/entries.service';
 
 /**
  * The gate's sections of the operations dashboard (ADR 0079): security for
  * whoever works the incidents (`incidents.manage`): the day's incidents,
  * the open and the open critical ones (ADR 0053), and the live lockdowns;
  * the gate for whoever reads it (`gate.read`): the day's entries and exits
- * and the visitors let in (as the traffic report counts them, ADR 0056).
+ * and the visitors let in (as the traffic report counts them, ADR 0056),
+ * and how many people are inside now (as `GET /gate/inside` counts them,
+ * ADR 0056's update).
  * Counts only: never a name, a unit or a plate.
  */
 @Injectable()
@@ -54,6 +57,7 @@ export class GateDashboardSections implements OnModuleInit {
           entriesToday: Number(e.entries),
           exitsToday: Number(e.exits),
           visitorsToday: Number(e.visitors),
+          insideNow: await countInsideNow(tx),
         };
       },
     });

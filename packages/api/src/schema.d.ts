@@ -40167,6 +40167,8 @@ export interface components {
         GateFiguresView: {
             entriesToday: number;
             exitsToday: number;
+            /** @description People inside the compound now (not entries: a group pass counts its party), the total of the `insideCount`s `GET /gate/inside` lists. Not bounded by the day. Absent from a brief written before it existed. */
+            insideNow?: number;
             /** @description Visitors let in today: by pass, gate request or field exception. */
             visitorsToday: number;
         };

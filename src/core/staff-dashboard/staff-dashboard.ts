@@ -114,6 +114,11 @@ export interface GateFigures {
   exitsToday: number;
   /** Visitors let in today: by pass, gate request or field exception. */
   visitorsToday: number;
+  /**
+   * People inside the compound now, as `GET /gate/inside` counts them. A
+   * brief written before this existed keeps no value.
+   */
+  insideNow?: number;
 }
 
 export interface FinanceFigures {

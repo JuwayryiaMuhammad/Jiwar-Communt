@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { StaffBrief } from '@prisma/client';
 import {
   InboxCountView,
@@ -132,6 +132,12 @@ export class GateFiguresView {
       'Visitors let in today: by pass, gate request or field exception.',
   })
   visitorsToday: number;
+  @ApiPropertyOptional({
+    type: Number,
+    description:
+      'People inside the compound now (not entries: a group pass counts its party), the total of the `insideCount`s `GET /gate/inside` lists. Not bounded by the day. Absent from a brief written before it existed.',
+  })
+  insideNow?: number;
 }
 
 export class FinanceFiguresView {

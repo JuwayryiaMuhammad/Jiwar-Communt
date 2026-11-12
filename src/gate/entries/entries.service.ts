@@ -142,6 +142,20 @@ const OPEN_SUBJECTS = Prisma.sql`
   ) latest
   WHERE inside > 0`;
 
+/**
+ * How many people are inside the compound now: the sum of the open
+ * subjects' counts, which is the total of `insideCount` over every page of
+ * `inside()`. The operations dashboard's gate card shows it (ADR 0079); read
+ * in the caller's tenant transaction (RLS), and not audited, like the list.
+ */
+export async function countInsideNow(tx: TenantTxClient): Promise<number> {
+  const [row] = await tx.$queryRaw<{ people: bigint }[]>`
+    SELECT coalesce(sum(e.inside), 0) AS people
+      FROM (${OPEN_SUBJECTS}) e
+      JOIN gates g ON g.id = e.gate_id`;
+  return Number(row.people);
+}
+
 /** How many may be inside at once on a subject (ADR 0043). */
 export function capacityOf(s: GateSubject): number {
   return s.type === 'visitor_pass' ? s.partySize : 1;

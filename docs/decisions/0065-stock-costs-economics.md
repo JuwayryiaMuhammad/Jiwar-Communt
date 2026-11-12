@@ -153,3 +153,6 @@ A store is shared-locked under a movement. A contract is locked for update, then
 
 ## Update (Phase M3-7, ADR 0094)
 - "A receipt's reference is free text" gains a link where the receipt is a purchase order's: a stock line accepted on a goods receipt writes the receipt movement at the order's unit price, with `stock_movements.goods_receipt_id`; its free-text reference is the receipt's number. "Purchasing (requisitions, purchase orders, suppliers) stays the ERP's" is over: purchase orders are built (ADR 0094).
+
+## Update 2026-11-12 (ADR 0094)
+- The items' list, `GET /maintenance/stock/items`, is also open to `purchase_orders.raise`, so who raises a purchase order names a stock line's item. Every other stock route stays `stock.manage`'s.

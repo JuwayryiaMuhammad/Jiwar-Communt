@@ -29,7 +29,7 @@ export default {
   'lines.add': 'Add a line',
   'lines.remove': 'Remove the line',
   'lines.lineTotal': 'Line net {net}',
-  'lines.noStockAccess': 'Stock items are listed to roles that keep the stock: a stock line needs that access.',
+  'lines.noStockAccess': 'Stock items are listed to who keeps the stock or raises orders: a stock line needs that access.',
   'totals.net': 'Net',
   'totals.vat': 'VAT',
   'totals.total': 'Total',

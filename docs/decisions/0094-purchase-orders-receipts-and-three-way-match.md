@@ -106,4 +106,12 @@ The owner widened the maintenance supervisor's reading, so the whole order form 
 - `GET /staff/finance/budgets` and `GET /staff/finance/budgets/{id}` take `finance.budget` **or** `purchase_orders.raise`. Who raises an order reads the budgets and their lines, with what each has left, to name the line it is paid from.
 - Everything else on the budget stays with `finance.budget`: drafting and submitting a budget, its lines and months, the settings, the expenses and their authorizations.
 - The maintenance supervisor already read the vendors (`assets.manage`, `purchases.request`) and the stock (`stock.manage`), so a direct order is now theirs from start to end. No role gained a permission.
-- The accountant still reads no stock items or stores (`stock.manage`), so the accountant's orders have no stock lines.
+- The accountant still read no stock items (`stock.manage`), so the accountant's orders had no stock lines; see the next update.
+
+## Update 2026-11-12: who raises an order lists the stock items
+
+The owner widened the accountant's reading too.
+
+- `GET /maintenance/stock/items` takes `stock.manage` **or** `purchase_orders.raise`. Who raises an order lists the items, with what is held, to name a stock line's item. The accountant's orders now carry stock lines.
+- The item's card, the stores, the movements and every change to the stock stay with `stock.manage`. The stores are read when goods are received, and receiving is `purchase_orders.receive`'s; the accountant does not receive.
+- No role gained a permission. Every holder of `purchase_orders.raise` now fills the whole order form.

@@ -29,7 +29,7 @@ const ar: Translation<typeof en> = {
   'lines.add': 'أضف بندًا',
   'lines.remove': 'احذف البند',
   'lines.lineTotal': 'صافي البند {net}',
-  'lines.noStockAccess': 'أصناف المخزون تظهر للأدوار التي تتولى المخزون: بند المخزون يحتاج إلى هذه الصلاحية.',
+  'lines.noStockAccess': 'أصناف المخزون تظهر لمن يتولى المخزون أو يصدر أوامر الشراء: بند المخزون يحتاج إلى هذه الصلاحية.',
   'totals.net': 'الصافي',
   'totals.vat': 'ضريبة القيمة المضافة',
   'totals.total': 'الإجمالي',

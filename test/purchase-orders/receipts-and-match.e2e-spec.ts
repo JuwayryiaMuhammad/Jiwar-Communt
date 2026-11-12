@@ -263,6 +263,60 @@ describe('Goods receipts and the three-way match (ADR 0094)', () => {
     });
   });
 
+  describe('raised by the accountant', () => {
+    it('lists the stock items to name a stock line, so the accountant’s order carries one; the store itself stays with who keeps the stock', async () => {
+      const item = (
+        await http('post', '/maintenance/stock/items', m(), {
+          sku: `AC-${uniqueSuffix()}`,
+          nameAr: 'فلتر',
+          nameEn: 'Filter',
+          unit: 'piece',
+        }).expect(201)
+      ).body as { id: string };
+      const listed = (
+        await http('get', '/maintenance/stock/items?active=true', acc()).expect(
+          200,
+        )
+      ).body as { data: { id: string }[] };
+      expect(listed.data.map((i) => i.id)).toContain(item.id);
+      const o = (
+        await http('post', '/staff/purchase-orders', acc(), {
+          vendorId,
+          budgetLineId: line().id,
+          deliveryOn: day(10),
+          lines: [
+            {
+              kind: 'stock',
+              stockItemId: item.id,
+              quantity: '4',
+              unitPrice: '75.00',
+            },
+          ],
+        }).expect(201)
+      ).body as Order;
+      expect(o.lines).toEqual([
+        expect.objectContaining({ kind: 'stock', stockItemId: item.id }),
+      ]);
+      // Listing is all: an item's card, the stores, the movements and every
+      // change stay stock.manage's.
+      await http('get', `/maintenance/stock/items/${item.id}`, acc()).expect(
+        403,
+      );
+      await http('get', '/maintenance/stores', acc()).expect(403);
+      await http('get', '/maintenance/stock/movements', acc()).expect(403);
+      await http('post', '/maintenance/stock/items', acc(), {
+        sku: `AX-${uniqueSuffix()}`,
+        nameAr: 'صنف',
+        nameEn: 'Item',
+        unit: 'piece',
+      }).expect(403);
+      // Who neither keeps the stock nor raises an order lists none.
+      const guard = await gateHelpers(h).guard(s.c);
+      const g = await f.who(s.c, guard.id, 'staff');
+      await http('get', '/maintenance/stock/items', g.token).expect(403);
+    });
+  });
+
   describe('receipts', () => {
     it('are in parts: accepted and rejected with a reason, a note and photos; a stock line goes into the store at the order’s cost', async () => {
       const item = (

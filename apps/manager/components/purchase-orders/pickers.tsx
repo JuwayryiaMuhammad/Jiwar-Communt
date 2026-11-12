@@ -24,10 +24,10 @@ export function useVendorChoices() {
   return { allowed, vendors: query.data?.data ?? [] };
 }
 
-/** The active stock items, for the roles that keep the stock. */
+/** The active stock items, for who keeps the stock or raises an order (ADR 0094). */
 export function useStockChoices() {
   const { can } = usePermissions();
-  const allowed = can('stock.manage');
+  const allowed = can('stock.manage') || can('purchase_orders.raise');
   const query = useQuery({
     queryKey: keys.poStockItems,
     queryFn: () => fetchers.stockItems({ active: 'true' }, undefined, 100),

@@ -97,7 +97,10 @@ export class StoresController {
   }
 }
 
-/** The store's items, their stock and its movements (ADR 0065). */
+/**
+ * The store's items, their stock and its movements (ADR 0065). Who raises a
+ * purchase order also lists the items, to name a stock line's (ADR 0094).
+ */
 @ApiArea('maintenance')
 @RequirePermissions('stock.manage')
 @Controller('maintenance/stock')
@@ -105,6 +108,7 @@ export class StockController {
   constructor(private readonly items: StockItemsService) {}
 
   @Get('items')
+  @RequireAnyPermission('stock.manage', 'purchase_orders.raise')
   @ApiOperation({ summary: 'List the items with what is held, oldest first' })
   @ApiOkResponse({ type: ListOf(StockItemView) })
   async list(

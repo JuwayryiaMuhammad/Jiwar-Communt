@@ -43,6 +43,7 @@ describe('API v0 — a unit’s worker', () => {
     expect(keyPaths(pending.body)).toEqual(
       [
         'capacity',
+        'currency',
         'id',
         'lastPaidPeriod',
         'monthlyWage',
@@ -99,6 +100,8 @@ describe('API v0 — a unit’s worker', () => {
     expect(member.body).toMatchObject({ id, status: 'active' });
     expect(keyPaths(member.body)).not.toContain('monthlyWage');
     expect(keyPaths(member.body)).not.toContain('lastPaidPeriod');
+    // The currency goes with the wage: absent with it.
+    expect(keyPaths(member.body)).not.toContain('currency');
     expect(leakText(member.body)).not.toContain('2500');
   });
 

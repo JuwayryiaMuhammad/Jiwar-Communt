@@ -2,9 +2,9 @@ import type { Translation } from '@jiwar/i18n';
 import type en from '../en/sec-found-items.ts';
 
 const ar: Translation<typeof en> = {
-  title: 'المعثورات عند البوابة',
+  title: 'ما عُثر عليه عند البوابة',
   descriptionBefore: 'ما سجّله الأمن. لعرض غرض على السكان، انشره على ',
-  board: 'لوحة المفقودات والمعثورات',
+  board: 'لوحة المفقودات',
   register: 'تسجيل',
   registered: 'تم التسجيل في المكتب.',
   registerTitle: 'تسجيل غرض عُثر عليه',

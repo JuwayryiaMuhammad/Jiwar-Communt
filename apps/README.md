@@ -147,12 +147,18 @@ One Arabic word per domain term, the same on every page.
 | VAT | ضريبة القيمة المضافة | | Tax declaration | الإقرار الضريبي |
 | Withholding tax | ضريبة الخصم من المنبع (الخصم والإضافة) | | Withholding certificate | شهادة الخصم |
 | Fiscal year | السنة المالية | | Year-end close | إقفال السنة |
-| Accumulated surplus | الفائض المرحّل | Purchase order | أمر شراء |
-| Goods receipt | إذن استلام | Three-way match | المطابقة الثلاثية |
-| Tolerance | حد التسامح | Received, not invoiced | مستلم غير مفوتر |
-| Revision (of an order) | مراجعة | Accepted | مقبول |
-| Rejected | مرفوض | Delivery | التسليم |
-| Acknowledge (by the vendor) | تأكيد الاستلام | Override (a mismatch) | تجاوز الفرق |
+| Accumulated surplus | الفائض المرحّل | | Purchase order | أمر شراء |
+| Goods receipt | إذن استلام | | Three-way match | المطابقة الثلاثية |
+| Tolerance | حد التسامح | | Received, not invoiced | مستلم غير مفوتر |
+| Revision (of an order) | مراجعة | | Accepted | مقبول |
+| Rejected | مرفوض | | Delivery | التسليم |
+| Acknowledge (by the vendor) | تأكيد الاستلام | | Override (a mismatch) | تجاوز الفرق |
+| Recovery (a case) | معالجة | | Follow-up (a case) | متابعة |
+| Cure period (before a late notice) | فترة السماح | | Cash custody | العهدة النقدية |
+| Found at the gate | ما عُثر عليه عند البوابة | | Lost & found | المفقودات |
+| Public board (suggestions, posts) | اللوحة العامة | | | |
+
+The board (مجلس الإدارة) is the owners' elected board, and the management (الإدارة) is the compound's office; a text never uses one for the other. The Arabic copy was reviewed on 2026-11-12 for these terms.
 
 ## Checks
 

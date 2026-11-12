@@ -128,7 +128,7 @@ export default {
   'perm.community.read': 'Read announcements, events and polls; answer and vote',
   'perm.suggestions.create': 'Send suggestions to the management',
   'perm.community.publish': 'Publish announcements, works and closures, events and polls',
-  'perm.community.suggestions': 'Handle suggestions: answer, publish to the board, say what was done',
+  'perm.community.suggestions': 'Handle suggestions: answer, publish to the public board, say what was done',
   'perm.neighbours.complain': 'Complain about another unit, and answer a notice sent to their own',
   'perm.neighbours.board': 'Post on the lost-and-found and lending boards, claim found items, write to a neighbour about a post',
   'perm.neighbours.handle': 'Handle complaints between units, the lost-and-found desk and reported conversations',

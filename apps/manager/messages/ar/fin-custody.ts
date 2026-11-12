@@ -2,7 +2,7 @@ import type { Translation } from '@jiwar/i18n';
 import type en from '../en/fin-custody.ts';
 
 const ar: Translation<typeof en> = {
-  title: 'العهدة',
+  title: 'العهدة النقدية',
   description: 'النقدية المحصّلة في المكتب أو في الميدان، إلى أن تُسلَّم.',
   none: 'لا يوجد',
   choose: 'اختر…',

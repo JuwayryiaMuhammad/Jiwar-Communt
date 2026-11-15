@@ -94453,7 +94453,7 @@
             "description": ""
           }
         },
-        "summary": "Request a login code by email",
+        "summary": "Request a login code (by SMS for a phone, by email otherwise)",
         "tags": [
           "auth"
         ],

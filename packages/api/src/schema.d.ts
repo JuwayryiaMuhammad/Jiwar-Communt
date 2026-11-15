@@ -378,7 +378,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Request a login code by email */
+        /** Request a login code (by SMS for a phone, by email otherwise) */
         post: operations["AuthController_requestOtp"];
         delete?: never;
         options?: never;

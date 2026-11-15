@@ -53,3 +53,6 @@ The compound's gate is where the community data meets people at the door: guards
 
 ## Update (the manager sees who is inside, ADR 0056)
 - `GET /gate/inside` takes `gate.read` or `gate.operate`. The management (`gate.read`) reads it with no shift; a guard still needs an open shift at a gate. The list is the same for both (every gate of the compound, no visitor name). The rule and its reasons are in ADR 0056's update.
+
+## Update (login codes by SMS, ADR 0095)
+- Guards no longer depend on reading email: a guard who logs in with the phone on the account gets the code by SMS (Egyptian numbers, once the server has SMS turned on). Creating a staff account with a phone and no email is a later change; an account still requires an email today, which is also where the code goes if the text fails.

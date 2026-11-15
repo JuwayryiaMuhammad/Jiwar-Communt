@@ -238,7 +238,7 @@ stateDiagram-v2
 
 **الأحداث الأمنية (`SecurityEventView`)**: `id`، `occurredAt`، `event`، `identifierHash` (HMAC للبريد أو الهاتف، **وليس البريد نفسه أبدًا**)، `accountId`، `tenantId`، `platformAdminId`، `ip`، `userAgent`، `requestId`، `metadata` (مثلًا `reason` في `platform.login_failed`، وقيمه: `unknown_email` / `wrong_password` / `locked` / `disabled`).
 
-أسماء الأحداث (`event`): `otp.requested`، `otp.verify_failed`، `otp.challenge_exhausted`، `otp.rate_limited`، `login.succeeded`، `session.refresh_reuse_detected`، `session.revoked`، `platform.login_failed`، `platform.login_locked`، `platform.login_succeeded`، `invite.token_invalid`، `account.phone_reassigned`، `registration.link_invalid`، `step_up.requested`، `step_up.verified`، `step_up.failed`، `login.new_device`، `account.not_me`.
+أسماء الأحداث (`event`): `otp.requested`، `otp.verify_failed`، `otp.challenge_exhausted`، `otp.rate_limited`، `otp.sms_sent`، `otp.sms_failed`، `otp.sms_capped`، `login.succeeded`، `session.refresh_reuse_detected`، `session.revoked`، `platform.login_failed`، `platform.login_locked`، `platform.login_succeeded`، `invite.token_invalid`، `account.phone_reassigned`، `registration.link_invalid`، `step_up.requested`، `step_up.verified`، `step_up.failed`، `login.new_device`، `account.not_me`.
 
 ## القواعد والقيود
 - السوبر أدمن **لا يستطيع** قراءة الوحدات أو السكان أو الإشغالات أو أي بيانات داخل الكمبوند. المتاح له: الكمبوند نفسه ومديروه فقط.

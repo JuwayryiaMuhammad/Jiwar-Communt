@@ -40,7 +40,7 @@ const WHO: Record<Audience, string> = {
     'Anyone, with no sign-in: links the compound sends, document checks, registration.',
 };
 
-const OTP_SIGN_IN = `1. \`POST /auth/otp/request\` with the email (or the phone) in \`identifier\`: a 6-digit code is sent by email.
+const OTP_SIGN_IN = `1. \`POST /auth/otp/request\` with the email (or the phone) in \`identifier\`: a 6-digit code is sent, by SMS to the phone when you typed a phone, otherwise by email (the answer is the same either way and never says which, or whether the person exists: show "if it is registered, a code was sent").
 2. \`POST /auth/otp/verify\` with the code: returns a login ticket and the accounts the person can pick (the same person can have accounts in more than one compound).
 3. \`POST /auth/select-account\` with the ticket and the account: returns \`accessToken\` and \`refreshToken\`. Send \`X-Jiwar-Install-Id\` with it (a UUID made once per install); without it every login looks like a new browser and raises an "unusual login" alert.
 4. Every request after that: \`Authorization: Bearer <accessToken>\`.

@@ -300,6 +300,30 @@ The public receipt page is `<PUBLIC_APP_URL>/receipt#<code>` and the page
 Paymob's checkout returns to is `<PUBLIC_APP_URL>/paid`: both ship with the
 public web pages, nothing to install.
 
+## Login codes by SMS (ADR 0095)
+
+Off until `app.env` says otherwise: with no `SMS_PROVIDER` every login code
+goes by email as before, so this change deploys with nothing to set. To turn
+it on (Twilio Programmable Messaging; Egypt only by default), create in Twilio
+an **API key** (`SK…` and its secret), a **Messaging Service** (`MG…`) with a
+sender, and enable **Egypt in Messaging → Settings → Geo permissions**; then
+add to `app.env`:
+
+```
+SMS_PROVIDER=twilio
+TWILIO_ACCOUNT_SID=AC…
+TWILIO_API_KEY_SID=SK…
+TWILIO_API_KEY_SECRET=…
+TWILIO_MESSAGING_SERVICE_SID=MG…
+```
+
+The app refuses to boot with `SMS_PROVIDER=twilio` and a missing or
+malformed one (the log names it), and with `SMS_PROVIDER=log` (development
+only) under `NODE_ENV=production`. Optional: `SMS_ALLOWED_COUNTRY_CODES`
+(`+20`), `SMS_MAX_PER_PHONE_PER_DAY` (10), `SMS_MAX_PER_HOUR` (300),
+`SMS_REQUEST_TIMEOUT_MS` (5000). The secret lives in `app.env` only. The
+step-by-step setup and the checks are in the ADR.
+
 ## Server layout
 
 | Path | Contents |

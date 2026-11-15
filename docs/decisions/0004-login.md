@@ -39,3 +39,8 @@ Login activity is written to `security_events` (ADR 0014): OTP requested / faile
 ## Update (Phase R1, ADR 0036)
 - **`select-account` records the device first.** It is the app's `X-Jiwar-Install-Id`, or the browser family and OS, kept as a keyed hash. A device never seen on the account raises a critical alert with a "not me" action.
 - **Step-up codes** (purpose `step_up`) are bound to the session that asked, and open one sensitive action.
+
+## Update (login codes by SMS, ADR 0095)
+- **The second channel exists.** A login typed as a phone gets its code by SMS to that phone (Twilio Programmable Messaging behind `OtpChannel`, Egyptian numbers by default, off until `SMS_PROVIDER` is set). An email login, and every other purpose, still goes by email. The response is still identical for every identifier.
+- **One challenge to the phone**, unlocking the active accounts whose login identifier is that phone in every compound, whatever their emails. The rule "one challenge per distinct destination email" holds for the email path, which is also the fallback when the text fails, the number is outside the allowed countries or a cap is hit. A code never unlocks an account reached only through the other identifier.
+- An unknown phone gets no text. The caps (10 a day per number, 300 an hour) are counted in Redis like the other limits.

@@ -31,3 +31,7 @@ The table owner (`jiwar_migrator`) can still `ALTER TABLE … DISABLE TRIGGER` a
 ## Update (Phase 2.2)
 - **Reasons** enter the trail as a `reasonCode` from a closed list per action (`core/common/reasons.ts`). The text the person is told stays on the record and in the notice, both erasable.
 - **Erasure** never touches `audit_log`; a test compares the rows before and after.
+
+## Update (login codes by SMS, ADR 0095)
+- Three security events: `otp.sms_sent` (the provider took the text), `otp.sms_failed` (`reason`, a provider `code`, and the `fallback`: `email` or `none`) and `otp.sms_capped` (`cap`: `phone_daily` or `global_hourly`). Each carries the identifier hash and never the number, and none holds anything Twilio said beyond its numeric error code. `otp.requested` is still written once per request, with `channel: 'sms'` when the text went.
+- Written in the background, so a slow insert never delays the email fallback. The admin dashboard lists them, the last two as alerting.

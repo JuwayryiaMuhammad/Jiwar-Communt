@@ -49,3 +49,6 @@ Worker notices (ADR 0017) and push/SMS will use this same outbox when those chan
   - or not written, when its category is off and it has an inbox twin.
 - Every preference change decides the account's held messages again. Critical templates always go, and sole-record notices are never skipped.
 - The purge also deletes messages with an inbox twin that have been held more than 7 days.
+
+## Update (login codes by SMS, ADR 0095)
+- A login code by SMS does **not** go through this outbox: like the emailed code it is sent at once, off the request path, and a failure falls back to email. What exists is the sender it will share with worker notices later, the `SmsSender` port (`src/core/sms/`, Twilio and a log sender). The outbox's channel column, its retries and its quiet hours for texts are still to come.

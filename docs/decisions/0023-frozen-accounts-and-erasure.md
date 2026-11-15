@@ -64,3 +64,6 @@
 
 ## Update (M2-12b, ADR 0090)
 - Erasure revokes a technician's location consent (by the system), which removes every point of theirs, and deletes their staff certificates with their papers. A deactivation revokes the consent the same way; the certificates stay, told no more. A deactivation or an erasure clears the account's open dangling-account finding and marks its undecided access-review lines `left`.
+
+## Update (login codes by SMS, ADR 0095)
+- **The observation above no longer holds once SMS is on.** A login typed as a phone gets its code by text to that phone, so the new holder of a number **can** reach the old account if the old holder never changed it. The self-service "not me" (ADR 0009 #13) is now possible (an SMS code can reach the new holder) and more pressing; it is not built. Until then freezing an account and releasing its phone stay staff actions. The five-attempt budget, the caps and the rate limits bound the exposure, and a phone released here (`accounts.phone` NULL, `released_phone_hash`) can no longer receive a code. ADR 0095 also records that an account's phone is unverified and now a credential.

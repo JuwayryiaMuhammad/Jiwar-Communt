@@ -11,11 +11,15 @@ export interface OtpMessage {
 }
 
 /**
- * How a one-time code reaches the user. Email in Phase 0; WhatsApp/SMS can be
- * added behind the same interface (ADR 0004, 0009).
+ * How a one-time code reaches the user. Email, and for a login typed as a phone,
+ * SMS (ADR 0004, 0009, 0095); WhatsApp can be added behind the same
+ * interface.
  */
 export interface OtpChannel {
   send(message: OtpMessage): Promise<void>;
 }
 
 export const OTP_CHANNEL = Symbol('OTP_CHANNEL');
+
+/** The login code by SMS (ADR 0095): the same interface, `to` is a phone. */
+export const SMS_OTP_CHANNEL = Symbol('SMS_OTP_CHANNEL');

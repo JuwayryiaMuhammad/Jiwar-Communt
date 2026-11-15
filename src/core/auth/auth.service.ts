@@ -14,7 +14,11 @@ import {
 import { TenantTx } from '../database/tenant-tx.service';
 import { REDIS } from '../redis/redis.module';
 import type { OtpVerifiedView, TokensView } from './dto/auth.dto';
-import { IdentifierHasher, parseIdentifier } from './identifier';
+import {
+  IdentifierHasher,
+  parseIdentifier,
+  type NormalizedIdentifier,
+} from './identifier';
 import { LoginAlerts } from './login-alerts';
 import { OtpService, type UnlockedAccount } from './otp.service';
 import { RateLimitService } from '../redis/rate-limit.service';
@@ -26,7 +30,7 @@ import {
 
 /** The one response to an OTP request, whether or not anything matched. */
 export const OTP_REQUESTED_MESSAGE =
-  'If this email or phone is registered, a login code has been sent to the email on file.';
+  'If this email or phone is registered, a login code has been sent.';
 
 type TicketAccount = Omit<UnlockedAccount, 'tenantName'>;
 
@@ -56,7 +60,8 @@ export class AuthService {
     ip: string,
     locale: Locale,
   ): Promise<void> {
-    const identifierHash = this.hashOrReject(rawIdentifier);
+    const identifier = this.parseOrReject(rawIdentifier);
+    const identifierHash = this.hasher.hashIdentifier(identifier);
     const window = this.config.get('OTP_RATE_LIMIT_WINDOW_SECONDS', {
       infer: true,
     });
@@ -75,12 +80,17 @@ export class AuthService {
       ),
     );
 
-    void this.otp.issue(identifierHash, locale).catch((error: unknown) => {
-      this.logger.error(
-        `OTP issue failed: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-    });
+    // Only a login typed as a phone may go by SMS, to that phone (ADR 0095);
+    // the number is handed on in memory and never stored.
+    const phone = identifier.type === 'phone' ? identifier.value : null;
+    void this.otp
+      .issue(identifierHash, locale, phone)
+      .catch((error: unknown) => {
+        this.logger.error(
+          `OTP issue failed: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      });
   }
 
   /** Step 2. A matching code yields a login ticket and the accounts it unlocks. */
@@ -239,7 +249,7 @@ export class AuthService {
     }
   }
 
-  private hashOrReject(rawIdentifier: string): string {
+  private parseOrReject(rawIdentifier: string): NormalizedIdentifier {
     const parsed = parseIdentifier(rawIdentifier);
     if (!parsed) {
       // A malformed identifier says nothing about who is registered.
@@ -253,7 +263,7 @@ export class AuthService {
         },
       );
     }
-    return this.hasher.hashIdentifier(parsed);
+    return parsed;
   }
 
   private async isActive(account: TicketAccount): Promise<boolean> {

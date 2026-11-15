@@ -6,9 +6,11 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { EmailOtpChannel } from './email-otp.channel';
 import { IdentifierHasher } from './identifier';
-import { OTP_CHANNEL } from './otp-channel';
+import { OTP_CHANNEL, SMS_OTP_CHANNEL } from './otp-channel';
 import { OtpService } from './otp.service';
 import { SessionService } from './session.service';
+import { SmsLoginPolicy } from './sms-login.policy';
+import { SmsOtpChannel } from './sms-otp.channel';
 import { StepUpController } from './step-up.controller';
 import { StepUpService } from './step-up.service';
 
@@ -23,7 +25,9 @@ import { StepUpService } from './step-up.service';
     StepUpService,
     ActionTokens,
     LoginAlerts,
+    SmsLoginPolicy,
     { provide: OTP_CHANNEL, useClass: EmailOtpChannel },
+    { provide: SMS_OTP_CHANNEL, useClass: SmsOtpChannel },
   ],
   exports: [
     IdentifierHasher,

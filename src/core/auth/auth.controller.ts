@@ -30,7 +30,8 @@ import {
 } from './dto/auth.dto';
 
 /**
- * Login: identifier → OTP by email → pick an account → tokens (ADR 0004).
+ * Login: identifier → OTP by SMS (a phone) or email → pick an account →
+ * tokens (ADR 0004, 0095).
  */
 @ApiArea('auth', 'public')
 @Public()
@@ -40,7 +41,9 @@ export class AuthController {
 
   /** Always answers the same way, whether or not the identifier exists. */
   @Post('otp/request')
-  @ApiOperation({ summary: 'Request a login code by email' })
+  @ApiOperation({
+    summary: 'Request a login code (by SMS for a phone, by email otherwise)',
+  })
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse({ type: OtpRequestedView })
   async requestOtp(
@@ -49,7 +52,7 @@ export class AuthController {
     @RequestHeader('accept-language') acceptLanguage?: string,
   ): Promise<OtpRequestedView> {
     // The account is not proven yet, so its stored locale is not used: the
-    // email goes out in the language the requester's client asks for.
+    // code goes out in the language the requester's client asks for.
     await this.auth.requestOtp(
       dto.identifier,
       ip,

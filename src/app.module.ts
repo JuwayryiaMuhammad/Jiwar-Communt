@@ -67,6 +67,7 @@ import { PlatformModule } from './core/platform/platform.module';
 import { PreferencesModule } from './core/preferences/preferences.module';
 import { PushModule } from './core/push/push.module';
 import { RedisModule } from './core/redis/redis.module';
+import { SmsModule } from './core/sms/sms.module';
 import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.module';
 
 @Module({
@@ -128,6 +129,7 @@ import { TenantSettingsModule } from './core/tenant-settings/tenant-settings.mod
     MailModule,
     PreferencesModule,
     PushModule,
+    SmsModule,
     ConsentsModule,
     SweepModule,
     TenantSettingsModule,

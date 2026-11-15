@@ -307,6 +307,67 @@ export const envSchema = z
     OTP_RATE_LIMIT_PER_IDENTIFIER: positiveInt.default(5),
     OTP_RATE_LIMIT_PER_IP: positiveInt.default(20),
 
+    // Login codes by SMS (ADR 0095). `none` (the default): SMS is off and
+    // every code goes by email. `log`: nothing is sent, the texts are kept
+    // for tests and written masked to the log (refused in production).
+    // `twilio`: Programmable Messaging, which needs the four variables below.
+    SMS_PROVIDER: z.enum(['twilio', 'log', 'none']).default('none'),
+    /**
+     * Calling codes SMS may go to, comma separated. A phone outside the list
+     * takes the email path, as if SMS were off.
+     */
+    SMS_ALLOWED_COUNTRY_CODES: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      z
+        .string()
+        .default('+20')
+        .transform((v, ctx) => {
+          const codes = v
+            .split(',')
+            .map((c) => c.trim())
+            .filter((c) => c !== '');
+          if (
+            codes.length === 0 ||
+            codes.some((c) => !/^\+[1-9]\d{0,2}$/.test(c))
+          ) {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'must be calling codes like +20 or +20,+966',
+            });
+            return z.NEVER;
+          }
+          return [...new Set(codes)];
+        }),
+    ),
+    /** SMS per phone per day (SMS pumping and spam); past it the code goes by email. */
+    SMS_MAX_PER_PHONE_PER_DAY: positiveInt.default(10),
+    /** SMS per hour across the whole service; past it the code goes by email. */
+    SMS_MAX_PER_HOUR: positiveInt.default(300),
+    /** How long Twilio may take before the SMS counts as failed (then email). */
+    SMS_REQUEST_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .max(15000)
+      .default(5000),
+    TWILIO_ACCOUNT_SID: optional(
+      z.string().regex(/^AC[0-9a-fA-F]{32}$/, 'must be an AC... account SID'),
+    ),
+    /** An API key (SK...), not the account's auth token: it can be revoked alone. */
+    TWILIO_API_KEY_SID: optional(
+      z.string().regex(/^SK[0-9a-fA-F]{32}$/, 'must be an SK... API key SID'),
+    ),
+    /** A secret: never logged. */
+    TWILIO_API_KEY_SECRET: optional(
+      z.string().min(16, 'must be at least 16 characters'),
+    ),
+    /** The Messaging Service (MG...) that owns the sender number or sender ID. */
+    TWILIO_MESSAGING_SERVICE_SID: optional(
+      z
+        .string()
+        .regex(/^MG[0-9a-fA-F]{32}$/, 'must be an MG... Messaging Service SID'),
+    ),
+
     // Platform super admin (ADR 0011)
     PLATFORM_JWT_SECRET: secret,
     SUPERADMIN_EMAIL: optional(z.email()),
@@ -610,6 +671,31 @@ export const envSchema = z
           path: [name],
           message: 'must not be fake when NODE_ENV=production',
         });
+    // SMS through Twilio needs all four settings: refuse to boot naming the
+    // missing ones rather than fail every login code at its first send.
+    if (env.SMS_PROVIDER === 'twilio') {
+      for (const name of [
+        'TWILIO_ACCOUNT_SID',
+        'TWILIO_API_KEY_SID',
+        'TWILIO_API_KEY_SECRET',
+        'TWILIO_MESSAGING_SERVICE_SID',
+      ] as const)
+        if (env[name] === undefined)
+          ctx.addIssue({
+            code: 'custom',
+            path: [name],
+            message: 'is required when SMS_PROVIDER=twilio (ADR 0095)',
+          });
+    }
+    // The log provider "sends" nothing: on a real server nobody would get a
+    // code, and no email fallback would follow.
+    if (env.NODE_ENV === 'production' && env.SMS_PROVIDER === 'log') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SMS_PROVIDER'],
+        message: 'must not be log when NODE_ENV=production',
+      });
+    }
     // A fixed code in production is a universal password. Refuse to boot
     // rather than trust that someone remembers to unset it.
     if (env.NODE_ENV === 'production' && env.OTP_FIXED_CODE !== undefined) {

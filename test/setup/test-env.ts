@@ -20,6 +20,19 @@ export function applyTestEnv(): void {
   process.env.SMTP_SECURE = 'false';
   delete process.env.SMTP_USER;
   delete process.env.SMTP_PASSWORD;
+  // Login codes by SMS (ADR 0095): off, whatever a developer's .env says (a
+  // real Twilio account in .env must never be reached from a test), so a
+  // phone login goes by email like every other suite expects. The SMS suites
+  // turn the in-memory `log` provider on themselves (test/setup/sms.ts)
+  // before they create the app; nothing in a test can reach Twilio.
+  process.env.SMS_PROVIDER = 'none';
+  delete process.env.TWILIO_ACCOUNT_SID;
+  delete process.env.TWILIO_API_KEY_SID;
+  delete process.env.TWILIO_API_KEY_SECRET;
+  delete process.env.TWILIO_MESSAGING_SERVICE_SID;
+  process.env.SMS_ALLOWED_COUNTRY_CODES = '+20';
+  process.env.SMS_MAX_PER_PHONE_PER_DAY = '10';
+  process.env.SMS_MAX_PER_HOUR = '300';
   // Same for object storage: files go to the local MinIO's test bucket,
   // never to a real bucket the developer's .env may point at (ADR 0029).
   process.env.S3_ENDPOINT =

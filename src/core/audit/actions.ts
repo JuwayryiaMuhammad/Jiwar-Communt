@@ -3103,6 +3103,12 @@ export const SECURITY_EVENTS = [
   'otp.verify_failed',
   'otp.challenge_exhausted',
   'otp.rate_limited',
+  // The login code by SMS (ADR 0095): sent; failed, with where the code
+  // went instead; held back by a cap, and sent by email instead. Never the
+  // number: the identifier hash and codes only.
+  'otp.sms_sent',
+  'otp.sms_failed',
+  'otp.sms_capped',
   'login.succeeded',
   'session.refresh_reuse_detected',
   'session.revoked',

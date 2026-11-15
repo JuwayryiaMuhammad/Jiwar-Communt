@@ -645,3 +645,127 @@ describe('guard vendor drivers (ADR 0068)', () => {
     ).toThrow(/GATE_VENDOR_TIMEOUT_MS/);
   });
 });
+
+describe('validateEnv: login codes by SMS (ADR 0095)', () => {
+  const twilio = {
+    SMS_PROVIDER: 'twilio',
+    TWILIO_ACCOUNT_SID: `AC${'a'.repeat(32)}`,
+    TWILIO_API_KEY_SID: `SK${'b'.repeat(32)}`,
+    TWILIO_API_KEY_SECRET: 'c'.repeat(32),
+    TWILIO_MESSAGING_SERVICE_SID: `MG${'d'.repeat(32)}`,
+  };
+  const failure = (extra: Record<string, string>): string => {
+    try {
+      validateEnv({ ...base, ...extra });
+    } catch (error) {
+      return (error as Error).message;
+    }
+    return '';
+  };
+
+  it('is off by default: no provider, Egypt only, the caps and the timeout', () => {
+    const env = validateEnv(base);
+    expect(env.SMS_PROVIDER).toBe('none');
+    expect(env.SMS_ALLOWED_COUNTRY_CODES).toEqual(['+20']);
+    expect(env.SMS_MAX_PER_PHONE_PER_DAY).toBe(10);
+    expect(env.SMS_MAX_PER_HOUR).toBe(300);
+    expect(env.SMS_REQUEST_TIMEOUT_MS).toBe(5000);
+    expect(env.TWILIO_API_KEY_SECRET).toBeUndefined();
+  });
+
+  it('boots with twilio when all four settings are there', () => {
+    expect(validateEnv({ ...base, ...twilio }).SMS_PROVIDER).toBe('twilio');
+  });
+
+  it('refuses twilio without a setting, naming each missing one', () => {
+    for (const name of Object.keys(twilio).filter(
+      (k) => k !== 'SMS_PROVIDER',
+    )) {
+      const { [name]: _omit, ...rest } = twilio as Record<string, string>;
+      void _omit;
+      expect(failure(rest)).toContain(name);
+    }
+    expect(failure({ SMS_PROVIDER: 'twilio' })).toMatch(
+      /TWILIO_ACCOUNT_SID[\s\S]*TWILIO_API_KEY_SID/,
+    );
+  });
+
+  it('treats empty Twilio settings as unset', () => {
+    expect(failure({ ...twilio, TWILIO_API_KEY_SECRET: '' })).toContain(
+      'TWILIO_API_KEY_SECRET',
+    );
+    expect(
+      validateEnv({ ...base, TWILIO_API_KEY_SECRET: '' }).TWILIO_API_KEY_SECRET,
+    ).toBeUndefined();
+  });
+
+  it('checks the shape of each SID and the secret', () => {
+    expect(failure({ ...twilio, TWILIO_ACCOUNT_SID: 'x' })).toContain(
+      'TWILIO_ACCOUNT_SID',
+    );
+    // An auth token is not an API key SID.
+    expect(
+      failure({ ...twilio, TWILIO_API_KEY_SID: `AC${'b'.repeat(32)}` }),
+    ).toContain('TWILIO_API_KEY_SID');
+    expect(
+      failure({ ...twilio, TWILIO_MESSAGING_SERVICE_SID: 'MG123' }),
+    ).toContain('TWILIO_MESSAGING_SERVICE_SID');
+    expect(failure({ ...twilio, TWILIO_API_KEY_SECRET: 'short' })).toContain(
+      'TWILIO_API_KEY_SECRET',
+    );
+  });
+
+  it('takes log outside production and refuses it in production', () => {
+    expect(validateEnv({ ...base, SMS_PROVIDER: 'log' }).SMS_PROVIDER).toBe(
+      'log',
+    );
+    expect(failure({ NODE_ENV: 'production', SMS_PROVIDER: 'log' })).toContain(
+      'SMS_PROVIDER',
+    );
+    expect(
+      validateEnv({ ...base, ...twilio, NODE_ENV: 'production' }).SMS_PROVIDER,
+    ).toBe('twilio');
+  });
+
+  it('refuses a provider it does not know', () => {
+    expect(failure({ SMS_PROVIDER: 'vonage' })).toContain('SMS_PROVIDER');
+  });
+
+  it('reads the allowed countries as a list', () => {
+    expect(
+      validateEnv({ ...base, SMS_ALLOWED_COUNTRY_CODES: '+20, +966,+20' })
+        .SMS_ALLOWED_COUNTRY_CODES,
+    ).toEqual(['+20', '+966']);
+    expect(
+      validateEnv({ ...base, SMS_ALLOWED_COUNTRY_CODES: '' })
+        .SMS_ALLOWED_COUNTRY_CODES,
+    ).toEqual(['+20']);
+    for (const bad of ['20', '+', '+0', 'EG', '+20;+966', '+1234'])
+      expect(failure({ SMS_ALLOWED_COUNTRY_CODES: bad })).toContain(
+        'SMS_ALLOWED_COUNTRY_CODES',
+      );
+  });
+
+  it('keeps the production guard on the fixed code', () => {
+    expect(
+      failure({
+        ...twilio,
+        NODE_ENV: 'production',
+        OTP_FIXED_CODE: '123456',
+      }),
+    ).toContain('OTP_FIXED_CODE');
+  });
+
+  it('bounds the timeout and the caps', () => {
+    expect(failure({ SMS_REQUEST_TIMEOUT_MS: '500' })).toContain(
+      'SMS_REQUEST_TIMEOUT_MS',
+    );
+    expect(failure({ SMS_REQUEST_TIMEOUT_MS: '60000' })).toContain(
+      'SMS_REQUEST_TIMEOUT_MS',
+    );
+    expect(failure({ SMS_MAX_PER_PHONE_PER_DAY: '0' })).toContain(
+      'SMS_MAX_PER_PHONE_PER_DAY',
+    );
+    expect(failure({ SMS_MAX_PER_HOUR: '0' })).toContain('SMS_MAX_PER_HOUR');
+  });
+});

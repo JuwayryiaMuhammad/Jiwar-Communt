@@ -1350,6 +1350,13 @@ export const M35_COVERAGE: readonly string[] = [
   'gl_period.reopened',
 ];
 
+/** The login code by SMS (ADR 0095), covered by test/auth/sms-login.e2e-spec.ts. */
+export const SMS_LOGIN_COVERAGE: readonly string[] = [
+  'otp.sms_sent',
+  'otp.sms_failed',
+  'otp.sms_capped',
+];
+
 /** Taxes and the year-end close (ADR 0093), covered by test/tax/audit-coverage.e2e-spec.ts. */
 export const M36_COVERAGE: readonly string[] = [
   'tax_settings.updated',
